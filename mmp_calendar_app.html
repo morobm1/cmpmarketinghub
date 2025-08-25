@@ -599,33 +599,40 @@
     function addDaysISO(iso, days){ const d=new Date(iso); d.setDate(d.getDate()+days); return toISO(d); }
 
     // Event form actions
-    els.saveBtn.addEventListener('click', () => {
+    els.saveBtn.addEventListener('click', async () => {
       const payload = readForm();
       if (!payload) return;
-      if (selectedEventId){
-        // update
-        const idx = events.findIndex(e => String(e.id) === String(selectedEventId));
-        if (idx >= 0){ events[idx] = { ...events[idx], ...payload }; }
-        selectedEventId = null;
-        els.saveBtn.textContent = 'Add Event';
-        els.deleteBtn.disabled = true;
-      } else {
-        // add new
-        const id = Date.now() + '-' + Math.random().toString(36).slice(2,7);
-        events.push({ id, ...payload });
-      }
-      saveStore();
+      const token = getToken();
+      try{
+        if (token){
+          if (selectedEventId){
+            await apiFetch('/events', { method:'PUT', body: JSON.stringify({ id: selectedEventId, property: currentProperty, ...payload }) });
+            selectedEventId = null; els.saveBtn.textContent = 'Add Event'; els.deleteBtn.disabled = true;
+          } else {
+            await apiFetch('/events', { method:'POST', body: JSON.stringify({ property: currentProperty, ...payload }) });
+          }
+          const res = await apiFetch(`/events?property=${encodeURIComponent(currentProperty)}`);
+          events = await res.json();
+        } else {
+          if (selectedEventId){ const idx = events.findIndex(e => String(e.id) === String(selectedEventId)); if (idx>=0) events[idx] = { ...events[idx], ...payload }; selectedEventId = null; els.saveBtn.textContent = 'Add Event'; els.deleteBtn.disabled = true; }
+          else { const id = Date.now() + '-' + Math.random().toString(36).slice(2,7); events.push({ id, ...payload }); }
+          saveStore();
+        }
+      }catch(e){ alert('Save failed: '+e.message); }
       clearForm();
       refreshCalendar();
     });
 
     els.clearBtn.addEventListener('click', () => { clearForm(); selectedEventId = null; els.saveBtn.textContent = 'Add Event'; els.deleteBtn.disabled = true; });
 
-    els.deleteBtn.addEventListener('click', () => {
+    els.deleteBtn.addEventListener('click', async () => {
       if (!selectedEventId) return;
-      const idx = events.findIndex(e => String(e.id) === String(selectedEventId));
-      if (idx >= 0){ events.splice(idx,1); saveStore(); refreshCalendar(); }
-      selectedEventId = null; clearForm(); els.saveBtn.textContent = 'Add Event'; els.deleteBtn.disabled = true;
+      const token = getToken();
+      try{
+        if (token){ await apiFetch('/events', { method:'DELETE', body: JSON.stringify({ id: selectedEventId, property: currentProperty }) }); const res = await apiFetch(`/events?property=${encodeURIComponent(currentProperty)}`); events = await res.json(); }
+        else { const idx = events.findIndex(e => String(e.id) === String(selectedEventId)); if (idx>=0){ events.splice(idx,1); saveStore(); } }
+      }catch(e){ alert('Delete failed: '+e.message); }
+      selectedEventId = null; clearForm(); els.saveBtn.textContent = 'Add Event'; els.deleteBtn.disabled = true; refreshCalendar();
     });
 
     els.exportBtn.addEventListener('click', () => {
@@ -740,8 +747,10 @@
     // Auth & Users Management
     const STORE_USERS_KEY = 'mmp_users_v1';
     const STORE_CURRENT_USER_KEY = 'mmp_current_user_v1';
+    const STORE_JWT_KEY = 'mmp_jwt_v1';
     const STORE_LOGIN_TIME_KEY = 'mmp_login_time_v1';
     const SESSION_TTL_MS = 8 * 60 * 60 * 1000; // 8 hours
+    const API_BASE = '/api';
     let users = {};
     let currentUser = null;
 
@@ -767,13 +776,25 @@
       }
     }
 
+    function getToken(){ try{ return localStorage.getItem(STORE_JWT_KEY)||''; }catch(e){ return ''; } }
+    function parseJwt(token){ try{ const p = token.split('.')[1]; return JSON.parse(atob(p.replace(/-/g,'+').replace(/_/g,'/'))); }catch(e){ return null; } }
+    async function apiFetch(path, opts={}){
+      const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers||{});
+      const token = getToken(); if (token) headers['Authorization'] = 'Bearer ' + token;
+      const res = await fetch(API_BASE + path, Object.assign({}, opts, { headers }));
+      if (!res.ok){ const text = await res.text(); throw new Error(text || ('HTTP '+res.status)); }
+      return res;
+    }
+
     function showApp(){ if (els.appHeader) els.appHeader.style.display=''; if (els.appContainer) els.appContainer.style.display=''; if (els.loginView) els.loginView.style.display='none'; }
     function showLogin(){ if (els.appHeader) els.appHeader.style.display='none'; if (els.appContainer) els.appContainer.style.display='none'; if (els.loginView) els.loginView.style.display='flex'; }
 
-    function doLogout(){
+    async function doLogout(){
+      try{ await fetch('/api/auth-logout', { method:'POST' }); }catch(e){}
       try{ localStorage.removeItem(STORE_CURRENT_USER_KEY); }catch(e){}
       try{ localStorage.removeItem(STORE_LOGIN_TIME_KEY); }catch(e){}
-      location.reload();
+      try{ localStorage.removeItem('mmp_jwt_v1'); }catch(e){}
+      location.href = 'index.html';
     }
     function bindHeaderHandlers(){
       if (els.logoutBtn){ els.logoutBtn.onclick = () => doLogout(); }
@@ -800,6 +821,29 @@
     async function initAuth(){
       loadUsers();
       await ensureAdminSeed();
+      // Prefer cookie-based session via /api/me
+      try{
+        const meRes = await fetch('/api/me');
+        if (meRes.ok){
+          const me = await meRes.json();
+          currentUser = { username: me.username, role: me.role, properties: me.properties };
+          showApp();
+          bindHeaderHandlers();
+          initializeAppForUser();
+          scheduleAutoLogout();
+          return true;
+        }
+      }catch(e){}
+      const jwt = getToken();
+      if (jwt){
+        const claims = parseJwt(jwt) || {};
+        currentUser = { username: claims.sub || '', role: claims.role || 'user', properties: claims.properties || [] };
+        showApp();
+        bindHeaderHandlers();
+        initializeAppForUser();
+        scheduleAutoLogout();
+        return true;
+      }
       const savedUser = (localStorage.getItem(STORE_CURRENT_USER_KEY)||'').trim();
       const savedLoginTime = parseInt(localStorage.getItem(STORE_LOGIN_TIME_KEY)||'0', 10) || 0;
       if (savedUser && users[savedUser]){
@@ -868,8 +912,13 @@
     // Monthly budgets management
     let monthlyBudgets = {};
     const STORE_BUDGETS_KEY = 'mmp_monthly_budgets_v1';
-    function saveBudgetStore(){
+    async function saveBudgetStore(){
       budgetsByProperty[currentProperty] = monthlyBudgets;
+      const token = getToken();
+      if (token){
+        try{ await apiFetch('/budgets', { method:'PUT', body: JSON.stringify({ property: currentProperty, months: monthlyBudgets }) }); return; }
+        catch(e){}
+      }
       try{ localStorage.setItem(STORE_BUDGETS_BY_PROP_KEY, JSON.stringify(budgetsByProperty)); }catch(e){}
     }
     function loadBudgetStore(){
@@ -983,8 +1032,18 @@
     function setActiveProperty(prop){
       currentProperty = prop;
       try{ localStorage.setItem(STORE_CURRENT_PROPERTY_KEY, currentProperty); }catch(e){}
-      loadStore();
-      loadBudgetStore();
+      const token = getToken();
+      if (token){
+        (async () => {
+          try{ const bres = await apiFetch(`/budgets?property=${encodeURIComponent(currentProperty)}`); monthlyBudgets = await bres.json(); }catch(e){ monthlyBudgets = {}; }
+          try{ const eres = await apiFetch(`/events?property=${encodeURIComponent(currentProperty)}`); events = await eres.json(); }catch(e){ events = []; }
+          if (els.budgetYear) { renderBudgetInputs(parseInt(els.budgetYear.value, 10)); }
+          if (calendar) refreshCalendar();
+        })();
+      } else {
+        loadStore();
+        loadBudgetStore();
+      }
       if (els.reqProperty) els.reqProperty.value = currentProperty;
       // Hide details when switching
       if (els.eventDetailsHeader) els.eventDetailsHeader.style.display = 'none';
@@ -994,8 +1053,10 @@
       els.deleteBtn.disabled = true;
       clearForm();
       // re-render budgets and calendar
-      if (els.budgetYear && els.budgetYear.options.length) { renderBudgetInputs(parseInt(els.budgetYear.value, 10)); }
-      if (calendar) refreshCalendar();
+      if (!getToken()){
+        if (els.budgetYear && els.budgetYear.options.length) { renderBudgetInputs(parseInt(els.budgetYear.value, 10)); }
+        if (calendar) refreshCalendar();
+      }
     }
     function initProperties(){
       loadProperties();
@@ -1136,13 +1197,17 @@
     function closeRequestModal(){ if (els.requestModal){ els.requestModal.style.display = 'none'; } }
     if (els.openRequestModalBtn){ els.openRequestModalBtn.addEventListener('click', openRequestModal); }
     if (els.req_close){ els.req_close.addEventListener('click', (e)=>{ e.preventDefault(); closeRequestModal(); }); }
-    if (els.req_submit){ els.req_submit.addEventListener('click', ()=>{
+    if (els.req_submit){ els.req_submit.addEventListener('click', async ()=>{
       if (!selectedEventId){ alert('Select an event first.'); return; }
-      const idx = events.findIndex(e => String(e.id) === String(selectedEventId));
-      if (idx < 0){ alert('Event not found'); return; }
-      events[idx].graphicRequestedAt = new Date().toISOString();
-      saveStore();
-      if (els.graphicStatus){ const dt = new Date(events[idx].graphicRequestedAt); els.graphicStatus.textContent = `Graphic request submitted: ${dt.toLocaleString()}`; els.graphicStatus.classList.remove('muted'); }
+      const token = getToken();
+      const when = new Date().toISOString();
+      try{
+        if (token){ await apiFetch('/events', { method:'PUT', body: JSON.stringify({ id: selectedEventId, property: currentProperty, graphicRequestedAt: when }) }); }
+        else {
+          const idx = events.findIndex(e => String(e.id) === String(selectedEventId)); if (idx >= 0){ events[idx].graphicRequestedAt = when; saveStore(); }
+        }
+        if (els.graphicStatus){ const dt = new Date(when); els.graphicStatus.textContent = `Graphic request submitted: ${dt.toLocaleString()}`; els.graphicStatus.classList.remove('muted'); }
+      }catch(e){ alert('Mark submitted failed: '+e.message); }
       closeRequestModal();
     }); }
 
@@ -1193,10 +1258,14 @@
 
     // Auto-save flyer URL when changed for selected event
     if (els.flyerUrl){
-      els.flyerUrl.addEventListener('change', ()=>{
+      els.flyerUrl.addEventListener('change', async ()=>{
         if (!selectedEventId) return;
-        const idx = events.findIndex(e => String(e.id) === String(selectedEventId));
-        if (idx >= 0){ events[idx].flyerUrl = (els.flyerUrl.value||'').trim(); saveStore(); }
+        const url = (els.flyerUrl.value||'').trim();
+        const token = getToken();
+        try{
+          if (token){ await apiFetch('/events', { method:'PUT', body: JSON.stringify({ id: selectedEventId, property: currentProperty, flyerUrl: url }) }); }
+          else { const idx = events.findIndex(e => String(e.id) === String(selectedEventId)); if (idx >= 0){ events[idx].flyerUrl = url; saveStore(); } }
+        }catch(e){ alert('Saving flyer URL failed: '+e.message); }
       });
     }
 

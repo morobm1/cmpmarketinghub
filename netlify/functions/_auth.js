@@ -32,10 +32,21 @@ export function signToken(user){
   return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES });
 }
 
+function parseCookies(event){
+  const raw = event.headers.cookie || event.headers.Cookie || '';
+  const out = {};
+  raw.split(';').forEach(p => {
+    const i = p.indexOf('='); if (i === -1) return; const k = p.slice(0,i).trim(); const v = p.slice(i+1).trim(); out[k] = decodeURIComponent(v);
+  });
+  return out;
+}
+
 export function verifyReqAuth(event){
+  let token = null;
   const auth = event.headers.authorization || event.headers.Authorization || '';
-  if (!auth.startsWith('Bearer ')) return null;
-  const token = auth.slice(7);
+  if (auth && auth.startsWith('Bearer ')) token = auth.slice(7);
+  if (!token){ const cookies = parseCookies(event); if (cookies.mmp_token) token = cookies.mmp_token; }
+  if (!token) return null;
   try{ return jwt.verify(token, JWT_SECRET); }catch(e){ return null; }
 }
 
