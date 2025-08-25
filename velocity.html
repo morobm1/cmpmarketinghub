@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Leasing Velocity Calculator</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; }
+        .container { max-width: 600px; margin: auto; }
+        label { display: block; margin-top: 1em; }
+        input, button { margin-top: 0.5em; }
+        #result { margin-top: 2em; padding: 1em; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Leasing Velocity Calculator</h1>
+    <label for="excelFile">Upload 2024 Excel File:</label>
+    <input type="file" id="excelFile" accept=".xlsx,.xls">
+    <label for="dateRange">2024 Leased Completed Date Range (e.g., A15:A101):</label>
+    <input type="text" id="dateRange" placeholder="Enter range, e.g., A15:A101">
+
+    <label for="excelFile2" style="margin-top:2em;">Upload 2025 Excel File:</label>
+    <input type="file" id="excelFile2" accept=".xlsx,.xls">
+    <label for="dateRange2">2025 Leased Completed Date Range (e.g., L27:L60):</label>
+    <input type="text" id="dateRange2" placeholder="Enter range, e.g., L27:L60">
+
+    <button id="processBtn">Calculate Leasing Velocity & Compare</button>
+
+    <div id="result"></div>
+    <div id="compareResult"></div>
+    <button id="exportBtn" style="display:none;margin-top:1em;">Export as Excel</button>
+</div>
+<script>
+let lastWeekData = null;
+let lastWeekData2 = null;
+document.getElementById('processBtn').addEventListener('click', function() {
+    const fileInput = document.getElementById('excelFile');
+    const dateRange = document.getElementById('dateRange').value.trim().toUpperCase();
+    const fileInput2 = document.getElementById('excelFile2');
+    const dateRange2 = document.getElementById('dateRange2').value.trim().toUpperCase();
+    const resultDiv = document.getElementById('result');
+    const compareDiv = document.getElementById('compareResult');
+    resultDiv.innerHTML = '';
+    compareDiv.innerHTML = '';
+
+    // Helper to process a file/range and return sorted date array
+    function extractDates(file, range, cb) {
+        if (!file) { cb([]); return; }
+        if (!range.match(/^[A-Z]+\d+:[A-Z]+\d+$/)) { cb([]); return; }
+        const [start, end] = range.split(':');
+        const startCol = start.match(/^[A-Z]+/)[0];
+        const startRow = parseInt(start.match(/\d+$/)[0], 10);
+        const endCol = end.match(/^[A-Z]+/)[0];
+        const endRow = parseInt(end.match(/\d+$/)[0], 10);
+        if (startCol !== endCol) { cb([]); return; }
+        const colIdx = XLSX.utils.decode_col(startCol);
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, {type: 'array'});
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            let dates = [];
+            for (let row = startRow - 1; row <= endRow - 1; ++row) {
+                const cellAddress = {c: colIdx, r: row};
+                const cellRef = XLSX.utils.encode_cell(cellAddress);
+                const cell = sheet[cellRef];
+                if (cell && cell.v) {
+                    let dateVal = cell.v;
+                    let jsDate = null;
+                    if (cell.t === 'd') {
+                        jsDate = new Date(dateVal);
+                    } else if (cell.t === 'n') {
+                        jsDate = XLSX.SSF.parse_date_code(dateVal);
+                        if (jsDate) {
+                            jsDate = new Date(jsDate.y, jsDate.m - 1, jsDate.d);
+                        }
+                    } else if (typeof dateVal === 'string') {
+                        jsDate = new Date(dateVal);
+                    }
+                    if (jsDate && !isNaN(jsDate)) {
+                        dates.push(jsDate);
+                    }
+                }
+            }
+            dates.sort((a, b) => a - b);
+            cb(dates);
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    // Wait for both files to be processed
+    let done = 0, dates1 = [], dates2 = [];
+    function afterBoth() {
+        if (++done < 2) return;
+        // If no data for first file, show error
+        if (!dates1.length) {
+            resultDiv.innerHTML = '<span style="color:red">No valid dates found in the first file/range.</span>';
+            return;
+        }
+        // If no data for second file, just show first file's results
+        if (!dates2.length) {
+            resultDiv.innerHTML = renderLeasingTable(dates1, '2024');
+            lastWeekData = buildWeekData(dates1);
+            lastWeekData2 = null;
+            document.getElementById('exportBtn').style.display = '';
+            return;
+        }
+        // Show both tables and comparison
+        resultDiv.innerHTML = renderLeasingTable(dates1, '2024') + '<br>' + renderLeasingTable(dates2, '2025');
+        lastWeekData = buildWeekData(dates1);
+        lastWeekData2 = buildWeekData(dates2);
+        document.getElementById('exportBtn').style.display = '';
+        compareDiv.innerHTML = renderCompareTable(lastWeekData, lastWeekData2);
+    }
+    extractDates(fileInput.files[0], dateRange, d => { dates1 = d; afterBoth(); });
+    extractDates(fileInput2.files[0], dateRange2, d => { dates2 = d; afterBoth(); });
+
+    // Helper: build week data from sorted date array
+    function buildWeekData(dates) {
+        const FULL_BED_COUNT = 97;
+        const weekData = [];
+        if (!dates.length) return weekData;
+        let first = dates[0], last = dates[dates.length-1];
+        let weekStart = new Date(2023, 9, 30);
+        weekStart.setHours(0,0,0,0);
+        let weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekEnd.getDate() + 6);
+        let i = 0, cumulative = 0;
+        while (weekStart <= last) {
+            let weekCount = 0;
+            while (i < dates.length && dates[i] >= weekStart && dates[i] <= weekEnd) {
+                weekCount++;
+                i++;
+            }
+            cumulative += weekCount;
+            weekData.push({
+                weekStart: new Date(weekStart),
+                weekEnd: new Date(weekEnd),
+                weekCount,
+                cumulative,
+                percent: ((cumulative / FULL_BED_COUNT) * 100).toFixed(1)
+            });
+            weekStart.setDate(weekStart.getDate() + 7);
+            weekEnd.setDate(weekEnd.getDate() + 7);
+        }
+        return weekData;
+    }
+    // Helper: render leasing table
+    function renderLeasingTable(dates, label) {
+        if (!dates.length) return '';
+        dates.sort((a, b) => a - b);
+        const first = dates[0];
+        const last = dates[dates.length - 1];
+        const diffMs = last - first;
+        const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+        const weekData = buildWeekData(dates);
+        let table = `<b>${label} Leasing Velocity:</b><br>
+            <b>Start (0%):</b> ${first.toLocaleDateString()}<br>
+            <b>End (100%):</b> ${last.toLocaleDateString()}<br>
+            <b>Total Days:</b> ${diffDays} days`;
+        table += `<br><b>Weekly Leasing Progress</b><br><table border="1" cellpadding="4" style="border-collapse:collapse;margin-top:1em;">
+            <tr><th>Week Start</th><th>Week End</th><th>Leases This Week</th><th>Cumulative</th><th>Total %</th></tr>`;
+        for (const w of weekData) {
+            table += `<tr><td>${w.weekStart.toLocaleDateString()}</td><td>${w.weekEnd.toLocaleDateString()}</td><td>${w.weekCount}</td><td>${w.cumulative}</td><td>${w.percent}%</td></tr>`;
+        }
+        table += '</table>';
+        return table;
+    }
+    // Helper: render comparison table
+    function renderCompareTable(weekData1, weekData2) {
+        if (!weekData1 || !weekData2) return '';
+        // Map 2024 weeks by ISO string for exact lookup
+        const weekMap1 = new Map(weekData1.map(w => [w.weekStart.toISOString().slice(0,10), w]));
+        let table = `<br><b>Variance Comparison (2025 vs 2024 Equivalent Week)</b><br><table border="1" cellpadding="4" style="border-collapse:collapse;margin-top:1em;">
+            <tr><th>2025 Week Start</th><th>2025 Week End</th><th>2025 Leases</th><th>2025 %</th><th>2024 Week Start</th><th>2024 Week End</th><th>2024 Leases</th><th>2024 %</th><th>Variance</th><th>Variance %</th></tr>`;
+        for (const w2 of weekData2) {
+            // Find the equivalent week in 2024 by subtracting 1 year from the week start and end
+            let eq2024Start = new Date(w2.weekStart);
+            eq2024Start.setFullYear(eq2024Start.getFullYear() - 1);
+            let eq2024End = new Date(w2.weekEnd);
+            eq2024End.setFullYear(eq2024End.getFullYear() - 1);
+            const eq2024Key = eq2024Start.toISOString().slice(0,10);
+            const w1 = weekMap1.get(eq2024Key) || {weekStart: '', weekEnd: '', weekCount: 0, percent: '0.0'};
+            const variance = w2.weekCount - w1.weekCount;
+            const variancePct = (parseFloat(w2.percent) - parseFloat(w1.percent)).toFixed(1);
+            table += `<tr><td>${w2.weekStart ? new Date(w2.weekStart).toLocaleDateString() : ''}</td><td>${w2.weekEnd ? new Date(w2.weekEnd).toLocaleDateString() : ''}</td><td>${w2.weekCount}</td><td>${w2.percent}%</td><td>${w1.weekStart ? new Date(w1.weekStart).toLocaleDateString() : ''}</td><td>${w1.weekEnd ? new Date(w1.weekEnd).toLocaleDateString() : ''}</td><td>${w1.weekCount}</td><td>${w1.percent}%</td><td>${variance}</td><td>${variancePct}%</td></tr>`;
+        }
+        table += '</table>';
+        return table;
+    }
+});
+
+document.getElementById('exportBtn').addEventListener('click', function() {
+    if (!lastWeekData) return;
+    const wsData = [
+        ['Week Start', 'Week End', 'Leases This Week', 'Cumulative', 'Total %']
+    ];
+    for (const w of lastWeekData) {
+        wsData.push([
+            w.weekStart.toLocaleDateString(),
+            w.weekEnd.toLocaleDateString(),
+            w.weekCount,
+            w.cumulative,
+            w.percent + '%'
+        ]);
+    }
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Weekly Leasing Progress');
+    XLSX.writeFile(wb, 'weekly_leasing_progress.xlsx');
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>UW Bothell Master Radius Map</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:400,500&display=swap">
+    <style>
+        body { margin: 0; font-family: 'Roboto', Arial, sans-serif; background: #f5f6fa; }
+        #container { display: flex; height: 100vh; }
+        #sidebar {
+            width: 355px; background: #fff;
+            padding: 22px 22px 18px 18px;
+            border-right: 1px solid #e5e8ef;
+            box-shadow: 2px 0 8px 0 rgba(59,72,90,0.06);
+            box-sizing: border-box;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        #map { flex: 1; height: 100vh; min-width: 0; }
+        .master-logo {display:flex;justify-content:center;margin-bottom:18px;}
+        .master-logo img {max-width:170px;max-height:58px;display:block;}
+        h2 {margin-top: 0; margin-bottom: 18px; font-size: 22px; font-weight: 500; color: #222e39; letter-spacing: 0.01em;}
+        .ds-switcher {margin-bottom:14px;}
+        .ds-switcher label {font-weight:500;margin-right:10px;}
+        select {padding:4px 9px;font-size:16px;border-radius:8px;border:1px solid #c5cee0;outline:none;background:#fafdff;margin-top:2px;}
+        .summary-line { font-size: 16px; display: flex; align-items: center; margin-bottom: 18px; font-weight: 500; color: #3578f2; }
+        .summary-label { margin-right: 9px; }
+        .summary-val {background: #f5f8ff; padding: 3px 14px; border-radius: 13px; font-weight: 600; font-size: 16.2px; margin-left: 9px;}
+        .section-title {margin-bottom: 10px; margin-top: 20px; font-weight: 500; font-size: 15.5px; text-transform: uppercase; color: #3c487f; letter-spacing: 0.08em;}
+        .range-group, .housing-group { margin-bottom: 13px; display: flex; align-items: center; }
+        label { font-size: 15.2px; cursor: pointer; flex: 1; color: #1c2230; margin-right: 4px; display: flex; align-items: center; }
+        .color-dot { display:inline-block;width:16px;height:16px;margin-right:12px; border-radius:3px; }
+        .range-count { min-width: 36px; text-align: center; background: #f5f8ff; color: #4287f0; border-radius: 8px; font-weight: 500; font-size: 14px; margin-left: 8px; padding: 3px 0 2px 0; }
+        .filter-radio:checked + .housing-label { background: #e5edff; color: #4175f5; border-radius: 9px; font-weight: bold; }
+        .housing-label { margin-left: 7px; margin-right: 11px; font-size: 15px; padding: 3px 12px 3px 7px; transition: background 0.18s; }
+        .leaflet-popup-content-wrapper { font-size: 13px; }
+        @media (max-width:550px) {#sidebar {width: 99vw; min-width: 0; position: absolute; z-index:1001; height: auto;} #container {flex-direction: column;}}
+    </style>
+</head>
+<body>
+<div id="container">
+  <aside id="sidebar">
+    <div class="master-logo"><img src="RV Logo.PNG" alt="RV Logo"></div>
+    <div class="ds-switcher">
+      <label for="ds-select">Dataset:</label>
+      <select id="ds-select">
+        <option value="firstyear">First Year Admit</option>
+        <option value="transfer">Transfer</option>
+        <option value="future">Future Residents</option>
+        <option value="past_2324">Past Residents 23-24</option>
+        <option value="past">Past Residents (All)</option>
+      </select>
+    </div>
+    <h2 id="sidebar-title">First Year Admit</h2>
+    <div id="summary"></div>
+    <div class="section-title">Radius Groups</div>
+    <div id="group-list"></div>
+    <div class="section-title" id="housing-section" style="display:none">Campus Housing</div>
+    <div id="housing-list"></div>
+  </aside>
+  <div id="map"></div>
+</div>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+<script>
+const UNIVERSITY = {lat: 47.758284, lon: -122.191377, name: "Univ of Bothell"};
+const RADIUS_BUCKETS = [0, 10, 50, 200, 10000];
+const RADIUS_LABELS = ["0-10 miles", "10-50 miles", "50-200 miles", ">=200 miles"];
+const bucketColors = ["#27ae60", "#e67e22", "#c0392b", "#6c3483"];
+const HOUSING_OPTIONS = ["All", "Yes", "No"];
+const datasets = {
+  firstyear: {
+    csv: "FirstYear_with_distances.csv",
+    title: "First Year Admit",
+    showHousing: true,
+    addressCols: ["Street 1","Street 2","City","State","ZipCode"],
+    housingCol: "Interested in Campus Housing?"
+  },
+  transfer: {
+    csv: "Bothell_Transfer_with_distances.csv",
+    title: "Transfer",
+    showHousing: true,
+    addressCols: ["Street 1","Street 2","City","State","ZipCode"],
+    housingCol: "Interested in Campus Housing?"
+  },
+  future: {
+    csv: "Future_resident_with_distances.csv",
+    title: "Future Residents",
+    showHousing: false,
+    addressCols: ["Street Line1","Street Line2","Street Line3","City","State/Province","Postal Code","Country"],
+    leaseCols: ["Current Lease Start","Current Lease End"]
+  },
+  past_2324: {
+    csv: "Past_resident_2324_with_distances.csv",
+    title: "Past Residents 23-24",
+    showHousing: false,
+    addressCols: ["Street Line1","Street Line2","Street Line3","City","State/Province","Postal Code","Country"],
+    leaseCols: ["Current Lease Start","Current Lease End"]
+  },
+  past: {
+    csv: "Past_resident_with_distances.csv",
+    title: "Past Residents (All)",
+    showHousing: false,
+    addressCols: ["Street Line1","Street Line2","Street Line3","City","State/Province","Postal Code","Country"],
+    leaseCols: ["Current Lease Start","Current Lease End"]
+  }
+};
+let markers = [];
+let allRawData = [];
+let activeHousing = "All";
+let activeDistances = [0,1,2,3];
+let currentDS = "firstyear";
+
+const map = L.map('map').setView([UNIVERSITY.lat, UNIVERSITY.lon], 9);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+L.marker([UNIVERSITY.lat, UNIVERSITY.lon], {title: UNIVERSITY.name, riseOnHover:true})
+    .addTo(map).bindPopup(`<b>${UNIVERSITY.name}</b><br>18612 Beardslee Blvd, Bothell, WA`);
+L.circle([UNIVERSITY.lat, UNIVERSITY.lon], {
+    radius: 10 * 1609.34,
+    color: "#1c75bc",
+    fillColor: "#1c75bc",
+    fillOpacity: 0.18
+}).addTo(map);
+function loadDataset(dsKey) {
+  let ds = datasets[dsKey];
+  document.getElementById("sidebar-title").textContent = ds.title;
+  document.getElementById("housing-section").style.display = ds.showHousing ? '' : 'none';
+  clearSidebar();
+  Papa.parse(ds.csv, {
+    header: true,
+    download: true,
+    complete: function(results) {
+      allRawData = results.data.filter(row => {
+        const lat = parseFloat(row['Latitude']);
+        const lon = parseFloat(row['Longitude']);
+        let dist = row['Distance to Univ (mi)'];
+        if (typeof dist === 'string' && dist.trim() !== '') dist = parseFloat(dist.trim());
+        else dist = null;
+        return !(isNaN(lat) || isNaN(lon) || dist === null || isNaN(dist));
+      });
+      activeHousing = "All";
+      activeDistances = [0,1,2,3];
+      renderSidebar();
+      updateMarkers();
+    }
+  });
+}
+function clearSidebar() {
+  document.getElementById('summary').innerHTML = '';
+  document.getElementById('group-list').innerHTML = '';
+  document.getElementById('housing-list').innerHTML = '';
+}
+function getMarkerRows() {
+  let filtered = [];
+  const ds = datasets[currentDS];
+  for(const row of allRawData) {
+    let dist = row['Distance to Univ (mi)'];
+    if(typeof dist === 'string' && dist.trim() !== '') dist = parseFloat(dist.trim());
+    else dist = null;
+    let housing = ds.housingCol ? ((row[ds.housingCol]||'').trim()==='Yes'?'Yes':((row[ds.housingCol]||'').trim()==='No'?'No':'Unknown')) : null;
+    if (dist === null || isNaN(dist)) continue;
+    let bucket = -1;
+    for (let i = 0; i < RADIUS_BUCKETS.length-1; ++i) {
+      if (dist >= RADIUS_BUCKETS[i] && dist < RADIUS_BUCKETS[i+1]) { bucket = i; break; }
+    }
+    if (bucket === -1) continue;
+    if (!activeDistances.includes(bucket)) continue;
+    if (ds.showHousing && activeHousing !== 'All' && housing !== activeHousing) continue;
+    filtered.push({row, bucket, housing});
+  }
+  return filtered;
+}
+function renderSidebar() {
+  const ds = datasets[currentDS];
+  // Housing radio
+  let hl = document.getElementById('housing-list');
+  hl.innerHTML = '';
+  if(ds.showHousing) {
+    HOUSING_OPTIONS.forEach(opt => {
+      let id = 'housecb_' + opt;
+      let cb = document.createElement('input');
+      cb.type = 'radio'; cb.className='filter-radio';
+      cb.name = 'housing'; cb.value = opt; cb.id = id;
+      cb.checked = (opt === activeHousing);
+      cb.onchange = function() { activeHousing = this.value; updateMarkers(); };
+      let lbl = document.createElement('label');
+      lbl.htmlFor = id; lbl.className = 'housing-label'; lbl.textContent = opt;
+      hl.appendChild(cb); hl.appendChild(lbl);
+    });
+  }
+  updateRadiusSidebar();
+}
+function updateRadiusSidebar() {
+  let ds = datasets[currentDS];
+  let filteredCounts = [0, 0, 0, 0];
+  let totalCount = 0;
+  for(const row of allRawData) {
+    let dist = row['Distance to Univ (mi)'];
+    if(typeof dist === 'string' && dist.trim() !== '') dist = parseFloat(dist.trim());
+    else dist = null;
+    let housing = ds.housingCol ? ((row[ds.housingCol]||'').trim()==='Yes'?'Yes':((row[ds.housingCol]||'').trim()==='No'?'No':'Unknown')) : null;
+    if (ds.showHousing && activeHousing !== 'All' && housing !== activeHousing) continue;
+    if (dist === null || isNaN(dist)) continue;
+    for (let i = 0; i < RADIUS_BUCKETS.length-1; ++i) {
+      if (dist >= RADIUS_BUCKETS[i] && dist < RADIUS_BUCKETS[i+1]) {
+        if (activeDistances.includes(i)) { filteredCounts[i]++; totalCount++; }
+        break;
+      }
+    }
+  }
+  document.getElementById('summary').innerHTML = `<span class='summary-line'><span class='summary-label'>Total</span><span class='summary-val'>${totalCount}</span></span>`;
+  let gl = document.getElementById('group-list');
+  gl.innerHTML = '';
+  for (let i = 0; i < filteredCounts.length; ++i) {
+    let box = document.createElement('div'); box.className = 'range-group';
+    let cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.checked = activeDistances.includes(i);
+    cb.id = 'distcb'+i;
+    cb.onchange = function() {
+      if (cb.checked && !activeDistances.includes(i)) activeDistances.push(i);
+      if (!cb.checked && activeDistances.includes(i)) activeDistances = activeDistances.filter(x => x !== i);
+      updateMarkers();
+    };
+    let lbl = document.createElement('label');
+    lbl.htmlFor = cb.id;
+    lbl.innerHTML = `<span class='color-dot' style='background:${bucketColors[i]}'></span>${RADIUS_LABELS[i]}`;
+    let cnt = document.createElement('span');
+    cnt.className = 'range-count';
+    cnt.textContent = filteredCounts[i];
+    box.appendChild(cb); box.appendChild(lbl); box.appendChild(cnt);
+    gl.appendChild(box);
+  }
+}
+function updateMarkers() {
+  updateRadiusSidebar();
+  markers.forEach(mo => { if (mo.shown) { map.removeLayer(mo.marker); mo.shown = false; } });
+  let ds = datasets[currentDS];
+  let filtered = getMarkerRows();
+  markers = [];
+  filtered.forEach(({row, bucket, housing}) => {
+    const lat = parseFloat(row['Latitude']);
+    const lon = parseFloat(row['Longitude']);
+    const dist = row['Distance to Univ (mi)'];
+    const addr = ds.addressCols.map(c=>row[c]).filter(Boolean).join(", ");
+    let popup = `<b>${addr}</b><br>Dist: ${dist} mi`;
+    if(ds.showHousing) popup += `<br>Interested in Campus Housing? <b>${housing||'Unknown'}</b>`;
+    if(ds.leaseCols) {
+      const lstart = row[ds.leaseCols[0]]||'';
+      const lend = row[ds.leaseCols[1]]||'';
+      if(lstart||lend) popup += `<br>Lease: <b>${lstart||'?'} → ${lend||'?'}</b>`;
+    }
+    const markerObj = {
+      marker: L.circleMarker([lat, lon], {color: bucketColors[bucket], radius: 6, fillOpacity: 0.85, weight: 1}).bindPopup(popup),
+      bucket, housing, shown: false
+    };
+    markerObj.marker.addTo(map); markerObj.shown = true;
+    markers.push(markerObj);
+  });
+}
+document.getElementById('ds-select').addEventListener('change', function() {
+  currentDS = this.value;
+  loadDataset(currentDS);
+});
+// Load initial
+loadDataset(currentDS);
+</script>
+</body>
+</html>

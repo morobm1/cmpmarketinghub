@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bothell Radius Map (with Grouping Sidebar)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        body { margin: 0; font-family: Arial, sans-serif; }
+        #container { display: flex; height: 98vh; }
+        #sidebar {
+            width: 320px;
+            background: #f5f5f5;
+            padding: 16px;
+            border-right: 1px solid #ddd;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+        #map { flex: 1; height: 98vh; }
+        h2 { margin-top: 0; margin-bottom: 16px; font-size: 19px; }
+        .range-group { margin-bottom: 12px; }
+        label { font-size: 15px; cursor: pointer; }
+        .range-count { color: #1c75bc; font-weight: bold; margin-left: 5px; }
+        .leaflet-popup-content-wrapper { font-size: 13px; }
+    </style>
+</head>
+<body>
+<div id="container">
+    <aside id="sidebar">
+        <div class="brand-logo"><img src="RV Logo.PNG" alt="RV Logo" style="max-width:170px;max-height:58px;margin-bottom:22px;display:block;"></div>
+        <h2>Radius Groups</h2>
+        <div id="group-list"></div>
+    </aside>
+    <div id="map"></div>
+</div>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+<script>
+const UNIVERSITY = {lat: 47.758284, lon: -122.191377, name: "Univ of Bothell"};
+const RADIUS_BUCKETS = [0, 10, 50, 200, 10000]; // [0-10), [10-50), [50-200), 200+
+const RADIUS_LABELS = ["0–10 miles", "10–50 miles", "50–200 miles", ">=200 miles"];
+const bucketColors = ["#27ae60", "#e67e22", "#c0392b", "#6c3483"];
+const groupLayerObjs = [];
+const groupCounts = Array(RADIUS_BUCKETS.length-1).fill(0);
+
+// 1. Map Setup
+const map = L.map('map').setView([UNIVERSITY.lat, UNIVERSITY.lon], 9);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+// University marker and circle
+L.marker([UNIVERSITY.lat, UNIVERSITY.lon], {title: UNIVERSITY.name, riseOnHover:true})
+    .addTo(map).bindPopup(`<b>${UNIVERSITY.name}</b><br>18612 Beardslee Blvd, Bothell, WA`);
+L.circle([UNIVERSITY.lat, UNIVERSITY.lon], {
+    radius: 10 * 1609.34,
+    color: "#1c75bc",
+    fillColor: "#1c75bc",
+    fillOpacity: 0.18
+}).addTo(map);
+// 2. Prepare Layer Groups per radius bucket
+for (let i = 0; i < RADIUS_BUCKETS.length - 1; ++i) groupLayerObjs.push(L.layerGroup());
+groupLayerObjs.forEach(layer => map.addLayer(layer));
+// 3. Parse CSV and plot each address
+Papa.parse("Bothell_with_distances.csv", {
+    header: true,
+    download: true,
+    complete: function(results) {
+        results.data.forEach(function(row) {
+            const lat = parseFloat(row['Latitude']);
+            const lon = parseFloat(row['Longitude']);
+            let dist = row['Distance to Univ (mi)'];
+            if (typeof dist === 'string' && dist.trim() !== '') dist = parseFloat(dist.trim());
+            else dist = null;
+            if (isNaN(lat) || isNaN(lon) || dist === null || isNaN(dist)) return;
+            // Determine bucket
+            let bucket = -1;
+            for (let i = 0; i < RADIUS_BUCKETS.length-1; ++i) {
+                if (dist >= RADIUS_BUCKETS[i] && dist < RADIUS_BUCKETS[i+1]) {
+                    bucket = i; break;
+                }
+            }
+            if (bucket === -1) return;
+            groupCounts[bucket]++;
+            const addr = [row['Street 1'], row['Street 2'], row['City'], row['State'], row['ZipCode']].filter(Boolean).join(", ");
+            const marker = L.circleMarker([lat, lon], {
+                color: bucketColors[bucket],
+                radius: 6,
+                fillOpacity: 0.85,
+                weight: 1
+            }).bindPopup(`<b>${addr}</b><br>Dist: ${dist} mi`);
+            groupLayerObjs[bucket].addLayer(marker);
+        });
+        renderSidebar();
+    }
+});
+function renderSidebar() {
+    const gl = document.getElementById('group-list');
+    gl.innerHTML = '';
+    for (let i = 0; i < groupCounts.length; ++i) {
+        const box = document.createElement('div');
+        box.className = 'range-group';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = true;
+        cb.id = 'cb'+i;
+        cb.onchange = function() {
+            if (cb.checked) { map.addLayer(groupLayerObjs[i]); }
+            else { map.removeLayer(groupLayerObjs[i]); }
+        };
+        const lbl = document.createElement('label');
+        lbl.htmlFor = cb.id;
+        lbl.innerHTML = `<span style='display:inline-block;width:14px;height:14px;background:${bucketColors[i]};margin-right:5px;border-radius:3px'></span>${RADIUS_LABELS[i]}`;
+        const cnt = document.createElement('span');
+        cnt.className = 'range-count';
+        cnt.textContent = groupCounts[i];
+        box.appendChild(cb);
+        box.appendChild(lbl);
+        box.appendChild(cnt);
+        gl.appendChild(box);
+    }
+}
+</script>
+</body>
+</html>

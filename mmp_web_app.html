@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Excel Web App - Local Viewer, Filter, Chart, Pivot</title>
+  <meta name="description" content="Load an Excel file locally in your browser to view, filter, chart, and summarize data. No uploads. Includes demo data.">
+  <style>
+    :root{
+      --bg:#0f172a;          /* slate-900 */
+      --panel:#111827;       /* gray-900 */
+      --muted:#1f2937;       /* gray-800 */
+      --text:#e5e7eb;        /* gray-200 */
+      --subtext:#9ca3af;     /* gray-400 */
+      --accent:#22d3ee;      /* cyan-400 */
+      --accent-2:#a78bfa;    /* violet-400 */
+      --good:#34d399;        /* emerald-400 */
+      --warn:#f59e0b;        /* amber-500 */
+      --bad:#f87171;         /* red-400 */
+      --border:#374151;      /* gray-700 */
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background:linear-gradient(160deg, var(--bg), #020617 60%);
+      color:var(--text);
+    }
+
+    header{
+      padding:18px 20px; border-bottom:1px solid var(--border); position:sticky; top:0; background:rgba(15,23,42,0.9); backdrop-filter: blur(6px); z-index:10;
+      display:flex; align-items:center; gap:18px; flex-wrap:wrap;
+    }
+    header .title{
+      font-size:18px; font-weight:700; letter-spacing:.2px;
+    }
+    header .meta{color:var(--subtext); font-size:13px}
+    .pill{
+      border:1px solid var(--border); background:var(--panel); border-radius:10px; padding:6px 10px; font-size:12px; color:var(--subtext);
+    }
+
+    .container{padding:18px; display:grid; grid-template-columns: 300px 1fr; gap:16px; align-items:start}
+    @media(max-width: 1100px){ .container{grid-template-columns: 1fr} }
+
+    .card{
+      background:linear-gradient(180deg, rgba(17,24,39,0.9), rgba(2,6,23,0.8));
+      border:1px solid var(--border); border-radius:14px; overflow:hidden;
+    }
+    .card h3{margin:0; padding:14px 14px 0 14px; font-size:14px; color:var(--subtext); font-weight:600}
+    .card .content{padding:14px}
+
+    .controls{display:flex; flex-direction:column; gap:14px}
+
+    .dropzone{
+      border:2px dashed var(--accent); border-radius:12px; padding:18px; text-align:center; cursor:pointer; background:rgba(34,211,238,0.05);
+    }
+    .dropzone.dragover{background:rgba(34,211,238,0.12)}
+    .dropzone .hint{color:var(--subtext); font-size:12px}
+
+    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .row > *{flex:1}
+
+    label{font-size:12px; color:var(--subtext); display:block; margin-bottom:6px}
+    select, input[type="text"], input[type="number"], button{
+      width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:var(--muted); color:var(--text);
+      font-size:14px;
+    }
+    button{cursor:pointer; border-color:transparent; background:linear-gradient(180deg, #0ea5e9, #22d3ee); color:#001018; font-weight:700}
+    button.secondary{background:var(--muted); color:var(--text); border:1px solid var(--border); font-weight:600}
+    button.warn{background:linear-gradient(180deg,#f59e0b,#fbbf24); color:#1f1300}
+    button.good{background:linear-gradient(180deg,#10b981,#34d399); color:#00130c}
+
+    .toolbar{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+
+    table{width:100%; border-collapse:separate; border-spacing:0;}
+    thead th{position:sticky; top:0; background:#0b1021; z-index:1; color:var(--subtext); font-weight:700; font-size:12px; text-align:left; padding:10px; border-bottom:1px solid var(--border); cursor:pointer}
+    tbody td{padding:10px; border-bottom:1px solid var(--border); font-size:13px}
+    tbody tr:hover{background:rgba(167,139,250,0.06)}
+
+    .status{display:flex; gap:10px; align-items:center; color:var(--subtext); font-size:12px}
+
+    .grid{max-height:60vh; overflow:auto; border:1px solid var(--border); border-radius:10px}
+
+    .muted{color:var(--subtext)}
+    .badge{display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; background:rgba(167,139,250,0.15); color:#d2ccff; border:1px solid rgba(167,139,250,0.35)}
+
+    .mini{font-size:11px; color:var(--subtext)}
+
+    .footer{padding:12px 18px; color:var(--subtext); font-size:12px}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header>
+    <div class="title">Excel Web App</div>
+    <span class="pill">100% local • No uploads • Works offline</span>
+    <div class="meta">Load .xlsx/.xls/.csv, view, filter, chart, and pivot</div>
+  </header>
+
+  <div class="container">
+    <aside class="card">
+      <h3>Load Data</h3>
+      <div class="content controls">
+        <div id="dropzone" class="dropzone">
+          <div style="font-weight:700; margin-bottom:6px">Drop Excel/CSV here</div>
+          <div class="hint">or click to choose file</div>
+          <input id="fileInput" type="file" accept=".xlsx,.xls,.csv" style="display:none" />
+        </div>
+        <div class="row">
+          <button id="chooseBtn" class="secondary">Choose File</button>
+          <button id="demoBtn">Load Demo Data</button>
+        </div>
+        <div class="row">
+          <div>
+            <label for="sheetSelect">Sheet</label>
+            <select id="sheetSelect"></select>
+          </div>
+          <div>
+            <label for="headerRow">Header Row</label>
+            <input id="headerRow" type="number" min="1" value="1" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="globalSearch">Filter rows</label>
+            <input id="globalSearch" type="text" placeholder="Type to filter across all columns" />
+          </div>
+        </div>
+        <div class="row">
+          <button id="exportBtn" class="good">Export filtered as CSV</button>
+          <button id="resetBtn" class="warn">Reset</button>
+        </div>
+        <div class="mini">Tip: Click table headers to sort. Use Chart and Pivot panels to analyze.</div>
+      </div>
+    </aside>
+
+    <main style="display:flex; flex-direction:column; gap:16px">
+      <section class="card">
+        <h3>Data Table</h3>
+        <div class="content">
+          <div class="toolbar">
+            <div class="status">
+              <span id="fileName" class="badge">No file loaded</span>
+              <span id="sheetInfo">-</span>
+            </div>
+          </div>
+          <div id="tableContainer" class="grid" role="region" aria-label="Data table"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3>Chart</h3>
+        <div class="content">
+          <div class="row">
+            <div>
+              <label for="xCol">X Axis</label>
+              <select id="xCol"></select>
+            </div>
+            <div>
+              <label for="yCol">Y Series</label>
+              <select id="yCol" multiple size="4"></select>
+            </div>
+            <div>
+              <label for="chartType">Chart Type</label>
+              <select id="chartType">
+                <option value="bar">Bar</option>
+                <option value="line">Line</option>
+                <option value="scatter">Scatter</option>
+              </select>
+            </div>
+            <div style="align-self:flex-end">
+              <button id="renderChartBtn">Render Chart</button>
+            </div>
+          </div>
+          <div style="margin-top:10px">
+            <canvas id="chartCanvas" height="160"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3>Pivot / Summary</h3>
+        <div class="content">
+          <div class="row">
+            <div>
+              <label for="groupCol">Group by</label>
+              <select id="groupCol"></select>
+            </div>
+            <div>
+              <label for="aggCol">Aggregate column</label>
+              <select id="aggCol"></select>
+            </div>
+            <div>
+              <label for="aggFunc">Aggregation</label>
+              <select id="aggFunc">
+                <option value="sum">Sum</option>
+                <option value="avg">Average</option>
+                <option value="count">Count</option>
+                <option value="min">Min</option>
+                <option value="max">Max</option>
+              </select>
+            </div>
+            <div style="align-self:flex-end">
+              <button id="runPivotBtn" class="secondary">Run</button>
+            </div>
+          </div>
+          <div id="pivotContainer" class="grid" style="margin-top:10px"></div>
+        </div>
+      </section>
+
+      <div class="footer">Data stays in your browser. Nothing is uploaded. Works with .xlsx, .xls, and .csv.</div>
+    </main>
+  </div>
+
+  <script>
+    // State
+    let workbook = null;
+    let currentSheetName = null;
+    let rows = [];          // full rows
+    let filteredRows = [];  // filtered rows
+    let columns = [];       // array of column names
+    let sortState = { col: null, dir: 1 };
+    let chart = null;
+
+    const els = {
+      dropzone: document.getElementById('dropzone'),
+      fileInput: document.getElementById('fileInput'),
+      chooseBtn: document.getElementById('chooseBtn'),
+      demoBtn: document.getElementById('demoBtn'),
+      sheetSelect: document.getElementById('sheetSelect'),
+      headerRow: document.getElementById('headerRow'),
+      globalSearch: document.getElementById('globalSearch'),
+      exportBtn: document.getElementById('exportBtn'),
+      resetBtn: document.getElementById('resetBtn'),
+      tableContainer: document.getElementById('tableContainer'),
+      fileName: document.getElementById('fileName'),
+      sheetInfo: document.getElementById('sheetInfo'),
+      xCol: document.getElementById('xCol'),
+      yCol: document.getElementById('yCol'),
+      chartType: document.getElementById('chartType'),
+      renderChartBtn: document.getElementById('renderChartBtn'),
+      chartCanvas: document.getElementById('chartCanvas'),
+      groupCol: document.getElementById('groupCol'),
+      aggCol: document.getElementById('aggCol'),
+      aggFunc: document.getElementById('aggFunc'),
+      runPivotBtn: document.getElementById('runPivotBtn'),
+      pivotContainer: document.getElementById('pivotContainer'),
+    };
+
+    function resetState() {
+      workbook = null; currentSheetName = null; rows = []; filteredRows = []; columns = []; sortState = {col:null, dir:1};
+      els.sheetSelect.innerHTML = '';
+      els.xCol.innerHTML = ''; els.yCol.innerHTML = ''; els.groupCol.innerHTML = ''; els.aggCol.innerHTML = '';
+      els.tableContainer.innerHTML = '';
+      els.pivotContainer.innerHTML = '';
+      els.fileName.textContent = 'No file loaded';
+      els.sheetInfo.textContent = '-';
+      els.globalSearch.value = '';
+      if (chart) { chart.destroy(); chart = null; }
+    }
+
+    function toObjectsFromSheet(ws, headerRowIndex = 0) {
+      // Read sheet as 2D array to preserve original content and headers
+      const arr = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: null });
+      if (!arr.length) return { columns: [], rows: [] };
+
+      const header = (arr[headerRowIndex] || []).map((h, i) => normalizeHeader(h, i));
+      // Data starts after header row
+      const dataRows = arr.slice(headerRowIndex + 1);
+      const objs = dataRows.map(r => {
+        const obj = {};
+        header.forEach((h, i) => {
+          obj[h] = i < r.length ? r[i] : null;
+        });
+        return obj;
+      });
+      return { columns: header, rows: objs };
+    }
+
+    function normalizeHeader(h, index){
+      const base = (h == null ? '' : String(h)).trim();
+      let key = base || `Column_${index+1}`;
+      // replace newlines and spaces with underscore; strip strange chars
+      key = key.replace(/[\n\r]+/g,' ').replace(/\s+/g,' ').trim();
+      key = key.replace(/[^A-Za-z0-9 _\-\.\/]/g, '');
+      key = key.replace(/\s+/g,'_');
+      return key || `Column_${index+1}`;
+    }
+
+    function renderTable() {
+      const container = els.tableContainer;
+      container.innerHTML = '';
+      if (!columns.length) return;
+
+      const table = document.createElement('table');
+      const thead = document.createElement('thead');
+      const trh = document.createElement('tr');
+      columns.forEach((col, idx) => {
+        const th = document.createElement('th');
+        th.textContent = col;
+        th.title = 'Sort by ' + col;
+        th.addEventListener('click', () => {
+          if (sortState.col === col) sortState.dir *= -1; else { sortState.col = col; sortState.dir = 1; }
+          sortRows();
+          renderTBody(table);
+        });
+        trh.appendChild(th);
+      });
+      thead.appendChild(trh);
+      table.appendChild(thead);
+
+      renderTBody(table);
+      container.appendChild(table);
+    }
+
+    function sortRows(){
+      if (!sortState.col) return;
+      const col = sortState.col; const dir = sortState.dir;
+      filteredRows.sort((a,b) => compareValues(a[col], b[col]) * dir);
+    }
+
+    function compareValues(a, b){
+      const na = parseNumber(a); const nb = parseNumber(b);
+      const da = isFinite(na); const db = isFinite(nb);
+      if (da && db) return na - nb; // numeric compare
+      const sa = (a==null?'' : String(a));
+      const sb = (b==null?'' : String(b));
+      return sa.localeCompare(sb, undefined, { numeric: true, sensitivity: 'base' });
+    }
+
+    function parseNumber(v){
+      if (v == null || v === '') return NaN;
+      if (typeof v === 'number') return v;
+      if (v instanceof Date) return v.getTime();
+      // Remove common currency/percent chars
+      const s = String(v).replace(/[$,%]/g,'').replace(/\s+/g,'').replace(/,/g,'');
+      const n = Number(s);
+      return isNaN(n) ? NaN : n;
+    }
+
+    function renderTBody(table){
+      const old = table.querySelector('tbody'); if (old) old.remove();
+      const tbody = document.createElement('tbody');
+      const frag = document.createDocumentFragment();
+      for (let r of filteredRows){
+        const tr = document.createElement('tr');
+        for (let c of columns){
+          const td = document.createElement('td');
+          const v = r[c];
+          td.textContent = formatCell(v);
+          frag.appendChild(td);
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      }
+      table.appendChild(tbody);
+      els.sheetInfo.textContent = `${numberWithCommas(filteredRows.length)} rows • ${columns.length} columns`;
+    }
+
+    function formatCell(v){
+      if (v == null) return '';
+      if (v instanceof Date) return v.toISOString().slice(0,10);
+      return String(v);
+    }
+
+    function numberWithCommas(n){
+      return (n||0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    function filterRows(){
+      const q = els.globalSearch.value.trim().toLowerCase();
+      if (!q) { filteredRows = rows.slice(); sortRows(); renderTable(); return; }
+      filteredRows = rows.filter(r => {
+        for (let c of columns){
+          const v = r[c];
+          if (v == null) continue;
+          if (String(v).toLowerCase().includes(q)) return true;
+        }
+        return false;
+      });
+      sortRows();
+      renderTable();
+    }
+
+    function updateSelectors(){
+      const opts = columns.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+      els.xCol.innerHTML = opts;
+      els.groupCol.innerHTML = opts;
+      els.aggCol.innerHTML = opts;
+      // y-col supports multiple
+      els.yCol.innerHTML = columns.map(c => `<option value="${escapeHtml(c)}" ${isNumericColumn(c)?'selected':''}>${escapeHtml(c)}${isNumericColumn(c)?' (num)':''}</option>`).join('');
+    }
+
+    function isNumericColumn(col){
+      // Heuristic: check up to first 20 non-null values
+      let count = 0, num = 0;
+      for (let r of rows){
+        const v = r[col]; if (v == null || v === '') continue;
+        count++; if (isFinite(parseNumber(v))) num++;
+        if (count >= 20) break;
+      }
+      return count > 0 && num / count > 0.7;
+    }
+
+    function escapeHtml(s){
+      return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
+    }
+
+    // File handling
+    els.chooseBtn.addEventListener('click', () => els.fileInput.click());
+    els.dropzone.addEventListener('click', () => els.fileInput.click());
+    els.fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+    ['dragenter','dragover'].forEach(evt => {
+      els.dropzone.addEventListener(evt, (e) => { e.preventDefault(); e.stopPropagation(); els.dropzone.classList.add('dragover'); });
+    });
+    ['dragleave','drop'].forEach(evt => {
+      els.dropzone.addEventListener(evt, (e) => { e.preventDefault(); e.stopPropagation(); els.dropzone.classList.remove('dragover'); });
+    });
+    els.dropzone.addEventListener('drop', (e) => { const files = e.dataTransfer.files; handleFiles(files); });
+
+    function handleFiles(fileList){
+      if (!fileList || !fileList.length) return;
+      const file = fileList[0];
+      els.fileName.textContent = file.name;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const data = ev.target.result;
+        if (file.name.toLowerCase().endsWith('.csv')){
+          // Convert CSV to workbook to reuse the same path
+          const text = new TextDecoder().decode(new Uint8Array(data));
+          const ws = XLSX.utils.aoa_to_sheet(XLSX.utils.sheet_to_json(XLSX.read(text, {type:'string'}).Sheets["Sheet1"], {header:1, raw:true, defval:null}));
+          workbook = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(workbook, ws, 'CSV');
+        } else {
+          workbook = XLSX.read(data, { type:'array', cellDates:true, cellNF:false, cellText:false });
+        }
+        populateSheets();
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function populateSheets(){
+      els.sheetSelect.innerHTML = '';
+      if (!workbook || !workbook.SheetNames.length){
+        resetState();
+        alert('No sheets found in this file.');
+        return;
+      }
+      for (let sn of workbook.SheetNames){
+        const opt = document.createElement('option');
+        opt.value = sn; opt.textContent = sn;
+        els.sheetSelect.appendChild(opt);
+      }
+      currentSheetName = workbook.SheetNames[0];
+      els.sheetSelect.value = currentSheetName;
+      loadCurrentSheet();
+    }
+
+    els.sheetSelect.addEventListener('change', () => { currentSheetName = els.sheetSelect.value; loadCurrentSheet(); });
+    els.headerRow.addEventListener('change', () => loadCurrentSheet());
+
+    function loadCurrentSheet(){
+      if (!workbook || !currentSheetName) return;
+      const ws = workbook.Sheets[currentSheetName];
+      const headerRowIdx = Math.max(1, parseInt(els.headerRow.value || '1',10)) - 1; // make 1-based in UI
+      const { columns: cols, rows: dataRows } = toObjectsFromSheet(ws, headerRowIdx);
+      columns = cols; rows = dataRows; filteredRows = rows.slice(); sortState = {col:null, dir:1};
+      renderTable();
+      updateSelectors();
+    }
+
+    // Global search
+    let searchDebounce = null;
+    els.globalSearch.addEventListener('input', () => {
+      clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(() => filterRows(), 150);
+    });
+
+    // Export filtered rows as CSV
+    els.exportBtn.addEventListener('click', () => {
+      if (!columns.length) return;
+      const ws = XLSX.utils.json_to_sheet(filteredRows, { header: columns });
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Filtered');
+      XLSX.writeFile(wb, 'export.csv');
+    });
+
+    // Reset
+    els.resetBtn.addEventListener('click', () => { resetState(); });
+
+    // Demo data
+    els.demoBtn.addEventListener('click', () => {
+      // Synthetic Marketing/Media Plan style demo aligned with typical MMP fields
+      const demo = buildDemoData(200);
+      const ws = XLSX.utils.json_to_sheet(demo.rows, { header: demo.columns });
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Demo');
+      workbook = wb; currentSheetName = 'Demo';
+      els.fileName.textContent = 'Demo Data';
+      populateSheets();
+    });
+
+    function buildDemoData(n=100){
+      const channels = ['Search','Social','Display','Email','Direct','Referral'];
+      const platforms = {
+        Search:['Google','Bing'], Social:['Facebook','Instagram','TikTok','LinkedIn'], Display:['GDN','Programmatic'], Email:['Klaviyo','Mailchimp'], Direct:['Direct'], Referral:['Partner A','Partner B']
+      };
+      const months = ['2025-01','2025-02','2025-03','2025-04','2025-05','2025-06','2025-07','2025-08','2025-09','2025-10','2025-11','2025-12'];
+      const columns = ['Month','Channel','Platform','Campaign','Budget','Spend','Impressions','Clicks','Leads','CPL'];
+      const rows = [];
+      for (let i=0;i<n;i++){
+        const ch = pick(channels);
+        const pf = pick(platforms[ch]);
+        const m = pick(months);
+        const budget = rand(500, 10000);
+        const spend = Math.round(budget * rand(0.6, 1.15));
+        const imps = Math.round(spend * rand(20, 120));
+        const clicks = Math.round(imps * rand(0.005, 0.06));
+        const leads = Math.max(0, Math.round(clicks * rand(0.01, 0.15)));
+        const cpl = leads ? +(spend / leads).toFixed(2) : null;
+        rows.push({
+          Month: m,
+          Channel: ch,
+          Platform: pf,
+          Campaign: `${ch} ${pf} ${m}`,
+          Budget: budget,
+          Spend: spend,
+          Impressions: imps,
+          Clicks: clicks,
+          Leads: leads,
+          CPL: cpl,
+        });
+      }
+      return { columns, rows };
+    }
+    function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+    function rand(min,max){ return Math.random()*(max-min)+min; }
+
+    // Charting
+    els.renderChartBtn.addEventListener('click', () => {
+      if (!columns.length) return;
+      const x = els.xCol.value;
+      const ys = Array.from(els.yCol.selectedOptions).map(o=>o.value);
+      const type = els.chartType.value;
+      if (!x || !ys.length){ alert('Select an X axis and at least one Y series'); return; }
+
+      // Build datasets; if x repeats, aggregate by sum for numeric series
+      const grouped = groupBy(rows, x);
+      const labels = Array.from(grouped.keys());
+      const datasets = ys.map((y, i) => {
+        const color = palette(i);
+        const data = labels.map(lbl => {
+          const items = grouped.get(lbl) || [];
+          const vals = items.map(r => parseNumber(r[y])).filter(v=>isFinite(v));
+          return vals.length ? vals.reduce((a,b)=>a+b,0) : null;
+        });
+        return { label: y, data, borderColor: color, backgroundColor: alpha(color, 0.35), tension: 0.25 };
+      });
+
+      if (chart) chart.destroy();
+      chart = new Chart(els.chartCanvas.getContext('2d'), {
+        type: type === 'scatter' ? 'scatter' : type,
+        data: { labels, datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { x: { ticks: { color: '#aab' }}, y: { ticks: { color: '#aab' } } },
+          plugins: { legend: { labels: { color: '#ddd' } } }
+        }
+      });
+    });
+
+    function groupBy(arr, key){
+      const map = new Map();
+      for (let r of arr){
+        const k = r[key] == null ? '' : String(r[key]);
+        if (!map.has(k)) map.set(k, []);
+        map.get(k).push(r);
+      }
+      return map;
+    }
+
+    function palette(i){
+      const colors = ['#22d3ee','#a78bfa','#34d399','#f59e0b','#f472b6','#60a5fa','#f87171','#c084fc','#2dd4bf','#fde047'];
+      return colors[i % colors.length];
+    }
+    function alpha(hex, a){
+      const rgb = hexToRgb(hex); return `rgba(${rgb.r},${rgb.g},${rgb.b},${a})`;
+    }
+    function hexToRgb(h){
+      const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h); return m?{r:parseInt(m[1],16),g:parseInt(m[2],16),b:parseInt(m[3],16)}:{r:255,g:255,b:255};
+    }
+
+    // Pivot
+    els.runPivotBtn.addEventListener('click', () => {
+      if (!columns.length) return;
+      const group = els.groupCol.value; const agg = els.aggCol.value; const func = els.aggFunc.value;
+      const grouped = groupBy(rows, group);
+      const out = [];
+      for (let [k, items] of grouped.entries()){
+        const vals = items.map(r => parseNumber(r[agg])).filter(v=>isFinite(v));
+        let v = null;
+        if (func === 'count') v = items.length;
+        else if (!vals.length) v = null;
+        else if (func === 'sum') v = vals.reduce((a,b)=>a+b,0);
+        else if (func === 'avg') v = vals.reduce((a,b)=>a+b,0)/vals.length;
+        else if (func === 'min') v = Math.min(...vals);
+        else if (func === 'max') v = Math.max(...vals);
+        out.push({ [group]: k, [func.toUpperCase()+'_'+agg]: v });
+      }
+      out.sort((a,b)=> String(a[group]).localeCompare(String(b[group])));
+      renderPivot(out);
+    });
+
+    function renderPivot(data){
+      els.pivotContainer.innerHTML = '';
+      if (!data.length){ els.pivotContainer.innerHTML = '<div class="muted" style="padding:10px">No results</div>'; return; }
+      const cols = Object.keys(data[0]);
+      const table = document.createElement('table');
+      const thead = document.createElement('thead');
+      const trh = document.createElement('tr');
+      for (let c of cols){ const th = document.createElement('th'); th.textContent = c; trh.appendChild(th); }
+      thead.appendChild(trh); table.appendChild(thead);
+      const tbody = document.createElement('tbody');
+      for (let r of data){
+        const tr = document.createElement('tr');
+        for (let c of cols){ const td = document.createElement('td'); td.textContent = formatCell(r[c]); tr.appendChild(td); }
+        tbody.appendChild(tr);
+      }
+      table.appendChild(tbody);
+      els.pivotContainer.appendChild(table);
+    }
+
+    // Initial state
+    resetState();
+  </script>
+</body>
+</html>

@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Prelease and Renewal Summary (Aug 2024 - Aug 2025)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #0f1115;
+      --panel: #151822;
+      --text: #e8eef9;
+      --muted: #aebad0;
+      --accent1: #1f77b4; /* Renewal % */
+      --accent2: #ff7f0e; /* Prelease% */
+      --grid: #2a2f3d;
+      --table-border: #2a2f3d;
+      --table-row: #1a1f2b;
+    }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: var(--bg);
+      color: var(--text);
+    }
+    .container {
+      max-width: 1100px;
+      margin: 24px auto 64px;
+      padding: 0 16px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 22px;
+      font-weight: 650;
+    }
+    .subtle {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--table-border);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 0 0 1px #000 inset;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+    .legend {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      flex-wrap: wrap;
+    }
+    .key { display: inline-flex; align-items: center; gap: 8px; }
+    .swatch { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
+
+    /* Table */
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      text-align: left;
+      font-weight: 600;
+      color: var(--muted);
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--table-border);
+      position: sticky;
+      top: 0;
+      background: var(--panel);
+      z-index: 1;
+    }
+    tbody td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--table-border);
+    }
+    tbody tr:nth-child(odd) td {
+      background: var(--table-row);
+    }
+    .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+    .footer {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 10px;
+    }
+
+    /* Canvas wrapper for responsiveness */
+    .chart-wrap {
+      position: relative;
+      width: 100%;
+      height: 420px;
+    }
+    canvas { width: 100%; height: 100%; display: block; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Prelease and Renewal Summary</h1>
+    <div class="subtle">Aug 2024 – Aug 2025 • Property size: 571 beds • Signed date basis: Lease - Approved</div>
+
+    <div class="grid">
+      <div class="panel">
+        <div class="chart-wrap">
+          <canvas id="chart"></canvas>
+        </div>
+        <div class="legend">
+          <span class="key"><span class="swatch" style="background: var(--accent1)"></span>Renewal %</span>
+          <span class="key"><span class="swatch" style="background: var(--accent2)"></span>Prelease%</span>
+        </div>
+      </div>
+
+      <div class="panel" style="overflow: auto; max-height: 420px;">
+        <table id="summary-table">
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th class="num">Renewal Leases</th>
+              <th class="num">Renewal %</th>
+              <th class="num">Prelease%</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="footer">Cumulative totals per month based on Lease - Approved date. Prelease% = (Renewal + New) / 571.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <h1>Closing Ratio</h1>
+    <div class="subtle">Monthly Leads, Lease Approvals, and Closing Percentage</div>
+
+    <div class="grid">
+      <div class="panel">
+        <div class="chart-wrap">
+          <canvas id="closingChart"></canvas>
+        </div>
+        <div class="legend">
+          <span class="key"><span class="swatch" style="background: var(--accent1)"></span>Closing %</span>
+        </div>
+      </div>
+
+      <div class="panel" style="overflow: auto; max-height: 420px;">
+        <table id="closing-table">
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th class="num">Leads</th>
+              <th class="num">Closing %</th>
+              <th class="num">Total Leases</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="footer">Closing % = (Lease Approvals / Leads) × 100 for the same month.</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="prelease_data.js"></script>
+  <script src="closing_data.js"></script>
+  <script>
+    // Load data produced by analyze_prelease_csv.py (strict Approved-only logic)
+    const data = (window.preleaseData || {labels:[], renewalLeases:[], renewalPct:[], preleasePct:[]});
+    const labels = data.labels;
+    const renewalLeases = data.renewalLeases;
+    const renewalPct = data.renewalPct;
+    const preleasePct = data.preleasePct;
+
+    // Closing ratio data (from closing_data.js)
+    const cdata = (window.closingData || {labels:[], leads:[], approvals:[], closingPct:[]});
+    const cLabels = cdata.labels;
+    const leads = cdata.leads;
+    const approvals = cdata.approvals;
+    const closingPct = cdata.closingPct;
+
+    // Populate table
+    (function buildTable(){
+      const tbody = document.querySelector('#summary-table tbody');
+      const fmtPct = n => n.toFixed(2) + '%';
+      labels.forEach((m, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${m}</td>
+          <td class="num">${renewalLeases[i].toLocaleString()}</td>
+          <td class="num">${fmtPct(renewalPct[i])}</td>
+          <td class="num">${fmtPct(preleasePct[i])}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    })();
+
+    // Simple responsive line chart (no external libraries)
+    (function chart(){
+      const canvas = document.getElementById('chart');
+      const ctx = canvas.getContext('2d');
+
+      function getMax(arrs) {
+        let m = 0;
+        arrs.forEach(a => a.forEach(v => { if (v > m) m = v; }));
+        return m;
+      }
+
+      function draw() {
+        // Handle HiDPI and responsive sizing
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = Math.round(rect.width * dpr);
+        canvas.height = Math.round(rect.height * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // scale drawing ops
+
+        const pad = { left: 56, right: 20, top: 20, bottom: 36 };
+        const w = rect.width, h = rect.height;
+        const plotW = w - pad.left - pad.right;
+        const plotH = h - pad.top - pad.bottom;
+
+        // Determine Y scale up to max of data or 100
+        const maxVal = Math.max(100, Math.ceil(getMax([renewalPct, preleasePct]) / 5) * 5);
+
+        // Background
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--panel');
+        ctx.fillRect(0, 0, w, h);
+
+        // Gridlines and axes
+        ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--grid');
+        ctx.lineWidth = 1;
+        ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--muted');
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+
+        const yTicks = 10; // 0..100 by 10s
+        for (let i = 0; i <= yTicks; i++) {
+          const v = (maxVal / yTicks) * i;
+          const y = pad.top + plotH - (v / maxVal) * plotH;
+          // grid line
+          ctx.beginPath();
+          ctx.moveTo(pad.left, y);
+          ctx.lineTo(pad.left + plotW, y);
+          ctx.stroke();
+          // label
+          ctx.fillText(v.toFixed(0) + '%', pad.left - 8, y);
+        }
+
+        // X labels (sparse to avoid overlap)
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        const n = labels.length;
+        labels.forEach((lab, i) => {
+          const x = pad.left + (i / (n - 1)) * plotW;
+          if (n <= 8 || i % 2 === 0) {
+            ctx.fillText(lab, x, pad.top + plotH + 8);
+          }
+        });
+
+        function plotLine(data, color) {
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          data.forEach((v, i) => {
+            const x = pad.left + (i / (n - 1)) * plotW;
+            const y = pad.top + plotH - (v / maxVal) * plotH;
+            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+          });
+          ctx.stroke();
+        }
+
+        // Draw lines
+        const styles = getComputedStyle(document.documentElement);
+        plotLine(renewalPct, styles.getPropertyValue('--accent1'));
+        plotLine(preleasePct, styles.getPropertyValue('--accent2'));
+      }
+
+      window.addEventListener('resize', draw);
+      draw();
+    })();
+
+    // Build Closing Ratio table
+    (function buildClosingTable(){
+      const tbody = document.querySelector('#closing-table tbody');
+      if (!tbody || !cLabels || cLabels.length === 0) return;
+      const fmtPct = n => Number(n).toFixed(2) + '%';
+      cLabels.forEach((m, i) => {
+        const tr = document.createElement('tr');
+        const l = Number(leads[i] || 0);
+        const a = Number(approvals[i] || 0);
+        const pct = (typeof closingPct[i] === 'number') ? closingPct[i] : Number(closingPct[i] || 0);
+        tr.innerHTML = `
+          <td>${m}</td>
+          <td class="num">${l.toLocaleString()}</td>
+          <td class="num">${fmtPct(pct)}</td>
+          <td class="num">${a.toLocaleString()}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    })();
+
+    // Closing % line chart
+    (function closingChart(){
+      const canvas = document.getElementById('closingChart');
+      if (!canvas || !cLabels || cLabels.length === 0) return;
+      const ctx = canvas.getContext('2d');
+
+      function draw() {
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = Math.round(rect.width * dpr);
+        canvas.height = Math.round(rect.height * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        const pad = { left: 56, right: 20, top: 20, bottom: 36 };
+        const w = rect.width, h = rect.height;
+        const plotW = w - pad.left - pad.right;
+        const plotH = h - pad.top - pad.bottom;
+        const maxVal = 100;
+
+        const styles = getComputedStyle(document.documentElement);
+        ctx.fillStyle = styles.getPropertyValue('--panel');
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.strokeStyle = styles.getPropertyValue('--grid');
+        ctx.lineWidth = 1;
+        ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+        ctx.fillStyle = styles.getPropertyValue('--muted');
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+
+        const yTicks = 10;
+        for (let i = 0; i <= yTicks; i++) {
+          const v = (maxVal / yTicks) * i;
+          const y = pad.top + plotH - (v / maxVal) * plotH;
+          ctx.beginPath();
+          ctx.moveTo(pad.left, y);
+          ctx.lineTo(pad.left + plotW, y);
+          ctx.stroke();
+          ctx.fillText(v.toFixed(0) + '%', pad.left - 8, y);
+        }
+
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        const n = cLabels.length;
+        cLabels.forEach((lab, i) => {
+          const x = pad.left + (i / (n - 1)) * plotW;
+          if (n <= 8 || i % 2 === 0) {
+            ctx.fillText(lab, x, pad.top + plotH + 8);
+          }
+        });
+
+        ctx.strokeStyle = styles.getPropertyValue('--accent1');
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        cLabels.forEach((_, i) => {
+          const v = Number(closingPct[i] || 0);
+          const x = pad.left + (i / (n - 1)) * plotW;
+          const y = pad.top + plotH - (v / maxVal) * plotH;
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+      }
+
+      window.addEventListener('resize', draw);
+      draw();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rent Roll Summary - Meridian on Main</title>
+  <style>
+    :root {
+      --bg: #0f172a;        /* slate-900 */
+      --panel: #111827;     /* gray-900 */
+      --muted: #94a3b8;     /* slate-400 */
+      --text: #e5e7eb;      /* gray-200 */
+      --accent: #22d3ee;    /* cyan-400 */
+      --good: #34d399;      /* green-400 */
+      --warn: #fbbf24;      /* amber-400 */
+      --bad: #fb7185;       /* rose-400 */
+      --border: #1f2937;    /* gray-800 */
+    }
+    body {
+      margin: 0; padding: 24px; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background: linear-gradient(135deg, #0b1220, #0a0f1a 60%, #0c1424);
+      color: var(--text);
+    }
+    header { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+    h1 { margin: 0; font-size: 24px; letter-spacing: 0.3px; }
+    .subtitle { color: var(--muted); font-size: 14px; }
+    .panel {
+      background: radial-gradient(1200px 800px at 10% -10%, rgba(34, 211, 238, 0.08), transparent 40%),
+                  radial-gradient(900px 600px at 100% 0%, rgba(52, 211, 153, 0.06), transparent 50%),
+                  var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px; margin-top: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.02);
+    }
+    .controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .btn {
+      background: linear-gradient(180deg, rgba(34,211,238,0.15), rgba(34,211,238,0.05));
+      border: 1px solid rgba(34,211,238,0.35);
+      color: var(--text);
+      padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: 600;
+    }
+    .btn:hover { filter: brightness(1.1); }
+    .note { color: var(--muted); font-size: 12px; }
+    .status { font-size: 13px; color: var(--muted); }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    thead th {
+      font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted);
+      border-bottom: 1px solid var(--border); padding: 10px 8px; text-align: right;
+    }
+    thead th:first-child { text-align: left; }
+    tbody td { padding: 10px 8px; border-bottom: 1px solid var(--border); text-align: right; }
+    tbody td:first-child { text-align: left; }
+    tfoot td { padding: 12px 8px; font-weight: 700; border-top: 2px solid var(--border); text-align: right; }
+    tfoot td:first-child { text-align: left; }
+
+    .badge { padding: 2px 8px; border-radius: 999px; font-weight: 600; font-size: 12px; display: inline-block; }
+    .vacancy-low { background: rgba(52, 211, 153, 0.15); color: #a7f3d0; border: 1px solid rgba(52, 211, 153, 0.35); }
+    .vacancy-med { background: rgba(251, 191, 36, 0.12); color: #fde68a; border: 1px solid rgba(251, 191, 36, 0.38); }
+    .vacancy-high { background: rgba(251, 113, 133, 0.12); color: #fecdd3; border: 1px solid rgba(251, 113, 133, 0.38); }
+
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    @media (max-width: 920px) { .grid { grid-template-columns: 1fr; } }
+
+    .kpi { background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+    .kpi .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .kpi .value { font-size: 22px; font-weight: 800; margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Rent Roll Summary</h1>
+    <span class="subtitle">Meridian on Main</span>
+  </header>
+
+  <section class="panel">
+    <div class="controls">
+      <input type="file" id="fileInput" accept=".csv" />
+      <button class="btn" id="loadDefault">Load CSV in this folder</button>
+      <span class="status" id="status">Awaiting CSV...</span>
+    </div>
+    <div class="note" style="margin-top:8px">
+      Tip: If loading the file fails due to browser restrictions, select the CSV via the file picker above, or run a local server in this folder and open this page via http://:
+      python -m http.server 8000
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="grid">
+      <div class="kpi">
+        <div class="label">Total Units</div>
+        <div class="value" id="kpiUnits">—</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Overall Vacancy</div>
+        <div class="value" id="kpiVacancy">—</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <table id="summaryTable">
+      <thead>
+        <tr>
+          <th>Floorplan</th>
+          <th>Units</th>
+          <th>Vacant</th>
+          <th>Vacancy %</th>
+          <th>Occ %</th>
+          <th>Market Rent Sum</th>
+          <th>Avg Market Rate</th>
+          <th>Scheduled Rent Sum</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+      <tfoot>
+        <tr>
+          <td>TOTAL</td>
+          <td id="totUnits">—</td>
+          <td id="totVacant">—</td>
+          <td id="totVacancy">—</td>
+          <td id="totOcc">—</td>
+          <td id="totMarket">—</td>
+          <td id="totAvgRate">—</td>
+          <td id="totScheduled">—</td>
+        </tr>
+      </tfoot>
+    </table>
+  </section>
+
+<script>
+(function(){
+  function parseCSV(text){
+    const rows=[]; let row=[]; let field='';
+    let inQuotes=false; let i=0; const n=text.length;
+    function pushField(){ row.push(field); field=''; }
+    function pushRow(){ rows.push(row); row=[]; }
+    while(i<n){
+      const ch=text[i];
+      if(inQuotes){
+        if(ch==='"'){
+          if(i+1<n && text[i+1]==='"'){ field+='"'; i++; }
+          else { inQuotes=false; }
+        } else { field+=ch; }
+      } else {
+        if(ch==='"'){ inQuotes=true; }
+        else if(ch===','){ pushField(); }
+        else if(ch==='\n') { pushField(); pushRow(); }
+        else if(ch==='\r') {
+          // handle CRLF or lone CR
+          if(i+1<n && text[i+1]==='\n'){ i++; }
+          pushField(); pushRow();
+        } else { field+=ch; }
+      }
+      i++;
+    }
+    // flush last field/row
+    pushField(); if(row.length>1 || (row.length===1 && row[0]!=='')) pushRow();
+    return rows;
+  }
+
+  function rowsToObjects(rows){
+    if(!rows || rows.length===0) return [];
+    const header = rows[0];
+    return rows.slice(1).map(r => {
+      const o={};
+      for(let i=0;i<header.length;i++) o[header[i]] = r[i] ?? '';
+      return o;
+    });
+  }
+
+  function findHeaderIndex(lines){
+    for(let i=0;i<lines.length;i++){
+      if(lines[i].startsWith('Bldg-Unit,Unit Type')) return i;
+    }
+    return -1;
+  }
+
+  function parseMoney(s){
+    if(s==null) return 0;
+    s = String(s).trim();
+    if(!s) return 0;
+    let neg=false;
+    if(s.startsWith('(') && s.endsWith(')')){ neg=true; s=s.slice(1,-1); }
+    s = s.replace(/[$,\s]/g,'');
+    const v = parseFloat(s);
+    if(!isFinite(v)) return 0;
+    return neg ? -v : v;
+  }
+
+  function formatMoney(n){
+    return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function summarize(objs){
+    const rows = objs.filter(r => (r['Bldg-Unit']||'').trim() && !(r['Bldg-Unit']||'').includes('Total'))
+                     .map(r => ({
+                        unitType: (r['Unit Type']||'').trim(),
+                        status: r['Unit Status']||'',
+                        MR: parseMoney(r['Market Rent']),
+                        SCH: parseMoney(r['Scheduled Charges'])
+                      }));
+    const groups = new Map();
+    for(const r of rows){
+      if(!groups.has(r.unitType)) groups.set(r.unitType, []);
+      groups.get(r.unitType).push(r);
+    }
+    const summary=[];
+    for(const [fp, g] of Array.from(groups.entries()).sort((a,b)=>a[0].localeCompare(b[0]))){
+      const total = g.length;
+      const vacant = g.filter(x => x.status.startsWith('Vacant')).length;
+      const vacpct = total ? Math.round((vacant/total)*1000)/10 : 0;
+      const occpct = total ? Math.round(((total - vacant)/total)*1000)/10 : 0;
+      const mrSum = Math.round(g.reduce((s,x)=>s+x.MR,0)*100)/100;
+      const avgMR = total ? Math.round((mrSum/total)*100)/100 : 0;
+      const schSum = Math.round(g.reduce((s,x)=>s+x.SCH,0)*100)/100;
+      summary.push({ floorplan: fp, units: total, vacant, vacpct, occpct, mrSum, avgMR, schSum });
+    }
+    const totUnits = rows.length;
+    const totVacant = rows.filter(x => x.status.startsWith('Vacant')).length;
+    const totVacPct = totUnits ? Math.round((totVacant/totUnits)*1000)/10 : 0;
+    const totOccPct = totUnits ? Math.round(((totUnits - totVacant)/totUnits)*1000)/10 : 0;
+    const totMR = Math.round(rows.reduce((s,x)=>s+x.MR,0)*100)/100;
+    const totAvgRate = totUnits ? Math.round((totMR/totUnits)*100)/100 : 0;
+    const totSCH = Math.round(rows.reduce((s,x)=>s+x.SCH,0)*100)/100;
+
+    return { summary, overall: { totUnits, totVacant, totVacPct, totOccPct, totMR, totAvgRate, totSCH } };
+  }
+
+  function vacBadge(pct){
+    const span = document.createElement('span');
+    span.className = 'badge ' + (pct < 20 ? 'vacancy-low' : pct < 50 ? 'vacancy-med' : 'vacancy-high');
+    span.textContent = pct.toFixed(1) + '%';
+    return span;
+  }
+  function occBadge(pct){
+    const span = document.createElement('span');
+    span.className = 'badge ' + (pct >= 80 ? 'vacancy-low' : pct >= 50 ? 'vacancy-med' : 'vacancy-high');
+    span.textContent = pct.toFixed(1) + '%';
+    return span;
+  }
+
+  function render({ summary, overall }){
+    const tbody = document.querySelector('#summaryTable tbody');
+    tbody.innerHTML = '';
+    for(const r of summary){
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${r.floorplan}</td>
+        <td>${r.units.toLocaleString()}</td>
+        <td>${r.vacant.toLocaleString()}</td>
+        <td></td>
+        <td></td>
+        <td>${formatMoney(r.mrSum)}</td>
+        <td>${formatMoney(r.avgMR)}</td>
+        <td>${formatMoney(r.schSum)}</td>
+      `;
+      tbody.appendChild(tr);
+      const tdVac = tr.children[3];
+      tdVac.appendChild(vacBadge(r.vacpct));
+      const tdOcc = tr.children[4];
+      tdOcc.appendChild(occBadge(r.occpct));
+    }
+
+    document.getElementById('totUnits').textContent = overall.totUnits.toLocaleString();
+    document.getElementById('totVacant').textContent = overall.totVacant.toLocaleString();
+    const totVacCell = document.getElementById('totVacancy');
+    totVacCell.textContent=''; totVacCell.appendChild(vacBadge(overall.totVacPct));
+    const totOccCell = document.getElementById('totOcc');
+    totOccCell.textContent=''; totOccCell.appendChild(occBadge(overall.totOccPct));
+    document.getElementById('totMarket').textContent = formatMoney(overall.totMR);
+    document.getElementById('totAvgRate').textContent = formatMoney(overall.totAvgRate);
+    document.getElementById('totScheduled').textContent = formatMoney(overall.totSCH);
+
+    // KPIs
+    document.getElementById('kpiUnits').textContent = overall.totUnits.toLocaleString();
+    document.getElementById('kpiVacancy').textContent = (overall.totVacPct.toFixed(1) + '%');
+  }
+
+  function locateHeaderAndParse(text){
+    const lines = text.split(/\r?\n/);
+    const idx = findHeaderIndex(lines);
+    if(idx === -1) throw new Error('Could not find header row (Bldg-Unit,Unit Type)');
+    const sub = lines.slice(idx).join('\n');
+    const rows = parseCSV(sub);
+    const objs = rowsToObjects(rows);
+    return objs;
+  }
+
+  async function loadFromURL(url){
+    const status = document.getElementById('status');
+    status.textContent = `Loading ${url} ...`;
+    const resp = await fetch(url);
+    if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const text = await resp.text();
+    const objs = locateHeaderAndParse(text);
+    render(summarize(objs));
+    status.textContent = `Loaded: ${url}`;
+  }
+
+  function loadFromFile(file){
+    const status = document.getElementById('status');
+    status.textContent = `Reading ${file.name} ...`;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const text = reader.result;
+        const objs = locateHeaderAndParse(text);
+        render(summarize(objs));
+        status.textContent = `Loaded: ${file.name}`;
+      } catch(err){
+        console.error(err);
+        status.textContent = `Error: ${err.message}`;
+      }
+    };
+    reader.onerror = () => { status.textContent = 'Error reading file'; };
+    reader.readAsText(file);
+  }
+
+  // Wire up controls
+  document.getElementById('fileInput').addEventListener('change', (e)=>{
+    const f = e.target.files && e.target.files[0];
+    if(f) loadFromFile(f);
+  });
+  document.getElementById('loadDefault').addEventListener('click', async ()=>{
+    try {
+      await loadFromURL('Rent Roll (4)(Meridian On Main).csv');
+    } catch(err){
+      console.warn(err);
+      document.getElementById('status').textContent = 'Unable to auto-load CSV (likely due to browser file security). Use the file picker above or run a local server.';
+    }
+  });
+
+  // Try to auto-load on open (will be caught if blocked)
+  (async ()=>{
+    try { await loadFromURL('Rent Roll (4)(Meridian On Main).csv'); } catch(e) { /* ignore, show idle */ }
+  })();
+})();
+</script>
+</body>
+</html>

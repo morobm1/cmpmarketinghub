@@ -1,0 +1,1207 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Marketing Calendar & Spend Monitor</title>
+  <meta name="description" content="Add events to a calendar and monitor monthly budget/spend. Optional local Excel import with field mapping.">
+  <style>
+    :root{
+      --bg:#0f172a;          /* slate-900 */
+      --panel:#111827;       /* gray-900 */
+      --muted:#1f2937;       /* gray-800 */
+      --text:#e5e7eb;        /* gray-200 */
+      --subtext:#9ca3af;     /* gray-400 */
+      --accent:#22d3ee;      /* cyan-400 */
+      --accent-2:#a78bfa;    /* violet-400 */
+      --good:#34d399;        /* emerald-400 */
+      --warn:#f59e0b;        /* amber-500 */
+      --bad:#f87171;         /* red-400 */
+      --border:#374151;      /* gray-700 */
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0; font-family:system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial; background:linear-gradient(160deg, var(--bg), #020617 60%); color:var(--text)}
+    header{padding:16px 18px; border-bottom:1px solid var(--border); position:sticky; top:0; background:rgba(15,23,42,0.9); backdrop-filter: blur(6px); z-index:10; display:flex; align-items:center; gap:14px; flex-wrap:wrap}
+    header .title{font-weight:800}
+    header .meta{color:var(--subtext); font-size:13px}
+    .pill{border:1px solid var(--border); background:var(--panel); border-radius:999px; padding:6px 10px; font-size:12px; color:var(--subtext)}
+
+    .container{padding:16px; display:grid; grid-template-columns: 340px 1fr; gap:16px}
+    @media(max-width: 1100px){ .container{grid-template-columns:1fr} }
+
+    .card{background:linear-gradient(180deg, rgba(17,24,39,0.92), rgba(2,6,23,0.85)); border:1px solid var(--border); border-radius:14px; overflow:hidden}
+    .card h3{margin:0; padding:12px 14px 0 14px; font-size:14px; color:var(--subtext); font-weight:700}
+    .card .content{padding:12px 14px 14px 14px}
+
+    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .row > *{flex:1}
+
+    label{font-size:12px; color:var(--subtext); display:block; margin-bottom:6px}
+    input, select, textarea, button{width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:var(--muted); color:var(--text); font-size:14px}
+    textarea{min-height:64px; resize:vertical}
+    button{cursor:pointer; border-color:transparent; background:linear-gradient(180deg, #0ea5e9, #22d3ee); color:#001018; font-weight:800}
+    button.secondary{background:var(--muted); color:var(--text); border:1px solid var(--border); font-weight:700}
+    button.warn{background:linear-gradient(180deg,#f59e0b,#fbbf24); color:#1f1300}
+    button.good{background:linear-gradient(180deg,#10b981,#34d399); color:#00130c}
+
+    .grid{max-height:60vh; overflow:auto; border:1px solid var(--border); border-radius:10px}
+    .muted{color:var(--subtext)}
+    .badge{display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; background:rgba(167,139,250,0.15); color:#d2ccff; border:1px solid rgba(167,139,250,0.35)}
+    .mini{font-size:11px; color:var(--subtext)}
+
+    #calendar{background:transparent; border:1px solid var(--border); border-radius:14px; padding:8px}
+    .summary{display:flex; gap:12px; flex-wrap:wrap}
+    .kpi{flex:1; min-width:160px; border:1px solid var(--border); border-radius:12px; padding:10px; background:rgba(2,6,23,0.5)}
+    .kpi .label{font-size:12px; color:var(--subtext)}
+    .kpi .value{font-size:20px; font-weight:800}
+    .progress{height:8px; background:#0b1021; border-radius:999px; overflow:hidden; border:1px solid var(--border)}
+    .progress > div{height:100%; background:linear-gradient(90deg, #a78bfa, #22d3ee)}
+
+    .dropzone{border:2px dashed var(--accent); border-radius:12px; padding:14px; text-align:center; cursor:pointer; background:rgba(34,211,238,0.05)}
+    .dropzone.dragover{background:rgba(34,211,238,0.12)}
+
+    .footer{padding:12px 18px; color:var(--subtext); font-size:12px}
+  </style>
+  <style>
+    /* Modal */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50}
+    .modal{background:linear-gradient(180deg, rgba(17,24,39,0.96), rgba(2,6,23,0.92));border:1px solid var(--border);border-radius:12px;max-width:560px;width:96%;padding:14px}
+    .modal h3{margin:0 0 10px 0;color:var(--subtext);font-size:16px}
+    .modal .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:12px}
+  </style>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.10/main.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.10/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div id="loginView" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px">
+    <div class="card" style="max-width:420px;width:100%">
+      <h3>Login</h3>
+      <div class="content">
+        <div class="row"><div><label for="loginUsername">Username</label><input id="loginUsername" type="text" autocomplete="username" /></div></div>
+        <div class="row"><div><label for="loginPassword">Password</label><input id="loginPassword" type="password" autocomplete="current-password" /></div></div>
+        <div class="row"><button id="loginBtn">Sign In</button></div>
+        <div id="loginError" class="mini" style="color:#f87171; display:none">Invalid credentials</div>
+      </div>
+    </div>
+  </div>
+  <header id="appHeader" style="display:none">
+    <div class="title">Marketing Calendar & Budgets</div>
+    <div class="pill" style="display:flex;align-items:center;gap:8px">
+      <label for="propertySelect" style="font-size:12px;color:var(--subtext)">Property</label>
+      <select id="propertySelect" style="min-width:220px"></select>
+      <button id="logoutBtn" class="secondary" style="padding:6px 10px">Logout</button>
+      <button id="adminPageBtn" class="secondary" style="padding:6px 10px; display:none">Admin</button>
+    </div>
+    <div class="meta">Add events and manage monthly budgets</div>
+  </header>
+
+  <div id="appContainer" class="container" style="display:none">
+    <aside class="card">
+      <h3 id="eventDetailsHeader" style="display:none">Event Details</h3>
+      <div id="eventDetailsContent" class="content" style="display:none">
+        <div class="row">
+          <div>
+            <label for="title">Title</label>
+            <input id="title" type="text" placeholder="e.g., Spring Social Campaign" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="start">Start</label>
+            <input id="start" type="date" />
+          </div>
+          <div>
+            <label for="end">End</label>
+            <input id="end" type="date" />
+          </div>
+          <div>
+            <label for="time">Time of Event (optional)</label>
+            <input id="time" type="time" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="channel">Channel</label>
+            <input id="channel" type="text" placeholder="Search / Social / Display / ..." />
+          </div>
+          <div>
+            <label for="platform">Platform</label>
+            <input id="platform" type="text" placeholder="Google / Meta / TikTok / ..." />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="campaign">Campaign</label>
+            <select id="campaign">
+              <option value="">-- Select --</option>
+              <option>Resident event</option>
+              <option>on-campus event</option>
+              <option>off-campus event</option>
+              <option>outreach marketing</option>
+              <option>cross-marketing partnership/scholarship</option>
+              <option>Review/Reputation</option>
+              <option>Social Media Lead Generation</option>
+              <option>Giveaway</option>
+              <option>Social Media Story</option>
+              <option>Social Media Post</option>
+              <option>Key Market Event</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="budget">Budget</label>
+            <input id="budget" type="number" step="0.01" placeholder="0.00" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="notes">Desciption of Event</label>
+            <textarea id="notes" placeholder="Optional"></textarea>
+          </div>
+        </div>
+                <div class="row">
+          <div>
+            <label for="audience">Intended Audience</label>
+            <input id="audience" type="text" placeholder="e.g., Residents, Prospects, Campus orgs" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="desired">What action is desired</label>
+            <select id="desired">
+              <option value="">-- Select --</option>
+              <option>Social media followers</option>
+              <option>collect review</option>
+              <option>complete guest cards</option>
+              <option>create email list</option>
+              <option>schedule a tour</option>
+              <option>complete application</option>
+              <option>sign new leases</option>
+              <option>sign renewal lease</option>
+              <option>building relationship</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="goal">Goal</label>
+            <input id="goal" type="text" placeholder="e.g., 10 RSVPs, 5 reviews, 20 new followers" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Property Checklist</label>
+            <div class="row" style="gap:12px">
+              <label style="display:flex;align-items:center;gap:6px;flex:0 0 auto"><input id="postedSocial" type="checkbox" /> Posted on social</label>
+              <label style="display:flex;align-items:center;gap:6px;flex:0 0 auto"><input id="flyerPosted" type="checkbox" /> flyer posted</label>
+              <label style="display:flex;align-items:center;gap:6px;flex:0 0 auto"><input id="eblastSent" type="checkbox" /> eblast sent</label>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <button id="saveBtn" class="good">Add Event</button>
+          <button id="clearBtn" class="secondary">Clear</button>
+        </div>
+        <div class="row" style="margin-top:6px">
+          <button id="deleteBtn" class="warn" disabled>Delete Selected</button>
+          <button id="exportBtn" class="secondary">Export CSV</button>
+        </div>
+        <div class="row" style="margin-top:6px">
+          <button id="openRequestModalBtn" class="secondary">Graphic Request</button>
+          <button id="addToCalendarBtn" class="secondary">Add to Calendar</button>
+        </div>
+        <div id="graphicStatus" class="mini muted" style="margin-top:6px"></div>
+        <div class="row" style="margin-top:6px">
+          <div>
+            <label for="flyerUrl">Flyer URL</label>
+            <input id="flyerUrl" type="url" placeholder="https://link.to/flyer.pdf or image" />
+            <div class="mini">Paste the public link to the flyer asset.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content mini">Data stays in your browser (localStorage). Nothing is uploaded.</div>
+    </aside>
+
+    <main style="display:flex; flex-direction:column; gap:16px">
+      <section class="card">
+        <h3>Calendar</h3>
+        <div class="content">
+          <div class="row" style="margin-bottom:8px">
+            <button id="openAddEventModalBtn" class="good">Add Event</button>
+          </div>
+          <div id="calendar"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3>Monthly Summary</h3>
+        <div class="content">
+          <div class="summary">
+            <div class="kpi">
+              <div class="label">Month</div>
+              <div id="kpi-month" class="value">-</div>
+            </div>
+            <div class="kpi">
+              <div class="label">Budget</div>
+              <div id="kpi-budget" class="value">$0</div>
+            </div>
+            <div class="kpi">
+              <div class="label">Proposed (sum of events)</div>
+              <div id="kpi-proposed" class="value">$0</div>
+            </div>
+            <div class="kpi">
+              <div class="label">Variance (Budget - Proposed)</div>
+              <div id="kpi-var" class="value">$0</div>
+            </div>
+          </div>
+          <div class="row" style="margin:8px 0 0 0">
+            <button id="adjustBudgetBtn" class="secondary">Set Budget = Proposed</button>
+          </div>
+
+          <div class="row" style="margin-top:10px; align-items:flex-end">
+            <div>
+              <label for="budgetYear">Year</label>
+              <select id="budgetYear"></select>
+            </div>
+            <div style="flex:1; display:flex; gap:8px; justify-content:flex-end">
+              <button id="saveBudgetsBtn" class="good">Save Budgets</button>
+              <button id="clearBudgetsBtn" class="secondary">Clear Year</button>
+            </div>
+          </div>
+
+          <div id="budgetsContainer" class="grid" style="padding:8px; margin-top:8px"></div>
+
+          <div style="margin-top:12px">
+            <canvas id="trendChart" height="140"></canvas>
+          </div>
+        </div>
+      </section>
+
+      
+      <div class="footer">Use the event form and set monthly budgets.</div>
+    </main>
+  </div>
+
+  <div id="eventModal" class="modal-backdrop">
+    <div class="modal">
+      <h3>Add Event</h3>
+      <div class="row">
+        <div>
+          <label for="m_title">Title</label>
+          <input id="m_title" type="text" placeholder="Event title" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="m_start">Start</label>
+          <input id="m_start" type="date" />
+        </div>
+        <div>
+          <label for="m_end">End</label>
+          <input id="m_end" type="date" />
+        </div>
+        <div>
+          <label for="m_time">Time (optional)</label>
+          <input id="m_time" type="time" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="m_campaign">Campaign</label>
+          <select id="m_campaign">
+            <option value="">-- Select --</option>
+            <option>Resident event</option>
+            <option>on-campus event</option>
+            <option>off-campus event</option>
+            <option>outreach marketing</option>
+            <option>cross-marketing partnership/scholarship</option>
+            <option>Review/Reputation</option>
+            <option>Social Media Lead Generation</option>
+            <option>Giveaway</option>
+            <option>Social Media Story</option>
+            <option>Social Media Post</option>
+            <option>Key Market Event</option>
+          </select>
+        </div>
+        <div>
+          <label for="m_budget">Budget (optional)</label>
+          <input id="m_budget" type="number" step="0.01" placeholder="0.00" />
+        </div>
+      </div>
+      <div class="actions">
+        <button id="m_cancel" class="secondary">Cancel</button>
+        <button id="m_save" class="good">Save Event</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="requestModal" class="modal-backdrop">
+    <div class="modal">
+      <h3>Digital Graphic Request</h3>
+      <div class="row">
+        <div>
+          <label for="reqName">Your Name</label>
+          <input id="reqName" type="text" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="reqEmail">PSM Email</label>
+          <input id="reqEmail" type="email" placeholder="psm@example.com" />
+        </div>
+        <div>
+          <label for="reqProperty">Property</label>
+          <input id="reqProperty" type="text" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="reqTitle">Event Title</label>
+          <input id="reqTitle" type="text" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="reqDueDate">Due Date</label>
+          <input id="reqDueDate" type="date" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="reqDesc">Description/Specs</label>
+          <textarea id="reqDesc" placeholder="Sizes, copy, brand notes, platforms..."></textarea>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Channels Requested</label>
+          <div class="row" style="gap:12px">
+            <label style="display:flex;align-items:center;gap:6px;flex:0 0 auto"><input id="reqSocial" type="checkbox" /> Social</label>
+            <label style="display:flex;align-items:center;gap:6px;flex:0 0 auto"><input id="reqFlyer" type="checkbox" /> Flyer</label>
+            <label style="display:flex;align-items:center;gap:6px;flex:0 0 auto"><input id="reqEblast" type="checkbox" /> Eblast</label>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <button id="reqUseEventBtn" class="secondary">Use Event Details</button>
+        <button id="reqCopyBtn" class="secondary">Copy Request</button>
+      </div>
+      <div class="actions">
+        <button id="req_close" class="secondary">Close</button>
+        <button id="reqEmailBtn" class="secondary">Generate Email</button>
+        <button id="req_submit" class="good">Mark Submitted</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // App State
+    let calendar = null;
+    let events = [];
+    let selectedEventId = null;
+    let chart = null;
+
+    // Storage
+    const STORE_PROPERTIES_KEY = 'mmp_properties_v1';
+    const STORE_CURRENT_PROPERTY_KEY = 'mmp_current_property_v1';
+    const STORE_EVENTS_BY_PROP_KEY = 'mmp_calendar_events_by_property_v1';
+    const STORE_BUDGETS_BY_PROP_KEY = 'mmp_monthly_budgets_by_property_v1';
+
+    let currentProperty = '';
+    let properties = [];
+    let eventsByProperty = {};
+    let budgetsByProperty = {};
+
+    function saveStore(){
+      eventsByProperty[currentProperty] = events;
+      try{ localStorage.setItem(STORE_EVENTS_BY_PROP_KEY, JSON.stringify(eventsByProperty)); }catch(e){}
+    }
+    function loadStore(){
+      try{ eventsByProperty = JSON.parse(localStorage.getItem(STORE_EVENTS_BY_PROP_KEY)||'{}'); }catch(e){ eventsByProperty = {}; }
+      events = eventsByProperty[currentProperty] || [];
+    }
+
+    // Elements
+    const els = {
+      title: document.getElementById('title'),
+      start: document.getElementById('start'),
+      end: document.getElementById('end'),
+      channel: document.getElementById('channel'),
+      platform: document.getElementById('platform'),
+      campaign: document.getElementById('campaign'),
+      budget: document.getElementById('budget'),
+      time: document.getElementById('time'),
+      audience: document.getElementById('audience'),
+      desired: document.getElementById('desired'),
+      goal: document.getElementById('goal'),
+      notes: document.getElementById('notes'),
+      saveBtn: document.getElementById('saveBtn'),
+      clearBtn: document.getElementById('clearBtn'),
+      deleteBtn: document.getElementById('deleteBtn'),
+      exportBtn: document.getElementById('exportBtn'),
+
+      calendar: document.getElementById('calendar'),
+
+      kpiMonth: document.getElementById('kpi-month'),
+      kpiBudget: document.getElementById('kpi-budget'),
+      kpiProposed: document.getElementById('kpi-proposed'),
+      kpiVar: document.getElementById('kpi-var'),
+      adjustBudgetBtn: document.getElementById('adjustBudgetBtn'),
+
+      budgetYear: document.getElementById('budgetYear'),
+      budgetsContainer: document.getElementById('budgetsContainer'),
+      saveBudgetsBtn: document.getElementById('saveBudgetsBtn'),
+      clearBudgetsBtn: document.getElementById('clearBudgetsBtn'),
+
+      propertySelect: document.getElementById('propertySelect'),
+      logoutBtn: document.getElementById('logoutBtn'),
+      adminPageBtn: document.getElementById('adminPageBtn'),
+      openRequestModalBtn: document.getElementById('openRequestModalBtn'),
+      addToCalendarBtn: document.getElementById('addToCalendarBtn'),
+      graphicStatus: document.getElementById('graphicStatus'),
+      flyerUrl: document.getElementById('flyerUrl'),
+      requestModal: document.getElementById('requestModal'),
+      req_submit: document.getElementById('req_submit'),
+      req_close: document.getElementById('req_close'),
+
+      loginView: document.getElementById('loginView'),
+      loginUsername: document.getElementById('loginUsername'),
+      loginPassword: document.getElementById('loginPassword'),
+      loginBtn: document.getElementById('loginBtn'),
+      loginError: document.getElementById('loginError'),
+      appHeader: document.getElementById('appHeader'),
+      appContainer: document.getElementById('appContainer'),
+
+      adminPanel: document.getElementById('adminPanel'),
+      admNewUsername: document.getElementById('admNewUsername'),
+      admNewPassword: document.getElementById('admNewPassword'),
+      admNewProps: document.getElementById('admNewProps'),
+      admCreateUserBtn: document.getElementById('admCreateUserBtn'),
+      usersTable: document.getElementById('usersTable'),
+
+      eventDetailsHeader: document.getElementById('eventDetailsHeader'),
+      eventDetailsContent: document.getElementById('eventDetailsContent'),
+      openAddEventModalBtn: document.getElementById('openAddEventModalBtn'),
+      eventModal: document.getElementById('eventModal'),
+      m_title: document.getElementById('m_title'),
+      m_start: document.getElementById('m_start'),
+      m_end: document.getElementById('m_end'),
+      m_time: document.getElementById('m_time'),
+      m_campaign: document.getElementById('m_campaign'),
+      m_budget: document.getElementById('m_budget'),
+      m_save: document.getElementById('m_save'),
+      m_cancel: document.getElementById('m_cancel'),
+
+      postedSocial: document.getElementById('postedSocial'),
+      flyerPosted: document.getElementById('flyerPosted'),
+      eblastSent: document.getElementById('eblastSent'),
+
+      reqName: document.getElementById('reqName'),
+      reqEmail: document.getElementById('reqEmail'),
+      reqProperty: document.getElementById('reqProperty'),
+      reqTitle: document.getElementById('reqTitle'),
+      reqDueDate: document.getElementById('reqDueDate'),
+      reqDesc: document.getElementById('reqDesc'),
+      reqSocial: document.getElementById('reqSocial'),
+      reqFlyer: document.getElementById('reqFlyer'),
+      reqEblast: document.getElementById('reqEblast'),
+      reqUseEventBtn: document.getElementById('reqUseEventBtn'),
+      reqCopyBtn: document.getElementById('reqCopyBtn'),
+      reqEmailBtn: document.getElementById('reqEmailBtn'),
+    };
+
+    // Calendar
+    function initCalendar(){
+      calendar = new FullCalendar.Calendar(els.calendar, {
+        initialView: 'dayGridMonth',
+        height: 'auto',
+        headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
+        eventClick: (info) => {
+          const ev = info.event;
+          // Toggle hide if clicking same event
+          if (selectedEventId && String(selectedEventId) === String(ev.id) && els.eventDetailsContent && els.eventDetailsContent.style.display !== 'none') {
+            if (els.eventDetailsHeader) els.eventDetailsHeader.style.display = 'none';
+            if (els.eventDetailsContent) els.eventDetailsContent.style.display = 'none';
+            selectedEventId = null;
+            els.saveBtn.textContent = 'Add Event';
+            els.deleteBtn.disabled = true;
+            clearForm();
+            return;
+          }
+          selectedEventId = ev.id;
+          // Load into form for editing
+          els.title.value = ev.title || '';
+          const s = toISO(ev.start); const e = ev.end ? toISO(new Date(ev.end.getTime()-86400000)) : s; // end displayed exclusive
+          els.start.value = s; els.end.value = e;
+          const xp = ev.extendedProps || {};
+          els.channel.value = xp.channel || '';
+          els.platform.value = xp.platform || '';
+          els.campaign.value = xp.campaign || '';
+          els.budget.value = isFinite(xp.budget) ? xp.budget : '';
+          els.time.value = xp.time || '';
+          els.audience.value = xp.audience || '';
+          els.desired.value = xp.desired || '';
+          els.goal.value = xp.goal || '';
+          els.notes.value = xp.notes || '';
+          els.postedSocial.checked = !!xp.postedSocial;
+          els.flyerPosted.checked = !!xp.flyerPosted;
+          els.eblastSent.checked = !!xp.eblastSent;
+          if (els.graphicStatus){
+            if (xp.graphicRequestedAt){
+              const dt = new Date(xp.graphicRequestedAt);
+              els.graphicStatus.textContent = `Graphic request submitted: ${dt.toLocaleString()}`;
+              els.graphicStatus.classList.remove('muted');
+            } else {
+              els.graphicStatus.textContent = 'No graphic request submitted';
+              els.graphicStatus.classList.add('muted');
+            }
+          }
+          if (els.flyerUrl) els.flyerUrl.value = xp.flyerUrl || '';
+          if (els.eventDetailsHeader) els.eventDetailsHeader.style.display = '';
+          if (els.eventDetailsContent) els.eventDetailsContent.style.display = '';
+          els.saveBtn.textContent = 'Update Event';
+          els.deleteBtn.disabled = false;
+        },
+        datesSet: () => { updateSummary(); },
+      });
+      calendar.render();
+    }
+
+    function toISO(d){ if (!d) return ''; const z = new Date(d.getTime()-d.getTimezoneOffset()*60000); return z.toISOString().slice(0,10); }
+
+    function refreshCalendar(){
+      calendar.removeAllEvents();
+      for (let ev of events){ calendar.addEvent(toFcEvent(ev)); }
+      updateSummary();
+    }
+
+    function toFcEvent(ev){
+      return {
+        id: String(ev.id),
+        title: ev.title,
+        start: ev.start,
+        end: ev.end ? addDaysISO(ev.end, 1) : undefined, // FullCalendar end is exclusive
+        allDay: true,
+        extendedProps: {
+          channel: ev.channel, platform: ev.platform, campaign: ev.campaign,
+          budget: ev.budget, time: ev.time, audience: ev.audience, desired: ev.desired, goal: ev.goal, notes: ev.notes,
+          postedSocial: ev.postedSocial, flyerPosted: ev.flyerPosted, eblastSent: ev.eblastSent,
+          graphicRequestedAt: ev.graphicRequestedAt, flyerUrl: ev.flyerUrl
+        }
+      }
+    }
+
+    function addDaysISO(iso, days){ const d=new Date(iso); d.setDate(d.getDate()+days); return toISO(d); }
+
+    // Event form actions
+    els.saveBtn.addEventListener('click', () => {
+      const payload = readForm();
+      if (!payload) return;
+      if (selectedEventId){
+        // update
+        const idx = events.findIndex(e => String(e.id) === String(selectedEventId));
+        if (idx >= 0){ events[idx] = { ...events[idx], ...payload }; }
+        selectedEventId = null;
+        els.saveBtn.textContent = 'Add Event';
+        els.deleteBtn.disabled = true;
+      } else {
+        // add new
+        const id = Date.now() + '-' + Math.random().toString(36).slice(2,7);
+        events.push({ id, ...payload });
+      }
+      saveStore();
+      clearForm();
+      refreshCalendar();
+    });
+
+    els.clearBtn.addEventListener('click', () => { clearForm(); selectedEventId = null; els.saveBtn.textContent = 'Add Event'; els.deleteBtn.disabled = true; });
+
+    els.deleteBtn.addEventListener('click', () => {
+      if (!selectedEventId) return;
+      const idx = events.findIndex(e => String(e.id) === String(selectedEventId));
+      if (idx >= 0){ events.splice(idx,1); saveStore(); refreshCalendar(); }
+      selectedEventId = null; clearForm(); els.saveBtn.textContent = 'Add Event'; els.deleteBtn.disabled = true;
+    });
+
+    els.exportBtn.addEventListener('click', () => {
+      const headers = ['Title','Start','End','Time of Event','Channel','Platform','Campaign','Budget','Intended Audience','Desired Action','Goal','Desciption of Event','Posted on social','flyer posted','eblast sent'];
+      const escapeCsv = (v) => '"' + String(v ?? '').replace(/"/g,'""') + '"';
+      const rowsCsv = events.map(e => [e.title, e.start, e.end, e.time, e.channel, e.platform, e.campaign, e.budget, e.audience, e.desired, e.goal, e.notes, e.postedSocial, e.flyerPosted, e.eblastSent].map(escapeCsv).join(','));
+      const csv = [headers.join(','), ...rowsCsv].join('\r\n');
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'events.csv';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
+    function currency(n){ if (!isFinite(n)) return '$0'; return '$' + n.toLocaleString(undefined, {maximumFractionDigits:2}); }
+
+    function readForm(){
+      const title = els.title.value.trim();
+      const start = els.start.value; const end = els.end.value || els.start.value;
+      if (!title || !start){ alert('Title and Start date are required.'); return null; }
+      const budget = parseFloat(els.budget.value);
+      return {
+        title,
+        start,
+        end,
+        channel: els.channel.value.trim(),
+        platform: els.platform.value.trim(),
+        campaign: els.campaign.value.trim(),
+        budget: isFinite(budget) ? Math.round(budget*100)/100 : 0,
+        time: els.time.value,
+        audience: els.audience.value.trim(),
+        desired: els.desired.value,
+        goal: els.goal.value.trim(),
+        notes: els.notes.value.trim(),
+        postedSocial: !!els.postedSocial.checked,
+        flyerPosted: !!els.flyerPosted.checked,
+        eblastSent: !!els.eblastSent.checked,
+        flyerUrl: (els.flyerUrl?.value || '').trim(),
+      };
+    }
+
+    function clearForm(){ els.title.value=''; els.start.value=''; els.end.value=''; els.channel.value=''; els.platform.value=''; els.campaign.value=''; els.budget.value=''; els.time.value=''; els.audience.value=''; els.desired.value=''; els.goal.value=''; els.notes.value=''; if(els.flyerUrl) els.flyerUrl.value=''; els.postedSocial.checked=false; els.flyerPosted.checked=false; els.eblastSent.checked=false; }
+
+    // Summary & Trends
+    function updateSummary(){
+      const view = calendar.view; // FullCalendar v6
+      const start = view.currentStart; const monthKey = ymKey(start);
+      const monthLabel = start.toLocaleString(undefined, { month: 'long', year: 'numeric' });
+      els.kpiMonth.textContent = monthLabel;
+      const budget = monthlyBudgets[monthKey] || 0;
+      const proposed = sumProposedForMonth(monthKey);
+      els.kpiBudget.textContent = currency(budget);
+      if (els.kpiProposed) els.kpiProposed.textContent = currency(proposed);
+      if (els.kpiVar) els.kpiVar.textContent = currency(budget - proposed);
+      renderTrendChart();
+    }
+
+    function ymKey(d){ const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,'0'); return `${y}-${m}`; }
+
+    function sumForMonth(ym){
+      let budget=0, spend=0;
+      for (let ev of events){
+        const k = (ev.start||'').slice(0,7);
+        if (k === ym){ budget += ev.budget||0; spend += ev.spend||0; }
+      }
+      return { budget, spend };
+    }
+
+    function monthsRange(){
+      const keysSet = new Set(Object.keys(monthlyBudgets||{}));
+      for (let e of events){ if (e.start) keysSet.add(e.start.slice(0,7)); }
+      const keys = Array.from(keysSet).filter(Boolean).sort();
+      if (keys.length) return keys;
+      const y = new Date().getFullYear();
+      const res=[]; for (let m=1;m<=12;m++){ res.push(`${y}-${String(m).padStart(2,'0')}`); }
+      return res;
+    }
+
+    function sumProposedForMonth(ym){
+      let total = 0;
+      for (let ev of events){
+        if (!ev.start) continue;
+        const k = ev.start.slice(0,7);
+        if (k === ym) total += (ev.budget || 0);
+      }
+      return Math.round(total * 100) / 100;
+    }
+
+    function renderTrendChart(){
+      const labels = monthsRange();
+      const budgetData = labels.map(ym => (monthlyBudgets[ym] || 0));
+      const proposedData = labels.map(ym => sumProposedForMonth(ym));
+      if (chart) chart.destroy();
+      chart = new Chart(document.getElementById('trendChart').getContext('2d'), {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Budget', data: budgetData, borderColor: '#a78bfa', backgroundColor: 'rgba(167,139,250,0.25)', tension: 0.25 },
+            { label: 'Proposed', data: proposedData, borderColor: '#22d3ee', backgroundColor: 'rgba(34,211,238,0.25)', tension: 0.25 }
+          ]
+        },
+        options: {
+          responsive:true, maintainAspectRatio:false,
+          scales:{ x:{ ticks:{ color:'#aab' } }, y:{ ticks:{ color:'#aab' } } },
+          plugins:{ legend:{ labels:{ color:'#ddd' } } }
+        }
+      });
+    }
+
+    // Auth & Users Management
+    const STORE_USERS_KEY = 'mmp_users_v1';
+    const STORE_CURRENT_USER_KEY = 'mmp_current_user_v1';
+    const STORE_LOGIN_TIME_KEY = 'mmp_login_time_v1';
+    const SESSION_TTL_MS = 8 * 60 * 60 * 1000; // 8 hours
+    let users = {};
+    let currentUser = null;
+
+    async function sha256Hex(str){
+      try{
+        if (window.crypto && window.crypto.subtle){
+          const data = new TextEncoder().encode(str);
+          const hash = await window.crypto.subtle.digest('SHA-256', data);
+          return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
+        }
+      }catch(e){ /* fallthrough */ }
+      return 'plain:' + str; // fallback for environments without SubtleCrypto
+    }
+
+    function loadUsers(){ try{ users = JSON.parse(localStorage.getItem(STORE_USERS_KEY)||'{}'); }catch(e){ users = {}; } }
+    function saveUsers(){ try{ localStorage.setItem(STORE_USERS_KEY, JSON.stringify(users)); }catch(e){} }
+
+    async function ensureAdminSeed(){
+      if (!users['morobm1']){
+        const hash = await sha256Hex('Admin0701!');
+        users['morobm1'] = { passwordHash: hash, role: 'admin', properties: '*' };
+        saveUsers();
+      }
+    }
+
+    function showApp(){ if (els.appHeader) els.appHeader.style.display=''; if (els.appContainer) els.appContainer.style.display=''; if (els.loginView) els.loginView.style.display='none'; }
+    function showLogin(){ if (els.appHeader) els.appHeader.style.display='none'; if (els.appContainer) els.appContainer.style.display='none'; if (els.loginView) els.loginView.style.display='flex'; }
+
+    function doLogout(){
+      try{ localStorage.removeItem(STORE_CURRENT_USER_KEY); }catch(e){}
+      try{ localStorage.removeItem(STORE_LOGIN_TIME_KEY); }catch(e){}
+      location.reload();
+    }
+    function bindHeaderHandlers(){
+      if (els.logoutBtn){ els.logoutBtn.onclick = () => doLogout(); }
+      if (els.adminPageBtn){
+        els.adminPageBtn.style.display = currentUser && currentUser.role==='admin' ? '' : 'none';
+        els.adminPageBtn.onclick = () => { location.href = 'mmp_admin.html'; };
+      }
+    }
+    function scheduleAutoLogout(){
+      const loginTime = parseInt(localStorage.getItem(STORE_LOGIN_TIME_KEY)||'0', 10) || 0;
+      const remaining = SESSION_TTL_MS - (Date.now() - loginTime);
+      if (remaining <= 0){ doLogout(); return; }
+      if (window.__mmpLogoutTimer){ try{ clearTimeout(window.__mmpLogoutTimer); }catch(e){} }
+      window.__mmpLogoutTimer = setTimeout(doLogout, remaining);
+    }
+
+    function getAccessibleProperties(){
+      if (!currentUser) return [];
+      if (currentUser.role === 'admin') return properties.slice();
+      const assigned = currentUser.properties === '*' ? properties.slice() : (currentUser.properties||[]);
+      return properties.filter(p => assigned.includes(p));
+    }
+
+    async function initAuth(){
+      loadUsers();
+      await ensureAdminSeed();
+      const savedUser = (localStorage.getItem(STORE_CURRENT_USER_KEY)||'').trim();
+      const savedLoginTime = parseInt(localStorage.getItem(STORE_LOGIN_TIME_KEY)||'0', 10) || 0;
+      if (savedUser && users[savedUser]){
+        // Enforce session TTL
+        if (!savedLoginTime || (Date.now() - savedLoginTime) > SESSION_TTL_MS){
+          try{ localStorage.removeItem(STORE_CURRENT_USER_KEY);}catch(e){}
+          try{ localStorage.removeItem(STORE_LOGIN_TIME_KEY);}catch(e){}
+          showLogin();
+          return false;
+        }
+        currentUser = { username: savedUser, role: users[savedUser].role, properties: users[savedUser].properties };
+        showApp();
+        bindHeaderHandlers();
+        initializeAppForUser();
+        scheduleAutoLogout();
+        return true;
+      }
+      if (els.loginBtn){
+        els.loginBtn.addEventListener('click', async () => {
+          const u = (els.loginUsername.value||'').trim();
+          const p = els.loginPassword.value||'';
+          loadUsers();
+          if (!users[u]){ els.loginError.style.display=''; return; }
+          const hash = await sha256Hex(p);
+          if (hash !== users[u].passwordHash){ els.loginError.style.display=''; return; }
+          els.loginError.style.display='none';
+          currentUser = { username: u, role: users[u].role, properties: users[u].properties };
+          try{ localStorage.setItem(STORE_CURRENT_USER_KEY, u); }catch(e){}
+          try{ localStorage.setItem(STORE_LOGIN_TIME_KEY, String(Date.now())); }catch(e){}
+          showApp();
+          bindHeaderHandlers();
+          initializeAppForUser();
+          scheduleAutoLogout();
+        });
+      }
+      showLogin();
+      return false;
+    }
+
+    
+    if (els.admCreateUserBtn){
+      els.admCreateUserBtn.addEventListener('click', async ()=>{
+        const u = (els.admNewUsername.value||'').trim(); const pw = els.admNewPassword.value||'';
+        if (!u || !pw){ alert('Username and password are required'); return; }
+        if (users[u]){ alert('User already exists'); return; }
+        const props = Array.from(els.admNewProps.selectedOptions).map(o=>o.value);
+        users[u] = { passwordHash: await sha256Hex(pw), role: 'user', properties: props };
+        saveUsers(); els.admNewUsername.value=''; els.admNewPassword.value=''; els.admNewProps.selectedIndex=-1; renderAdminPanel();
+      });
+    }
+
+    function initializeAppForUser(){
+      initProperties();
+      renderPropertyOptions();
+      const list = (typeof getAccessibleProperties==='function') ? getAccessibleProperties() : properties.slice();
+      if (!calendar){ initCalendar(); }
+      if (list.length){
+        if (els.propertySelect){ els.propertySelect.value = list[0]; }
+        setActiveProperty(list[0]);
+      }
+      if (!els.budgetYear.options.length){ initBudgetUI(); }
+      if (els.adminPanel) els.adminPanel.style.display = currentUser && currentUser.role==='admin' ? '' : 'none';
+      if (calendar) refreshCalendar();
+    }
+
+    // Monthly budgets management
+    let monthlyBudgets = {};
+    const STORE_BUDGETS_KEY = 'mmp_monthly_budgets_v1';
+    function saveBudgetStore(){
+      budgetsByProperty[currentProperty] = monthlyBudgets;
+      try{ localStorage.setItem(STORE_BUDGETS_BY_PROP_KEY, JSON.stringify(budgetsByProperty)); }catch(e){}
+    }
+    function loadBudgetStore(){
+      try{ budgetsByProperty = JSON.parse(localStorage.getItem(STORE_BUDGETS_BY_PROP_KEY)||'{}'); }catch(e){ budgetsByProperty = {}; }
+      monthlyBudgets = budgetsByProperty[currentProperty] || {};
+    }
+
+    function initBudgetUI(){
+      initBudgetYearOptions();
+      renderBudgetInputs(parseInt(els.budgetYear.value, 10));
+      els.saveBudgetsBtn.addEventListener('click', () => { saveBudgetStore(); updateSummary(); renderTrendChart(); });
+      els.clearBudgetsBtn.addEventListener('click', () => {
+        const y = parseInt(els.budgetYear.value, 10);
+        clearYear(y);
+        renderBudgetInputs(y);
+        updateSummary();
+        renderTrendChart();
+      });
+      els.budgetYear.addEventListener('change', () => {
+        const y = parseInt(els.budgetYear.value, 10);
+        renderBudgetInputs(y);
+      });
+    }
+
+    function initBudgetYearOptions(){
+      const now = new Date().getFullYear();
+      const years = [now-1, now, now+1, now+2];
+      els.budgetYear.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+      els.budgetYear.value = String(now);
+    }
+
+    function renderBudgetInputs(year){
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      let html = '<div class="months-inline" style="display:flex; gap:10px; flex-wrap:wrap">';
+      for (let i=1;i<=12;i++){
+        const ym = `${year}-${String(i).padStart(2,'0')}`;
+        const val = monthlyBudgets[ym] ?? '';
+        html += `<div style="display:flex; flex-direction:column; gap:4px; min-width:110px; flex:0 0 auto">`+
+                `<div class="mini" style="text-align:center">${months[i-1]} ${year}</div>`+
+                `<input data-ym="${ym}" type="number" step="0.01" value="${val}" style="width:100%" />`+
+                `</div>`;
+      }
+      html += '</div>';
+      els.budgetsContainer.innerHTML = html;
+      els.budgetsContainer.querySelectorAll('input[data-ym]').forEach(inp => {
+        inp.addEventListener('input', (e) => {
+          const ym = e.target.dataset.ym;
+          const v = parseFloat(e.target.value);
+          if (isFinite(v)) monthlyBudgets[ym] = Math.round(v*100)/100; else delete monthlyBudgets[ym];
+          saveBudgetStore();
+          updateSummary();
+          renderTrendChart();
+        });
+      });
+    }
+
+    function clearYear(year){ for (let i=1;i<=12;i++){ const ym = `${year}-${String(i).padStart(2,'0')}`; delete monthlyBudgets[ym]; } saveBudgetStore(); }
+
+    // Properties helpers
+    function loadProperties(){
+      properties = [
+        'M@College',
+        'Blattner Hall (75 Arkansas)',
+        'Century Hall',
+        'Zuma Apartments',
+        'Cerca Apartments',
+        'Prisma Apartments',
+        'Mountain View Hall',
+        'Lantana Hall',
+        'Founders Hall',
+        'Ferry Street Flats',
+        'The Continuum for UF Grads',
+        'River House Graduate Housing',
+        'Infinity Hall',
+        'Florida Polytechnic University - Phase II',
+        'Ivory University House',
+        'Palomar SLO',
+        'Chorro SLO',
+        'Florida Polytechnic University - Phase III',
+        'The Residential Village at UW Bothell',
+        'Stateside Apartments',
+        'Bryan Flats',
+        'Nexus on Holmes (Univ of Alabama, Huntsville)',
+        'Comma Barrington',
+        'Meridian on Main (132 E Main Street)',
+        'The Village at Mines Park',
+        'Monte Apartments',
+      ];
+    }
+    function saveProperties(){ try{ localStorage.setItem(STORE_PROPERTIES_KEY, JSON.stringify(properties)); }catch(e){} }
+    function renderPropertyOptions(){ if (!els.propertySelect) return; const list = (typeof getAccessibleProperties==='function') ? getAccessibleProperties() : properties; els.propertySelect.innerHTML = list.map(p => `<option value="${p.replace(/"/g,'&quot;')}">${p}</option>`).join(''); }
+    function migrateLegacyIfNeeded(){
+      // move legacy single-store events/budgets into currentProperty on first run
+      try{
+        if (!localStorage.getItem(STORE_EVENTS_BY_PROP_KEY)){
+          const legacyEvents = JSON.parse(localStorage.getItem('mmp_calendar_events_v1')||'[]');
+          if (Array.isArray(legacyEvents) && legacyEvents.length){
+            eventsByProperty[currentProperty] = legacyEvents; localStorage.setItem(STORE_EVENTS_BY_PROP_KEY, JSON.stringify(eventsByProperty));
+          }
+        }
+      }catch(e){}
+      try{
+        if (!localStorage.getItem(STORE_BUDGETS_BY_PROP_KEY)){
+          const legacyBudgets = JSON.parse(localStorage.getItem('mmp_monthly_budgets_v1')||'{}');
+          if (legacyBudgets && typeof legacyBudgets === 'object' && Object.keys(legacyBudgets).length){
+            budgetsByProperty[currentProperty] = legacyBudgets; localStorage.setItem(STORE_BUDGETS_BY_PROP_KEY, JSON.stringify(budgetsByProperty));
+          }
+        }
+      }catch(e){}
+    }
+    function setActiveProperty(prop){
+      currentProperty = prop;
+      try{ localStorage.setItem(STORE_CURRENT_PROPERTY_KEY, currentProperty); }catch(e){}
+      loadStore();
+      loadBudgetStore();
+      if (els.reqProperty) els.reqProperty.value = currentProperty;
+      // Hide details when switching
+      if (els.eventDetailsHeader) els.eventDetailsHeader.style.display = 'none';
+      if (els.eventDetailsContent) els.eventDetailsContent.style.display = 'none';
+      selectedEventId = null;
+      els.saveBtn.textContent = 'Add Event';
+      els.deleteBtn.disabled = true;
+      clearForm();
+      // re-render budgets and calendar
+      if (els.budgetYear && els.budgetYear.options.length) { renderBudgetInputs(parseInt(els.budgetYear.value, 10)); }
+      if (calendar) refreshCalendar();
+    }
+    function initProperties(){
+      loadProperties();
+      try{ eventsByProperty = JSON.parse(localStorage.getItem(STORE_EVENTS_BY_PROP_KEY)||'{}'); }catch(e){ eventsByProperty = {}; }
+      try{ budgetsByProperty = JSON.parse(localStorage.getItem(STORE_BUDGETS_BY_PROP_KEY)||'{}'); }catch(e){ budgetsByProperty = {}; }
+      const saved = (localStorage.getItem(STORE_CURRENT_PROPERTY_KEY) || '').trim();
+      const list = (typeof getAccessibleProperties === 'function') ? getAccessibleProperties() : properties.slice();
+      currentProperty = list.includes(saved) ? saved : list[0];
+      migrateLegacyIfNeeded();
+      loadStore();
+      loadBudgetStore();
+      renderPropertyOptions();
+      if (els.propertySelect){
+        els.propertySelect.value = currentProperty;
+        els.propertySelect.addEventListener('change', () => setActiveProperty(els.propertySelect.value));
+      }
+      if (els.addPropertyBtn){
+        els.addPropertyBtn.addEventListener('click', () => {
+          const name = prompt('Enter new property name');
+          if (!name) return;
+          if (!properties.includes(name)){
+            properties.push(name); saveProperties(); renderPropertyOptions();
+          }
+          if (els.propertySelect) els.propertySelect.value = name;
+          setActiveProperty(name);
+        });
+      }
+      if (els.reqProperty) els.reqProperty.value = currentProperty;
+    }
+
+    // Init
+    (async () => { await initAuth(); })();
+
+    // Digital Graphic Request setup
+    const STORE_REQ_NAME='mmp_req_name', STORE_REQ_EMAIL='mmp_req_email';
+    try{ els.reqName.value = localStorage.getItem(STORE_REQ_NAME) || ''; }catch(e){}
+    try{ els.reqEmail.value = localStorage.getItem(STORE_REQ_EMAIL) || ''; }catch(e){}
+    if (els.reqName) els.reqName.addEventListener('input', ()=>{ try{ localStorage.setItem(STORE_REQ_NAME, els.reqName.value); }catch(e){} });
+    if (els.reqEmail) els.reqEmail.addEventListener('input', ()=>{ try{ localStorage.setItem(STORE_REQ_EMAIL, els.reqEmail.value); }catch(e){} });
+    function buildRequestText(){
+      const channels=[]; if (els.reqSocial && els.reqSocial.checked) channels.push('Social'); if (els.reqFlyer && els.reqFlyer.checked) channels.push('Flyer'); if (els.reqEblast && els.reqEblast.checked) channels.push('Eblast');
+      const lines = [];
+      lines.push(`Requester: ${els.reqName?.value || ''}`);
+      lines.push(`Property: ${els.reqProperty?.value || ''}`);
+      lines.push(`PSM Email: ${els.reqEmail?.value || ''}`);
+      lines.push(`Event Title: ${els.reqTitle?.value || ''}`);
+      lines.push(`Due Date: ${els.reqDueDate?.value || ''}`);
+      lines.push(`Channels: ${channels.join(', ') || '-'}`);
+      lines.push('');
+      lines.push('Description/Specs:');
+      lines.push(els.reqDesc?.value || '');
+      lines.push('');
+      lines.push('Context from Event (optional):');
+      lines.push(`Date: ${els.start?.value || ''} ${els.time?.value || ''} - ${els.end?.value || ''}`);
+      lines.push(`Audience: ${els.audience?.value || ''}`);
+      lines.push(`Desired Action: ${els.desired?.value || ''}`);
+      lines.push(`Goal: ${els.goal?.value || ''}`);
+      return lines.join('\n');
+    }
+    if (els.reqUseEventBtn){ els.reqUseEventBtn.addEventListener('click', () => { if (!els.reqTitle.value) els.reqTitle.value = els.title.value; if (!els.reqDesc.value) els.reqDesc.value = els.notes.value; }); }
+    if (els.reqCopyBtn){ els.reqCopyBtn.addEventListener('click', async () => { const text = buildRequestText(); try{ await navigator.clipboard.writeText(text); alert('Request copied to clipboard'); }catch(e){ alert('Copy failed.'); } }); }
+    if (els.reqEmailBtn){ els.reqEmailBtn.addEventListener('click', () => { const to = (els.reqEmail?.value || '').trim(); const subject = `[Graphics Request] ${els.reqTitle?.value || 'Untitled Event'} - Due ${els.reqDueDate?.value || ''}`; const body = encodeURIComponent(buildRequestText()); const mailto = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${body}`; window.location.href = mailto; }); }
+
+    // Add Event modal handlers
+    function openEventModal(){
+      els.m_title.value = '';
+      const today = new Date();
+      const iso = toISO(today);
+      els.m_start.value = iso;
+      els.m_end.value = '';
+      els.m_time.value = '';
+      els.m_campaign.value = '';
+      els.m_budget.value = '';
+      els.eventModal.style.display = 'flex';
+    }
+    function closeEventModal(){ els.eventModal.style.display = 'none'; }
+    if (els.openAddEventModalBtn){ els.openAddEventModalBtn.addEventListener('click', openEventModal); }
+    if (els.m_cancel){ els.m_cancel.addEventListener('click', (e)=>{ e.preventDefault(); closeEventModal(); }); }
+    if (els.m_save){
+      els.m_save.addEventListener('click', (e)=>{
+        e.preventDefault();
+        const title = (els.m_title.value || '').trim();
+        const start = els.m_start.value;
+        const end = els.m_end.value || els.m_start.value;
+        if (!title || !start){ alert('Title and Start date are required.'); return; }
+        // Ensure there is an active property
+        if (!currentProperty){
+          const list = (typeof getAccessibleProperties==='function') ? getAccessibleProperties() : properties.slice();
+          if (list.length){ setActiveProperty(list[0]); } else { alert('No property assigned to this user.'); return; }
+        }
+        const budget = parseFloat(els.m_budget.value);
+        const payload = {
+          title,
+          start,
+          end,
+          channel: '',
+          platform: '',
+          campaign: els.m_campaign.value,
+          budget: isFinite(budget) ? Math.round(budget*100)/100 : 0,
+          time: els.m_time.value,
+          audience: '',
+          desired: '',
+          goal: '',
+          notes: '',
+          postedSocial: false,
+          flyerPosted: false,
+          eblastSent: false,
+        };
+        const id = Date.now() + '-' + Math.random().toString(36).slice(2,7);
+        events.push({ id, ...payload });
+        saveStore();
+        if (calendar) refreshCalendar();
+        closeEventModal();
+      });
+    }
+
+    if (els.adjustBudgetBtn){
+      els.adjustBudgetBtn.addEventListener('click', () => {
+        const view = calendar.view;
+        const monthKey = ymKey(view.currentStart);
+        const proposed = sumProposedForMonth(monthKey);
+        monthlyBudgets[monthKey] = proposed;
+        saveBudgetStore();
+        // reflect change in budgets UI if same year
+        const yearOfMonth = parseInt(monthKey.slice(0,4),10);
+        const selectedYear = parseInt(els.budgetYear.value, 10);
+        if (yearOfMonth === selectedYear){
+          const inp = els.budgetsContainer.querySelector(`input[data-ym="${monthKey}"]`);
+          if (inp) inp.value = proposed;
+        }
+        updateSummary();
+        renderTrendChart();
+      });
+    }
+
+    // Graphic Request modal
+    function openRequestModal(){ if (els.requestModal){ els.requestModal.style.display = 'flex'; } }
+    function closeRequestModal(){ if (els.requestModal){ els.requestModal.style.display = 'none'; } }
+    if (els.openRequestModalBtn){ els.openRequestModalBtn.addEventListener('click', openRequestModal); }
+    if (els.req_close){ els.req_close.addEventListener('click', (e)=>{ e.preventDefault(); closeRequestModal(); }); }
+    if (els.req_submit){ els.req_submit.addEventListener('click', ()=>{
+      if (!selectedEventId){ alert('Select an event first.'); return; }
+      const idx = events.findIndex(e => String(e.id) === String(selectedEventId));
+      if (idx < 0){ alert('Event not found'); return; }
+      events[idx].graphicRequestedAt = new Date().toISOString();
+      saveStore();
+      if (els.graphicStatus){ const dt = new Date(events[idx].graphicRequestedAt); els.graphicStatus.textContent = `Graphic request submitted: ${dt.toLocaleString()}`; els.graphicStatus.classList.remove('muted'); }
+      closeRequestModal();
+    }); }
+
+    // Add to Calendar (ICS)
+    function pad2(n){ return String(n).padStart(2,'0'); }
+    function toUTCStringYYYYMMDDTHHMMSSZ(d){ return d.getUTCFullYear()+pad2(d.getUTCMonth()+1)+pad2(d.getUTCDate())+'T'+pad2(d.getUTCHours())+pad2(d.getUTCMinutes())+pad2(d.getUTCSeconds())+'Z'; }
+    function yyyymmdd(d){ return d.getFullYear()+pad2(d.getMonth()+1)+pad2(d.getDate()); }
+    function buildICS(ev){
+      const now = new Date();
+      const uid = (ev.id||('evt-'+now.getTime()))+'@mmp';
+      const dtstamp = toUTCStringYYYYMMDDTHHMMSSZ(now);
+      let dtStartLine=''; let dtEndLine='';
+      if (ev.time){
+        const [hh,mm] = (ev.time||'00:00').split(':').map(x=>parseInt(x,10)||0);
+        const s = new Date(ev.start+'T'+pad2(hh)+':'+pad2(mm)+':00');
+        const e = new Date((ev.end||ev.start)+'T'+pad2(hh)+':'+pad2(mm)+':00');
+        dtStartLine = 'DTSTART:'+toUTCStringYYYYMMDDTHHMMSSZ(s);
+        dtEndLine = 'DTEND:'+toUTCStringYYYYMMDDTHHMMSSZ(e);
+      } else {
+        const s = new Date(ev.start+'T00:00:00');
+        const e = new Date((ev.end||ev.start)+'T00:00:00'); e.setDate(e.getDate()+1); // all-day DTEND exclusive next day
+        dtStartLine = 'DTSTART;VALUE=DATE:'+yyyymmdd(s);
+        dtEndLine = 'DTEND;VALUE=DATE:'+yyyymmdd(e);
+      }
+      const descLines = [];
+      if (ev.notes) descLines.push('Notes: '+ev.notes);
+      if (ev.campaign) descLines.push('Campaign: '+ev.campaign);
+      if (ev.channel) descLines.push('Channel: '+ev.channel);
+      if (ev.platform) descLines.push('Platform: '+ev.platform);
+      const description = descLines.join('\\n');
+      const location = (typeof currentProperty==='string' ? currentProperty : '');
+      return 'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//MMP//Calendar//EN\nMETHOD:PUBLISH\nBEGIN:VEVENT\nUID:'+uid+'\nDTSTAMP:'+dtstamp+'\n'+dtStartLine+'\n'+dtEndLine+'\nSUMMARY:'+ (ev.title||'Event') +'\nDESCRIPTION:'+description+'\nLOCATION:'+location+'\nEND:VEVENT\nEND:VCALENDAR\n';
+    }
+    function downloadICSForSelectedEvent(){
+      if (!selectedEventId){ alert('Select an event first.'); return; }
+      const ev = events.find(e => String(e.id) === String(selectedEventId));
+      if (!ev){ alert('Event not found'); return; }
+      const ics = buildICS(ev);
+      const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      const safeName = (ev.title||'event').replace(/[^A-Za-z0-9-_]+/g,'_');
+      a.download = safeName + '.ics';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+    if (els.addToCalendarBtn){ els.addToCalendarBtn.addEventListener('click', downloadICSForSelectedEvent); }
+
+    // Auto-save flyer URL when changed for selected event
+    if (els.flyerUrl){
+      els.flyerUrl.addEventListener('change', ()=>{
+        if (!selectedEventId) return;
+        const idx = events.findIndex(e => String(e.id) === String(selectedEventId));
+        if (idx >= 0){ events[idx].flyerUrl = (els.flyerUrl.value||'').trim(); saveStore(); }
+      });
+    }
+
+    if (calendar) refreshCalendar();
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin - User Management</title>
+  <meta name="description" content="Manage users, roles, and property access">
+  <style>
+    :root{
+      --bg:#0f172a; --panel:#111827; --muted:#1f2937; --text:#e5e7eb; --sub:#9ca3af; --border:#374151; --accent:#22d3ee; --good:#34d399; --warn:#f59e0b; --bad:#f87171;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0; font-family:system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial; background:linear-gradient(160deg, var(--bg), #020617 60%); color:var(--text)}
+    header{padding:16px 18px; border-bottom:1px solid var(--border); position:sticky; top:0; background:rgba(15,23,42,0.9); backdrop-filter: blur(6px); z-index:10; display:flex; align-items:center; gap:14px; flex-wrap:wrap}
+    header .title{font-weight:800}
+    .pill{border:1px solid var(--border); background:var(--panel); border-radius:999px; padding:6px 10px; font-size:12px; color:var(--sub)}
+
+    .container{padding:18px; max-width:1200px; margin:0 auto; display:flex; flex-direction:column; gap:16px}
+
+    .card{background:linear-gradient(180deg, rgba(17,24,39,0.92), rgba(2,6,23,0.85)); border:1px solid var(--border); border-radius:14px; overflow:hidden}
+    .card h3{margin:0; padding:12px 14px 0 14px; font-size:14px; color:var(--sub); font-weight:700}
+    .card .content{padding:12px 14px 14px 14px}
+
+    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .row > *{flex:1}
+
+    label{font-size:12px; color:var(--sub); display:block; margin-bottom:6px}
+    input, select, textarea, button{width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:var(--muted); color:var(--text); font-size:14px}
+    textarea{min-height:64px; resize:vertical}
+    button{cursor:pointer; border-color:transparent; background:linear-gradient(180deg, #0ea5e9, #22d3ee); color:#001018; font-weight:800}
+    button.secondary{background:var(--muted); color:var(--text); border:1px solid var(--border); font-weight:700}
+    button.warn{background:linear-gradient(180deg,#f59e0b,#fbbf24); color:#1f1300}
+    button.danger{background:linear-gradient(180deg,#ef4444,#f87171); color:#1f0a0a}
+    .mini{font-size:11px; color:var(--sub)}
+
+    .grid{max-height:60vh; overflow:auto; border:1px solid var(--border); border-radius:10px}
+
+    table{width:100%; border-collapse:separate; border-spacing:0;}
+    thead th{background:#0b1021; color:var(--sub); font-weight:700; font-size:12px; text-align:left; padding:10px; border-bottom:1px solid var(--border)}
+    tbody td{padding:10px; border-bottom:1px solid var(--border); font-size:13px; vertical-align:top}
+    .prop-list{display:flex; flex-direction:column; gap:6px}
+    .prop-item{display:flex; align-items:center; justify-content:flex-start; padding:8px 10px; border:1px solid var(--border); border-radius:8px; cursor:pointer; background:var(--muted); color:var(--text); user-select:none}
+    .prop-item.selected{border-color: var(--accent); background: rgba(34,211,238,0.12)}
+
+    /* Login */
+    #loginView{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+  </style>
+</head>
+<body>
+  <div id="loginView">
+    <div class="card" style="max-width:420px;width:100%">
+      <h3>Admin Login</h3>
+      <div class="content">
+        <div class="row"><div><label for="loginUsername">Username</label><input id="loginUsername" type="text" autocomplete="username"></div></div>
+        <div class="row"><div><label for="loginPassword">Password</label><input id="loginPassword" type="password" autocomplete="current-password"></div></div>
+        <div class="row"><button id="loginBtn">Sign In</button></div>
+        <div id="loginError" class="mini" style="color:#f87171; display:none">Invalid credentials, or not an admin.</div>
+      </div>
+    </div>
+  </div>
+
+  <header id="appHeader" style="display:none">
+    <div class="title">Admin • User Management</div>
+    <div class="pill mini">Only admins can access</div>
+    <div style="margin-left:auto; display:flex; gap:8px">
+      <button id="toCalendarBtn" class="secondary">Back to Calendar</button>
+      <button id="logoutBtn" class="secondary">Logout</button>
+    </div>
+  </header>
+
+  <main id="appContainer" class="container" style="display:none">
+    <section class="card">
+      <h3>Create User</h3>
+      <div class="content">
+        <div class="row">
+          <div>
+            <label for="newUsername">Username</label>
+            <input id="newUsername" type="text" />
+          </div>
+          <div>
+            <label for="newPassword">Temp Password</label>
+            <input id="newPassword" type="password" />
+          </div>
+          <div>
+            <label for="newRole">Role</label>
+            <select id="newRole"><option value="user">User</option><option value="admin">Admin</option></select>
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Assign Properties</label>
+            <div id="newPropsWrap" class="grid" style="padding:8px; max-height:300px; overflow:auto"></div>
+            <div class="mini" style="margin-top:6px; display:flex; gap:8px">
+              <button id="selectAllPropsBtn" class="secondary" style="flex:0 0 auto; padding:6px 8px">Select All</button>
+              <button id="clearAllPropsBtn" class="secondary" style="flex:0 0 auto; padding:6px 8px">Clear All</button>
+            </div>
+          </div>
+          <div style="align-self:flex-end">
+            <button id="createUserBtn" class="good">Create User</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>Users</h3>
+      <div class="content">
+        <div id="usersTable" class="grid"></div>
+      </div>
+    </section>
+
+    <div class="mini">Changes are saved to your browser's storage. For production, use a server-backed store.</div>
+  </main>
+
+  <script>
+    const STORE_USERS_KEY = 'mmp_users_v1';
+    const STORE_CURRENT_USER_KEY = 'mmp_current_user_v1';
+
+    const properties = [
+      'M@College',
+      'Blattner Hall (75 Arkansas)',
+      'Century Hall',
+      'Zuma Apartments',
+      'Cerca Apartments',
+      'Prisma Apartments',
+      'Mountain View Hall',
+      'Lantana Hall',
+      'Founders Hall',
+      'Ferry Street Flats',
+      'The Continuum for UF Grads',
+      'River House Graduate Housing',
+      'Infinity Hall',
+      'Florida Polytechnic University - Phase II',
+      'Ivory University House',
+      'Palomar SLO',
+      'Chorro SLO',
+      'Florida Polytechnic University - Phase III',
+      'The Residential Village at UW Bothell',
+      'Stateside Apartments',
+      'Bryan Flats',
+      'Nexus on Holmes (Univ of Alabama, Huntsville)',
+      'Comma Barrington',
+      'Meridian on Main (132 E Main Street)',
+      'The Village at Mines Park',
+      'Monte Apartments',
+    ];
+
+    // Elements
+    const els = {
+      loginView: document.getElementById('loginView'),
+      loginUsername: document.getElementById('loginUsername'),
+      loginPassword: document.getElementById('loginPassword'),
+      loginBtn: document.getElementById('loginBtn'),
+      loginError: document.getElementById('loginError'),
+
+      appHeader: document.getElementById('appHeader'),
+      appContainer: document.getElementById('appContainer'),
+      toCalendarBtn: document.getElementById('toCalendarBtn'),
+      logoutBtn: document.getElementById('logoutBtn'),
+
+      newUsername: document.getElementById('newUsername'),
+      newPassword: document.getElementById('newPassword'),
+      newRole: document.getElementById('newRole'),
+      newProps: document.getElementById('newProps'),
+      selectAllPropsBtn: document.getElementById('selectAllPropsBtn'),
+      clearAllPropsBtn: document.getElementById('clearAllPropsBtn'),
+      createUserBtn: document.getElementById('createUserBtn'),
+
+      usersTable: document.getElementById('usersTable'),
+    };
+
+    let users = {}; // username -> { passwordHash, role, properties: string[]|'*' }
+    let currentUser = null;
+
+    async function sha256Hex(str){
+      const data = new TextEncoder().encode(str);
+      const hash = await crypto.subtle.digest('SHA-256', data);
+      return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
+    }
+
+    function loadUsers(){ try{ users = JSON.parse(localStorage.getItem(STORE_USERS_KEY)||'{}'); }catch(e){ users = {}; } }
+    function saveUsers(){ try{ localStorage.setItem(STORE_USERS_KEY, JSON.stringify(users)); }catch(e){} }
+
+    async function ensureAdminSeed(){
+      if (!users['morobm1']){
+        const hash = await sha256Hex('Admin0701!');
+        users['morobm1'] = { passwordHash: hash, role: 'admin', properties: '*' };
+        saveUsers();
+      }
+    }
+
+    function showApp(){ els.appHeader.style.display=''; els.appContainer.style.display=''; els.loginView.style.display='none'; }
+    function showLogin(){ els.appHeader.style.display='none'; els.appContainer.style.display='none'; els.loginView.style.display='flex'; }
+
+    function renderCreateProps(){
+      const wrap = document.getElementById('newPropsWrap');
+      if (!wrap) return;
+      const html = properties.map(p=>{
+        const safe = p.replace(/"/g,'&quot;');
+        return `<div class="prop-item" data-prop="${safe}">${p}</div>`;
+      }).join('');
+      wrap.innerHTML = `<div class="prop-list">${html}</div>`;
+      wrap.querySelectorAll('.prop-item').forEach(item=>{ item.addEventListener('click', ()=>{ item.classList.toggle('selected'); }); });
+    }
+
+    function renderUsers(){
+      const usernames = Object.keys(users);
+      if (!usernames.length){ els.usersTable.innerHTML = '<div class="mini" style="padding:10px">No users found.</div>'; return; }
+      let html = '<table><thead><tr>'+
+        '<th>User</th><th>Role</th><th>Properties</th><th style="width:220px"></th></tr></thead><tbody>';
+      for (const u of usernames){
+        const up = users[u];
+        const isSelf = (currentUser && currentUser.username === u);
+        const roleSel = `<select class="uRole" data-u="${u}"><option value="user" ${up.role==='user'?'selected':''}>User</option><option value="admin" ${up.role==='admin'?'selected':''}>Admin</option></select>`;
+        const items = properties.map(p=>{
+          const safe = p.replace(/\"/g,'&quot;');
+          const sel = (up.properties==='*' || (up.properties||[]).includes(p)) ? 'prop-item selected' : 'prop-item';
+          return `<div class=\"${sel}\" data-u=\"${u}\" data-prop=\"${safe}\">${p}</div>`;
+        }).join('');
+        const propSel = `<div class=\"prop-list\" data-u=\"${u}\" style=\"max-height:180px; overflow:auto\">${items}</div>`;
+        html += `<tr>`+
+          `<td>${u}</td>`+
+          `<td>${isSelf? `<span class="mini">${up.role}</span>` : roleSel}</td>`+
+          `<td>${propSel}</td>`+
+          `<td>`+
+            `<div style=\"display:flex; flex-direction:column; gap:6px; align-items:flex-start\">`+
+              `${isSelf? '' : `<button class=\"uSave secondary\" data-u=\"${u}\">Save</button>`}`+
+              `<button class=\"uResetPw secondary\" data-u=\"${u}\">Reset PW</button>`+
+              `${isSelf? '' : `<button class=\"uDelete danger\" data-u=\"${u}\">Delete</button>`}`+
+            `</div>`+
+          `</td>`+
+        `</tr>`;
+      }
+      html += '</tbody></table>';
+      els.usersTable.innerHTML = html;
+
+      // Wire actions
+      els.usersTable.querySelectorAll('.uSave').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const u = btn.dataset.u;
+          const roleEl = els.usersTable.querySelector(`select.uRole[data-u=\"${u}\"]`);
+          if (roleEl) users[u].role = roleEl.value;
+          const vals = Array.from(els.usersTable.querySelectorAll(`.prop-list[data-u=\"${u}\"] .prop-item.selected`)).map(it=>it.dataset.prop);
+          users[u].properties = vals;
+          saveUsers(); alert('Saved');
+        });
+      });
+      els.usersTable.querySelectorAll('.uResetPw').forEach(btn=>{
+        btn.addEventListener('click', async ()=>{
+          const u = btn.dataset.u; const pw = prompt(`Enter new password for ${u}`); if (!pw) return;
+          users[u].passwordHash = await sha256Hex(pw); saveUsers(); alert('Password updated');
+        });
+      });
+      els.usersTable.querySelectorAll('.uDelete').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const u = btn.dataset.u; if (!confirm(`Delete user ${u}?`)) return; delete users[u]; saveUsers(); renderUsers();
+        });
+      });
+    }
+
+    function initHandlers(){
+      els.selectAllPropsBtn.addEventListener('click', (e)=>{ e.preventDefault(); document.querySelectorAll('#newPropsWrap .prop-item').forEach(it=>it.classList.add('selected')); });
+      els.clearAllPropsBtn.addEventListener('click', (e)=>{ e.preventDefault(); document.querySelectorAll('#newPropsWrap .prop-item').forEach(it=>it.classList.remove('selected')); });
+      els.createUserBtn.addEventListener('click', async ()=>{
+        const u = (els.newUsername.value||'').trim(); const pw = els.newPassword.value||''; const role = els.newRole.value;
+        if (!u || !pw){ alert('Username and password are required'); return; }
+        loadUsers(); if (users[u]){ alert('User already exists'); return; }
+        const props = Array.from(document.querySelectorAll('#newPropsWrap .prop-item.selected')).map(it=>it.dataset.prop);
+        users[u] = { passwordHash: await sha256Hex(pw), role, properties: props };
+        saveUsers();
+        els.newUsername.value=''; els.newPassword.value=''; els.newRole.value='user';
+        document.querySelectorAll('#newPropsWrap .prop-item.selected').forEach(it=>it.classList.remove('selected'));
+        renderUsers();
+      });
+
+      els.usersTable.addEventListener('click', (e)=>{ const it = e.target.closest('.prop-item'); if (it && els.usersTable.contains(it)) { it.classList.toggle('selected'); } });
+      els.toCalendarBtn.addEventListener('click', ()=>{ location.href = 'mmp_calendar_app.html'; });
+      els.logoutBtn.addEventListener('click', ()=>{ try{ localStorage.removeItem(STORE_CURRENT_USER_KEY);}catch(e){} location.reload(); });
+    }
+
+    async function init(){
+      // Seed admin and check login
+      loadUsers(); await ensureAdminSeed();
+      // If already logged in and admin
+      const savedUser = (localStorage.getItem(STORE_CURRENT_USER_KEY)||'').trim();
+      if (savedUser && users[savedUser] && users[savedUser].role==='admin'){
+        currentUser = { username: savedUser, role: users[savedUser].role };
+        showApp();
+        renderCreateProps();
+        initHandlers();
+        renderUsers();
+        return;
+      }
+      // Otherwise require login
+      els.loginBtn.addEventListener('click', async ()=>{
+        const u = (els.loginUsername.value||'').trim(); const p = els.loginPassword.value||'';
+        loadUsers(); if (!users[u]){ els.loginError.style.display=''; return; }
+        const h = await sha256Hex(p); if (h !== users[u].passwordHash || users[u].role !== 'admin'){ els.loginError.style.display=''; return; }
+        els.loginError.style.display='none';
+        currentUser = { username: u, role: 'admin' };
+        try{ localStorage.setItem(STORE_CURRENT_USER_KEY, u); }catch(e){}
+        showApp();
+        renderCreateProps();
+        initHandlers();
+        renderUsers();
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>

@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rate Plan Visualizer - Meridian on Main</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --muted: #94a3b8;
+      --text: #e5e7eb;
+      --accent: #22d3ee;
+      --good: #34d399;
+      --warn: #fbbf24;
+      --bad: #fb7185;
+      --border: #1f2937;
+      --seg1: #0ea5e9;
+      --seg2: #10b981;
+      --seg3: #f59e0b;
+      --seg4: #ef4444;
+      --seg5: #a78bfa;
+      --seg6: #f472b6;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 24px; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; background: linear-gradient(135deg, #0b1220, #0a0f1a 60%, #0c1424); color: var(--text); }
+    h1 { margin: 0 0 12px 0; font-size: 22px; }
+    .subtitle { color: var(--muted); font-size: 13px; }
+    .grid { display: grid; gap: 16px; }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    @media (max-width: 1200px) { .grid-3 { grid-template-columns: 1fr; } }
+    @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+    .panel { background: radial-gradient(900px 600px at 0% -10%, rgba(34,211,238,0.07), transparent 35%), var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.02); }
+    .kpi { background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+    .kpi .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .kpi .value { font-size: 22px; font-weight: 800; margin-top: 6px; }
+    .kpi .delta { font-size: 12px; margin-top: 4px; }
+    .good { color: var(--good); }
+    .bad { color: var(--bad); }
+    .controls { display: grid; grid-template-columns: repeat(9, minmax(0,1fr)); gap: 8px; }
+    .control { display: flex; flex-direction: column; gap: 4px; }
+    label { font-size: 11px; color: var(--muted); }
+    input[type="number"] { width: 100%; background: #0b1220; color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px; }
+    .tip { color: var(--muted); font-size: 12px; margin-top: 8px; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); border-bottom: 1px solid var(--border); padding: 8px; text-align: right; }
+    thead th:first-child, tbody td:first-child, tfoot td:first-child { text-align: left; }
+    tbody td, tfoot td { border-bottom: 1px solid var(--border); padding: 8px; font-size: 14px; text-align: right; }
+    tfoot td { font-weight: 700; }
+    .stack { display: flex; height: 28px; border-radius: 999px; overflow: hidden; border: 1px solid var(--border); }
+    .seg { height: 100%; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #0b1220; font-weight: 700; white-space: nowrap; }
+    .legend { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; font-size: 12px; color: var(--muted); }
+    .dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 6px; }
+    .progress { height: 10px; background: #0b1220; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; }
+    .progress > div { height: 100%; background: linear-gradient(90deg, var(--accent), #00ffa6); }
+    .ring { width: 140px; height: 140px; border-radius: 50%; background: conic-gradient(var(--seg1) 0 50%, var(--seg5) 50% 100%); position: relative; }
+    .ring::after { content: ''; position: absolute; inset: 18px; background: var(--panel); border-radius: 50%; border: 1px solid var(--border); }
+    .ring-wrap { display: flex; align-items: center; gap: 16px; }
+    .ring-labels { font-size: 13px; color: var(--muted); }
+    .warnbox { background: rgba(251, 191, 36, 0.12); border: 1px solid rgba(251, 191, 36, 0.4); color: #fde68a; border-radius: 8px; padding: 8px 10px; font-size: 12px; }
+    .rate-warn { outline: 2px solid rgba(251, 113, 133, 0.7); background: rgba(251, 113, 133, 0.08); }
+    .small { font-size: 11px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <h1>Rate Plan Visualizer</h1>
+  <div class="subtitle">Meridian on Main — per-floorplan tiered pricing for new leases (renewals aggregated)</div>
+
+  <section class="panel">
+    <div class="grid grid-3">
+      <div class="kpi">
+        <div class="label">Last Year Monthly Budget</div>
+        <div class="value" id="kpiLast">$149,000</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Target (<span id="kpiPctInline">+1.5%</span>)</div>
+        <div class="value" id="kpiTarget">$151,235</div>
+        <div class="delta" id="kpiTargetDelta">+1.5%</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Current Plan (weighted)</div>
+        <div class="value bad" id="kpiCurrent">$126,730</div>
+        <div class="delta bad" id="kpiCurrentGap">- $24,505 gap</div>
+      </div>
+    </div>
+    <div class="tip">Adjust per-floorplan tier counts and rates below. All visuals and KPIs recalc instantly.</div>
+  </section>
+
+  <section class="panel">
+    <div class="controls">
+      <div class="control"><label>Last Year ($)</label><input id="inLast" type="number" value="149000" step="100" /></div>
+      <div class="control"><label>Target Increase (%)</label><input id="inPct" type="number" value="1.5" step="0.1" /></div>
+      <div class="control"><label>Current Plan ($)</label><input id="inCurrent" type="number" value="126730" step="100" /></div>
+      <div class="control"><label>Total Units (fixed)</label><input id="inUnits" type="number" value="109" step="1" /></div>
+      <div class="control"><label>New Mix Target (%)</label><input id="inNewMix" type="number" value="64.2" step="0.1" /></div>
+      <div class="control"><label>Renewal Mix Target (%)</label><input id="inRenMix" type="number" value="35.8" step="0.1" /></div>
+      <div class="control"><label>New Lease Rate Ceiling ($)</label><input id="inRateCap" type="number" value="1350" step="25" /></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="grid grid-2">
+      <div>
+        <h3 style="margin:0 0 10px 0;font-size:16px;color:var(--muted)">New Leases by Floorplan (Tiered)</h3>
+        <div class="small" style="margin-bottom:8px">Edit counts and rates for each floorplan and tier. Row Total is the sum of T1–T4 counts.</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Floorplan</th>
+              <th>T1 Cnt</th>
+              <th>T1 New Rate</th>
+              <th>T2 Cnt</th>
+              <th>T2 New Rate</th>
+              <th>T3 Cnt</th>
+              <th>T3 New Rate</th>
+              <th>T4 Cnt</th>
+              <th>T4 New Rate</th>
+              <th>Row Total</th>
+              <th>Row Rev</th>
+            </tr>
+          </thead>
+          <tbody id="fpBody"></tbody>
+          <tfoot>
+            <tr>
+              <td>Total</td>
+              <td colspan="8"></td>
+              <td id="fpTotalsCnt">—</td>
+              <td id="fpTotalsRev">—</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <div>
+        <h3 style="margin:0 0 10px 0;font-size:16px;color:var(--muted)">Renewals (aggregated)</h3>
+        <div class="controls" style="grid-template-columns: repeat(4, minmax(0,1fr));">
+          <div class="control"><label>R1 Units</label><input id="r1c" type="number" value="31" step="1" /></div>
+          <div class="control"><label>R1 Renewal Rate</label><input id="r1r" type="number" value="1098" step="10" /></div>
+          <div class="control"><label>R2 Units</label><input id="r2c" type="number" value="8" step="1" /></div>
+          <div class="control"><label>R2 Renewal Rate</label><input id="r2r" type="number" value="1175" step="10" /></div>
+        </div>
+        <div class="tip">Keep renewals conservative as discussed; focus optimization on new tiers by floorplan.</div>
+      </div>
+    </div>
+    <div class="tip">New vs Renewal unit counts should roughly match the 64.2%/35.8% target mix. Warnings will display if off by more than 2%.</div>
+  </section>
+
+  <section class="panel">
+    <div class="grid grid-3">
+      <div>
+        <div style="margin-bottom:8px;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em">Revenue Composition</div>
+        <div class="stack" id="stack"></div>
+        <div class="legend" id="legend"></div>
+        <div style="margin-top:12px;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em">Progress to Target</div>
+        <div class="progress"><div id="progressFill" style="width:0%"></div></div>
+        <div id="progressLabel" style="margin-top:6px;font-size:12px;color:var(--muted)"></div>
+      </div>
+      <div>
+        <div style="margin-bottom:8px;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em">Mix (Units)</div>
+        <div class="ring-wrap">
+          <div class="ring" id="ring"></div>
+          <div class="ring-labels" id="ringLabels"></div>
+        </div>
+        <div id="mixWarn" class="warnbox" style="display:none;margin-top:10px"></div>
+        <div id="rateWarn" class="warnbox" style="display:none;margin-top:10px"></div>
+      </div>
+      <div>
+        <div style="margin-bottom:8px;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em">Summary</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Group</th>
+              <th>Units</th>
+              <th>Avg Rate</th>
+              <th>Revenue</th>
+            </tr>
+          </thead>
+          <tbody id="sumBody"></tbody>
+          <tfoot>
+            <tr>
+              <td>Total</td>
+              <td id="sumUnits">—</td>
+              <td id="sumAvg">—</td>
+              <td id="sumRev">—</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div style="margin-bottom:8px;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em">Detail by Tier (Totals across floorplans)</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Tier</th>
+          <th>Units</th>
+          <th>Rate</th>
+          <th>Revenue</th>
+        </tr>
+      </thead>
+      <tbody id="tierBody"></tbody>
+    </table>
+  </section>
+
+<script>
+(function(){
+  const fmt0 = (n)=> n.toLocaleString(undefined,{minimumFractionDigits:0, maximumFractionDigits:0});
+  const fmt2 = (n)=> n.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2});
+
+  const els = {
+    inLast: document.getElementById('inLast'),
+    inPct: document.getElementById('inPct'),
+    inCurrent: document.getElementById('inCurrent'),
+    inUnits: document.getElementById('inUnits'),
+    inNewMix: document.getElementById('inNewMix'),
+    inRenMix: document.getElementById('inRenMix'),
+    inRateCap: document.getElementById('inRateCap'),
+    r1c: document.getElementById('r1c'), r1r: document.getElementById('r1r'),
+    r2c: document.getElementById('r2c'), r2r: document.getElementById('r2r'),
+    kpiLast: document.getElementById('kpiLast'),
+    kpiTarget: document.getElementById('kpiTarget'),
+    kpiTargetDelta: document.getElementById('kpiTargetDelta'),
+    kpiCurrent: document.getElementById('kpiCurrent'),
+    kpiCurrentGap: document.getElementById('kpiCurrentGap'),
+    fpBody: document.getElementById('fpBody'),
+    fpTotalsCnt: document.getElementById('fpTotalsCnt'),
+    fpTotalsRev: document.getElementById('fpTotalsRev'),
+    stack: document.getElementById('stack'),
+    legend: document.getElementById('legend'),
+    progressFill: document.getElementById('progressFill'),
+    progressLabel: document.getElementById('progressLabel'),
+    ring: document.getElementById('ring'),
+    ringLabels: document.getElementById('ringLabels'),
+    mixWarn: document.getElementById('mixWarn'),
+    rateWarn: document.getElementById('rateWarn'),
+    sumBody: document.getElementById('sumBody'),
+    sumUnits: document.getElementById('sumUnits'),
+    sumAvg: document.getElementById('sumAvg'),
+    sumRev: document.getElementById('sumRev'),
+    tierBody: document.getElementById('tierBody'),
+  };
+
+  const inputs = ['inLast','inPct','inCurrent','inUnits','inNewMix','inRenMix','inRateCap','r1c','r1r','r2c','r2r'];
+  inputs.forEach(id => els[id].addEventListener('input', render));
+
+  const FP = [
+    ['Apex', 8],
+    ['Paramount', 12],
+    ['Newark', 16],
+    ['The Main', 16],
+    ['Meridian', 16],
+    ['Vertex (Single)', 4],
+    ['Vertex (Double)', 8],
+    ['Peak (Single)', 4],
+    ['Peak (Double)', 8],
+    ['Summit', 8],
+    ['Crest', 4],
+    ['Skyline', 4],
+    ['Skyline (Room w/ Nook)', 1],
+  ];
+
+  // Default new rates: conservative market-friendly
+  const defaultRates = [999, 1100, 1250, 1350];
+
+  // Build floorplan rows with inputs
+  const fpInputs = []; // [{name, c:[...], r:[...] }]
+  function buildFpTable(){
+    const newMix = parseFloat(els.inNewMix.value) || 64.2;
+    const totalUnits = parseFloat(els.inUnits.value) || 109;
+
+    els.fpBody.innerHTML = '';
+    fpInputs.length = 0;
+    FP.forEach(([name, units]) => {
+      // Allocate default new counts proportionally to inventory, split across tiers
+      const planNew = Math.round(units * newMix / 100);
+      const baseCounts = [0,1,2,3].map(()=> Math.floor(planNew/4));
+      for(let i=0;i<planNew%4;i++) baseCounts[i]++;
+      const baseRates = defaultRates.slice();
+
+      const row = { name, c: baseCounts.slice(), r: baseRates.slice(), nodes: { c:[], r:[], totalCnt: null, totalRev: null } };
+      fpInputs.push(row);
+
+      const tr = document.createElement('tr');
+      const nameTd = document.createElement('td'); nameTd.textContent = name; tr.appendChild(nameTd);
+      for(let t=0;t<4;t++){
+        const cTd = document.createElement('td');
+        const cIn = document.createElement('input'); cIn.type='number'; cIn.step='1'; cIn.min='0'; cIn.value=String(row.c[t]); cIn.style.width='90px';
+        cIn.addEventListener('input', render);
+        cTd.appendChild(cIn); tr.appendChild(cTd); row.nodes.c[t]=cIn;
+
+        const rTd = document.createElement('td');
+        const rIn = document.createElement('input'); rIn.type='number'; rIn.step='25'; rIn.min='0'; rIn.value=String(row.r[t]); rIn.style.width='100px';
+        rIn.addEventListener('input', render);
+        rTd.appendChild(rIn); tr.appendChild(rTd); row.nodes.r[t]=rIn;
+      }
+      const totalCntTd = document.createElement('td'); totalCntTd.textContent='—'; tr.appendChild(totalCntTd); row.nodes.totalCnt = totalCntTd;
+      const totalRevTd = document.createElement('td'); totalRevTd.textContent='—'; tr.appendChild(totalRevTd); row.nodes.totalRev = totalRevTd;
+
+      els.fpBody.appendChild(tr);
+    });
+  }
+
+  function collectFp(){
+    let newTotals = { units: 0, rev: 0, tUnits: [0,0,0,0], tRev: [0,0,0,0], tAvgRate: [0,0,0,0] };
+    for(const row of fpInputs){
+      let rowUnits = 0; let rowRev = 0;
+      for(let t=0;t<4;t++){
+        const c = parseFloat(row.nodes.c[t].value)||0; const r = parseFloat(row.nodes.r[t].value)||0;
+        rowUnits += c;
+        rowRev += c * r;
+        newTotals.tUnits[t] += c;
+        newTotals.tRev[t] += c * r;
+      }
+      row.nodes.totalCnt.textContent = fmt0(rowUnits);
+      row.nodes.totalRev.textContent = '$' + fmt0(rowRev);
+      newTotals.units += rowUnits;
+      newTotals.rev += rowRev;
+    }
+    for(let t=0;t<4;t++){
+      newTotals.tAvgRate[t] = newTotals.tUnits[t] ? newTotals.tRev[t] / newTotals.tUnits[t] : 0;
+    }
+    els.fpTotalsCnt.textContent = fmt0(newTotals.units);
+    els.fpTotalsRev.textContent = '$' + fmt0(newTotals.rev);
+    return newTotals;
+  }
+
+  function val(id){ const v = parseFloat(els[id].value); return isFinite(v) ? v : 0; }
+  function highlightRates(cap){
+    let over=0;
+    for(const row of fpInputs){
+      for(let t=0;t<4;t++){
+        const r = parseFloat(row.nodes.r[t].value)||0;
+        if(r>cap){ row.nodes.r[t].classList.add('rate-warn'); over++; }
+        else { row.nodes.r[t].classList.remove('rate-warn'); }
+      }
+    }
+    return over;
+  }
+
+  function render(){
+    const last = val('inLast');
+    const pct = val('inPct');
+    const current = val('inCurrent');
+    const totalUnitsTarget = val('inUnits');
+    const mixNewTarget = val('inNewMix');
+    const mixRenTarget = val('inRenMix');
+
+    const newTotals = collectFp();
+
+    const r1c = val('r1c'), r1r = val('r1r');
+    const r2c = val('r2c'), r2r = val('r2r');
+    const renUnits = r1c + r2c;
+    const renRev = r1c*r1r + r2c*r2r;
+
+    const newUnits = newTotals.units;
+    const newRev = newTotals.rev;
+
+    const totalUnits = newUnits + renUnits;
+    const totalRev = newRev + renRev;
+
+    const target = Math.round(last * (1 + pct/100));
+
+    // KPIs
+    els.kpiLast.textContent = '$' + fmt0(last);
+    els.kpiTarget.textContent = '$' + fmt0(target);
+    const pctStr = (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%';
+    els.kpiTargetDelta.textContent = pctStr;
+    const pctInline = document.getElementById('kpiPctInline'); if(pctInline) pctInline.textContent = pctStr;
+    els.kpiCurrent.textContent = '$' + fmt0(current);
+    const gapCurrent = target - current;
+    els.kpiCurrentGap.textContent = (gapCurrent>=0?'- $'+fmt0(gapCurrent)+' gap':'+ $'+fmt0(-gapCurrent)+' above');
+    els.kpiCurrent.className = 'value ' + (gapCurrent>0? 'bad' : 'good');
+    els.kpiCurrentGap.className = 'delta ' + (gapCurrent>0? 'bad' : 'good');
+
+    // Progress to target for PROPOSED (this plan)
+    const pctToTarget = target ? Math.max(0, Math.min(100, (totalRev/target)*100)) : 0;
+    els.progressFill.style.width = pctToTarget + '%';
+    els.progressLabel.textContent = '$' + fmt0(totalRev) + ' / $' + fmt0(target) + ' (' + (target? (totalRev/target*100).toFixed(1):'0.0') + '%)';
+
+    // Ring for mix
+    const newPct = totalUnits ? (newUnits/totalUnits)*100 : 0;
+    const renPct = 100 - newPct;
+    els.ring.style.background = `conic-gradient(var(--seg1) 0 ${newPct}%, var(--seg5) ${newPct}% 100%)`;
+    els.ringLabels.innerHTML = `
+      <div><span class="dot" style="background:var(--seg1)"></span> New: <b>${fmt0(newUnits)}</b> (${newPct.toFixed(1)}%)</div>
+      <div><span class="dot" style="background:var(--seg5)"></span> Renewals: <b>${fmt0(renUnits)}</b> (${renPct.toFixed(1)}%)</div>
+      <div style="margin-top:6px">Target mix: ${mixNewTarget.toFixed(1)}% / ${mixRenTarget.toFixed(1)}%</div>
+    `;
+    const mixDiff = Math.abs(newPct - mixNewTarget);
+    if(mixDiff > 2){
+      els.mixWarn.style.display = '';
+      els.mixWarn.textContent = `Mix deviates from target by ${mixDiff.toFixed(1)}% (new). Adjust counts to approach ${mixNewTarget.toFixed(1)}% new / ${mixRenTarget.toFixed(1)}% renewals.`;
+    } else { els.mixWarn.style.display = 'none'; }
+
+    // Rate ceiling warning and highlighting for NEW lease rates
+    const rateCap = val('inRateCap');
+    const overCap = highlightRates(rateCap);
+    if(overCap>0){
+      els.rateWarn.style.display = '';
+      els.rateWarn.textContent = `${overCap} new lease rate${overCap>1?'s':''} exceed the comfort ceiling of $${fmt0(rateCap)}. Consider reducing new tier rates or redistributing counts.`;
+    } else { els.rateWarn.style.display = 'none'; }
+
+    // Revenue stack composition
+    const segs = [
+      { name: 'New T1', units: newTotals.tUnits[0], rate: newTotals.tAvgRate[0], rev: newTotals.tRev[0], color: 'var(--seg1)' },
+      { name: 'New T2', units: newTotals.tUnits[1], rate: newTotals.tAvgRate[1], rev: newTotals.tRev[1], color: 'var(--seg2)' },
+      { name: 'New T3', units: newTotals.tUnits[2], rate: newTotals.tAvgRate[2], rev: newTotals.tRev[2], color: 'var(--seg3)' },
+      { name: 'New T4', units: newTotals.tUnits[3], rate: newTotals.tAvgRate[3], rev: newTotals.tRev[3], color: 'var(--seg4)' },
+      { name: 'Renewal R1', units: r1c, rate: r1r, rev: r1c*r1r, color: 'var(--seg5)' },
+      { name: 'Renewal R2', units: r2c, rate: r2r, rev: r2c*r2r, color: 'var(--seg6)' },
+    ].filter(s => s.rev>0);
+    els.stack.innerHTML = '';
+    els.legend.innerHTML = '';
+    for(const s of segs){
+      const pct = totalRev ? (s.rev/totalRev)*100 : 0;
+      const div = document.createElement('div');
+      div.className = 'seg';
+      div.style.width = pct + '%';
+      div.style.background = s.color;
+      div.title = `${s.name}: $${fmt0(s.rev)} (${pct.toFixed(1)}%)`;
+      div.textContent = pct >= 10 ? `$${fmt0(s.rev)}` : '';
+      els.stack.appendChild(div);
+      const lg = document.createElement('div');
+      lg.innerHTML = `<span class="dot" style="background:${s.color}"></span>${s.name}: ${fmt0(s.units)}u @ $${fmt0(s.rate)} = $${fmt0(s.rev)}`;
+      els.legend.appendChild(lg);
+    }
+
+    // Summary table
+    const newAvg = newUnits ? newRev/newUnits : 0;
+    const renAvg = renUnits ? renRev/renUnits : 0;
+    const perUnitAvg = (newUnits+renUnits) ? totalRev/(newUnits+renUnits) : 0;
+    els.sumBody.innerHTML = '';
+    const rows = [
+      ['New Leases', newUnits, `$${fmt2(newAvg)}`, `$${fmt0(newRev)}`],
+      ['Renewals', renUnits, `$${fmt2(renAvg)}`, `$${fmt0(renRev)}`],
+    ];
+    for(const r of rows){
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${r[0]}</td><td>${fmt0(r[1])}</td><td>${r[2]}</td><td>${r[3]}</td>`;
+      els.sumBody.appendChild(tr);
+    }
+    els.sumUnits.textContent = fmt0(newUnits+renUnits);
+    els.sumAvg.textContent = `$${fmt2(perUnitAvg)}`;
+    els.sumRev.textContent = `$${fmt0(totalRev)}`;
+
+    // Tier detail totals
+    const tiers = [
+      ['New T1', newTotals.tUnits[0], newTotals.tAvgRate[0], newTotals.tRev[0] ],
+      ['New T2', newTotals.tUnits[1], newTotals.tAvgRate[1], newTotals.tRev[1] ],
+      ['New T3', newTotals.tUnits[2], newTotals.tAvgRate[2], newTotals.tRev[2] ],
+      ['New T4', newTotals.tUnits[3], newTotals.tAvgRate[3], newTotals.tRev[3] ],
+      ['Renewal R1', r1c, r1r, r1c*r1r],
+      ['Renewal R2', r2c, r2r, r2c*r2r],
+    ];
+    els.tierBody.innerHTML = '';
+    for(const t of tiers){
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${t[0]}</td><td>${fmt0(t[1])}</td><td>$${fmt0(t[2]||0)}</td><td>$${fmt0(t[3]||0)}</td>`;
+      els.tierBody.appendChild(tr);
+    }
+  }
+
+  buildFpTable();
+  render();
+})();
+</script>
+</body>
+</html>

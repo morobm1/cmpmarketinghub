@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bothell Admit Radius Map</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map { width: 100vw; height: 98vh; }
+        body { margin: 0; }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+<script>
+const UNIVERSITY = {lat: 47.758284, lon: -122.191377, name: "Univ of Bothell"};
+const RADIUS_MI = 10; // set to 10 for 10-mile radius
+
+// Initialize map
+const map = L.map('map').setView([UNIVERSITY.lat, UNIVERSITY.lon], 10);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+// University marker and circle
+L.marker([UNIVERSITY.lat, UNIVERSITY.lon], {title: UNIVERSITY.name, riseOnHover:true})
+    .addTo(map)
+    .bindPopup(`<b>${UNIVERSITY.name}</b><br>18612 Beardslee Blvd, Bothell, WA`);
+L.circle([UNIVERSITY.lat, UNIVERSITY.lon], {
+    radius: RADIUS_MI * 1609.34, // Convert mi to meters
+    color: "#1c75bc",
+    fillColor: "#1c75bc",
+    fillOpacity: 0.18
+}).addTo(map);
+
+// Plot addresses from CSV
+Papa.parse("Bothell_with_distances.csv", {
+    header: true,
+    download: true,
+    complete: function(results) {
+        results.data.forEach(function(row) {
+            const lat = parseFloat(row['Latitude']);
+            const lon = parseFloat(row['Longitude']);
+            const dist = row['Distance to Univ (mi)'];
+            const addr = [row['Street 1'], row['Street 2'], row['City'], row['State'], row['ZipCode']].filter(Boolean).join(", ");
+            if (!isNaN(lat) && !isNaN(lon)) {
+                L.circleMarker([lat, lon], {
+                    color: dist <= RADIUS_MI ? '#27ae60' : '#c0392b',
+                    radius: 6,
+                    fillOpacity: 0.85,
+                    weight: 1
+                }).addTo(map)
+                .bindPopup(`<b>${addr}</b><br>Dist: ${dist} mi`);
+            }
+        });
+    }
+});
+</script>
+</body>
+</html>
