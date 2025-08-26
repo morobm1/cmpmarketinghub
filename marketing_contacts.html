@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-  <meta name="description" content="Marketing Contacts – Under construction" />
+  <meta name="description" content="Manage property marketing contacts and partnerships" />
   <style>
     :root{
       --brand-primary:#446472; --brand-accent:#ffb732; --brand-accent-2:#52d5ff; --brand-gray:#929497; --page-bg:#e5e7eb;
@@ -37,12 +37,42 @@
     .nav-tab.active{ background:#52d5ff; border-color:#52d5ff; color:#0b1b24; font-weight:700 }
 
     /* Layout */
-    .container{padding:18px; max-width:1200px; margin:0 auto}
+    .container{padding:18px; max-width:1200px; margin:0 auto; display:flex; flex-direction:column; gap:16px}
+    .toolbar{ display:flex; gap:8px; flex-wrap:wrap; align-items:center }
+    .btn{ display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:10px; border:1px solid #d1d5db; background:#ffffff; color:#111827; font-weight:700; cursor:pointer; font-family: Roboto, Arial, sans-serif }
+    .btn:hover{ background:#f9fafb }
+    .btn.primary{ background:#52d5ff; border-color:#52d5ff; color:#0b1b24 }
+    .btn.warn{ background:#ffb732; border-color:#ffb732; color:#1f1300 }
+
     .card{ background:#ffffff; border:1px solid var(--border); border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,0.06); overflow:hidden }
     .card h3{ margin:0; padding:12px 14px 0 14px; font-size:16px; color:#374151; font-weight:800; font-family: Roboto, Arial, sans-serif }
     .card .content{ padding:14px }
-    .badge{display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; background:#fff7e6; color:#8a5800; border:1px solid #fde68a; font-weight:700; font-family: Roboto, Arial, sans-serif}
-    .muted{ color:#6b7280 }
+
+    .grid{ width:100%; border-collapse:collapse }
+    .grid th, .grid td{ border-bottom:1px solid var(--border); padding:8px 10px; text-align:left; vertical-align:top; font-size:14px }
+    .grid th{ color:#374151; font-weight:800; font-family: Roboto, Arial, sans-serif }
+    .grid .mini{ font-size:12px; color:#6b7280 }
+
+    .badge{display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; background:#fff7e6; color:#8a5800; border:1px solid #fde68a; font-weight:700; font-family: Roboto, Arial, sans-serif}
+
+    /* Toggle */
+    .toggle{ position:relative; width:42px; height:24px; background:#e5e7eb; border-radius:999px; cursor:pointer; border:1px solid #d1d5db; display:inline-block }
+    .toggle.on{ background:#52d5ff; border-color:#52d5ff }
+    .toggle .knob{ position:absolute; top:1px; left:1px; width:20px; height:20px; border-radius:50%; background:#ffffff; transition:left .15s ease }
+    .toggle.on .knob{ left:21px }
+
+    /* Modal */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50}
+    .modal{background:#ffffff;border:1px solid var(--border);border-radius:12px;max-width:720px;width:96%;padding:14px; box-shadow:0 10px 30px rgba(0,0,0,0.2)}
+    .modal h3{margin:0 0 10px 0;color:#374151;font-size:18px}
+    .row{display:flex; gap:10px; align-items:flex-start; flex-wrap:wrap}
+    .row > *{ flex:1 }
+    label{display:block; font-size:12px; color:#374151; margin-bottom:6px}
+    input, select, textarea{ width:100%; padding:10px 12px; border-radius:10px; border:1px solid #d1d5db; background:#ffffff; color:#111827; font-size:14px}
+    textarea{ min-height:60px; resize:vertical }
+    .actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px }
+
+    .section-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap }
   </style>
 </head>
 <body>
@@ -67,17 +97,200 @@
   </nav>
 
   <main class="container">
+    <div class="toolbar">
+      <button id="addGeneralBtn" class="btn primary">+ Add Contact</button>
+      <button id="addPartnershipBtn" class="btn primary">+ Add Local Business Partnership</button>
+      <button id="addDeptBtn" class="btn primary">+ Add Department Contact</button>
+      <span class="mini" style="color:#6b7280">Entries are stored per property.</span>
+    </div>
+
     <section class="card">
-      <h3>Marketing Contacts</h3>
+      <div class="section-head">
+        <h3>Contacts</h3>
+        <span class="badge" id="countGeneral">0</span>
+      </div>
       <div class="content">
-        <div class="badge">Under construction</div>
-        <p class="muted" style="margin-top:8px">This page is being built. Check back soon.</p>
+        <div style="overflow:auto">
+          <table class="grid" id="generalTable">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Business</th>
+                <th>Title</th>
+                <th>Purpose</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Address</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-head">
+        <h3>Local Business Partnerships</h3>
+        <span class="badge" id="countPartner">0</span>
+      </div>
+      <div class="content">
+        <div style="overflow:auto">
+          <table class="grid" id="partnerTable">
+            <thead>
+              <tr>
+                <th>Business</th>
+                <th>Target Audience</th>
+                <th>Distance</th>
+                <th>Point of Contact</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Address</th>
+                <th>Allowed to Flyer</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-head">
+        <h3>Department Contacts (Campus)</h3>
+        <span class="badge" id="countDept">0</span>
+      </div>
+      <div class="content">
+        <div style="overflow:auto">
+          <table class="grid" id="deptTable">
+            <thead>
+              <tr>
+                <th>University</th>
+                <th>Department</th>
+                <th>Point of Contact</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Visits</th>
+                <th>Promo/Gift</th>
+                <th>Relationship</th>
+                <th>Health</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </div>
     </section>
   </main>
 
+  <!-- Modals -->
+  <div id="modalGeneral" class="modal-backdrop">
+    <div class="modal">
+      <h3>Add Contact</h3>
+      <div class="row">
+        <div><label for="g_name">Name</label><input id="g_name" type="text"></div>
+        <div><label for="g_business">Business</label><input id="g_business" type="text"></div>
+      </div>
+      <div class="row">
+        <div><label for="g_title">Title</label><input id="g_title" type="text"></div>
+        <div><label for="g_purpose">Purpose</label><input id="g_purpose" type="text" placeholder="Why we contact them"></div>
+      </div>
+      <div class="row">
+        <div><label for="g_phone">Phone</label><input id="g_phone" type="tel"></div>
+        <div><label for="g_email">Email</label><input id="g_email" type="email"></div>
+      </div>
+      <div class="row">
+        <div><label for="g_address">Address</label><input id="g_address" type="text"></div>
+      </div>
+      <div class="actions">
+        <button class="btn" data-close="modalGeneral">Cancel</button>
+        <button id="g_save" class="btn primary">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalPartner" class="modal-backdrop">
+    <div class="modal">
+      <h3>Add Local Business Partnership</h3>
+      <div class="row">
+        <div><label for="p_business">Business</label><input id="p_business" type="text"></div>
+        <div><label for="p_target">Target Audience</label><input id="p_target" type="text"></div>
+      </div>
+      <div class="row">
+        <div><label for="p_distance">Distance from Property</label><input id="p_distance" type="text" placeholder="e.g., 0.5 miles"></div>
+        <div><label for="p_poc">Point of Contact</label><input id="p_poc" type="text"></div>
+      </div>
+      <div class="row">
+        <div><label for="p_phone">Phone</label><input id="p_phone" type="tel"></div>
+        <div><label for="p_email">Email</label><input id="p_email" type="email"></div>
+      </div>
+      <div class="row">
+        <div><label for="p_address">Address</label><input id="p_address" type="text"></div>
+        <div>
+          <label>Allowed to flyer</label>
+          <div id="p_allowed" class="toggle"><div class="knob"></div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn" data-close="modalPartner">Cancel</button>
+        <button id="p_save" class="btn primary">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalDept" class="modal-backdrop">
+    <div class="modal">
+      <h3>Add Department Contact</h3>
+      <div class="row">
+        <div><label for="d_university">University</label><input id="d_university" type="text"></div>
+        <div><label for="d_department">Department</label><input id="d_department" type="text"></div>
+      </div>
+      <div class="row">
+        <div><label for="d_poc">Point of Contact</label><input id="d_poc" type="text"></div>
+        <div><label for="d_phone">Phone</label><input id="d_phone" type="tel"></div>
+      </div>
+      <div class="row">
+        <div><label for="d_email">Email</label><input id="d_email" type="email"></div>
+        <div><label for="d_visit">Visit Date</label><input id="d_visit" type="date"></div>
+      </div>
+      <div class="row">
+        <div><label for="d_promo">Promo or Gift Bag Given</label><input id="d_promo" type="text"></div>
+        <div><label for="d_relationship">Nature of Relationship</label><input id="d_relationship" type="text"></div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="d_health">Partnership Health (1-5)</label>
+          <select id="d_health">
+            <option value="1">1 - Poor</option>
+            <option value="2">2</option>
+            <option value="3" selected>3 - Fair</option>
+            <option value="4">4</option>
+            <option value="5">5 - Strong</option>
+          </select>
+        </div>
+        <div>
+          <label for="d_status">Status</label>
+          <select id="d_status">
+            <option>Undergrad</option>
+            <option>Grad student</option>
+            <option>International</option>
+          </select>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn" data-close="modalDept">Cancel</button>
+        <button id="d_save" class="btn primary">Save</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const STORE_CURRENT_PROPERTY_KEY = 'mmp_current_property_v1';
+    const STORE_CONTACTS_BY_PROP_KEY = 'mmp_contacts_by_property_v1';
 
     // Highlight current tab
     (function(){
@@ -94,33 +307,273 @@
       propertySelect: document.getElementById('propertySelect'),
       logoutBtn: document.getElementById('logoutBtn'),
       adminPageBtn: document.getElementById('adminPageBtn'),
+      addGeneralBtn: document.getElementById('addGeneralBtn'),
+      addPartnershipBtn: document.getElementById('addPartnershipBtn'),
+      addDeptBtn: document.getElementById('addDeptBtn'),
+      countGeneral: document.getElementById('countGeneral'),
+      countPartner: document.getElementById('countPartner'),
+      countDept: document.getElementById('countDept'),
+      // tables
+      genTbody: document.querySelector('#generalTable tbody'),
+      parTbody: document.querySelector('#partnerTable tbody'),
+      depTbody: document.querySelector('#deptTable tbody'),
+      // modals and fields
+      modalGeneral: document.getElementById('modalGeneral'),
+      modalPartner: document.getElementById('modalPartner'),
+      modalDept: document.getElementById('modalDept'),
+      // general fields
+      g_name: document.getElementById('g_name'),
+      g_business: document.getElementById('g_business'),
+      g_title: document.getElementById('g_title'),
+      g_purpose: document.getElementById('g_purpose'),
+      g_phone: document.getElementById('g_phone'),
+      g_email: document.getElementById('g_email'),
+      g_address: document.getElementById('g_address'),
+      g_save: document.getElementById('g_save'),
+      // partnership fields
+      p_business: document.getElementById('p_business'),
+      p_target: document.getElementById('p_target'),
+      p_distance: document.getElementById('p_distance'),
+      p_poc: document.getElementById('p_poc'),
+      p_phone: document.getElementById('p_phone'),
+      p_email: document.getElementById('p_email'),
+      p_address: document.getElementById('p_address'),
+      p_allowed: document.getElementById('p_allowed'),
+      p_save: document.getElementById('p_save'),
+      // dept fields
+      d_university: document.getElementById('d_university'),
+      d_department: document.getElementById('d_department'),
+      d_poc: document.getElementById('d_poc'),
+      d_phone: document.getElementById('d_phone'),
+      d_email: document.getElementById('d_email'),
+      d_visit: document.getElementById('d_visit'),
+      d_promo: document.getElementById('d_promo'),
+      d_relationship: document.getElementById('d_relationship'),
+      d_health: document.getElementById('d_health'),
+      d_status: document.getElementById('d_status'),
+      d_save: document.getElementById('d_save'),
     };
 
-    async function api(path, opts={}){
-      const res = await fetch('/api' + path, opts);
-      if (!res.ok) throw new Error(await res.text() || ('HTTP '+res.status));
-      return res;
+    // Toggle handler for modal switch
+    els.p_allowed.addEventListener('click', () => { els.p_allowed.classList.toggle('on'); });
+
+    let currentProperty = '';
+    let contactsByProperty = {};
+
+    function loadStore(){
+      try{ contactsByProperty = JSON.parse(localStorage.getItem(STORE_CONTACTS_BY_PROP_KEY)||'{}'); }catch(e){ contactsByProperty = {}; }
+      ensurePropBucket();
+    }
+    function saveStore(){ try{ localStorage.setItem(STORE_CONTACTS_BY_PROP_KEY, JSON.stringify(contactsByProperty)); }catch(e){} }
+    function ensurePropBucket(){
+      if (!contactsByProperty[currentProperty]){
+        contactsByProperty[currentProperty] = { general: [], partnerships: [], departments: [] };
+      }
+    }
+    function setActiveProperty(prop){
+      currentProperty = prop || '';
+      localStorage.setItem(STORE_CURRENT_PROPERTY_KEY, currentProperty);
+      ensurePropBucket();
+      renderAll();
     }
 
-    function getAccessible(properties, me){
-      const names = properties.map(p => p.name).filter(Boolean);
-      if (!me) return names;
-      if (me.role === 'admin') return names;
-      if (me.properties === '*') return names;
-      const allowed = Array.isArray(me.properties) ? me.properties : [];
-      return names.filter(n => allowed.includes(n));
+    function fmtPhone(p){ return p||''; }
+    function htmlesc(s){ return String(s||'').replace(/[&<>"]'/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+    function renderGeneral(){
+      const list = (contactsByProperty[currentProperty]?.general||[]).slice().sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+      els.countGeneral.textContent = String(list.length);
+      els.genTbody.innerHTML = list.map(it => {
+        const tel = it.phone ? `<a href="tel:${htmlesc(it.phone)}">${htmlesc(it.phone)}</a>` : '';
+        const mail = it.email ? `<a href="mailto:${htmlesc(it.email)}">${htmlesc(it.email)}</a>` : '';
+        return `<tr>
+          <td>${htmlesc(it.name)}</td>
+          <td>${htmlesc(it.business)}</td>
+          <td>${htmlesc(it.title)}</td>
+          <td>${htmlesc(it.purpose)}</td>
+          <td>${tel}</td>
+          <td>${mail}</td>
+          <td>${htmlesc(it.address)}</td>
+          <td style="white-space:nowrap"><button class="btn warn" data-del-g="${it.id}">Delete</button></td>
+        </tr>`;
+      }).join('');
     }
+
+    function renderPartner(){
+      const list = (contactsByProperty[currentProperty]?.partnerships||[]).slice().sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+      els.countPartner.textContent = String(list.length);
+      els.parTbody.innerHTML = list.map(it => {
+        const tel = it.phone ? `<a href="tel:${htmlesc(it.phone)}">${htmlesc(it.phone)}</a>` : '';
+        const mail = it.email ? `<a href="mailto:${htmlesc(it.email)}">${htmlesc(it.email)}</a>` : '';
+        const on = it.allowedToFlyer ? 'on' : '';
+        const toggle = `<span class="toggle ${on}" data-toggle-flyer="${it.id}"><span class="knob"></span></span>`;
+        return `<tr>
+          <td>${htmlesc(it.business)}</td>
+          <td>${htmlesc(it.targetAudience)}</td>
+          <td>${htmlesc(it.distance)}</td>
+          <td>${htmlesc(it.poc)}</td>
+          <td>${tel}</td>
+          <td>${mail}</td>
+          <td>${htmlesc(it.address)}</td>
+          <td>${toggle}</td>
+          <td style="white-space:nowrap"><button class="btn warn" data-del-p="${it.id}">Delete</button></td>
+        </tr>`;
+      }).join('');
+    }
+
+    function renderDept(){
+      const list = (contactsByProperty[currentProperty]?.departments||[]).slice().sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+      els.countDept.textContent = String(list.length);
+      els.depTbody.innerHTML = list.map(it => {
+        const tel = it.phone ? `<a href="tel:${htmlesc(it.phone)}">${htmlesc(it.phone)}</a>` : '';
+        const mail = it.email ? `<a href="mailto:${htmlesc(it.email)}">${htmlesc(it.email)}</a>` : '';
+        const visits = (it.visits||[]).map(v=>`<span class="badge" style="margin-right:4px">${htmlesc(v)}</span>`).join('');
+        const addVisit = `<div class="row" style="margin-top:6px"><input type="date" data-visit-input="${it.id}"><button class="btn" data-add-visit="${it.id}">Add</button></div>`;
+        return `<tr>
+          <td>${htmlesc(it.university)}</td>
+          <td>${htmlesc(it.department)}</td>
+          <td>${htmlesc(it.poc)}</td>
+          <td>${tel}</td>
+          <td>${mail}</td>
+          <td>${visits}${addVisit}</td>
+          <td>${htmlesc(it.promoGift)}</td>
+          <td>${htmlesc(it.relationshipNature)}</td>
+          <td>${htmlesc(it.healthRating)}</td>
+          <td>${htmlesc(it.status)}</td>
+          <td style="white-space:nowrap"><button class="btn warn" data-del-d="${it.id}">Delete</button></td>
+        </tr>`;
+      }).join('');
+    }
+
+    function renderAll(){ renderGeneral(); renderPartner(); renderDept(); }
+
+    // Event delegation for toggles, deletes, add-visit
+    document.addEventListener('click', (e)=>{
+      const t = e.target;
+      if (!(t instanceof HTMLElement)) return;
+      const delG = t.getAttribute('data-del-g');
+      const delP = t.getAttribute('data-del-p');
+      const delD = t.getAttribute('data-del-d');
+      const tog = t.closest('[data-toggle-flyer]');
+      const addVisitBtn = t.getAttribute('data-add-visit');
+      const closeId = t.getAttribute('data-close');
+
+      if (closeId){ const m = document.getElementById(closeId); if (m) m.style.display='none'; return; }
+
+      if (delG){
+        const arr = contactsByProperty[currentProperty].general;
+        const idx = arr.findIndex(x => x.id === delG);
+        if (idx >= 0){ arr.splice(idx,1); saveStore(); renderGeneral(); }
+        return;
+      }
+      if (delP){
+        const arr = contactsByProperty[currentProperty].partnerships;
+        const idx = arr.findIndex(x => x.id === delP);
+        if (idx >= 0){ arr.splice(idx,1); saveStore(); renderPartner(); }
+        return;
+      }
+      if (delD){
+        const arr = contactsByProperty[currentProperty].departments;
+        const idx = arr.findIndex(x => x.id === delD);
+        if (idx >= 0){ arr.splice(idx,1); saveStore(); renderDept(); }
+        return;
+      }
+      if (tog){
+        const id = tog.getAttribute('data-toggle-flyer');
+        const arr = contactsByProperty[currentProperty].partnerships;
+        const idx = arr.findIndex(x => x.id === id);
+        if (idx >= 0){ arr[idx].allowedToFlyer = !arr[idx].allowedToFlyer; saveStore(); renderPartner(); }
+        return;
+      }
+      if (addVisitBtn){
+        const id = addVisitBtn;
+        const input = document.querySelector(`input[data-visit-input="${id}"]`);
+        const date = input && input.value;
+        if (!date) return;
+        const arr = contactsByProperty[currentProperty].departments;
+        const idx = arr.findIndex(x => x.id === id);
+        if (idx >= 0){ arr[idx].visits = arr[idx].visits || []; arr[idx].visits.push(date); saveStore(); renderDept(); }
+        return;
+      }
+    });
+
+    // Open modals
+    els.addGeneralBtn.onclick = ()=>{ clearGeneralForm(); els.modalGeneral.style.display='flex'; };
+    els.addPartnershipBtn.onclick = ()=>{ clearPartnerForm(); els.modalPartner.style.display='flex'; };
+    els.addDeptBtn.onclick = ()=>{ clearDeptForm(); els.modalDept.style.display='flex'; };
+
+    // Save handlers
+    els.g_save.onclick = ()=>{
+      const it = {
+        id: 'g_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+        name: els.g_name.value.trim(),
+        business: els.g_business.value.trim(),
+        title: els.g_title.value.trim(),
+        purpose: els.g_purpose.value.trim(),
+        phone: els.g_phone.value.trim(),
+        email: els.g_email.value.trim(),
+        address: els.g_address.value.trim(),
+        createdAt: new Date().toISOString(),
+      };
+      if (!it.name && !it.business){ alert('Provide at least a Name or Business'); return; }
+      contactsByProperty[currentProperty].general.push(it);
+      saveStore(); renderGeneral(); els.modalGeneral.style.display='none';
+    };
+
+    els.p_save.onclick = ()=>{
+      const it = {
+        id: 'p_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+        business: els.p_business.value.trim(),
+        targetAudience: els.p_target.value.trim(),
+        distance: els.p_distance.value.trim(),
+        poc: els.p_poc.value.trim(),
+        phone: els.p_phone.value.trim(),
+        email: els.p_email.value.trim(),
+        address: els.p_address.value.trim(),
+        allowedToFlyer: els.p_allowed.classList.contains('on'),
+        createdAt: new Date().toISOString(),
+      };
+      if (!it.business){ alert('Business is required'); return; }
+      contactsByProperty[currentProperty].partnerships.push(it);
+      saveStore(); renderPartner(); els.modalPartner.style.display='none';
+    };
+
+    els.d_save.onclick = ()=>{
+      const firstVisit = els.d_visit.value ? [els.d_visit.value] : [];
+      const it = {
+        id: 'd_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+        university: els.d_university.value.trim(),
+        department: els.d_department.value.trim(),
+        poc: els.d_poc.value.trim(),
+        phone: els.d_phone.value.trim(),
+        email: els.d_email.value.trim(),
+        visits: firstVisit,
+        promoGift: els.d_promo.value.trim(),
+        relationshipNature: els.d_relationship.value.trim(),
+        healthRating: parseInt(els.d_health.value,10)||3,
+        status: els.d_status.value,
+        createdAt: new Date().toISOString(),
+      };
+      if (!it.university || !it.department){ alert('University and Department are required'); return; }
+      contactsByProperty[currentProperty].departments.push(it);
+      saveStore(); renderDept(); els.modalDept.style.display='none';
+    };
+
+    function clearGeneralForm(){ els.g_name.value=''; els.g_business.value=''; els.g_title.value=''; els.g_purpose.value=''; els.g_phone.value=''; els.g_email.value=''; els.g_address.value=''; }
+    function clearPartnerForm(){ els.p_business.value=''; els.p_target.value=''; els.p_distance.value=''; els.p_poc.value=''; els.p_phone.value=''; els.p_email.value=''; els.p_address.value=''; els.p_allowed.classList.remove('on'); }
+    function clearDeptForm(){ els.d_university.value=''; els.d_department.value=''; els.d_poc.value=''; els.d_phone.value=''; els.d_email.value=''; els.d_visit.value=''; els.d_promo.value=''; els.d_relationship.value=''; els.d_health.value='3'; els.d_status.value='Undergrad'; }
+
+    async function api(path, opts={}){ const res = await fetch('/api' + path, opts); if (!res.ok) throw new Error(await res.text()||('HTTP '+res.status)); return res; }
+    function getAccessible(properties, me){ const names = properties.map(p=>p.name).filter(Boolean); if (!me) return names; if (me.role==='admin') return names; if (me.properties==='*') return names; const allowed = Array.isArray(me.properties)?me.properties:[]; return names.filter(n=>allowed.includes(n)); }
 
     async function init(){
       try{
         const meRes = await fetch('/api/me');
         if (!meRes.ok){ location.href = 'index.html'; return; }
         const me = await meRes.json();
-        // Admin button
         if (els.adminPageBtn){ els.adminPageBtn.style.display = me.role === 'admin' ? '' : 'none'; els.adminPageBtn.onclick = ()=>{ location.href='mmp_admin.html'; } }
         if (els.logoutBtn){ els.logoutBtn.onclick = async ()=>{ try{ await fetch('/api/auth-logout', { method:'POST' }); }catch(e){} location.href='index.html'; }; }
 
-        // Load properties
         let props = [];
         try{ const pres = await api('/properties'); props = await pres.json(); }catch(e){ props = []; }
         const list = getAccessible(props, me);
@@ -129,8 +582,10 @@
         if (els.propertySelect){
           els.propertySelect.innerHTML = list.map(p => `<option value="${p.replace(/"/g,'&quot;')}">${p}</option>`).join('');
           els.propertySelect.value = current;
-          els.propertySelect.onchange = ()=>{ localStorage.setItem(STORE_CURRENT_PROPERTY_KEY, els.propertySelect.value); };
+          els.propertySelect.onchange = ()=>{ setActiveProperty(els.propertySelect.value); };
         }
+        setActiveProperty(current);
+        loadStore(); renderAll();
       }catch(e){ location.href = 'index.html'; }
     }
 
