@@ -1271,50 +1271,44 @@
       closeRequestModal();
     }); }
 
-    // Add to Calendar (ICS)
+    // Add to Calendar (Google Invite)
     function pad2(n){ return String(n).padStart(2,'0'); }
     function toUTCStringYYYYMMDDTHHMMSSZ(d){ return d.getUTCFullYear()+pad2(d.getUTCMonth()+1)+pad2(d.getUTCDate())+'T'+pad2(d.getUTCHours())+pad2(d.getUTCMinutes())+pad2(d.getUTCSeconds())+'Z'; }
     function yyyymmdd(d){ return d.getFullYear()+pad2(d.getMonth()+1)+pad2(d.getDate()); }
-    function buildICS(ev){
-      const now = new Date();
-      const uid = (ev.id||('evt-'+now.getTime()))+'@mmp';
-      const dtstamp = toUTCStringYYYYMMDDTHHMMSSZ(now);
-      let dtStartLine=''; let dtEndLine='';
+    function buildGoogleCalendarUrl(ev){
+      const title = encodeURIComponent(ev.title || 'Event');
+      const location = encodeURIComponent(typeof currentProperty==='string' ? currentProperty : '');
+      const descParts = [];
+      if (ev.notes) descParts.push('Notes: '+ev.notes);
+      if (ev.campaign) descParts.push('Campaign: '+ev.campaign);
+      if (ev.channel) descParts.push('Channel: '+ev.channel);
+      if (ev.platform) descParts.push('Platform: '+ev.platform);
+      const details = encodeURIComponent(descParts.join('\n'));
+      let dates = '';
       if (ev.time){
-        const [hh,mm] = (ev.time||'00:00').split(':').map(x=>parseInt(x,10)||0);
-        const s = new Date(ev.start+'T'+pad2(hh)+':'+pad2(mm)+':00');
-        const e = new Date((ev.end||ev.start)+'T'+pad2(hh)+':'+pad2(mm)+':00');
-        dtStartLine = 'DTSTART:'+toUTCStringYYYYMMDDTHHMMSSZ(s);
-        dtEndLine = 'DTEND:'+toUTCStringYYYYMMDDTHHMMSSZ(e);
+        const [hh,mm] = String(ev.time||'00:00').split(':').map(x=>parseInt(x,10)||0);
+        const start = new Date(ev.start+'T'+pad2(hh)+':'+pad2(mm)+':00');
+        // If end date provided, use same time on end date; otherwise add 1 hour duration
+        let end = ev.end ? new Date(ev.end+'T'+pad2(hh)+':'+pad2(mm)+':00') : new Date(start.getTime()+60*60*1000);
+        const s = toUTCStringYYYYMMDDTHHMMSSZ(start);
+        const e = toUTCStringYYYYMMDDTHHMMSSZ(end);
+        dates = s+'/'+e;
       } else {
         const s = new Date(ev.start+'T00:00:00');
-        const e = new Date((ev.end||ev.start)+'T00:00:00'); e.setDate(e.getDate()+1); // all-day DTEND exclusive next day
-        dtStartLine = 'DTSTART;VALUE=DATE:'+yyyymmdd(s);
-        dtEndLine = 'DTEND;VALUE=DATE:'+yyyymmdd(e);
+        const e = new Date((ev.end||ev.start)+'T00:00:00'); e.setDate(e.getDate()+1); // all-day end exclusive
+        dates = yyyymmdd(s)+'/'+yyyymmdd(e);
       }
-      const descLines = [];
-      if (ev.notes) descLines.push('Notes: '+ev.notes);
-      if (ev.campaign) descLines.push('Campaign: '+ev.campaign);
-      if (ev.channel) descLines.push('Channel: '+ev.channel);
-      if (ev.platform) descLines.push('Platform: '+ev.platform);
-      const description = descLines.join('\\n');
-      const location = (typeof currentProperty==='string' ? currentProperty : '');
-      return 'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//MMP//Calendar//EN\nMETHOD:PUBLISH\nBEGIN:VEVENT\nUID:'+uid+'\nDTSTAMP:'+dtstamp+'\n'+dtStartLine+'\n'+dtEndLine+'\nSUMMARY:'+ (ev.title||'Event') +'\nDESCRIPTION:'+description+'\nLOCATION:'+location+'\nEND:VEVENT\nEND:VCALENDAR\n';
+      const base = 'https://calendar.google.com/calendar/render?action=TEMPLATE';
+      return `${base}&text=${title}&dates=${dates}&details=${details}&location=${location}`;
     }
-    function downloadICSForSelectedEvent(){
+    function openGoogleInviteForSelectedEvent(){
       if (!selectedEventId){ alert('Select an event first.'); return; }
       const ev = events.find(e => String(e.id) === String(selectedEventId));
       if (!ev){ alert('Event not found'); return; }
-      const ics = buildICS(ev);
-      const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      const safeName = (ev.title||'event').replace(/[^A-Za-z0-9-_]+/g,'_');
-      a.download = safeName + '.ics';
-      a.click();
-      URL.revokeObjectURL(a.href);
+      const url = buildGoogleCalendarUrl(ev);
+      window.open(url, '_blank');
     }
-    if (els.addToCalendarBtn){ els.addToCalendarBtn.addEventListener('click', downloadICSForSelectedEvent); }
+    if (els.addToCalendarBtn){ els.addToCalendarBtn.addEventListener('click', openGoogleInviteForSelectedEvent); }
 
     // Auto-save flyer URL when changed for selected event
     if (els.flyerUrl){
