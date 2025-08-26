@@ -235,6 +235,7 @@
           <div class="row" style="margin-bottom:8px">
             <button id="openAddEventModalBtn" class="good">Add Event</button>
           </div>
+          <div id="filtersRow" class="row" style="gap:8px; align-items:center"></div>
           <div id="calendar"></div>
         </div>
       </section>
@@ -460,6 +461,7 @@
       clearBudgetsBtn: document.getElementById('clearBudgetsBtn'),
 
       propertySelect: document.getElementById('propertySelect'),
+      filtersRow: document.getElementById('filtersRow'),
       logoutBtn: document.getElementById('logoutBtn'),
       adminPageBtn: document.getElementById('adminPageBtn'),
       openRequestModalBtn: document.getElementById('openRequestModalBtn'),
@@ -518,6 +520,51 @@
     };
     if (els.loginTogglePw){ els.loginTogglePw.addEventListener('change', ()=>{ els.loginPassword.type = els.loginTogglePw.checked ? 'text' : 'password'; }); }
     let SESSION_ACTIVE = false;
+    const TYPE_DEFS = [
+      { id: 'resident', label: 'Resident Event', color: '#86efac', textColor: '#00130c', match: [/resident\s*event/i] },
+      { id: 'renewal', label: 'Renewal Effort', color: '#f59e0b', textColor: '#1f1300', match: [/renewal/i] },
+      { id: 'campus', label: 'On/Off-campus', color: '#3b82f6', textColor: '#001018', match: [/on[-\s]?campus/i, /off[-\s]?campus/i] },
+      { id: 'outreach', label: 'Outreach/Cross-Marketing', color: '#7f1d1d', textColor: '#ffffff', match: [/outreach/i, /cross[-\s]marketing/i, /cross[-\s]outreach/i] },
+      { id: 'review', label: 'Review', color: '#93c5fd', textColor: '#001018', match: [/review/i] },
+      { id: 'market', label: 'Market Key date', color: '#facc15', textColor: '#1f1300', match: [/key\s*market/i, /market\s*key/i] },
+      { id: 'other', label: 'Other', color: '#a78bfa', textColor: '#001018', match: [] },
+    ];
+    let visibleTypes = new Set(TYPE_DEFS.map(d => d.id));
+    function getTypeForCampaign(c){
+      const s = String(c||'').toLowerCase();
+      for (const d of TYPE_DEFS){ if (d.match.some(rx => rx.test(s))) return d; }
+      return TYPE_DEFS.find(d => d.id==='other');
+    }
+    function isEventVisible(ev){ const d = getTypeForCampaign(ev.campaign||''); return visibleTypes.has(d.id); }
+    function renderTypeFilters(){
+      if (!els.filtersRow) return;
+      const allId = 'filter_all';
+      const cbAll = `<label class="mini" style="display:flex;align-items:center;gap:6px;flex:0 0 auto"><input id="${allId}" type="checkbox" checked /> All</label>`;
+      const items = TYPE_DEFS.map(d => {
+        const id = 'filter_'+d.id;
+        const swatch = `<span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${d.color};border:1px solid rgba(0,0,0,.3)"></span>`;
+        return `<label class="mini" style="display:flex;align-items:center;gap:6px;flex:0 0 auto"><input id="${id}" type="checkbox" checked /> ${swatch} ${d.label}</label>`;
+      }).join('');
+      els.filtersRow.innerHTML = cbAll + items;
+      const allEl = document.getElementById(allId);
+      allEl.addEventListener('change', ()=>{
+        const checked = allEl.checked;
+        visibleTypes = new Set(checked ? TYPE_DEFS.map(d=>d.id) : []);
+        TYPE_DEFS.forEach(d => { const e = document.getElementById('filter_'+d.id); if (e) e.checked = checked; });
+        if (calendar) refreshCalendar();
+      });
+      TYPE_DEFS.forEach(d => {
+        const el = document.getElementById('filter_'+d.id);
+        if (el){
+          el.addEventListener('change', ()=>{
+            if (el.checked) visibleTypes.add(d.id); else visibleTypes.delete(d.id);
+            const allChecked = TYPE_DEFS.every(x => visibleTypes.has(x.id));
+            if (allEl) allEl.checked = allChecked;
+            if (calendar) refreshCalendar();
+          });
+        }
+      });
+    }
 
     // Calendar
     function initCalendar(){
@@ -580,17 +627,22 @@
 
     function refreshCalendar(){
       calendar.removeAllEvents();
-      for (let ev of events){ calendar.addEvent(toFcEvent(ev)); }
+      for (let ev of events){ if (!isEventVisible(ev)) continue; calendar.addEvent(toFcEvent(ev)); }
       updateSummary();
     }
 
     function toFcEvent(ev){
+      const def = getTypeForCampaign(ev.campaign||'');
+      const bg = def.color; const txt = def.textColor || '#001018';
       return {
         id: String(ev.id),
         title: ev.title,
         start: ev.start,
         end: ev.end ? addDaysISO(ev.end, 1) : undefined, // FullCalendar end is exclusive
         allDay: true,
+        backgroundColor: bg,
+        borderColor: bg,
+        textColor: txt,
         extendedProps: {
           channel: ev.channel, platform: ev.platform, campaign: ev.campaign,
           budget: ev.budget, time: ev.time, audience: ev.audience, desired: ev.desired, goal: ev.goal, notes: ev.notes,
@@ -863,6 +915,7 @@
       }
       if (!els.budgetYear.options.length){ initBudgetUI(); }
       if (els.adminPanel) els.adminPanel.style.display = currentUser && currentUser.role==='admin' ? '' : 'none';
+      renderTypeFilters();
       if (!SESSION_ACTIVE && calendar) refreshCalendar();
     }
 
