@@ -517,6 +517,7 @@
       reqEmailBtn: document.getElementById('reqEmailBtn'),
     };
     if (els.loginTogglePw){ els.loginTogglePw.addEventListener('change', ()=>{ els.loginPassword.type = els.loginTogglePw.checked ? 'text' : 'password'; }); }
+    let SESSION_ACTIVE = false;
 
     // Calendar
     function initCalendar(){
@@ -605,22 +606,16 @@
     els.saveBtn.addEventListener('click', async () => {
       const payload = readForm();
       if (!payload) return;
-      const token = getToken();
       try{
-        if (token){
-          if (selectedEventId){
-            await apiFetch('/events', { method:'PUT', body: JSON.stringify({ id: selectedEventId, property: currentProperty, ...payload }) });
-            selectedEventId = null; els.saveBtn.textContent = 'Add Event'; els.deleteBtn.disabled = true;
-          } else {
-            await apiFetch('/events', { method:'POST', body: JSON.stringify({ property: currentProperty, ...payload }) });
-          }
-          const res = await apiFetch(`/events?property=${encodeURIComponent(currentProperty)}`);
-          events = await res.json();
+        if (!SESSION_ACTIVE){ showLogin(); return; }
+        if (selectedEventId){
+          await apiFetch('/events', { method:'PUT', body: JSON.stringify({ id: selectedEventId, property: currentProperty, ...payload }) });
+          selectedEventId = null; els.saveBtn.textContent = 'Add Event'; els.deleteBtn.disabled = true;
         } else {
-          if (selectedEventId){ const idx = events.findIndex(e => String(e.id) === String(selectedEventId)); if (idx>=0) events[idx] = { ...events[idx], ...payload }; selectedEventId = null; els.saveBtn.textContent = 'Add Event'; els.deleteBtn.disabled = true; }
-          else { const id = Date.now() + '-' + Math.random().toString(36).slice(2,7); events.push({ id, ...payload }); }
-          saveStore();
+          await apiFetch('/events', { method:'POST', body: JSON.stringify({ property: currentProperty, ...payload }) });
         }
+        const res = await apiFetch(`/events?property=${encodeURIComponent(currentProperty)}`);
+        events = await res.json();
       }catch(e){ alert('Save failed: '+e.message); }
       clearForm();
       refreshCalendar();
@@ -630,10 +625,9 @@
 
     els.deleteBtn.addEventListener('click', async () => {
       if (!selectedEventId) return;
-      const token = getToken();
       try{
-        if (token){ await apiFetch('/events', { method:'DELETE', body: JSON.stringify({ id: selectedEventId, property: currentProperty }) }); const res = await apiFetch(`/events?property=${encodeURIComponent(currentProperty)}`); events = await res.json(); }
-        else { const idx = events.findIndex(e => String(e.id) === String(selectedEventId)); if (idx>=0){ events.splice(idx,1); saveStore(); } }
+        if (!SESSION_ACTIVE){ showLogin(); return; }
+        await apiFetch('/events', { method:'DELETE', body: JSON.stringify({ id: selectedEventId, property: currentProperty }) }); const res = await apiFetch(`/events?property=${encodeURIComponent(currentProperty)}`); events = await res.json();
       }catch(e){ alert('Delete failed: '+e.message); }
       selectedEventId = null; clearForm(); els.saveBtn.textContent = 'Add Event'; els.deleteBtn.disabled = true; refreshCalendar();
     });
@@ -783,7 +777,6 @@
     function parseJwt(token){ try{ const p = token.split('.')[1]; return JSON.parse(atob(p.replace(/-/g,'+').replace(/_/g,'/'))); }catch(e){ return null; } }
     async function apiFetch(path, opts={}){
       const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers||{});
-      const token = getToken(); if (token) headers['Authorization'] = 'Bearer ' + token;
       const res = await fetch(API_BASE + path, Object.assign({}, opts, { headers }));
       if (!res.ok){ const text = await res.text(); throw new Error(text || ('HTTP '+res.status)); }
       return res;
@@ -808,6 +801,7 @@
     }
     function scheduleAutoLogout(){
       const loginTime = parseInt(localStorage.getItem(STORE_LOGIN_TIME_KEY)||'0', 10) || 0;
+      if (!loginTime){ return; }
       const remaining = SESSION_TTL_MS - (Date.now() - loginTime);
       if (remaining <= 0){ doLogout(); return; }
       if (window.__mmpLogoutTimer){ try{ clearTimeout(window.__mmpLogoutTimer); }catch(e){} }
@@ -822,14 +816,13 @@
     }
 
     async function initAuth(){
-      loadUsers();
-      await ensureAdminSeed();
-      // Prefer cookie-based session via /api/me
+      // Server session only via /api/me
       try{
         const meRes = await fetch('/api/me');
         if (meRes.ok){
           const me = await meRes.json();
           currentUser = { username: me.username, role: me.role, properties: me.properties };
+          SESSION_ACTIVE = true;
           showApp();
           bindHeaderHandlers();
           initializeAppForUser();
@@ -837,35 +830,6 @@
           return true;
         }
       }catch(e){}
-      const jwt = getToken();
-      if (jwt){
-        const claims = parseJwt(jwt) || {};
-        currentUser = { username: claims.sub || '', role: claims.role || 'user', properties: claims.properties || [] };
-        showApp();
-        bindHeaderHandlers();
-        initializeAppForUser();
-        scheduleAutoLogout();
-        return true;
-      }
-      const savedUser = (localStorage.getItem(STORE_CURRENT_USER_KEY)||'').trim();
-      const savedLoginTime = parseInt(localStorage.getItem(STORE_LOGIN_TIME_KEY)||'0', 10) || 0;
-      if (savedUser && users[savedUser]){
-        // Enforce session TTL, upgrade legacy sessions without timestamp
-        if (!savedLoginTime){
-          try{ localStorage.setItem(STORE_LOGIN_TIME_KEY, String(Date.now())); }catch(e){}
-        } else if ((Date.now() - savedLoginTime) > SESSION_TTL_MS){
-          try{ localStorage.removeItem(STORE_CURRENT_USER_KEY);}catch(e){}
-          try{ localStorage.removeItem(STORE_LOGIN_TIME_KEY);}catch(e){}
-          showLogin();
-          return false;
-        }
-        currentUser = { username: savedUser, role: users[savedUser].role, properties: users[savedUser].properties };
-        showApp();
-        bindHeaderHandlers();
-        initializeAppForUser();
-        scheduleAutoLogout();
-        return true;
-      }
       showLogin();
       return false;
     }
@@ -901,8 +865,7 @@
     const STORE_BUDGETS_KEY = 'mmp_monthly_budgets_v1';
     async function saveBudgetStore(){
       budgetsByProperty[currentProperty] = monthlyBudgets;
-      const token = getToken();
-      if (token){
+      if (SESSION_ACTIVE){
         try{ await apiFetch('/budgets', { method:'PUT', body: JSON.stringify({ property: currentProperty, months: monthlyBudgets }) }); return; }
         catch(e){}
       }
@@ -1019,8 +982,7 @@
     function setActiveProperty(prop){
       currentProperty = prop;
       try{ localStorage.setItem(STORE_CURRENT_PROPERTY_KEY, currentProperty); }catch(e){}
-      const token = getToken();
-      if (token){
+      if (SESSION_ACTIVE){
         (async () => {
           try{ const bres = await apiFetch(`/budgets?property=${encodeURIComponent(currentProperty)}`); monthlyBudgets = await bres.json(); }catch(e){ monthlyBudgets = {}; }
           try{ const eres = await apiFetch(`/events?property=${encodeURIComponent(currentProperty)}`); events = await eres.json(); }catch(e){ events = []; }
@@ -1186,10 +1148,9 @@
     if (els.req_close){ els.req_close.addEventListener('click', (e)=>{ e.preventDefault(); closeRequestModal(); }); }
     if (els.req_submit){ els.req_submit.addEventListener('click', async ()=>{
       if (!selectedEventId){ alert('Select an event first.'); return; }
-      const token = getToken();
       const when = new Date().toISOString();
       try{
-        if (token){ await apiFetch('/events', { method:'PUT', body: JSON.stringify({ id: selectedEventId, property: currentProperty, graphicRequestedAt: when }) }); }
+        if (SESSION_ACTIVE){ await apiFetch('/events', { method:'PUT', body: JSON.stringify({ id: selectedEventId, property: currentProperty, graphicRequestedAt: when }) }); }
         else {
           const idx = events.findIndex(e => String(e.id) === String(selectedEventId)); if (idx >= 0){ events[idx].graphicRequestedAt = when; saveStore(); }
         }
@@ -1248,9 +1209,8 @@
       els.flyerUrl.addEventListener('change', async ()=>{
         if (!selectedEventId) return;
         const url = (els.flyerUrl.value||'').trim();
-        const token = getToken();
         try{
-          if (token){ await apiFetch('/events', { method:'PUT', body: JSON.stringify({ id: selectedEventId, property: currentProperty, flyerUrl: url }) }); }
+          if (SESSION_ACTIVE){ await apiFetch('/events', { method:'PUT', body: JSON.stringify({ id: selectedEventId, property: currentProperty, flyerUrl: url }) }); }
           else { const idx = events.findIndex(e => String(e.id) === String(selectedEventId)); if (idx >= 0){ events[idx].flyerUrl = url; saveStore(); } }
         }catch(e){ alert('Saving flyer URL failed: '+e.message); }
       });
