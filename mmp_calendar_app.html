@@ -827,7 +827,7 @@
           SESSION_ACTIVE = true;
           showApp();
           bindHeaderHandlers();
-          initializeAppForUser();
+          await initializeAppForUser();
           scheduleAutoLogout();
           return true;
         }
@@ -848,8 +848,8 @@
       });
     }
 
-    function initializeAppForUser(){
-      initProperties();
+    async function initializeAppForUser(){
+      await initProperties();
       renderPropertyOptions();
       const list = (typeof getAccessibleProperties==='function') ? getAccessibleProperties() : properties.slice();
       if (!calendar){ initCalendar(); }
@@ -1022,8 +1022,8 @@
         if (calendar) refreshCalendar();
       }
     }
-    function initProperties(){
-      loadProperties();
+    async function initProperties(){
+      await loadProperties();
       try{ eventsByProperty = JSON.parse(localStorage.getItem(STORE_EVENTS_BY_PROP_KEY)||'{}'); }catch(e){ eventsByProperty = {}; }
       try{ budgetsByProperty = JSON.parse(localStorage.getItem(STORE_BUDGETS_BY_PROP_KEY)||'{}'); }catch(e){ budgetsByProperty = {}; }
       const saved = (localStorage.getItem(STORE_CURRENT_PROPERTY_KEY) || '').trim();
