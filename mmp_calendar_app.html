@@ -160,6 +160,12 @@
         </div>
         <div class="row">
           <div>
+            <label for="actualSpend">Actual Spend</label>
+            <input id="actualSpend" type="number" step="0.01" placeholder="0.00" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
             <label for="notes">Desciption of Event</label>
             <textarea id="notes" placeholder="Optional"></textarea>
           </div>
@@ -257,7 +263,11 @@
               <div id="kpi-proposed" class="value">$0</div>
             </div>
             <div class="kpi">
-              <div class="label">Variance (Budget - Proposed)</div>
+              <div class="label">Actual</div>
+              <div id="kpi-actual" class="value">$0</div>
+            </div>
+            <div class="kpi">
+              <div class="label">Variance (Budget - Actual)</div>
               <div id="kpi-var" class="value">$0</div>
             </div>
           </div>
@@ -333,6 +343,12 @@
         <div>
           <label for="m_budget">Budget (optional)</label>
           <input id="m_budget" type="number" step="0.01" placeholder="0.00" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="m_spend">Actual Spend (optional)</label>
+          <input id="m_spend" type="number" step="0.01" placeholder="0.00" />
         </div>
       </div>
       <div class="actions">
@@ -437,6 +453,7 @@
       platform: document.getElementById('platform'),
       campaign: document.getElementById('campaign'),
       budget: document.getElementById('budget'),
+      actualSpend: document.getElementById('actualSpend'),
       time: document.getElementById('time'),
       audience: document.getElementById('audience'),
       desired: document.getElementById('desired'),
@@ -452,6 +469,7 @@
       kpiMonth: document.getElementById('kpi-month'),
       kpiBudget: document.getElementById('kpi-budget'),
       kpiProposed: document.getElementById('kpi-proposed'),
+      kpiActual: document.getElementById('kpi-actual'),
       kpiVar: document.getElementById('kpi-var'),
       adjustBudgetBtn: document.getElementById('adjustBudgetBtn'),
 
@@ -498,6 +516,7 @@
       m_time: document.getElementById('m_time'),
       m_campaign: document.getElementById('m_campaign'),
       m_budget: document.getElementById('m_budget'),
+      m_spend: document.getElementById('m_spend'),
       m_save: document.getElementById('m_save'),
       m_cancel: document.getElementById('m_cancel'),
 
@@ -594,6 +613,7 @@
           els.platform.value = xp.platform || '';
           els.campaign.value = xp.campaign || '';
           els.budget.value = isFinite(xp.budget) ? xp.budget : '';
+          if (els.actualSpend) els.actualSpend.value = isFinite(xp.spend) ? xp.spend : '';
           els.time.value = xp.time || '';
           els.audience.value = xp.audience || '';
           els.desired.value = xp.desired || '';
@@ -645,7 +665,7 @@
         textColor: txt,
         extendedProps: {
           channel: ev.channel, platform: ev.platform, campaign: ev.campaign,
-          budget: ev.budget, time: ev.time, audience: ev.audience, desired: ev.desired, goal: ev.goal, notes: ev.notes,
+          budget: ev.budget, spend: ev.spend, time: ev.time, audience: ev.audience, desired: ev.desired, goal: ev.goal, notes: ev.notes,
           postedSocial: ev.postedSocial, flyerPosted: ev.flyerPosted, eblastSent: ev.eblastSent,
           graphicRequestedAt: ev.graphicRequestedAt, flyerUrl: ev.flyerUrl
         }
@@ -706,6 +726,7 @@
       const start = els.start.value; const end = els.end.value || els.start.value;
       if (!title || !start){ alert('Title and Start date are required.'); return null; }
       const budget = parseFloat(els.budget.value);
+      const spend = parseFloat(els.actualSpend?.value);
       return {
         title,
         start,
@@ -714,6 +735,7 @@
         platform: els.platform.value.trim(),
         campaign: els.campaign.value.trim(),
         budget: isFinite(budget) ? Math.round(budget*100)/100 : 0,
+        spend: isFinite(spend) ? Math.round(spend*100)/100 : 0,
         time: els.time.value,
         audience: els.audience.value.trim(),
         desired: els.desired.value,
@@ -726,7 +748,7 @@
       };
     }
 
-    function clearForm(){ els.title.value=''; els.start.value=''; els.end.value=''; els.channel.value=''; els.platform.value=''; els.campaign.value=''; els.budget.value=''; els.time.value=''; els.audience.value=''; els.desired.value=''; els.goal.value=''; els.notes.value=''; if(els.flyerUrl) els.flyerUrl.value=''; els.postedSocial.checked=false; els.flyerPosted.checked=false; els.eblastSent.checked=false; }
+    function clearForm(){ els.title.value=''; els.start.value=''; els.end.value=''; els.channel.value=''; els.platform.value=''; els.campaign.value=''; els.budget.value=''; if(els.actualSpend) els.actualSpend.value=''; els.time.value=''; els.audience.value=''; els.desired.value=''; els.goal.value=''; els.notes.value=''; if(els.flyerUrl) els.flyerUrl.value=''; els.postedSocial.checked=false; els.flyerPosted.checked=false; els.eblastSent.checked=false; }
 
     // Summary & Trends
     function updateSummary(){
@@ -736,9 +758,11 @@
       els.kpiMonth.textContent = monthLabel;
       const budget = monthlyBudgets[monthKey] || 0;
       const proposed = sumProposedForMonth(monthKey);
+      const actual = sumActualForMonth(monthKey);
       els.kpiBudget.textContent = currency(budget);
       if (els.kpiProposed) els.kpiProposed.textContent = currency(proposed);
-      if (els.kpiVar) els.kpiVar.textContent = currency(budget - proposed);
+      if (els.kpiActual) els.kpiActual.textContent = currency(actual);
+      if (els.kpiVar) els.kpiVar.textContent = currency(budget - actual);
       renderTrendChart();
     }
 
@@ -769,6 +793,15 @@
         if (!ev.start) continue;
         const k = ev.start.slice(0,7);
         if (k === ym) total += (ev.budget || 0);
+      }
+      return Math.round(total * 100) / 100;
+    }
+    function sumActualForMonth(ym){
+      let total = 0;
+      for (let ev of events){
+        if (!ev.start) continue;
+        const k = ev.start.slice(0,7);
+        if (k === ym) total += (ev.spend || 0);
       }
       return Math.round(total * 100) / 100;
     }
@@ -1166,6 +1199,7 @@
           if (list.length){ setActiveProperty(list[0]); } else { alert('No property assigned to this user.'); return; }
         }
         const budget = parseFloat(els.m_budget.value);
+        const spend = parseFloat(els.m_spend?.value);
         const payload = {
           title,
           start,
@@ -1174,6 +1208,7 @@
           platform: '',
           campaign: els.m_campaign.value,
           budget: isFinite(budget) ? Math.round(budget*100)/100 : 0,
+          spend: isFinite(spend) ? Math.round(spend*100)/100 : 0,
           time: els.m_time.value,
           audience: '',
           desired: '',
