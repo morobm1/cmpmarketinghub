@@ -291,6 +291,25 @@
   <script>
     const STORE_CURRENT_PROPERTY_KEY = 'mmp_current_property_v1';
     const STORE_CONTACTS_BY_PROP_KEY = 'mmp_contacts_by_property_v1';
+    const API_BASE = '/api';
+    async function apiJson(path, opts = {}){
+      const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers||{});
+      const res = await fetch(API_BASE + path, Object.assign({}, opts, { headers }));
+      if (!res.ok){ const t = await res.text(); throw new Error(t || ('HTTP '+res.status)); }
+      return res;
+    }
+    async function loadServerContacts(prop){
+      try{
+        const res = await apiJson(`/contacts?property=${encodeURIComponent(prop)}`);
+        const data = await res.json();
+        contactsByProperty[prop] = {
+          general: data.general || [],
+          partnerships: data.partnerships || [],
+          departments: data.departments || [],
+        };
+        saveStore();
+      }catch(e){ /* offline or server unavailable: keep local */ }
+    }
 
     // Highlight current tab
     (function(){
@@ -375,6 +394,8 @@
       localStorage.setItem(STORE_CURRENT_PROPERTY_KEY, currentProperty);
       ensurePropBucket();
       renderAll();
+      // Try to load from server and then re-render when available
+      loadServerContacts(currentProperty).then(()=>{ renderAll(); });
     }
 
     function fmtPhone(p){ return p||''; }
@@ -463,18 +484,21 @@
       if (delG){
         const arr = contactsByProperty[currentProperty].general;
         const idx = arr.findIndex(x => x.id === delG);
+        try{ await apiJson('/contacts', { method:'DELETE', body: JSON.stringify({ id: delG, property: currentProperty }) }); }catch(e){}
         if (idx >= 0){ arr.splice(idx,1); saveStore(); renderGeneral(); }
         return;
       }
       if (delP){
         const arr = contactsByProperty[currentProperty].partnerships;
         const idx = arr.findIndex(x => x.id === delP);
+        try{ await apiJson('/contacts', { method:'DELETE', body: JSON.stringify({ id: delP, property: currentProperty }) }); }catch(e){}
         if (idx >= 0){ arr.splice(idx,1); saveStore(); renderPartner(); }
         return;
       }
       if (delD){
         const arr = contactsByProperty[currentProperty].departments;
         const idx = arr.findIndex(x => x.id === delD);
+        try{ await apiJson('/contacts', { method:'DELETE', body: JSON.stringify({ id: delD, property: currentProperty }) }); }catch(e){}
         if (idx >= 0){ arr.splice(idx,1); saveStore(); renderDept(); }
         return;
       }
@@ -482,7 +506,12 @@
         const id = tog.getAttribute('data-toggle-flyer');
         const arr = contactsByProperty[currentProperty].partnerships;
         const idx = arr.findIndex(x => x.id === id);
-        if (idx >= 0){ arr[idx].allowedToFlyer = !arr[idx].allowedToFlyer; saveStore(); renderPartner(); }
+        if (idx >= 0){
+          const newVal = !arr[idx].allowedToFlyer;
+          try{ await apiJson('/contacts', { method:'PUT', body: JSON.stringify({ id, property: currentProperty, allowedToFlyer: newVal }) }); }catch(e){}
+          arr[idx].allowedToFlyer = newVal;
+          saveStore(); renderPartner();
+        }
         return;
       }
       if (addVisitBtn){
@@ -492,7 +521,10 @@
         if (!date) return;
         const arr = contactsByProperty[currentProperty].departments;
         const idx = arr.findIndex(x => x.id === id);
-        if (idx >= 0){ arr[idx].visits = arr[idx].visits || []; arr[idx].visits.push(date); saveStore(); renderDept(); }
+        if (idx >= 0){
+          try{ await apiJson('/contacts', { method:'PUT', body: JSON.stringify({ id, property: currentProperty, pushVisit: date }) }); }catch(e){}
+          arr[idx].visits = arr[idx].visits || []; arr[idx].visits.push(date); saveStore(); renderDept();
+        }
         return;
       }
     });
@@ -503,9 +535,8 @@
     els.addDeptBtn.onclick = ()=>{ clearDeptForm(); els.modalDept.style.display='flex'; };
 
     // Save handlers
-    els.g_save.onclick = ()=>{
-      const it = {
-        id: 'g_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    els.g_save.onclick = async ()=>{
+      const base = {
         name: els.g_name.value.trim(),
         business: els.g_business.value.trim(),
         title: els.g_title.value.trim(),
@@ -513,16 +544,21 @@
         phone: els.g_phone.value.trim(),
         email: els.g_email.value.trim(),
         address: els.g_address.value.trim(),
-        createdAt: new Date().toISOString(),
       };
-      if (!it.name && !it.business){ alert('Provide at least a Name or Business'); return; }
-      contactsByProperty[currentProperty].general.push(it);
+      if (!base.name && !base.business){ alert('Provide at least a Name or Business'); return; }
+      try{
+        const res = await apiJson('/contacts', { method:'POST', body: JSON.stringify({ property: currentProperty, type:'general', ...base }) });
+        const { id } = await res.json();
+        contactsByProperty[currentProperty].general.push({ id, type:'general', property: currentProperty, ...base, createdAt: new Date().toISOString() });
+      }catch(err){
+        const it = { id: 'g_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6), ...base, createdAt: new Date().toISOString() };
+        contactsByProperty[currentProperty].general.push(it);
+      }
       saveStore(); renderGeneral(); els.modalGeneral.style.display='none';
     };
 
-    els.p_save.onclick = ()=>{
-      const it = {
-        id: 'p_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    els.p_save.onclick = async ()=>{
+      const base = {
         business: els.p_business.value.trim(),
         targetAudience: els.p_target.value.trim(),
         distance: els.p_distance.value.trim(),
@@ -531,17 +567,22 @@
         email: els.p_email.value.trim(),
         address: els.p_address.value.trim(),
         allowedToFlyer: els.p_allowed.classList.contains('on'),
-        createdAt: new Date().toISOString(),
       };
-      if (!it.business){ alert('Business is required'); return; }
-      contactsByProperty[currentProperty].partnerships.push(it);
+      if (!base.business){ alert('Business is required'); return; }
+      try{
+        const res = await apiJson('/contacts', { method:'POST', body: JSON.stringify({ property: currentProperty, type:'partnership', ...base }) });
+        const { id } = await res.json();
+        contactsByProperty[currentProperty].partnerships.push({ id, type:'partnership', property: currentProperty, ...base, createdAt: new Date().toISOString() });
+      }catch(err){
+        const it = { id: 'p_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6), ...base, createdAt: new Date().toISOString() };
+        contactsByProperty[currentProperty].partnerships.push(it);
+      }
       saveStore(); renderPartner(); els.modalPartner.style.display='none';
     };
 
-    els.d_save.onclick = ()=>{
+    els.d_save.onclick = async ()=>{
       const firstVisit = els.d_visit.value ? [els.d_visit.value] : [];
-      const it = {
-        id: 'd_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+      const base = {
         university: els.d_university.value.trim(),
         department: els.d_department.value.trim(),
         poc: els.d_poc.value.trim(),
@@ -552,10 +593,16 @@
         relationshipNature: els.d_relationship.value.trim(),
         healthRating: parseInt(els.d_health.value,10)||3,
         status: els.d_status.value,
-        createdAt: new Date().toISOString(),
       };
-      if (!it.university || !it.department){ alert('University and Department are required'); return; }
-      contactsByProperty[currentProperty].departments.push(it);
+      if (!base.university || !base.department){ alert('University and Department are required'); return; }
+      try{
+        const res = await apiJson('/contacts', { method:'POST', body: JSON.stringify({ property: currentProperty, type:'department', ...base }) });
+        const { id } = await res.json();
+        contactsByProperty[currentProperty].departments.push({ id, type:'department', property: currentProperty, ...base, createdAt: new Date().toISOString() });
+      }catch(err){
+        const it = { id: 'd_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6), ...base, createdAt: new Date().toISOString() };
+        contactsByProperty[currentProperty].departments.push(it);
+      }
       saveStore(); renderDept(); els.modalDept.style.display='none';
     };
 
