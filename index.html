@@ -45,64 +45,20 @@
     const els = { username: document.getElementById('username'), password: document.getElementById('password'), loginBtn: document.getElementById('loginBtn'), error: document.getElementById('error'), togglePw: document.getElementById('togglePw') };
     if (els.togglePw){ els.togglePw.addEventListener('change', ()=>{ els.password.type = els.togglePw.checked ? 'text' : 'password'; }); }
 
-    // Local fallback auth (same storage scheme as app)
-    const STORE_USERS_KEY = 'mmp_users_v1';
-    const STORE_CURRENT_USER_KEY = 'mmp_current_user_v1';
-    const STORE_LOGIN_TIME_KEY = 'mmp_login_time_v1';
-    const SESSION_TTL_MS = 8 * 60 * 60 * 1000; // 8 hours
-
-    let users = {};
-
-    async function sha256Hex(str){
-      try{
-        if (window.crypto && window.crypto.subtle){
-          const data = new TextEncoder().encode(str);
-          const hash = await window.crypto.subtle.digest('SHA-256', data);
-          return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
-        }
-      }catch(e){ /* ignore */ }
-      return 'plain:' + str;
-    }
-    function loadUsers(){ try{ users = JSON.parse(localStorage.getItem(STORE_USERS_KEY)||'{}'); }catch(e){ users = {}; } }
-    function saveUsers(){ try{ localStorage.setItem(STORE_USERS_KEY, JSON.stringify(users)); }catch(e){} }
-    async function ensureAdminSeed(){
-      if (!users['morobm1']){
-        const hash = await sha256Hex('Admin0701!');
-        users['morobm1'] = { passwordHash: hash, role: 'admin', properties: '*' };
-        saveUsers();
-      }
-    }
-
-    async function localLogin(username, password){
-      loadUsers();
-      const u = users[username];
-      if (!u) return false;
-      const h = await sha256Hex(password);
-      if (h !== u.passwordHash) return false;
-      try{ localStorage.setItem(STORE_CURRENT_USER_KEY, username); }catch(e){}
-      try{ localStorage.setItem(STORE_LOGIN_TIME_KEY, String(Date.now())); }catch(e){}
-      return true;
-    }
+    // Server-backed auth only; no localStorage fallback
 
     async function doLogin(){
       els.error.style.display = 'none';
       const username = (els.username.value||'').trim();
       const password = els.password.value||'';
       if (!username || !password){ els.error.textContent = 'Enter username and password'; els.error.style.display=''; return; }
-      // Try server login first (sets HttpOnly cookie on success)
       try{
         const res = await fetch('/api/auth-login', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ username, password }) });
-        if (res.ok){
-          window.location.href = 'mmp_calendar_app.html';
-          return;
-        }
-      }catch(e){ /* fall through to local */ }
-      // Fallback to localStorage-based auth (matches admin/app behavior)
-      await ensureAdminSeed();
-      if (await localLogin(username, password)){
-        window.location.href = 'mmp_calendar_app.html';
-      } else {
+        if (res.ok){ window.location.href = 'mmp_calendar_app.html'; return; }
         els.error.textContent = 'Invalid credentials';
+        els.error.style.display = '';
+      }catch(e){
+        els.error.textContent = 'Login failed';
         els.error.style.display = '';
       }
     }
@@ -110,19 +66,9 @@
     els.loginBtn.addEventListener('click', doLogin);
     document.addEventListener('keydown', (e)=>{ if (e.key === 'Enter') doLogin(); });
 
-    // If already logged in via cookie or local session, redirect to app
+    // If already logged in via cookie, redirect to app
     (async function(){
-      loadUsers();
-      await ensureAdminSeed();
-      try{ const me = await fetch('/api/me'); if (me.ok){ window.location.href = 'mmp_calendar_app.html'; return; } }catch(e){}
-      try{
-        const savedUser = (localStorage.getItem(STORE_CURRENT_USER_KEY)||'').trim();
-        const loginTime = parseInt(localStorage.getItem(STORE_LOGIN_TIME_KEY)||'0', 10) || 0;
-        if (savedUser && users[savedUser] && loginTime && (Date.now() - loginTime) < SESSION_TTL_MS){
-          window.location.href = 'mmp_calendar_app.html';
-          return;
-        }
-      }catch(e){}
+      try{ const me = await fetch('/api/me'); if (me.ok){ window.location.href = 'mmp_calendar_app.html'; } }catch(e){}
     })();
   </script>
 </body>
