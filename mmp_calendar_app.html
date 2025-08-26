@@ -324,6 +324,13 @@
         </div>
       </section>
 
+      <section class="card" id="auditCard">
+        <h3>Audit</h3>
+        <div class="content">
+          <div id="auditRows"></div>
+        </div>
+      </section>
+
       <section class="card">
         <h3>Monthly Summary</h3>
         <div class="content">
@@ -727,7 +734,7 @@
           els.saveBtn.textContent = 'Update Event';
           els.deleteBtn.disabled = false;
         },
-        datesSet: () => { updateSummary(); },
+        datesSet: () => { updateSummary(); renderAudit(); },
       });
       calendar.render();
     }
@@ -738,6 +745,7 @@
       calendar.removeAllEvents();
       for (let ev of events){ if (!isEventVisible(ev)) continue; calendar.addEvent(toFcEvent(ev)); }
       updateSummary();
+      renderAudit();
     }
 
     function toFcEvent(ev){
@@ -903,6 +911,69 @@
           plugins:{ legend:{ labels:{ color:'#ddd' } } }
         }
       });
+    }
+
+    // Audit helpers and rendering
+    function getWeekBounds(now){
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const day = d.getDay(); // 0=Sun
+      const start = new Date(d); start.setDate(d.getDate() - day); start.setHours(0,0,0,0);
+      const end = new Date(start); end.setDate(start.getDate()+6); end.setHours(23,59,59,999);
+      return { start, end };
+    }
+    function isIsoInRange(iso, start, end){ if (!iso) return false; const dt = new Date(iso + 'T00:00:00'); return dt >= start && dt <= end; }
+    function sameMonthYMD(iso, y, m0){ if (!iso) return false; const d = new Date(iso + 'T00:00:00'); return d.getFullYear()===y && d.getMonth()===m0; }
+    function renderAudit(){
+      const wrap = document.getElementById('auditRows'); if (!wrap){ return; }
+      const today = new Date(); const { start:ws, end:we } = getWeekBounds(today);
+      const view = calendar?.view; const vStart = view?.currentStart || new Date(); const y=vStart.getFullYear(), m0=vStart.getMonth();
+      const lower = s => String(s||'').toLowerCase();
+      const isStory = e => /story/.test(lower(e.campaign));
+      const isGrid = e => /social\s*media\s*post/.test(lower(e.campaign)) && !/story/.test(lower(e.campaign));
+      const isGiveaway = e => /giveaway/.test(lower(e.campaign));
+      const isEventEvt = e => /event/.test(lower(e.campaign));
+      const isOnCampus = e => /on[-\s]?campus/.test(lower(e.campaign));
+      const isCrossMkt = e => /cross[-\s]?marketing|partnership|scholarship/.test(lower(e.campaign));
+
+      let wStories=0, wGrid=0, wGive=0;
+      let mEvents=0, mOnCampus=0, mCross=0, mFlyer=0;
+
+      for (const e of events){
+        // Weekly counts (by event start)
+        if (isIsoInRange(e.start, ws, we)){
+          if (isStory(e)) wStories++;
+          if (isGrid(e)) wGrid++;
+          if (isGiveaway(e)) wGive++;
+        }
+        // Monthly counts
+        if (sameMonthYMD(e.start, y, m0)){
+          if (isEventEvt(e)) mEvents++;
+          if (isOnCampus(e)) mOnCampus++;
+          if (isCrossMkt(e)) mCross++;
+        }
+        // Monthly flyering by checklist date
+        if (sameMonthYMD(e.flyerPostedAt, y, m0)) mFlyer++;
+      }
+
+      const req = {
+        weekly: { stories: 3, grid: 1, giveaway: 1 },
+        monthly: { events: 2, onCampus: 2, cross: 1, flyer: 4 }
+      };
+      const rows = [
+        { label: 'Social Stories (week)', have:wStories, need:req.weekly.stories },
+        { label: 'Grid Posts (week)', have:wGrid, need:req.weekly.grid },
+        { label: 'Giveaways (week, optional)', have:wGive, need:req.weekly.giveaway },
+        { label: 'Events (month, optional)', have:mEvents, need:req.monthly.events },
+        { label: 'On-Campus shifts (month)', have:mOnCampus, need:req.monthly.onCampus },
+        { label: 'Cross-marketing events (month)', have:mCross, need:req.monthly.cross },
+        { label: 'Flyering shifts (month)', have:mFlyer, need:req.monthly.flyer },
+      ];
+      const html = rows.map(r => {
+        const pct = r.need ? Math.max(0, Math.min(100, Math.round((r.have/r.need)*100))) : 100;
+        const bar = `<div style="flex:1;height:10px;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:999px;overflow:hidden"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#52d5ff,#446472)"></div></div>`;
+        return `<div class="audit-row" style="display:flex;align-items:center;gap:10px"><div class="label" style="flex:0 0 280px;color:#374151;font-size:13px">${r.label}</div>${bar}<div class="val" style="flex:0 0 auto;width:120px;text-align:right;font-weight:800;color:#111827">${r.have}/${r.need} (${pct}%)</div></div>`;
+      }).join('');
+      wrap.innerHTML = html;
     }
 
     // Auth & Users Management
