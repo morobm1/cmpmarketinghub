@@ -863,7 +863,7 @@
       }
       if (!els.budgetYear.options.length){ initBudgetUI(); }
       if (els.adminPanel) els.adminPanel.style.display = currentUser && currentUser.role==='admin' ? '' : 'none';
-      if (calendar) refreshCalendar();
+      if (!SESSION_ACTIVE && calendar) refreshCalendar();
     }
 
     // Monthly budgets management
@@ -999,8 +999,8 @@
       try{ localStorage.setItem(STORE_CURRENT_PROPERTY_KEY, currentProperty); }catch(e){}
       if (SESSION_ACTIVE){
         (async () => {
-          try{ const bres = await apiFetch(`/budgets?property=${encodeURIComponent(currentProperty)}`); monthlyBudgets = await bres.json(); }catch(e){ monthlyBudgets = {}; }
-          try{ const eres = await apiFetch(`/events?property=${encodeURIComponent(currentProperty)}`); events = await eres.json(); }catch(e){ events = []; }
+          try{ const bres = await apiFetch(`/budgets?property=${encodeURIComponent(currentProperty)}`); monthlyBudgets = await bres.json(); }catch(e){ /* leave existing monthlyBudgets */ }
+          try{ const eres = await apiFetch(`/events?property=${encodeURIComponent(currentProperty)}`); events = await eres.json(); }catch(e){ /* leave existing events */ }
           if (els.budgetYear) { renderBudgetInputs(parseInt(els.budgetYear.value, 10)); }
           if (calendar) refreshCalendar();
         })();
@@ -1024,14 +1024,15 @@
     }
     async function initProperties(){
       await loadProperties();
-      try{ eventsByProperty = JSON.parse(localStorage.getItem(STORE_EVENTS_BY_PROP_KEY)||'{}'); }catch(e){ eventsByProperty = {}; }
-      try{ budgetsByProperty = JSON.parse(localStorage.getItem(STORE_BUDGETS_BY_PROP_KEY)||'{}'); }catch(e){ budgetsByProperty = {}; }
+      // Only use localStorage data when not authenticated; otherwise rely on server fetch
+      if (!SESSION_ACTIVE){
+        try{ eventsByProperty = JSON.parse(localStorage.getItem(STORE_EVENTS_BY_PROP_KEY)||'{}'); }catch(e){ eventsByProperty = {}; }
+        try{ budgetsByProperty = JSON.parse(localStorage.getItem(STORE_BUDGETS_BY_PROP_KEY)||'{}'); }catch(e){ budgetsByProperty = {}; }
+      }
       const saved = (localStorage.getItem(STORE_CURRENT_PROPERTY_KEY) || '').trim();
       const list = (typeof getAccessibleProperties === 'function') ? getAccessibleProperties() : properties.slice();
       currentProperty = list.includes(saved) ? saved : list[0];
-      migrateLegacyIfNeeded();
-      loadStore();
-      loadBudgetStore();
+      if (!SESSION_ACTIVE){ migrateLegacyIfNeeded(); loadStore(); loadBudgetStore(); }
       renderPropertyOptions();
       if (els.propertySelect){
         els.propertySelect.value = currentProperty;
