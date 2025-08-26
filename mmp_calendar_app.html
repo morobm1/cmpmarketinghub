@@ -606,6 +606,7 @@
     els.saveBtn.addEventListener('click', async () => {
       const payload = readForm();
       if (!payload) return;
+      if (!currentProperty){ alert('Select a property first.'); return; }
       try{
         if (!SESSION_ACTIVE){ showLogin(); return; }
         if (selectedEventId){
@@ -625,6 +626,7 @@
 
     els.deleteBtn.addEventListener('click', async () => {
       if (!selectedEventId) return;
+      if (!currentProperty){ alert('Select a property first.'); return; }
       try{
         if (!SESSION_ACTIVE){ showLogin(); return; }
         await apiFetch('/events', { method:'DELETE', body: JSON.stringify({ id: selectedEventId, property: currentProperty }) }); const res = await apiFetch(`/events?property=${encodeURIComponent(currentProperty)}`); events = await res.json();
@@ -854,6 +856,10 @@
       if (list.length){
         if (els.propertySelect){ els.propertySelect.value = list[0]; }
         setActiveProperty(list[0]);
+      } else {
+        if (els.propertySelect){ els.propertySelect.innerHTML = ''; }
+        alert('No properties are assigned to your account. Contact an admin to grant access.');
+        return;
       }
       if (!els.budgetYear.options.length){ initBudgetUI(); }
       if (els.adminPanel) els.adminPanel.style.display = currentUser && currentUser.role==='admin' ? '' : 'none';
@@ -928,7 +934,16 @@
     function clearYear(year){ for (let i=1;i<=12;i++){ const ym = `${year}-${String(i).padStart(2,'0')}`; delete monthlyBudgets[ym]; } saveBudgetStore(); }
 
     // Properties helpers
-    function loadProperties(){
+    async function loadProperties(){
+      if (SESSION_ACTIVE){
+        try{
+          const res = await fetch('/api/properties');
+          const list = await res.json();
+          properties = (list||[]).map(x => x.name).filter(Boolean);
+          if (!properties.length){ throw new Error('empty'); }
+          return;
+        }catch(e){ /* fall through to static seed */ }
+      }
       properties = [
         'M@College',
         'Blattner Hall (75 Arkansas)',
@@ -1002,7 +1017,7 @@
       els.deleteBtn.disabled = true;
       clearForm();
       // re-render budgets and calendar
-      if (!getToken()){
+      if (!SESSION_ACTIVE){
         if (els.budgetYear && els.budgetYear.options.length) { renderBudgetInputs(parseInt(els.budgetYear.value, 10)); }
         if (calendar) refreshCalendar();
       }
