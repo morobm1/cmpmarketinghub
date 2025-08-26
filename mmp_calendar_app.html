@@ -291,6 +291,14 @@
             <div class="mini">Paste the public link to the flyer asset.</div>
           </div>
         </div>
+        <div class="row" style="margin-top:6px">
+          <div>
+            <label for="flyerFile">Upload Flyer (PDF or image)</label>
+            <input id="flyerFile" type="file" accept="application/pdf,image/*" />
+            <div class="mini">Local preview only. To save, paste a public link above.</div>
+            <div id="flyerPreview" style="margin-top:8px"></div>
+          </div>
+        </div>
       </div>
 
           </aside>
@@ -553,6 +561,8 @@
       addToCalendarBtn: document.getElementById('addToCalendarBtn'),
       graphicStatus: document.getElementById('graphicStatus'),
       flyerUrl: document.getElementById('flyerUrl'),
+      flyerFile: document.getElementById('flyerFile'),
+      flyerPreview: document.getElementById('flyerPreview'),
       requestModal: document.getElementById('requestModal'),
       req_submit: document.getElementById('req_submit'),
       req_close: document.getElementById('req_close'),
@@ -702,6 +712,7 @@
             }
           }
           if (els.flyerUrl) els.flyerUrl.value = xp.flyerUrl || '';
+          if (els.flyerPreview) els.flyerPreview.innerHTML = buildFlyerPreviewHtml(xp.flyerUrl || '');
           if (els.eventDetailsHeader) els.eventDetailsHeader.style.display = '';
           if (els.eventDetailsContent) els.eventDetailsContent.style.display = '';
           els.saveBtn.textContent = 'Update Event';
@@ -1393,10 +1404,27 @@
       els.flyerUrl.addEventListener('change', async ()=>{
         if (!selectedEventId) return;
         const url = (els.flyerUrl.value||'').trim();
+        if (els.flyerPreview) els.flyerPreview.innerHTML = buildFlyerPreviewHtml(url);
         try{
           if (SESSION_ACTIVE){ await apiFetch('/events', { method:'PUT', body: JSON.stringify({ id: selectedEventId, property: currentProperty, flyerUrl: url }) }); }
           else { const idx = events.findIndex(e => String(e.id) === String(selectedEventId)); if (idx >= 0){ events[idx].flyerUrl = url; saveStore(); } }
         }catch(e){ alert('Saving flyer URL failed: '+e.message); }
+      });
+    }
+    if (els.flyerFile){
+      els.flyerFile.addEventListener('change', ()=>{
+        const f = els.flyerFile.files && els.flyerFile.files[0];
+        const prev = els.flyerPreview;
+        if (!prev){ return; }
+        if (!f){ prev.innerHTML = ''; return; }
+        const blobUrl = URL.createObjectURL(f);
+        if (f.type === 'application/pdf'){
+          prev.innerHTML = `<iframe src="${blobUrl}" style="width:100%;height:280px;border:1px solid var(--border);border-radius:8px"></iframe>`;
+        } else if ((f.type||'').startsWith('image/')){
+          prev.innerHTML = `<img src="${blobUrl}" alt="Flyer preview" style="max-width:100%;max-height:280px;border:1px solid var(--border);border-radius:8px" />`;
+        } else {
+          prev.innerHTML = `<a href="${blobUrl}" target="_blank" rel="noopener">Open file</a>`;
+        }
       });
     }
 
