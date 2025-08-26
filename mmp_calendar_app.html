@@ -103,7 +103,7 @@
     button{ background:#446472; color:#ffffff; border:1px solid #3b5561 }
     button.secondary{ background:#ffffff; color:#111827; border:1px solid #d1d5db }
     button.warn{ background:#ffb732; color:#1f1300; border-color:#ffb732 }
-    button.good{ background:linear-gradient(180deg, #52d5ff, #446472); color:#ffffff; border-color:#3b5561 }
+    button.good{ background:#446472; color:#ffffff; border-color:#3b5561 }
 
     #calendar{ background:#ffffff; border:1px solid var(--border); box-shadow:0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04) }
 
@@ -260,11 +260,9 @@
         </div>
         <div class="row">
           <button id="saveBtn" class="good">Add Event</button>
-          <button id="clearBtn" class="secondary">Clear</button>
         </div>
         <div class="row" style="margin-top:6px">
           <button id="deleteBtn" class="warn" disabled>Delete Selected</button>
-          <button id="exportBtn" class="secondary">Export CSV</button>
         </div>
         <div class="row" style="margin-top:6px">
           <button id="openRequestModalBtn" class="secondary">Graphic Request</button>
@@ -280,8 +278,7 @@
         </div>
       </div>
 
-      <div class="content mini">Data stays in your browser (localStorage). Nothing is uploaded.</div>
-    </aside>
+          </aside>
 
     <main style="display:flex; flex-direction:column; gap:16px">
       <section class="card">
@@ -400,6 +397,14 @@
           <input id="m_spend" type="number" step="0.01" placeholder="0.00" />
         </div>
       </div>
+      <div class="row">
+        <div>
+          <label for="m_flyer">Flyer URL (PDF or image)</label>
+          <input id="m_flyer" type="url" placeholder="https://link.to/flyer.pdf or image" />
+          <div class="mini">Paste the public link to the flyer asset.</div>
+          <div id="m_flyerPreview" style="margin-top:8px"></div>
+        </div>
+      </div>
       <div class="actions">
         <button id="m_cancel" class="secondary">Cancel</button>
         <button id="m_save" class="good">Save Event</button>
@@ -509,9 +514,7 @@
       goal: document.getElementById('goal'),
       notes: document.getElementById('notes'),
       saveBtn: document.getElementById('saveBtn'),
-      clearBtn: document.getElementById('clearBtn'),
       deleteBtn: document.getElementById('deleteBtn'),
-      exportBtn: document.getElementById('exportBtn'),
 
       calendar: document.getElementById('calendar'),
 
@@ -566,6 +569,8 @@
       m_campaign: document.getElementById('m_campaign'),
       m_budget: document.getElementById('m_budget'),
       m_spend: document.getElementById('m_spend'),
+      m_flyer: document.getElementById('m_flyer'),
+      m_flyerPreview: document.getElementById('m_flyerPreview'),
       m_save: document.getElementById('m_save'),
       m_cancel: document.getElementById('m_cancel'),
 
@@ -743,8 +748,7 @@
       refreshCalendar();
     });
 
-    els.clearBtn.addEventListener('click', () => { clearForm(); selectedEventId = null; els.saveBtn.textContent = 'Add Event'; els.deleteBtn.disabled = true; });
-
+    
     els.deleteBtn.addEventListener('click', async () => {
       if (!selectedEventId) return;
       if (!currentProperty){ alert('Select a property first.'); return; }
@@ -755,19 +759,7 @@
       selectedEventId = null; clearForm(); els.saveBtn.textContent = 'Add Event'; els.deleteBtn.disabled = true; refreshCalendar();
     });
 
-    els.exportBtn.addEventListener('click', () => {
-      const headers = ['Title','Start','End','Time of Event','Channel','Platform','Campaign','Budget','Intended Audience','Desired Action','Goal','Desciption of Event','Posted on social','flyer posted','eblast sent'];
-      const escapeCsv = (v) => '"' + String(v ?? '').replace(/"/g,'""') + '"';
-      const rowsCsv = events.map(e => [e.title, e.start, e.end, e.time, e.channel, e.platform, e.campaign, e.budget, e.audience, e.desired, e.goal, e.notes, e.postedSocial, e.flyerPosted, e.eblastSent].map(escapeCsv).join(','));
-      const csv = [headers.join(','), ...rowsCsv].join('\r\n');
-      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'events.csv';
-      a.click();
-      URL.revokeObjectURL(a.href);
-    });
-
+    
     function currency(n){ if (!isFinite(n)) return '$0'; return '$' + n.toLocaleString(undefined, {maximumFractionDigits:2}); }
 
     function readForm(){
@@ -1231,6 +1223,8 @@
       els.m_time.value = '';
       els.m_campaign.value = '';
       els.m_budget.value = '';
+      if (els.m_flyer) els.m_flyer.value = '';
+      if (els.m_flyerPreview) els.m_flyerPreview.innerHTML = '';
       els.eventModal.style.display = 'flex';
     }
     function closeEventModal(){ els.eventModal.style.display = 'none'; }
@@ -1264,6 +1258,7 @@
           desired: '',
           goal: '',
           notes: '',
+          flyerUrl: (els.m_flyer?.value || '').trim(),
           postedSocial: false,
           flyerPosted: false,
           eblastSent: false,
@@ -1282,6 +1277,24 @@
           closeEventModal();
         }catch(err){ alert('Save failed: '+err.message); }
       });
+    }
+
+    function buildFlyerPreviewHtml(url){
+      const u = (url||'').trim();
+      if (!u) return '';
+      const lower = u.toLowerCase();
+      if (lower.endsWith('.pdf')){
+        return `<iframe src="${u}" style="width:100%;height:280px;border:1px solid var(--border);border-radius:8px"></iframe>`;
+      }
+      if (/(png|jpg|jpeg|gif|webp|svg)$/i.test(lower)){
+        return `<img src="${u}" alt="Flyer preview" style="max-width:100%;max-height:280px;border:1px solid var(--border);border-radius:8px" />`;
+      }
+      return `<a href="${u}" target="_blank" rel="noopener">Open flyer</a>`;
+    }
+    if (els.m_flyer){
+      const upd = ()=>{ if (els.m_flyerPreview) els.m_flyerPreview.innerHTML = buildFlyerPreviewHtml(els.m_flyer.value); };
+      els.m_flyer.addEventListener('input', upd);
+      els.m_flyer.addEventListener('change', upd);
     }
 
     if (els.adjustBudgetBtn){
