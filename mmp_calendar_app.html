@@ -267,9 +267,18 @@
           <div>
             <label>Property Checklist</label>
             <div class="row" style="gap:12px">
-              <label style="display:flex;align-items:center;gap:6px;flex:0 0 auto"><input id="postedSocial" type="checkbox" /> Posted on social</label>
-              <label style="display:flex;align-items:center;gap:6px;flex:0 0 auto"><input id="flyerPosted" type="checkbox" /> flyer posted</label>
-              <label style="display:flex;align-items:center;gap:6px;flex:0 0 auto"><input id="eblastSent" type="checkbox" /> eblast sent</label>
+              <div style="flex:1">
+                <label for="postedSocialAt">Social post date</label>
+                <input id="postedSocialAt" type="date" />
+              </div>
+              <div style="flex:1">
+                <label for="flyerPostedAt">Flyer posted date</label>
+                <input id="flyerPostedAt" type="date" />
+              </div>
+              <div style="flex:1">
+                <label for="eblastSentAt">Eblast sent date</label>
+                <input id="eblastSentAt" type="date" />
+              </div>
             </div>
           </div>
         </div>
@@ -599,9 +608,9 @@
       m_save: document.getElementById('m_save'),
       m_cancel: document.getElementById('m_cancel'),
 
-      postedSocial: document.getElementById('postedSocial'),
-      flyerPosted: document.getElementById('flyerPosted'),
-      eblastSent: document.getElementById('eblastSent'),
+      postedSocialAt: document.getElementById('postedSocialAt'),
+      flyerPostedAt: document.getElementById('flyerPostedAt'),
+      eblastSentAt: document.getElementById('eblastSentAt'),
 
       reqName: document.getElementById('reqName'),
       reqEmail: document.getElementById('reqEmail'),
@@ -698,9 +707,9 @@
           els.desired.value = xp.desired || '';
           els.goal.value = xp.goal || '';
           els.notes.value = xp.notes || '';
-          els.postedSocial.checked = !!xp.postedSocial;
-          els.flyerPosted.checked = !!xp.flyerPosted;
-          els.eblastSent.checked = !!xp.eblastSent;
+          if (els.postedSocialAt) els.postedSocialAt.value = xp.postedSocialAt ? String(xp.postedSocialAt).slice(0,10) : '';
+          if (els.flyerPostedAt) els.flyerPostedAt.value = xp.flyerPostedAt ? String(xp.flyerPostedAt).slice(0,10) : '';
+          if (els.eblastSentAt) els.eblastSentAt.value = xp.eblastSentAt ? String(xp.eblastSentAt).slice(0,10) : '';
           if (els.graphicStatus){
             if (xp.graphicRequestedAt){
               const dt = new Date(xp.graphicRequestedAt);
@@ -746,7 +755,7 @@
         extendedProps: {
           channel: ev.channel, platform: ev.platform, campaign: ev.campaign,
           budget: ev.budget, spend: ev.spend, time: ev.time, audience: ev.audience, desired: ev.desired, goal: ev.goal, notes: ev.notes,
-          postedSocial: ev.postedSocial, flyerPosted: ev.flyerPosted, eblastSent: ev.eblastSent,
+          postedSocialAt: ev.postedSocialAt, flyerPostedAt: ev.flyerPostedAt, eblastSentAt: ev.eblastSentAt,
           graphicRequestedAt: ev.graphicRequestedAt, flyerUrl: ev.flyerUrl
         }
       }
@@ -808,14 +817,14 @@
         desired: els.desired.value,
         goal: els.goal.value.trim(),
         notes: els.notes.value.trim(),
-        postedSocial: !!els.postedSocial.checked,
-        flyerPosted: !!els.flyerPosted.checked,
-        eblastSent: !!els.eblastSent.checked,
+        postedSocialAt: els.postedSocialAt?.value || '',
+        flyerPostedAt: els.flyerPostedAt?.value || '',
+        eblastSentAt: els.eblastSentAt?.value || '',
         flyerUrl: (els.flyerUrl?.value || '').trim(),
       };
     }
 
-    function clearForm(){ els.title.value=''; els.start.value=''; els.end.value=''; els.channel.value=''; els.platform.value=''; els.campaign.value=''; els.budget.value=''; if(els.actualSpend) els.actualSpend.value=''; els.time.value=''; els.audience.value=''; els.desired.value=''; els.goal.value=''; els.notes.value=''; if(els.flyerUrl) els.flyerUrl.value=''; els.postedSocial.checked=false; els.flyerPosted.checked=false; els.eblastSent.checked=false; }
+    function clearForm(){ els.title.value=''; els.start.value=''; els.end.value=''; els.channel.value=''; els.platform.value=''; els.campaign.value=''; els.budget.value=''; if(els.actualSpend) els.actualSpend.value=''; els.time.value=''; els.audience.value=''; els.desired.value=''; els.goal.value=''; els.notes.value=''; if(els.flyerUrl) els.flyerUrl.value=''; if(els.postedSocialAt) els.postedSocialAt.value=''; if(els.flyerPostedAt) els.flyerPostedAt.value=''; if(els.eblastSentAt) els.eblastSentAt.value=''; }
 
     // Summary & Trends
     function updateSummary(){
