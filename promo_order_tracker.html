@@ -52,7 +52,7 @@
 
     /* Modal */
     .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50}
-    .modal{background:#ffffff;border:1px solid var(--border);border-radius:12px;max-width:720px;width:96%;padding:14px; box-shadow:0 10px 30px rgba(0,0,0,0.2)}
+    .modal{background:#ffffff;border:1px solid var(--border);border-radius:12px;max-width:900px;width:96%;padding:14px; box-shadow:0 10px 30px rgba(0,0,0,0.2)}
     .modal h3{margin:0 0 10px 0;color:#374151;font-size:18px}
     .row{display:flex; gap:10px; align-items:flex-start; flex-wrap:wrap}
     .row > *{ flex:1 }
@@ -62,6 +62,9 @@
     .actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px }
 
     .status-select{ padding:6px 8px; border-radius:8px; border:1px solid #d1d5db; background:#ffffff }
+    .hint{ font-size:12px; color:#6b7280 }
+    .photo-preview{ border:1px solid #e5e7eb; border-radius:8px; padding:6px; min-height:80px; display:flex; align-items:center; justify-content:center; background:#fafafa }
+    .photo-preview img{ max-height:120px; max-width:100%; display:block }
   </style>
 </head>
 <body>
@@ -87,7 +90,7 @@
 
   <main class="container">
     <div class="toolbar">
-      <button id="newOrderBtn" class="btn primary">+ New Promo Order</button>
+      <button id="newOrderBtn" class="btn primary">+ Promo Order Request</button>
       <button id="emailRequestBtn" class="btn">Generate Email from Selected</button>
     </div>
 
@@ -100,10 +103,14 @@
               <tr>
                 <th></th>
                 <th>Title</th>
-                <th>Items</th>
-                <th>Needed by</th>
-                <th>Vendor</th>
-                <th>Est. Cost</th>
+                <th>List of Promo Request</th>
+                <th>Need by</th>
+                <th>Vendor Pref</th>
+                <th>Budget</th>
+                <th>Color</th>
+                <th>Quantity</th>
+                <th>Shipping Address</th>
+                <th>Photo</th>
                 <th>Status</th>
                 <th>Tracking #</th>
                 <th>Submitted</th>
@@ -117,23 +124,39 @@
     </section>
   </main>
 
-  <!-- New Order Modal -->
+  <!-- Promo Order Modal -->
   <div id="orderModal" class="modal-backdrop">
     <div class="modal">
-      <h3>New Promo Order</h3>
+      <h3>Promo Order Request</h3>
       <div class="row">
         <div><label for="o_title">Title</label><input id="o_title" type="text" placeholder="Short order title"></div>
-        <div><label for="o_needed">Needed by</label><input id="o_needed" type="date"></div>
+        <div>
+          <label for="o_needed">Need by</label>
+          <input id="o_needed" type="date">
+          <div class="hint">Please allow a minimum of 2–3 weeks depending on the promo order.</div>
+        </div>
       </div>
       <div class="row">
-        <div><label for="o_vendor">Vendor (optional)</label><input id="o_vendor" type="text" placeholder="Preferred vendor"></div>
-        <div><label for="o_cost">Est. Cost (optional)</label><input id="o_cost" type="number" step="0.01" placeholder="0.00"></div>
+        <div><label for="o_vendorPref">Vendor Preference</label><input id="o_vendorPref" type="text" placeholder="Preferred vendor"></div>
+        <div><label for="o_budget">Budget</label><input id="o_budget" type="number" step="0.01" placeholder="0.00"></div>
       </div>
       <div class="row">
-        <div><label for="o_items">Requested items</label><textarea id="o_items" placeholder="List requested promo items and quantities"></textarea></div>
+        <div><label for="o_items">List of Promo Request</label><textarea id="o_items" placeholder="List requested promo items and quantities"></textarea></div>
       </div>
       <div class="row">
-        <div><label for="o_notes">Notes</label><textarea id="o_notes" placeholder="Context, branding specs, delivery address..."></textarea></div>
+        <div>
+          <label for="o_photo">Photo (optional)</label>
+          <input id="o_photo" type="file" accept="image/*">
+          <div id="o_photoPreview" class="photo-preview" style="margin-top:6px"><span class="hint">No photo selected</span></div>
+        </div>
+        <div><label for="o_color">Color</label><input id="o_color" type="text" placeholder="e.g., Navy / PMS"></div>
+        <div><label for="o_quantity">Quantity</label><input id="o_quantity" type="number" step="1" min="0" placeholder="0"></div>
+      </div>
+      <div class="row">
+        <div><label for="o_shipAddress">Shipping Address</label><textarea id="o_shipAddress" placeholder="Street, City, State, Zip"></textarea></div>
+      </div>
+      <div class="row">
+        <div><label for="o_notes">Notes (optional)</label><textarea id="o_notes" placeholder="Branding specs, deadlines, special instructions..."></textarea></div>
       </div>
       <div class="actions">
         <button class="btn" id="o_cancel">Cancel</button>
@@ -158,9 +181,14 @@
       orderModal: document.getElementById('orderModal'),
       o_title: document.getElementById('o_title'),
       o_needed: document.getElementById('o_needed'),
-      o_vendor: document.getElementById('o_vendor'),
-      o_cost: document.getElementById('o_cost'),
+      o_vendorPref: document.getElementById('o_vendorPref'),
+      o_budget: document.getElementById('o_budget'),
       o_items: document.getElementById('o_items'),
+      o_photo: document.getElementById('o_photo'),
+      o_photoPreview: document.getElementById('o_photoPreview'),
+      o_color: document.getElementById('o_color'),
+      o_quantity: document.getElementById('o_quantity'),
+      o_shipAddress: document.getElementById('o_shipAddress'),
       o_notes: document.getElementById('o_notes'),
       o_cancel: document.getElementById('o_cancel'),
       o_email: document.getElementById('o_email'),
@@ -170,6 +198,7 @@
     let currentProperty = '';
     let ordersByProperty = {};
     let selectedOrderId = null;
+    let modalPhotoUrl = '';
 
     function saveStore(){ try{ localStorage.setItem(STORE_ORDERS_BY_PROP_KEY, JSON.stringify(ordersByProperty)); }catch(e){} }
     function loadStore(){ try{ ordersByProperty = JSON.parse(localStorage.getItem(STORE_ORDERS_BY_PROP_KEY)||'{}'); }catch(e){ ordersByProperty = {}; } }
@@ -194,13 +223,18 @@
         const checked = selectedOrderId === it.id ? 'checked' : '';
         const dt = it.submittedAt ? new Date(it.submittedAt).toLocaleDateString() : '';
         const statusSel = statusSelectHtml(it.id, it.status||'Submitted');
+        const img = it.photoUrl ? `<img src="${esc(it.photoUrl)}" alt="photo" style="max-height:40px;max-width:80px;border:1px solid #e5e7eb;border-radius:6px">` : '<span class="mini">—</span>';
         return `<tr>
           <td><input type="radio" name="sel" data-sel="${it.id}" ${checked}></td>
           <td>${esc(it.title)}</td>
           <td><div class="mini">${esc(it.items)}</div></td>
           <td>${esc(it.neededBy||'')}</td>
-          <td>${esc(it.vendor||'')}</td>
-          <td>${fmtMoney(it.cost)}</td>
+          <td>${esc(it.vendorPreference||'')}</td>
+          <td>${fmtMoney(it.budget)}</td>
+          <td>${esc(it.color||'')}</td>
+          <td>${esc(it.quantity||'')}</td>
+          <td><div class="mini">${esc(it.shippingAddress||'')}</div></td>
+          <td>${img}<div><button class="btn" data-change-photo="${it.id}" style="margin-top:6px;padding:6px 8px">Change</button></div></td>
           <td>${statusSel}</td>
           <td><input type="text" data-track="${it.id}" value="${esc(it.trackingNumber||'')}" placeholder="Enter tracking #" style="width:160px"></td>
           <td>${dt}</td>
@@ -221,22 +255,50 @@
     function fmtMoney(n){ const v = parseFloat(n); if (!isFinite(v) || v<=0) return ''; return '$'+v.toFixed(2); }
 
     // Modal helpers
-    function openOrderModal(){ els.o_title.value=''; els.o_needed.value=''; els.o_vendor.value=''; els.o_cost.value=''; els.o_items.value=''; els.o_notes.value=''; els.orderModal.style.display='flex'; }
+    function openOrderModal(){ modalPhotoUrl=''; els.o_title.value=''; els.o_needed.value=''; els.o_vendorPref.value=''; els.o_budget.value=''; els.o_items.value=''; els.o_color.value=''; els.o_quantity.value=''; els.o_shipAddress.value=''; els.o_notes.value=''; setPhotoPreview(''); els.orderModal.style.display='flex'; }
     function closeOrderModal(){ els.orderModal.style.display='none'; }
 
+    function setPhotoPreview(url){ if (!url){ els.o_photoPreview.innerHTML = '<span class="hint">No photo selected</span>'; } else { els.o_photoPreview.innerHTML = `<img src="${url}" alt="preview">`; } }
+
+    async function uploadPhoto(file){
+      if (!file) return '';
+      if (!currentProperty){ alert('Select a property first.'); return ''; }
+      try{
+        const qs = new URLSearchParams({ property: currentProperty, filename: file.name||'photo' });
+        const res = await fetch(`/api/upload-file?${qs}`, { method:'POST', headers:{ 'Content-Type': file.type||'application/octet-stream' }, body: file });
+        if (!res.ok){ const t = await res.text(); throw new Error(t||'Upload failed'); }
+        const { url } = await res.json();
+        return url;
+      }catch(e){ alert('Upload failed. The order will be saved without a photo.'); return ''; }
+    }
+
+    // Photo change in modal
+    els.o_photo.addEventListener('change', async ()=>{
+      const f = els.o_photo.files && els.o_photo.files[0];
+      if (!f){ setPhotoPreview(''); modalPhotoUrl=''; return; }
+      // Immediate local preview
+      const blobUrl = URL.createObjectURL(f); setPhotoPreview(blobUrl);
+      // Upload to server
+      const url = await uploadPhoto(f); if (url){ modalPhotoUrl = url; setPhotoPreview(url); }
+    });
+
     // Email builders
-    function buildEmailSubject(it){ const prop = typeof currentProperty==='string' ? currentProperty : ''; const due = it.neededBy ? ` (Needed by ${it.neededBy})` : ''; return `[Promo Order] ${prop} - ${it.title || 'Untitled'}${due}`; }
+    function buildEmailSubject(it){ const prop = typeof currentProperty==='string' ? currentProperty : ''; const due = it.neededBy ? ` (Need by ${it.neededBy})` : ''; return `[Promo Order] ${prop} - ${it.title || 'Untitled'}${due}`; }
     function buildEmailBody(it){
       const lines = [];
       lines.push(`Property: ${currentProperty}`);
       lines.push(`Title: ${it.title||''}`);
-      if (it.neededBy) lines.push(`Needed by: ${it.neededBy}`);
-      if (it.vendor) lines.push(`Vendor: ${it.vendor}`);
-      if (it.cost) lines.push(`Est. Cost: ${fmtMoney(it.cost)}`);
+      if (it.neededBy){ lines.push(`Need by: ${it.neededBy} (Please allow 2–3 weeks lead time)`); }
+      if (it.vendorPreference) lines.push(`Vendor Preference: ${it.vendorPreference}`);
+      if (isFinite(it.budget) && it.budget>0) lines.push(`Budget: ${fmtMoney(it.budget)}`);
+      if (it.color) lines.push(`Color: ${it.color}`);
+      if (isFinite(it.quantity) && it.quantity>0) lines.push(`Quantity: ${it.quantity}`);
+      if (it.shippingAddress){ lines.push(''); lines.push('Shipping Address:'); lines.push(it.shippingAddress); }
       lines.push('');
-      lines.push('Requested Items:');
+      lines.push('List of Promo Request:');
       lines.push(it.items || '');
       lines.push('');
+      if (it.photoUrl){ lines.push(`Photo: ${it.photoUrl}`); lines.push(''); }
       if (it.notes){ lines.push('Notes:'); lines.push(it.notes); lines.push(''); }
       lines.push('Thank you.');
       return encodeURIComponent(lines.join('\n'));
@@ -255,14 +317,28 @@
     };
 
     function readOrderForm(){
-      const title = els.o_title.value.trim(); const items = els.o_items.value.trim(); if (!title && !items){ alert('Provide a title or requested items.'); return null; }
-      return { title, items, neededBy: els.o_needed.value, vendor: els.o_vendor.value.trim(), cost: parseFloat(els.o_cost.value)||0, notes: els.o_notes.value.trim() };
+      const title = els.o_title.value.trim();
+      const items = els.o_items.value.trim();
+      if (!title && !items){ alert('Provide a title or list of promo request.'); return null; }
+      const budget = parseFloat(els.o_budget.value);
+      const quantity = parseInt(els.o_quantity.value, 10);
+      return {
+        title,
+        items,
+        neededBy: els.o_needed.value,
+        vendorPreference: els.o_vendorPref.value.trim(),
+        budget: isFinite(budget) ? Math.round(budget*100)/100 : 0,
+        color: els.o_color.value.trim(),
+        quantity: isFinite(quantity) ? quantity : 0,
+        shippingAddress: els.o_shipAddress.value.trim(),
+        photoUrl: modalPhotoUrl || '',
+        notes: els.o_notes.value.trim(),
+      };
     }
 
     document.addEventListener('click', async (e)=>{
       const t = e.target; if (!(t instanceof HTMLElement)) return;
-      const sel = t.getAttribute('data-sel'); const del = t.getAttribute('data-del'); const email = t.getAttribute('data-email');
-      const trackId = t.getAttribute('data-track') || (t.closest('td') && t.closest('td').querySelector('input[data-track]') && t.closest('td').querySelector('input[data-track]').getAttribute('data-track'));
+      const del = t.getAttribute('data-del'); const email = t.getAttribute('data-email'); const changePhoto = t.getAttribute('data-change-photo');
       if (t.matches('input[name="sel"]')){ selectedOrderId = t.getAttribute('data-sel'); return; }
       if (del){
         const arr = ordersByProperty[currentProperty]||[]; const idx = arr.findIndex(x=>String(x.id)===String(del));
@@ -277,7 +353,21 @@
         return;
       }
       if (t.matches('input[data-track]')){ t.addEventListener('change', async ()=>{ const id = t.getAttribute('data-track'); const val = t.value.trim(); const arr = ordersByProperty[currentProperty]||[]; const idx = arr.findIndex(x=>String(x.id)===String(id)); if (idx>=0){ try{ await apiJson('/orders', { method:'PUT', body: JSON.stringify({ id, property: currentProperty, trackingNumber: val }) }); }catch(e){} arr[idx].trackingNumber = val; saveStore(); } }); }
+      if (changePhoto){
+        const id = changePhoto; const fileInput = document.createElement('input'); fileInput.type='file'; fileInput.accept='image/*';
+        fileInput.onchange = async ()=>{
+          const f = fileInput.files && fileInput.files[0]; if (!f) return;
+          const url = await uploadPhoto(f); if (!url) return;
+          try{ await apiJson('/orders', { method:'PUT', body: JSON.stringify({ id, property: currentProperty, photoUrl: url }) }); }catch(e){}
+          const arr = ordersByProperty[currentProperty]||[]; const idx = arr.findIndex(x=>String(x.id)===String(id)); if (idx>=0){ arr[idx].photoUrl = url; saveStore(); renderOrders(); }
+        };
+        fileInput.click();
+        return;
+      }
     });
+
+    // Toolbar email from selected
+    els.emailRequestBtn.onclick = ()=>{ const arr = ordersByProperty[currentProperty]||[]; const it = arr.find(x=>String(x.id)===String(selectedOrderId)); if (it){ openEmailFor(it); } else { alert('Select an order first.'); } };
 
     // Nav active
     (function(){ const nav = document.getElementById('mainNav'); if (!nav) return; const path = (location.pathname||'').toLowerCase(); nav.querySelectorAll('.nav-tab').forEach(a=>{ const href=(a.getAttribute('href')||'').toLowerCase(); if (href && (path.endsWith(href) || path.endsWith('/'+href))) a.classList.add('active'); }); })();

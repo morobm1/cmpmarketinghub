@@ -19,7 +19,7 @@ export async function handler(event){
     }
     if (event.httpMethod === 'POST'){
       const payload = JSON.parse(event.body||'{}');
-      const { property, title, items, neededBy, vendor, cost, notes } = payload || {};
+      const { property, title, items, neededBy, vendorPreference, budget, color, quantity, shippingAddress, notes, photoUrl } = payload || {};
       if (!property) return { statusCode: 400, body: 'Missing property' };
       if (user.role !== 'admin' && !(user.properties||[]).includes(property)) return { statusCode: 403, body: 'Forbidden' };
       if (!title && !items) return { statusCode: 400, body: 'Missing title/items' };
@@ -28,8 +28,12 @@ export async function handler(event){
         title: String(title||'').trim(),
         items: String(items||'').trim(),
         neededBy: neededBy ? String(neededBy) : '',
-        vendor: String(vendor||'').trim(),
-        cost: Number.isFinite(cost) ? cost : (cost ? parseFloat(cost) : 0),
+        vendorPreference: String(vendorPreference||'').trim(),
+        budget: Number.isFinite(budget) ? budget : (budget ? parseFloat(budget) : 0),
+        color: String(color||'').trim(),
+        quantity: Number.isFinite(quantity) ? quantity : (quantity ? parseInt(quantity,10) : 0),
+        shippingAddress: String(shippingAddress||'').trim(),
+        photoUrl: String(photoUrl||'').trim(),
         notes: String(notes||'').trim(),
         status: 'Submitted',
         submittedAt: new Date(),
@@ -51,8 +55,12 @@ export async function handler(event){
       if (typeof updates.title === 'string') set.title = updates.title;
       if (typeof updates.items === 'string') set.items = updates.items;
       if (typeof updates.neededBy === 'string') set.neededBy = updates.neededBy;
-      if (typeof updates.vendor === 'string') set.vendor = updates.vendor;
-      if (typeof updates.cost !== 'undefined'){ const c = Number.isFinite(updates.cost) ? updates.cost : parseFloat(updates.cost); set.cost = Number.isFinite(c) ? c : 0; }
+      if (typeof updates.vendorPreference === 'string') set.vendorPreference = updates.vendorPreference;
+      if (typeof updates.budget !== 'undefined'){ const c = Number.isFinite(updates.budget) ? updates.budget : parseFloat(updates.budget); set.budget = Number.isFinite(c) ? c : 0; }
+      if (typeof updates.color === 'string') set.color = updates.color;
+      if (typeof updates.quantity !== 'undefined'){ const q = Number.isFinite(updates.quantity) ? updates.quantity : parseInt(updates.quantity,10); set.quantity = Number.isFinite(q) ? q : 0; }
+      if (typeof updates.shippingAddress === 'string') set.shippingAddress = updates.shippingAddress;
+      if (typeof updates.photoUrl === 'string') set.photoUrl = updates.photoUrl;
       if (typeof updates.notes === 'string') set.notes = updates.notes;
       if (typeof updates.trackingNumber === 'string') set.trackingNumber = updates.trackingNumber;
       if (typeof updates.status === 'string' && ALLOWED_STATUS.has(updates.status)){
