@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CMP Marketing Hub</title>
+  <title>Marketing Hub</title>
   <meta name="description" content="Add events to a calendar and monitor monthly budget/spend. Optional local Excel import with field mapping.">
   <style>
     :root{
@@ -95,6 +95,7 @@
     header{ background:#ffffff; border-bottom:1px solid var(--border); box-shadow:0 2px 6px rgba(0,0,0,0.04) }
     .brand{display:flex;align-items:center;gap:10px}
     .brand .logo-img{height:32px;width:auto;display:block}
+    .brand .title{color:#ffb732; font-family: zooja-pro, Arial, sans-serif}
 
     .card{ background:#ffffff !important; border:1px solid var(--border) !important; box-shadow:0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04) }
     label{ color:#374151 }
@@ -167,7 +168,7 @@
     </div>
   </div>
   <header id="appHeader" style="display:none">
-    <div class="brand"><img src="logo-main.svg" class="logo-img" alt="Capstone" /><div class="title">CMP Marketing Hub</div></div>
+    <div class="brand"><img src="logo-main.svg" class="logo-img" alt="Capstone" /><div class="title">Marketing Hub</div></div>
     <div class="pill" style="display:flex;align-items:center;gap:8px">
       <label for="propertySelect" style="font-size:12px;color:var(--subtext)">Property</label>
       <select id="propertySelect" style="min-width:220px"></select>
@@ -318,7 +319,7 @@
           <div>
             <label for="flyerFile">Upload Flyer (PDF or image)</label>
             <input id="flyerFile" type="file" accept="application/pdf,image/*" />
-            <div class="mini">Local preview only. To save, paste a public link above.</div>
+            <div class="mini">Choose a file to upload; it will auto-save and set the Flyer URL.</div>
             <div id="flyerPreview" style="margin-top:8px"></div>
           </div>
         </div>
@@ -394,7 +395,7 @@
       </section>
 
       
-      <div class="footer">CMP Marketing Hub • Plan resident events, manage budgets, and track actual spend.</div>
+      <div class="footer">Marketing Hub • Plan resident events, manage budgets, and track actual spend.</div>
     </main>
   </div>
 
@@ -1528,11 +1529,12 @@
       });
     }
     if (els.flyerFile){
-      els.flyerFile.addEventListener('change', ()=>{
+      els.flyerFile.addEventListener('change', async ()=>{
         const f = els.flyerFile.files && els.flyerFile.files[0];
         const prev = els.flyerPreview;
         if (!prev){ return; }
         if (!f){ prev.innerHTML = ''; return; }
+        // Local preview immediately
         const blobUrl = URL.createObjectURL(f);
         if (f.type === 'application/pdf'){
           prev.innerHTML = `<iframe src="${blobUrl}" style="width:100%;height:280px;border:1px solid var(--border);border-radius:8px"></iframe>`;
@@ -1541,6 +1543,22 @@
         } else {
           prev.innerHTML = `<a href="${blobUrl}" target="_blank" rel="noopener">Open file</a>`;
         }
+        // Upload to server if authenticated and a property is selected
+        if (!SESSION_ACTIVE){ alert('Please sign in to upload.'); return; }
+        if (!currentProperty){ alert('Select a property first.'); return; }
+        try{
+          const qs = new URLSearchParams({ property: currentProperty, filename: f.name || 'flyer' });
+          const res = await fetch(`/api/upload-file?${qs}`, { method:'POST', headers:{ 'Content-Type': f.type || 'application/octet-stream' }, body: f });
+          if (!res.ok){ const t = await res.text(); throw new Error(t || 'Upload failed'); }
+          const { url } = await res.json();
+          if (els.flyerUrl){ els.flyerUrl.value = url; }
+          if (els.flyerPreview){ els.flyerPreview.innerHTML = buildFlyerPreviewHtml(url); }
+          if (selectedEventId){
+            try{
+              await apiFetch('/events', { method:'PUT', body: JSON.stringify({ id: selectedEventId, property: currentProperty, flyerUrl: url }) });
+            }catch(e){ /* ignore, will be persisted on next save */ }
+          }
+        }catch(err){ alert('Upload failed: '+err.message); }
       });
     }
 
