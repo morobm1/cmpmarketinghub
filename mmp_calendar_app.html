@@ -82,6 +82,7 @@
       <div class="content">
         <div class="row"><div><label for="loginUsername">Username</label><input id="loginUsername" type="text" autocomplete="username" /></div></div>
         <div class="row"><div><label for="loginPassword">Password</label><input id="loginPassword" type="password" autocomplete="current-password" /></div></div>
+        <div class="row"><label class="mini" style="display:flex;align-items:center;gap:6px;user-select:none"><input id="togglePw" type="checkbox" /> Show password</label></div>
         <div class="row"><button id="loginBtn">Sign In</button></div>
         <div id="loginError" class="mini" style="color:#f87171; display:none">Invalid credentials</div>
       </div>
@@ -472,6 +473,7 @@
       loginView: document.getElementById('loginView'),
       loginUsername: document.getElementById('loginUsername'),
       loginPassword: document.getElementById('loginPassword'),
+      loginTogglePw: document.getElementById('togglePw'),
       loginBtn: document.getElementById('loginBtn'),
       loginError: document.getElementById('loginError'),
       appHeader: document.getElementById('appHeader'),
@@ -514,6 +516,7 @@
       reqCopyBtn: document.getElementById('reqCopyBtn'),
       reqEmailBtn: document.getElementById('reqEmailBtn'),
     };
+    if (els.loginTogglePw){ els.loginTogglePw.addEventListener('change', ()=>{ els.loginPassword.type = els.loginTogglePw.checked ? 'text' : 'password'; }); }
 
     // Calendar
     function initCalendar(){
@@ -787,7 +790,7 @@
     }
 
     function showApp(){ if (els.appHeader) els.appHeader.style.display=''; if (els.appContainer) els.appContainer.style.display=''; if (els.loginView) els.loginView.style.display='none'; }
-    function showLogin(){ if (els.appHeader) els.appHeader.style.display='none'; if (els.appContainer) els.appContainer.style.display='none'; if (els.loginView) els.loginView.style.display='flex'; }
+    function showLogin(){ if (els.appHeader) els.appHeader.style.display='none'; if (els.appContainer) els.appContainer.style.display='none'; window.location.href = 'index.html'; }
 
     async function doLogout(){
       try{ await fetch('/api/auth-logout', { method:'POST' }); }catch(e){}
@@ -847,8 +850,10 @@
       const savedUser = (localStorage.getItem(STORE_CURRENT_USER_KEY)||'').trim();
       const savedLoginTime = parseInt(localStorage.getItem(STORE_LOGIN_TIME_KEY)||'0', 10) || 0;
       if (savedUser && users[savedUser]){
-        // Enforce session TTL
-        if (!savedLoginTime || (Date.now() - savedLoginTime) > SESSION_TTL_MS){
+        // Enforce session TTL, upgrade legacy sessions without timestamp
+        if (!savedLoginTime){
+          try{ localStorage.setItem(STORE_LOGIN_TIME_KEY, String(Date.now())); }catch(e){}
+        } else if ((Date.now() - savedLoginTime) > SESSION_TTL_MS){
           try{ localStorage.removeItem(STORE_CURRENT_USER_KEY);}catch(e){}
           try{ localStorage.removeItem(STORE_LOGIN_TIME_KEY);}catch(e){}
           showLogin();
@@ -860,24 +865,6 @@
         initializeAppForUser();
         scheduleAutoLogout();
         return true;
-      }
-      if (els.loginBtn){
-        els.loginBtn.addEventListener('click', async () => {
-          const u = (els.loginUsername.value||'').trim();
-          const p = els.loginPassword.value||'';
-          loadUsers();
-          if (!users[u]){ els.loginError.style.display=''; return; }
-          const hash = await sha256Hex(p);
-          if (hash !== users[u].passwordHash){ els.loginError.style.display=''; return; }
-          els.loginError.style.display='none';
-          currentUser = { username: u, role: users[u].role, properties: users[u].properties };
-          try{ localStorage.setItem(STORE_CURRENT_USER_KEY, u); }catch(e){}
-          try{ localStorage.setItem(STORE_LOGIN_TIME_KEY, String(Date.now())); }catch(e){}
-          showApp();
-          bindHeaderHandlers();
-          initializeAppForUser();
-          scheduleAutoLogout();
-        });
       }
       showLogin();
       return false;

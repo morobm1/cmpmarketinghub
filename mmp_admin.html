@@ -54,6 +54,7 @@
       <div class="content">
         <div class="row"><div><label for="loginUsername">Username</label><input id="loginUsername" type="text" autocomplete="username"></div></div>
         <div class="row"><div><label for="loginPassword">Password</label><input id="loginPassword" type="password" autocomplete="current-password"></div></div>
+        <div class="row"><label class="mini" style="display:flex;align-items:center;gap:6px;user-select:none"><input id="togglePw" type="checkbox" /> Show password</label></div>
         <div class="row"><button id="loginBtn">Sign In</button></div>
         <div id="loginError" class="mini" style="color:#f87171; display:none">Invalid credentials, or not an admin.</div>
       </div>
@@ -116,6 +117,7 @@
   <script>
     const STORE_USERS_KEY = 'mmp_users_v1';
     const STORE_CURRENT_USER_KEY = 'mmp_current_user_v1';
+    const STORE_LOGIN_TIME_KEY = 'mmp_login_time_v1';
 
     const properties = [
       'M@College',
@@ -151,6 +153,7 @@
       loginView: document.getElementById('loginView'),
       loginUsername: document.getElementById('loginUsername'),
       loginPassword: document.getElementById('loginPassword'),
+      togglePw: document.getElementById('togglePw'),
       loginBtn: document.getElementById('loginBtn'),
       loginError: document.getElementById('loginError'),
 
@@ -276,13 +279,27 @@
 
       els.usersTable.addEventListener('click', (e)=>{ const it = e.target.closest('.prop-item'); if (it && els.usersTable.contains(it)) { it.classList.toggle('selected'); } });
       els.toCalendarBtn.addEventListener('click', ()=>{ location.href = 'mmp_calendar_app.html'; });
-      els.logoutBtn.addEventListener('click', ()=>{ try{ localStorage.removeItem(STORE_CURRENT_USER_KEY);}catch(e){} location.reload(); });
+      els.logoutBtn.addEventListener('click', async ()=>{ try{ await fetch('/api/auth-logout', { method:'POST' }); }catch(e){} try{ localStorage.removeItem(STORE_CURRENT_USER_KEY);}catch(e){} try{ localStorage.removeItem(STORE_LOGIN_TIME_KEY);}catch(e){} location.href = 'index.html'; });
     }
 
     async function init(){
-      // Seed admin and check login
+      // Prefer server session
+      try{
+        const meRes = await fetch('/api/me');
+        if (meRes.ok){
+          const me = await meRes.json();
+          if (me.role === 'admin'){
+            currentUser = { username: me.username, role: me.role };
+            showApp();
+            renderCreateProps();
+            initHandlers();
+            renderUsers();
+            return;
+          }
+        }
+      }catch(e){}
+      // Fallback to localStorage session (created by index.html fallback)
       loadUsers(); await ensureAdminSeed();
-      // If already logged in and admin
       const savedUser = (localStorage.getItem(STORE_CURRENT_USER_KEY)||'').trim();
       if (savedUser && users[savedUser] && users[savedUser].role==='admin'){
         currentUser = { username: savedUser, role: users[savedUser].role };
@@ -292,19 +309,8 @@
         renderUsers();
         return;
       }
-      // Otherwise require login
-      els.loginBtn.addEventListener('click', async ()=>{
-        const u = (els.loginUsername.value||'').trim(); const p = els.loginPassword.value||'';
-        loadUsers(); if (!users[u]){ els.loginError.style.display=''; return; }
-        const h = await sha256Hex(p); if (h !== users[u].passwordHash || users[u].role !== 'admin'){ els.loginError.style.display=''; return; }
-        els.loginError.style.display='none';
-        currentUser = { username: u, role: 'admin' };
-        try{ localStorage.setItem(STORE_CURRENT_USER_KEY, u); }catch(e){}
-        showApp();
-        renderCreateProps();
-        initHandlers();
-        renderUsers();
-      });
+      // Not authenticated or not admin; redirect to single login page
+      location.href = 'index.html';
     }
 
     init();
