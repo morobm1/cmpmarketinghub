@@ -120,6 +120,20 @@
     .kpi .value.val-red{ color:#ef4444 !important }
   </style>
   <style>
+    /* Audit styles */
+    #auditCard .section-title{font-weight:800;color:#111827;margin:8px 0 10px}
+    #auditCard .audit-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+    #auditCard .audit-item{border:1px solid var(--border);border-radius:12px;background:#ffffff;padding:12px;box-shadow:0 1px 2px rgba(0,0,0,0.05);display:flex;flex-direction:column;gap:8px}
+    #auditCard .item-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+    #auditCard .item-label{display:flex;align-items:center;gap:8px;font-weight:700;color:#111827;font-size:13px}
+    #auditCard .dot{width:10px;height:10px;border-radius:50%;border:1px solid rgba(0,0,0,0.2)}
+    #auditCard .pct-badge{font-weight:800;font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--border);color:#111827;background:#f9fafb}
+    #auditCard .counts{font-size:12px;color:#6b7280}
+    #auditCard .bar{position:relative;height:10px;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:999px;overflow:hidden}
+    #auditCard .bar>div{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--barStart),var(--barEnd));width:var(--w,0%)}
+    #auditCard .opt{color:#6b7280;font-weight:600;font-size:11px}
+  </style>
+  <style>
     /* FullCalendar spacing and Today button fixes */
     .fc{ --fc-border-color:#e5e7eb; --fc-page-bg-color:#ffffff; --fc-neutral-bg-color:#f9fafb; --fc-today-bg-color:#fff7e6 }
     .fc .fc-toolbar{ margin-bottom:8px; gap:8px; align-items:center }
@@ -939,41 +953,63 @@
       let mEvents=0, mOnCampus=0, mCross=0, mFlyer=0;
 
       for (const e of events){
-        // Weekly counts (by event start)
         if (isIsoInRange(e.start, ws, we)){
           if (isStory(e)) wStories++;
           if (isGrid(e)) wGrid++;
           if (isGiveaway(e)) wGive++;
         }
-        // Monthly counts
         if (sameMonthYMD(e.start, y, m0)){
           if (isEventEvt(e)) mEvents++;
           if (isOnCampus(e)) mOnCampus++;
           if (isCrossMkt(e)) mCross++;
         }
-        // Monthly flyering by checklist date
         if (sameMonthYMD(e.flyerPostedAt, y, m0)) mFlyer++;
       }
 
-      const req = {
-        weekly: { stories: 3, grid: 1, giveaway: 1 },
-        monthly: { events: 2, onCampus: 2, cross: 1, flyer: 4 }
-      };
-      const rows = [
-        { label: 'Social Stories (week)', have:wStories, need:req.weekly.stories },
-        { label: 'Grid Posts (week)', have:wGrid, need:req.weekly.grid },
-        { label: 'Giveaways (week, optional)', have:wGive, need:req.weekly.giveaway },
-        { label: 'Events (month, optional)', have:mEvents, need:req.monthly.events },
-        { label: 'On-Campus shifts (month)', have:mOnCampus, need:req.monthly.onCampus },
-        { label: 'Cross-marketing events (month)', have:mCross, need:req.monthly.cross },
-        { label: 'Flyering shifts (month)', have:mFlyer, need:req.monthly.flyer },
+      const weekly = [
+        { id:'stories', label:'Social Stories', have:wStories, need:3, optional:false, colors:['#52d5ff','#446472'] },
+        { id:'grid', label:'Grid Posts', have:wGrid, need:1, optional:false, colors:['#a78bfa','#52d5ff'] },
+        { id:'giveaway', label:'Giveaways', have:wGive, need:1, optional:true, colors:['#ffb732','#f59e0b'] },
       ];
-      const html = rows.map(r => {
-        const pct = r.need ? Math.max(0, Math.min(100, Math.round((r.have/r.need)*100))) : 100;
-        const bar = `<div style="flex:1;height:10px;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:999px;overflow:hidden"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#52d5ff,#446472)"></div></div>`;
-        return `<div class="audit-row" style="display:flex;align-items:center;gap:10px"><div class="label" style="flex:0 0 280px;color:#374151;font-size:13px">${r.label}</div>${bar}<div class="val" style="flex:0 0 auto;width:120px;text-align:right;font-weight:800;color:#111827">${r.have}/${r.need} (${pct}%)</div></div>`;
-      }).join('');
-      wrap.innerHTML = html;
+      const monthly = [
+        { id:'events', label:'Events', have:mEvents, need:2, optional:true, colors:['#a78bfa','#6366f1'] },
+        { id:'onCampus', label:'On-campus shifts', have:mOnCampus, need:2, optional:false, colors:['#10b981','#059669'] },
+        { id:'cross', label:'Cross-marketing', have:mCross, need:1, optional:false, colors:['#22d3ee','#0ea5e9'] },
+        { id:'flyer', label:'Flyering shifts', have:mFlyer, need:4, optional:false, colors:['#f97316','#fb923c'] },
+      ];
+
+      function pct(have, need){ return need ? Math.max(0, Math.min(100, Math.round((have/need)*100))) : 100; }
+      function tile(it){
+        const p = pct(it.have, it.need);
+        const badgeBg = p >= 100 ? '#e6fffa' : '#f3f4f6';
+        const badgeColor = p >= 100 ? '#065f46' : '#111827';
+        const dot = it.colors[0];
+        const st = `--barStart:${it.colors[0]};--barEnd:${it.colors[1]};--w:${p}%`;
+        return `
+          <div class="audit-item" style="${st}">
+            <div class="item-head">
+              <div class="item-label"><span class="dot" style="background:${dot}"></span>${it.label}${it.optional?' <span class="opt">(optional)</span>':''}</div>
+              <div class="pct-badge" style="background:${badgeBg};color:${badgeColor}">${p}%</div>
+            </div>
+            <div class="bar"><div></div></div>
+            <div class="counts">${it.have} of ${it.need}</div>
+          </div>
+        `;
+      }
+
+      const weeklyHtml = `
+        <div class="section-title">Weekly Targets</div>
+        <div class="audit-grid">
+          ${weekly.map(tile).join('')}
+        </div>
+      `;
+      const monthlyHtml = `
+        <div class="section-title" style="margin-top:12px">Monthly Targets</div>
+        <div class="audit-grid">
+          ${monthly.map(tile).join('')}
+        </div>
+      `;
+      wrap.innerHTML = weeklyHtml + monthlyHtml;
     }
 
     // Auth & Users Management
