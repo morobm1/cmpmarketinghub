@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-  <meta name="description" content="Promo Order Tracker – Under construction" />
+  <meta name="description" content="Create promo order requests, generate email, and track status and shipments per property." />
   <style>
     :root{ --brand-primary:#446472; --brand-accent:#ffb732; --brand-accent-2:#52d5ff; --brand-gray:#929497; --page-bg:#e5e7eb; --bg:#ffffff; --panel:#ffffff; --muted:#ffffff; --text:#1f2937; --subtext:#6b7280; --accent:var(--brand-accent-2); --accent-2:var(--brand-accent); --border:#e5e7eb; }
     *{box-sizing:border-box}
@@ -32,12 +32,36 @@
     .nav-tab:hover{ background:#f3f4f6 }
     .nav-tab.active{ background:#52d5ff; border-color:#52d5ff; color:#0b1b24; font-weight:700 }
 
-    .container{padding:18px; max-width:1200px; margin:0 auto}
+    .container{padding:18px; max-width:1200px; margin:0 auto; display:flex; flex-direction:column; gap:16px}
+    .toolbar{ display:flex; gap:8px; flex-wrap:wrap; align-items:center }
+    .btn{ display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:10px; border:1px solid #d1d5db; background:#ffffff; color:#111827; font-weight:700; cursor:pointer; font-family: Roboto, Arial, sans-serif }
+    .btn:hover{ background:#f9fafb }
+    .btn.primary{ background:#52d5ff; border-color:#52d5ff; color:#0b1b24 }
+    .btn.warn{ background:#ffb732; border-color:#ffb732; color:#1f1300 }
+
     .card{ background:#ffffff; border:1px solid var(--border); border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,0.06); overflow:hidden }
     .card h3{ margin:0; padding:12px 14px 0 14px; font-size:16px; color:#374151; font-weight:800; font-family: Roboto, Arial, sans-serif }
     .card .content{ padding:14px }
-    .badge{display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; background:#fff7e6; color:#8a5800; border:1px solid #fde68a; font-weight:700; font-family: Roboto, Arial, sans-serif}
-    .muted{ color:#6b7280 }
+
+    .grid{ width:100%; border-collapse:collapse }
+    .grid th, .grid td{ border-bottom:1px solid var(--border); padding:8px 10px; text-align:left; vertical-align:top; font-size:14px }
+    .grid th{ color:#374151; font-weight:800; font-family: Roboto, Arial, sans-serif }
+    .grid .mini{ font-size:12px; color:#6b7280 }
+
+    .badge{display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; background:#fff7e6; color:#8a5800; border:1px solid #fde68a; font-weight:700; font-family: Roboto, Arial, sans-serif}
+
+    /* Modal */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50}
+    .modal{background:#ffffff;border:1px solid var(--border);border-radius:12px;max-width:720px;width:96%;padding:14px; box-shadow:0 10px 30px rgba(0,0,0,0.2)}
+    .modal h3{margin:0 0 10px 0;color:#374151;font-size:18px}
+    .row{display:flex; gap:10px; align-items:flex-start; flex-wrap:wrap}
+    .row > *{ flex:1 }
+    label{display:block; font-size:12px; color:#374151; margin-bottom:6px}
+    input, select, textarea{ width:100%; padding:10px 12px; border-radius:10px; border:1px solid #d1d5db; background:#ffffff; color:#111827; font-size:14px}
+    textarea{ min-height:60px; resize:vertical }
+    .actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px }
+
+    .status-select{ padding:6px 8px; border-radius:8px; border:1px solid #d1d5db; background:#ffffff }
   </style>
 </head>
 <body>
@@ -62,48 +86,204 @@
   </nav>
 
   <main class="container">
+    <div class="toolbar">
+      <button id="newOrderBtn" class="btn primary">+ New Promo Order</button>
+      <button id="emailRequestBtn" class="btn">Generate Email from Selected</button>
+    </div>
+
     <section class="card">
-      <h3>Promo Order Tracker</h3>
+      <h3>Orders</h3>
       <div class="content">
-        <div class="badge">Under construction</div>
-        <p class="muted" style="margin-top:8px">This page is being built. Check back soon.</p>
+        <div style="overflow:auto">
+          <table class="grid" id="ordersTable">
+            <thead>
+              <tr>
+                <th></th>
+                <th>Title</th>
+                <th>Items</th>
+                <th>Needed by</th>
+                <th>Vendor</th>
+                <th>Est. Cost</th>
+                <th>Status</th>
+                <th>Tracking #</th>
+                <th>Submitted</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </div>
     </section>
   </main>
 
+  <!-- New Order Modal -->
+  <div id="orderModal" class="modal-backdrop">
+    <div class="modal">
+      <h3>New Promo Order</h3>
+      <div class="row">
+        <div><label for="o_title">Title</label><input id="o_title" type="text" placeholder="Short order title"></div>
+        <div><label for="o_needed">Needed by</label><input id="o_needed" type="date"></div>
+      </div>
+      <div class="row">
+        <div><label for="o_vendor">Vendor (optional)</label><input id="o_vendor" type="text" placeholder="Preferred vendor"></div>
+        <div><label for="o_cost">Est. Cost (optional)</label><input id="o_cost" type="number" step="0.01" placeholder="0.00"></div>
+      </div>
+      <div class="row">
+        <div><label for="o_items">Requested items</label><textarea id="o_items" placeholder="List requested promo items and quantities"></textarea></div>
+      </div>
+      <div class="row">
+        <div><label for="o_notes">Notes</label><textarea id="o_notes" placeholder="Context, branding specs, delivery address..."></textarea></div>
+      </div>
+      <div class="actions">
+        <button class="btn" id="o_cancel">Cancel</button>
+        <button class="btn" id="o_email">Email Request</button>
+        <button class="btn primary" id="o_save">Save Order</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const STORE_CURRENT_PROPERTY_KEY = 'mmp_current_property_v1';
-
-    (function(){
-      const nav = document.getElementById('mainNav');
-      if (!nav) return;
-      const path = (location.pathname || '').toLowerCase();
-      nav.querySelectorAll('.nav-tab').forEach(a => {
-        const href = (a.getAttribute('href') || '').toLowerCase();
-        if (href && (path.endsWith(href) || path.endsWith('/' + href))) a.classList.add('active');
-      });
-    })();
+    const STORE_ORDERS_BY_PROP_KEY = 'mmp_orders_by_property_v1';
+    const API_BASE = '/api';
 
     const els = {
       propertySelect: document.getElementById('propertySelect'),
       logoutBtn: document.getElementById('logoutBtn'),
       adminPageBtn: document.getElementById('adminPageBtn'),
+      ordersTbody: document.querySelector('#ordersTable tbody'),
+      newOrderBtn: document.getElementById('newOrderBtn'),
+      emailRequestBtn: document.getElementById('emailRequestBtn'),
+      orderModal: document.getElementById('orderModal'),
+      o_title: document.getElementById('o_title'),
+      o_needed: document.getElementById('o_needed'),
+      o_vendor: document.getElementById('o_vendor'),
+      o_cost: document.getElementById('o_cost'),
+      o_items: document.getElementById('o_items'),
+      o_notes: document.getElementById('o_notes'),
+      o_cancel: document.getElementById('o_cancel'),
+      o_email: document.getElementById('o_email'),
+      o_save: document.getElementById('o_save'),
     };
 
-    async function api(path, opts={}){
-      const res = await fetch('/api' + path, opts);
-      if (!res.ok) throw new Error(await res.text() || ('HTTP '+res.status));
+    let currentProperty = '';
+    let ordersByProperty = {};
+    let selectedOrderId = null;
+
+    function saveStore(){ try{ localStorage.setItem(STORE_ORDERS_BY_PROP_KEY, JSON.stringify(ordersByProperty)); }catch(e){} }
+    function loadStore(){ try{ ordersByProperty = JSON.parse(localStorage.getItem(STORE_ORDERS_BY_PROP_KEY)||'{}'); }catch(e){ ordersByProperty = {}; } }
+    function ensureProp(){ if (!ordersByProperty[currentProperty]) ordersByProperty[currentProperty] = []; }
+
+    async function apiJson(path, opts = {}){
+      const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers||{});
+      const res = await fetch(API_BASE + path, Object.assign({}, opts, { headers }));
+      if (!res.ok){ const t = await res.text(); throw new Error(t || ('HTTP '+res.status)); }
       return res;
     }
-
-    function getAccessible(properties, me){
-      const names = properties.map(p => p.name).filter(Boolean);
-      if (!me) return names;
-      if (me.role === 'admin') return names;
-      if (me.properties === '*') return names;
-      const allowed = Array.isArray(me.properties) ? me.properties : [];
-      return names.filter(n => allowed.includes(n));
+    async function loadServerOrders(){
+      try{ const res = await apiJson(`/orders?property=${encodeURIComponent(currentProperty)}`); const list = await res.json(); ordersByProperty[currentProperty] = list; saveStore(); }
+      catch(e){ /* offline fallback */ }
     }
+
+    function setActiveProperty(prop){ currentProperty = prop; localStorage.setItem(STORE_CURRENT_PROPERTY_KEY, prop); ensureProp(); renderOrders(); loadServerOrders().then(()=>renderOrders()); }
+
+    function renderOrders(){
+      const list = (ordersByProperty[currentProperty]||[]).slice();
+      els.ordersTbody.innerHTML = list.map(it => {
+        const checked = selectedOrderId === it.id ? 'checked' : '';
+        const dt = it.submittedAt ? new Date(it.submittedAt).toLocaleDateString() : '';
+        const statusSel = statusSelectHtml(it.id, it.status||'Submitted');
+        return `<tr>
+          <td><input type="radio" name="sel" data-sel="${it.id}" ${checked}></td>
+          <td>${esc(it.title)}</td>
+          <td><div class="mini">${esc(it.items)}</div></td>
+          <td>${esc(it.neededBy||'')}</td>
+          <td>${esc(it.vendor||'')}</td>
+          <td>${fmtMoney(it.cost)}</td>
+          <td>${statusSel}</td>
+          <td><input type="text" data-track="${it.id}" value="${esc(it.trackingNumber||'')}" placeholder="Enter tracking #" style="width:160px"></td>
+          <td>${dt}</td>
+          <td style="white-space:nowrap">
+            <button class="btn" data-email="${it.id}">Email</button>
+            <button class="btn warn" data-del="${it.id}">Delete</button>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    function statusSelectHtml(id, val){
+      const opts = ['Submitted','Approved','Ordered','Shipped','Delivered','Rejected'];
+      return `<select class="status-select" data-status="${id}">`+opts.map(o=>`<option ${o===val?'selected':''}>${o}</option>`).join('')+`</select>`;
+    }
+
+    function esc(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    function fmtMoney(n){ const v = parseFloat(n); if (!isFinite(v) || v<=0) return ''; return '$'+v.toFixed(2); }
+
+    // Modal helpers
+    function openOrderModal(){ els.o_title.value=''; els.o_needed.value=''; els.o_vendor.value=''; els.o_cost.value=''; els.o_items.value=''; els.o_notes.value=''; els.orderModal.style.display='flex'; }
+    function closeOrderModal(){ els.orderModal.style.display='none'; }
+
+    // Email builders
+    function buildEmailSubject(it){ const prop = typeof currentProperty==='string' ? currentProperty : ''; const due = it.neededBy ? ` (Needed by ${it.neededBy})` : ''; return `[Promo Order] ${prop} - ${it.title || 'Untitled'}${due}`; }
+    function buildEmailBody(it){
+      const lines = [];
+      lines.push(`Property: ${currentProperty}`);
+      lines.push(`Title: ${it.title||''}`);
+      if (it.neededBy) lines.push(`Needed by: ${it.neededBy}`);
+      if (it.vendor) lines.push(`Vendor: ${it.vendor}`);
+      if (it.cost) lines.push(`Est. Cost: ${fmtMoney(it.cost)}`);
+      lines.push('');
+      lines.push('Requested Items:');
+      lines.push(it.items || '');
+      lines.push('');
+      if (it.notes){ lines.push('Notes:'); lines.push(it.notes); lines.push(''); }
+      lines.push('Thank you.');
+      return encodeURIComponent(lines.join('\n'));
+    }
+    function openEmailFor(it){ const to = ''; const subject = encodeURIComponent(buildEmailSubject(it)); const body = buildEmailBody(it); const mailto = `mailto:${to}?subject=${subject}&body=${body}`; window.location.href = mailto; }
+
+    // Handlers
+    els.newOrderBtn.onclick = openOrderModal;
+    els.o_cancel.onclick = closeOrderModal;
+    els.o_email.onclick = ()=>{ const it = readOrderForm(); if (!it) return; openEmailFor(it); };
+    els.o_save.onclick = async ()=>{
+      const it = readOrderForm(); if (!it) return;
+      try{ const res = await apiJson('/orders', { method:'POST', body: JSON.stringify({ property: currentProperty, ...it }) }); const { id } = await res.json(); (ordersByProperty[currentProperty]||[]).unshift({ id, property: currentProperty, status:'Submitted', submittedAt: new Date().toISOString(), trackingNumber:'', createdBy:'', ...it }); }
+      catch(e){ const id = 'o_'+Date.now().toString(36); (ordersByProperty[currentProperty]||[]).unshift({ id, property: currentProperty, status:'Submitted', submittedAt: new Date().toISOString(), trackingNumber:'', createdBy:'', ...it }); }
+      saveStore(); renderOrders(); closeOrderModal();
+    };
+
+    function readOrderForm(){
+      const title = els.o_title.value.trim(); const items = els.o_items.value.trim(); if (!title && !items){ alert('Provide a title or requested items.'); return null; }
+      return { title, items, neededBy: els.o_needed.value, vendor: els.o_vendor.value.trim(), cost: parseFloat(els.o_cost.value)||0, notes: els.o_notes.value.trim() };
+    }
+
+    document.addEventListener('click', async (e)=>{
+      const t = e.target; if (!(t instanceof HTMLElement)) return;
+      const sel = t.getAttribute('data-sel'); const del = t.getAttribute('data-del'); const email = t.getAttribute('data-email');
+      const trackId = t.getAttribute('data-track') || (t.closest('td') && t.closest('td').querySelector('input[data-track]') && t.closest('td').querySelector('input[data-track]').getAttribute('data-track'));
+      if (t.matches('input[name="sel"]')){ selectedOrderId = t.getAttribute('data-sel'); return; }
+      if (del){
+        const arr = ordersByProperty[currentProperty]||[]; const idx = arr.findIndex(x=>String(x.id)===String(del));
+        try{ await apiJson('/orders', { method:'DELETE', body: JSON.stringify({ id: del, property: currentProperty }) }); }catch(e){}
+        if (idx>=0){ arr.splice(idx,1); saveStore(); renderOrders(); }
+        return;
+      }
+      if (email){ const arr = ordersByProperty[currentProperty]||[]; const it = arr.find(x=>String(x.id)===String(email)); if (it){ openEmailFor(it); } return; }
+      if (t.matches('select[data-status]')){
+        const id = t.getAttribute('data-status'); const val = t.value; const arr = ordersByProperty[currentProperty]||[]; const idx = arr.findIndex(x=>String(x.id)===String(id));
+        if (idx>=0){ try{ await apiJson('/orders', { method:'PUT', body: JSON.stringify({ id, property: currentProperty, status: val }) }); }catch(e){} arr[idx].status = val; saveStore(); }
+        return;
+      }
+      if (t.matches('input[data-track]')){ t.addEventListener('change', async ()=>{ const id = t.getAttribute('data-track'); const val = t.value.trim(); const arr = ordersByProperty[currentProperty]||[]; const idx = arr.findIndex(x=>String(x.id)===String(id)); if (idx>=0){ try{ await apiJson('/orders', { method:'PUT', body: JSON.stringify({ id, property: currentProperty, trackingNumber: val }) }); }catch(e){} arr[idx].trackingNumber = val; saveStore(); } }); }
+    });
+
+    // Nav active
+    (function(){ const nav = document.getElementById('mainNav'); if (!nav) return; const path = (location.pathname||'').toLowerCase(); nav.querySelectorAll('.nav-tab').forEach(a=>{ const href=(a.getAttribute('href')||'').toLowerCase(); if (href && (path.endsWith(href) || path.endsWith('/'+href))) a.classList.add('active'); }); })();
+
+    async function api(path, opts={}){ const res = await fetch('/api' + path, opts); if (!res.ok) throw new Error(await res.text() || ('HTTP '+res.status)); return res; }
+    function getAccessible(properties, me){ const names = properties.map(p => p.name).filter(Boolean); if (!me) return names; if (me.role === 'admin') return names; if (me.properties === '*') return names; const allowed = Array.isArray(me.properties) ? me.properties : []; return names.filter(n => allowed.includes(n)); }
 
     async function init(){
       try{
@@ -121,8 +301,9 @@
         if (els.propertySelect){
           els.propertySelect.innerHTML = list.map(p => `<option value="${p.replace(/"/g,'&quot;')}">${p}</option>`).join('');
           els.propertySelect.value = current;
-          els.propertySelect.onchange = ()=>{ localStorage.setItem(STORE_CURRENT_PROPERTY_KEY, els.propertySelect.value); };
+          els.propertySelect.onchange = ()=>{ setActiveProperty(els.propertySelect.value); };
         }
+        loadStore(); setActiveProperty(current);
       }catch(e){ location.href = 'index.html'; }
     }
 
