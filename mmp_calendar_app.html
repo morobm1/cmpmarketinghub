@@ -145,6 +145,14 @@
     #auditCard .opt{color:#6b7280;font-weight:600;font-size:11px}
   </style>
   <style>
+    /* Main Nav Bar */
+    .nav-bar{ background:#ffffff; border-bottom:1px solid var(--border); box-shadow:0 1px 3px rgba(0,0,0,0.06) }
+    .nav-bar .nav-wrap{ max-width:1200px; margin:0 auto; padding:8px 16px; display:flex; gap:8px; flex-wrap:wrap }
+    .nav-tab{ display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border:1px solid var(--border); border-radius:999px; color:#374151; text-decoration:none; background:#ffffff; transition: all .15s ease }
+    .nav-tab:hover{ background:#f3f4f6 }
+    .nav-tab.active{ background:#52d5ff; border-color:#52d5ff; color:#0b1b24; font-weight:700 }
+  </style>
+  <style>
     /* FullCalendar spacing and Today button fixes */
     .fc{ --fc-border-color:#e5e7eb; --fc-page-bg-color:#ffffff; --fc-neutral-bg-color:#f9fafb; --fc-today-bg-color:#fff7e6 }
     .fc .fc-toolbar{ margin-bottom:8px; gap:8px; align-items:center }
@@ -187,6 +195,15 @@
     </div>
     <div class="meta">Capstone Management Partners • Events, budgets, and marketing coordination</div>
   </header>
+  <nav id="mainNav" class="nav-bar">
+    <div class="nav-wrap">
+      <a href="mmp_calendar_app.html" class="nav-tab" data-tab="calendar">Marketing Calendar</a>
+      <a href="marketing_contacts.html" class="nav-tab" data-tab="contacts">Marketing Contacts</a>
+      <a href="promo_order_tracker.html" class="nav-tab" data-tab="promo">Promo Order Tracker</a>
+      <a href="velocity_tracker.html" class="nav-tab" data-tab="velocity">Velocity Tracker</a>
+      <a href="social_media_audit.html" class="nav-tab" data-tab="social">Social Media Audit</a>
+    </div>
+  </nav>
 
   <div id="appContainer" class="container" style="display:none">
     <aside class="card">
@@ -657,6 +674,18 @@
       reqCopyBtn: document.getElementById('reqCopyBtn'),
       reqEmailBtn: document.getElementById('reqEmailBtn'),
     };
+
+    // Activate current nav tab
+    (function(){
+      const nav = document.getElementById('mainNav');
+      if (!nav) return;
+      const path = (location.pathname || '').toLowerCase();
+      nav.querySelectorAll('.nav-tab').forEach(a => {
+        const href = (a.getAttribute('href') || '').toLowerCase();
+        if (href && (path.endsWith(href) || path.endsWith('/' + href))) a.classList.add('active');
+      });
+    })();
+
     if (els.loginTogglePw){ els.loginTogglePw.addEventListener('change', ()=>{ els.loginPassword.type = els.loginTogglePw.checked ? 'text' : 'password'; }); }
     let SESSION_ACTIVE = false;
     const TYPE_DEFS = [
