@@ -73,9 +73,9 @@
   </style>
   <style>
     /* Modal */
-    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50}
-    .modal{background:linear-gradient(180deg, rgba(17,24,39,0.96), rgba(2,6,23,0.92));border:1px solid var(--border);border-radius:12px;max-width:560px;width:96%;padding:14px}
-    .modal h3{margin:0 0 10px 0;color:var(--subtext);font-size:16px}
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:50}
+    .modal{background:#ffffff;border:1px solid var(--border);border-radius:12px;max-width:720px;width:96%;padding:16px;color:#111827;box-shadow:0 10px 25px rgba(0,0,0,0.15)}
+    .modal h3{margin:0 0 10px 0;color:#111827;font-size:16px;font-weight:800}
     .modal .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:12px}
   </style>
   <style>
@@ -1542,7 +1542,7 @@
     }
     if (els.reqUseEventBtn){ els.reqUseEventBtn.addEventListener('click', () => { if (!els.reqTitle.value) els.reqTitle.value = els.title.value; if (!els.reqDesc.value) els.reqDesc.value = els.notes.value; }); }
     if (els.reqCopyBtn){ els.reqCopyBtn.addEventListener('click', async () => { const text = buildRequestText(); try{ await navigator.clipboard.writeText(text); alert('Request copied to clipboard'); }catch(e){ alert('Copy failed.'); } }); }
-    if (els.reqEmailBtn){ els.reqEmailBtn.addEventListener('click', () => { const to = (els.reqEmail?.value || '').trim(); const subject = `[Graphics Request] ${els.reqTitle?.value || 'Untitled Event'} - Due ${els.reqDueDate?.value || ''}`; const body = encodeURIComponent(buildRequestText()); const mailto = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${body}`; window.location.href = mailto; }); }
+    if (els.reqEmailBtn){ els.reqEmailBtn.addEventListener('click', (e) => { e.preventDefault(); const to = (els.reqEmail?.value || '').trim(); const subject = `[Graphics Request] ${els.reqTitle?.value || 'Untitled Event'} - Due ${els.reqDueDate?.value || ''}`; const body = buildRequestText(); const gmail = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`; window.open(gmail, '_blank', 'noopener,noreferrer'); }); }
 
     // Add Event modal handlers
     function openEventModal(){
