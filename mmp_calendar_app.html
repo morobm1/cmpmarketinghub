@@ -373,7 +373,9 @@
       </section>
 
       <section class="card" id="auditCard">
-        <h3>Audit</h3>
+        <h3 style="display:flex;align-items:center;justify-content:space-between">Audit
+          <button id="editTargetsBtn" class="secondary" style="display:none; padding:6px 10px; font-size:12px">Edit Targets</button>
+        </h3>
         <div class="content">
           <div id="auditRows"></div>
         </div>
@@ -989,6 +991,48 @@
     }
 
     // Audit helpers and rendering
+    // Targets configuration: default + per-property override (admin editable)
+    const DEFAULT_TARGETS = {
+      weekly: [
+        { id:'story',   label:'Stories', cadence:'weekly', visible:true, min:5, max:5 },
+        { id:'reel',    label:'Reels', cadence:'weekly', visible:true, min:2, max:3 },
+        { id:'grid',    label:'Grid Posts', cadence:'weekly', visible:true, min:3, max:3 }, // 12 per month -> approx 3 per week
+      ],
+      monthly: [
+        { id:'event',   label:'Events', cadence:'monthly', visible:true, min:2, max:4 },
+        { id:'campus',  label:'On-campus shifts', cadence:'monthly', visible:true, min:4, max:4 },
+        { id:'outreach',label:'Outreach', cadence:'monthly', visible:true, min:2, max:2 },
+        { id:'renewal', label:'Renewal push', cadence:'monthly', visible:true, min:4, max:4 },
+        { id:'grid',    label:'Social media grid posts', cadence:'monthly', visible:true, min:12, max:12 },
+        { id:'story',   label:'Social media story posts', cadence:'monthly', visible:true, min:5, max:5 },
+        { id:'reel',    label:'Reels', cadence:'monthly', visible:true, min:2, max:3 },
+      ]
+    };
+    let targets = JSON.parse(JSON.stringify(DEFAULT_TARGETS));
+
+    function campaignToBucket(ev){
+      const c = String(ev.campaign||'').toLowerCase();
+      if (/renewal/.test(c)) return 'renewal';
+      if (/on[-\s]?campus/.test(c)) return 'campus';
+      if (/outreach|cross[-\s]?marketing|partnership|scholarship/.test(c)) return 'outreach';
+      if (/story/.test(c)) return 'story';
+      if (/reel/.test(c)) return 'reel';
+      if (/social\s*media\s*post/.test(c) && !/story|reel/.test(c)) return 'grid';
+      if (/event/.test(c)) return 'event';
+      return null;
+    }
+
+    async function loadTargets(){
+      try{
+        const res = await fetch(`/api/targets?property=${encodeURIComponent(currentProperty)}`, { credentials:'include' });
+        if (res.ok){ const data = await res.json(); targets = data.config || JSON.parse(JSON.stringify(DEFAULT_TARGETS)); }
+        else { targets = JSON.parse(JSON.stringify(DEFAULT_TARGETS)); }
+      }catch(e){ targets = JSON.parse(JSON.stringify(DEFAULT_TARGETS)); }
+    }
+    async function saveTargets(){
+      const payload = { property: currentProperty, config: targets };
+      await apiFetch('/targets', { method:'PUT', body: JSON.stringify(payload) });
+    }
     function getWeekBounds(now){
       const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const day = d.getDay(); // 0=Sun
@@ -1002,75 +1046,73 @@
       const wrap = document.getElementById('auditRows'); if (!wrap){ return; }
       const today = new Date(); const { start:ws, end:we } = getWeekBounds(today);
       const view = calendar?.view; const vStart = view?.currentStart || new Date(); const y=vStart.getFullYear(), m0=vStart.getMonth();
-      const lower = s => String(s||'').toLowerCase();
-      const isStory = e => /story/.test(lower(e.campaign));
-      const isGrid = e => /social\s*media\s*post/.test(lower(e.campaign)) && !/story/.test(lower(e.campaign));
-      const isGiveaway = e => /giveaway/.test(lower(e.campaign));
-      const isEventEvt = e => /event/.test(lower(e.campaign));
-      const isOnCampus = e => /on[-\s]?campus/.test(lower(e.campaign));
-      const isCrossMkt = e => /cross[-\s]?marketing|partnership|scholarship/.test(lower(e.campaign));
+      const isInMonth = (iso)=> sameMonthYMD(iso, y, m0);
 
-      let wStories=0, wGrid=0, wGive=0;
-      let mEvents=0, mOnCampus=0, mCross=0, mFlyer=0;
+      // Counters by bucket
+      const weeklyCounts = { story:0, reel:0, grid:0 };
+      const monthlyCounts = { event:0, campus:0, outreach:0, renewal:0, story:0, reel:0, grid:0 };
 
       for (const e of events){
+        const bucket = campaignToBucket(e) || '';
         if (isIsoInRange(e.start, ws, we)){
-          if (isStory(e)) wStories++;
-          if (isGrid(e)) wGrid++;
-          if (isGiveaway(e)) wGive++;
+          if (bucket==='story') weeklyCounts.story++;
+          if (bucket==='reel') weeklyCounts.reel++;
+          if (bucket==='grid') weeklyCounts.grid++;
         }
-        if (sameMonthYMD(e.start, y, m0)){
-          if (isEventEvt(e)) mEvents++;
-          if (isOnCampus(e)) mOnCampus++;
-          if (isCrossMkt(e)) mCross++;
+        if (isInMonth(e.start)){
+          if (bucket==='event') monthlyCounts.event++;
+          if (bucket==='campus') monthlyCounts.campus++;
+          if (bucket==='outreach') monthlyCounts.outreach++;
+          if (bucket==='renewal') monthlyCounts.renewal++;
+          if (bucket==='story') monthlyCounts.story++;
+          if (bucket==='reel') monthlyCounts.reel++;
+          if (bucket==='grid') monthlyCounts.grid++;
         }
-        if (sameMonthYMD(e.flyerPostedAt, y, m0)) mFlyer++;
       }
 
-      const weekly = [
-        { id:'stories', label:'Social Stories', have:wStories, need:3, optional:false, colors:['#52d5ff','#446472'] },
-        { id:'grid', label:'Grid Posts', have:wGrid, need:1, optional:false, colors:['#a78bfa','#52d5ff'] },
-        { id:'giveaway', label:'Giveaways', have:wGive, need:1, optional:true, colors:['#ffb732','#f59e0b'] },
-      ];
-      const monthly = [
-        { id:'events', label:'Events', have:mEvents, need:2, optional:true, colors:['#a78bfa','#6366f1'] },
-        { id:'onCampus', label:'On-campus shifts', have:mOnCampus, need:2, optional:false, colors:['#10b981','#059669'] },
-        { id:'cross', label:'Cross-marketing', have:mCross, need:1, optional:false, colors:['#22d3ee','#0ea5e9'] },
-        { id:'flyer', label:'Flyering shifts', have:mFlyer, need:4, optional:false, colors:['#f97316','#fb923c'] },
-      ];
-
-      function pct(have, need){ return need ? Math.max(0, Math.min(100, Math.round((have/need)*100))) : 100; }
-      function tile(it){
-        const p = pct(it.have, it.need);
+      function pct(have, min){ return min ? Math.max(0, Math.min(100, Math.round((have/min)*100))) : 100; }
+      function tile(it, have){
+        const p = pct(have, it.min);
         const badgeBg = p >= 100 ? '#e6fffa' : '#f3f4f6';
         const badgeColor = p >= 100 ? '#065f46' : '#111827';
-        const dot = it.colors[0];
-        const st = `--barStart:${it.colors[0]};--barEnd:${it.colors[1]};--w:${p}%`;
+        const colors = it.id==='event'?['#a78bfa','#6366f1']:
+                       it.id==='campus'?['#10b981','#059669']:
+                       it.id==='outreach'?['#22d3ee','#0ea5e9']:
+                       it.id==='renewal'?['#f59e0b','#fbbf24']:
+                       it.id==='reel'?['#f97316','#fb923c']:
+                       it.id==='story'?['#52d5ff','#446472']:
+                       ['#a78bfa','#52d5ff'];
+        const st = `--barStart:${colors[0]};--barEnd:${colors[1]};--w:${p}%`;
+        const range = it.max && it.max!==it.min ? `${it.min}-${it.max}` : `${it.min}`;
         return `
           <div class="audit-item" style="${st}">
             <div class="item-head">
-              <div class="item-label"><span class="dot" style="background:${dot}"></span>${it.label}${it.optional?' <span class="opt">(optional)</span>':''}</div>
+              <div class="item-label"><span class="dot" style="background:${colors[0]}"></span>${it.label}</div>
               <div class="pct-badge" style="background:${badgeBg};color:${badgeColor}">${p}%</div>
             </div>
             <div class="bar"><div></div></div>
-            <div class="counts">${it.have} of ${it.need}</div>
-          </div>
-        `;
+            <div class="counts">${have} of ${range}</div>
+          </div>`;
       }
+
+      const weeklyCfg = (targets.weekly||[]).filter(x=>x.visible!==false);
+      const monthlyCfg = (targets.monthly||[]).filter(x=>x.visible!==false);
 
       const weeklyHtml = `
         <div class="section-title">Weekly Targets</div>
         <div class="audit-grid">
-          ${weekly.map(tile).join('')}
-        </div>
-      `;
+          ${weeklyCfg.map(it => tile(it, weeklyCounts[it.id]||0)).join('')}
+        </div>`;
       const monthlyHtml = `
         <div class="section-title" style="margin-top:12px">Monthly Targets</div>
         <div class="audit-grid">
-          ${monthly.map(tile).join('')}
-        </div>
-      `;
+          ${monthlyCfg.map(it => tile(it, monthlyCounts[it.id]||0)).join('')}
+        </div>`;
       wrap.innerHTML = weeklyHtml + monthlyHtml;
+
+      // Admin button visibility
+      const btn = document.getElementById('editTargetsBtn');
+      if (btn){ btn.style.display = (currentUser && currentUser.role==='admin') ? '' : 'none'; }
     }
 
     // Auth & Users Management
@@ -1209,6 +1251,7 @@
       if (!els.budgetYear.options.length){ initBudgetUI(); }
       if (els.adminPanel) els.adminPanel.style.display = currentUser && currentUser.role==='admin' ? '' : 'none';
       renderTypeFilters();
+      await loadTargets();
       if (!SESSION_ACTIVE && calendar) refreshCalendar();
     }
 
@@ -1347,6 +1390,7 @@
         (async () => {
           try{ const bres = await apiFetch(`/budgets?property=${encodeURIComponent(currentProperty)}`); monthlyBudgets = await bres.json(); }catch(e){ /* leave existing monthlyBudgets */ }
           try{ const eres = await apiFetch(`/events?property=${encodeURIComponent(currentProperty)}`); events = await eres.json(); }catch(e){ /* leave existing events */ }
+          try{ await loadTargets(); }catch(e){}
           if (els.budgetYear) { renderBudgetInputs(parseInt(els.budgetYear.value, 10)); }
           if (calendar) refreshCalendar();
         })();
@@ -1400,6 +1444,75 @@
 
     // Init
     (async () => { await initAuth(); })();
+
+    // Targets modal/editor (admin only)
+    (function(){
+      const btn = document.getElementById('editTargetsBtn');
+      if (!btn) return;
+      btn.addEventListener('click', async ()=>{
+        if (!(currentUser && currentUser.role==='admin')){ alert('Admin only'); return; }
+        const cfg = targets || DEFAULT_TARGETS;
+        const mk = (items)=>items.map((it,i)=>{
+          const id = `${it.cadence}_${it.id}_${i}`;
+          const range = `${it.min}${(it.max&&it.max!==it.min)?('-'+it.max):''}`;
+          return `<tr>
+            <td><input type="checkbox" data-id="${it.id}" data-cadence="${it.cadence}" ${it.visible!==false?'checked':''}></td>
+            <td>${it.label}</td>
+            <td><input type="text" value="${range}" data-range="${id}" style="width:90px"></td>
+          </tr>`;
+        }).join('');
+        const html = `
+        <div class="modal-backdrop" id="targetsModal" style="display:flex">
+          <div class="modal" style="max-width:720px">
+            <h3>Edit Targets for ${currentProperty}</h3>
+            <div class="content">
+              <div class="mini" style="margin-bottom:8px">Format: enter a number or a range like 2-4. Uncheck to hide a target for this property.</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div>
+                  <div class="mini" style="font-weight:700;margin-bottom:6px">Weekly</div>
+                  <table style="width:100%;font-size:13px;border-collapse:collapse">
+                    <thead><tr><th style="text-align:left">Show</th><th style="text-align:left">Metric</th><th style="text-align:left">Target</th></tr></thead>
+                    <tbody>${mk(cfg.weekly||[])}</tbody>
+                  </table>
+                </div>
+                <div>
+                  <div class="mini" style="font-weight:700;margin-bottom:6px">Monthly</div>
+                  <table style="width:100%;font-size:13px;border-collapse:collapse">
+                    <thead><tr><th style="text-align:left">Show</th><th style="text-align:left">Metric</th><th style="text-align:left">Target</th></tr></thead>
+                    <tbody>${mk(cfg.monthly||[])}</tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <div class="actions">
+              <button class="secondary" id="targetsCancel">Cancel</button>
+              <button class="good" id="targetsSave">Save</button>
+            </div>
+          </div>
+        </div>`;
+        document.body.insertAdjacentHTML('beforeend', html);
+        const modal = document.getElementById('targetsModal');
+        document.getElementById('targetsCancel').onclick = ()=>{ modal.remove(); };
+        document.getElementById('targetsSave').onclick = async ()=>{
+          const parseRange = (s)=>{ const t=String(s||'').split('-').map(x=>parseInt(x,10)); const a=isFinite(t[0])?t[0]:0; const b=isFinite(t[1])?t[1]:a; return { min:Math.min(a,b), max:Math.max(a,b) }; };
+          const upd = JSON.parse(JSON.stringify(cfg));
+          function apply(items, cadence){
+            items.forEach((it,i)=>{
+              const checked = modal.querySelector(`input[type=checkbox][data-id="${it.id}"][data-cadence="${cadence}"]`).checked;
+              const rangeEl = modal.querySelector(`input[data-range="${cadence}_${it.id}_${i}"]`);
+              const { min, max } = parseRange(rangeEl.value);
+              it.visible = checked; it.min = min; it.max = max;
+            });
+          }
+          apply(upd.weekly, 'weekly');
+          apply(upd.monthly, 'monthly');
+          targets = upd;
+          try{ await saveTargets(); }catch(e){ alert('Save failed'); }
+          modal.remove();
+          renderAudit();
+        };
+      });
+    })();
 
     // Digital Graphic Request setup
     const STORE_REQ_NAME='mmp_req_name', STORE_REQ_EMAIL='mmp_req_email';
