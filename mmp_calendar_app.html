@@ -693,6 +693,21 @@
     })();
 
     if (els.loginTogglePw){ els.loginTogglePw.addEventListener('change', ()=>{ els.loginPassword.type = els.loginTogglePw.checked ? 'text' : 'password'; }); }
+    // Inline login handler to avoid redirect loops
+    async function doInlineLogin(){
+      const u = (els.loginUsername?.value||'').trim();
+      const p = els.loginPassword?.value||'';
+      if (!u || !p){ if (els.loginError){ els.loginError.textContent='Enter username and password'; els.loginError.style.display=''; } return; }
+      try{
+        if (els.loginError) els.loginError.style.display='none';
+        const res = await fetch('/api/auth-login', { method:'POST', headers:{ 'Content-Type':'application/json', 'Accept':'application/json' }, credentials:'include', body: JSON.stringify({ username:u, password:p }) });
+        if (!res.ok){ if (els.loginError){ els.loginError.textContent = (res.status===401||res.status===400)?'Incorrect username or password':'Login failed'; els.loginError.style.display=''; } return; }
+        // Re-run auth/init
+        await initAuth();
+      }catch(e){ if (els.loginError){ els.loginError.textContent='Network error. Try again.'; els.loginError.style.display=''; } }
+    }
+    if (els.loginBtn){ els.loginBtn.addEventListener('click', doInlineLogin); }
+    document.addEventListener('keydown', (e)=>{ if (e.key==='Enter' && (document.activeElement===els.loginUsername || document.activeElement===els.loginPassword)){ doInlineLogin(); } });
     let SESSION_ACTIVE = false;
     const TYPE_DEFS = [
       { id: 'resident', label: 'Resident Event', color: '#86efac', textColor: '#00130c', match: [/resident\s*event/i] },
@@ -1100,7 +1115,12 @@
     }
 
     function showApp(){ if (els.appHeader) els.appHeader.style.display=''; if (els.appContainer) els.appContainer.style.display=''; if (els.loginView) els.loginView.style.display='none'; const bl=document.getElementById('bootLoader'); if (bl) bl.style.display='none'; }
-    function showLogin(){ const bl=document.getElementById('bootLoader'); if (bl) bl.style.display='none'; if (els.appHeader) els.appHeader.style.display='none'; if (els.appContainer) els.appContainer.style.display='none'; window.location.href = 'index.html'; }
+    function showLogin(){
+      const bl=document.getElementById('bootLoader'); if (bl) bl.style.display='none';
+      if (els.appHeader) els.appHeader.style.display='none';
+      if (els.appContainer) els.appContainer.style.display='none';
+      if (els.loginView) els.loginView.style.display='flex';
+    }
 
     async function doLogout(){
       try{ await fetch('/api/auth-logout', { method:'POST' }); }catch(e){}
