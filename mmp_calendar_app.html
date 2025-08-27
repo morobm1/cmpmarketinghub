@@ -1137,10 +1137,18 @@
       }
     }
     function scheduleAutoLogout(){
-      const loginTime = parseInt(localStorage.getItem(STORE_LOGIN_TIME_KEY)||'0', 10) || 0;
-      if (!loginTime){ return; }
-      const remaining = SESSION_TTL_MS - (Date.now() - loginTime);
-      if (remaining <= 0){ doLogout(); return; }
+      let loginTime = parseInt(localStorage.getItem(STORE_LOGIN_TIME_KEY)||'0', 10) || 0;
+      // If not set, initialize now (prevents immediate logout)
+      if (!loginTime){
+        loginTime = Date.now();
+        try{ localStorage.setItem(STORE_LOGIN_TIME_KEY, String(loginTime)); }catch(e){}
+      }
+      let remaining = SESSION_TTL_MS - (Date.now() - loginTime);
+      if (remaining <= 0){
+        // Session TTL fallback: restart timer from now instead of logging out immediately
+        try{ localStorage.setItem(STORE_LOGIN_TIME_KEY, String(Date.now())); }catch(e){}
+        remaining = SESSION_TTL_MS;
+      }
       if (window.__mmpLogoutTimer){ try{ clearTimeout(window.__mmpLogoutTimer); }catch(e){} }
       window.__mmpLogoutTimer = setTimeout(doLogout, remaining);
     }
@@ -1160,6 +1168,8 @@
           const me = await meRes.json();
           currentUser = { username: me.username, role: me.role, properties: me.properties };
           SESSION_ACTIVE = true;
+          // Ensure a login time exists for auto-logout scheduling
+          try{ if (!localStorage.getItem(STORE_LOGIN_TIME_KEY)) localStorage.setItem(STORE_LOGIN_TIME_KEY, String(Date.now())); }catch(e){}
           showApp();
           bindHeaderHandlers();
           await initializeAppForUser();
