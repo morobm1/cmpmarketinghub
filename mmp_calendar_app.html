@@ -1094,7 +1094,7 @@
     function parseJwt(token){ try{ const p = token.split('.')[1]; return JSON.parse(atob(p.replace(/-/g,'+').replace(/_/g,'/'))); }catch(e){ return null; } }
     async function apiFetch(path, opts={}){
       const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers||{});
-      const res = await fetch(API_BASE + path, Object.assign({}, opts, { headers }));
+      const res = await fetch(API_BASE + path, Object.assign({}, opts, { headers, credentials: 'include' }));
       if (!res.ok){ const text = await res.text(); throw new Error(text || ('HTTP '+res.status)); }
       return res;
     }
@@ -1135,7 +1135,7 @@
     async function initAuth(){
       // Server session only via /api/me
       try{
-        const meRes = await fetch('/api/me');
+        const meRes = await fetch('/api/me', { credentials: 'include' });
         if (meRes.ok){
           const me = await meRes.json();
           currentUser = { username: me.username, role: me.role, properties: me.properties };
