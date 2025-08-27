@@ -713,45 +713,53 @@
     if (els.loginBtn){ els.loginBtn.addEventListener('click', doInlineLogin); }
     document.addEventListener('keydown', (e)=>{ if (e.key==='Enter' && (document.activeElement===els.loginUsername || document.activeElement===els.loginPassword)){ doInlineLogin(); } });
     let SESSION_ACTIVE = false;
-    const TYPE_DEFS = [
-      { id: 'resident', label: 'Resident Event', color: '#86efac', textColor: '#00130c', match: [/resident\s*event/i] },
-      { id: 'renewal', label: 'Renewal Effort', color: '#f59e0b', textColor: '#1f1300', match: [/renewal/i] },
-      { id: 'campus', label: 'On/Off-campus', color: '#3b82f6', textColor: '#001018', match: [/on[-\s]?campus/i, /off[-\s]?campus/i] },
-      { id: 'outreach', label: 'Outreach/Cross-Marketing', color: '#7f1d1d', textColor: '#ffffff', match: [/outreach/i, /cross[-\s]marketing/i, /cross[-\s]outreach/i] },
-      { id: 'review', label: 'Review', color: '#93c5fd', textColor: '#001018', match: [/review/i] },
-      { id: 'market', label: 'Market Key date', color: '#facc15', textColor: '#1f1300', match: [/key\s*market/i, /market\s*key/i] },
-      { id: 'other', label: 'Other', color: '#a78bfa', textColor: '#001018', match: [] },
+    // Admin-editable campaigns
+    const DEFAULT_CAMPAIGNS = [
+      { id:'event', label:'Event', color:'#a78bfa' },
+      { id:'campus', label:'On-campus', color:'#3b82f6' },
+      { id:'outreach', label:'Outreach', color:'#7f1d1d' },
+      { id:'renewal', label:'Renewal', color:'#f59e0b' },
+      { id:'story', label:'Story', color:'#52d5ff' },
+      { id:'reel', label:'Reel', color:'#f97316' },
+      { id:'grid', label:'Grid Post', color:'#22d3ee' }
     ];
-    let visibleTypes = new Set(TYPE_DEFS.map(d => d.id));
+    let CAMPAIGNS = DEFAULT_CAMPAIGNS.slice();
+    let visibleTypes = new Set(CAMPAIGNS.map(d => d.id));
     function getTypeForCampaign(c){
       const s = String(c||'').toLowerCase();
-      for (const d of TYPE_DEFS){ if (d.match.some(rx => rx.test(s))) return d; }
-      return TYPE_DEFS.find(d => d.id==='other');
+      if (/renewal/.test(s)) return { id:'renewal', color:'#f59e0b' };
+      if (/on[-\s]?campus/.test(s)) return { id:'campus', color:'#3b82f6' };
+      if (/outreach|cross[-\s]?marketing|partnership|scholarship/.test(s)) return { id:'outreach', color:'#7f1d1d' };
+      if (/story/.test(s)) return { id:'story', color:'#52d5ff' };
+      if (/reel/.test(s)) return { id:'reel', color:'#f97316' };
+      if (/social\s*media\s*post/.test(s) && !/story|reel/.test(s)) return { id:'grid', color:'#22d3ee' };
+      if (/event/.test(s)) return { id:'event', color:'#a78bfa' };
+      return { id:'other', color:'#a78bfa' };
     }
     function isEventVisible(ev){ const d = getTypeForCampaign(ev.campaign||''); return visibleTypes.has(d.id); }
     function renderTypeFilters(){
       if (!els.filtersRow) return;
       const allId = 'filter_all';
       const cbAll = `<label class="mini" style="display:flex;align-items:center;gap:6px;flex:0 0 auto"><input id="${allId}" type="checkbox" checked /> All</label>`;
-      const items = TYPE_DEFS.map(d => {
+      const items = CAMPAIGNS.map(d => {
         const id = 'filter_'+d.id;
-        const swatch = `<span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${d.color};border:1px solid rgba(0,0,0,.3)"></span>`;
-        return `<label class="mini" style="display:flex;align-items:center;gap:6px;flex:0 0 auto"><input id="${id}" type="checkbox" checked /> ${swatch} ${d.label}</label>`;
+        const dot = `<span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${d.color||'#a78bfa'};border:1px solid rgba(0,0,0,.3)"></span>`;
+        return `<label class="mini" style="display:flex;align-items:center;gap:6px;flex:0 0 auto"><input id="${id}" type="checkbox" checked /> ${dot} ${d.label}</label>`;
       }).join('');
       els.filtersRow.innerHTML = cbAll + items;
       const allEl = document.getElementById(allId);
       allEl.addEventListener('change', ()=>{
         const checked = allEl.checked;
-        visibleTypes = new Set(checked ? TYPE_DEFS.map(d=>d.id) : []);
-        TYPE_DEFS.forEach(d => { const e = document.getElementById('filter_'+d.id); if (e) e.checked = checked; });
+        visibleTypes = new Set(checked ? CAMPAIGNS.map(d=>d.id) : []);
+        CAMPAIGNS.forEach(d => { const e = document.getElementById('filter_'+d.id); if (e) e.checked = checked; });
         if (calendar) refreshCalendar();
       });
-      TYPE_DEFS.forEach(d => {
+      CAMPAIGNS.forEach(d => {
         const el = document.getElementById('filter_'+d.id);
         if (el){
           el.addEventListener('change', ()=>{
             if (el.checked) visibleTypes.add(d.id); else visibleTypes.delete(d.id);
-            const allChecked = TYPE_DEFS.every(x => visibleTypes.has(x.id));
+            const allChecked = CAMPAIGNS.every(x => visibleTypes.has(x.id));
             if (allEl) allEl.checked = allChecked;
             if (calendar) refreshCalendar();
           });
@@ -1241,6 +1249,7 @@
       }
       if (!els.budgetYear.options.length){ initBudgetUI(); }
       if (els.adminPanel) els.adminPanel.style.display = currentUser && currentUser.role==='admin' ? '' : 'none';
+      await loadCampaigns();
       renderTypeFilters();
       await loadTargets();
       if (!SESSION_ACTIVE && calendar) refreshCalendar();
@@ -1402,6 +1411,69 @@
         if (els.budgetYear && els.budgetYear.options.length) { renderBudgetInputs(parseInt(els.budgetYear.value, 10)); }
         if (calendar) refreshCalendar();
       }
+    }
+    async function loadCampaigns(){
+      try{ const res = await fetch(`/api/campaigns?property=${encodeURIComponent(currentProperty)}`, { credentials:'include' }); if (res.ok){ const data = await res.json(); CAMPAIGNS = Array.isArray(data.campaigns)?data.campaigns:DEFAULT_CAMPAIGNS.slice(); } else { CAMPAIGNS = DEFAULT_CAMPAIGNS.slice(); } }
+      catch(e){ CAMPAIGNS = DEFAULT_CAMPAIGNS.slice(); }
+      visibleTypes = new Set(CAMPAIGNS.map(d=>d.id));
+      // Update Campaign select options
+      const sel = document.getElementById('campaign'); if (sel){ sel.innerHTML = '<option value="">-- Select --</option>'+CAMPAIGNS.map(c=>`<option value="${c.label}">${c.label}</option>`).join(''); }
+    }
+    function openCampaignsEditor(){
+      const isAdmin = currentUser && currentUser.role==='admin';
+      if (!isAdmin){ alert('Admin only'); return; }
+      const rows = CAMPAIGNS.map((c,i)=>`<tr>
+        <td><input type="text" data-lbl="${i}" value="${c.label}" style="width:160px"></td>
+        <td><input type="color" data-col="${i}" value="${c.color||'#a78bfa'}"></td>
+        <td><button class="secondary btn-inline" data-del="${i}" style="padding:4px 8px">Remove</button></td>
+      </tr>`).join('');
+      const html = `
+      <div class="modal-backdrop" id="campaignsModal" style="display:flex">
+        <div class="modal" style="max-width:720px">
+          <h3>Edit Campaigns</h3>
+          <div class="content">
+            <div class="mini" style="margin-bottom:8px">These campaigns drive the Audit targets and the Campaign select.</div>
+            <table style="width:100%;font-size:13px;border-collapse:collapse">
+              <thead><tr><th style="text-align:left">Label</th><th style="text-align:left">Color</th><th></th></tr></thead>
+              <tbody id="cmpBody">${rows}</tbody>
+            </table>
+            <div style="margin-top:8px"><button class="good btn-inline" id="cmpAdd" style="padding:4px 8px">+ Add Campaign</button></div>
+          </div>
+          <div class="actions">
+            <button class="secondary" id="cmpCancel">Cancel</button>
+            <button class="good" id="cmpSave">Save</button>
+          </div>
+        </div>
+      </div>`;
+      document.body.insertAdjacentHTML('beforeend', html);
+      const modal = document.getElementById('campaignsModal');
+      document.getElementById('cmpCancel').onclick = ()=> modal.remove();
+      document.getElementById('cmpAdd').onclick = ()=>{
+        CAMPAIGNS.push({ id: 'custom-'+Date.now().toString(36), label: 'New Campaign', color: '#a78bfa' });
+        modal.remove(); openCampaignsEditor();
+      };
+      modal.addEventListener('click', (e)=>{
+        const t=e.target; if (!(t instanceof HTMLElement)) return;
+        const del = t.getAttribute('data-del');
+        if (del){ CAMPAIGNS.splice(parseInt(del,10),1); modal.remove(); openCampaignsEditor(); }
+      });
+      document.getElementById('cmpSave').onclick = async ()=>{
+        const body = modal.querySelector('#cmpBody');
+        const rows = Array.from(body.querySelectorAll('tr'));
+        const next = rows.map((tr,idx)=>{
+          const lbl = tr.querySelector(`input[data-lbl="${idx}"]`).value.trim();
+          const col = tr.querySelector(`input[data-col="${idx}"]`).value.trim();
+          return { id: (CAMPAIGNS[idx]?.id)||lbl.toLowerCase().replace(/[^a-z0-9]+/g,'-'), label: lbl, color: col, visible: true };
+        }).filter(x=>x.label);
+        CAMPAIGNS = next;
+        try{ await apiFetch('/campaigns', { method:'PUT', body: JSON.stringify({ property: currentProperty, campaigns: CAMPAIGNS }) }); }
+        catch(e){ alert('Save failed'); }
+        modal.remove();
+        // Refresh UI
+        renderTypeFilters();
+        const sel = document.getElementById('campaign'); if (sel){ sel.innerHTML = '<option value="">-- Select --</option>'+CAMPAIGNS.map(c=>`<option value="${c.label}">${c.label}</option>`).join(''); }
+        renderAudit();
+      };
     }
     async function initProperties(){
       await loadProperties();
