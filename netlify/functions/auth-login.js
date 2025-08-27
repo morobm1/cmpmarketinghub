@@ -13,7 +13,13 @@ export async function handler(event){
     if (!ok) return { statusCode: 401, body: 'Invalid' };
     const token = signToken(user);
     const ttlSeconds = 8*60*60; // align with 8h default
-    const cookie = `mmp_token=${encodeURIComponent(token)}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${ttlSeconds}`;
+    const host = (event.headers && (event.headers.host || event.headers.Host)) || '';
+    const proto = (event.headers && (event.headers['x-forwarded-proto'] || event.headers['X-Forwarded-Proto'])) || '';
+    const isLocal = /localhost|127\.0\.0\.1/.test(host) || /^http$/i.test(proto);
+    const flags = isLocal
+      ? `HttpOnly; SameSite=Lax; Path=/; Max-Age=${ttlSeconds}` // dev over http
+      : `HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${ttlSeconds}`; // prod over https
+    const cookie = `mmp_token=${encodeURIComponent(token)}; ${flags}`;
     return {
       statusCode: 200,
       headers: { 'Set-Cookie': cookie, 'Content-Type': 'application/json' },

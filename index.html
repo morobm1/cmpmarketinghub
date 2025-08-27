@@ -3,6 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="googlebot" content="noindex, nofollow" />
   <title>MMP • Login</title>
   <meta name="description" content="Login to the MMP Calendar">
   <style>
@@ -17,7 +19,7 @@
     input, button{width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:var(--muted); color:var(--text); font-size:14px}
     button{cursor:pointer; border-color:transparent; background:linear-gradient(180deg, #0ea5e9, #22d3ee); color:#001018; font-weight:800; margin-top:12px}
     .mini{font-size:11px; color:var(--sub)}
-    .err{color:var(--bad); display:none; margin-top:8px}
+    .err{display:none; margin-top:8px; padding:10px 12px; border-radius:10px; background:#fee2e2; border:1px solid #fecaca; color:#7f1d1d; font-weight:700}
     .footer{margin-top:10px; font-size:11px; color:var(--sub)}
     .actions{display:flex; gap:10px; align-items:center; justify-content:space-between}
     a{color:#93c5fd; text-decoration:none}
@@ -33,12 +35,12 @@
       <input id="password" type="password" autocomplete="current-password" />
       <div class="row" style="margin-top:6px"><label class="mini" style="display:flex;align-items:center;gap:6px;user-select:none"><input id="togglePw" type="checkbox" /> Show password</label></div>
       <button id="loginBtn">Sign In</button>
-      <div id="error" class="err">Invalid credentials</div>
+      <div id="error" class="err" role="alert" aria-live="assertive" aria-atomic="true"></div>
       <div class="footer mini">You will be redirected to the calendar after login.</div>
     </div>
-    <div class="actions mini" style="margin-top:8px">
-      <div>Admin portal</div>
-      <div><a href="mmp_admin.html">Admin</a></div>
+        <div class="footer mini" style="margin-top:8px">
+      <a href="https://cardinalgroup.com/privacy-policy/" target="_blank" rel="noopener noreferrer">Privacy Policy</a> •
+      <a href="https://cardinalgroup.com/disclosures-licenses/" target="_blank" rel="noopener noreferrer">Disclosures & Licenses</a>
     </div>
   </div>
   <script>
@@ -52,14 +54,23 @@
       const username = (els.username.value||'').trim();
       const password = els.password.value||'';
       if (!username || !password){ els.error.textContent = 'Enter username and password'; els.error.style.display=''; return; }
+      const btn = els.loginBtn; const orig = btn.textContent; btn.disabled = true; btn.textContent = 'Signing in…';
       try{
-        const res = await fetch('/api/auth-login', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ username, password }) });
+        const res = await fetch('/api/auth-login', { method:'POST', headers:{ 'Content-Type':'application/json', 'Accept':'application/json' }, credentials:'include', body: JSON.stringify({ username, password }) });
         if (res.ok){ window.location.href = 'mmp_calendar_app.html'; return; }
-        els.error.textContent = 'Invalid credentials';
+        if (res.status === 401 || res.status === 400){
+          els.error.textContent = 'Incorrect username or password';
+        } else {
+          let txt = '';
+          try{ txt = await res.text(); }catch(e){}
+          els.error.textContent = txt ? ('Login failed: ' + txt) : 'Login failed';
+        }
         els.error.style.display = '';
       }catch(e){
-        els.error.textContent = 'Login failed';
+        els.error.textContent = 'Network error. Please try again.';
         els.error.style.display = '';
+      } finally {
+        btn.disabled = false; btn.textContent = orig;
       }
     }
 
@@ -68,7 +79,7 @@
 
     // If already logged in via cookie, redirect to app
     (async function(){
-      try{ const me = await fetch('/api/me'); if (me.ok){ window.location.href = 'mmp_calendar_app.html'; } }catch(e){}
+      try{ const me = await fetch('/api/me', { credentials:'include' }); if (me.ok){ window.location.href = 'mmp_calendar_app.html'; } }catch(e){}
     })();
   </script>
 </body>
