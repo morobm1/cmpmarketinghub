@@ -13,7 +13,7 @@ export async function handler(event){
     try{
       const db = await getDb();
       const doc = await db.collection('campaigns').findOne({ property });
-      if (!doc) return json(404, { error:'not found' });
+      if (!doc) return json(200, { property, campaigns: [] });
       return json(200, { property, campaigns: doc.campaigns || [] });
     }catch(e){ return json(500, { error:'server_error', detail: String(e?.message||e) }); }
   }
