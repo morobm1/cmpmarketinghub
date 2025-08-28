@@ -377,6 +377,7 @@
       </section>
 
       <section class="card" id="auditCard">
+<<<<<<< HEAD
         <h3 style="display:flex;align-items:center;justify-content:space-between">Audit
 <<<<<<< HEAD
           <button id="editTargetsBtn" class="good" style="display:none; padding:4px 8px; font-size:12px; line-height:1; border-radius:999px">Edit Targets</button>
@@ -384,6 +385,9 @@
           <button id="editTargetsBtn" class="good" style="display:none; padding:4px 8px; font-size:11px; line-height:1; border-radius:999px">Edit Targets</button>
 >>>>>>> parent of e21d6ee (Update mmp_calendar_app.html)
         </h3>
+=======
+        <h3>Audit</h3>
+>>>>>>> parent of d7b5952 (update)
         <div class="content">
           <div id="auditRows"></div>
         </div>
@@ -1007,48 +1011,6 @@
     }
 
     // Audit helpers and rendering
-    // Targets configuration: default + per-property override (admin editable)
-    const DEFAULT_TARGETS = {
-      weekly: [
-        { id:'story',   label:'Stories', cadence:'weekly', visible:true, min:5, max:5 },
-        { id:'reel',    label:'Reels', cadence:'weekly', visible:true, min:2, max:3 },
-        { id:'grid',    label:'Grid Posts', cadence:'weekly', visible:true, min:3, max:3 }, // 12 per month -> approx 3 per week
-      ],
-      monthly: [
-        { id:'event',   label:'Events', cadence:'monthly', visible:true, min:2, max:4 },
-        { id:'campus',  label:'On-campus shifts', cadence:'monthly', visible:true, min:4, max:4 },
-        { id:'outreach',label:'Outreach', cadence:'monthly', visible:true, min:2, max:2 },
-        { id:'renewal', label:'Renewal push', cadence:'monthly', visible:true, min:4, max:4 },
-        { id:'grid',    label:'Social media grid posts', cadence:'monthly', visible:true, min:12, max:12 },
-        { id:'story',   label:'Social media story posts', cadence:'monthly', visible:true, min:5, max:5 },
-        { id:'reel',    label:'Reels', cadence:'monthly', visible:true, min:2, max:3 },
-      ]
-    };
-    let targets = JSON.parse(JSON.stringify(DEFAULT_TARGETS));
-
-    function campaignToBucket(ev){
-      const c = String(ev.campaign||'').toLowerCase();
-      if (/renewal/.test(c)) return 'renewal';
-      if (/on[-\s]?campus/.test(c)) return 'campus';
-      if (/outreach|cross[-\s]?marketing|partnership|scholarship/.test(c)) return 'outreach';
-      if (/story/.test(c)) return 'story';
-      if (/reel/.test(c)) return 'reel';
-      if (/social\s*media\s*post/.test(c) && !/story|reel/.test(c)) return 'grid';
-      if (/event/.test(c)) return 'event';
-      return null;
-    }
-
-    async function loadTargets(){
-      try{
-        const res = await fetch(`/api/targets?property=${encodeURIComponent(currentProperty)}`, { credentials:'include' });
-        if (res.ok){ const data = await res.json(); targets = data.config || JSON.parse(JSON.stringify(DEFAULT_TARGETS)); }
-        else { targets = JSON.parse(JSON.stringify(DEFAULT_TARGETS)); }
-      }catch(e){ targets = JSON.parse(JSON.stringify(DEFAULT_TARGETS)); }
-    }
-    async function saveTargets(){
-      const payload = { property: currentProperty, config: targets };
-      await apiFetch('/targets', { method:'PUT', body: JSON.stringify(payload) });
-    }
     function getWeekBounds(now){
       const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const day = d.getDay(); // 0=Sun
@@ -1062,8 +1024,15 @@
       const wrap = document.getElementById('auditRows'); if (!wrap){ return; }
       const today = new Date(); const { start:ws, end:we } = getWeekBounds(today);
       const view = calendar?.view; const vStart = view?.currentStart || new Date(); const y=vStart.getFullYear(), m0=vStart.getMonth();
-      const isInMonth = (iso)=> sameMonthYMD(iso, y, m0);
+      const lower = s => String(s||'').toLowerCase();
+      const isStory = e => /story/.test(lower(e.campaign));
+      const isGrid = e => /social\s*media\s*post/.test(lower(e.campaign)) && !/story/.test(lower(e.campaign));
+      const isGiveaway = e => /giveaway/.test(lower(e.campaign));
+      const isEventEvt = e => /event/.test(lower(e.campaign));
+      const isOnCampus = e => /on[-\s]?campus/.test(lower(e.campaign));
+      const isCrossMkt = e => /cross[-\s]?marketing|partnership|scholarship/.test(lower(e.campaign));
 
+<<<<<<< HEAD
       // Counters by bucket (monthly only)
       const monthlyCounts = { event:0, campus:0, outreach:0, renewal:0, story:0, reel:0, grid:0 };
 
@@ -1078,39 +1047,71 @@
           if (bucket==='story') monthlyCounts.story++;
           if (bucket==='reel') monthlyCounts.reel++;
           if (bucket==='grid') monthlyCounts.grid++;
+=======
+      let wStories=0, wGrid=0, wGive=0;
+      let mEvents=0, mOnCampus=0, mCross=0, mFlyer=0;
+
+      for (const e of events){
+        if (isIsoInRange(e.start, ws, we)){
+          if (isStory(e)) wStories++;
+          if (isGrid(e)) wGrid++;
+          if (isGiveaway(e)) wGive++;
         }
+        if (sameMonthYMD(e.start, y, m0)){
+          if (isEventEvt(e)) mEvents++;
+          if (isOnCampus(e)) mOnCampus++;
+          if (isCrossMkt(e)) mCross++;
+>>>>>>> parent of d7b5952 (update)
+        }
+        if (sameMonthYMD(e.flyerPostedAt, y, m0)) mFlyer++;
       }
 
-      function pct(have, min){ return min ? Math.max(0, Math.min(100, Math.round((have/min)*100))) : 100; }
-      function tile(it, have){
-        const p = pct(have, it.min);
+      const weekly = [
+        { id:'stories', label:'Social Stories', have:wStories, need:3, optional:false, colors:['#52d5ff','#446472'] },
+        { id:'grid', label:'Grid Posts', have:wGrid, need:1, optional:false, colors:['#a78bfa','#52d5ff'] },
+        { id:'giveaway', label:'Giveaways', have:wGive, need:1, optional:true, colors:['#ffb732','#f59e0b'] },
+      ];
+      const monthly = [
+        { id:'events', label:'Events', have:mEvents, need:2, optional:true, colors:['#a78bfa','#6366f1'] },
+        { id:'onCampus', label:'On-campus shifts', have:mOnCampus, need:2, optional:false, colors:['#10b981','#059669'] },
+        { id:'cross', label:'Cross-marketing', have:mCross, need:1, optional:false, colors:['#22d3ee','#0ea5e9'] },
+        { id:'flyer', label:'Flyering shifts', have:mFlyer, need:4, optional:false, colors:['#f97316','#fb923c'] },
+      ];
+
+      function pct(have, need){ return need ? Math.max(0, Math.min(100, Math.round((have/need)*100))) : 100; }
+      function tile(it){
+        const p = pct(it.have, it.need);
         const badgeBg = p >= 100 ? '#e6fffa' : '#f3f4f6';
         const badgeColor = p >= 100 ? '#065f46' : '#111827';
-        const colors = it.id==='event'?['#a78bfa','#6366f1']:
-                       it.id==='campus'?['#10b981','#059669']:
-                       it.id==='outreach'?['#22d3ee','#0ea5e9']:
-                       it.id==='renewal'?['#f59e0b','#fbbf24']:
-                       it.id==='reel'?['#f97316','#fb923c']:
-                       it.id==='story'?['#52d5ff','#446472']:
-                       ['#a78bfa','#52d5ff'];
-        const st = `--barStart:${colors[0]};--barEnd:${colors[1]};--w:${p}%`;
-        const range = it.max && it.max!==it.min ? `${it.min}-${it.max}` : `${it.min}`;
+        const dot = it.colors[0];
+        const st = `--barStart:${it.colors[0]};--barEnd:${it.colors[1]};--w:${p}%`;
         return `
           <div class="audit-item" style="${st}">
             <div class="item-head">
-              <div class="item-label"><span class="dot" style="background:${colors[0]}"></span>${it.label}</div>
+              <div class="item-label"><span class="dot" style="background:${dot}"></span>${it.label}${it.optional?' <span class="opt">(optional)</span>':''}</div>
               <div class="pct-badge" style="background:${badgeBg};color:${badgeColor}">${p}%</div>
             </div>
             <div class="bar"><div></div></div>
-            <div class="counts">${have} of ${range}</div>
-          </div>`;
+            <div class="counts">${it.have} of ${it.need}</div>
+          </div>
+        `;
       }
 
+<<<<<<< HEAD
       const monthlyCfg = (targets.monthly||[]).filter(x=>x.visible!==false);
 
+=======
+      const weeklyHtml = `
+        <div class="section-title">Weekly Targets</div>
+        <div class="audit-grid">
+          ${weekly.map(tile).join('')}
+        </div>
+      `;
+>>>>>>> parent of d7b5952 (update)
       const monthlyHtml = `
         <div class="section-title">Monthly Targets</div>
         <div class="audit-grid">
+<<<<<<< HEAD
           ${monthlyCfg.map(it => tile(it, monthlyCounts[it.id]||0)).join('')}
         </div>`;
       wrap.innerHTML = monthlyHtml;
@@ -1118,6 +1119,12 @@
       // Admin button visibility
       const btn = document.getElementById('editTargetsBtn');
       if (btn){ btn.style.display = (currentUser && currentUser.role==='admin') ? '' : 'none'; }
+=======
+          ${monthly.map(tile).join('')}
+        </div>
+      `;
+      wrap.innerHTML = weeklyHtml + monthlyHtml;
+>>>>>>> parent of d7b5952 (update)
     }
 
     // Auth & Users Management
@@ -1257,7 +1264,6 @@
       if (els.adminPanel) els.adminPanel.style.display = currentUser && currentUser.role==='admin' ? '' : 'none';
       await loadCampaigns();
       renderTypeFilters();
-      await loadTargets();
       if (!SESSION_ACTIVE && calendar) refreshCalendar();
     }
 
@@ -1396,7 +1402,6 @@
         (async () => {
           try{ const bres = await apiFetch(`/budgets?property=${encodeURIComponent(currentProperty)}`); monthlyBudgets = await bres.json(); }catch(e){ /* leave existing monthlyBudgets */ }
           try{ const eres = await apiFetch(`/events?property=${encodeURIComponent(currentProperty)}`); events = await eres.json(); }catch(e){ /* leave existing events */ }
-          try{ await loadTargets(); }catch(e){}
           if (els.budgetYear) { renderBudgetInputs(parseInt(els.budgetYear.value, 10)); }
           if (calendar) refreshCalendar();
         })();
@@ -1514,6 +1519,7 @@
     // Init
     (async () => { await initAuth(); })();
 
+<<<<<<< HEAD
     // Targets modal/editor (admin only)
     (function(){
       const btn = document.getElementById('editTargetsBtn');
@@ -1573,6 +1579,8 @@
       });
     })();
 
+=======
+>>>>>>> parent of d7b5952 (update)
     // Digital Graphic Request setup
     const STORE_REQ_NAME='mmp_req_name', STORE_REQ_EMAIL='mmp_req_email';
     try{ els.reqName.value = localStorage.getItem(STORE_REQ_NAME) || ''; }catch(e){}
