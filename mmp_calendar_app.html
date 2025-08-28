@@ -731,7 +731,8 @@
       { id:'renewal', label:'Renewal', color:'#f59e0b' },
       { id:'story', label:'Story', color:'#52d5ff' },
       { id:'reel', label:'Reel', color:'#f97316' },
-      { id:'grid', label:'Grid Post', color:'#22d3ee' }
+      { id:'grid', label:'Grid Post', color:'#22d3ee' },
+      { id:'other', label:'Other', color:'#a78bfa' }
     ];
     let CAMPAIGNS = DEFAULT_CAMPAIGNS.slice();
     let visibleTypes = new Set(CAMPAIGNS.map(d => d.id));
@@ -746,7 +747,14 @@
       if (/event/.test(s)) return { id:'event', color:'#a78bfa' };
       return { id:'other', color:'#a78bfa' };
     }
-    function isEventVisible(ev){ const d = getTypeForCampaign(ev.campaign||''); return visibleTypes.has(d.id); }
+    function isEventVisible(ev){
+      const d = getTypeForCampaign(ev.campaign||'');
+      if (!d || !d.id) return true; // show if unknown mapping
+      if (!visibleTypes || visibleTypes.size === 0) return true; // no filters applied
+      // If this campaign id isn’t in the configured list, don’t hide it
+      if (!CAMPAIGNS.find(c => c.id === d.id)) return true;
+      return visibleTypes.has(d.id);
+    }
     function renderTypeFilters(){
       if (!els.filtersRow) return;
       const allId = 'filter_all';
