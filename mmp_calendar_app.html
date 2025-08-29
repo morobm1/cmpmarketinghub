@@ -1156,8 +1156,9 @@
     function getAccessibleProperties(){
       if (!currentUser) return [];
       if (currentUser.role === 'admin') return properties.slice();
-      const assigned = currentUser.properties === '*' ? properties.slice() : (currentUser.properties||[]);
-      return properties.filter(p => assigned.includes(p));
+      const rawAssigned = currentUser.properties === '*' ? properties.slice() : (currentUser.properties||[]);
+      const assignedGroups = Array.from(new Set(rawAssigned.map(p => mapPropertyNameToGroup(p))));
+      return properties.filter(p => assignedGroups.includes(p));
     }
 
     async function initAuth(){
@@ -1280,6 +1281,62 @@
     function clearYear(year){ for (let i=1;i<=12;i++){ const ym = `${year}-${String(i).padStart(2,'0')}`; delete monthlyBudgets[ym]; } saveBudgetStore(); }
 
     // Properties helpers
+    // Grouped property mapping to combine certain properties
+    const OLD_TO_GROUP = {
+      'Cerca Apartments': 'Cerca/Prisma/Zuma',
+      'Prisma Apartments': 'Cerca/Prisma/Zuma',
+      'Zuma Apartments': 'Cerca/Prisma/Zuma',
+      'Stateside Apartments': 'Stateside/Monte',
+      'Monte Apartments': 'Stateside/Monte',
+      'Chorro SLO': 'Chorro/Palomar',
+      'Palomar SLO': 'Chorro/Palomar',
+    };
+    const GROUPED_NAMES = ['Cerca/Prisma/Zuma','Stateside/Monte','Chorro/Palomar'];
+    const OLD_NAMES = Object.keys(OLD_TO_GROUP);
+    function mapPropertyNameToGroup(name){ return OLD_TO_GROUP[name] || name; }
+    function applyPropertyGrouping(){
+      // Remove old individual names and ensure grouped names exist
+      properties = (properties||[]).filter(p => !OLD_NAMES.includes(p));
+      GROUPED_NAMES.forEach(g => { if (!properties.includes(g)) properties.push(g); });
+      // Migrate local stores only when not authenticated (server-managed stores handled server-side)
+      if (!SESSION_ACTIVE){
+        migrateLocalStoresToGroups();
+      }
+    }
+    function migrateLocalStoresToGroups(){
+      try{
+        // Migrate events
+        if (eventsByProperty && typeof eventsByProperty === 'object'){
+          for (const oldName of OLD_NAMES){
+            const newName = OLD_TO_GROUP[oldName];
+            if (eventsByProperty[oldName] && eventsByProperty[oldName].length){
+              eventsByProperty[newName] = (eventsByProperty[newName] || []).concat(eventsByProperty[oldName]);
+              delete eventsByProperty[oldName];
+            }
+          }
+          try{ localStorage.setItem(STORE_EVENTS_BY_PROP_KEY, JSON.stringify(eventsByProperty)); }catch(e){}
+        }
+      }catch(e){}
+      try{
+        // Migrate budgets (sum by month)
+        if (budgetsByProperty && typeof budgetsByProperty === 'object'){
+          for (const oldName of OLD_NAMES){
+            const newName = OLD_TO_GROUP[oldName];
+            const oldMap = budgetsByProperty[oldName];
+            if (oldMap && typeof oldMap === 'object'){
+              const target = budgetsByProperty[newName] || {};
+              for (const ym of Object.keys(oldMap)){
+                const v = parseFloat(oldMap[ym]) || 0;
+                target[ym] = (parseFloat(target[ym]) || 0) + v;
+              }
+              budgetsByProperty[newName] = target;
+              delete budgetsByProperty[oldName];
+            }
+          }
+          try{ localStorage.setItem(STORE_BUDGETS_BY_PROP_KEY, JSON.stringify(budgetsByProperty)); }catch(e){}
+        }
+      }catch(e){}
+    }
     async function loadProperties(){
       if (SESSION_ACTIVE){
         try{
@@ -1341,6 +1398,7 @@
       }catch(e){}
     }
     function setActiveProperty(prop){
+      prop = mapPropertyNameToGroup(prop);
       currentProperty = prop;
       try{ localStorage.setItem(STORE_CURRENT_PROPERTY_KEY, currentProperty); }catch(e){}
       if (SESSION_ACTIVE){
@@ -1375,7 +1433,11 @@
         try{ eventsByProperty = JSON.parse(localStorage.getItem(STORE_EVENTS_BY_PROP_KEY)||'{}'); }catch(e){ eventsByProperty = {}; }
         try{ budgetsByProperty = JSON.parse(localStorage.getItem(STORE_BUDGETS_BY_PROP_KEY)||'{}'); }catch(e){ budgetsByProperty = {}; }
       }
-      const saved = (localStorage.getItem(STORE_CURRENT_PROPERTY_KEY) || '').trim();
+      // Apply grouping rules and migrate local stores if needed
+      applyPropertyGrouping();
+
+      // Determine current property (map any legacy name to grouped)
+      const saved = mapPropertyNameToGroup((localStorage.getItem(STORE_CURRENT_PROPERTY_KEY) || '').trim());
       const list = (typeof getAccessibleProperties === 'function') ? getAccessibleProperties() : properties.slice();
       currentProperty = list.includes(saved) ? saved : list[0];
       if (!SESSION_ACTIVE){ migrateLegacyIfNeeded(); loadStore(); loadBudgetStore(); }
