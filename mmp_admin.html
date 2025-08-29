@@ -130,6 +130,28 @@
     let properties = [];
     let usersList = [];
 
+    // Property grouping to combine individual names into grouped names
+    const OLD_TO_GROUP = {
+      'Cerca Apartments': 'Cerca/Prisma/Zuma',
+      'Prisma Apartments': 'Cerca/Prisma/Zuma',
+      'Zuma Apartments': 'Cerca/Prisma/Zuma',
+      'Stateside Apartments': 'Stateside/Monte',
+      'Monte Apartments': 'Stateside/Monte',
+      'Chorro SLO': 'Chorro/Palomar',
+      'Palomar SLO': 'Chorro/Palomar',
+    };
+    const GROUPED_NAMES = ['Cerca/Prisma/Zuma','Stateside/Monte','Chorro/Palomar'];
+    function mapPropertyNameToGroup(name){ return OLD_TO_GROUP[name] || name; }
+    function applyPropertyGrouping(rawList){
+      const set = new Set();
+      for (const n of (rawList||[])){
+        const g = mapPropertyNameToGroup(n);
+        if (g) set.add(g);
+      }
+      GROUPED_NAMES.forEach(n => set.add(n));
+      return Array.from(set);
+    }
+
     function show(el){ if (el) el.classList.remove('hidden'); }
     function hide(el){ if (el) el.classList.add('hidden'); }
 
@@ -159,7 +181,8 @@
         const roleSel = `<select class="uRole" data-u="${u.username}"><option value="user" ${u.role==='user'?'selected':''}>User</option><option value="admin" ${u.role==='admin'?'selected':''}>Admin</option></select>`;
         const items = properties.map(p=>{
           const safe = p.replace(/\"/g,'&quot;');
-          const assigned = (u.properties==='*') || ((u.properties||[]).includes(p));
+          const assignedSet = new Set(((u.properties==='*') ? [] : (u.properties||[])).map(mapPropertyNameToGroup));
+          const assigned = (u.properties==='*') || assignedSet.has(p);
           const sel = assigned ? 'prop-item selected' : 'prop-item';
           return `<div class="${sel}" data-u="${u.username}" data-prop="${safe}">${p}</div>`;
         }).join('');
@@ -216,7 +239,7 @@
       try{
         const res = await apiFetch('/properties');
         const list = await res.json();
-        properties = (list||[]).map(x => x.name).filter(Boolean);
+        properties = applyPropertyGrouping(((list||[]).map(x => x.name).filter(Boolean)));
         if (!properties.length){ await ensurePropertiesSeed(); }
       }catch(e){ alert('Loading properties failed: '+e.message); properties = []; }
       renderCreateProps();
@@ -224,7 +247,14 @@
 
     async function ensurePropertiesSeed(){
       const seed = [
-        'M@College', 'Blattner Hall (75 Arkansas)', 'Century Hall', 'Zuma Apartments', 'Cerca Apartments', 'Prisma Apartments', 'Mountain View Hall', 'Lantana Hall', 'Founders Hall', 'Ferry Street Flats', 'The Continuum for UF Grads', 'River House Graduate Housing', 'Infinity Hall', 'Florida Polytechnic University - Phase II', 'Ivory University House', 'Palomar SLO', 'Chorro SLO', 'Florida Polytechnic University - Phase III', 'The Residential Village at UW Bothell', 'Stateside Apartments', 'Bryan Flats', 'Nexus on Holmes (Univ of Alabama, Huntsville)', 'Comma Barrington', 'Meridian on Main (132 E Main Street)', 'The Village at Mines Park', 'Monte Apartments'
+        'M@College', 'Blattner Hall (75 Arkansas)', 'Century Hall',
+        'Cerca/Prisma/Zuma', 'Stateside/Monte', 'Chorro/Palomar',
+        'Mountain View Hall', 'Lantana Hall', 'Founders Hall', 'Ferry Street Flats',
+        'The Continuum for UF Grads', 'River House Graduate Housing', 'Infinity Hall',
+        'Florida Polytechnic University - Phase II', 'Ivory University House',
+        'Florida Polytechnic University - Phase III', 'The Residential Village at UW Bothell',
+        'Bryan Flats', 'Nexus on Holmes (Univ of Alabama, Huntsville)', 'Comma Barrington',
+        'Meridian on Main (132 E Main Street)', 'The Village at Mines Park'
       ];
       try{
         for (const name of seed){ await apiFetch('/properties', { method:'POST', body: JSON.stringify({ name }) }); }
@@ -232,7 +262,7 @@
       try{
         const res = await apiFetch('/properties');
         const list = await res.json();
-        properties = (list||[]).map(x => x.name).filter(Boolean);
+        properties = applyPropertyGrouping(((list||[]).map(x => x.name).filter(Boolean)));
       }catch(e){ properties = []; }
     }
 
