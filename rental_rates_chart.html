@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rental Rates Chart</title>
+  <link rel="icon" href="logo-main.svg">
+  <style>
+    :root{
+      --bg1:#0a1020; --bg2:#0d1730; --panel:#0c1530; --border:#1a2a4a;
+      --text:#e8f0ff; --muted:#9fb0d0; --accent1:#4f8cff; --accent2:#3bd1ff;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; background:radial-gradient(1000px 600px at 20% -10%, #132045, transparent),
+                          radial-gradient(1200px 700px at 120% 10%, rgba(59,209,255,.12), transparent),
+                          linear-gradient(180deg, var(--bg1), var(--bg2));
+      color:var(--text); font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;
+    }
+    .wrap{max-width:1200px; margin:0 auto; padding:20px}
+    .hero{
+      display:flex; align-items:center; justify-content:space-between; gap:16px; padding:10px 2px;
+    }
+    .brand{display:flex; align-items:center; gap:10px; opacity:.9}
+    .brand img{height:26px}
+    .brand .title{font-weight:600}
+    .panel{
+      background:linear-gradient(180deg, rgba(13,23,48,.85), rgba(10,18,36,.85));
+      border:1px solid var(--border); border-radius:16px; overflow:hidden; position:relative;
+      box-shadow:0 10px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.05);
+    }
+    .canvas-wrap{height:72vh; min-height:460px;}
+    .status{position:absolute; left:14px; top:12px; color:var(--muted); font-size:12px}
+    .footer-note{color:var(--muted); font-size:12px; text-align:center; margin-top:8px}
+
+    .overlay{
+      position:absolute; inset:0; display:none; align-items:center; justify-content:center; backdrop-filter: blur(6px);
+      background:linear-gradient(180deg, rgba(10,16,32,.75), rgba(10,16,32,.65));
+    }
+    .overlay .card{
+      background:linear-gradient(180deg,#0e1a36,#0a1326); border:1px solid var(--border); border-radius:14px; padding:18px; text-align:center;
+      max-width:520px;
+    }
+    .overlay .card h3{margin:0 0 8px; font-size:16px}
+    .overlay .card p{margin:0 0 12px; color:var(--muted)}
+    .overlay.drag .card{ border-color: var(--accent1); box-shadow: 0 0 0 2px rgba(79,140,255,.35); }
+    .btn{display:inline-block; padding:10px 14px; border-radius:10px; border:1px solid var(--border); cursor:pointer; background:#0e1a36; color:var(--text)}
+    .btn.primary{background:linear-gradient(90deg,var(--accent1),var(--accent2)); border:none; color:#071020}
+    .btn:hover{filter:brightness(1.06)}
+    input[type=file]{display:none}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.20.3/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <div class="brand">
+        <img src="logo-main.svg" alt="logo" onerror="this.style.display='none'">
+        <div class="title">Rental Rates Chart</div>
+      </div>
+      <div id="legend" class="brand" style="font-size:12px; color:var(--muted)"></div>
+    </div>
+
+    <div class="panel">
+      <div id="status" class="status">Preparing…</div>
+      <div class="canvas-wrap"><canvas id="chart"></canvas></div>
+      <div class="overlay" id="overlay">
+        <div class="card">
+          <h3>Load Workbook</h3>
+          <p>Choose your Excel file (or drop it here). No server required — this runs locally in your browser.</p>
+          <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap">
+            <label class="btn primary" for="fileInput">Choose Excel…</label>
+            <input id="fileInput" type="file" accept=".xlsx,.xls">
+          </div>
+          <div style="margin-top:10px; color:var(--muted); font-size:12px">Tip: Drag and drop the .xlsx file onto this area.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-note" id="footer">Average by category is shown. Top categories only for readability.</div>
+  </div>
+
+  <script>
+        const els = {
+      status: document.getElementById('status'),
+      overlay: document.getElementById('overlay'),
+      fileInput: document.getElementById('fileInput'),
+      legend: document.getElementById('legend'),
+      footer: document.getElementById('footer'),
+      canvas: document.getElementById('chart'),
+    };
+
+    const fmt = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 });
+    let chart = null;
+
+    function setStatus(msg){ els.status.textContent = msg; }
+
+    function handleFile(file){
+      setStatus(`Reading ${file.name}…`);
+      const reader = new FileReader();
+      reader.onload = (ev)=>{
+        try{
+          const wb = XLSX.read(ev.target.result, { type:'array' });
+          onWorkbookLoaded(wb);
+        }catch(err){
+          setStatus('Failed to read Excel: '+err.message);
+        }
+      };
+      reader.onerror = ()=> setStatus('Failed to read file');
+      reader.readAsArrayBuffer(file);
+    }
+
+    function isNumericVal(v) {
+      if (v === null || v === undefined || v === '') return false;
+      if (typeof v === 'number') return Number.isFinite(v);
+      if (typeof v === 'string') {
+        const s = v.replace(/[$,%\s]/g, '');
+        const n = Number(s);
+        return Number.isFinite(n);
+      }
+      return false;
+    }
+    function toNumber(v) {
+      if (typeof v === 'number') return v;
+      if (typeof v === 'string') return Number(v.replace(/[$,%\s]/g, ''));
+      return NaN;
+    }
+
+    function sheetToObjects(ws) {
+      const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:null });
+      if (!rows.length) return { headers: [], rows: [] };
+      let headers = rows[0].map(v => v===null? '': String(v).trim());
+      // Fallback generic headers if header row seems numeric/blank
+      const numericHeadCount = headers.filter(isNumericVal).length;
+      if (numericHeadCount > headers.length/2) {
+        headers = rows[0].map((_, i) => `Column ${i+1}`);
+      }
+      // Build objects
+      const objs = [];
+      for (let r=1; r<rows.length; r++) {
+        const row = rows[r]; if (!row) continue;
+        const empty = row.every(v => v===null || v==='');
+        if (empty) continue;
+        const o = {}; headers.forEach((h,i)=>o[h]=row[i]??null); objs.push(o);
+      }
+      return { headers, rows: objs };
+    }
+
+    function pickColumns(headers, rows) {
+      const numericCandidates = [];
+      const textCandidates = [];
+
+      const nameScore = (h, list) => list.some(k => h.toLowerCase().includes(k)) ? 2 : 0;
+      const numericHints = ['rate','rent','price','amount','total','cost','fee','revenue'];
+      const groupHints = ['unit','type','term','bed','plan','name','category','building','floor','phase','semester','period'];
+
+      headers.forEach(h => {
+        let n=0,c=0; for (const r of rows){ const v=r[h]; if(v!==null && v!==''){ c++; if(isNumericVal(v)) n++; } }
+        const ratio = c? n/c : 0;
+        if (ratio >= 0.35) numericCandidates.push({h, score: ratio*3 + nameScore(h,numericHints)});
+        else textCandidates.push({h, score: (1-ratio) + nameScore(h,groupHints)});
+      });
+
+      numericCandidates.sort((a,b)=>b.score-a.score);
+      textCandidates.sort((a,b)=>b.score-a.score);
+
+      const measure = (numericCandidates[0]||{}).h || headers.find(h => rows.some(r=>isNumericVal(r[h]))) || headers[0];
+      const group = (textCandidates[0]||{}).h || headers.find(h => !rows.some(r=>isNumericVal(r[h]))) || headers[0];
+      return { group, measure };
+    }
+
+    function aggregate(rows, groupCol, valueCol, agg='avg'){
+      const map = new Map();
+      for (const r of rows){
+        const keyRaw = r[groupCol];
+        const key = keyRaw===null||keyRaw===undefined||keyRaw===''? '(blank)' : String(keyRaw);
+        if (!map.has(key)) map.set(key, {sum:0,count:0,min:Infinity,max:-Infinity});
+        const g = map.get(key);
+        if (agg === 'count') { g.count++; continue; }
+        const v = r[valueCol]; if (!isNumericVal(v)) continue;
+        const n = toNumber(v); if (!Number.isFinite(n)) continue;
+        g.sum += n; g.count++; if (n<g.min) g.min=n; if (n>g.max) g.max=n;
+      }
+      const labels = []; const values = [];
+      for (const [k,g] of map.entries()){
+        let val = 0;
+        if (agg==='sum') val = g.sum;
+        else if (agg==='avg') val = g.count? g.sum/g.count : 0;
+        else if (agg==='count') val = g.count;
+        else if (agg==='min') val = Number.isFinite(g.min)? g.min : 0;
+        else if (agg==='max') val = Number.isFinite(g.max)? g.max : 0;
+        labels.push(k); values.push(val);
+      }
+      // Sort desc, keep top N
+      const zipped = labels.map((l,i)=>({l, v:values[i]})).sort((a,b)=>Math.abs(b.v)-Math.abs(a.v));
+      const TOP=12; const top = zipped.slice(0,TOP);
+      return { labels: top.map(x=>x.l), values: top.map(x=>x.v) };
+    }
+
+    // Chart.js plugin for gradient fill and soft shadows
+    const FancyBars = {
+      id: 'fancyBars',
+      beforeDatasetsDraw(chart, args, pluginOptions){
+        const {ctx, chartArea} = chart; if (!chartArea) return;
+        ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 12; ctx.shadowOffsetY = 6;
+      },
+      afterDatasetsDraw(chart){ chart.ctx.restore(); }
+    };
+
+    function palette(n){
+      const base=['#4f8cff','#3bd1ff','#6ee7b7','#fbbf24','#ff8b8b','#c084fc','#60a5fa','#34d399','#f472b6','#f59e0b','#22d3ee','#93c5fd'];
+      const out=[]; for(let i=0;i<n;i++) out.push(base[i%base.length]); return out;
+    }
+
+    function buildChart(title, subtitle, labels, values, type='bar'){
+      const colors = palette(values.length);
+      const ctx = els.canvas.getContext('2d');
+
+      if (chart) chart.destroy();
+      chart = new Chart(ctx, {
+        type,
+        data:{ labels, datasets:[{
+          label: subtitle,
+          data: values,
+          borderColor: colors,
+          backgroundColor: (c)=>{
+            const i=c.dataIndex; const col=colors[i%colors.length];
+            const {chartArea} = c.chart; if(!chartArea) return col;
+            const g = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+            g.addColorStop(0, hexToRgba(col,.9)); g.addColorStop(1, hexToRgba(col,.35));
+            return g;
+          },
+          borderWidth:1.2,
+          borderRadius:8,
+          hoverBorderWidth:1.6,
+        }]},
+        options:{
+          responsive:true, maintainAspectRatio:false,
+          plugins:{
+            legend:{display:false},
+            title:{display:true, text:title, color:'#dfe7f6', font:{size:18, weight:'600'}},
+            subtitle:{display:!!subtitle, text:subtitle, color:'#9fb0d0', font:{size:12}},
+            tooltip:{
+              backgroundColor:'rgba(15,27,50,.95)', borderColor:'#1a2a4a', borderWidth:1,
+              titleColor:'#e8f0ff', bodyColor:'#cfe2ff', padding:10,
+              callbacks:{ label:(ctx)=> `${ctx.label}: ${fmt.format(ctx.parsed.y ?? ctx.parsed)}` }
+            }
+          },
+          scales: type==='pie'? {} : {
+            x:{ ticks:{color:'#cfe2ff'}, grid:{color:'#1b2a47'} },
+            y:{ ticks:{color:'#cfe2ff'}, grid:{color:'#1b2a47'} }
+          },
+          animation:{ duration:900, easing:'cubicBezier(.2,.8,.2,1)' }
+        },
+        plugins:[FancyBars]
+      });
+    }
+
+    function hexToRgba(hex,a){ const v=hex.replace('#',''); return `rgba(${parseInt(v.slice(0,2),16)},${parseInt(v.slice(2,4),16)},${parseInt(v.slice(4,6),16)},${a})`; }
+
+    function onWorkbookLoaded(wb){
+      // Choose first sheet with data
+      const names = wb.SheetNames || [];
+      for (const name of names){
+        const ws = wb.Sheets[name];
+        const {headers, rows} = sheetToObjects(ws);
+        if (rows.length && headers.length){
+          const {group, measure} = pickColumns(headers, rows);
+          const {labels, values} = aggregate(rows, group, measure, 'avg');
+          const title = `Average ${measure} by ${group}`;
+          const subtitle = `${name}`;
+          els.legend.textContent = `${measure} vs ${group}`;
+          els.footer.textContent = `Showing top ${labels.length} categories • Aggregation: Average`;
+          buildChart(title, subtitle, labels, values, 'bar');
+          els.overlay.style.display='none';
+          setStatus(`Loaded • Sheet: ${name}`);
+          return;
+        }
+      }
+      setStatus('Workbook has no visible data');
+    }
+
+    
+    // Fallback file input
+    els.fileInput.addEventListener('change', (e)=>{
+      const file = e.target.files && e.target.files[0]; if(!file) return;
+      handleFile(file);
+      e.target.value='';
+    });
+
+    // Drag & drop
+    ;['dragenter','dragover'].forEach(ev => els.overlay.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); els.overlay.classList.add('drag'); setStatus('Drop the Excel file…'); }));
+    ;['dragleave','dragend'].forEach(ev => els.overlay.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); els.overlay.classList.remove('drag'); setStatus('Select or drop an Excel file'); }));
+    els.overlay.addEventListener('drop', e => { e.preventDefault(); e.stopPropagation(); els.overlay.classList.remove('drag'); const file = e.dataTransfer.files && e.dataTransfer.files[0]; if(file) handleFile(file); });
+    // Kickoff
+    window.addEventListener('load', ()=>{
+      els.overlay.style.display = 'flex';
+      setStatus('Select or drop an Excel file');
+    });
+  </script>
+</body>
+</html>

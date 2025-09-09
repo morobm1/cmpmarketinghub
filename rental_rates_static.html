@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rental Rates – Static Charts (HTML + CSS only)</title>
+  <link rel="icon" href="logo-main.svg">
+  <style>
+    :root{
+      --bg1:#0a1020; --bg2:#0d1730; --panel:#0c1530; --border:#1a2a4a;
+      --text:#e8f0ff; --muted:#9fb0d0; --accent1:#4f8cff; --accent2:#3bd1ff; --ok:#6ee7b7; --warn:#fbbf24; --danger:#ff8b8b;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; background:radial-gradient(1000px 600px at 20% -10%, #132045, transparent),
+                          radial-gradient(1200px 700px at 120% 10%, rgba(59,209,255,.12), transparent),
+                          linear-gradient(180deg, var(--bg1), var(--bg2));
+      color:var(--text); font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;
+    }
+    .wrap{max-width:1000px; margin:0 auto; padding:20px}
+    h1{font-size:20px; margin:4px 0 6px; display:flex; align-items:center; gap:10px}
+    h1 img{height:26px}
+    .note{color:var(--muted); font-size:12px; background:rgba(13,23,48,.7); border:1px solid var(--border); padding:10px 12px; border-radius:10px}
+    .grid{display:grid; grid-template-columns:1fr; gap:16px; margin-top:14px}
+
+    .card{background:linear-gradient(180deg, rgba(13,23,48,.85), rgba(10,18,36,.85)); border:1px solid var(--border); border-radius:16px; padding:14px}
+    .card h2{margin:0 0 10px; font-size:16px}
+
+    /* BAR CHART */
+    .bars{display:grid; gap:8px;}
+    .bar{display:grid; grid-template-columns:160px 1fr; align-items:center; gap:10px}
+    .bar .label{color:#cfe2ff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+    .bar .track{position:relative; background:#0c1935; border:1px solid #1a2a4a; border-radius:999px; height:24px; overflow:hidden}
+    .bar .fill{height:100%; background:linear-gradient(90deg, var(--accent1), var(--accent2)); box-shadow: 0 8px 18px rgba(79,140,255,.25) inset; border-radius:999px}
+    .bar .value{position:absolute; right:8px; top:0; height:100%; display:flex; align-items:center; font-size:12px; color:#e8f0ff; text-shadow:0 1px 0 rgba(0,0,0,.35)}
+
+    .scale{position:relative; height:8px; margin:8px 0 0 170px; background:linear-gradient(90deg, rgba(59,209,255,.15), transparent); border-radius:6px}
+    .scale .tick{position:absolute; top:10px; width:1px; height:8px; background:#23365e}
+    .scale .tick::after{content:attr(data-lbl); position:absolute; top:10px; left:-8px; color:var(--muted); font-size:10px}
+
+    /* PIE CHART via conic-gradient */
+    .pie-wrap{display:flex; align-items:center; gap:20px; flex-wrap:wrap}
+    .pie{--s1:40; --s2:25; --s3:20; --s4:15; width:220px; height:220px; border-radius:50%;
+      background:
+        conic-gradient(
+          #4f8cff 0 calc(var(--s1)*1%),
+          #3bd1ff calc(var(--s1)*1%) calc((var(--s1)+var(--s2))*1%),
+          #6ee7b7 calc((var(--s1)+var(--s2))*1%) calc((var(--s1)+var(--s2)+var(--s3))*1%),
+          #fbbf24 calc((var(--s1)+var(--s2)+var(--s3))*1%) 100%
+        );
+      box-shadow:0 8px 30px rgba(0,0,0,.35);
+      border:1px solid var(--border);
+      position:relative;
+    }
+    .pie::after{content:''; position:absolute; inset:14%; background:linear-gradient(180deg,#0c1530,#0b1226); border-radius:50%; border:1px solid #1a2a4a}
+    .legend{display:grid; gap:6px}
+    .legend .row{display:flex; gap:8px; align-items:center}
+    .legend .sw{width:12px; height:12px; border-radius:3px}
+    .legend small{color:var(--muted)}
+
+    code.tiny{font-size:12px; color:#94a9cf}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>
+      <img src="logo-main.svg" alt="" onerror="this.style.display='none'"> Rental Rates – Static Charts
+    </h1>
+    <div class="note">
+      How to use this file (no JavaScript, no server):
+      - Open your Excel, compute the values you want to visualize (e.g., average rate per unit type), then edit the labels and percentages in this HTML.
+      - Bar chart: set the width inline in each .fill style (0%–100%) and update the numeric label.
+      - Pie chart: set CSS variables --s1..--s4 to the segment percentages that sum to 100.
+      - Save and open this file to see your static chart.
+    </div>
+
+    <div class="grid">
+      <section class="card">
+        <h2>Average Rate by Unit Type</h2>
+        <div class="bars">
+          <!-- Example bars. Replace label text and width/value numbers with your data. -->
+          <div class="bar">
+            <div class="label">Studio</div>
+            <div class="track">
+              <div class="fill" style="width: 78%"></div>
+              <div class="value">$1,280</div>
+            </div>
+          </div>
+          <div class="bar">
+            <div class="label">1 Bed</div>
+            <div class="track">
+              <div class="fill" style="width: 85%"></div>
+              <div class="value">$1,400</div>
+            </div>
+          </div>
+          <div class="bar">
+            <div class="label">2 Bed</div>
+            <div class="track">
+              <div class="fill" style="width: 92%"></div>
+              <div class="value">$1,520</div>
+            </div>
+          </div>
+          <div class="bar">
+            <div class="label">3 Bed</div>
+            <div class="track">
+              <div class="fill" style="width: 66%"></div>
+              <div class="value">$1,080</div>
+            </div>
+          </div>
+          <div class="bar">
+            <div class="label">4 Bed</div>
+            <div class="track">
+              <div class="fill" style="width: 73%"></div>
+              <div class="value">$1,190</div>
+            </div>
+          </div>
+        </div>
+        <div class="scale">
+          <div class="tick" style="left:0%" data-lbl="0%"></div>
+          <div class="tick" style="left:25%" data-lbl="25%"></div>
+          <div class="tick" style="left:50%" data-lbl="50%"></div>
+          <div class="tick" style="left:75%" data-lbl="75%"></div>
+          <div class="tick" style="left:100%" data-lbl="100%"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Rate Mix by Term</h2>
+        <div class="pie-wrap">
+          <!-- Set the segment percentages by editing --s1..--s4 so they add to 100 -->
+          <div class="pie" style="--s1: 45; --s2: 30; --s3: 15; --s4: 10;"></div>
+          <div class="legend">
+            <div class="row"><span class="sw" style="background:#4f8cff"></span> Academic Year <small>(45%)</small></div>
+            <div class="row"><span class="sw" style="background:#3bd1ff"></span> Fall <small>(30%)</small></div>
+            <div class="row"><span class="sw" style="background:#6ee7b7"></span> Spring <small>(15%)</small></div>
+            <div class="row"><span class="sw" style="background:#fbbf24"></span> Summer <small>(10%)</small></div>
+          </div>
+        </div>
+        <div class="note" style="margin-top:10px">
+          Edit the numbers above to match your workbook. If you prefer different segments, duplicate/remove a row and adjust the conic-gradient accordingly.
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>How to replace with your data</h2>
+        <div class="note">
+          - Open this file in your editor. For the bar chart, replace labels and widths: width represents the percentage relative to your chosen scale (e.g., max rate).
+          - Replace the value text (e.g., $1,400) to match the actual numbers you calculated in Excel.
+          - For the pie chart, change the inline style on the .pie element: --s1..--sN should add to 100. Update the legend labels and percentages to match.
+        </div>
+        <div class="note" style="margin-top:8px">
+          If you want me to fill in the exact values from your workbook, export or paste the relevant sheet (two columns: Category, Value) and I will commit the numbers directly in this file.
+        </div>
+      </section>
+    </div>
+  </div>
+</body>
+</html>

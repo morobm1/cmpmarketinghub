@@ -1,0 +1,566 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rental Rates Dashboard</title>
+  <link rel="icon" href="logo-main.svg">
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #121a2b;
+      --panel-2: #0e1626;
+      --text: #e6eefc;
+      --muted: #9fb0d0;
+      --accent: #4f8cff;
+      --accent-2: #3bd1ff;
+      --danger: #ff6470;
+      --ok: #6ee7b7;
+      --warn: #fbbf24;
+      --border: #1f2a44;
+      --chip: #203052;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; background:linear-gradient(180deg, #0b1220, #0b1220 60%, #0c1527);
+      color:var(--text); font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;
+    }
+    header{
+      position:sticky; top:0; z-index:10; backdrop-filter:saturate(1.2) blur(6px);
+      background:rgba(11,18,32,0.75); border-bottom:1px solid var(--border);
+    }
+    .wrap{max-width:1200px; margin:0 auto; padding:16px;}
+    h1{font-size:20px; margin:0 0 8px; display:flex; align-items:center; gap:10px}
+    h1 img{height:28px}
+    .sub{color:var(--muted); font-size:12px}
+
+    .toolbar{
+      display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:10px;
+    }
+    .toolbar .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+
+    button, select, input[type="file"], input[type="text"], .btn{
+      background:var(--panel); color:var(--text); border:1px solid var(--border);
+      padding:8px 10px; border-radius:8px; cursor:pointer; font-size:13px;
+    }
+    button.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2)); border:none; color:#081119}
+    button:hover, .btn:hover{filter:brightness(1.08)}
+    button:disabled{opacity:0.6; cursor:not-allowed}
+
+    .content{display:grid; grid-template-columns: 1.3fr 1fr; gap:16px; padding:16px}
+    .panel{background:linear-gradient(180deg, var(--panel), var(--panel-2)); border:1px solid var(--border); border-radius:12px; padding:14px}
+    .panel h2{margin:0 0 10px; font-size:16px}
+
+    .status{color:var(--muted); font-size:12px}
+
+    .stats{display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:10px}
+    .stat{
+      background:linear-gradient(180deg,#0e1626,#0b1322); border:1px solid var(--border); border-radius:10px; padding:12px;
+    }
+    .stat h3{font-size:12px; margin:0 0 6px; color:var(--muted)}
+    .stat .kpi{font-size:18px; font-weight:600}
+    .stat small{color:var(--muted)}
+
+    .controls{display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:8px}
+    .controls .full{grid-column: 1 / -1}
+
+    .table-wrap{border:1px solid var(--border); border-radius:10px; overflow:auto; max-height:520px}
+    table{width:100%; border-collapse:separate; border-spacing:0}
+    thead th{position:sticky; top:0; background:#0f1a2c; border-bottom:1px solid var(--border); padding:8px; text-align:left; font-weight:600}
+    tbody td{padding:8px; border-bottom:1px solid #13203A; color:#dfe7f6}
+    tbody tr:nth-child(even){background:#0c172a}
+    tbody tr:hover{background:#10213c}
+    .chips{display:flex; flex-wrap:wrap; gap:6px}
+    .chip{background:var(--chip); color:var(--text); border:1px solid var(--border); padding:5px 8px; border-radius:999px; font-size:12px}
+
+    .pager{display:flex; gap:8px; align-items:center; justify-content:flex-end; padding-top:8px}
+
+    .chart-wrap{height:360px}
+
+    .help{color:var(--muted); font-size:12px; margin-top:8px}
+
+    @media (max-width: 1020px){
+      .content{grid-template-columns:1fr}
+      .controls{grid-template-columns: repeat(2, minmax(0,1fr));}
+    }
+  </style>
+  <!-- Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.20.3/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>
+        <img src="logo-main.svg" alt="logo" onerror="this.style.display='none'"> Rental Rates Dashboard
+      </h1>
+      <div class="sub">Interactive dashboard built from your Excel workbook. Load the provided file or choose another Excel file to analyze.</div>
+      <div class="toolbar">
+        <div class="row">
+          <button id="btnLoadDefault" class="primary">Load Provided Excel</button>
+          <label class="btn" for="fileInput">Choose Excel...</label>
+          <input id="fileInput" type="file" accept=".xlsx,.xls" style="display:none">
+          <div id="status" class="status">Idle</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="content">
+      <section class="panel">
+        <h2>Data</h2>
+        <div class="controls">
+          <div>
+            <label>Sheet</label>
+            <select id="sheetSelect"></select>
+          </div>
+          <div>
+            <label>Search</label>
+            <input id="searchInput" type="text" placeholder="Filter rows (free text)" />
+          </div>
+          <div>
+            <label>Page size</label>
+            <select id="pageSize">
+              <option>10</option>
+              <option selected>25</option>
+              <option>50</option>
+              <option>100</option>
+              <option>250</option>
+            </select>
+          </div>
+          <div class="chips" id="colSummary"></div>
+          <div class="full table-wrap">
+            <table id="dataTable">
+              <thead></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="full pager">
+            <button id="prevPage">Prev</button>
+            <span id="pageInfo" class="status">Page 1 / 1</span>
+            <button id="nextPage">Next</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Insights & Charts</h2>
+        <div class="stats" id="stats"></div>
+        <div class="controls" style="margin-top:10px">
+          <div>
+            <label>Group by (Category)</label>
+            <select id="groupBy"></select>
+          </div>
+          <div>
+            <label>Measure (Numeric)</label>
+            <select id="measure"></select>
+          </div>
+          <div>
+            <label>Aggregation</label>
+            <select id="agg">
+              <option value="sum" selected>Sum</option>
+              <option value="avg">Average</option>
+              <option value="count">Count</option>
+              <option value="min">Min</option>
+              <option value="max">Max</option>
+            </select>
+          </div>
+          <div>
+            <label>Chart type</label>
+            <select id="chartType">
+              <option value="bar" selected>Bar</option>
+              <option value="line">Line</option>
+              <option value="pie">Pie</option>
+            </select>
+          </div>
+          <div class="full">
+            <button id="btnBuildChart" class="primary">Build Chart</button>
+          </div>
+          <div class="full chart-wrap">
+            <canvas id="chart"></canvas>
+          </div>
+          <div class="help">Tip: Choose a categorical column to group rows (e.g., Unit Type, Term) and a numeric measure (e.g., Rate). Then select an aggregation like Sum or Average.</div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const DEFAULT_FILE = 'Copy of FL Poly Phase I 2026-2027 Rental Rates Proposal (2).xlsx';
+    const q = (sel, el=document) => el.querySelector(sel);
+    const qa = (sel, el=document) => Array.from(el.querySelectorAll(sel));
+    const fmt = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 });
+
+    const els = {
+      status: q('#status'),
+      btnLoadDefault: q('#btnLoadDefault'),
+      fileInput: q('#fileInput'),
+      sheetSelect: q('#sheetSelect'),
+      searchInput: q('#searchInput'),
+      pageSize: q('#pageSize'),
+      prevPage: q('#prevPage'),
+      nextPage: q('#nextPage'),
+      pageInfo: q('#pageInfo'),
+      thead: q('#dataTable thead'),
+      tbody: q('#dataTable tbody'),
+      stats: q('#stats'),
+      colSummary: q('#colSummary'),
+      groupBy: q('#groupBy'),
+      measure: q('#measure'),
+      agg: q('#agg'),
+      chartType: q('#chartType'),
+      btnBuildChart: q('#btnBuildChart'),
+      chartCanvas: q('#chart'),
+    };
+
+    let workbook = null;
+    let currentSheetName = null;
+    let dataRows = [];      // array of objects
+    let headers = [];       // array of header names
+    let paging = { page: 1, size: 25, filteredIdx: [] };
+    let chartInstance = null;
+
+    function setStatus(msg) { els.status.textContent = msg; }
+
+    function isNumericVal(v) {
+      if (v === null || v === undefined || v === '') return false;
+      if (typeof v === 'number') return Number.isFinite(v);
+      if (typeof v === 'string') {
+        // Remove currency symbols and commas
+        const s = v.replace(/[$,\s]/g, '');
+        const n = Number(s);
+        return Number.isFinite(n);
+      }
+      return false;
+    }
+
+    function toNumber(v) {
+      if (typeof v === 'number') return v;
+      if (typeof v === 'string') return Number(v.replace(/[$,\s]/g, ''));
+      return NaN;
+    }
+
+    function autoHeadersFromRow(row) {
+      return row.map((h, i) => {
+        let name = (h === undefined || h === null || String(h).trim() === '') ? `Column ${i+1}` : String(h).trim();
+        // De-dupe headers
+        let base = name, k=1;
+        while (headers.includes(name)) { name = `${base} (${k++})`; }
+        return name;
+      });
+    }
+
+    function sheetToObjects(ws) {
+      // Use sheet_to_json with header:1 to get rows
+      const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:null });
+      if (!rows.length) return { headers: [], rows: [] };
+      let hdr = rows[0].map(v => (v===null? '': String(v)));
+      // If first row seems mostly numeric or blank, create generic headers
+      const numericHeadCount = hdr.filter(isNumericVal).length;
+      if (numericHeadCount > hdr.length/2) {
+        hdr = rows[0].map((_, i) => `Column ${i+1}`);
+      }
+      // Normalize and de-dupe
+      headers = [];
+      hdr.forEach((h, i) => { headers.push(h && String(h).trim() ? String(h).trim() : `Column ${i+1}`); });
+      const seen = new Set();
+      headers = headers.map((h, i) => {
+        let base = h, name = h, k=2;
+        while (seen.has(name)) { name = `${base} (${k++})`; }
+        seen.add(name); return name;
+      });
+
+      const objs = [];
+      for (let r=1; r<rows.length; r++) {
+        const row = rows[r];
+        if (!row || row.every(v => v===null || v==='')) continue; // skip empty rows
+        const obj = {};
+        headers.forEach((h, i) => { obj[h] = (row[i]===undefined ? null : row[i]); });
+        objs.push(obj);
+      }
+      return { headers, rows: objs };
+    }
+
+    function renderTable() {
+      // Header
+      els.thead.innerHTML = '';
+      const trh = document.createElement('tr');
+      headers.forEach(h => {
+        const th = document.createElement('th'); th.textContent = h; trh.appendChild(th);
+      });
+      els.thead.appendChild(trh);
+
+      // Filter
+      const term = els.searchInput.value.trim().toLowerCase();
+      const idx = [];
+      for (let i=0; i<dataRows.length; i++) {
+        const row = dataRows[i];
+        if (!term) { idx.push(i); continue; }
+        const hit = headers.some(h => {
+          const v = row[h];
+          return v !== null && v !== undefined && String(v).toLowerCase().includes(term);
+        });
+        if (hit) idx.push(i);
+      }
+      paging.filteredIdx = idx;
+
+      // Paging
+      paging.size = Number(els.pageSize.value);
+      const totalPages = Math.max(1, Math.ceil(idx.length / paging.size));
+      paging.page = Math.min(paging.page, totalPages);
+      const start = (paging.page - 1) * paging.size;
+      const end = Math.min(start + paging.size, idx.length);
+      els.pageInfo.textContent = `Page ${paging.page} / ${totalPages} • ${idx.length} rows`;
+
+      // Body
+      els.tbody.innerHTML = '';
+      for (let k=start; k<end; k++) {
+        const r = dataRows[idx[k]];
+        const tr = document.createElement('tr');
+        headers.forEach(h => {
+          const td = document.createElement('td');
+          const v = r[h];
+          if (typeof v === 'number') td.textContent = fmt.format(v);
+          else td.textContent = v === null ? '' : String(v);
+          tr.appendChild(td);
+        });
+        els.tbody.appendChild(tr);
+      }
+
+      // Column summary chips
+      const numericCols = headers.filter(h => dataRows.some(r => isNumericVal(r[h])));
+      const textCols = headers.filter(h => !numericCols.includes(h));
+      els.colSummary.innerHTML = '';
+      const chip = (t) => { const s=document.createElement('span'); s.className='chip'; s.textContent=t; return s; };
+      els.colSummary.append('Text: ', ...textCols.slice(0,8).map(chip));
+      if (textCols.length>8) els.colSummary.append(chip(`+${textCols.length-8} more`));
+      els.colSummary.append(' ', document.createElement('br'));
+      els.colSummary.append('Numeric: ', ...numericCols.slice(0,8).map(chip));
+      if (numericCols.length>8) els.colSummary.append(chip(`+${numericCols.length-8} more`));
+    }
+
+    function renderStats() {
+      // Build simple stats for up to 4 numeric columns (first 4)
+      const numericCols = headers.filter(h => dataRows.some(r => isNumericVal(r[h]))).slice(0, 4);
+      els.stats.innerHTML = '';
+      if (!numericCols.length) {
+        const div = document.createElement('div'); div.className='stat';
+        div.innerHTML = '<h3>No numeric columns detected</h3><div class="kpi">—</div>';
+        els.stats.appendChild(div); return;
+      }
+      numericCols.forEach(h => {
+        let count=0,sum=0,min=Infinity,max=-Infinity;
+        for (const row of dataRows) {
+          const v = row[h];
+          if (!isNumericVal(v)) continue;
+          const n = toNumber(v);
+          if (!Number.isFinite(n)) continue;
+          count++; sum += n; if (n<min) min=n; if (n>max) max=n;
+        }
+        const avg = count? sum/count : 0;
+        const div = document.createElement('div'); div.className='stat';
+        div.innerHTML = `
+          <h3>${h}</h3>
+          <div class="kpi">Sum: ${fmt.format(sum)}</div>
+          <small>Avg: ${fmt.format(avg)} • Min: ${Number.isFinite(min)?fmt.format(min):'—'} • Max: ${Number.isFinite(max)?fmt.format(max):'—'} • N: ${count}</small>
+        `;
+        els.stats.appendChild(div);
+      });
+    }
+
+    function populateChartControls() {
+      // Group-by: all columns; Measure: numeric only
+      const numericCols = headers.filter(h => dataRows.some(r => isNumericVal(r[h])));
+      els.groupBy.innerHTML = headers.map(h => `<option>${escapeHtml(h)}</option>`).join('');
+      els.measure.innerHTML = numericCols.map(h => `<option>${escapeHtml(h)}</option>`).join('');
+      // Auto-select: first text col as group, first numeric as measure
+      const firstText = headers.find(h => !numericCols.includes(h)) || headers[0];
+      els.groupBy.value = firstText || '';
+      els.measure.value = numericCols[0] || '';
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
+    }
+
+    function buildChart() {
+      if (!dataRows.length) return;
+      const groupCol = els.groupBy.value;
+      const valueCol = els.measure.value;
+      const agg = els.agg.value; // sum, avg, count, min, max
+      const type = els.chartType.value; // bar, line, pie
+
+      const groups = new Map(); // key -> {sum,count,min,max}
+      for (const row of dataRows) {
+        const keyRaw = row[groupCol];
+        const key = keyRaw === null || keyRaw === undefined || keyRaw === '' ? '(blank)' : String(keyRaw);
+        if (!groups.has(key)) groups.set(key, { sum:0, count:0, min:Infinity, max:-Infinity });
+        const g = groups.get(key);
+        if (agg === 'count') {
+          g.count++;
+        } else {
+          const v = row[valueCol];
+          if (isNumericVal(v)) {
+            const n = toNumber(v);
+            if (Number.isFinite(n)) {
+              g.sum += n; g.count++; if (n<g.min) g.min=n; if (n>g.max) g.max=n;
+            }
+          }
+        }
+      }
+      const labels = Array.from(groups.keys());
+      const values = labels.map(k => {
+        const g = groups.get(k);
+        if (agg === 'sum') return g.sum;
+        if (agg === 'avg') return g.count? g.sum/g.count : 0;
+        if (agg === 'count') return g.count;
+        if (agg === 'min') return Number.isFinite(g.min)? g.min : 0;
+        if (agg === 'max') return Number.isFinite(g.max)? g.max : 0;
+        return 0;
+      });
+
+      // Sort descending by value, limit to top 25 for readability
+      const zipped = labels.map((l,i)=>({l, v: values[i]}));
+      zipped.sort((a,b)=> Math.abs(b.v) - Math.abs(a.v));
+      const TOP = 25;
+      const top = zipped.slice(0, TOP);
+      const lab = top.map(x=>x.l);
+      const val = top.map(x=>x.v);
+
+      const palette = generatePalette(val.length);
+      const ds = {
+        label: `${agg.toUpperCase()} of ${valueCol || 'rows'} by ${groupCol}`,
+        data: val,
+        backgroundColor: type === 'line' ? palette.map(c=>hexToRgba(c, 0.25)) : palette,
+        borderColor: palette,
+        borderWidth: 1.5,
+        tension: 0.25,
+        fill: type === 'line',
+      };
+
+      if (chartInstance) chartInstance.destroy();
+      chartInstance = new Chart(els.chartCanvas, {
+        type,
+        data: { labels: lab, datasets: [ds] },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: '#cfe2ff' } },
+            tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${fmt.format(ctx.parsed.y ?? ctx.parsed)}` } }
+          },
+          scales: (type === 'pie') ? {} : {
+            x: { ticks: { color: '#cfe2ff' }, grid: { color: '#1b2a47' } },
+            y: { ticks: { color: '#cfe2ff' }, grid: { color: '#1b2a47' } }
+          }
+        }
+      });
+    }
+
+    function generatePalette(n){
+      const base = [
+        '#4f8cff','#3bd1ff','#6ee7b7','#fbbf24','#ff8b8b','#c084fc','#60a5fa','#34d399','#f472b6','#f59e0b',
+        '#22d3ee','#a7f3d0','#fde68a','#fca5a5','#93c5fd','#d8b4fe','#7dd3fc','#bef264','#f9a8d4','#fcd34d'
+      ];
+      const out = [];
+      for (let i=0;i<n;i++){ out.push(base[i%base.length]); }
+      return out;
+    }
+    function hexToRgba(hex, a){
+      const v = hex.replace('#','');
+      const r = parseInt(v.substring(0,2),16);
+      const g = parseInt(v.substring(2,4),16);
+      const b = parseInt(v.substring(4,6),16);
+      return `rgba(${r},${g},${b},${a})`;
+    }
+
+    async function loadWorkbookFromUrl(url){
+      setStatus('Fetching Excel...');
+      try{
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const ab = await res.arrayBuffer();
+        const wb = XLSX.read(ab, { type:'array' });
+        onWorkbookLoaded(wb, `Loaded: ${decodeURI(url)}`);
+      }catch(err){
+        console.error(err);
+        setStatus(`Failed to fetch file: ${err.message}`);
+      }
+    }
+
+    function onWorkbookLoaded(wb, statusMsg='Workbook loaded'){
+      workbook = wb;
+      setStatus(`${statusMsg} • Sheets: ${workbook.SheetNames.join(', ')}`);
+      // Populate sheet select
+      els.sheetSelect.innerHTML = workbook.SheetNames.map(n => `<option>${escapeHtml(n)}</option>`).join('');
+      currentSheetName = workbook.SheetNames[0];
+      els.sheetSelect.value = currentSheetName;
+      loadSheet(currentSheetName);
+    }
+
+    function loadSheet(name){
+      const ws = workbook.Sheets[name];
+      const { headers: hdrs, rows } = sheetToObjects(ws);
+      headers = hdrs; dataRows = rows;
+      currentSheetName = name;
+      paging.page = 1;
+      renderTable();
+      renderStats();
+      populateChartControls();
+      // Auto chart if possible
+      if (headers.length) buildChart();
+    }
+
+    // Event wiring
+    els.btnLoadDefault.addEventListener('click', () => {
+      const url = encodeURI(DEFAULT_FILE);
+      loadWorkbookFromUrl(url);
+    });
+    els.fileInput.addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      setStatus(`Reading ${file.name}...`);
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try{
+          const ab = ev.target.result;
+          const wb = XLSX.read(ab, { type:'array' });
+          onWorkbookLoaded(wb, `Loaded: ${file.name}`);
+        }catch(err){
+          console.error(err);
+          setStatus(`Failed to read file: ${err.message}`);
+        }
+      };
+      reader.onerror = () => setStatus('Failed to read file');
+      reader.readAsArrayBuffer(file);
+      // reset input to allow reload same file
+      e.target.value = '';
+    });
+
+    els.sheetSelect.addEventListener('change', (e) => {
+      const name = e.target.value;
+      if (name && name !== currentSheetName) loadSheet(name);
+    });
+
+    els.searchInput.addEventListener('input', () => { paging.page = 1; renderTable(); });
+    els.pageSize.addEventListener('change', () => { paging.page = 1; renderTable(); });
+    els.prevPage.addEventListener('click', () => { if (paging.page>1){ paging.page--; renderTable(); } });
+    els.nextPage.addEventListener('click', () => {
+      const totalPages = Math.max(1, Math.ceil(paging.filteredIdx.length / paging.size));
+      if (paging.page < totalPages){ paging.page++; renderTable(); }
+    });
+
+    els.btnBuildChart.addEventListener('click', buildChart);
+
+    // Try auto-load the provided file if available
+    window.addEventListener('load', () => {
+      // Attempt to fetch default silently; if it fails, stay idle.
+      fetch(encodeURI(DEFAULT_FILE), { method:'HEAD' })
+        .then(r => { if (r.ok) loadWorkbookFromUrl(encodeURI(DEFAULT_FILE)); })
+        .catch(()=>{});
+    });
+  </script>
+</body>
+</html>
