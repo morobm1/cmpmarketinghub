@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Renewal Campaign • Marketing Hub</title>
+  <link rel="preconnect" href="https://use.typekit.net" crossorigin>
+  <link rel="preconnect" href="https://p.typekit.net" crossorigin>
+  <link rel="stylesheet" href="https://use.typekit.net/hqv8hwr.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <meta name="description" content="Manage renewal campaign assets: flyers and HTML email templates with a customization wizard." />
+  <style>
+    :root{ --brand-primary:#446472; --brand-accent:#ffb732; --brand-accent-2:#52d5ff; --brand-gray:#929497; --page-bg:#e5e7eb; --bg:#ffffff; --panel:#ffffff; --muted:#ffffff; --text:#1f2937; --subtext:#6b7280; --accent:var(--brand-accent-2); --accent-2:var(--brand-accent); --border:#e5e7eb; }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0; font-family:'Open Sans', Arial, sans-serif; background:var(--page-bg); color:var(--text)}
+    header{padding:16px 18px; border-bottom:1px solid var(--border); position:sticky; top:0; background:#ffffff; z-index:20; display:flex; align-items:center; gap:14px; flex-wrap:wrap; box-shadow:0 2px 6px rgba(0,0,0,0.04)}
+    .brand{display:flex;align-items:center;gap:10px}
+    .brand .logo-img{height:32px;width:auto;display:block}
+    .brand .title{color:#ffb732; font-family: zooja-pro, Arial, sans-serif; font-size: clamp(36px, 5vw, 64px); line-height: 1.05}
+
+    .nav-bar{ background:#ffffff; border-bottom:1px solid var(--border); box-shadow:0 1px 3px rgba(0,0,0,0.06) }
+    .nav-bar .nav-wrap{ max-width:1200px; margin:0 auto; padding:8px 16px; display:flex; gap:8px; flex-wrap:wrap }
+    .nav-tab{ display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border:1px solid var(--border); border-radius:999px; color:#374151; text-decoration:none; background:#ffffff; transition: all .15s ease; font-family: Roboto, Arial, sans-serif }
+    .nav-tab:hover{ background:#f3f4f6 }
+    .nav-tab.active{ background:#52d5ff; border-color:#52d5ff; color:#0b1b24; font-weight:700 }
+
+    .container{padding:18px; max-width:1200px; margin:0 auto; display:grid; grid-template-columns: 340px 1fr; gap:16px}
+    @media(max-width:1024px){ .container{ grid-template-columns:1fr } }
+
+    .card{ background:#ffffff; border:1px solid var(--border); border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,0.06); overflow:hidden }
+    .card h3{ margin:0; padding:12px 14px 0 14px; font-size:16px; color:#374151; font-weight:800; font-family: Roboto, Arial, sans-serif }
+    .card .content{ padding:14px }
+
+    label{display:block; font-size:12px; color:#374151; margin-bottom:6px}
+    input, select, textarea, button{ width:100%; padding:10px 12px; border-radius:10px; border:1px solid #d1d5db; background:#ffffff; color:#111827; font-size:14px}
+    textarea{ min-height:80px; resize:vertical }
+    button{ cursor:pointer; font-weight:700; font-family: Roboto, Arial, sans-serif }
+    .btn{ display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:10px; border:1px solid #d1d5db; background:#ffffff; color:#111827 }
+    .btn.primary{ background:#52d5ff; border-color:#52d5ff; color:#0b1b24 }
+    .btn.warn{ background:#ffb732; border-color:#ffb732; color:#1f1300 }
+    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:flex-start }
+    .row > *{ flex:1 }
+
+    .mini{ font-size:12px; color:#6b7280 }
+    .muted{ color:#6b7280 }
+
+    .split{ display:grid; grid-template-columns:1fr 1fr; gap:12px }
+    @media(max-width: 900px){ .split{ grid-template-columns:1fr } }
+
+    .preview{ border:1px solid var(--border); border-radius:10px; background:#fff; padding:10px; height:520px; overflow:auto }
+    .code{ border:1px solid var(--border); border-radius:10px; background:#0f172a; color:#e5e7eb; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; padding:10px; height:520px; overflow:auto; white-space:pre; }
+
+    .pill{border:1px solid var(--border); background:#ffffff; border-radius:999px; padding:6px 10px; font-size:12px; color:#374151; display:flex; align-items:center; gap:8px}
+    .pill select, .pill button{ font-family: Roboto, Arial, sans-serif; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand"><img src="logo-main.svg" class="logo-img" alt="Capstone" /><div class="title">Marketing Hub</div></div>
+    <div class="pill">
+      <label for="propertySelect" style="font-size:12px;color:#6b7280">Property</label>
+      <select id="propertySelect" style="min-width:220px"></select>
+      <button id="logoutBtn">Logout</button>
+      <button id="adminPageBtn" style="display:none">Admin</button>
+    </div>
+    <div class="muted" style="font-size:13px">Capstone Management Partners</div>
+  </header>
+  <nav id="mainNav" class="nav-bar">
+    <div class="nav-wrap">
+      <a href="mmp_calendar_app.html" class="nav-tab" data-tab="calendar">Marketing Calendar</a>
+      <a href="marketing_contacts.html" class="nav-tab" data-tab="contacts">Marketing Contacts</a>
+      <a href="promo_order_tracker.html" class="nav-tab" data-tab="promo">Promo Order Tracker</a>
+      <a href="renewal_campaign.html" class="nav-tab" data-tab="renewal">Renewal Campaign</a>
+      <a href="velocity_tracker.html" class="nav-tab" data-tab="velocity">Velocity Tracker</a>
+      <a href="social_media_audit.html" class="nav-tab" data-tab="social">Social Media Audit</a>
+    </div>
+  </nav>
+
+  <main class="container">
+    <aside class="card">
+      <h3>Wizard</h3>
+      <div class="content">
+        <div class="row">
+          <div>
+            <label for="tmplSelect">Email Template</label>
+            <select id="tmplSelect">
+              <option value="countdown">Countdown to Renewal Launch</option>
+              <option value="center">Visit Your Personal Renewal Center</option>
+              <option value="hype">Build Renewal Hype</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div><label for="propName">Property Name</label><input id="propName" type="text" placeholder="Property name"></div>
+        </div>
+        <div class="row">
+          <div><label for="launchDate">Renewal Launch Date</label><input id="launchDate" type="date"></div>
+          <div><label for="renewalUrl">Renewal Center URL</label><input id="renewalUrl" type="url" placeholder="https://..."></div>
+        </div>
+        <div class="row">
+          <div><label for="officePhone">Office Phone</label><input id="officePhone" type="text" placeholder="(xxx) xxx-xxxx"></div>
+          <div><label for="officeEmail">Office Email</label><input id="officeEmail" type="email" placeholder="leasing@..."></div>
+        </div>
+        <div class="row">
+          <div><label for="primaryColor">Primary Brand Color</label><input id="primaryColor" type="color" value="#446472"></div>
+          <div><label for="accentColor">Accent Color</label><input id="accentColor" type="color" value="#ffb732"></div>
+        </div>
+        <div class="row">
+          <button id="applyBtn" class="btn primary">Apply to Template</button>
+          <button id="saveBtn" class="btn">Save Template</button>
+        </div>
+        <div class="mini" style="margin-top:6px">Values are stored per property and auto-filled next time.</div>
+      </div>
+    </aside>
+
+    <section class="card">
+      <h3>Template Preview & Editor</h3>
+      <div class="content">
+        <div class="row" style="gap:8px; align-items:center; margin-bottom:6px">
+          <button id="copyHtmlBtn" class="btn">Copy HTML</button>
+          <button id="openGmailBtn" class="btn">Send via Gmail</button>
+          <button id="downloadBtn" class="btn">Download .html</button>
+        </div>
+        <div class="split">
+          <div class="preview" id="preview"></div>
+          <textarea id="code" class="code" spellcheck="false"></textarea>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>Flyers & Assets</h3>
+      <div class="content">
+        <div class="row">
+          <div>
+            <label for="flyerUrl">Flyer URL (PDF/Image)</label>
+            <input id="flyerUrl" type="url" placeholder="https://...">
+            <div class="mini">Paste public link to flyer; stored per property.</div>
+            <div id="flyerPreview" style="margin-top:8px"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const STORE_CURRENT_PROPERTY_KEY = 'mmp_current_property_v1';
+    const STORE_RENEWAL_TMPL_KEY = 'mmp_renewal_templates_v1';
+    const STORE_RENEWAL_ASSETS_KEY = 'mmp_renewal_assets_v1';
+
+    const els = {
+      propertySelect: document.getElementById('propertySelect'),
+      logoutBtn: document.getElementById('logoutBtn'),
+      adminPageBtn: document.getElementById('adminPageBtn'),
+      tmplSelect: document.getElementById('tmplSelect'),
+      propName: document.getElementById('propName'),
+      launchDate: document.getElementById('launchDate'),
+      renewalUrl: document.getElementById('renewalUrl'),
+      officePhone: document.getElementById('officePhone'),
+      officeEmail: document.getElementById('officeEmail'),
+      primaryColor: document.getElementById('primaryColor'),
+      accentColor: document.getElementById('accentColor'),
+      applyBtn: document.getElementById('applyBtn'),
+      saveBtn: document.getElementById('saveBtn'),
+      preview: document.getElementById('preview'),
+      code: document.getElementById('code'),
+      copyHtmlBtn: document.getElementById('copyHtmlBtn'),
+      openGmailBtn: document.getElementById('openGmailBtn'),
+      downloadBtn: document.getElementById('downloadBtn'),
+      flyerUrl: document.getElementById('flyerUrl'),
+      flyerPreview: document.getElementById('flyerPreview'),
+    };
+
+    // Nav active
+    (function(){ const nav = document.getElementById('mainNav'); if (!nav) return; const path = (location.pathname||'').toLowerCase(); nav.querySelectorAll('.nav-tab').forEach(a=>{ const href=(a.getAttribute('href')||'').toLowerCase(); if (href && (path.endsWith(href) || path.endsWith('/'+href))) a.classList.add('active'); }); })();
+
+    let currentProperty = (localStorage.getItem(STORE_CURRENT_PROPERTY_KEY)||'').trim();
+
+    // Simple property list for offline usage (fallback)
+    const DEFAULT_PROPERTIES = [
+      'M@College','Blattner Hall (75 Arkansas)','Century Hall','Zuma Apartments','Cerca Apartments','Prisma Apartments','Mountain View Hall','Lantana Hall','Founders Hall','Ferry Street Flats','The Continuum for UF Grads','River House Graduate Housing','Infinity Hall','Florida Polytechnic University - Phase II','Ivory University House','Palomar SLO','Chorro SLO','Florida Polytechnic University - Phase III','The Residential Village at UW Bothell','Stateside Apartments','Bryan Flats','Nexus on Holmes (Univ of Alabama, Huntsville)','Comma Barrington','Meridian on Main (132 E Main Street)','The Village at Mines Park','Monte Apartments'
+    ];
+
+    async function initProperties(){
+      // Try server list
+      let props = [];
+      try{ const res = await fetch('/api/properties'); if (res.ok){ const list = await res.json(); props = (list||[]).map(x=>x.name).filter(Boolean); } }catch(e){}
+      if (!props.length) props = DEFAULT_PROPERTIES.slice();
+      if (!currentProperty || !props.includes(currentProperty)) currentProperty = props[0] || '';
+      if (els.propertySelect){ els.propertySelect.innerHTML = props.map(p=>`<option value="${p.replace(/"/g,'&quot;')}">${p}</option>`).join(''); els.propertySelect.value = currentProperty; els.propertySelect.onchange = ()=>{ currentProperty = els.propertySelect.value; localStorage.setItem(STORE_CURRENT_PROPERTY_KEY, currentProperty); loadState(); renderPreview(); }; }
+    }
+
+    const defaultTemplates = {
+      countdown: {
+        subject: '⏳ ${PROP} — Renewal launches on ${LAUNCH_DATE}!'
+        , html: baseEmailWrap(`
+          <h1 style="margin:0 0 12px 0;font-size:24px;color:#111827">Renewal is almost here!</h1>
+          <p style="margin:0 0 10px 0;color:#374151">We\'re excited to announce that lease renewals at <strong>${PROP}</strong> open on <strong>${LAUNCH_DATE}</strong>.</p>
+          <p style="margin:0 0 10px 0;color:#374151">Stay tuned for details and be ready to secure your spot for another amazing year.</p>
+          ${ctaButton('Mark Your Calendar', '${RENEWAL_URL}', '#ffffff', '${PRIMARY}', '#111827')}
+          <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0" />
+          ${footerBlock()}
+        `)
+      },
+      center: {
+        subject: '🔑 ${PROP} — Access your personal renewal center'
+        , html: baseEmailWrap(`
+          <h1 style="margin:0 0 12px 0;font-size:24px;color:#111827">Your Personal Renewal Center</h1>
+          <p style="margin:0 0 10px 0;color:#374151">Renewing at <strong>${PROP}</strong> is quick and easy. Visit your personalized renewal center to view options, rates, and next steps.</p>
+          ${ctaButton('Visit Renewal Center', '${RENEWAL_URL}', '#0b1b24', '${ACCENT}', '#ffffff')}
+          <p style="margin:12px 0 0 0;color:#6b7280;font-size:13px">Questions? We\'re here to help.</p>
+          <ul style="color:#374151; padding-left:18px">
+            <li>Call: ${PHONE}</li>
+            <li>Email: ${EMAIL}</li>
+          </ul>
+          <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0" />
+          ${footerBlock()}
+        `)
+      },
+      hype: {
+        subject: '🎉 ${PROP} — Get ready for renewal perks and exclusives!'
+        , html: baseEmailWrap(`
+          <h1 style="margin:0 0 12px 0;font-size:24px;color:#111827">Renewal Season Hype</h1>
+          <p style="margin:0 0 10px 0;color:#374151">Big things are coming to <strong>${PROP}</strong>! From early-bird perks to exclusive giveaways, renewal season is the best time to lock in your spot.</p>
+          <ul style="color:#374151; padding-left:18px">
+            <li>Early-bird incentives</li>
+            <li>Exclusive resident giveaways</li>
+            <li>Priority selection</li>
+          </ul>
+          ${ctaButton('See What\'s Coming', '${RENEWAL_URL}', '#ffffff', '${PRIMARY}', '#111827')}
+          <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0" />
+          ${footerBlock()}
+        `)
+      }
+    };
+
+    function baseEmailWrap(inner){
+      return `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>${PROP} Renewal</title>
+</head>
+<body style="margin:0;padding:0;background:#f3f4f6">
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f3f4f6">
+    <tr><td align="center" style="padding:20px 10px">
+      <table role="presentation" cellpadding="0" cellspacing="0" width="640" style="max-width:640px;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden">
+        <tr>
+          <td style="padding:0;background:${PRIMARY}">
+            <div style="padding:16px;text-align:center;color:#001018;font-weight:800;background:${ACCENT}">Marketing Hub • Renewal</div>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:18px">
+            ${inner}
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
+      `.trim();
+    }
+    function ctaButton(label, url, color, bg, hoverTxt){
+      return `
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:10px 0">
+          <tr>
+            <td align="center" bgcolor="${bg}" style="border-radius:8px">
+              <a href="${url}" target="_blank" style="display:inline-block;padding:12px 16px;text-decoration:none;color:${color};font-weight:700">${label}</a>
+            </td>
+          </tr>
+        </table>
+      `;
+    }
+    function footerBlock(){
+      return `
+        <div style="font-size:12px;color:#6b7280">
+          ${PROP} • Questions? Call ${PHONE} or email ${EMAIL}
+        </div>
+      `;
+    }
+
+    function formatDateISO(iso){ if (!iso) return ''; try{ return new Date(iso+'T00:00:00').toLocaleDateString(); }catch(e){ return iso; } }
+
+    function renderPreview(){ els.preview.innerHTML = els.code.value; }
+
+    function loadState(){
+      // Load stored template per property
+      let all = {};
+      try{ all = JSON.parse(localStorage.getItem(STORE_RENEWAL_TMPL_KEY)||'{}'); }catch(e){ all = {}; }
+      const perProp = all[currentProperty] || {};
+      const id = els.tmplSelect.value;
+      const record = perProp[id];
+      const defaults = defaultTemplates[id];
+
+      const PROP = els.propName.value || currentProperty || '';
+      const LAUNCH_DATE = formatDateISO(els.launchDate.value);
+      const RENEWAL_URL = els.renewalUrl.value || '';
+      const PRIMARY = els.primaryColor.value || '#446472';
+      const ACCENT = els.accentColor.value || '#ffb732';
+      const PHONE = els.officePhone.value || '';
+      const EMAIL = els.officeEmail.value || '';
+
+      // Use stored HTML if present, else build from defaults with substitutions
+      let html = (record && record.html) ? record.html : defaults.html;
+      html = substitute(html, { PROP, LAUNCH_DATE, RENEWAL_URL, PRIMARY, ACCENT, PHONE, EMAIL });
+      els.code.value = html;
+      renderPreview();
+
+      // Flyer
+      let assets = {};
+      try{ assets = JSON.parse(localStorage.getItem(STORE_RENEWAL_ASSETS_KEY)||'{}'); }catch(e){ assets = {}; }
+      const fp = (assets[currentProperty]||{}).flyerUrl || '';
+      els.flyerUrl.value = fp;
+      els.flyerPreview.innerHTML = buildFlyerPreviewHtml(fp);
+    }
+
+    function substitute(tpl, map){ return tpl.replace(/\$\{(PROP|LAUNCH_DATE|RENEWAL_URL|PRIMARY|ACCENT|PHONE|EMAIL)\}/g, (_,k)=> map[k] ?? ''); }
+
+    function saveTemplate(){
+      const id = els.tmplSelect.value;
+      let all = {};
+      try{ all = JSON.parse(localStorage.getItem(STORE_RENEWAL_TMPL_KEY)||'{}'); }catch(e){ all = {}; }
+      if (!all[currentProperty]) all[currentProperty] = {};
+      all[currentProperty][id] = { html: els.code.value };
+      try{ localStorage.setItem(STORE_RENEWAL_TMPL_KEY, JSON.stringify(all)); alert('Template saved for '+currentProperty); }catch(e){ alert('Save failed'); }
+    }
+
+    function openGmail(){
+      const id = els.tmplSelect.value;
+      const defaults = defaultTemplates[id];
+      const subject = substitute(defaults.subject, {
+        PROP: els.propName.value || currentProperty || '',
+        LAUNCH_DATE: formatDateISO(els.launchDate.value),
+        RENEWAL_URL: els.renewalUrl.value || '',
+        PRIMARY: els.primaryColor.value || '#446472',
+        ACCENT: els.accentColor.value || '#ffb732',
+        PHONE: els.officePhone.value || '',
+        EMAIL: els.officeEmail.value || '',
+      });
+      const body = els.code.value; // HTML body
+      const gmail = `https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}&tf=1`;
+      window.open(gmail, '_blank', 'noopener,noreferrer');
+    }
+
+    function copyHtml(){
+      const v = els.code.value; navigator.clipboard.writeText(v).then(()=>alert('HTML copied to clipboard')).catch(()=>alert('Copy failed'));
+    }
+
+    function downloadHtml(){
+      const id = els.tmplSelect.value;
+      const a = document.createElement('a');
+      const blob = new Blob([els.code.value], { type: 'text/html;charset=utf-8' });
+      a.href = URL.createObjectURL(blob);
+      a.download = `${currentProperty.replace(/[^a-z0-9]+/gi,'_').toLowerCase()}_${id}.html`;
+      a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+    }
+
+    function buildFlyerPreviewHtml(url){
+      const u = (url||'').trim();
+      if (!u) return '';
+      const lower = u.toLowerCase();
+      if (lower.endsWith('.pdf')){
+        return `<iframe src="${u}" style="width:100%;height:320px;border:1px solid #e5e7eb;border-radius:8px"></iframe>`;
+      }
+      if (/(png|jpg|jpeg|gif|webp|svg)$/i.test(lower)){
+        return `<img src="${u}" alt="Flyer preview" style="max-width:100%;max-height:320px;border:1px solid #e5e7eb;border-radius:8px" />`;
+      }
+      return `<a href="${u}" target="_blank" rel="noopener">Open flyer</a>`;
+    }
+
+    function saveAssets(){
+      let assets = {};
+      try{ assets = JSON.parse(localStorage.getItem(STORE_RENEWAL_ASSETS_KEY)||'{}'); }catch(e){ assets = {}; }
+      if (!assets[currentProperty]) assets[currentProperty] = {};
+      assets[currentProperty].flyerUrl = els.flyerUrl.value.trim();
+      try{ localStorage.setItem(STORE_RENEWAL_ASSETS_KEY, JSON.stringify(assets)); }catch(e){}
+      els.flyerPreview.innerHTML = buildFlyerPreviewHtml(assets[currentProperty].flyerUrl);
+    }
+
+    function loadTemplateDefaultsIfEmpty(){
+      // No-op; defaults are baked into render load path
+    }
+
+    // Bindings
+    els.tmplSelect.addEventListener('change', loadState);
+    els.applyBtn.addEventListener('click', renderPreview);
+    els.saveBtn.addEventListener('click', saveTemplate);
+    els.code.addEventListener('input', renderPreview);
+    els.copyHtmlBtn.addEventListener('click', copyHtml);
+    els.openGmailBtn.addEventListener('click', openGmail);
+    els.downloadBtn.addEventListener('click', downloadHtml);
+    els.flyerUrl.addEventListener('change', saveAssets);
+
+    // Auth/session header actions
+    (async function(){
+      try{
+        const meRes = await fetch('/api/me');
+        if (!meRes.ok){ /* allow offline */ } else {
+          const me = await meRes.json();
+          if (els.adminPageBtn){ els.adminPageBtn.style.display = me.role === 'admin' ? '' : 'none'; els.adminPageBtn.onclick = ()=>{ location.href='mmp_admin.html'; } }
+          if (els.logoutBtn){ els.logoutBtn.onclick = async ()=>{ try{ await fetch('/api/auth-logout', { method:'POST' }); }catch(e){} location.href='index.html'; }; }
+        }
+      }catch(e){}
+    })();
+
+    // Initialize
+    (async function(){ await initProperties(); loadTemplateDefaultsIfEmpty(); loadState(); })();
+  </script>
+</body>
+</html>
