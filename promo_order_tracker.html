@@ -169,6 +169,7 @@
   <script>
     const STORE_CURRENT_PROPERTY_KEY = 'mmp_current_property_v1';
     const STORE_ORDERS_BY_PROP_KEY = 'mmp_orders_by_property_v1';
+    const STORE_ARCHIVED_BY_PROP_KEY = 'mmp_orders_archived_by_property_v1';
     const API_BASE = '/api';
 
     const els = {
@@ -197,12 +198,13 @@
 
     let currentProperty = '';
     let ordersByProperty = {};
+    let archivedByProperty = {};
     let selectedOrderId = null;
     let modalPhotoUrl = '';
 
-    function saveStore(){ try{ localStorage.setItem(STORE_ORDERS_BY_PROP_KEY, JSON.stringify(ordersByProperty)); }catch(e){} }
-    function loadStore(){ try{ ordersByProperty = JSON.parse(localStorage.getItem(STORE_ORDERS_BY_PROP_KEY)||'{}'); }catch(e){ ordersByProperty = {}; } }
-    function ensureProp(){ if (!ordersByProperty[currentProperty]) ordersByProperty[currentProperty] = []; }
+    function saveStore(){ try{ localStorage.setItem(STORE_ORDERS_BY_PROP_KEY, JSON.stringify(ordersByProperty)); localStorage.setItem(STORE_ARCHIVED_BY_PROP_KEY, JSON.stringify(archivedByProperty)); }catch(e){} }
+    function loadStore(){ try{ ordersByProperty = JSON.parse(localStorage.getItem(STORE_ORDERS_BY_PROP_KEY)||'{}'); }catch(e){ ordersByProperty = {}; } try{ archivedByProperty = JSON.parse(localStorage.getItem(STORE_ARCHIVED_BY_PROP_KEY)||'{}'); }catch(e){ archivedByProperty = {}; } }
+    function ensureProp(){ if (!ordersByProperty[currentProperty]) ordersByProperty[currentProperty] = []; if (!archivedByProperty[currentProperty]) archivedByProperty[currentProperty] = []; }
 
     async function apiJson(path, opts = {}){
       const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers||{});
@@ -241,6 +243,7 @@
           <td style="white-space:nowrap">
             <button class="btn" data-email="${it.id}">Email</button>
             <button class="btn warn" data-del="${it.id}">Delete</button>
+            <button class="btn" data-archive="${it.id}">Archive</button>
           </td>
         </tr>`;
       }).join('');
@@ -338,12 +341,26 @@
 
     document.addEventListener('click', async (e)=>{
       const t = e.target; if (!(t instanceof HTMLElement)) return;
-      const del = t.getAttribute('data-del'); const email = t.getAttribute('data-email'); const changePhoto = t.getAttribute('data-change-photo');
+      const del = t.getAttribute('data-del'); const email = t.getAttribute('data-email'); const archive = t.getAttribute('data-archive'); const changePhoto = t.getAttribute('data-change-photo');
       if (t.matches('input[name="sel"]')){ selectedOrderId = t.getAttribute('data-sel'); return; }
       if (del){
         const arr = ordersByProperty[currentProperty]||[]; const idx = arr.findIndex(x=>String(x.id)===String(del));
         try{ await apiJson('/orders', { method:'DELETE', body: JSON.stringify({ id: del, property: currentProperty }) }); }catch(e){}
         if (idx>=0){ arr.splice(idx,1); saveStore(); renderOrders(); }
+        return;
+      }
+      if (archive){
+        const arr = ordersByProperty[currentProperty]||[];
+        const idx = arr.findIndex(x=>String(x.id)===String(archive));
+        if (idx>=0){
+          const itm = arr.splice(idx,1)[0];
+          ensureProp();
+          (archivedByProperty[currentProperty]||[]).unshift(itm);
+          try{ await apiJson('/orders', { method:'PUT', body: JSON.stringify({ id: archive, property: currentProperty, archived: true }) }); }catch(e){}
+          if (String(selectedOrderId) === String(archive)) selectedOrderId = null;
+          saveStore();
+          renderOrders();
+        }
         return;
       }
       if (email){ const arr = ordersByProperty[currentProperty]||[]; const it = arr.find(x=>String(x.id)===String(email)); if (it){ openEmailFor(it); } return; }
