@@ -112,7 +112,7 @@
           <button id="applyBtn" class="btn primary">Apply to Template</button>
           <button id="saveBtn" class="btn">Save Template</button>
         </div>
-        <div class="mini" style="margin-top:6px">Values are stored per property and auto-filled next time.</div>
+        <div class="mini" style="margin-top:6px">Wizard values are stored per property and auto-filled next time.</n></div>
       </div>
     </aside>
 
@@ -150,6 +150,7 @@
     const STORE_CURRENT_PROPERTY_KEY = 'mmp_current_property_v1';
     const STORE_RENEWAL_TMPL_KEY = 'mmp_renewal_templates_v1';
     const STORE_RENEWAL_ASSETS_KEY = 'mmp_renewal_assets_v1';
+    const STORE_RENEWAL_PROFILE_KEY = 'mmp_renewal_profile_v1';
 
     const els = {
       propertySelect: document.getElementById('propertySelect'),
@@ -190,53 +191,10 @@
       try{ const res = await fetch('/api/properties'); if (res.ok){ const list = await res.json(); props = (list||[]).map(x=>x.name).filter(Boolean); } }catch(e){}
       if (!props.length) props = DEFAULT_PROPERTIES.slice();
       if (!currentProperty || !props.includes(currentProperty)) currentProperty = props[0] || '';
-      if (els.propertySelect){ els.propertySelect.innerHTML = props.map(p=>`<option value="${p.replace(/"/g,'&quot;')}">${p}</option>`).join(''); els.propertySelect.value = currentProperty; els.propertySelect.onchange = ()=>{ currentProperty = els.propertySelect.value; localStorage.setItem(STORE_CURRENT_PROPERTY_KEY, currentProperty); loadState(); renderPreview(); }; }
+      if (els.propertySelect){ els.propertySelect.innerHTML = props.map(p=>`<option value="${p.replace(/"/g,'&quot;')}">${p}</option>`).join(''); els.propertySelect.value = currentProperty; els.propertySelect.onchange = ()=>{ currentProperty = els.propertySelect.value; localStorage.setItem(STORE_CURRENT_PROPERTY_KEY, currentProperty); loadProfile(); loadState(); }; }
     }
 
-    const defaultTemplates = {
-      countdown: {
-        subject: '⏳ ${PROP} — Renewal launches on ${LAUNCH_DATE}!'
-        , html: baseEmailWrap(`
-          <h1 style="margin:0 0 12px 0;font-size:24px;color:#111827">Renewal is almost here!</h1>
-          <p style="margin:0 0 10px 0;color:#374151">We\'re excited to announce that lease renewals at <strong>${PROP}</strong> open on <strong>${LAUNCH_DATE}</strong>.</p>
-          <p style="margin:0 0 10px 0;color:#374151">Stay tuned for details and be ready to secure your spot for another amazing year.</p>
-          ${ctaButton('Mark Your Calendar', '${RENEWAL_URL}', '#ffffff', '${PRIMARY}', '#111827')}
-          <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0" />
-          ${footerBlock()}
-        `)
-      },
-      center: {
-        subject: '🔑 ${PROP} — Access your personal renewal center'
-        , html: baseEmailWrap(`
-          <h1 style="margin:0 0 12px 0;font-size:24px;color:#111827">Your Personal Renewal Center</h1>
-          <p style="margin:0 0 10px 0;color:#374151">Renewing at <strong>${PROP}</strong> is quick and easy. Visit your personalized renewal center to view options, rates, and next steps.</p>
-          ${ctaButton('Visit Renewal Center', '${RENEWAL_URL}', '#0b1b24', '${ACCENT}', '#ffffff')}
-          <p style="margin:12px 0 0 0;color:#6b7280;font-size:13px">Questions? We\'re here to help.</p>
-          <ul style="color:#374151; padding-left:18px">
-            <li>Call: ${PHONE}</li>
-            <li>Email: ${EMAIL}</li>
-          </ul>
-          <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0" />
-          ${footerBlock()}
-        `)
-      },
-      hype: {
-        subject: '🎉 ${PROP} — Get ready for renewal perks and exclusives!'
-        , html: baseEmailWrap(`
-          <h1 style="margin:0 0 12px 0;font-size:24px;color:#111827">Renewal Season Hype</h1>
-          <p style="margin:0 0 10px 0;color:#374151">Big things are coming to <strong>${PROP}</strong>! From early-bird perks to exclusive giveaways, renewal season is the best time to lock in your spot.</p>
-          <ul style="color:#374151; padding-left:18px">
-            <li>Early-bird incentives</li>
-            <li>Exclusive resident giveaways</li>
-            <li>Priority selection</li>
-          </ul>
-          ${ctaButton('See What\'s Coming', '${RENEWAL_URL}', '#ffffff', '${PRIMARY}', '#111827')}
-          <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0" />
-          ${footerBlock()}
-        `)
-      }
-    };
-
+    // Default templates with escaped placeholders (\\${...}) so they stay as tokens until we substitute
     function baseEmailWrap(inner){
       return `
 <!DOCTYPE html>
@@ -244,15 +202,15 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>${PROP} Renewal</title>
+<title>\${PROP} Renewal</title>
 </head>
 <body style="margin:0;padding:0;background:#f3f4f6">
   <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f3f4f6">
     <tr><td align="center" style="padding:20px 10px">
       <table role="presentation" cellpadding="0" cellspacing="0" width="640" style="max-width:640px;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden">
         <tr>
-          <td style="padding:0;background:${PRIMARY}">
-            <div style="padding:16px;text-align:center;color:#001018;font-weight:800;background:${ACCENT}">Marketing Hub • Renewal</div>
+          <td style="padding:0;background:\${PRIMARY}">
+            <div style="padding:16px;text-align:center;color:#001018;font-weight:800;background:\${ACCENT}">Marketing Hub • Renewal</div>
           </td>
         </tr>
         <tr>
@@ -267,7 +225,7 @@
 </html>
       `.trim();
     }
-    function ctaButton(label, url, color, bg, hoverTxt){
+    function ctaButton(label, url, color, bg){
       return `
         <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:10px 0">
           <tr>
@@ -281,17 +239,96 @@
     function footerBlock(){
       return `
         <div style="font-size:12px;color:#6b7280">
-          ${PROP} • Questions? Call ${PHONE} or email ${EMAIL}
+          \${PROP} • Questions? Call \${PHONE} or email \${EMAIL}
         </div>
       `;
     }
+
+    const defaultTemplates = {
+      countdown: {
+        subject: '⏳ ${PROP} — Renewal launches on ${LAUNCH_DATE}!'
+        , html: baseEmailWrap(`
+          <h1 style="margin:0 0 12px 0;font-size:24px;color:#111827">Renewal is almost here!</h1>
+          <p style="margin:0 0 10px 0;color:#374151">We\'re excited to announce that lease renewals at <strong>\${PROP}</strong> open on <strong>\${LAUNCH_DATE}</strong>.</p>
+          <p style="margin:0 0 10px 0;color:#374151">Stay tuned for details and be ready to secure your spot for another amazing year.</p>
+          ${ctaButton('Mark Your Calendar', '${RENEWAL_URL}', '#111827', '${PRIMARY}')}
+          <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0" />
+          ${footerBlock()}
+        `)
+      },
+      center: {
+        subject: '🔑 ${PROP} — Access your personal renewal center'
+        , html: baseEmailWrap(`
+          <h1 style="margin:0 0 12px 0;font-size:24px;color:#111827">Your Personal Renewal Center</h1>
+          <p style="margin:0 0 10px 0;color:#374151">Renewing at <strong>\${PROP}</strong> is quick and easy. Visit your personalized renewal center to view options, rates, and next steps.</p>
+          ${ctaButton('Visit Renewal Center', '${RENEWAL_URL}', '#0b1b24', '${ACCENT}')}
+          <p style="margin:12px 0 0 0;color:#6b7280;font-size:13px">Questions? We\'re here to help.</p>
+          <ul style="color:#374151; padding-left:18px">
+            <li>Call: \${PHONE}</li>
+            <li>Email: \${EMAIL}</li>
+          </ul>
+          <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0" />
+          ${footerBlock()}
+        `)
+      },
+      hype: {
+        subject: '🎉 ${PROP} — Get ready for renewal perks and exclusives!'
+        , html: baseEmailWrap(`
+          <h1 style="margin:0 0 12px 0;font-size:24px;color:#111827">Renewal Season Hype</h1>
+          <p style="margin:0 0 10px 0;color:#374151">Big things are coming to <strong>\${PROP}</strong>! From early-bird perks to exclusive giveaways, renewal season is the best time to lock in your spot.</p>
+          <ul style="color:#374151; padding-left:18px">
+            <li>Early-bird incentives</li>
+            <li>Exclusive resident giveaways</li>
+            <li>Priority selection</li>
+          </ul>
+          ${ctaButton('See What\'s Coming', '${RENEWAL_URL}', '#111827', '${PRIMARY}')}
+          <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0" />
+          ${footerBlock()}
+        `)
+      }
+    };
 
     function formatDateISO(iso){ if (!iso) return ''; try{ return new Date(iso+'T00:00:00').toLocaleDateString(); }catch(e){ return iso; } }
 
     function renderPreview(){ els.preview.innerHTML = els.code.value; }
 
+    function substitute(tpl, map){ return tpl.replace(/\$\{(PROP|LAUNCH_DATE|RENEWAL_URL|PRIMARY|ACCENT|PHONE|EMAIL)\}/g, (_,k)=> map[k] ?? ''); }
+
+    function loadProfile(){
+      let store = {};
+      try{ store = JSON.parse(localStorage.getItem(STORE_RENEWAL_PROFILE_KEY)||'{}'); }catch(e){ store = {}; }
+      const p = store[currentProperty] || {};
+      els.propName.value = p.propName || currentProperty || '';
+      els.launchDate.value = p.launchDate || '';
+      els.renewalUrl.value = p.renewalUrl || '';
+      els.officePhone.value = p.officePhone || '';
+      els.officeEmail.value = p.officeEmail || '';
+      els.primaryColor.value = p.primaryColor || '#446472';
+      els.accentColor.value = p.accentColor || '#ffb732';
+      // Flyer assets
+      let assets = {};
+      try{ assets = JSON.parse(localStorage.getItem(STORE_RENEWAL_ASSETS_KEY)||'{}'); }catch(e){ assets = {}; }
+      const fp = (assets[currentProperty]||{}).flyerUrl || '';
+      els.flyerUrl.value = fp;
+      els.flyerPreview.innerHTML = buildFlyerPreviewHtml(fp);
+    }
+    function saveProfile(){
+      let store = {};
+      try{ store = JSON.parse(localStorage.getItem(STORE_RENEWAL_PROFILE_KEY)||'{}'); }catch(e){ store = {}; }
+      store[currentProperty] = {
+        propName: els.propName.value.trim(),
+        launchDate: els.launchDate.value,
+        renewalUrl: els.renewalUrl.value.trim(),
+        officePhone: els.officePhone.value.trim(),
+        officeEmail: els.officeEmail.value.trim(),
+        primaryColor: els.primaryColor.value,
+        accentColor: els.accentColor.value,
+      };
+      try{ localStorage.setItem(STORE_RENEWAL_PROFILE_KEY, JSON.stringify(store)); }catch(e){}
+    }
+
     function loadState(){
-      // Load stored template per property
+      // Use stored template per property (if any) or defaults, then substitute wizard values
       let all = {};
       try{ all = JSON.parse(localStorage.getItem(STORE_RENEWAL_TMPL_KEY)||'{}'); }catch(e){ all = {}; }
       const perProp = all[currentProperty] || {};
@@ -307,21 +344,11 @@
       const PHONE = els.officePhone.value || '';
       const EMAIL = els.officeEmail.value || '';
 
-      // Use stored HTML if present, else build from defaults with substitutions
       let html = (record && record.html) ? record.html : defaults.html;
       html = substitute(html, { PROP, LAUNCH_DATE, RENEWAL_URL, PRIMARY, ACCENT, PHONE, EMAIL });
       els.code.value = html;
       renderPreview();
-
-      // Flyer
-      let assets = {};
-      try{ assets = JSON.parse(localStorage.getItem(STORE_RENEWAL_ASSETS_KEY)||'{}'); }catch(e){ assets = {}; }
-      const fp = (assets[currentProperty]||{}).flyerUrl || '';
-      els.flyerUrl.value = fp;
-      els.flyerPreview.innerHTML = buildFlyerPreviewHtml(fp);
     }
-
-    function substitute(tpl, map){ return tpl.replace(/\$\{(PROP|LAUNCH_DATE|RENEWAL_URL|PRIMARY|ACCENT|PHONE|EMAIL)\}/g, (_,k)=> map[k] ?? ''); }
 
     function saveTemplate(){
       const id = els.tmplSelect.value;
@@ -344,14 +371,12 @@
         PHONE: els.officePhone.value || '',
         EMAIL: els.officeEmail.value || '',
       });
-      const body = els.code.value; // HTML body
+      const body = els.code.value; // Note: Gmail compose URL treats body as plain text; formatting may not render HTML.
       const gmail = `https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}&tf=1`;
       window.open(gmail, '_blank', 'noopener,noreferrer');
     }
 
-    function copyHtml(){
-      const v = els.code.value; navigator.clipboard.writeText(v).then(()=>alert('HTML copied to clipboard')).catch(()=>alert('Copy failed'));
-    }
+    function copyHtml(){ const v = els.code.value; navigator.clipboard.writeText(v).then(()=>alert('HTML copied to clipboard')).catch(()=>alert('Copy failed')); }
 
     function downloadHtml(){
       const id = els.tmplSelect.value;
@@ -385,19 +410,30 @@
       els.flyerPreview.innerHTML = buildFlyerPreviewHtml(assets[currentProperty].flyerUrl);
     }
 
-    function loadTemplateDefaultsIfEmpty(){
-      // No-op; defaults are baked into render load path
-    }
-
     // Bindings
     els.tmplSelect.addEventListener('change', loadState);
-    els.applyBtn.addEventListener('click', renderPreview);
-    els.saveBtn.addEventListener('click', saveTemplate);
+    els.applyBtn.addEventListener('click', ()=>{
+      // Apply wizard values to current code by substituting placeholders
+      const PROP = els.propName.value || currentProperty || '';
+      const LAUNCH_DATE = formatDateISO(els.launchDate.value);
+      const RENEWAL_URL = els.renewalUrl.value || '';
+      const PRIMARY = els.primaryColor.value || '#446472';
+      const ACCENT = els.accentColor.value || '#ffb732';
+      const PHONE = els.officePhone.value || '';
+      const EMAIL = els.officeEmail.value || '';
+      els.code.value = substitute(els.code.value, { PROP, LAUNCH_DATE, RENEWAL_URL, PRIMARY, ACCENT, PHONE, EMAIL });
+      renderPreview();
+      saveProfile();
+    });
+    els.saveBtn.addEventListener('click', ()=>{ saveTemplate(); saveProfile(); });
     els.code.addEventListener('input', renderPreview);
     els.copyHtmlBtn.addEventListener('click', copyHtml);
     els.openGmailBtn.addEventListener('click', openGmail);
     els.downloadBtn.addEventListener('click', downloadHtml);
-    els.flyerUrl.addEventListener('change', saveAssets);
+    els.flyerUrl.addEventListener('change', ()=>{ saveAssets(); saveProfile(); });
+
+    // Persist wizard fields as user types
+    [els.propName, els.launchDate, els.renewalUrl, els.officePhone, els.officeEmail, els.primaryColor, els.accentColor].forEach(el=>{ if (el) el.addEventListener('input', saveProfile); });
 
     // Auth/session header actions
     (async function(){
@@ -412,7 +448,7 @@
     })();
 
     // Initialize
-    (async function(){ await initProperties(); loadTemplateDefaultsIfEmpty(); loadState(); })();
+    (async function(){ await initProperties(); loadProfile(); loadState(); })();
   </script>
 </body>
 </html>
