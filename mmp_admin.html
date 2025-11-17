@@ -90,6 +90,17 @@
             <button id="createUserBtn" class="good">Create User</button>
           </div>
         </div>
+        <div class="row">
+          <div>
+            <label for="userEmail">User Email Address</label>
+            <input id="userEmail" type="email" placeholder="user@example.com" />
+            <div class="mini" style="margin-top:6px">
+              <label style="display:flex;align-items:center;gap:6px;user-select:none">
+                <input id="sendEmailCheck" type="checkbox" checked /> Open email client with credentials after creating user
+              </label>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -103,6 +114,7 @@
     <div class="mini">Changes are saved to the server (MongoDB Atlas) via API.</div>
   </main>
 
+  
   <script>
     const API_BASE = '/api';
 
@@ -120,6 +132,8 @@
       selectAllPropsBtn: document.getElementById('selectAllPropsBtn'),
       clearAllPropsBtn: document.getElementById('clearAllPropsBtn'),
       createUserBtn: document.getElementById('createUserBtn'),
+      sendEmailCheck: document.getElementById('sendEmailCheck'),
+      userEmail: document.getElementById('userEmail'),
 
       usersTable: document.getElementById('usersTable'),
     };
@@ -275,14 +289,35 @@
       els.selectAllPropsBtn.addEventListener('click', (e)=>{ e.preventDefault(); document.querySelectorAll('#newPropsWrap .prop-item').forEach(it=>it.classList.add('selected')); });
       els.clearAllPropsBtn.addEventListener('click', (e)=>{ e.preventDefault(); document.querySelectorAll('#newPropsWrap .prop-item').forEach(it=>it.classList.remove('selected')); });
       els.createUserBtn.addEventListener('click', async ()=>{
-        const username = (els.newUsername.value||'').trim(); const password = els.newPassword.value||''; const role = els.newRole.value;
+        const username = (els.newUsername.value||'').trim(); 
+        const password = els.newPassword.value||''; 
+        const role = els.newRole.value;
+        const email = (els.userEmail.value||'').trim();
+        
         if (!username || !password){ alert('Username and password are required'); return; }
+        
         const props = Array.from(document.querySelectorAll('#newPropsWrap .prop-item.selected')).map(it=>it.dataset.prop);
+        
         try{
           await apiFetch('/auth-users', { method:'POST', body: JSON.stringify({ username, password, role, properties: props }) });
-          els.newUsername.value=''; els.newPassword.value=''; els.newRole.value='user';
+          
+          // Check if email should be sent
+          if (els.sendEmailCheck.checked && email) {
+            openEmailClient(username, password, email);
+          }
+          
+          // Clear form
+          els.newUsername.value=''; 
+          els.newPassword.value=''; 
+          els.newRole.value='user';
+          els.userEmail.value='';
           document.querySelectorAll('#newPropsWrap .prop-item.selected').forEach(it=>it.classList.remove('selected'));
-          await fetchUsers(); renderUsers();
+          await fetchUsers(); 
+          renderUsers();
+          
+          if (!els.sendEmailCheck.checked || !email) {
+            alert('User created successfully');
+          }
         }catch(e){ alert('Create user failed: '+e.message); }
       });
 
@@ -304,6 +339,67 @@
       await fetchUsers();
       renderUsers();
       initHandlers();
+    }
+
+    // Email function using mailto
+    function openEmailClient(username, password, recipientEmail) {
+      const subject = encodeURIComponent('Welcome to CMP Marketing Hub - Your Login Credentials');
+      
+      // Create a professional plain-text email body
+      const body = encodeURIComponent(
+`Dear ${username},
+
+Welcome to CMP Marketing Hub!
+
+Your account has been successfully created. Below are your login credentials to access the CMP Marketing Hub platform.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+LOGIN CREDENTIALS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Username: ${username}
+Temporary Password: ${password}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ IMPORTANT SECURITY NOTICE:
+For security reasons, please change your password upon first login. Keep your credentials confidential and do not share them with anyone.
+
+ACCESS THE PLATFORM:
+https://cmpmarketinghub.com
+
+GETTING STARTED:
+1. Log in using the credentials provided above
+2. Navigate to your profile settings to update your password
+3. Explore the dashboard to view your assigned properties
+4. Access marketing tools and campaign management features
+
+NEED HELP?
+• User Guide: https://cmpmarketinghub.com/help
+• Video Tutorials: https://cmpmarketinghub.com/tutorials
+• FAQs: https://cmpmarketinghub.com/faq
+• Support Center: https://cmpmarketinghub.com/support
+
+If you need assistance, please contact our support team at support@cmpmarketinghub.com
+
+Best regards,
+The CMP Marketing Hub Team
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+© 2024 CMP Marketing Hub. All rights reserved.
+This email contains confidential information intended only for the recipient.`
+      );
+      
+      // Create the mailto link
+      const mailtoLink = `mailto:${recipientEmail}?subject=${subject}&body=${body}`;
+      
+      // Open the default email client
+      window.location.href = mailtoLink;
+      
+      // Show confirmation that email client was opened
+      setTimeout(() => {
+        alert('Email client opened. Please review and send the welcome email with credentials.');
+      }, 500);
     }
 
     init();
