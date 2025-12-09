@@ -185,6 +185,32 @@
         <div id="step1">
           <div class="section-title">Step 1 – Basic Info</div>
           <div class="section-sub">Set plan basics. You can edit details later.</div>
+          <div class="row" id="quickPickRow" style="margin:8px 0; gap:8px; align-items:flex-end">
+            <div>
+              <label for="w_term_quick">Quick Term</label>
+              <select id="w_term_quick" style="min-width:140px"></select>
+            </div>
+            <div>
+              <label for="w_name_quick">Name Suggestion</label>
+              <select id="w_name_quick" style="min-width:200px"></select>
+            </div>
+            <div>
+              <label for="w_goals_quick">Goals Preset</label>
+              <select id="w_goals_quick" style="min-width:180px"></select>
+            </div>
+            <div>
+              <label for="w_targets_quick">Audiences Preset</label>
+              <select id="w_targets_quick" style="min-width:180px"></select>
+            </div>
+            <div>
+              <label for="w_keydates_quick">Key Dates Preset</label>
+              <select id="w_keydates_quick" style="min-width:180px"></select>
+            </div>
+            <div>
+              <label for="w_ongoing_quick">Ongoing Preset</label>
+              <select id="w_ongoing_quick" style="min-width:180px"></select>
+            </div>
+          </div>
           <div class="grid-cols">
             <div>
               <label>Plan Type</label>
@@ -538,7 +564,7 @@
 
       // Step 1 bindings
       const radios = document.querySelectorAll('input[name="w_planType"]');
-      radios.forEach(r => { r.checked = (r.value === wizardData.planType); r.onchange = () => { wizardData.planType = r.value; suggestEndDate(); } });
+      radios.forEach(r => { r.checked = (r.value === wizardData.planType); r.onchange = () => { wizardData.planType = r.value; suggestEndDate(); refreshNameSuggestions(); populateAllWeekPresetSelects(); } });
       els.w_name.value = wizardData.name||''; els.w_name.oninput = () => wizardData.name = els.w_name.value;
       els.w_term.value = wizardData.termLabel||''; els.w_term.oninput = () => wizardData.termLabel = els.w_term.value;
       els.w_start.value = wizardData.startDate||''; els.w_start.onchange = () => { wizardData.startDate = els.w_start.value; suggestEndDate(); };
@@ -549,6 +575,7 @@
       els.w_ongoing.value = wizardData.ongoingTasks||''; els.w_ongoing.oninput = () => wizardData.ongoingTasks = els.w_ongoing.value;
       els.w_notes.value = wizardData.notes||''; els.w_notes.oninput = () => wizardData.notes = els.w_notes.value;
 
+      if (wizardStep === 1){ initQuickPickControls(); }
       if (wizardStep === 2){ ensureWeeks(); renderWeeksEditor(); }
       if (wizardStep === 3){ renderReview(); }
     }
@@ -624,6 +651,18 @@
               <div class="mini muted">${pct!=null? (pct+'% complete') : ''}</div>
             </div>
           </div>
+          <div class="row" style="margin-top:8px; align-items:flex-end; gap:10px">
+            <div>
+              <label>Week Preset</label>
+              <select id="wk_${idx}_preset" style="min-width:200px"></select>
+            </div>
+            <div>
+              <label>Add Task Bundle</label>
+              <select id="wk_${idx}_bundle" style="min-width:200px"></select>
+            </div>
+            <button class="secondary" style="flex:0 0 auto" onclick="(function(){ applyWeekPreset(${idx}); })()">Apply Preset</button>
+            <button class="secondary" style="flex:0 0 auto" onclick="(function(){ addTaskBundleSelected(${idx}); })()">Add Bundle</button>
+          </div>
           <div class="grid-cols" style="margin-top:8px">
             <div><label>Leasing Focus</label><textarea id="wk_${idx}_lease">${escapeHtml(w.leasingFocus||'')}</textarea></div>
             <div><label>Community Outreach / Resident Events</label><textarea id="wk_${idx}_comm">${escapeHtml(w.communityOutreach||'')}</textarea></div>
@@ -642,6 +681,8 @@
     function bindWeekEditor(idx){
       const w = wizardData.weeks[idx]; if (!w) return;
       const g = (id)=> document.getElementById(id);
+      populateWeekPresetSelect(idx);
+      populateTaskBundleSelect(idx);
       g(`wk_${idx}_num`).oninput = (e)=> w.weekNumber = parseInt(e.target.value||'0',10)||0;
       g(`wk_${idx}_label`).oninput = (e)=> w.weekLabel = e.target.value;
       g(`wk_${idx}_s`).onchange = (e)=> w.dateRangeStart = e.target.value;
@@ -742,6 +783,153 @@
           tasks: (w.tasks||[]).map(t=>({ id: t.id||rid(), title: t.title||'', channel: t.channel||'', dueDate: t.dueDate||'', status: t.status||'not_started', notes: t.notes||'' }))
         }))
       };
+    }
+
+    // Quick-pick presets and helpers
+    const GOAL_PRESETS_30 = [
+      { id:'launch', label:'Launch/Transition Sprint', text:'Launch plan: establish consistent social cadence, kick off PPC, quick wins on reputation, and execute 2-3 resident+prospect events per week to drive tours and apps.' },
+      { id:'assets', label:'Asset Development + Digital', text:'Capture new photos/video/UGC, refresh virtual tours, stand up always-on PPC/social, and coordinate quick-turn giveaways.' },
+      { id:'renewals', label:'Renewal + Events Push', text:'Drive renewal urgency and host weekly resident events that also reach prospects (friend invites). Layer in email/social reminders and limited-time incentives.' }
+    ];
+    const GOAL_PRESETS_60 = [
+      { id:'term_campaign', label:'Term Campaign', text:'8–9 week campaign to drive awareness, consideration, and conversion for the selected term. Mix on-campus outreach, local partnerships, weekly social/digital themes, and strong calls-to-action.' },
+      { id:'move_in', label:'Move-in + Early Leases', text:'Promote early move-ins and student-friendly timelines. Balance outreach, digital, and community-building events with a steady drumbeat of urgency messages.' }
+    ];
+    const AUDIENCE_PRESETS = [
+      { id:'std_groups', label:'Students (UG/Grad) + Faculty/Staff', text:'Undergrads, graduate students, faculty, and local professionals' },
+      { id:'parents', label:'Parents + Transfer/International', text:'Parents/guardians; transfer students; international students; local professionals' },
+      { id:'comm', label:'Campus Orgs + Local Community', text:'Campus orgs (Greek, clubs, departments), local businesses, community partners' }
+    ];
+    const KEYDATE_PRESETS = [
+      { id:'acad', label:'Academic Calendar', text:'Add-drop, midterms, breaks, housing fairs, move-in, orientation' },
+      { id:'term_milestones', label:'Term Milestones', text:'Application deadlines, scholarship timelines, exam periods, holidays' }
+    ];
+    const ONGOING_PRESETS = [
+      { id:'always_on', label:'Always-on', text:'Weekly email blasts; reputation management; PPC and paid social always-on; regular IG/TT posting cadence' },
+      { id:'reputation', label:'Reputation + Social', text:'Weekly review requests; social listening/community management; 3x stories + 1 grid post minimum' }
+    ];
+
+    const WEEK_PRESETS_30 = [
+      { id:'w_launch', label:'Launch & Awareness', leasingFocus:'Announce campaigns, highlight top floorplans, limited-time incentives', communityOutreach:'Kickoff resident event + invite prospects; on-campus flyering/tabling', socialDigital:'Introduce weekly theme; paid social + PPC live; story series begins', weeklyTaskSummary:'2-3 events; 3 stories; 1 grid; 1 email' },
+      { id:'w_assets', label:'Assets & Reputation', leasingFocus:'Capture/curate new media; spotlight amenities', communityOutreach:'Photo/video day; resident testimonials', socialDigital:'UGC push; review requests; short-form video posts', weeklyTaskSummary:'3 stories; 1 grid; 1 video; 1 review push' },
+      { id:'w_events', label:'Events Push', leasingFocus:'Event-based CTAs; tours & apps', communityOutreach:'Two resident/prospect events; local partner pop-up', socialDigital:'Event countdowns; giveaways; live stories', weeklyTaskSummary:'2+ events; 3 stories; 1 grid; 1 giveaway' },
+      { id:'w_close', label:'Final Push', leasingFocus:'Urgency (last chance, limited spots)', communityOutreach:'Flyer sweep; on-campus booth', socialDigital:'Deadline creatives; retargeting refresh', weeklyTaskSummary:'3 stories; 1 grid; 1 email' }
+    ];
+    const WEEK_PRESETS_60 = [
+      { id:'awareness', label:'Awareness', leasingFocus:'Top benefits + brand story', communityOutreach:'Campus org introductions; tabling schedule', socialDigital:'Theme kickoff; paid awareness live', weeklyTaskSummary:'3 stories; 1 grid; 1 email' },
+      { id:'outreach', label:'On-Campus Outreach', leasingFocus:'Program highlights; early bird offers', communityOutreach:'Department/club visits; sponsorships', socialDigital:'UGC focus; stories from campus', weeklyTaskSummary:'Outreach + 3 stories; 1 grid' },
+      { id:'partners', label:'Local Partnerships', leasingFocus:'Co-marketing offers', communityOutreach:'Local partner pop-ups', socialDigital:'Co-branded content; giveaway', weeklyTaskSummary:'Partner pop-up; 3 stories; 1 grid' },
+      { id:'social_theme', label:'Social/Digital Theme', leasingFocus:'Feature a differentiator', communityOutreach:'Light events; content capture', socialDigital:'Themed posts all week', weeklyTaskSummary:'3 stories; 2 grids; 1 email' },
+      { id:'urgency', label:'Urgency', leasingFocus:'Deadlines; last-chance messaging', communityOutreach:'Flyer sweep; tabling', socialDigital:'Countdown series; retargeting refresh', weeklyTaskSummary:'3 stories; 1 grid; 1 email' },
+      { id:'last_chance', label:'Last Chance', leasingFocus:'Final units; immediate move-ins', communityOutreach:'Final pop-up/event', socialDigital:'Final CTA; all channels', weeklyTaskSummary:'Close out; 3 stories; 1 grid' }
+    ];
+
+    const TASK_BUNDLES = [
+      { id:'social_pack', label:'Social Week Pack', tasks:[
+        { title:'Social Story #1', channel:'Social Media' },
+        { title:'Social Story #2', channel:'Social Media' },
+        { title:'Social Story #3', channel:'Social Media' },
+        { title:'Grid Post', channel:'Social Media' },
+        { title:'Giveaway Post', channel:'Social Media' }
+      ]},
+      { id:'outreach_pack', label:'Outreach Pack', tasks:[
+        { title:'On-campus tabling', channel:'On-Campus Outreach' },
+        { title:'Local business visit', channel:'Local Business' },
+        { title:'Email blast', channel:'Email' }
+      ]},
+      { id:'digital_pack', label:'Digital Pack', tasks:[
+        { title:'PPC push', channel:'Digital Ads' },
+        { title:'Retargeting refresh', channel:'Digital Ads' },
+        { title:'Email blast', channel:'Email' }
+      ]}
+    ];
+
+    function initQuickPickControls(){
+      populateQuickTerm();
+      refreshNameSuggestions();
+      populateStep1PresetSelects();
+      bindQuickSelectHandlers();
+    }
+    function populateQuickTerm(){
+      const sel = document.getElementById('w_term_quick'); if (!sel) return;
+      const now = new Date(); const y = now.getFullYear();
+      const years = [y-1, y, y+1, y+2];
+      const opts = [];
+      years.forEach(Y => { opts.push(`Spring ${Y}`); opts.push(`Fall ${Y}`); });
+      sel.innerHTML = '<option value="">-- Select --</option>' + opts.map(o=>`<option value="${o.replace(/"/g,'&quot;')}">${o}</option>`).join('');
+    }
+    function refreshNameSuggestions(){
+      const sel = document.getElementById('w_name_quick'); if (!sel) return;
+      const term = (els.w_term?.value||'').trim();
+      const type = wizardData?.planType==='60_day' ? '60 Day POA' : '30 Day Action Plan';
+      const base = term ? [`${term} ${type}`] : [`${type}`];
+      const alt = term ? [`${term} Marketing Plan`, `${term} ${wizardData?.planType==='60_day'?'8–9 Week':'4–5 Week'} Campaign`] : [];
+      const names = Array.from(new Set(base.concat(alt)));
+      sel.innerHTML = '<option value="">-- Select --</option>' + names.map(n=>`<option value="${n.replace(/"/g,'&quot;')}">${n}</option>`).join('');
+    }
+    function populateStep1PresetSelects(){
+      const goals = (wizardData?.planType==='60_day'? GOAL_PRESETS_60 : GOAL_PRESETS_30);
+      fillSelect('w_goals_quick', goals);
+      fillSelect('w_targets_quick', AUDIENCE_PRESETS);
+      fillSelect('w_keydates_quick', KEYDATE_PRESETS);
+      fillSelect('w_ongoing_quick', ONGOING_PRESETS);
+    }
+    function fillSelect(id, arr){ const el = document.getElementById(id); if (!el) return; el.innerHTML = '<option value="">-- Select --</option>' + arr.map(p=>`<option value="${p.id}">${p.label}</option>`).join(''); }
+
+    function bindQuickSelectHandlers(){
+      const tsel = document.getElementById('w_term_quick'); if (tsel){ tsel.onchange = ()=>{ if (tsel.value){ els.w_term.value = tsel.value; wizardData.termLabel = tsel.value; refreshNameSuggestions(); } } }
+      const nsel = document.getElementById('w_name_quick'); if (nsel){ nsel.onchange = ()=>{ if (nsel.value){ els.w_name.value = nsel.value; wizardData.name = nsel.value; } } }
+      const gsel = document.getElementById('w_goals_quick'); if (gsel){ gsel.onchange = ()=> applyPresetToTextarea(gsel, els.w_goals, (wizardData.planType==='60_day'?GOAL_PRESETS_60:GOAL_PRESETS_30)); }
+      const asel = document.getElementById('w_targets_quick'); if (asel){ asel.onchange = ()=> applyPresetToTextarea(asel, els.w_targets, AUDIENCE_PRESETS); }
+      const ksel = document.getElementById('w_keydates_quick'); if (ksel){ ksel.onchange = ()=> applyPresetToTextarea(ksel, els.w_keydates, KEYDATE_PRESETS); }
+      const osel = document.getElementById('w_ongoing_quick'); if (osel){ osel.onchange = ()=> applyPresetToTextarea(osel, els.w_ongoing, ONGOING_PRESETS); }
+    }
+    function applyPresetToTextarea(selEl, ta, presets){
+      const id = selEl.value; if (!id) return; const p = presets.find(x=>x.id===id); if (!p) return;
+      const text = p.text || '';
+      if (!text) return;
+      const cur = ta.value.trim();
+      ta.value = cur ? (cur + '\n' + text) : text;
+      selEl.value = '';
+      ta.dispatchEvent(new Event('input'));
+    }
+
+    function populateWeekPresetSelect(idx){
+      const el = document.getElementById(`wk_${idx}_preset`); if (!el) return;
+      const src = wizardData?.planType==='60_day' ? WEEK_PRESETS_60 : WEEK_PRESETS_30;
+      el.innerHTML = '<option value="">-- Select --</option>' + src.map(p=>`<option value="${p.id}">${p.label}</option>`).join('');
+    }
+    function populateTaskBundleSelect(idx){
+      const el = document.getElementById(`wk_${idx}_bundle`); if (!el) return;
+      el.innerHTML = '<option value="">-- Select --</option>' + TASK_BUNDLES.map(p=>`<option value="${p.id}">${p.label}</option>`).join('');
+    }
+    function populateAllWeekPresetSelects(){
+      const list = wizardData?.weeks||[]; list.forEach((_,i)=>{ populateWeekPresetSelect(i); populateTaskBundleSelect(i); });
+    }
+    function applyWeekPreset(idx){
+      const sel = document.getElementById(`wk_${idx}_preset`); if (!sel) return; const id = sel.value; if (!id) return;
+      const src = wizardData?.planType==='60_day' ? WEEK_PRESETS_60 : WEEK_PRESETS_30;
+      const p = src.find(x=>x.id===id); if (!p) return;
+      const w = wizardData.weeks[idx]; if (!w) return;
+      function setOrAppend(cur, add){ const c = (cur||'').trim(); const a = (add||'').trim(); if (!a) return c; return c? (c+'\n'+a) : a; }
+      w.leasingFocus = setOrAppend(w.leasingFocus, p.leasingFocus);
+      w.communityOutreach = setOrAppend(w.communityOutreach, p.communityOutreach);
+      w.socialDigital = setOrAppend(w.socialDigital, p.socialDigital);
+      w.weeklyTaskSummary = setOrAppend(w.weeklyTaskSummary, p.weeklyTaskSummary);
+      // reflect in DOM
+      const g = (id)=> document.getElementById(id);
+      const sfx = idx;
+      const lease = g(`wk_${sfx}_lease`); if (lease) lease.value = w.leasingFocus;
+      const comm = g(`wk_${sfx}_comm`); if (comm) comm.value = w.communityOutreach;
+      const social = g(`wk_${sfx}_social`); if (social) social.value = w.socialDigital;
+      const sum = g(`wk_${sfx}_sum`); if (sum) sum.value = w.weeklyTaskSummary;
+    }
+    function addTaskBundleSelected(idx){
+      const sel = document.getElementById(`wk_${idx}_bundle`); if (!sel) return; const id = sel.value; if (!id) return;
+      const bundle = TASK_BUNDLES.find(b=>b.id===id); if (!bundle) return;
+      const w = wizardData.weeks[idx]; if (!Array.isArray(w.tasks)) w.tasks = [];
+      bundle.tasks.forEach(t => { w.tasks.push({ id: rid(), title: t.title, channel: t.channel, dueDate:'', status:'not_started', notes:'' }); });
+      renderWeeksEditor();
     }
 
     // Utils
