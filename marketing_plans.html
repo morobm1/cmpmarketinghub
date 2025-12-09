@@ -105,13 +105,6 @@
     .content-pane{ min-width:0 }
   </style>
 <style>
-    /* Clean tabs */
-    .tabs{ display:flex; gap:8px; border-bottom:1px solid var(--border); margin-top:8px }
-    .tab{ appearance:none; background:#fff; border:1px solid var(--border); border-bottom:none; padding:6px 10px; border-radius:8px 8px 0 0; cursor:pointer; font-weight:700; color:#374151 }
-    .tab.active{ background:#f9fafb; color:#111827 }
-    .tab-panel{ padding:10px; border:1px solid var(--border); border-top:none; border-radius:0 8px 8px 8px; background:#fff }
-  </style>
-<style>
     /* Weekly sub-accordions and read-only collapsibles */
     .wk-sub .wk-sub-body{ display:block }
     .wk-sub.collapsed .wk-sub-body{ display:none }
@@ -587,8 +580,8 @@
       els.wizardNext.style.display = wizardStep<3 ? '' : 'none';
       els.wizardSave.style.display = wizardStep===3 ? '' : 'none';
 
-      // Step 1 rendered as a combined, clean layout
-      if (wizardStep === 1){ renderStep1Combined(); }
+      // Step 1 rendered via flow
+      if (wizardStep === 1){ renderStep1Flow(); }
       if (wizardStep === 2){ ensureWeeks(); renderWeeksEditor(); }
       if (wizardStep === 3){ renderReview(); }
     }
@@ -670,27 +663,7 @@
                 <input type="date" id="wk_${idx}_e" value="${(w.dateRangeEnd||'').slice(0,10)}" />
               </div>
             </div>
-            <div id="wk_${idx}_tabs" class="tabs">
-              <button class="tab active" data-tab="acts">Activities</button>
-              <button class="tab" data-tab="details">Details</button>
-              <button class="tab" data-tab="tasks">Tasks</button>
-            </div>
-            <div id="wk_${idx}_panel_acts" class="tab-panel">
-              ${activitiesGroupsHtml(idx)}
-            </div>
-            <div id="wk_${idx}_panel_details" class="tab-panel" style="display:none">
-              <div class="grid-cols">
-                <div><label>Leasing Focus</label><textarea id="wk_${idx}_lease">${escapeHtml(w.leasingFocus||'')}</textarea></div>
-                <div><label>Community Outreach / Resident Events</label><textarea id="wk_${idx}_comm">${escapeHtml(w.communityOutreach||'')}</textarea></div>
-                <div><label>Social Media & Digital Marketing</label><textarea id="wk_${idx}_social">${escapeHtml(w.socialDigital||'')}</textarea></div>
-                <div><label>Weekly Task Summary / Goals</label><textarea id="wk_${idx}_sum">${escapeHtml(w.weeklyTaskSummary||'')}</textarea></div>
-              </div>
-            </div>
-            <div id="wk_${idx}_panel_tasks" class="tab-panel" style="display:none">
-              <div class="mini muted" style="margin-bottom:6px">Tasks (optional)</div>
-              <div id="wk_${idx}_tasks" style="display:flex;flex-direction:column;gap:6px">${(w.tasks||[]).map((t,ti)=> taskEditorRowHtml(idx, ti, t)).join('')}</div>
-              <div class="row" style="margin-top:6px"><button class="secondary" style="flex:0 0 auto" onclick="(function(){ addTask(${idx}); })()">Add Task</button></div>
-            </div>
+            <div id="wk_${idx}_flow"></div>
           </div>
         </div>
       `;
@@ -704,7 +677,7 @@
       g(`wk_${idx}_label`).oninput = (e)=> w.weekLabel = e.target.value;
       g(`wk_${idx}_s`).onchange = (e)=> w.dateRangeStart = e.target.value;
       g(`wk_${idx}_e`).onchange = (e)=> w.dateRangeEnd = e.target.value;
-      initWeekTabs(${idx});
+      renderWeekFlow(idx);
     }
 
     function taskEditorRowHtml(wi, ti, t){
@@ -805,6 +778,7 @@
       };
     }
 
+<<<<<<< HEAD
     // Step 1 combined layout (clean, grouped)
     function renderStep1Combined(){
       const wrap = document.getElementById('step1Flow'); if (!wrap) return;
@@ -831,10 +805,52 @@
         <div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:10px">
           <div class="section-title" style="margin-top:0">Goals & Audience</div>
           <div class="row" style="align-items:flex-end">
+=======
+    // Step 1 per-plan flow (guided questions)
+    let step1FlowIdx = 0;
+    function renderStep1Flow(){
+      const wrap = document.getElementById('step1Flow'); if (!wrap) return;
+      const steps = ['Plan Type','Term','Plan Name','Dates','Primary Goal','Target Audience','Key Dates','Key Tasks','Metrics','Notes'];
+      const cur = Math.max(0, Math.min(step1FlowIdx, steps.length-1));
+      const P = wizardData;
+      const progress = `<div class="mini muted">Step ${cur+1} of ${steps.length} • ${steps[cur]}</div>`;
+      let content = '';
+      switch(cur){
+        case 0: // Plan Type
+          content = `<div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:6px">
+            <div style="display:flex;gap:12px">
+              <label style="display:flex;align-items:center;gap:6px;user-select:none"><input type="radio" name="s1_type" value="30_day" ${P.planType!=='60_day'?'checked':''}/> 30 Day</label>
+              <label style="display:flex;align-items:center;gap:6px;user-select:none"><input type="radio" name="s1_type" value="60_day" ${P.planType==='60_day'?'checked':''}/> 60 Day</label>
+            </div>
+          </div>`;
+          break;
+        case 1: // Term
+          content = `<div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:6px">
+            <div class="row" style="align-items:flex-end">
+              <div><label>Term Label</label><input id="s1_term" type="text" value="${escapeAttr(P.termLabel||'')}" placeholder="e.g., Fall 2025" /></div>
+              <div><label>Quick Term</label><select id="w_term_quick" style="min-width:140px"></select></div>
+            </div>
+          </div>`;
+          break;
+        case 2: // Name
+          content = `<div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:6px">
+            <div><label>Plan Name</label><input id="s1_name" type="text" value="${escapeAttr(P.name||'')}" placeholder="e.g., Fall 2025 60 Day POA" /></div>
+          </div>`;
+          break;
+        case 3: // Dates
+          content = `<div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:6px">
+            <div class="row"><div><label>Start Date</label><input id="s1_start" type="date" value="${(P.startDate||'').slice(0,10)}" /></div><div><label>End Date</label><input id="s1_end" type="date" value="${(P.endDate||'').slice(0,10)}" /></div></div>
+            <div class="mini muted" style="margin-top:4px">End date auto-suggests from plan type; editable.</div>
+          </div>`;
+          break;
+        case 4: // Primary Goal
+          content = `<div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:6px">
+>>>>>>> parent of 601d8b0 (Update marketing_plans.html)
             <div><label>Primary Goal</label>
               <select id="w_goals"><option value="">-- Select --</option><option>Awareness</option><option>Lead Generation</option><option>Applications</option><option>Leases Signed</option><option>Renewals</option><option>Move-in Readiness</option><option>Reputation & Reviews</option><option value="__custom">Other (type below)</option></select>
               <input id="w_goals_custom" type="text" placeholder="Type a custom goal" style="margin-top:6px; display:${P.primaryGoals && !['Awareness','Lead Generation','Applications','Leases Signed','Renewals','Move-in Readiness','Reputation & Reviews'].includes(P.primaryGoals)?'':'none'}" value="${escapeAttr(P.primaryGoals||'')}"/>
             </div>
+<<<<<<< HEAD
             <div><label>Target Audience</label>
               <div style="display:flex;gap:6px;flex-wrap:wrap">
                 <select id="s1_targets_select" multiple size="6" style="min-width:200px"><option>Undergrads</option><option>Graduate Students</option><option>Faculty</option><option>Greek</option><option>Organization</option><option>Local Business</option></select>
@@ -889,6 +905,69 @@
     }
 
     
+=======
+          </div>`;
+          break;
+        case 5: // Target Audience
+          content = `<div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:6px">
+            <div><label>Target Audience</label>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <select id="s1_targets_select" multiple size="6" style="min-width:200px">
+                  <option>Undergrads</option><option>Graduate Students</option><option>Faculty</option><option>Greek</option><option>Organization</option><option>Local Business</option>
+                </select>
+                <input id="s1_targets_custom" type="text" placeholder="Type another audience (optional)" />
+              </div>
+            </div>
+          </div>`;
+          break;
+        case 6: // Key Dates
+          content = `<div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:6px">
+            <div><label>Key Dates</label><div id="keyDatesWrap" style="display:flex;flex-direction:column;gap:6px"></div>
+              <div class="row" style="margin-top:6px"><input id="kd_label" type="text" placeholder="Label (e.g., Housing Fair)" /><input id="kd_date" type="date" />
+                <button class="secondary" style="flex:0 0 auto" onclick="(function(){ addKeyDate(); })()">Add Date</button></div>
+            </div>
+          </div>`;
+          break;
+        case 7: // Key Tasks
+          content = `<div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:6px">
+            <div><label>Key Tasks</label><textarea id="s1_keytasks" placeholder="Weekly email blasts, reputation mgmt, PPC/social">${escapeHtml(P.keyTasks||P.ongoingTasks||'')}</textarea></div>
+          </div>`;
+          break;
+        case 8: // Metrics
+          content = `<div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:6px">
+            <div class="grid-cols">
+              <div><label>Prelease at Start (%)</label><input id="s1_preleaseStart" type="number" min="0" max="100" step="1" value="${P.preleaseStart ?? ''}" /></div>
+              <div><label>Prelease at End (%)</label><input id="s1_preleaseEnd" type="number" min="0" max="100" step="1" value="${P.preleaseEnd ?? ''}" /></div>
+              <div><label>Applications Goal</label><input id="s1_appGoal" type="number" min="0" step="1" value="${P.applicationsGoal ?? ''}" /></div>
+              <div><label>Applications Actual</label><input id="s1_appActual" type="number" min="0" step="1" value="${P.applicationsActual ?? ''}" /></div>
+              <div><label>Leases Goal</label><input id="s1_leaseGoal" type="number" min="0" step="1" value="${P.leasesGoal ?? ''}" /></div>
+              <div><label>Leases Actual</label><input id="s1_leaseActual" type="number" min="0" step="1" value="${P.leasesActual ?? ''}" /></div>
+            </div>
+          </div>`;
+          break;
+        case 9: // Notes
+          content = `<div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:6px">
+            <div><label>Notes</label><textarea id="s1_notes" placeholder="Assumptions / constraints">${escapeHtml(P.notes||'')}</textarea></div>
+          </div>`;
+          break;
+      }
+      const controls = `<div class="row" style="gap:8px;margin-top:8px"><button class="secondary" style="flex:0 0 auto" ${cur===0?'disabled':''} onclick="(function(){ setStep1Flow(${cur-1}); })()">Back</button><div style="flex:1"></div><button class="good" style="flex:0 0 auto" onclick="(function(){ setStep1Flow(${Math.min(cur+1,steps.length-1)}); })()">${cur===steps.length-1?'Finish':'Next'}</button></div>`;
+      wrap.innerHTML = progress + content + controls;
+      // Bind step controls
+      if (cur===0){ document.querySelectorAll('input[name="s1_type"]').forEach(r=>{ r.onchange=()=>{ wizardData.planType = r.value==='60_day'?'60_day':'30_day'; suggestEndDate(); }; }); }
+      if (cur===1){ populateQuickTerm(); const qt = document.getElementById('w_term_quick'); if (qt){ qt.onchange = ()=>{ if (qt.value){ wizardData.termLabel = qt.value; const t = document.getElementById('s1_term'); if (t) t.value = qt.value; } }; } const t = document.getElementById('s1_term'); if (t){ t.value = wizardData.termLabel||''; t.oninput = ()=> wizardData.termLabel = t.value; } }
+      if (cur===2){ const n = document.getElementById('s1_name'); if (n){ n.value = wizardData.name||''; n.oninput = ()=> wizardData.name = n.value; } }
+      if (cur===3){ const s = document.getElementById('s1_start'); const e = document.getElementById('s1_end'); if (s){ s.value = (wizardData.startDate||'').slice(0,10); s.onchange = ()=>{ wizardData.startDate = s.value; suggestEndDate(); const e2=document.getElementById('s1_end'); if (e2) e2.value = (wizardData.endDate||'').slice(0,10); }; } if (e){ e.value = (wizardData.endDate||'').slice(0,10); e.onchange = ()=> wizardData.endDate = e.value; } }
+      if (cur===4){ const g = document.getElementById('w_goals'); const c = document.getElementById('w_goals_custom'); if (g){ g.value = ['Awareness','Lead Generation','Applications','Leases Signed','Renewals','Move-in Readiness','Reputation & Reviews'].includes(wizardData.primaryGoals)?wizardData.primaryGoals:'__custom'; g.onchange = ()=>{ if (g.value==='__custom'){ c.style.display=''; c.focus(); wizardData.primaryGoals = (c.value||'').trim(); } else { c.style.display='none'; wizardData.primaryGoals = g.value; } }; } if (c){ c.value = (!['Awareness','Lead Generation','Applications','Leases Signed','Renewals','Move-in Readiness','Reputation & Reviews'].includes(wizardData.primaryGoals)?(wizardData.primaryGoals||''):''); c.oninput = ()=> wizardData.primaryGoals = c.value.trim(); } }
+      if (cur===5){ const sel=document.getElementById('s1_targets_select'); const cust=document.getElementById('s1_targets_custom'); if (wizardData.targetAudiences){ const parts = wizardData.targetAudiences.split(',').map(s=>s.trim()); Array.from(sel.options).forEach(o=> o.selected = parts.includes(o.value)); const custom = parts.filter(p=> !Array.from(sel.options).map(o=>o.value).includes(p)); cust.value = custom.join(', '); } const sync=()=>{ const base=Array.from(sel.selectedOptions).map(o=>o.value); const extra=(cust.value||'').trim(); wizardData.targetAudiences = base.concat(extra? [extra] : []).join(', '); }; sel.onchange = sync; cust.oninput = sync; }
+      if (cur===6){ renderKeyDatesEditor(); }
+      if (cur===7){ const kt=document.getElementById('s1_keytasks'); if (kt){ kt.oninput = ()=>{ wizardData.keyTasks = kt.value; wizardData.ongoingTasks = kt.value; }; } }
+      if (cur===8){ const bindNum=(id,key)=>{ const el=document.getElementById(id); if (!el) return; el.oninput = ()=>{ const v=parseFloat(el.value); wizardData[key] = isFinite(v)?v:null; }; }; bindNum('s1_preleaseStart','preleaseStart'); bindNum('s1_preleaseEnd','preleaseEnd'); bindNum('s1_appGoal','applicationsGoal'); bindNum('s1_appActual','applicationsActual'); bindNum('s1_leaseGoal','leasesGoal'); bindNum('s1_leaseActual','leasesActual'); }
+      if (cur===9){ const n=document.getElementById('s1_notes'); if (n){ n.oninput = ()=> wizardData.notes = n.value; } }
+    }
+    function setStep1Flow(step){ step1FlowIdx = Math.max(0, step); renderStep1Flow(); }
+
+>>>>>>> parent of 601d8b0 (Update marketing_plans.html)
     // Key dates editor
     function renderKeyDatesEditor(){
       const wrap = document.getElementById('keyDatesWrap'); if (!wrap) return;
@@ -1114,35 +1193,9 @@
       const w = wizardData.weeks[wi]; if (!Array.isArray(w.activities)) return; if (gai<0 || gai>=w.activities.length) return; w.activities.splice(gai,1); renderWeeksEditor();
     }
 
-    // Week tabs (Activities / Details / Tasks)
-    function initWeekTabs(idx){
-      const tabs = document.getElementById(`wk_${idx}_tabs`);
-      if (!tabs) return;
-      const panels = {
-        acts: document.getElementById(`wk_${idx}_panel_acts`),
-        details: document.getElementById(`wk_${idx}_panel_details`),
-        tasks: document.getElementById(`wk_${idx}_panel_tasks`),
-      };
-      function activate(key){
-        tabs.querySelectorAll('.tab').forEach(b=> b.classList.remove('active'));
-        const btn = tabs.querySelector(`[data-tab="${key}"]`); if (btn) btn.classList.add('active');
-        Object.keys(panels).forEach(k=> panels[k].style.display = (k===key)?'':'none');
-        // Bind editors when panel activates
-        if (key==='acts'){
-          const wrap = panels.acts; if (wrap){ wrap.querySelectorAll('[data-gai]').forEach(row => bindActivityEditorGlobal(idx, parseInt(row.getAttribute('data-gai'),10)||0)); }
-        } else if (key==='details'){
-          const w = wizardData.weeks[idx] || {}; const g=(id)=> document.getElementById(id);
-          const lease = g(`wk_${idx}_lease`); if (lease) lease.oninput = (e)=> w.leasingFocus = e.target.value;
-          const comm = g(`wk_${idx}_comm`); if (comm) comm.oninput = (e)=> w.communityOutreach = e.target.value;
-          const social = g(`wk_${idx}_social`); if (social) social.oninput = (e)=> w.socialDigital = e.target.value;
-          const sum = g(`wk_${idx}_sum`); if (sum) sum.oninput = (e)=> w.weeklyTaskSummary = e.target.value;
-        } else if (key==='tasks'){
-          const wrap = panels.tasks; if (wrap){ wrap.querySelectorAll('[data-ti]').forEach(row => bindTaskEditor(idx, parseInt(row.getAttribute('data-ti'),10)||0)); }
-        }
-      }
-      tabs.querySelectorAll('.tab').forEach(b => b.onclick = ()=> activate(b.getAttribute('data-tab')));
-      activate('acts');
-    }
+    // Week flow wizard for activities, details, and tasks
+    const weekFlowIdx = {};
+    function renderWeekFlow(idx){
       const wrap = document.getElementById(`wk_${idx}_flow`); if (!wrap) return;
       const w = wizardData.weeks[idx] || { activities: [], tasks: [] };
       const groups = activitiesGroups();
