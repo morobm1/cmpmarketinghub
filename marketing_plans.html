@@ -515,6 +515,7 @@
           <div style="flex:0 0 auto; display:flex; gap:8px">
             <button class="secondary" onclick="(function(){ openPlanModal(${JSON.stringify({mode:'edit'}).replace(/"/g,'&quot;')}, '${plan._id?plan._id:plan.id}'); })()">Edit Plan</button>
             <button class="secondary" onclick="(function(){ duplicatePlan('${plan._id?plan._id:plan.id}'); })()">Duplicate</button>
+            <button class="secondary" onclick="exportPlanPDF()">Export PDF</button>
             <button class="warn" onclick="(function(){ deletePlan('${plan._id?plan._id:plan.id}'); })()">Delete</button>
           </div>
         </div>
@@ -530,6 +531,7 @@
           ${(plan.weeks||[]).sort((a,b)=> (a.priority||a.weekNumber||0) - (b.priority||b.weekNumber||0)).map(w => weekReadOnlyHtml(w)).join('')}
         </div>
       `;
+      window.__lastRenderedPlan = plan;
       el.innerHTML = hdr + body;
     }
 
@@ -591,6 +593,22 @@
         renderPlansTable();
         hidePlanView();
       }catch(e){ alert('Delete failed: '+e.message); }
+    }
+
+    async function exportPlanPDF(){
+      try{
+        if (typeof html2pdf === 'undefined'){ alert('PDF engine not loaded. Check network.'); return; }
+        const planEl = els.planView; if (!planEl){ alert('No plan to export.'); return; }
+        const plan = (window.__lastRenderedPlan||{});
+        const filename = `${(plan.property||currentProperty||'Property').replace(/[\\/:*?"<>|]+/g,'-')} - ${(plan.name||'Plan').replace(/[\\/:*?"<>|]+/g,'-')}.pdf`;
+        const clone = planEl.cloneNode(true);
+        clone.querySelectorAll('.ro-acc').forEach(x=> x.classList.remove('collapsed'));
+        clone.querySelectorAll('button').forEach(b=> b.remove());
+        const tmp = document.createElement('div'); tmp.style.position='fixed'; tmp.style.left='-9999px'; tmp.style.top='0'; tmp.style.width='900px'; tmp.appendChild(clone); document.body.appendChild(tmp);
+        const opt = { margin: 0.5, filename, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, scrollY: -window.scrollY }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }, pagebreak: { mode: ['css','legacy'] } };
+        await html2pdf().set(opt).from(clone).save();
+        document.body.removeChild(tmp);
+      }catch(e){ alert('Export failed: '+(e?.message||e)); }
     }
 
     // Wizard
@@ -1124,5 +1142,6 @@
     // Init
     (async ()=>{ await initAuth(); })();
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
 </body>
 </html>
