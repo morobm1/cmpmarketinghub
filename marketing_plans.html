@@ -663,7 +663,26 @@
                 <input type="date" id="wk_${idx}_e" value="${(w.dateRangeEnd||'').slice(0,10)}" />
               </div>
             </div>
-            <div id="wk_${idx}_flow"></div>
+            <div class="wk-sub collapsed" id="wk_${idx}_details">
+              <div class="wk-sub-head" onclick="(function(){ document.getElementById('wk_${idx}_details')?.classList.toggle('collapsed'); })()">
+                <div style="display:flex;align-items:center;gap:8px"><span class="caret">▶</span><strong>Weekly Details</strong></div>
+                <div class="mini muted">Leasing Focus • Community Outreach • Social & Digital • Summary</div>
+              </div>
+              <div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:8px">
+                <div class="grid-cols">
+                  <div><label>Leasing Focus</label><textarea id="wk_${idx}_lease">${escapeHtml(w.leasingFocus||'')}</textarea></div>
+                  <div><label>Community Outreach / Resident Events</label><textarea id="wk_${idx}_comm">${escapeHtml(w.communityOutreach||'')}</textarea></div>
+                  <div><label>Social Media & Digital Marketing</label><textarea id="wk_${idx}_social">${escapeHtml(w.socialDigital||'')}</textarea></div>
+                  <div><label>Weekly Task Summary / Goals</label><textarea id="wk_${idx}_sum">${escapeHtml(w.weeklyTaskSummary||'')}</textarea></div>
+                </div>
+              </div>
+            </div>
+            ${activitiesGroupsHtml(idx)}
+            <div style="margin-top:8px">
+              <div class="mini muted" style="margin-bottom:6px">Tasks (optional)</div>
+              <div id="wk_${idx}_tasks" style="display:flex;flex-direction:column;gap:6px">${(w.tasks||[]).map((t,ti)=> taskEditorRowHtml(idx, ti, t)).join('')}</div>
+              <div class="row" style="margin-top:6px"><button class="secondary" style="flex:0 0 auto" onclick="(function(){ addTask(${idx}); })()">Add Task</button></div>
+            </div>
           </div>
         </div>
       `;
@@ -677,7 +696,17 @@
       g(`wk_${idx}_label`).oninput = (e)=> w.weekLabel = e.target.value;
       g(`wk_${idx}_s`).onchange = (e)=> w.dateRangeStart = e.target.value;
       g(`wk_${idx}_e`).onchange = (e)=> w.dateRangeEnd = e.target.value;
-      renderWeekFlow(idx);
+      // bind weekly detail textareas
+      const lease = g(`wk_${idx}_lease`); if (lease) lease.oninput = (e)=> w.leasingFocus = e.target.value;
+      const comm = g(`wk_${idx}_comm`); if (comm) comm.oninput = (e)=> w.communityOutreach = e.target.value;
+      const social = g(`wk_${idx}_social`); if (social) social.oninput = (e)=> w.socialDigital = e.target.value;
+      const sum = g(`wk_${idx}_sum`); if (sum) sum.oninput = (e)=> w.weeklyTaskSummary = e.target.value;
+      // bind tasks
+      const tasksWrap = g(`wk_${idx}_tasks`);
+      if (tasksWrap){ tasksWrap.querySelectorAll('[data-ti]').forEach(row => bindTaskEditor(idx, parseInt(row.getAttribute('data-ti'),10)||0)); }
+      // bind grouped activities (by global index)
+      const weekAcc = document.getElementById(`wk_${idx}_acc`);
+      if (weekAcc){ weekAcc.querySelectorAll('[data-gai]').forEach(row => bindActivityEditorGlobal(idx, parseInt(row.getAttribute('data-gai'),10)||0)); }
     }
 
     function taskEditorRowHtml(wi, ti, t){
@@ -1192,83 +1221,6 @@
     function removeGroupActivity(wi, gai){
       const w = wizardData.weeks[wi]; if (!Array.isArray(w.activities)) return; if (gai<0 || gai>=w.activities.length) return; w.activities.splice(gai,1); renderWeeksEditor();
     }
-
-    // Week flow wizard for activities, details, and tasks
-    const weekFlowIdx = {};
-    function renderWeekFlow(idx){
-      const wrap = document.getElementById(`wk_${idx}_flow`); if (!wrap) return;
-      const w = wizardData.weeks[idx] || { activities: [], tasks: [] };
-      const groups = activitiesGroups();
-      const total = groups.length + 2; // + Details + Tasks
-      const cur = Math.max(0, Math.min((weekFlowIdx[idx] ?? 0), total-1));
-      weekFlowIdx[idx] = cur;
-      const title = (step)=> step < groups.length ? groups[step] : (step===groups.length ? 'Weekly Details' : 'Tasks');
-      const progress = `<div class="mini muted">Step ${cur+1} of ${total} • ${title(cur)}</div>`;
-      let content = '';
-      if (cur < groups.length){
-        const label = groups[cur];
-        const list = (w.activities||[]).map((a,i)=>({a,i})).filter(x => (String(x.a?.type||'')===label));
-        const rows = list.length ? list.map(x => groupActivityEditorRowHtml(idx, x.i, x.a)).join('') : '<div class="mini muted">No items yet</div>';
-        content = `
-          <div class="wk-sub" style="margin-top:6px">
-            <div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px">
-              <div style="font-weight:800;margin-bottom:6px">${label}</div>
-              <div id="wk_${idx}_flow_list">${rows}</div>
-              <div class="row" style="margin-top:8px; align-items:flex-end; gap:8px">
-                <div><label class="mini muted">Title/Description</label><input id="wk_${idx}_flow_add_title" type="text" placeholder="Title" /></div>
-                <div><label class="mini muted">Date</label><input id="wk_${idx}_flow_add_date" type="date" /></div>
-                <div><label class="mini muted">Time</label><input id="wk_${idx}_flow_add_time" type="text" placeholder="e.g., 4 PM - 6 PM" /></div>
-                <div><label class="mini muted">Details</label><input id="wk_${idx}_flow_add_details" type="text" placeholder="Optional notes" /></div>
-                <button class="secondary" style="flex:0 0 auto" onclick="(function(){ addGroupActivity(${idx}, ${cur}); })()">Add</button>
-              </div>
-            </div>
-          </div>`;
-      } else if (cur === groups.length){
-        content = `
-          <div class="wk-sub" style="margin-top:6px">
-            <div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px">
-              <div class="grid-cols">
-                <div><label>Leasing Focus</label><textarea id="wk_${idx}_flow_lease">${escapeHtml(w.leasingFocus||'')}</textarea></div>
-                <div><label>Community Outreach / Resident Events</label><textarea id="wk_${idx}_flow_comm">${escapeHtml(w.communityOutreach||'')}</textarea></div>
-                <div><label>Social Media & Digital Marketing</label><textarea id="wk_${idx}_flow_social">${escapeHtml(w.socialDigital||'')}</textarea></div>
-                <div><label>Weekly Task Summary / Goals</label><textarea id="wk_${idx}_flow_sum">${escapeHtml(w.weeklyTaskSummary||'')}</textarea></div>
-              </div>
-            </div>
-          </div>`;
-      } else {
-        // Tasks step
-        const rows = (w.tasks||[]).map((t,ti)=> taskEditorRowHtml(idx, ti, t)).join('') || '<div class="mini muted">No tasks yet</div>';
-        content = `
-          <div class="wk-sub" style="margin-top:6px">
-            <div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px">
-              <div class="mini muted" style="margin-bottom:6px">Tasks (optional)</div>
-              <div id="wk_${idx}_flow_tasks" style="display:flex;flex-direction:column;gap:6px">${rows}</div>
-              <div class="row" style="margin-top:6px"><button class="secondary" style="flex:0 0 auto" onclick="(function(){ addTask(${idx}); })()">Add Task</button></div>
-            </div>
-          </div>`;
-      }
-      const controls = `
-        <div class="row" style="gap:8px;margin-top:8px">
-          <button class="secondary" style="flex:0 0 auto" ${cur===0?'disabled':''} onclick="(function(){ setWeekFlowStep(${idx}, ${cur-1}); })()">Back</button>
-          <div style="flex:1"></div>
-          <button class="good" style="flex:0 0 auto" onclick="(function(){ setWeekFlowStep(${idx}, ${Math.min(cur+1,total-1)}); })()">${cur===total-1?'Finish':'Next'}</button>
-        </div>`;
-      wrap.innerHTML = progress + content + controls;
-      // Bind editors inside flow
-      if (cur < groups.length){
-        const flow = document.getElementById(`wk_${idx}_flow`);
-        if (flow){ flow.querySelectorAll('[data-gai]').forEach(row => bindActivityEditorGlobal(idx, parseInt(row.getAttribute('data-gai'),10)||0)); }
-      } else if (cur === groups.length){
-        const l = document.getElementById(`wk_${idx}_flow_lease`); if (l) l.oninput = (e)=> { w.leasingFocus = e.target.value; };
-        const c = document.getElementById(`wk_${idx}_flow_comm`); if (c) c.oninput = (e)=> { w.communityOutreach = e.target.value; };
-        const s = document.getElementById(`wk_${idx}_flow_social`); if (s) s.oninput = (e)=> { w.socialDigital = e.target.value; };
-        const sm = document.getElementById(`wk_${idx}_flow_sum`); if (sm) sm.oninput = (e)=> { w.weeklyTaskSummary = e.target.value; };
-      } else {
-        const taskWrap = document.getElementById(`wk_${idx}_flow_tasks`);
-        if (taskWrap){ taskWrap.querySelectorAll('[data-ti]').forEach(row => bindTaskEditor(idx, parseInt(row.getAttribute('data-ti'),10)||0)); }
-      }
-    }
-    function setWeekFlowStep(idx, step){ weekFlowIdx[idx] = step; renderWeekFlow(idx); }
 
     // Collapsible week controls
     function toggleWeek(idx){
