@@ -374,9 +374,62 @@
     }
   </style>
 <style>
+    /* Wizard Progress Indicator */
+    .wizard-step {
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:6px;
+      opacity:0.4;
+      transition: opacity 0.3s ease;
+    }
+    .wizard-step.active {
+      opacity:1;
+    }
+    .wizard-step.completed {
+      opacity:0.7;
+    }
+    .step-number {
+      width:36px;
+      height:36px;
+      border-radius:50%;
+      background:#e5e7eb;
+      color:#6b7280;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:700;
+      font-size:14px;
+      transition: all 0.3s ease;
+    }
+    .wizard-step.active .step-number {
+      background:var(--brand-accent-2);
+      color:#ffffff;
+      box-shadow:0 0 0 4px rgba(82, 213, 255, 0.2);
+    }
+    .wizard-step.completed .step-number {
+      background:var(--good);
+      color:#ffffff;
+    }
+    .step-label {
+      font-size:12px;
+      font-weight:600;
+      color:#6b7280;
+      white-space:nowrap;
+    }
+    .wizard-step.active .step-label {
+      color:#111827;
+    }
+    .step-connector {
+      width:60px;
+      height:2px;
+      background:#e5e7eb;
+      margin-top:18px;
+    }
+
     /* Compact wizard body and collapsible week sections */
     #planWizard{ 
-      max-height: 65vh; 
+      max-height: 62vh; 
       overflow:auto;
       padding-right:8px;
     }
@@ -422,6 +475,57 @@
     .wk-acc.collapsed .wk-head .caret{ transform: rotate(0deg) }
   </style>
 <style>
+    /* Plan Type Cards */
+    .plan-type-card {
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      padding:20px;
+      border:2px solid var(--border);
+      border-radius:10px;
+      background:#ffffff;
+      cursor:pointer;
+      transition: all 0.2s ease;
+      text-align:center;
+    }
+    .plan-type-card:hover {
+      border-color:#cbd5e1;
+      box-shadow:var(--shadow-sm);
+    }
+    .plan-type-card.selected {
+      border-color:var(--brand-accent-2);
+      background:#f0f9ff;
+      box-shadow:0 0 0 3px rgba(82, 213, 255, 0.1);
+    }
+    .plan-type-icon {
+      width:60px;
+      height:60px;
+      border-radius:50%;
+      background:var(--border);
+      color:#6b7280;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:24px;
+      font-weight:700;
+      margin-bottom:12px;
+      transition: all 0.2s ease;
+    }
+    .plan-type-card.selected .plan-type-icon {
+      background:var(--brand-accent-2);
+      color:#ffffff;
+    }
+    .plan-type-title {
+      font-size:16px;
+      font-weight:700;
+      color:#111827;
+      margin-bottom:4px;
+    }
+    .plan-type-desc {
+      font-size:13px;
+      color:#6b7280;
+    }
+
     /* Vertical sidebar layout */
     .layout{ 
       display:grid; 
@@ -657,22 +761,58 @@
     <div class="modal">
       <h3 id="planModalTitle">New Plan</h3>
       <div id="planWizard">
+        <!-- Progress Indicator -->
+        <div style="display:flex;justify-content:center;gap:8px;margin-bottom:24px">
+          <div id="prog1" class="wizard-step active">
+            <div class="step-number">1</div>
+            <div class="step-label">Basic Info</div>
+          </div>
+          <div class="step-connector"></div>
+          <div id="prog2" class="wizard-step">
+            <div class="step-number">2</div>
+            <div class="step-label">Goals & Details</div>
+          </div>
+          <div class="step-connector"></div>
+          <div id="prog3" class="wizard-step">
+            <div class="step-number">3</div>
+            <div class="step-label">Weekly Plan</div>
+          </div>
+          <div class="step-connector"></div>
+          <div id="prog4" class="wizard-step">
+            <div class="step-number">4</div>
+            <div class="step-label">Review</div>
+          </div>
+        </div>
+
+        <!-- Step 1: Basic Info -->
         <div id="step1">
-          <div class="section-title">Step 1 – Basic Info</div>
-          <div class="section-sub">Set plan basics. You can edit details later.</div>
+          <div class="section-title">Plan Basics</div>
+          <div class="section-sub">Start by defining your plan type and timeline</div>
           <div id="step1Flow"></div>
         </div>
+
+        <!-- Step 2: Goals & Details -->
         <div id="step2" style="display:none">
-          <div class="section-title">Step 2 – Weekly Plan Builder</div>
-          <div class="section-sub">Auto-generated weeks based on plan type; customize as needed.</div>
-          <div class="row" style="gap:8px; margin:6px 0 8px 0; align-items:center">
+          <div class="section-title">Goals & Strategy</div>
+          <div class="section-sub">Define your marketing objectives and target audience</div>
+          <div id="step2Flow"></div>
+        </div>
+
+        <!-- Step 3: Weekly Plan Builder -->
+        <div id="step3" style="display:none">
+          <div class="section-title">Weekly Plan Builder</div>
+          <div class="section-sub">Auto-generated weeks based on your timeline. Customize each week's activities.</div>
+          <div class="row" style="gap:8px; margin:12px 0; align-items:center">
             <button class="secondary" style="flex:0 0 auto" onclick="expandAllWeeks()">Expand All</button>
             <button class="secondary" style="flex:0 0 auto" onclick="collapseAllWeeks()">Collapse All</button>
           </div>
           <div id="weeksWrap"></div>
         </div>
-        <div id="step3" style="display:none">
-          <div class="section-title">Step 3 – Review & Save</div>
+
+        <!-- Step 4: Review & Save -->
+        <div id="step4" style="display:none">
+          <div class="section-title">Review Your Plan</div>
+          <div class="section-sub">Review all details before saving</div>
           <div id="reviewWrap"></div>
         </div>
       </div>
@@ -1013,17 +1153,30 @@
     }
 
     function renderWizard(){
+      // Update progress indicator
+      for (let i = 1; i <= 4; i++) {
+        const prog = document.getElementById(`prog${i}`);
+        if (!prog) continue;
+        prog.classList.remove('active', 'completed');
+        if (i === wizardStep) prog.classList.add('active');
+        else if (i < wizardStep) prog.classList.add('completed');
+      }
+
+      // Show/hide steps
       els.step1.style.display = (wizardStep===1) ? '' : 'none';
       els.step2.style.display = (wizardStep===2) ? '' : 'none';
       els.step3.style.display = (wizardStep===3) ? '' : 'none';
+      document.getElementById('step4').style.display = (wizardStep===4) ? '' : 'none';
+      
       els.wizardBack.style.display = wizardStep>1 ? '' : 'none';
-      els.wizardNext.style.display = wizardStep<3 ? '' : 'none';
-      els.wizardSave.style.display = wizardStep===3 ? '' : 'none';
+      els.wizardNext.style.display = wizardStep<4 ? '' : 'none';
+      els.wizardSave.style.display = wizardStep===4 ? '' : 'none';
 
-      // Step 1 rendered via flow
+      // Render step content
       if (wizardStep === 1){ renderStep1Flow(); }
-      if (wizardStep === 2){ ensureWeeks(); renderWeeksEditor(); }
-      if (wizardStep === 3){ renderReview(); }
+      if (wizardStep === 2){ renderStep2Flow(); }
+      if (wizardStep === 3){ ensureWeeks(); renderWeeksEditor(); }
+      if (wizardStep === 4){ renderReview(); }
     }
 
     function suggestEndDate(){
@@ -1200,8 +1353,14 @@
 
     els.wizardBack.addEventListener('click', ()=>{ if (wizardStep>1){ wizardStep--; renderWizard(); } });
     els.wizardNext.addEventListener('click', ()=>{
-      if (wizardStep===1){ if (!wizardData.name || !wizardData.startDate || !wizardData.endDate){ alert('Plan Name, Start, and End are required.'); return; } }
-      if (wizardStep<3){ wizardStep++; renderWizard(); }
+      // Validation
+      if (wizardStep===1){ 
+        if (!wizardData.name || !wizardData.startDate || !wizardData.endDate){ 
+          alert('Plan Name, Start Date, and End Date are required.'); 
+          return; 
+        } 
+      }
+      if (wizardStep<4){ wizardStep++; renderWizard(); }
     });
     els.wizardCancel.addEventListener('click', ()=> closePlanModal());
     els.wizardSave.addEventListener('click', async ()=>{
@@ -1339,34 +1498,193 @@
       const wrap = document.getElementById('step1Flow'); if (!wrap) return;
       const P = wizardData || {};
       wrap.innerHTML = `
-        <div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:6px">
-          <div class="section-title" style="margin-top:0">Basics</div>
-          <div class="row" style="align-items:flex-end">
-            <div>
-              <label>Plan Type</label>
-              <div style="display:flex;gap:12px">
-                <label style="display:flex;align-items:center;gap:6px;user-select:none"><input type="radio" name="s1_type" value="30_day" ${P.planType!=='60_day'?'checked':''}/> 30 Day</label>
-                <label style="display:flex;align-items:center;gap:6px;user-select:none"><input type="radio" name="s1_type" value="60_day" ${P.planType==='60_day'?'checked':''}/> 60 Day</label>
+        <div style="display:flex;flex-direction:column;gap:20px">
+          <!-- Plan Type Selection -->
+          <div style="background:#f9fafb;border:1px solid var(--border);border-radius:10px;padding:20px">
+            <label style="font-size:14px;font-weight:700;color:#111827;margin-bottom:12px;display:block">Plan Type</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <label class="plan-type-card ${P.planType!=='60_day'?'selected':''}" data-type="30_day">
+                <input type="radio" name="s1_type" value="30_day" ${P.planType!=='60_day'?'checked':''} style="display:none"/>
+                <div class="plan-type-icon">30</div>
+                <div class="plan-type-title">30 Day Plan</div>
+                <div class="plan-type-desc">4-5 week sprint campaign</div>
+              </label>
+              <label class="plan-type-card ${P.planType==='60_day'?'selected':''}" data-type="60_day">
+                <input type="radio" name="s1_type" value="60_day" ${P.planType==='60_day'?'checked':''} style="display:none"/>
+                <div class="plan-type-icon">60</div>
+                <div class="plan-type-title">60 Day Plan</div>
+                <div class="plan-type-desc">8-9 week comprehensive campaign</div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Plan Details -->
+          <div style="background:#ffffff;border:1px solid var(--border);border-radius:10px;padding:20px">
+            <label style="font-size:14px;font-weight:700;color:#111827;margin-bottom:12px;display:block">Plan Details</label>
+            <div style="display:grid;gap:16px">
+              <div>
+                <label for="s1_name">Plan Name <span style="color:#ef4444">*</span></label>
+                <input id="s1_name" type="text" value="${escapeAttr(P.name||'')}" placeholder="e.g., Fall 2025 Marketing Campaign" />
+              </div>
+              <div class="row" style="align-items:flex-end">
+                <div style="flex:2">
+                  <label for="s1_term">Term Label</label>
+                  <input id="s1_term" type="text" value="${escapeAttr(P.termLabel||'')}" placeholder="e.g., Fall 2025" />
+                </div>
+                <div style="flex:1">
+                  <label for="w_term_quick">Quick Select</label>
+                  <select id="w_term_quick"></select>
+                </div>
               </div>
             </div>
-            <div><label>Term Label</label><input id="s1_term" type="text" value="${escapeAttr(P.termLabel||'')}" placeholder="e.g., Fall 2025" /></div>
-            <div><label>Quick Term</label><select id="w_term_quick" style="min-width:140px"></select></div>
           </div>
-          <div class="row" style="align-items:flex-end;margin-top:8px">
-            <div><label>Plan Name</label><input id="s1_name" type="text" value="${escapeAttr(P.name||'')}" placeholder="e.g., Fall 2025 60 Day POA" /></div>
-            <div><label>Start Date</label><input id="s1_start" type="date" value="${(P.startDate||'').slice(0,10)}" /></div>
-            <div><label>End Date</label><input id="s1_end" type="date" value="${(P.endDate||'').slice(0,10)}" /></div>
+
+          <!-- Timeline -->
+          <div style="background:#ffffff;border:1px solid var(--border);border-radius:10px;padding:20px">
+            <label style="font-size:14px;font-weight:700;color:#111827;margin-bottom:12px;display:block">Timeline</label>
+            <div class="row" style="align-items:flex-end">
+              <div>
+                <label for="s1_start">Start Date <span style="color:#ef4444">*</span></label>
+                <input id="s1_start" type="date" value="${(P.startDate||'').slice(0,10)}" />
+              </div>
+              <div>
+                <label for="s1_end">End Date <span style="color:#ef4444">*</span></label>
+                <input id="s1_end" type="date" value="${(P.endDate||'').slice(0,10)}" />
+              </div>
+              <div style="flex:2">
+                <div class="mini" style="padding:10px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;color:#0369a1">
+                  <strong>Tip:</strong> End date will auto-calculate based on plan type
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       `;
-      document.querySelectorAll('input[name="s1_type"]').forEach(r=>{
-        r.onchange = ()=>{ wizardData.planType = r.value==='60_day'?'60_day':'30_day'; suggestEndDate(); };
+
+      // Bind plan type cards
+      document.querySelectorAll('.plan-type-card').forEach(card => {
+        card.addEventListener('click', function() {
+          document.querySelectorAll('.plan-type-card').forEach(c => c.classList.remove('selected'));
+          this.classList.add('selected');
+          const radio = this.querySelector('input[type="radio"]');
+          radio.checked = true;
+          wizardData.planType = radio.value;
+          suggestEndDate();
+        });
       });
+
       const t = document.getElementById('s1_term'); if (t){ t.oninput = ()=> wizardData.termLabel = t.value; }
       const n = document.getElementById('s1_name'); if (n){ n.oninput = ()=> wizardData.name = n.value; }
       const s = document.getElementById('s1_start'); if (s){ s.onchange = ()=>{ wizardData.startDate = s.value; suggestEndDate(); const e2=document.getElementById('s1_end'); if (e2) e2.value = (wizardData.endDate||'').slice(0,10); }; }
       const e = document.getElementById('s1_end'); if (e){ e.onchange = ()=> wizardData.endDate = e.value; }
       populateQuickTerm(); const qt = document.getElementById('w_term_quick'); if (qt){ qt.onchange = ()=>{ if (qt.value){ wizardData.termLabel = qt.value; const t2 = document.getElementById('s1_term'); if (t2) t2.value = qt.value; } }; }
+    }
+
+    function renderStep2Flow(){
+      const wrap = document.getElementById('step2Flow'); if (!wrap) return;
+      const P = wizardData || {};
+      wrap.innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:20px">
+          <!-- Primary Goals -->
+          <div style="background:#ffffff;border:1px solid var(--border);border-radius:10px;padding:20px">
+            <label style="font-size:14px;font-weight:700;color:#111827;margin-bottom:8px;display:block">Primary Goals</label>
+            <div class="mini muted" style="margin-bottom:12px">What are the main objectives for this campaign?</div>
+            <textarea id="s2_goals" rows="4" placeholder="e.g., Increase brand awareness, drive applications, boost lease signings...">${escapeHtml(P.primaryGoals||'')}</textarea>
+          </div>
+
+          <!-- Target Audiences -->
+          <div style="background:#ffffff;border:1px solid var(--border);border-radius:10px;padding:20px">
+            <label style="font-size:14px;font-weight:700;color:#111827;margin-bottom:8px;display:block">Target Audiences</label>
+            <div class="mini muted" style="margin-bottom:12px">Who are you trying to reach?</div>
+            <textarea id="s2_audiences" rows="3" placeholder="e.g., Undergrads, graduate students, faculty, parents...">${escapeHtml(P.targetAudiences||'')}</textarea>
+          </div>
+
+          <!-- Key Dates -->
+          <div style="background:#ffffff;border:1px solid var(--border);border-radius:10px;padding:20px">
+            <label style="font-size:14px;font-weight:700;color:#111827;margin-bottom:8px;display:block">Key Dates</label>
+            <div class="mini muted" style="margin-bottom:12px">Important dates during this campaign (housing fairs, deadlines, etc.)</div>
+            <div id="keyDatesWrap" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
+            <div class="row" style="gap:8px;align-items:flex-end">
+              <div style="flex:2">
+                <input id="kd_label" type="text" placeholder="Event name (e.g., Housing Fair)" />
+              </div>
+              <div style="flex:1">
+                <input id="kd_date" type="date" />
+              </div>
+              <button class="secondary" style="flex:0 0 auto" onclick="addKeyDate()">Add Date</button>
+            </div>
+          </div>
+
+          <!-- Key Tasks -->
+          <div style="background:#ffffff;border:1px solid var(--border);border-radius:10px;padding:20px">
+            <label style="font-size:14px;font-weight:700;color:#111827;margin-bottom:8px;display:block">Ongoing Tasks</label>
+            <div class="mini muted" style="margin-bottom:12px">Recurring activities throughout the campaign</div>
+            <textarea id="s2_tasks" rows="3" placeholder="e.g., Weekly email blasts, social media posts, reputation management...">${escapeHtml(P.keyTasks||P.ongoingTasks||'')}</textarea>
+          </div>
+
+          <!-- Metrics (Optional) -->
+          <div style="background:#f9fafb;border:1px solid var(--border);border-radius:10px;padding:20px">
+            <label style="font-size:14px;font-weight:700;color:#111827;margin-bottom:8px;display:block">Success Metrics <span class="badge" style="background:#e0e7ff;color:#4338ca;border-color:#c7d2fe">Optional</span></label>
+            <div class="mini muted" style="margin-bottom:12px">Track your campaign performance</div>
+            <div class="grid-cols" style="grid-template-columns:repeat(auto-fit, minmax(200px, 1fr))">
+              <div>
+                <label for="s2_preleaseStart">Prelease at Start (%)</label>
+                <input id="s2_preleaseStart" type="number" min="0" max="100" step="1" value="${P.preleaseStart ?? ''}" placeholder="0" />
+              </div>
+              <div>
+                <label for="s2_preleaseEnd">Prelease at End (%)</label>
+                <input id="s2_preleaseEnd" type="number" min="0" max="100" step="1" value="${P.preleaseEnd ?? ''}" placeholder="0" />
+              </div>
+              <div>
+                <label for="s2_appGoal">Applications Goal</label>
+                <input id="s2_appGoal" type="number" min="0" step="1" value="${P.applicationsGoal ?? ''}" placeholder="0" />
+              </div>
+              <div>
+                <label for="s2_appActual">Applications Actual</label>
+                <input id="s2_appActual" type="number" min="0" step="1" value="${P.applicationsActual ?? ''}" placeholder="0" />
+              </div>
+              <div>
+                <label for="s2_leaseGoal">Leases Goal</label>
+                <input id="s2_leaseGoal" type="number" min="0" step="1" value="${P.leasesGoal ?? ''}" placeholder="0" />
+              </div>
+              <div>
+                <label for="s2_leaseActual">Leases Actual</label>
+                <input id="s2_leaseActual" type="number" min="0" step="1" value="${P.leasesActual ?? ''}" placeholder="0" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div style="background:#ffffff;border:1px solid var(--border);border-radius:10px;padding:20px">
+            <label style="font-size:14px;font-weight:700;color:#111827;margin-bottom:8px;display:block">Additional Notes</label>
+            <div class="mini muted" style="margin-bottom:12px">Any assumptions, constraints, or special considerations</div>
+            <textarea id="s2_notes" rows="3" placeholder="Add any additional context...">${escapeHtml(P.notes||'')}</textarea>
+          </div>
+        </div>
+      `;
+
+      // Bind inputs
+      const goals = document.getElementById('s2_goals'); if (goals) goals.oninput = ()=> wizardData.primaryGoals = goals.value;
+      const audiences = document.getElementById('s2_audiences'); if (audiences) audiences.oninput = ()=> wizardData.targetAudiences = audiences.value;
+      const tasks = document.getElementById('s2_tasks'); if (tasks) tasks.oninput = ()=> { wizardData.keyTasks = tasks.value; wizardData.ongoingTasks = tasks.value; };
+      const notes = document.getElementById('s2_notes'); if (notes) notes.oninput = ()=> wizardData.notes = notes.value;
+
+      const bindNum = (id, key) => { 
+        const el = document.getElementById(id); 
+        if (!el) return; 
+        el.oninput = ()=> { 
+          const v = parseFloat(el.value); 
+          wizardData[key] = isFinite(v) ? v : null; 
+        }; 
+      };
+      bindNum('s2_preleaseStart', 'preleaseStart');
+      bindNum('s2_preleaseEnd', 'preleaseEnd');
+      bindNum('s2_appGoal', 'applicationsGoal');
+      bindNum('s2_appActual', 'applicationsActual');
+      bindNum('s2_leaseGoal', 'leasesGoal');
+      bindNum('s2_leaseActual', 'leasesActual');
+
+      renderKeyDatesEditor();
     }
     // Key dates editor
     function renderKeyDatesEditor(){
