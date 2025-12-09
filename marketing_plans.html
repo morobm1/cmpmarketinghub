@@ -521,13 +521,22 @@
     function weekReadOnlyHtml(w){
       const pct = taskCompletionPct(w.tasks||[]);
       const header = `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><div style="font-weight:800">${escapeHtml(w.weekLabel||`Week ${w.weekNumber||''}`)}</div><div class="mini muted">${escapeHtml((w.dateRangeStart||'') + (w.dateRangeEnd?(' – '+w.dateRangeEnd):''))}</div><div class="mini" style="margin-left:auto">${pct != null ? (pct+"% complete") : ''}</div></div>`;
-      const sec = (label, val) => `<div><div class="mini muted">${label}</div><div>${val?nl2br(escapeHtml(val)): '<span class=\'muted\'>-</span>'}</div></div>`;
+      const acts = (w.activities||[]).map(a => {
+        const t = escapeHtml(a.type||'');
+        const title = escapeHtml(a.title||'');
+        const date = escapeHtml((a.date||'').slice(0,10));
+        const time = escapeHtml(a.time||'');
+        const det = escapeHtml(a.details||'');
+        const bold = `<strong>${t}:</strong> ${title}${date?` (${date})`:''}`;
+        const tail = [time, det].filter(Boolean).join(' – ');
+        return `<div style="margin:2px 0">${bold}${tail?`<div class=\"mini muted\">${tail}</div>`:''}</div>`;
+      }).join('');
       const tasks = (w.tasks||[]).length ? `<div style="margin-top:6px">
         <div class="mini muted" style="margin-bottom:4px">Tasks</div>
         <div style="display:flex;flex-direction:column;gap:4px">${w.tasks.map(t=> taskReadOnlyHtml(t)).join('')}</div>
       </div>` : '';
       return `<div style="border:1px solid var(--border);border-radius:10px;padding:10px">${header}
-        <div class="grid-cols" style="margin-top:8px">${sec('Leasing Focus', w.leasingFocus)}${sec('Community Outreach / Events', w.communityOutreach)}${sec('Social & Digital', w.socialDigital)}${sec('Weekly Task Summary', w.weeklyTaskSummary)}</div>
+        <div style="margin-top:6px">${acts || '<span class=\'muted\'>No activities</span>'}</div>
         ${tasks}
       </div>`;
     }
@@ -602,7 +611,8 @@
           socialDigital: w.socialDigital||'',
           weeklyTaskSummary: w.weeklyTaskSummary||'',
           priority: w.priority||w.weekNumber||0,
-          tasks: Array.isArray(w.tasks)? w.tasks.map(t=>({ id: t.id||rid(), title:t.title||'', channel:t.channel||'', dueDate:(t.dueDate||'').slice(0,10), status: t.status||'not_started', notes: t.notes||'' })) : []
+          tasks: Array.isArray(w.tasks)? w.tasks.map(t=>({ id: t.id||rid(), title:t.title||'', channel:t.channel||'', dueDate:(t.dueDate||'').slice(0,10), status: t.status||'not_started', notes: t.notes||'' })) : [],
+          activities: Array.isArray(w.activities)? w.activities.map(a=>({ type:a.type||'', title:a.title||'', date:(a.date||'').slice(0,10), time:a.time||'', details:a.details||'' })) : []
         })) : []
       };
     }
@@ -617,7 +627,7 @@
 
       // Step 1 bindings
       const radios = document.querySelectorAll('input[name="w_planType"]');
-      radios.forEach(r => { r.checked = (r.value === wizardData.planType); r.onchange = () => { wizardData.planType = r.value; suggestEndDate(); refreshNameSuggestions(); populateAllWeekPresetSelects(); } });
+      radios.forEach(r => { r.checked = (r.value === wizardData.planType); r.onchange = () => { wizardData.planType = r.value; suggestEndDate(); refreshNameSuggestions(); } });
       els.w_name.value = wizardData.name||''; els.w_name.oninput = () => wizardData.name = els.w_name.value;
       els.w_term.value = wizardData.termLabel||''; els.w_term.oninput = () => wizardData.termLabel = els.w_term.value;
       els.w_start.value = wizardData.startDate||''; els.w_start.onchange = () => { wizardData.startDate = els.w_start.value; suggestEndDate(); };
@@ -728,23 +738,29 @@
                 <input type="date" id="wk_${idx}_e" value="${(w.dateRangeEnd||'').slice(0,10)}" />
               </div>
             </div>
-            <div class="row" style="margin-top:8px; align-items:flex-end; gap:10px">
-              <div>
-                <label>Week Preset</label>
-                <select id="wk_${idx}_preset" style="min-width:200px"></select>
+            <div style="margin-top:8px">
+              <div class="mini muted" style="margin-bottom:6px">Activities</div>
+              <div id="wk_${idx}_acts" style="display:flex;flex-direction:column;gap:6px">${(w.activities||[]).map((a,ai)=> activityEditorRowHtml(idx, ai, a)).join('')}</div>
+              <div class="row" style="margin-top:6px; align-items:flex-end; gap:8px">
+                <div>
+                  <label class="mini muted">Type</label>
+                  <select id="wk_${idx}_add_type" style="min-width:160px">
+                    <option>Giveaway Challenge</option>
+                    <option>Campus Outreach</option>
+                    <option>Social Media</option>
+                    <option>Resident Event</option>
+                    <option>Local Business</option>
+                    <option>Email</option>
+                    <option>Digital Ads</option>
+                    <option>Other</option>
+                  </select>
+                </div>
+                <div><label class="mini muted">Title/Description</label><input id="wk_${idx}_add_title" type="text" placeholder="e.g., How Many Leaf Clovers?" /></div>
+                <div><label class="mini muted">Date</label><input id="wk_${idx}_add_date" type="date" /></div>
+                <div><label class="mini muted">Time</label><input id="wk_${idx}_add_time" type="text" placeholder="e.g., 4 PM - 6 PM" /></div>
+                <div><label class="mini muted">Details</label><input id="wk_${idx}_add_details" type="text" placeholder="Optional notes" /></div>
+                <button class="secondary" style="flex:0 0 auto" onclick="(function(){ addActivity(${idx}); })()">Add</button>
               </div>
-              <div>
-                <label>Add Task Bundle</label>
-                <select id="wk_${idx}_bundle" style="min-width:200px"></select>
-              </div>
-              <button class="secondary" style="flex:0 0 auto" onclick="(function(){ applyWeekPreset(${idx}); })()">Apply Preset</button>
-              <button class="secondary" style="flex:0 0 auto" onclick="(function(){ addTaskBundleSelected(${idx}); })()">Add Bundle</button>
-            </div>
-            <div class="grid-cols" style="margin-top:8px">
-              <div><label>Leasing Focus</label><textarea id="wk_${idx}_lease">${escapeHtml(w.leasingFocus||'')}</textarea></div>
-              <div><label>Community Outreach / Resident Events</label><textarea id="wk_${idx}_comm">${escapeHtml(w.communityOutreach||'')}</textarea></div>
-              <div><label>Social Media & Digital Marketing</label><textarea id="wk_${idx}_social">${escapeHtml(w.socialDigital||'')}</textarea></div>
-              <div><label>Weekly Task Summary / Goals</label><textarea id="wk_${idx}_sum">${escapeHtml(w.weeklyTaskSummary||'')}</textarea></div>
             </div>
             <div style="margin-top:8px">
               <div class="mini muted" style="margin-bottom:6px">Tasks (optional)</div>
@@ -759,19 +775,17 @@
     function bindWeekEditor(idx){
       const w = wizardData.weeks[idx]; if (!w) return;
       const g = (id)=> document.getElementById(id);
-      populateWeekPresetSelect(idx);
-      populateTaskBundleSelect(idx);
+      // no presets/bundles
       g(`wk_${idx}_num`).oninput = (e)=> w.weekNumber = parseInt(e.target.value||'0',10)||0;
       g(`wk_${idx}_label`).oninput = (e)=> w.weekLabel = e.target.value;
       g(`wk_${idx}_s`).onchange = (e)=> w.dateRangeStart = e.target.value;
       g(`wk_${idx}_e`).onchange = (e)=> w.dateRangeEnd = e.target.value;
-      g(`wk_${idx}_lease`).oninput = (e)=> w.leasingFocus = e.target.value;
-      g(`wk_${idx}_comm`).oninput = (e)=> w.communityOutreach = e.target.value;
-      g(`wk_${idx}_social`).oninput = (e)=> w.socialDigital = e.target.value;
-      g(`wk_${idx}_sum`).oninput = (e)=> w.weeklyTaskSummary = e.target.value;
       // bind tasks
       const tasksWrap = g(`wk_${idx}_tasks`);
       if (tasksWrap){ tasksWrap.querySelectorAll('[data-ti]').forEach(row => bindTaskEditor(idx, parseInt(row.getAttribute('data-ti'),10)||0)); }
+      // bind activities
+      const actsWrap = g(`wk_${idx}_acts`);
+      if (actsWrap){ actsWrap.querySelectorAll('[data-ai]').forEach(row => bindActivityEditor(idx, parseInt(row.getAttribute('data-ai'),10)||0)); }
     }
 
     function taskEditorRowHtml(wi, ti, t){
@@ -866,7 +880,8 @@
           socialDigital: w.socialDigital || '',
           weeklyTaskSummary: w.weeklyTaskSummary || '',
           priority: w.priority || (i+1),
-          tasks: (w.tasks||[]).map(t=>({ id: t.id||rid(), title: t.title||'', channel: t.channel||'', dueDate: t.dueDate||'', status: t.status||'not_started', notes: t.notes||'' }))
+          tasks: (w.tasks||[]).map(t=>({ id: t.id||rid(), title: t.title||'', channel: t.channel||'', dueDate: t.dueDate||'', status: t.status||'not_started', notes: t.notes||'' })),
+          activities: (w.activities||[]).map(a=>({ type:a.type||'', title:a.title||'', date:a.date||'', time:a.time||'', details:a.details||'' }))
         }))
       };
     }
@@ -1010,43 +1025,29 @@
       ta.dispatchEvent(new Event('input'));
     }
 
-    function populateWeekPresetSelect(idx){
-      const el = document.getElementById(`wk_${idx}_preset`); if (!el) return;
-      const src = wizardData?.planType==='60_day' ? WEEK_PRESETS_60 : WEEK_PRESETS_30;
-      el.innerHTML = '<option value="">-- Select --</option>' + src.map(p=>`<option value="${p.id}">${p.label}</option>`).join('');
+    // removed presets/bundles helpers
+    // Activities editor
+    function activityEditorRowHtml(wi, ai, a){
+      return `<div data-ai="${ai}" style="display:flex;gap:6px;align-items:flex-end;border:1px solid var(--border);border-radius:8px;padding:8px">
+        <div style="flex:1"><label>Type</label><input id="wk_${wi}_a_${ai}_type" type="text" value="${escapeAttr(a.type||'')}" /></div>
+        <div style="flex:2"><label>Title/Desc</label><input id="wk_${wi}_a_${ai}_title" type="text" value="${escapeAttr(a.title||'')}" /></div>
+        <div style="flex:1"><label>Date</label><input id="wk_${wi}_a_${ai}_date" type="date" value="${(a.date||'').slice(0,10)}" /></div>
+        <div style="flex:1"><label>Time</label><input id="wk_${wi}_a_${ai}_time" type="text" value="${escapeAttr(a.time||'')}" /></div>
+        <div style="flex:2"><label>Details</label><input id="wk_${wi}_a_${ai}_details" type="text" value="${escapeAttr(a.details||'')}" /></div>
+        <div style="flex:0 0 auto"><button class="secondary" onclick="(function(){ removeActivity(${wi}, ${ai}); })()">Remove</button></div>
+      </div>`;
     }
-    function populateTaskBundleSelect(idx){
-      const el = document.getElementById(`wk_${idx}_bundle`); if (!el) return;
-      el.innerHTML = '<option value="">-- Select --</option>' + TASK_BUNDLES.map(p=>`<option value="${p.id}">${p.label}</option>`).join('');
-    }
-    function populateAllWeekPresetSelects(){
-      const list = wizardData?.weeks||[]; list.forEach((_,i)=>{ populateWeekPresetSelect(i); populateTaskBundleSelect(i); });
-    }
-    function applyWeekPreset(idx){
-      const sel = document.getElementById(`wk_${idx}_preset`); if (!sel) return; const id = sel.value; if (!id) return;
-      const src = wizardData?.planType==='60_day' ? WEEK_PRESETS_60 : WEEK_PRESETS_30;
-      const p = src.find(x=>x.id===id); if (!p) return;
-      const w = wizardData.weeks[idx]; if (!w) return;
-      function setOrAppend(cur, add){ const c = (cur||'').trim(); const a = (add||'').trim(); if (!a) return c; return c? (c+'\n'+a) : a; }
-      w.leasingFocus = setOrAppend(w.leasingFocus, p.leasingFocus);
-      w.communityOutreach = setOrAppend(w.communityOutreach, p.communityOutreach);
-      w.socialDigital = setOrAppend(w.socialDigital, p.socialDigital);
-      w.weeklyTaskSummary = setOrAppend(w.weeklyTaskSummary, p.weeklyTaskSummary);
-      // reflect in DOM
+    function bindActivityEditor(wi, ai){
+      const a = (wizardData.weeks[wi].activities||[])[ai]; if (!a) return;
       const g = (id)=> document.getElementById(id);
-      const sfx = idx;
-      const lease = g(`wk_${sfx}_lease`); if (lease) lease.value = w.leasingFocus;
-      const comm = g(`wk_${sfx}_comm`); if (comm) comm.value = w.communityOutreach;
-      const social = g(`wk_${sfx}_social`); if (social) social.value = w.socialDigital;
-      const sum = g(`wk_${sfx}_sum`); if (sum) sum.value = w.weeklyTaskSummary;
+      g(`wk_${wi}_a_${ai}_type`).oninput = (e)=> a.type = e.target.value;
+      g(`wk_${wi}_a_${ai}_title`).oninput = (e)=> a.title = e.target.value;
+      g(`wk_${wi}_a_${ai}_date`).onchange = (e)=> a.date = e.target.value;
+      g(`wk_${wi}_a_${ai}_time`).oninput = (e)=> a.time = e.target.value;
+      g(`wk_${wi}_a_${ai}_details`).oninput = (e)=> a.details = e.target.value;
     }
-    function addTaskBundleSelected(idx){
-      const sel = document.getElementById(`wk_${idx}_bundle`); if (!sel) return; const id = sel.value; if (!id) return;
-      const bundle = TASK_BUNDLES.find(b=>b.id===id); if (!bundle) return;
-      const w = wizardData.weeks[idx]; if (!Array.isArray(w.tasks)) w.tasks = [];
-      bundle.tasks.forEach(t => { w.tasks.push({ id: rid(), title: t.title, channel: t.channel, dueDate:'', status:'not_started', notes:'' }); });
-      renderWeeksEditor();
-    }
+    function addActivity(wi){ const w = wizardData.weeks[wi]; if (!Array.isArray(w.activities)) w.activities = []; const t=document.getElementById(`wk_${wi}_add_type`).value; const ti=document.getElementById(`wk_${wi}_add_title`).value; const d=document.getElementById(`wk_${wi}_add_date`).value; const tm=document.getElementById(`wk_${wi}_add_time`).value; const det=document.getElementById(`wk_${wi}_add_details`).value; if(!ti||!d){ alert('Title and Date are required'); return; } w.activities.push({ type:t, title:ti, date:d, time:tm, details:det }); renderWeeksEditor(); }
+    function removeActivity(wi, ai){ const w = wizardData.weeks[wi]; if (!Array.isArray(w.activities)) return; w.activities.splice(ai,1); renderWeeksEditor(); }
 
     // Collapsible week controls
     function toggleWeek(idx){

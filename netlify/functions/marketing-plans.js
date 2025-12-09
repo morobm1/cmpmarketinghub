@@ -66,6 +66,13 @@ function normalizeTask(t){
 function normalizeWeek(w, idx){
   if (!w || typeof w !== 'object') return null;
   const tasks = Array.isArray(w.tasks) ? w.tasks.map(normalizeTask).filter(Boolean) : [];
+  const activities = Array.isArray(w.activities) ? (w.activities||[]).map(a => ({
+    type: String(a?.type||'').trim(),
+    title: String(a?.title||'').trim(),
+    date: a?.date ? toISO(a.date) : '',
+    time: String(a?.time||'').trim(),
+    details: String(a?.details||'').trim(),
+  })) : [];
   return {
     weekNumber: Number.isFinite(w.weekNumber) ? w.weekNumber : (idx+1),
     weekLabel: String(w.weekLabel||'').trim() || `Week ${(idx+1)}`,
@@ -76,6 +83,7 @@ function normalizeWeek(w, idx){
     socialDigital: String(w.socialDigital||'').trim(),
     weeklyTaskSummary: String(w.weeklyTaskSummary||'').trim(),
     priority: Number.isFinite(w.priority) ? w.priority : (idx+1),
+    activities,
     tasks,
   };
 }
