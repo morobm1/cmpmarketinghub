@@ -986,81 +986,223 @@
 
     function renderPlanView(plan){
       const el = els.planView; els.planViewCard.style.display='';
-      function sec(title, body){ return `<div style="margin:10px 0"><div style="font-weight:800;color:#111827;margin:8px 0 6px">${title}</div><div>${body||'<span class=\'muted\'>-</span>'}</div></div>`; }
-      function fmtKeyDates(kd){ if (!Array.isArray(kd)) return escapeHtml(kd||''); return kd.map(k=>`${escapeHtml(k.label||'')}: ${escapeHtml(k.date||'')}`).join('<br/>'); }
-      function fmtMetrics(p){ return `Prelease Start: ${p.preleaseStart??'-'}% • Prelease End: ${p.preleaseEnd??'-'}%<br/>Apps Goal/Actual: ${p.applicationsGoal??'-'} / ${p.applicationsActual??'-'} • Leases Goal/Actual: ${p.leasesGoal??'-'} / ${p.leasesActual??'-'}`; }
+      
+      function sec(title, body){ 
+        return `
+          <div style="background:#ffffff;border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px">
+            <div style="font-weight:700;color:#111827;font-size:14px;margin-bottom:8px">${title}</div>
+            <div style="color:#374151;line-height:1.6">${body||'<span class="muted">Not specified</span>'}</div>
+          </div>
+        `; 
+      }
+      
+      function fmtKeyDates(kd){ 
+        if (!Array.isArray(kd) || kd.length === 0) return '<span class="muted">No key dates specified</span>'; 
+        return kd.map(k=>`
+          <div style="display:flex;align-items:center;gap:8px;padding:8px;background:#f9fafb;border-radius:6px;margin-bottom:6px">
+            <div style="width:8px;height:8px;border-radius:50%;background:var(--brand-accent-2)"></div>
+            <strong>${escapeHtml(k.label||'')}</strong>
+            <span class="mini muted" style="margin-left:auto">${escapeHtml(k.date||'')}</span>
+          </div>
+        `).join(''); 
+      }
+      
+      function fmtMetrics(p){ 
+        const hasMetrics = p.preleaseStart != null || p.preleaseEnd != null || 
+                          p.applicationsGoal != null || p.applicationsActual != null ||
+                          p.leasesGoal != null || p.leasesActual != null;
+        
+        if (!hasMetrics) return '<span class="muted">No metrics specified</span>';
+        
+        return `
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+            ${p.preleaseStart != null || p.preleaseEnd != null ? `
+              <div style="padding:12px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px">
+                <div class="mini muted" style="margin-bottom:4px">Prelease</div>
+                <div style="font-weight:700;color:#0369a1">${p.preleaseStart??'-'}% → ${p.preleaseEnd??'-'}%</div>
+              </div>
+            ` : ''}
+            ${p.applicationsGoal != null || p.applicationsActual != null ? `
+              <div style="padding:12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px">
+                <div class="mini muted" style="margin-bottom:4px">Applications</div>
+                <div style="font-weight:700;color:#15803d">Goal: ${p.applicationsGoal??'-'} | Actual: ${p.applicationsActual??'-'}</div>
+              </div>
+            ` : ''}
+            ${p.leasesGoal != null || p.leasesActual != null ? `
+              <div style="padding:12px;background:#fef3c7;border:1px solid #fde68a;border-radius:8px">
+                <div class="mini muted" style="margin-bottom:4px">Leases</div>
+                <div style="font-weight:700;color:#92400e">Goal: ${p.leasesGoal??'-'} | Actual: ${p.leasesActual??'-'}</div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }
+      
       const hdr = `
-        <div class="row" style="align-items:flex-start">
-          <div style="flex:1">
-            <div class="mini muted">Property</div>
-            <div class="badge">${escapeHtml(plan.property||currentProperty||'-')}</div>
-          </div>
-          <div style="flex:2">
-            <div class="mini muted">Plan</div>
-            <div style="font-weight:800">${escapeHtml(plan.name||'')}</div>
-            <div class="mini">${plan.planType==='60_day'?'60 Day':'30 Day'}${plan.termLabel?(' • '+escapeHtml(plan.termLabel)) : ''} • ${escapeHtml((plan.startDate||'') + (plan.endDate?(' – '+plan.endDate):''))}</div>
-            <div class="mini muted">Created by ${escapeHtml(plan.createdByUserId||'')} • ${plan.createdAt?formatDateTime(plan.createdAt):''} • Updated ${plan.updatedAt?formatDateTime(plan.updatedAt):''}</div>
-          </div>
-          <div style="flex:0 0 auto; display:flex; gap:8px">
-            <button class="secondary" onclick="(function(){ openPlanModal(${JSON.stringify({mode:'edit'}).replace(/"/g,'&quot;')}, '${plan._id?plan._id:plan.id}'); })()">Edit Plan</button>
-            <button class="secondary" onclick="(function(){ duplicatePlan('${plan._id?plan._id:plan.id}'); })()">Duplicate</button>
-            <button class="secondary" onclick="exportPlanPDF()">Export PDF</button>
-            <button class="warn" onclick="(function(){ deletePlan('${plan._id?plan._id:plan.id}'); })()">Delete</button>
+        <div style="background:linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);border:1px solid #bae6fd;border-radius:12px;padding:20px;margin-bottom:24px">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+            <div style="flex:1;min-width:300px">
+              <div class="mini muted" style="margin-bottom:4px">Property</div>
+              <div class="badge" style="background:#ffffff;margin-bottom:12px">${escapeHtml(plan.property||currentProperty||'-')}</div>
+              
+              <div style="font-size:24px;font-weight:700;color:#111827;margin-bottom:8px">${escapeHtml(plan.name||'Untitled Plan')}</div>
+              
+              <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px">
+                <span class="badge" style="background:var(--brand-accent-2);color:#ffffff;border-color:var(--brand-accent-2)">
+                  ${plan.planType==='60_day'?'60 Day Plan':'30 Day Plan'}
+                </span>
+                ${plan.termLabel ? `<span class="badge">${escapeHtml(plan.termLabel)}</span>` : ''}
+                <span class="badge">${escapeHtml((plan.startDate||'').slice(0,10))} – ${escapeHtml((plan.endDate||'').slice(0,10))}</span>
+              </div>
+              
+              <div class="mini muted">
+                Created by ${escapeHtml(plan.createdByUserId||'Unknown')} • 
+                ${plan.createdAt?formatDateTime(plan.createdAt):''} • 
+                Updated ${plan.updatedAt?formatDateTime(plan.updatedAt):''}
+              </div>
+            </div>
+            
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="secondary" onclick="(function(){ openPlanModal(${JSON.stringify({mode:'edit'}).replace(/"/g,'&quot;')}, '${plan._id?plan._id:plan.id}'); })()">Edit Plan</button>
+              <button class="secondary" onclick="(function(){ duplicatePlan('${plan._id?plan._id:plan.id}'); })()">Duplicate</button>
+              <button class="secondary" onclick="exportPlanPDF()">Export PDF</button>
+              <button class="warn" onclick="(function(){ deletePlan('${plan._id?plan._id:plan.id}'); })()">Delete</button>
+            </div>
           </div>
         </div>
       `;
+      
       const body = `
-        ${sec('Primary Goal', nl2br(escapeHtml(plan.primaryGoals||'')))}
-        ${sec('Target Audiences', nl2br(escapeHtml(plan.targetAudiences||'')))}
-        ${sec('Key Dates', fmtKeyDates(plan.keyDates))}
-        ${sec('Key Tasks', nl2br(escapeHtml(plan.keyTasks||plan.ongoingTasks||'')))}
-        ${sec('Metrics', fmtMetrics(plan))}
-        <div class="section-title" style="margin-top:12px">Weekly Breakdown</div>
-        <div style="display:flex; flex-direction:column; gap:10px">
-          ${(plan.weeks||[]).sort((a,b)=> (a.priority||a.weekNumber||0) - (b.priority||b.weekNumber||0)).map(w => weekReadOnlyHtml(w)).join('')}
+        <div style="display:grid;gap:16px">
+          ${sec('Primary Goals', nl2br(escapeHtml(plan.primaryGoals||'')))}
+          ${sec('Target Audiences', nl2br(escapeHtml(plan.targetAudiences||'')))}
+          ${sec('Key Dates', fmtKeyDates(plan.keyDates))}
+          ${sec('Ongoing Tasks', nl2br(escapeHtml(plan.keyTasks||plan.ongoingTasks||'')))}
+          ${plan.notes ? sec('Additional Notes', nl2br(escapeHtml(plan.notes))) : ''}
+          ${sec('Success Metrics', fmtMetrics(plan))}
+        </div>
+        
+        <div style="margin-top:32px">
+          <div style="font-size:18px;font-weight:700;color:#111827;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid var(--border)">
+            Weekly Breakdown
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            ${(plan.weeks||[]).sort((a,b)=> (a.priority||a.weekNumber||0) - (b.priority||b.weekNumber||0)).map(w => weekReadOnlyHtml(w)).join('')}
+          </div>
         </div>
       `;
+      
       window.__lastRenderedPlan = plan;
       el.innerHTML = hdr + body;
     }
 
     function weekReadOnlyHtml(w){
       const pct = taskCompletionPct(w.tasks||[]);
-      const header = `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><div style="font-weight:800">${escapeHtml(w.weekLabel||`Week ${w.weekNumber||''}`)}</div><div class="mini muted">${escapeHtml((w.dateRangeStart||'') + (w.dateRangeEnd?(' – '+w.dateRangeEnd):''))}</div><div class="mini" style="margin-left:auto">${pct != null ? (pct+"% complete") : ''}</div></div>`;
-      const roSec = (label, val) => `<div class="ro-acc collapsed"><div class="ro-head" onclick="this.parentElement.classList.toggle('collapsed')"><div style=\"display:flex;align-items:center;gap:8px\"><span class=\"caret\">▶</span><strong>${label}</strong></div></div><div class="ro-body" style="border:1px solid var(--border);border-radius:8px;padding:8px;margin-top:6px">${val?nl2br(escapeHtml(val)):'<span class=\'muted\'>-</span>'}</div></div>`;
-      const details = roSec('Leasing Focus', w.leasingFocus) + roSec('Community Outreach / Events', w.communityOutreach) + roSec('Social & Digital', w.socialDigital) + roSec('Weekly Task Summary', w.weeklyTaskSummary);
-      const acts = (w.activities||[]).map(a => {
-        const t = escapeHtml(a.type||'');
-        const title = escapeHtml(a.title||'');
-        const date = escapeHtml((a.date||'').slice(0,10));
-        const time = escapeHtml(a.time||'');
-        const det = escapeHtml(a.details||'');
-        const bold = `<strong>${t}:</strong> ${title}${date?` (${date})`:''}`;
-        const tail = [time, det].filter(Boolean).join(' – ');
-        return `<div style="margin:2px 0">${bold}${tail?`<div class=\"mini muted\">${tail}</div>`:''}</div>`;
-      }).join('');
-      const tasks = (w.tasks||[]).length ? `<div style="margin-top:6px">
-        <div class="mini muted" style="margin-bottom:4px">Tasks</div>
-        <div style="display:flex;flex-direction:column;gap:4px">${w.tasks.map(t=> taskReadOnlyHtml(t)).join('')}</div>
-      </div>` : '';
-      return `<div style="border:1px solid var(--border);border-radius:10px;padding:10px">${header}
-        <div style="margin-top:6px">${acts || '<span class=\'muted\'>No activities</span>'}</div>
-        <div style="margin-top:8px">${details}</div>
-        ${tasks}
-      </div>`;
+      
+      const header = `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px">
+          <div>
+            <div style="font-weight:700;font-size:16px;color:#111827">${escapeHtml(w.weekLabel||`Week ${w.weekNumber||''}`)}</div>
+            <div class="mini muted">${escapeHtml((w.dateRangeStart||'').slice(0,10))} – ${escapeHtml((w.dateRangeEnd||'').slice(0,10))}</div>
+          </div>
+          ${pct != null ? `
+            <div style="text-align:right">
+              <div class="mini muted">Task Progress</div>
+              <div style="font-weight:700;color:${pct===100?'var(--good)':pct>0?'var(--brand-accent-2)':'#6b7280'}">${pct}% Complete</div>
+            </div>
+          ` : ''}
+        </div>
+      `;
+      
+      const roSec = (label, val, icon) => {
+        if (!val) return '';
+        return `
+          <div class="ro-acc collapsed" style="margin-bottom:8px">
+            <div class="ro-head" onclick="this.parentElement.classList.toggle('collapsed')">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span class="caret">▶</span>
+                <span>${icon}</span>
+                <strong>${label}</strong>
+              </div>
+            </div>
+            <div class="ro-body" style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:6px;background:#fafbfc">
+              ${nl2br(escapeHtml(val))}
+            </div>
+          </div>
+        `;
+      };
+      
+      const details = 
+        roSec('Leasing Focus', w.leasingFocus, '🎯') + 
+        roSec('Community Outreach & Events', w.communityOutreach, '🤝') + 
+        roSec('Social Media & Digital', w.socialDigital, '📱') + 
+        roSec('Weekly Task Summary', w.weeklyTaskSummary, '✅');
+      
+      const acts = (w.activities||[]).length > 0 ? `
+        <div style="margin-bottom:12px">
+          <div style="font-weight:700;color:#111827;margin-bottom:8px;font-size:14px">📅 Activities</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            ${(w.activities||[]).map(a => {
+              const t = escapeHtml(a.type||'Activity');
+              const title = escapeHtml(a.title||'');
+              const date = escapeHtml((a.date||'').slice(0,10));
+              const time = escapeHtml(a.time||'');
+              const det = escapeHtml(a.details||'');
+              return `
+                <div style="padding:10px;background:#f9fafb;border:1px solid var(--border);border-radius:8px">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                    <span class="badge" style="background:var(--brand-accent-2);color:#ffffff;border-color:var(--brand-accent-2)">${t}</span>
+                    <strong>${title}</strong>
+                    ${date ? `<span class="mini muted" style="margin-left:auto">${date}${time?' • '+time:''}</span>` : ''}
+                  </div>
+                  ${det ? `<div class="mini" style="color:#6b7280">${det}</div>` : ''}
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      ` : '';
+      
+      const tasks = (w.tasks||[]).length ? `
+        <div style="margin-top:12px">
+          <div style="font-weight:700;color:#111827;margin-bottom:8px;font-size:14px">✓ Tasks</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            ${w.tasks.map(t=> taskReadOnlyHtml(t)).join('')}
+          </div>
+        </div>
+      ` : '';
+      
+      return `
+        <div style="background:#ffffff;border:1px solid var(--border);border-radius:12px;padding:16px;box-shadow:var(--shadow-sm)">
+          ${header}
+          ${acts}
+          ${details || '<div class="mini muted" style="padding:12px;text-align:center;background:#f9fafb;border-radius:8px">No weekly details specified</div>'}
+          ${tasks}
+        </div>
+      `;
     }
 
     function taskReadOnlyHtml(t){
       const statusLabel = t.status==='done' ? 'Done' : (t.status==='in_progress' ? 'In Progress' : 'Not Started');
-      const statusColor = t.status==='done' ? '#16a34a' : (t.status==='in_progress' ? '#2563eb' : '#6b7280');
-      const due = t.dueDate ? ` • Due ${escapeHtml(t.dueDate)}` : '';
-      const ch = t.channel ? ` • ${escapeHtml(t.channel)}` : '';
-      return `<div style="display:flex;align-items:center;gap:8px; border:1px solid var(--border); border-radius:8px; padding:6px 8px">
-        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${statusColor}"></span>
-        <div style="font-weight:700">${escapeHtml(t.title||'')}</div>
-        <div class="mini muted">${statusLabel}${ch}${due}</div>
-        <div class="mini">${escapeHtml(t.notes||'')}</div>
-      </div>`;
+      const statusColor = t.status==='done' ? '#10b981' : (t.status==='in_progress' ? '#3b82f6' : '#9ca3af');
+      const statusBg = t.status==='done' ? '#d1fae5' : (t.status==='in_progress' ? '#dbeafe' : '#f3f4f6');
+      
+      return `
+        <div style="display:flex;align-items:flex-start;gap:10px;border:1px solid var(--border);border-radius:8px;padding:12px;background:#fafbfc">
+          <div style="display:flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:${statusBg};flex-shrink:0;margin-top:2px">
+            <span style="display:block;width:10px;height:10px;border-radius:50%;background:${statusColor}"></span>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700;color:#111827;margin-bottom:4px">${escapeHtml(t.title||'Untitled Task')}</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <span class="badge" style="background:${statusBg};color:${statusColor};border-color:${statusColor}">${statusLabel}</span>
+              ${t.channel ? `<span class="badge">${escapeHtml(t.channel)}</span>` : ''}
+              ${t.dueDate ? `<span class="mini muted">Due: ${escapeHtml((t.dueDate||'').slice(0,10))}</span>` : ''}
+            </div>
+            ${t.notes ? `<div class="mini" style="margin-top:6px;color:#6b7280">${escapeHtml(t.notes)}</div>` : ''}
+          </div>
+        </div>
+      `;
     }
 
     async function duplicatePlan(id){
