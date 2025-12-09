@@ -220,98 +220,7 @@
         <div id="step1">
           <div class="section-title">Step 1 – Basic Info</div>
           <div class="section-sub">Set plan basics. You can edit details later.</div>
-          <div class="row" id="quickPickRow" style="margin:8px 0; gap:8px; align-items:flex-end">
-            <div>
-              <label for="w_term_quick">Quick Term</label>
-              <select id="w_term_quick" style="min-width:140px"></select>
-            </div>
-            <!-- removed suggested name and presets per requirements -->
-          </div>
-          <div class="grid-cols">
-            <div>
-              <label>Plan Type</label>
-              <div style="display:flex;gap:10px">
-                <label style="display:flex;align-items:center;gap:6px;user-select:none"><input type="radio" name="w_planType" value="30_day" checked /> 30 Day</label>
-                <label style="display:flex;align-items:center;gap:6px;user-select:none"><input type="radio" name="w_planType" value="60_day" /> 60 Day</label>
-              </div>
-            </div>
-            <div>
-              <label for="w_name">Plan Name</label>
-              <input id="w_name" type="text" placeholder="e.g., Fall 2025 60 Day POA" />
-            </div>
-            <div>
-              <label for="w_term">Term Label (optional)</label>
-              <input id="w_term" type="text" placeholder="e.g., Fall 25" />
-            </div>
-            <div>
-              <label for="w_start">Start Date</label>
-              <input id="w_start" type="date" />
-            </div>
-            <div>
-              <label for="w_end">End Date</label>
-              <input id="w_end" type="date" />
-              <div class="help">Auto-suggests based on plan type; editable.</div>
-            </div>
-          </div>
-          <div class="grid-cols" style="margin-top:10px">
-            <div>
-              <label for="w_goals">Primary Goal</label>
-              <select id="w_goals">
-                <option value="">-- Select --</option>
-                <option>Awareness</option>
-                <option>Lead Generation</option>
-                <option>Applications</option>
-                <option>Leases Signed</option>
-                <option>Renewals</option>
-                <option>Move-in Readiness</option>
-                <option>Reputation & Reviews</option>
-                <option value="__custom">Other (type below)</option>
-              </select>
-              <input id="w_goals_custom" type="text" placeholder="Type a custom goal" style="margin-top:6px; display:none" />
-            </div>
-            <div>
-              <label for="w_targets">Target Audience</label>
-              <div style="display:flex;gap:6px;flex-wrap:wrap">
-                <select id="w_targets_select" multiple size="6" style="min-width:200px">
-                  <option>Undergrads</option>
-                  <option>Graduate Students</option>
-                  <option>Faculty</option>
-                  <option>Greek</option>
-                  <option>Organization</option>
-                  <option>Local Business</option>
-                </select>
-                <input id="w_targets_custom" type="text" placeholder="Type another audience (optional)" />
-              </div>
-            </div>
-            <div>
-              <label>Key Dates</label>
-              <div id="keyDatesWrap" style="display:flex;flex-direction:column;gap:6px"></div>
-              <div class="row" style="margin-top:6px">
-                <input id="kd_label" type="text" placeholder="Label (e.g., Housing Fair)" />
-                <input id="kd_date" type="date" />
-                <button class="secondary" style="flex:0 0 auto" onclick="(function(){ addKeyDate(); })()">Add Date</button>
-              </div>
-            </div>
-            <div>
-              <label for="w_ongoing">Key Tasks</label>
-              <textarea id="w_ongoing" placeholder="Weekly email blasts, reputation mgmt, PPC/social"></textarea>
-            </div>
-            <div>
-              <label>Plan Metrics</label>
-              <div class="grid-cols">
-                <div><label for="preleaseStart">Prelease at Start (%)</label><input id="preleaseStart" type="number" min="0" max="100" step="1" /></div>
-                <div><label for="preleaseEnd">Prelease at End (%)</label><input id="preleaseEnd" type="number" min="0" max="100" step="1" /></div>
-                <div><label for="applicationsGoal">Applications Goal</label><input id="applicationsGoal" type="number" min="0" step="1" /></div>
-                <div><label for="applicationsActual">Applications Actual</label><input id="applicationsActual" type="number" min="0" step="1" /></div>
-                <div><label for="leasesGoal">Leases Goal</label><input id="leasesGoal" type="number" min="0" step="1" /></div>
-                <div><label for="leasesActual">Leases Actual</label><input id="leasesActual" type="number" min="0" step="1" /></div>
-              </div>
-            </div>
-            <div>
-              <label for="w_notes">Notes</label>
-              <textarea id="w_notes" placeholder="Assumptions / constraints"></textarea>
-            </div>
-          </div>
+          <div id="step1Flow"></div>
         </div>
         <div id="step2" style="display:none">
           <div class="section-title">Step 2 – Weekly Plan Builder</div>
@@ -671,38 +580,8 @@
       els.wizardNext.style.display = wizardStep<3 ? '' : 'none';
       els.wizardSave.style.display = wizardStep===3 ? '' : 'none';
 
-      // Step 1 bindings
-      const radios = document.querySelectorAll('input[name="w_planType"]');
-      radios.forEach(r => { r.checked = (r.value === wizardData.planType); r.onchange = () => { wizardData.planType = r.value; suggestEndDate(); refreshNameSuggestions(); } });
-      els.w_name.value = wizardData.name||''; els.w_name.oninput = () => wizardData.name = els.w_name.value;
-      els.w_term.value = wizardData.termLabel||''; els.w_term.oninput = () => wizardData.termLabel = els.w_term.value;
-      els.w_start.value = wizardData.startDate||''; els.w_start.onchange = () => { wizardData.startDate = els.w_start.value; suggestEndDate(); };
-      els.w_end.value = wizardData.endDate||''; els.w_end.onchange = () => wizardData.endDate = els.w_end.value;
-      // Primary goal dropdown + custom
-      const wGoals = document.getElementById('w_goals'); const wGoalsCustom = document.getElementById('w_goals_custom');
-      wGoals.value = wizardData.primaryGoals||'';
-      wGoals.onchange = ()=>{ if (wGoals.value==='__custom'){ wGoalsCustom.style.display=''; wGoalsCustom.focus(); wizardData.primaryGoals = wGoalsCustom.value.trim(); } else { wGoalsCustom.style.display='none'; wizardData.primaryGoals = wGoals.value; } };
-      wGoalsCustom.value = (wGoals.value==='__custom')?(wizardData.primaryGoals||''):'';
-      wGoalsCustom.oninput = ()=>{ if (wGoals.value==='__custom'){ wizardData.primaryGoals = wGoalsCustom.value.trim(); } };
-
-      // Target audience multi + custom
-      const tSel = document.getElementById('w_targets_select'); const tCust = document.getElementById('w_targets_custom');
-      function syncTargets(){ const base = Array.from(tSel.selectedOptions).map(o=>o.value); const extra = (tCust.value||'').trim(); wizardData.targetAudiences = base.concat(extra? [extra] : []).join(', '); }
-      if (wizardData.targetAudiences){ const parts = wizardData.targetAudiences.split(',').map(s=>s.trim()); Array.from(tSel.options).forEach(o=>{ o.selected = parts.includes(o.value); }); const custom = parts.filter(p => !Array.from(tSel.options).map(o=>o.value).includes(p)); tCust.value = custom.join(', '); }
-      tSel.onchange = syncTargets; tCust.oninput = syncTargets;
-
-      // Key dates list editor
-      renderKeyDatesEditor();
-
-      // Key tasks
-      els.w_ongoing.value = wizardData.keyTasks||wizardData.ongoingTasks||''; els.w_ongoing.oninput = () => { wizardData.keyTasks = els.w_ongoing.value; wizardData.ongoingTasks = els.w_ongoing.value; };
-
-      // Metrics
-      const bindNum = (id, key) => { const el=document.getElementById(id); el.value = wizardData[key] ?? ''; el.oninput = ()=>{ const v=parseFloat(el.value); wizardData[key] = isFinite(v)?v:null; }; };
-      bindNum('preleaseStart','preleaseStart'); bindNum('preleaseEnd','preleaseEnd'); bindNum('applicationsGoal','applicationsGoal'); bindNum('applicationsActual','applicationsActual'); bindNum('leasesGoal','leasesGoal'); bindNum('leasesActual','leasesActual');
-      els.w_notes.value = wizardData.notes||''; els.w_notes.oninput = () => wizardData.notes = els.w_notes.value;
-
-      if (wizardStep === 1){ initQuickPickControls(); }
+      // Step 1 rendered via flow
+      if (wizardStep === 1){ renderStep1Flow(); }
       if (wizardStep === 2){ ensureWeeks(); renderWeeksEditor(); }
       if (wizardStep === 3){ renderReview(); }
     }
@@ -898,6 +777,110 @@
         }))
       };
     }
+
+    // Step 1 per-plan flow (guided questions)
+    let step1FlowIdx = 0;
+    function renderStep1Flow(){
+      const wrap = document.getElementById('step1Flow'); if (!wrap) return;
+      const steps = ['Plan Type','Term','Plan Name','Dates','Primary Goal','Target Audience','Key Dates','Key Tasks','Metrics','Notes'];
+      const cur = Math.max(0, Math.min(step1FlowIdx, steps.length-1));
+      const P = wizardData;
+      const progress = `<div class="mini muted">Step ${cur+1} of ${steps.length} • ${steps[cur]}</div>`;
+      let content = '';
+      switch(cur){
+        case 0: // Plan Type
+          content = `<div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:6px">
+            <div style="display:flex;gap:12px">
+              <label style="display:flex;align-items:center;gap:6px;user-select:none"><input type="radio" name="s1_type" value="30_day" ${P.planType!=='60_day'?'checked':''}/> 30 Day</label>
+              <label style="display:flex;align-items:center;gap:6px;user-select:none"><input type="radio" name="s1_type" value="60_day" ${P.planType==='60_day'?'checked':''}/> 60 Day</label>
+            </div>
+          </div>`;
+          break;
+        case 1: // Term
+          content = `<div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:6px">
+            <div class="row" style="align-items:flex-end">
+              <div><label>Term Label</label><input id="s1_term" type="text" value="${escapeAttr(P.termLabel||'')}" placeholder="e.g., Fall 2025" /></div>
+              <div><label>Quick Term</label><select id="w_term_quick" style="min-width:140px"></select></div>
+            </div>
+          </div>`;
+          break;
+        case 2: // Name
+          content = `<div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:6px">
+            <div><label>Plan Name</label><input id="s1_name" type="text" value="${escapeAttr(P.name||'')}" placeholder="e.g., Fall 2025 60 Day POA" /></div>
+          </div>`;
+          break;
+        case 3: // Dates
+          content = `<div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:6px">
+            <div class="row"><div><label>Start Date</label><input id="s1_start" type="date" value="${(P.startDate||'').slice(0,10)}" /></div><div><label>End Date</label><input id="s1_end" type="date" value="${(P.endDate||'').slice(0,10)}" /></div></div>
+            <div class="mini muted" style="margin-top:4px">End date auto-suggests from plan type; editable.</div>
+          </div>`;
+          break;
+        case 4: // Primary Goal
+          content = `<div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:6px">
+            <div><label>Primary Goal</label>
+              <select id="w_goals"><option value="">-- Select --</option><option>Awareness</option><option>Lead Generation</option><option>Applications</option><option>Leases Signed</option><option>Renewals</option><option>Move-in Readiness</option><option>Reputation & Reviews</option><option value="__custom">Other (type below)</option></select>
+              <input id="w_goals_custom" type="text" placeholder="Type a custom goal" style="margin-top:6px; display:${P.primaryGoals && !['Awareness','Lead Generation','Applications','Leases Signed','Renewals','Move-in Readiness','Reputation & Reviews'].includes(P.primaryGoals)?'':'none'}" value="${escapeAttr(P.primaryGoals||'')}"/>
+            </div>
+          </div>`;
+          break;
+        case 5: // Target Audience
+          content = `<div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:6px">
+            <div><label>Target Audience</label>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <select id="s1_targets_select" multiple size="6" style="min-width:200px">
+                  <option>Undergrads</option><option>Graduate Students</option><option>Faculty</option><option>Greek</option><option>Organization</option><option>Local Business</option>
+                </select>
+                <input id="s1_targets_custom" type="text" placeholder="Type another audience (optional)" />
+              </div>
+            </div>
+          </div>`;
+          break;
+        case 6: // Key Dates
+          content = `<div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:6px">
+            <div><label>Key Dates</label><div id="keyDatesWrap" style="display:flex;flex-direction:column;gap:6px"></div>
+              <div class="row" style="margin-top:6px"><input id="kd_label" type="text" placeholder="Label (e.g., Housing Fair)" /><input id="kd_date" type="date" />
+                <button class="secondary" style="flex:0 0 auto" onclick="(function(){ addKeyDate(); })()">Add Date</button></div>
+            </div>
+          </div>`;
+          break;
+        case 7: // Key Tasks
+          content = `<div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:6px">
+            <div><label>Key Tasks</label><textarea id="s1_keytasks" placeholder="Weekly email blasts, reputation mgmt, PPC/social">${escapeHtml(P.keyTasks||P.ongoingTasks||'')}</textarea></div>
+          </div>`;
+          break;
+        case 8: // Metrics
+          content = `<div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:6px">
+            <div class="grid-cols">
+              <div><label>Prelease at Start (%)</label><input id="s1_preleaseStart" type="number" min="0" max="100" step="1" value="${P.preleaseStart ?? ''}" /></div>
+              <div><label>Prelease at End (%)</label><input id="s1_preleaseEnd" type="number" min="0" max="100" step="1" value="${P.preleaseEnd ?? ''}" /></div>
+              <div><label>Applications Goal</label><input id="s1_appGoal" type="number" min="0" step="1" value="${P.applicationsGoal ?? ''}" /></div>
+              <div><label>Applications Actual</label><input id="s1_appActual" type="number" min="0" step="1" value="${P.applicationsActual ?? ''}" /></div>
+              <div><label>Leases Goal</label><input id="s1_leaseGoal" type="number" min="0" step="1" value="${P.leasesGoal ?? ''}" /></div>
+              <div><label>Leases Actual</label><input id="s1_leaseActual" type="number" min="0" step="1" value="${P.leasesActual ?? ''}" /></div>
+            </div>
+          </div>`;
+          break;
+        case 9: // Notes
+          content = `<div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:6px">
+            <div><label>Notes</label><textarea id="s1_notes" placeholder="Assumptions / constraints">${escapeHtml(P.notes||'')}</textarea></div>
+          </div>`;
+          break;
+      }
+      const controls = `<div class="row" style="gap:8px;margin-top:8px"><button class="secondary" style="flex:0 0 auto" ${cur===0?'disabled':''} onclick="(function(){ setStep1Flow(${cur-1}); })()">Back</button><div style="flex:1"></div><button class="good" style="flex:0 0 auto" onclick="(function(){ setStep1Flow(${Math.min(cur+1,steps.length-1)}); })()">${cur===steps.length-1?'Finish':'Next'}</button></div>`;
+      wrap.innerHTML = progress + content + controls;
+      // Bind step controls
+      if (cur===0){ document.querySelectorAll('input[name="s1_type"]').forEach(r=>{ r.onchange=()=>{ wizardData.planType = r.value==='60_day'?'60_day':'30_day'; suggestEndDate(); }; }); }
+      if (cur===1){ populateQuickTerm(); const qt = document.getElementById('w_term_quick'); if (qt){ qt.onchange = ()=>{ if (qt.value){ wizardData.termLabel = qt.value; const t = document.getElementById('s1_term'); if (t) t.value = qt.value; } }; } const t = document.getElementById('s1_term'); if (t){ t.value = wizardData.termLabel||''; t.oninput = ()=> wizardData.termLabel = t.value; } }
+      if (cur===2){ const n = document.getElementById('s1_name'); if (n){ n.value = wizardData.name||''; n.oninput = ()=> wizardData.name = n.value; } }
+      if (cur===3){ const s = document.getElementById('s1_start'); const e = document.getElementById('s1_end'); if (s){ s.value = (wizardData.startDate||'').slice(0,10); s.onchange = ()=>{ wizardData.startDate = s.value; suggestEndDate(); const e2=document.getElementById('s1_end'); if (e2) e2.value = (wizardData.endDate||'').slice(0,10); }; } if (e){ e.value = (wizardData.endDate||'').slice(0,10); e.onchange = ()=> wizardData.endDate = e.value; } }
+      if (cur===4){ const g = document.getElementById('w_goals'); const c = document.getElementById('w_goals_custom'); if (g){ g.value = ['Awareness','Lead Generation','Applications','Leases Signed','Renewals','Move-in Readiness','Reputation & Reviews'].includes(wizardData.primaryGoals)?wizardData.primaryGoals:'__custom'; g.onchange = ()=>{ if (g.value==='__custom'){ c.style.display=''; c.focus(); wizardData.primaryGoals = (c.value||'').trim(); } else { c.style.display='none'; wizardData.primaryGoals = g.value; } }; } if (c){ c.value = (!['Awareness','Lead Generation','Applications','Leases Signed','Renewals','Move-in Readiness','Reputation & Reviews'].includes(wizardData.primaryGoals)?(wizardData.primaryGoals||''):''); c.oninput = ()=> wizardData.primaryGoals = c.value.trim(); } }
+      if (cur===5){ const sel=document.getElementById('s1_targets_select'); const cust=document.getElementById('s1_targets_custom'); if (wizardData.targetAudiences){ const parts = wizardData.targetAudiences.split(',').map(s=>s.trim()); Array.from(sel.options).forEach(o=> o.selected = parts.includes(o.value)); const custom = parts.filter(p=> !Array.from(sel.options).map(o=>o.value).includes(p)); cust.value = custom.join(', '); } const sync=()=>{ const base=Array.from(sel.selectedOptions).map(o=>o.value); const extra=(cust.value||'').trim(); wizardData.targetAudiences = base.concat(extra? [extra] : []).join(', '); }; sel.onchange = sync; cust.oninput = sync; }
+      if (cur===6){ renderKeyDatesEditor(); }
+      if (cur===7){ const kt=document.getElementById('s1_keytasks'); if (kt){ kt.oninput = ()=>{ wizardData.keyTasks = kt.value; wizardData.ongoingTasks = kt.value; }; } }
+      if (cur===8){ const bindNum=(id,key)=>{ const el=document.getElementById(id); if (!el) return; el.oninput = ()=>{ const v=parseFloat(el.value); wizardData[key] = isFinite(v)?v:null; }; }; bindNum('s1_preleaseStart','preleaseStart'); bindNum('s1_preleaseEnd','preleaseEnd'); bindNum('s1_appGoal','applicationsGoal'); bindNum('s1_appActual','applicationsActual'); bindNum('s1_leaseGoal','leasesGoal'); bindNum('s1_leaseActual','leasesActual'); }
+      if (cur===9){ const n=document.getElementById('s1_notes'); if (n){ n.oninput = ()=> wizardData.notes = n.value; } }
+    }
+    function setStep1Flow(step){ step1FlowIdx = Math.max(0, step); renderStep1Flow(); }
 
     // Key dates editor
     function renderKeyDatesEditor(){
