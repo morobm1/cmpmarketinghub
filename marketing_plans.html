@@ -85,6 +85,25 @@
 
     .footer{ padding:12px 18px; color:#6b7280; font-size:12px }
   </style>
+<style>
+    /* Compact wizard body and collapsible week sections */
+    #planWizard{ max-height: 70vh; overflow:auto }
+    .wk-acc .wk-body{ display:block }
+    .wk-acc.collapsed .wk-body{ display:none }
+    .wk-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; cursor:pointer; padding:6px 8px; border:1px solid var(--border); border-radius:8px; background:#f9fafb }
+    .wk-head .caret{ display:inline-block; transform: rotate(0deg); transition: transform .15s ease }
+    .wk-acc.collapsed .wk-head .caret{ transform: rotate(-90deg) }
+  </style>
+<style>
+    /* Vertical sidebar layout */
+    .layout{ display:grid; grid-template-columns: 220px 1fr; gap:16px; align-items:start; max-width:1200px; margin:0 auto; padding:0 16px 16px }
+    @media(max-width: 900px){ .layout{ grid-template-columns: 1fr } }
+    .sidebar{ background:#ffffff; border:1px solid var(--border); border-radius:12px; padding:12px; position:sticky; top:10px; align-self:start }
+    .sidebar .nav-tab{ display:flex; align-items:center; gap:8px; padding:10px 12px; border:1px solid var(--border); border-radius:10px; color:#374151; text-decoration:none; background:#ffffff; margin:4px 0 }
+    .sidebar .nav-tab:hover{ background:#f3f4f6 }
+    .sidebar .nav-tab.active{ background:#52d5ff; border-color:#52d5ff; color:#0b1b24; font-weight:700 }
+    .content-pane{ min-width:0 }
+  </style>
 </head>
 <body>
   <div id="bootLoader" style="position:fixed;inset:0;background:#ffffff;display:flex;align-items:center;justify-content:center;z-index:100;color:#111827;font-family:Roboto,Arial,sans-serif">
@@ -116,8 +135,8 @@
     </div>
     <div class="mini">Capstone Management Partners • Marketing Plans</div>
   </header>
-  <nav id="mainNav" class="nav-bar">
-    <div class="nav-wrap">
+  <div class="layout">
+    <aside id="mainNav" class="sidebar">
       <a href="mmp_calendar_app.html" class="nav-tab" data-tab="calendar">Marketing Calendar</a>
       <a href="marketing_plans.html" class="nav-tab" data-tab="plans">Marketing Plans</a>
       <a href="marketing_contacts.html" class="nav-tab" data-tab="contacts">Marketing Contacts</a>
@@ -125,8 +144,8 @@
       <a href="renewal_campaign.html" class="nav-tab" data-tab="renewal">Renewal Campaign</a>
       <a href="velocity_tracker.html" class="nav-tab" data-tab="velocity">Velocity Tracker</a>
       <a href="social_media_audit.html" class="nav-tab" data-tab="social">Social Media Audit</a>
-    </div>
-  </nav>
+    </aside>
+    <div class="content-pane">
 
   <div id="appContainer" class="container" style="display:none">
     <section class="card">
@@ -176,6 +195,8 @@
 
     <div class="footer">Marketing Hub • Build 30 & 60 day plans by property.</div>
   </div>
+    </div>
+  </div>
 
   <!-- New/Edit Plan Modal -->
   <div id="planModal" class="modal-backdrop">
@@ -191,23 +212,23 @@
               <select id="w_term_quick" style="min-width:140px"></select>
             </div>
             <div>
-              <label for="w_name_quick">Name Suggestion</label>
+              <label for="w_name_quick">Suggested Name</label>
               <select id="w_name_quick" style="min-width:200px"></select>
             </div>
             <div>
-              <label for="w_goals_quick">Goals Preset</label>
+              <label for="w_goals_quick">Goals Preset (optional)</label>
               <select id="w_goals_quick" style="min-width:180px"></select>
             </div>
             <div>
-              <label for="w_targets_quick">Audiences Preset</label>
+              <label for="w_targets_quick">Audiences Preset (optional)</label>
               <select id="w_targets_quick" style="min-width:180px"></select>
             </div>
             <div>
-              <label for="w_keydates_quick">Key Dates Preset</label>
+              <label for="w_keydates_quick">Key Dates Preset (optional)</label>
               <select id="w_keydates_quick" style="min-width:180px"></select>
             </div>
             <div>
-              <label for="w_ongoing_quick">Ongoing Preset</label>
+              <label for="w_ongoing_quick">Ongoing Preset (optional)</label>
               <select id="w_ongoing_quick" style="min-width:180px"></select>
             </div>
           </div>
@@ -263,6 +284,10 @@
         <div id="step2" style="display:none">
           <div class="section-title">Step 2 – Weekly Plan Builder</div>
           <div class="section-sub">Auto-generated weeks based on plan type; customize as needed.</div>
+          <div class="row" style="gap:8px; margin:6px 0 8px 0; align-items:center">
+            <button class="secondary" style="flex:0 0 auto" onclick="expandAllWeeks()">Expand All</button>
+            <button class="secondary" style="flex:0 0 auto" onclick="collapseAllWeeks()">Collapse All</button>
+          </div>
           <div id="weeksWrap"></div>
         </div>
         <div id="step3" style="display:none">
@@ -627,52 +652,59 @@
     }
 
     function weekEditorHtml(w, idx){
-      const pct = taskCompletionPct(w.tasks||[]);
+      const pct = taskCompletionPct((w.tasks)||[]);
       return `
-        <div style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:10px">
-          <div class="row" style="align-items:flex-end">
-            <div>
-              <label>Week Number</label>
-              <input type="number" id="wk_${idx}_num" value="${w.weekNumber||idx+1}" />
+        <div id="wk_${idx}_acc" class="wk-acc ${idx===0?'':'collapsed'}" style="margin-bottom:10px">
+          <div class="wk-head" onclick="(function(){ toggleWeek(${idx}); })()">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="caret">▶</span>
+              <div style="font-weight:800">${escapeHtml(w.weekLabel||`Week ${idx+1}`)}</div>
+              <div class="mini muted">${escapeHtml((w.dateRangeStart||'') + (w.dateRangeEnd?(' – '+w.dateRangeEnd):''))}</div>
             </div>
-            <div>
-              <label>Week Label</label>
-              <input type="text" id="wk_${idx}_label" value="${escapeAttr(w.weekLabel||`Week ${idx+1}`)}" />
-            </div>
-            <div>
-              <label>Start</label>
-              <input type="date" id="wk_${idx}_s" value="${(w.dateRangeStart||'').slice(0,10)}" />
-            </div>
-            <div>
-              <label>End</label>
-              <input type="date" id="wk_${idx}_e" value="${(w.dateRangeEnd||'').slice(0,10)}" />
-            </div>
-            <div style="flex:0 0 auto">
-              <div class="mini muted">${pct!=null? (pct+'% complete') : ''}</div>
-            </div>
+            <div class="mini">${pct!=null?(pct+'% complete'):''}</div>
           </div>
-          <div class="row" style="margin-top:8px; align-items:flex-end; gap:10px">
-            <div>
-              <label>Week Preset</label>
-              <select id="wk_${idx}_preset" style="min-width:200px"></select>
+          <div class="wk-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:8px">
+            <div class="row" style="align-items:flex-end">
+              <div>
+                <label>Week Number</label>
+                <input type="number" id="wk_${idx}_num" value="${w.weekNumber||idx+1}" />
+              </div>
+              <div>
+                <label>Week Label</label>
+                <input type="text" id="wk_${idx}_label" value="${escapeAttr(w.weekLabel||`Week ${idx+1}`)}" />
+              </div>
+              <div>
+                <label>Start</label>
+                <input type="date" id="wk_${idx}_s" value="${(w.dateRangeStart||'').slice(0,10)}" />
+              </div>
+              <div>
+                <label>End</label>
+                <input type="date" id="wk_${idx}_e" value="${(w.dateRangeEnd||'').slice(0,10)}" />
+              </div>
             </div>
-            <div>
-              <label>Add Task Bundle</label>
-              <select id="wk_${idx}_bundle" style="min-width:200px"></select>
+            <div class="row" style="margin-top:8px; align-items:flex-end; gap:10px">
+              <div>
+                <label>Week Preset</label>
+                <select id="wk_${idx}_preset" style="min-width:200px"></select>
+              </div>
+              <div>
+                <label>Add Task Bundle</label>
+                <select id="wk_${idx}_bundle" style="min-width:200px"></select>
+              </div>
+              <button class="secondary" style="flex:0 0 auto" onclick="(function(){ applyWeekPreset(${idx}); })()">Apply Preset</button>
+              <button class="secondary" style="flex:0 0 auto" onclick="(function(){ addTaskBundleSelected(${idx}); })()">Add Bundle</button>
             </div>
-            <button class="secondary" style="flex:0 0 auto" onclick="(function(){ applyWeekPreset(${idx}); })()">Apply Preset</button>
-            <button class="secondary" style="flex:0 0 auto" onclick="(function(){ addTaskBundleSelected(${idx}); })()">Add Bundle</button>
-          </div>
-          <div class="grid-cols" style="margin-top:8px">
-            <div><label>Leasing Focus</label><textarea id="wk_${idx}_lease">${escapeHtml(w.leasingFocus||'')}</textarea></div>
-            <div><label>Community Outreach / Resident Events</label><textarea id="wk_${idx}_comm">${escapeHtml(w.communityOutreach||'')}</textarea></div>
-            <div><label>Social Media & Digital Marketing</label><textarea id="wk_${idx}_social">${escapeHtml(w.socialDigital||'')}</textarea></div>
-            <div><label>Weekly Task Summary / Goals</label><textarea id="wk_${idx}_sum">${escapeHtml(w.weeklyTaskSummary||'')}</textarea></div>
-          </div>
-          <div style="margin-top:8px">
-            <div class="mini muted" style="margin-bottom:6px">Tasks (optional)</div>
-            <div id="wk_${idx}_tasks" style="display:flex;flex-direction:column;gap:6px">${(w.tasks||[]).map((t,ti)=> taskEditorRowHtml(idx, ti, t)).join('')}</div>
-            <div class="row" style="margin-top:6px"><button class="secondary" style="flex:0 0 auto" onclick="(function(){ addTask(${idx}); })()">Add Task</button></div>
+            <div class="grid-cols" style="margin-top:8px">
+              <div><label>Leasing Focus</label><textarea id="wk_${idx}_lease">${escapeHtml(w.leasingFocus||'')}</textarea></div>
+              <div><label>Community Outreach / Resident Events</label><textarea id="wk_${idx}_comm">${escapeHtml(w.communityOutreach||'')}</textarea></div>
+              <div><label>Social Media & Digital Marketing</label><textarea id="wk_${idx}_social">${escapeHtml(w.socialDigital||'')}</textarea></div>
+              <div><label>Weekly Task Summary / Goals</label><textarea id="wk_${idx}_sum">${escapeHtml(w.weeklyTaskSummary||'')}</textarea></div>
+            </div>
+            <div style="margin-top:8px">
+              <div class="mini muted" style="margin-bottom:6px">Tasks (optional)</div>
+              <div id="wk_${idx}_tasks" style="display:flex;flex-direction:column;gap:6px">${(w.tasks||[]).map((t,ti)=> taskEditorRowHtml(idx, ti, t)).join('')}</div>
+              <div class="row" style="margin-top:6px"><button class="secondary" style="flex:0 0 auto" onclick="(function(){ addTask(${idx}); })()">Add Task</button></div>
+            </div>
           </div>
         </div>
       `;
@@ -846,16 +878,35 @@
 
     function initQuickPickControls(){
       populateQuickTerm();
+      // Default Quick Term selection if none
+      const termSel = document.getElementById('w_term_quick');
+      if (termSel && !els.w_term.value){
+        const opt = Array.from(termSel.options).find(o=>o.value);
+        if (opt){ termSel.value = opt.value; els.w_term.value = opt.value; wizardData.termLabel = opt.value; }
+      }
       refreshNameSuggestions();
+      // Default Suggested Name if empty
+      const nameSel = document.getElementById('w_name_quick');
+      if (nameSel && !els.w_name.value){
+        const optN = Array.from(nameSel.options).find(o=>o.value);
+        if (optN){ nameSel.value = optN.value; els.w_name.value = optN.value; wizardData.name = optN.value; }
+      }
       populateStep1PresetSelects();
       bindQuickSelectHandlers();
     }
     function populateQuickTerm(){
       const sel = document.getElementById('w_term_quick'); if (!sel) return;
-      const now = new Date(); const y = now.getFullYear();
-      const years = [y-1, y, y+1, y+2];
-      const opts = [];
-      years.forEach(Y => { opts.push(`Spring ${Y}`); opts.push(`Fall ${Y}`); });
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = now.getMonth(); // 0=Jan
+      let opts = [];
+      if (m >= 7){ // Aug-Dec
+        opts = [`Fall ${y}`, `Spring ${y+1}`];
+      } else if (m <= 3){ // Jan-Apr
+        opts = [`Spring ${y}`, `Fall ${y}`];
+      } else { // May-Jul
+        opts = [`Fall ${y}`, `Spring ${y+1}`];
+      }
       sel.innerHTML = '<option value="">-- Select --</option>' + opts.map(o=>`<option value="${o.replace(/"/g,'&quot;')}">${o}</option>`).join('');
     }
     function refreshNameSuggestions(){
@@ -930,6 +981,20 @@
       const w = wizardData.weeks[idx]; if (!Array.isArray(w.tasks)) w.tasks = [];
       bundle.tasks.forEach(t => { w.tasks.push({ id: rid(), title: t.title, channel: t.channel, dueDate:'', status:'not_started', notes:'' }); });
       renderWeeksEditor();
+    }
+
+    // Collapsible week controls
+    function toggleWeek(idx){
+      const acc = document.getElementById(`wk_${idx}_acc`); if (!acc) return;
+      acc.classList.toggle('collapsed');
+    }
+    function expandAllWeeks(){
+      const wrap = document.getElementById('weeksWrap'); if (!wrap) return;
+      wrap.querySelectorAll('.wk-acc').forEach(el => el.classList.remove('collapsed'));
+    }
+    function collapseAllWeeks(){
+      const wrap = document.getElementById('weeksWrap'); if (!wrap) return;
+      wrap.querySelectorAll('.wk-acc').forEach(el => el.classList.add('collapsed'));
     }
 
     // Utils
