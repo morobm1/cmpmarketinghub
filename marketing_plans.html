@@ -798,30 +798,7 @@
                 </div>
               </div>
             </div>
-            <div style="margin-top:8px">
-              <div class="mini muted" style="margin-bottom:6px">Activities</div>
-              <div id="wk_${idx}_acts" style="display:flex;flex-direction:column;gap:6px">${(w.activities||[]).map((a,ai)=> activityEditorRowHtml(idx, ai, a)).join('')}</div>
-              <div class="row" style="margin-top:6px; align-items:flex-end; gap:8px">
-                <div>
-                  <label class="mini muted">Type</label>
-                  <select id="wk_${idx}_add_type" style="min-width:160px">
-                    <option>Giveaway Challenge</option>
-                    <option>Campus Outreach</option>
-                    <option>Social Media</option>
-                    <option>Resident Event</option>
-                    <option>Local Business</option>
-                    <option>Email</option>
-                    <option>Digital Ads</option>
-                    <option>Other</option>
-                  </select>
-                </div>
-                <div><label class="mini muted">Title/Description</label><input id="wk_${idx}_add_title" type="text" placeholder="e.g., How Many Leaf Clovers?" /></div>
-                <div><label class="mini muted">Date</label><input id="wk_${idx}_add_date" type="date" /></div>
-                <div><label class="mini muted">Time</label><input id="wk_${idx}_add_time" type="text" placeholder="e.g., 4 PM - 6 PM" /></div>
-                <div><label class="mini muted">Details</label><input id="wk_${idx}_add_details" type="text" placeholder="Optional notes" /></div>
-                <button class="secondary" style="flex:0 0 auto" onclick="(function(){ addActivity(${idx}); })()">Add</button>
-              </div>
-            </div>
+            ${activitiesGroupsHtml(idx)}
             <div style="margin-top:8px">
               <div class="mini muted" style="margin-bottom:6px">Tasks (optional)</div>
               <div id="wk_${idx}_tasks" style="display:flex;flex-direction:column;gap:6px">${(w.tasks||[]).map((t,ti)=> taskEditorRowHtml(idx, ti, t)).join('')}</div>
@@ -848,9 +825,9 @@
       // bind tasks
       const tasksWrap = g(`wk_${idx}_tasks`);
       if (tasksWrap){ tasksWrap.querySelectorAll('[data-ti]').forEach(row => bindTaskEditor(idx, parseInt(row.getAttribute('data-ti'),10)||0)); }
-      // bind activities
-      const actsWrap = g(`wk_${idx}_acts`);
-      if (actsWrap){ actsWrap.querySelectorAll('[data-ai]').forEach(row => bindActivityEditor(idx, parseInt(row.getAttribute('data-ai'),10)||0)); }
+      // bind grouped activities (by global index)
+      const weekAcc = document.getElementById(`wk_${idx}_acc`);
+      if (weekAcc){ weekAcc.querySelectorAll('[data-gai]').forEach(row => bindActivityEditorGlobal(idx, parseInt(row.getAttribute('data-gai'),10)||0)); }
     }
 
     function taskEditorRowHtml(wi, ti, t){
@@ -1113,6 +1090,68 @@
     }
     function addActivity(wi){ const w = wizardData.weeks[wi]; if (!Array.isArray(w.activities)) w.activities = []; const t=document.getElementById(`wk_${wi}_add_type`).value; const ti=document.getElementById(`wk_${wi}_add_title`).value; const d=document.getElementById(`wk_${wi}_add_date`).value; const tm=document.getElementById(`wk_${wi}_add_time`).value; const det=document.getElementById(`wk_${wi}_add_details`).value; if(!ti||!d){ alert('Title and Date are required'); return; } w.activities.push({ type:t, title:ti, date:d, time:tm, details:det }); renderWeeksEditor(); }
     function removeActivity(wi, ai){ const w = wizardData.weeks[wi]; if (!Array.isArray(w.activities)) return; w.activities.splice(ai,1); renderWeeksEditor(); }
+
+    // Grouped activities UI
+    function activitiesGroups(){
+      return ['Giveaway Challenge','Campus Outreach','Social Media','Resident Event','Local Business','Email','Digital Ads','Other'];
+    }
+    function activitiesGroupsHtml(wi){
+      return activitiesGroups().map((label, gi) => groupSectionHtml(wi, label, gi)).join('');
+    }
+    function groupSectionHtml(wi, label, gi){
+      const w = wizardData.weeks[wi] || {};
+      const list = (w.activities||[]).map((a,i)=>({a,i})).filter(x => (String(x.a?.type||'')===label));
+      const rows = list.length ? list.map(x => groupActivityEditorRowHtml(wi, x.i, x.a)).join('') : '<div class="mini muted">No items yet</div>';
+      return `
+      <div class="wk-sub collapsed" id="wk_${wi}_grp_${gi}">
+        <div class="wk-sub-head" onclick="(function(){ document.getElementById('wk_${wi}_grp_${gi}')?.classList.toggle('collapsed'); })()">
+          <div style="display:flex;align-items:center;gap:8px"><span class="caret">▶</span><strong>${label}</strong></div>
+          <div class="mini muted">Weekly ${label.toLowerCase()}</div>
+        </div>
+        <div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:8px">
+          <div id="wk_${wi}_grp_${gi}_list" style="display:flex;flex-direction:column;gap:6px">${rows}</div>
+          <div class="row" style="margin-top:6px; align-items:flex-end; gap:8px">
+            <div><label class="mini muted">Title/Description</label><input id="wk_${wi}_grp_${gi}_add_title" type="text" placeholder="Title" /></div>
+            <div><label class="mini muted">Date</label><input id="wk_${wi}_grp_${gi}_add_date" type="date" /></div>
+            <div><label class="mini muted">Time</label><input id="wk_${wi}_grp_${gi}_add_time" type="text" placeholder="e.g., 4 PM - 6 PM" /></div>
+            <div><label class="mini muted">Details</label><input id="wk_${wi}_grp_${gi}_add_details" type="text" placeholder="Optional notes" /></div>
+            <button class="secondary" style="flex:0 0 auto" onclick="(function(){ addGroupActivity(${wi}, ${gi}); })()">Add</button>
+          </div>
+        </div>
+      </div>`;
+    }
+    function groupActivityEditorRowHtml(wi, gai, a){
+      return `<div data-gai="${gai}" style="display:flex;gap:6px;align-items:flex-end;border:1px solid var(--border);border-radius:8px;padding:8px">
+        <div style="flex:2"><label>Title/Desc</label><input id="wk_${wi}_ga_${gai}_title" type="text" value="${escapeAttr(a.title||'')}" /></div>
+        <div style="flex:1"><label>Date</label><input id="wk_${wi}_ga_${gai}_date" type="date" value="${(a.date||'').slice(0,10)}" /></div>
+        <div style="flex:1"><label>Time</label><input id="wk_${wi}_ga_${gai}_time" type="text" value="${escapeAttr(a.time||'')}" /></div>
+        <div style="flex:2"><label>Details</label><input id="wk_${wi}_ga_${gai}_details" type="text" value="${escapeAttr(a.details||'')}" /></div>
+        <div style="flex:0 0 auto"><button class="secondary" onclick="(function(){ removeGroupActivity(${wi}, ${gai}); })()">Remove</button></div>
+      </div>`;
+    }
+    function bindActivityEditorGlobal(wi, gai){
+      const w = wizardData.weeks[wi]; if (!w || !Array.isArray(w.activities) || !w.activities[gai]) return;
+      const a = w.activities[gai];
+      const g = (id)=> document.getElementById(id);
+      const t = g(`wk_${wi}_ga_${gai}_title`); if (t) t.oninput = (e)=> a.title = e.target.value;
+      const d = g(`wk_${wi}_ga_${gai}_date`); if (d) d.onchange = (e)=> a.date = e.target.value;
+      const tm = g(`wk_${wi}_ga_${gai}_time`); if (tm) tm.oninput = (e)=> a.time = e.target.value;
+      const dt = g(`wk_${wi}_ga_${gai}_details`); if (dt) dt.oninput = (e)=> a.details = e.target.value;
+    }
+    function addGroupActivity(wi, gi){
+      const label = activitiesGroups()[gi]; const w = wizardData.weeks[wi]; if (!w) return; if (!Array.isArray(w.activities)) w.activities = [];
+      const g = (id)=> document.getElementById(id);
+      const title = (g(`wk_${wi}_grp_${gi}_add_title`)?.value||'').trim();
+      const date = g(`wk_${wi}_grp_${gi}_add_date`)?.value||'';
+      const time = (g(`wk_${wi}_grp_${gi}_add_time`)?.value||'').trim();
+      const details = (g(`wk_${wi}_grp_${gi}_add_details`)?.value||'').trim();
+      if (!title || !date){ alert('Title and Date are required'); return; }
+      w.activities.push({ type: label, title, date, time, details });
+      renderWeeksEditor();
+    }
+    function removeGroupActivity(wi, gai){
+      const w = wizardData.weeks[wi]; if (!Array.isArray(w.activities)) return; if (gai<0 || gai>=w.activities.length) return; w.activities.splice(gai,1); renderWeeksEditor();
+    }
 
     // Collapsible week controls
     function toggleWeek(idx){
