@@ -211,26 +211,7 @@
               <label for="w_term_quick">Quick Term</label>
               <select id="w_term_quick" style="min-width:140px"></select>
             </div>
-            <div>
-              <label for="w_name_quick">Suggested Name</label>
-              <select id="w_name_quick" style="min-width:200px"></select>
-            </div>
-            <div>
-              <label for="w_goals_quick">Goals Preset (optional)</label>
-              <select id="w_goals_quick" style="min-width:180px"></select>
-            </div>
-            <div>
-              <label for="w_targets_quick">Audiences Preset (optional)</label>
-              <select id="w_targets_quick" style="min-width:180px"></select>
-            </div>
-            <div>
-              <label for="w_keydates_quick">Key Dates Preset (optional)</label>
-              <select id="w_keydates_quick" style="min-width:180px"></select>
-            </div>
-            <div>
-              <label for="w_ongoing_quick">Ongoing Preset (optional)</label>
-              <select id="w_ongoing_quick" style="min-width:180px"></select>
-            </div>
+            <!-- removed suggested name and presets per requirements -->
           </div>
           <div class="grid-cols">
             <div>
@@ -260,20 +241,57 @@
           </div>
           <div class="grid-cols" style="margin-top:10px">
             <div>
-              <label for="w_goals">Primary Goals</label>
-              <textarea id="w_goals" placeholder="High-level outcomes"></textarea>
+              <label for="w_goals">Primary Goal</label>
+              <select id="w_goals">
+                <option value="">-- Select --</option>
+                <option>Awareness</option>
+                <option>Lead Generation</option>
+                <option>Applications</option>
+                <option>Leases Signed</option>
+                <option>Renewals</option>
+                <option>Move-in Readiness</option>
+                <option>Reputation & Reviews</option>
+                <option value="__custom">Other (type below)</option>
+              </select>
+              <input id="w_goals_custom" type="text" placeholder="Type a custom goal" style="margin-top:6px; display:none" />
             </div>
             <div>
-              <label for="w_targets">Target Audiences</label>
-              <textarea id="w_targets" placeholder="Undergrads, grads, faculty, local professionals"></textarea>
+              <label for="w_targets">Target Audience</label>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <select id="w_targets_select" multiple size="6" style="min-width:200px">
+                  <option>Undergrads</option>
+                  <option>Graduate Students</option>
+                  <option>Faculty</option>
+                  <option>Greek</option>
+                  <option>Organization</option>
+                  <option>Local Business</option>
+                </select>
+                <input id="w_targets_custom" type="text" placeholder="Type another audience (optional)" />
+              </div>
             </div>
             <div>
-              <label for="w_keydates">Key Dates</label>
-              <textarea id="w_keydates" placeholder="Campus calendar, move-in, breaks" ></textarea>
+              <label>Key Dates</label>
+              <div id="keyDatesWrap" style="display:flex;flex-direction:column;gap:6px"></div>
+              <div class="row" style="margin-top:6px">
+                <input id="kd_label" type="text" placeholder="Label (e.g., Housing Fair)" />
+                <input id="kd_date" type="date" />
+                <button class="secondary" style="flex:0 0 auto" onclick="(function(){ addKeyDate(); })()">Add Date</button>
+              </div>
             </div>
             <div>
-              <label for="w_ongoing">Ongoing Tasks</label>
+              <label for="w_ongoing">Key Tasks</label>
               <textarea id="w_ongoing" placeholder="Weekly email blasts, reputation mgmt, PPC/social"></textarea>
+            </div>
+            <div>
+              <label>Plan Metrics</label>
+              <div class="grid-cols">
+                <div><label for="preleaseStart">Prelease at Start (%)</label><input id="preleaseStart" type="number" min="0" max="100" step="1" /></div>
+                <div><label for="preleaseEnd">Prelease at End (%)</label><input id="preleaseEnd" type="number" min="0" max="100" step="1" /></div>
+                <div><label for="applicationsGoal">Applications Goal</label><input id="applicationsGoal" type="number" min="0" step="1" /></div>
+                <div><label for="applicationsActual">Applications Actual</label><input id="applicationsActual" type="number" min="0" step="1" /></div>
+                <div><label for="leasesGoal">Leases Goal</label><input id="leasesGoal" type="number" min="0" step="1" /></div>
+                <div><label for="leasesActual">Leases Actual</label><input id="leasesActual" type="number" min="0" step="1" /></div>
+              </div>
             </div>
             <div>
               <label for="w_notes">Notes</label>
@@ -466,6 +484,8 @@
     function renderPlanView(plan){
       const el = els.planView; els.planViewCard.style.display='';
       function sec(title, body){ return `<div style="margin:10px 0"><div style="font-weight:800;color:#111827;margin:8px 0 6px">${title}</div><div>${body||'<span class=\'muted\'>-</span>'}</div></div>`; }
+      function fmtKeyDates(kd){ if (!Array.isArray(kd)) return escapeHtml(kd||''); return kd.map(k=>`${escapeHtml(k.label||'')}: ${escapeHtml(k.date||'')}`).join('<br/>'); }
+      function fmtMetrics(p){ return `Prelease Start: ${p.preleaseStart??'-'}% • Prelease End: ${p.preleaseEnd??'-'}%<br/>Apps Goal/Actual: ${p.applicationsGoal??'-'} / ${p.applicationsActual??'-'} • Leases Goal/Actual: ${p.leasesGoal??'-'} / ${p.leasesActual??'-'}`; }
       const hdr = `
         <div class="row" style="align-items:flex-start">
           <div style="flex:1">
@@ -485,10 +505,11 @@
         </div>
       `;
       const body = `
-        ${sec('Primary Goals', nl2br(escapeHtml(plan.primaryGoals||'')))}
+        ${sec('Primary Goal', nl2br(escapeHtml(plan.primaryGoals||'')))}
         ${sec('Target Audiences', nl2br(escapeHtml(plan.targetAudiences||'')))}
-        ${sec('Key Dates', nl2br(escapeHtml(plan.keyDates||'')))}
-        ${sec('Ongoing Tasks', nl2br(escapeHtml(plan.ongoingTasks||'')))}
+        ${sec('Key Dates', fmtKeyDates(plan.keyDates))}
+        ${sec('Key Tasks', nl2br(escapeHtml(plan.keyTasks||plan.ongoingTasks||'')))}
+        ${sec('Metrics', fmtMetrics(plan))}
         <div class="section-title" style="margin-top:12px">Weekly Breakdown</div>
         <div style="display:flex; flex-direction:column; gap:10px">
           ${(plan.weeks||[]).sort((a,b)=> (a.priority||a.weekNumber||0) - (b.priority||b.weekNumber||0)).map(w => weekReadOnlyHtml(w)).join('')}
@@ -561,8 +582,15 @@
         endDate: (p.endDate||'').slice(0,10),
         primaryGoals: p.primaryGoals||'',
         targetAudiences: p.targetAudiences||'',
-        keyDates: p.keyDates||'',
+        keyDates: Array.isArray(p.keyDates) ? (p.keyDates||[]) : [],
+        keyTasks: p.keyTasks || p.ongoingTasks || '',
         ongoingTasks: p.ongoingTasks||'',
+        preleaseStart: (typeof p.preleaseStart==='number')?p.preleaseStart:null,
+        preleaseEnd: (typeof p.preleaseEnd==='number')?p.preleaseEnd:null,
+        applicationsGoal: (typeof p.applicationsGoal==='number')?p.applicationsGoal:null,
+        applicationsActual: (typeof p.applicationsActual==='number')?p.applicationsActual:null,
+        leasesGoal: (typeof p.leasesGoal==='number')?p.leasesGoal:null,
+        leasesActual: (typeof p.leasesActual==='number')?p.leasesActual:null,
         notes: p.notes||'',
         weeks: Array.isArray(p.weeks) ? p.weeks.map(w => ({
           weekNumber: w.weekNumber||0,
@@ -594,10 +622,28 @@
       els.w_term.value = wizardData.termLabel||''; els.w_term.oninput = () => wizardData.termLabel = els.w_term.value;
       els.w_start.value = wizardData.startDate||''; els.w_start.onchange = () => { wizardData.startDate = els.w_start.value; suggestEndDate(); };
       els.w_end.value = wizardData.endDate||''; els.w_end.onchange = () => wizardData.endDate = els.w_end.value;
-      els.w_goals.value = wizardData.primaryGoals||''; els.w_goals.oninput = () => wizardData.primaryGoals = els.w_goals.value;
-      els.w_targets.value = wizardData.targetAudiences||''; els.w_targets.oninput = () => wizardData.targetAudiences = els.w_targets.value;
-      els.w_keydates.value = wizardData.keyDates||''; els.w_keydates.oninput = () => wizardData.keyDates = els.w_keydates.value;
-      els.w_ongoing.value = wizardData.ongoingTasks||''; els.w_ongoing.oninput = () => wizardData.ongoingTasks = els.w_ongoing.value;
+      // Primary goal dropdown + custom
+      const wGoals = document.getElementById('w_goals'); const wGoalsCustom = document.getElementById('w_goals_custom');
+      wGoals.value = wizardData.primaryGoals||'';
+      wGoals.onchange = ()=>{ if (wGoals.value==='__custom'){ wGoalsCustom.style.display=''; wGoalsCustom.focus(); wizardData.primaryGoals = wGoalsCustom.value.trim(); } else { wGoalsCustom.style.display='none'; wizardData.primaryGoals = wGoals.value; } };
+      wGoalsCustom.value = (wGoals.value==='__custom')?(wizardData.primaryGoals||''):'';
+      wGoalsCustom.oninput = ()=>{ if (wGoals.value==='__custom'){ wizardData.primaryGoals = wGoalsCustom.value.trim(); } };
+
+      // Target audience multi + custom
+      const tSel = document.getElementById('w_targets_select'); const tCust = document.getElementById('w_targets_custom');
+      function syncTargets(){ const base = Array.from(tSel.selectedOptions).map(o=>o.value); const extra = (tCust.value||'').trim(); wizardData.targetAudiences = base.concat(extra? [extra] : []).join(', '); }
+      if (wizardData.targetAudiences){ const parts = wizardData.targetAudiences.split(',').map(s=>s.trim()); Array.from(tSel.options).forEach(o=>{ o.selected = parts.includes(o.value); }); const custom = parts.filter(p => !Array.from(tSel.options).map(o=>o.value).includes(p)); tCust.value = custom.join(', '); }
+      tSel.onchange = syncTargets; tCust.oninput = syncTargets;
+
+      // Key dates list editor
+      renderKeyDatesEditor();
+
+      // Key tasks
+      els.w_ongoing.value = wizardData.keyTasks||wizardData.ongoingTasks||''; els.w_ongoing.oninput = () => { wizardData.keyTasks = els.w_ongoing.value; wizardData.ongoingTasks = els.w_ongoing.value; };
+
+      // Metrics
+      const bindNum = (id, key) => { const el=document.getElementById(id); el.value = wizardData[key] ?? ''; el.oninput = ()=>{ const v=parseFloat(el.value); wizardData[key] = isFinite(v)?v:null; }; };
+      bindNum('preleaseStart','preleaseStart'); bindNum('preleaseEnd','preleaseEnd'); bindNum('applicationsGoal','applicationsGoal'); bindNum('applicationsActual','applicationsActual'); bindNum('leasesGoal','leasesGoal'); bindNum('leasesActual','leasesActual');
       els.w_notes.value = wizardData.notes||''; els.w_notes.oninput = () => wizardData.notes = els.w_notes.value;
 
       if (wizardStep === 1){ initQuickPickControls(); }
@@ -771,8 +817,10 @@
       const p = wizardData;
       const hdr = `<div style="display:flex;align-items:center;gap:8px"><div style="font-weight:800">${escapeHtml(p.name||'')}</div><div class="mini">${p.planType==='60_day'?'60 Day':'30 Day'}${p.termLabel?(' • '+escapeHtml(p.termLabel)) : ''} • ${escapeHtml((p.startDate||'') + (p.endDate?(' – '+p.endDate):''))}</div></div>`;
       const sec = (t, v) => `<div style="margin-top:6px"><div class="mini muted">${t}</div><div>${v?nl2br(escapeHtml(v)):'<span class=\'muted\'>-</span>'}</div></div>`;
+      const kd = Array.isArray(p.keyDates)? p.keyDates.map(k=>`${escapeHtml(k.label||'')}: ${escapeHtml(k.date||'')}`).join('<br/>') : escapeHtml(p.keyDates||'');
+      const metrics = `Prelease Start: ${p.preleaseStart??'-'}% • Prelease End: ${p.preleaseEnd??'-'}%<br/>Apps Goal/Actual: ${p.applicationsGoal??'-'} / ${p.applicationsActual??'-'} • Leases Goal/Actual: ${p.leasesGoal??'-'} / ${p.leasesActual??'-'}`;
       const weeks = (p.weeks||[]).map(w=> weekReadOnlyHtml(w)).join('');
-      els.reviewWrap.innerHTML = hdr + sec('Primary Goals', p.primaryGoals) + sec('Target Audiences', p.targetAudiences) + sec('Key Dates', p.keyDates) + sec('Ongoing Tasks', p.ongoingTasks) + `<div class="section-title" style="margin-top:12px">Weekly Breakdown</div>` + weeks;
+      els.reviewWrap.innerHTML = hdr + sec('Primary Goal', p.primaryGoals) + sec('Target Audiences', p.targetAudiences) + sec('Key Dates', kd) + sec('Key Tasks', p.keyTasks||p.ongoingTasks) + sec('Metrics', metrics) + `<div class="section-title" style="margin-top:12px">Weekly Breakdown</div>` + weeks;
     }
 
     els.wizardBack.addEventListener('click', ()=>{ if (wizardStep>1){ wizardStep--; renderWizard(); } });
@@ -799,8 +847,14 @@
         endDate: p.endDate,
         primaryGoals: p.primaryGoals,
         targetAudiences: p.targetAudiences,
-        keyDates: p.keyDates,
-        ongoingTasks: p.ongoingTasks,
+        keyDates: Array.isArray(p.keyDates)? p.keyDates : [],
+        keyTasks: p.keyTasks || p.ongoingTasks,
+        preleaseStart: p.preleaseStart,
+        preleaseEnd: p.preleaseEnd,
+        applicationsGoal: p.applicationsGoal,
+        applicationsActual: p.applicationsActual,
+        leasesGoal: p.leasesGoal,
+        leasesActual: p.leasesActual,
         notes: p.notes,
         weeks: (p.weeks||[]).map((w,i)=>({
           weekNumber: w.weekNumber || (i+1),
@@ -817,7 +871,31 @@
       };
     }
 
-    // Quick-pick presets and helpers
+    // Key dates editor
+    function renderKeyDatesEditor(){
+      const wrap = document.getElementById('keyDatesWrap'); if (!wrap) return;
+      const list = Array.isArray(wizardData.keyDates) ? wizardData.keyDates : [];
+      wrap.innerHTML = list.length ? list.map((k,i)=> keyDateRowHtml(k,i)).join('') : '<div class="mini muted">No key dates yet</div>';
+    }
+    function keyDateRowHtml(k, i){
+      return `<div style="display:flex;gap:8px;align-items:end">
+        <div style="flex:2"><label class="mini muted">Label</label><input id="kd_lbl_${i}" type="text" value="${escapeAttr(k.label||'')}" /></div>
+        <div style="flex:1"><label class="mini muted">Date</label><input id="kd_dt_${i}" type="date" value="${(k.date||'').slice(0,10)}" /></div>
+        <div style="flex:0 0 auto"><button class="secondary" onclick="(function(){ removeKeyDate(${i}); })()">Remove</button></div>
+      </div>`;
+    }
+    function addKeyDate(){
+      if (!Array.isArray(wizardData.keyDates)) wizardData.keyDates = [];
+      const lbl = document.getElementById('kd_label'); const dt = document.getElementById('kd_date');
+      const label = (lbl?.value||'').trim(); const date = dt?.value||'';
+      if (!label || !date){ alert('Enter label and date'); return; }
+      wizardData.keyDates.push({ label, date });
+      if (lbl) lbl.value = ''; if (dt) dt.value = '';
+      renderKeyDatesEditor();
+    }
+    function removeKeyDate(i){ if (!Array.isArray(wizardData.keyDates)) return; wizardData.keyDates.splice(i,1); renderKeyDatesEditor(); }
+
+    // Quick-pick presets and helpers (legacy not used by UI)
     const GOAL_PRESETS_30 = [
       { id:'launch', label:'Launch/Transition Sprint', text:'Launch plan: establish consistent social cadence, kick off PPC, quick wins on reputation, and execute 2-3 resident+prospect events per week to drive tours and apps.' },
       { id:'assets', label:'Asset Development + Digital', text:'Capture new photos/video/UGC, refresh virtual tours, stand up always-on PPC/social, and coordinate quick-turn giveaways.' },
@@ -884,14 +962,6 @@
         const opt = Array.from(termSel.options).find(o=>o.value);
         if (opt){ termSel.value = opt.value; els.w_term.value = opt.value; wizardData.termLabel = opt.value; }
       }
-      refreshNameSuggestions();
-      // Default Suggested Name if empty
-      const nameSel = document.getElementById('w_name_quick');
-      if (nameSel && !els.w_name.value){
-        const optN = Array.from(nameSel.options).find(o=>o.value);
-        if (optN){ nameSel.value = optN.value; els.w_name.value = optN.value; wizardData.name = optN.value; }
-      }
-      populateStep1PresetSelects();
       bindQuickSelectHandlers();
     }
     function populateQuickTerm(){
@@ -928,12 +998,7 @@
     function fillSelect(id, arr){ const el = document.getElementById(id); if (!el) return; el.innerHTML = '<option value="">-- Select --</option>' + arr.map(p=>`<option value="${p.id}">${p.label}</option>`).join(''); }
 
     function bindQuickSelectHandlers(){
-      const tsel = document.getElementById('w_term_quick'); if (tsel){ tsel.onchange = ()=>{ if (tsel.value){ els.w_term.value = tsel.value; wizardData.termLabel = tsel.value; refreshNameSuggestions(); } } }
-      const nsel = document.getElementById('w_name_quick'); if (nsel){ nsel.onchange = ()=>{ if (nsel.value){ els.w_name.value = nsel.value; wizardData.name = nsel.value; } } }
-      const gsel = document.getElementById('w_goals_quick'); if (gsel){ gsel.onchange = ()=> applyPresetToTextarea(gsel, els.w_goals, (wizardData.planType==='60_day'?GOAL_PRESETS_60:GOAL_PRESETS_30)); }
-      const asel = document.getElementById('w_targets_quick'); if (asel){ asel.onchange = ()=> applyPresetToTextarea(asel, els.w_targets, AUDIENCE_PRESETS); }
-      const ksel = document.getElementById('w_keydates_quick'); if (ksel){ ksel.onchange = ()=> applyPresetToTextarea(ksel, els.w_keydates, KEYDATE_PRESETS); }
-      const osel = document.getElementById('w_ongoing_quick'); if (osel){ osel.onchange = ()=> applyPresetToTextarea(osel, els.w_ongoing, ONGOING_PRESETS); }
+      const tsel = document.getElementById('w_term_quick'); if (tsel){ tsel.onchange = ()=>{ if (tsel.value){ els.w_term.value = tsel.value; wizardData.termLabel = tsel.value; } } }
     }
     function applyPresetToTextarea(selEl, ta, presets){
       const id = selEl.value; if (!id) return; const p = presets.find(x=>x.id===id); if (!p) return;

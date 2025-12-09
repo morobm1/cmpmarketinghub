@@ -88,12 +88,21 @@ function normalizePlan(body, { forUpdate=false } = {}){
   const termLabel = String(body.termLabel||'').trim();
   const primaryGoals = String(body.primaryGoals||'').trim();
   const targetAudiences = String(body.targetAudiences||'').trim();
-  const keyDates = String(body.keyDates||'').trim();
-  const ongoingTasks = String(body.ongoingTasks||'').trim();
+  const keyDates = Array.isArray(body.keyDates)
+    ? (body.keyDates||[]).map(k => ({ label: String(k?.label||'').trim(), date: k?.date ? toISO(k.date) : '' }))
+    : String(body.keyDates||'').trim();
+  const keyTasks = String(body.keyTasks||'').trim();
+  const ongoingTasks = String(body.ongoingTasks||body.keyTasks||'').trim();
+  const preleaseStart = Number.isFinite(+body.preleaseStart) ? +body.preleaseStart : null;
+  const preleaseEnd = Number.isFinite(+body.preleaseEnd) ? +body.preleaseEnd : null;
+  const applicationsGoal = Number.isFinite(+body.applicationsGoal) ? +body.applicationsGoal : null;
+  const applicationsActual = Number.isFinite(+body.applicationsActual) ? +body.applicationsActual : null;
+  const leasesGoal = Number.isFinite(+body.leasesGoal) ? +body.leasesGoal : null;
+  const leasesActual = Number.isFinite(+body.leasesActual) ? +body.leasesActual : null;
   const notes = String(body.notes||'').trim();
   let weeks = Array.isArray(body.weeks) ? body.weeks.map(normalizeWeek).filter(Boolean) : [];
   if (!weeks.length && startDate && endDate){ weeks = autoGenerateWeeks(planType, startDate, endDate); }
-  const out = { name, planType, termLabel, startDate, endDate, primaryGoals, targetAudiences, keyDates, ongoingTasks, notes, weeks };
+  const out = { name, planType, termLabel, startDate, endDate, primaryGoals, targetAudiences, keyDates, keyTasks, ongoingTasks, preleaseStart, preleaseEnd, applicationsGoal, applicationsActual, leasesGoal, leasesActual, notes, weeks };
   if (forUpdate){ return out; }
   return out;
 }
