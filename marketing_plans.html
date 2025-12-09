@@ -104,6 +104,20 @@
     .sidebar .nav-tab.active{ background:#52d5ff; border-color:#52d5ff; color:#0b1b24; font-weight:700 }
     .content-pane{ min-width:0 }
   </style>
+<style>
+    /* Weekly sub-accordions and read-only collapsibles */
+    .wk-sub .wk-sub-body{ display:block }
+    .wk-sub.collapsed .wk-sub-body{ display:none }
+    .wk-sub-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; cursor:pointer; padding:6px 8px; border:1px dashed var(--border); border-radius:8px; background:#fdfdfd; margin-top:8px }
+    .wk-sub-head .caret{ display:inline-block; transform: rotate(0deg); transition: transform .15s ease }
+    .wk-sub.collapsed .wk-sub-head .caret{ transform: rotate(-90deg) }
+
+    .ro-acc .ro-body{ display:block }
+    .ro-acc.collapsed .ro-body{ display:none }
+    .ro-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; cursor:pointer; padding:6px 8px; border:1px solid var(--border); border-radius:8px; background:#f9fafb; margin-top:6px }
+    .ro-head .caret{ display:inline-block; transform: rotate(0deg); transition: transform .15s ease }
+    .ro-acc.collapsed .ro-head .caret{ transform: rotate(-90deg) }
+  </style>
 </head>
 <body>
   <div id="bootLoader" style="position:fixed;inset:0;background:#ffffff;display:flex;align-items:center;justify-content:center;z-index:100;color:#111827;font-family:Roboto,Arial,sans-serif">
@@ -501,6 +515,7 @@
           <div style="flex:0 0 auto; display:flex; gap:8px">
             <button class="secondary" onclick="(function(){ openPlanModal(${JSON.stringify({mode:'edit'}).replace(/"/g,'&quot;')}, '${plan._id?plan._id:plan.id}'); })()">Edit Plan</button>
             <button class="secondary" onclick="(function(){ duplicatePlan('${plan._id?plan._id:plan.id}'); })()">Duplicate</button>
+            <button class="warn" onclick="(function(){ deletePlan('${plan._id?plan._id:plan.id}'); })()">Delete</button>
           </div>
         </div>
       `;
@@ -521,6 +536,8 @@
     function weekReadOnlyHtml(w){
       const pct = taskCompletionPct(w.tasks||[]);
       const header = `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><div style="font-weight:800">${escapeHtml(w.weekLabel||`Week ${w.weekNumber||''}`)}</div><div class="mini muted">${escapeHtml((w.dateRangeStart||'') + (w.dateRangeEnd?(' – '+w.dateRangeEnd):''))}</div><div class="mini" style="margin-left:auto">${pct != null ? (pct+"% complete") : ''}</div></div>`;
+      const roSec = (label, val) => `<div class="ro-acc collapsed"><div class="ro-head" onclick="this.parentElement.classList.toggle('collapsed')"><div style=\"display:flex;align-items:center;gap:8px\"><span class=\"caret\">▶</span><strong>${label}</strong></div></div><div class="ro-body" style="border:1px solid var(--border);border-radius:8px;padding:8px;margin-top:6px">${val?nl2br(escapeHtml(val)):'<span class=\'muted\'>-</span>'}</div></div>`;
+      const details = roSec('Leasing Focus', w.leasingFocus) + roSec('Community Outreach / Events', w.communityOutreach) + roSec('Social & Digital', w.socialDigital) + roSec('Weekly Task Summary', w.weeklyTaskSummary);
       const acts = (w.activities||[]).map(a => {
         const t = escapeHtml(a.type||'');
         const title = escapeHtml(a.title||'');
@@ -537,6 +554,7 @@
       </div>` : '';
       return `<div style="border:1px solid var(--border);border-radius:10px;padding:10px">${header}
         <div style="margin-top:6px">${acts || '<span class=\'muted\'>No activities</span>'}</div>
+        <div style="margin-top:8px">${details}</div>
         ${tasks}
       </div>`;
     }
@@ -563,6 +581,16 @@
         renderPlansTable();
         if (newId) openPlanView(newId);
       }catch(e){ alert('Duplicate failed: '+e.message); }
+    }
+
+    async function deletePlan(id){
+      if (!confirm('Delete this plan? This cannot be undone.')) return;
+      try{
+        await apiFetch('/marketing-plans', { method:'DELETE', body: JSON.stringify({ id }) });
+        await fetchPlans();
+        renderPlansTable();
+        hidePlanView();
+      }catch(e){ alert('Delete failed: '+e.message); }
     }
 
     // Wizard
@@ -738,6 +766,20 @@
                 <input type="date" id="wk_${idx}_e" value="${(w.dateRangeEnd||'').slice(0,10)}" />
               </div>
             </div>
+            <div class="wk-sub collapsed" id="wk_${idx}_details">
+              <div class="wk-sub-head" onclick="(function(){ document.getElementById('wk_${idx}_details')?.classList.toggle('collapsed'); })()">
+                <div style="display:flex;align-items:center;gap:8px"><span class="caret">▶</span><strong>Weekly Details</strong></div>
+                <div class="mini muted">Leasing Focus • Community Outreach • Social & Digital • Summary</div>
+              </div>
+              <div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:8px">
+                <div class="grid-cols">
+                  <div><label>Leasing Focus</label><textarea id="wk_${idx}_lease">${escapeHtml(w.leasingFocus||'')}</textarea></div>
+                  <div><label>Community Outreach / Resident Events</label><textarea id="wk_${idx}_comm">${escapeHtml(w.communityOutreach||'')}</textarea></div>
+                  <div><label>Social Media & Digital Marketing</label><textarea id="wk_${idx}_social">${escapeHtml(w.socialDigital||'')}</textarea></div>
+                  <div><label>Weekly Task Summary / Goals</label><textarea id="wk_${idx}_sum">${escapeHtml(w.weeklyTaskSummary||'')}</textarea></div>
+                </div>
+              </div>
+            </div>
             <div style="margin-top:8px">
               <div class="mini muted" style="margin-bottom:6px">Activities</div>
               <div id="wk_${idx}_acts" style="display:flex;flex-direction:column;gap:6px">${(w.activities||[]).map((a,ai)=> activityEditorRowHtml(idx, ai, a)).join('')}</div>
@@ -780,6 +822,11 @@
       g(`wk_${idx}_label`).oninput = (e)=> w.weekLabel = e.target.value;
       g(`wk_${idx}_s`).onchange = (e)=> w.dateRangeStart = e.target.value;
       g(`wk_${idx}_e`).onchange = (e)=> w.dateRangeEnd = e.target.value;
+      // bind weekly detail textareas
+      const lease = g(`wk_${idx}_lease`); if (lease) lease.oninput = (e)=> w.leasingFocus = e.target.value;
+      const comm = g(`wk_${idx}_comm`); if (comm) comm.oninput = (e)=> w.communityOutreach = e.target.value;
+      const social = g(`wk_${idx}_social`); if (social) social.oninput = (e)=> w.socialDigital = e.target.value;
+      const sum = g(`wk_${idx}_sum`); if (sum) sum.oninput = (e)=> w.weeklyTaskSummary = e.target.value;
       // bind tasks
       const tasksWrap = g(`wk_${idx}_tasks`);
       if (tasksWrap){ tasksWrap.querySelectorAll('[data-ti]').forEach(row => bindTaskEditor(idx, parseInt(row.getAttribute('data-ti'),10)||0)); }
