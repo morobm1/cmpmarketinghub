@@ -1,0 +1,762 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Marketing Plans</title>
+  <link rel="preconnect" href="https://use.typekit.net" crossorigin>
+  <link rel="preconnect" href="https://p.typekit.net" crossorigin>
+  <link rel="stylesheet" href="https://use.typekit.net/hqv8hwr.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <meta name="description" content="Create, edit, and track 30 & 60 day marketing plans by property." />
+  <style>
+    :root{
+      --brand-primary:#446472;
+      --brand-accent:#ffb732;
+      --brand-accent-2:#52d5ff;
+      --brand-gray:#929497;
+      --page-bg:#e5e7eb;
+
+      --bg:#ffffff;
+      --panel:#ffffff;
+      --muted:#ffffff;
+      --text:#1f2937;
+      --subtext:#6b7280;
+      --accent:var(--brand-accent-2);
+      --accent-2:var(--brand-accent);
+      --good:#446472;
+      --warn:#ffb732;
+      --bad:#ef4444;
+      --border:#e5e7eb;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{ margin:0; font-family:'Open Sans', Arial, sans-serif; background:var(--page-bg); color:var(--text) }
+    header{ background:#ffffff; border-bottom:1px solid var(--border); box-shadow:0 2px 6px rgba(0,0,0,0.04); padding:16px 18px; display:flex; align-items:center; gap:14px; flex-wrap:wrap }
+    .brand{display:flex;align-items:center;gap:10px}
+    .brand .logo-img{height:32px;width:auto;display:block}
+    .brand .title{color:#ffb732; font-family: zooja-pro, Arial, sans-serif; font-weight: 400; font-size: clamp(36px, 5vw, 64px); line-height: 1.05}
+
+    .pill{display:flex;align-items:center;gap:8px;border:1px solid var(--border); background:#ffffff; border-radius:999px; padding:6px 10px; font-size:12px; color:#374151}
+    select,input,textarea,button{ width:100%; padding:10px 12px; border-radius:10px; border:1px solid #d1d5db; background:#ffffff; color:var(--text); font-size:14px }
+    label{font-size:12px; color:#374151; display:block; margin-bottom:6px}
+    button{ cursor:pointer; background:#446472; color:#ffffff; border:1px solid #3b5561; font-weight:800 }
+    button.secondary{ background:#ffffff; color:#111827; border:1px solid #d1d5db; font-weight:700 }
+    button.warn{ background:#ffb732; color:#1f1300; border-color:#ffb732 }
+    button.good{ background:#52d5ff; color:#0b1b24; border-color:#52d5ff }
+
+    .nav-bar{ background:#ffffff; border-bottom:1px solid var(--border); box-shadow:0 1px 3px rgba(0,0,0,0.06) }
+    .nav-bar .nav-wrap{ max-width:1200px; margin:0 auto; padding:8px 16px; display:flex; gap:8px; flex-wrap:wrap }
+    .nav-tab{ display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border:1px solid var(--border); border-radius:999px; color:#374151; text-decoration:none; background:#ffffff; transition: all .15s ease }
+    .nav-tab:hover{ background:#f3f4f6 }
+    .nav-tab.active{ background:#52d5ff; border-color:#52d5ff; color:#0b1b24; font-weight:700 }
+
+    .container{ padding:16px; max-width:1200px; margin: 0 auto; display:grid; grid-template-columns: 1fr; gap:16px }
+    .card{ background:#ffffff; border:1px solid var(--border); border-radius:14px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04) }
+    .card h3{ margin:0; padding:12px 14px 0 14px; font-size:14px; color:#6b7280; font-weight:700 }
+    .card .content{ padding:12px 14px 14px 14px }
+
+    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap }
+    .row > *{ flex:1 }
+
+    .toolbar{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+    .muted{ color:#6b7280 }
+    .mini{ font-size:11px; color:#6b7280 }
+    .badge{ display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; background:#f3f4f6; color:#111827; border:1px solid var(--border) }
+
+    table{ width:100%; border-collapse:separate; border-spacing:0 }
+    thead th{ position:sticky; top:0; background:#ffffff; z-index:1; color:#6b7280; font-weight:700; font-size:12px; text-align:left; padding:10px; border-bottom:1px solid var(--border) }
+    tbody td{ padding:10px; border-bottom:1px solid var(--border); font-size:13px }
+    tbody tr:hover{ background:#f9fafb; cursor:pointer }
+
+    /* Modal */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50}
+    .modal{background:#ffffff;border:1px solid var(--border);border-radius:12px;max-width:920px;width:96%;padding:14px}
+    .modal h3{margin:0 0 10px 0;color:#111827;font-size:16px}
+    .modal .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:12px}
+
+    .section-title{ font-weight:800; color:#111827; margin:8px 0 10px }
+    .section-sub{ color:#6b7280; font-size:12px; margin-top:-6px; margin-bottom:8px }
+
+    .help{ color:#6b7280; font-size:12px }
+    .grid-cols{ display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:10px }
+
+    .footer{ padding:12px 18px; color:#6b7280; font-size:12px }
+  </style>
+</head>
+<body>
+  <div id="bootLoader" style="position:fixed;inset:0;background:#ffffff;display:flex;align-items:center;justify-content:center;z-index:100;color:#111827;font-family:Roboto,Arial,sans-serif">
+    <div style="display:flex;flex-direction:column;gap:6px;align-items:center">
+      <div style="font-weight:800">Marketing Hub</div>
+      <div class="mini" style="color:#6b7280">Loading…</div>
+    </div>
+  </div>
+  <div id="loginView" style="min-height:100vh;display:none;align-items:center;justify-content:center;padding:20px">
+    <div class="card" style="max-width:420px;width:100%">
+      <h3>Login</h3>
+      <div class="content">
+        <div class="row"><div><label for="loginUsername">Username</label><input id="loginUsername" type="text" autocomplete="username" /></div></div>
+        <div class="row"><div><label for="loginPassword">Password</label><input id="loginPassword" type="password" autocomplete="current-password" /></div></div>
+        <div class="row"><label class="mini" style="display:flex;align-items:center;gap:6px;user-select:none"><input id="togglePw" type="checkbox" /> Show password</label></div>
+        <div class="row"><button id="loginBtn">Sign In</button></div>
+        <div id="loginError" class="mini" style="color:#f87171; display:none">Invalid credentials</div>
+      </div>
+    </div>
+  </div>
+
+  <header id="appHeader" style="display:none">
+    <div class="brand"><img src="logo-main.svg" class="logo-img" alt="Capstone" /><div class="title">Marketing Hub</div></div>
+    <div class="pill" style="display:flex;align-items:center;gap:8px">
+      <label for="propertySelect" style="font-size:12px;color:#6b7280">Property</label>
+      <select id="propertySelect" style="min-width:220px"></select>
+      <button id="logoutBtn" class="secondary" style="padding:6px 10px">Logout</button>
+      <button id="adminPageBtn" class="secondary" style="padding:6px 10px; display:none">Admin</button>
+    </div>
+    <div class="mini">Capstone Management Partners • Marketing Plans</div>
+  </header>
+  <nav id="mainNav" class="nav-bar">
+    <div class="nav-wrap">
+      <a href="mmp_calendar_app.html" class="nav-tab" data-tab="calendar">Marketing Calendar</a>
+      <a href="marketing_plans.html" class="nav-tab" data-tab="plans">Marketing Plans</a>
+      <a href="marketing_contacts.html" class="nav-tab" data-tab="contacts">Marketing Contacts</a>
+      <a href="promo_order_tracker.html" class="nav-tab" data-tab="promo">Promo Order Tracker</a>
+      <a href="renewal_campaign.html" class="nav-tab" data-tab="renewal">Renewal Campaign</a>
+      <a href="velocity_tracker.html" class="nav-tab" data-tab="velocity">Velocity Tracker</a>
+      <a href="social_media_audit.html" class="nav-tab" data-tab="social">Social Media Audit</a>
+    </div>
+  </nav>
+
+  <div id="appContainer" class="container" style="display:none">
+    <section class="card">
+      <h3>Marketing Plans</h3>
+      <div class="content">
+        <div class="toolbar" style="margin-bottom:8px">
+          <button id="newPlanBtn" class="good" style="flex:0 0 auto">New Plan</button>
+          <div style="flex:1"></div>
+          <div style="display:flex;gap:8px;align-items:flex-end">
+            <div>
+              <label for="filterType">Plan Type</label>
+              <select id="filterType" style="min-width:140px">
+                <option value="all">All</option>
+                <option value="30_day">30 Day</option>
+                <option value="60_day">60 Day</option>
+              </select>
+            </div>
+            <div>
+              <label for="filterTerm">Term</label>
+              <input id="filterTerm" type="text" placeholder="e.g., Fall 25" />
+            </div>
+          </div>
+        </div>
+
+        <div id="plansTableWrap" style="border:1px solid var(--border); border-radius:10px; overflow:auto; max-height:60vh">
+          <table>
+            <thead>
+              <tr>
+                <th>Plan Name</th>
+                <th>Type</th>
+                <th>Term</th>
+                <th>Start – End</th>
+                <th>Created By</th>
+                <th>Last Updated</th>
+              </tr>
+            </thead>
+            <tbody id="plansTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="planViewCard" class="card" style="display:none">
+      <h3>Plan</h3>
+      <div class="content" id="planView"></div>
+    </section>
+
+    <div class="footer">Marketing Hub • Build 30 & 60 day plans by property.</div>
+  </div>
+
+  <!-- New/Edit Plan Modal -->
+  <div id="planModal" class="modal-backdrop">
+    <div class="modal">
+      <h3 id="planModalTitle">New Plan</h3>
+      <div id="planWizard">
+        <div id="step1">
+          <div class="section-title">Step 1 – Basic Info</div>
+          <div class="section-sub">Set plan basics. You can edit details later.</div>
+          <div class="grid-cols">
+            <div>
+              <label>Plan Type</label>
+              <div style="display:flex;gap:10px">
+                <label style="display:flex;align-items:center;gap:6px;user-select:none"><input type="radio" name="w_planType" value="30_day" checked /> 30 Day</label>
+                <label style="display:flex;align-items:center;gap:6px;user-select:none"><input type="radio" name="w_planType" value="60_day" /> 60 Day</label>
+              </div>
+            </div>
+            <div>
+              <label for="w_name">Plan Name</label>
+              <input id="w_name" type="text" placeholder="e.g., Fall 2025 60 Day POA" />
+            </div>
+            <div>
+              <label for="w_term">Term Label (optional)</label>
+              <input id="w_term" type="text" placeholder="e.g., Fall 25" />
+            </div>
+            <div>
+              <label for="w_start">Start Date</label>
+              <input id="w_start" type="date" />
+            </div>
+            <div>
+              <label for="w_end">End Date</label>
+              <input id="w_end" type="date" />
+              <div class="help">Auto-suggests based on plan type; editable.</div>
+            </div>
+          </div>
+          <div class="grid-cols" style="margin-top:10px">
+            <div>
+              <label for="w_goals">Primary Goals</label>
+              <textarea id="w_goals" placeholder="High-level outcomes"></textarea>
+            </div>
+            <div>
+              <label for="w_targets">Target Audiences</label>
+              <textarea id="w_targets" placeholder="Undergrads, grads, faculty, local professionals"></textarea>
+            </div>
+            <div>
+              <label for="w_keydates">Key Dates</label>
+              <textarea id="w_keydates" placeholder="Campus calendar, move-in, breaks" ></textarea>
+            </div>
+            <div>
+              <label for="w_ongoing">Ongoing Tasks</label>
+              <textarea id="w_ongoing" placeholder="Weekly email blasts, reputation mgmt, PPC/social"></textarea>
+            </div>
+            <div>
+              <label for="w_notes">Notes</label>
+              <textarea id="w_notes" placeholder="Assumptions / constraints"></textarea>
+            </div>
+          </div>
+        </div>
+        <div id="step2" style="display:none">
+          <div class="section-title">Step 2 – Weekly Plan Builder</div>
+          <div class="section-sub">Auto-generated weeks based on plan type; customize as needed.</div>
+          <div id="weeksWrap"></div>
+        </div>
+        <div id="step3" style="display:none">
+          <div class="section-title">Step 3 – Review & Save</div>
+          <div id="reviewWrap"></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="wizardBack" class="secondary">Back</button>
+        <button id="wizardNext" class="good">Next</button>
+        <button id="wizardSave" class="good" style="display:none">Save Plan</button>
+        <button id="wizardCancel" class="secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State
+    let SESSION_ACTIVE = false;
+    let currentUser = null;
+    let properties = [];
+    let currentProperty = '';
+    let plans = [];
+    let editingPlanId = null;
+
+    const els = {
+      bootLoader: document.getElementById('bootLoader'),
+      loginView: document.getElementById('loginView'),
+      loginUsername: document.getElementById('loginUsername'),
+      loginPassword: document.getElementById('loginPassword'),
+      togglePw: document.getElementById('togglePw'),
+      loginBtn: document.getElementById('loginBtn'),
+      loginError: document.getElementById('loginError'),
+
+      appHeader: document.getElementById('appHeader'),
+      appContainer: document.getElementById('appContainer'),
+      propertySelect: document.getElementById('propertySelect'),
+      logoutBtn: document.getElementById('logoutBtn'),
+      adminPageBtn: document.getElementById('adminPageBtn'),
+
+      newPlanBtn: document.getElementById('newPlanBtn'),
+      filterType: document.getElementById('filterType'),
+      filterTerm: document.getElementById('filterTerm'),
+      plansTbody: document.getElementById('plansTbody'),
+
+      planViewCard: document.getElementById('planViewCard'),
+      planView: document.getElementById('planView'),
+
+      planModal: document.getElementById('planModal'),
+      planModalTitle: document.getElementById('planModalTitle'),
+      wizardBack: document.getElementById('wizardBack'),
+      wizardNext: document.getElementById('wizardNext'),
+      wizardSave: document.getElementById('wizardSave'),
+      wizardCancel: document.getElementById('wizardCancel'),
+
+      step1: document.getElementById('step1'),
+      step2: document.getElementById('step2'),
+      step3: document.getElementById('step3'),
+      w_name: document.getElementById('w_name'),
+      w_term: document.getElementById('w_term'),
+      w_start: document.getElementById('w_start'),
+      w_end: document.getElementById('w_end'),
+      w_goals: document.getElementById('w_goals'),
+      w_targets: document.getElementById('w_targets'),
+      w_keydates: document.getElementById('w_keydates'),
+      w_ongoing: document.getElementById('w_ongoing'),
+      w_notes: document.getElementById('w_notes'),
+      weeksWrap: document.getElementById('weeksWrap'),
+      reviewWrap: document.getElementById('reviewWrap'),
+    };
+
+    // Activate current nav tab
+    (function(){
+      const nav = document.getElementById('mainNav');
+      if (!nav) return;
+      const path = (location.pathname || '').toLowerCase();
+      nav.querySelectorAll('.nav-tab').forEach(a => {
+        const href = (a.getAttribute('href') || '').toLowerCase();
+        if (href && (path.endsWith(href) || path.endsWith('/' + href))) a.classList.add('active');
+      });
+    })();
+
+    // Login helpers
+    if (els.togglePw){ els.togglePw.addEventListener('change', ()=>{ els.loginPassword.type = els.togglePw.checked ? 'text' : 'password'; }); }
+    if (els.loginBtn){ els.loginBtn.addEventListener('click', doInlineLogin); }
+    document.addEventListener('keydown', (e)=>{ if (e.key==='Enter' && (document.activeElement===els.loginUsername || document.activeElement===els.loginPassword)){ doInlineLogin(); } });
+
+    async function doInlineLogin(){
+      const u = (els.loginUsername?.value||'').trim();
+      const p = els.loginPassword?.value||'';
+      if (!u || !p){ if (els.loginError){ els.loginError.textContent='Enter username and password'; els.loginError.style.display=''; } return; }
+      try{
+        if (els.loginError) els.loginError.style.display='none';
+        const res = await fetch('/api/auth-login', { method:'POST', headers:{ 'Content-Type':'application/json', 'Accept':'application/json' }, credentials:'include', body: JSON.stringify({ username:u, password:p }) });
+        if (!res.ok){ if (els.loginError){ els.loginError.textContent = (res.status===401||res.status===400)?'Incorrect username or password':'Login failed'; els.loginError.style.display=''; } return; }
+        await initAuth();
+      }catch(e){ if (els.loginError){ els.loginError.textContent='Network error. Try again.'; els.loginError.style.display=''; } }
+    }
+
+    // API
+    async function apiFetch(path, opts={}){
+      const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers||{});
+      const res = await fetch('/api' + path, Object.assign({}, opts, { headers, credentials: 'include' }));
+      if (!res.ok){ const text = await res.text(); throw new Error(text || ('HTTP '+res.status)); }
+      return res;
+    }
+
+    function showApp(){ if (els.appHeader) els.appHeader.style.display=''; if (els.appContainer) els.appContainer.style.display=''; if (els.loginView) els.loginView.style.display='none'; const bl=document.getElementById('bootLoader'); if (bl) bl.style.display='none'; }
+    function showLogin(){ const bl=document.getElementById('bootLoader'); if (bl) bl.style.display='none'; if (els.appHeader) els.appHeader.style.display='none'; if (els.appContainer) els.appContainer.style.display='none'; if (els.loginView) els.loginView.style.display='flex'; }
+
+    async function doLogout(){ try{ await fetch('/api/auth-logout', { method:'POST' }); }catch(e){} location.href = 'index.html'; }
+
+    function bindHeaderHandlers(){ if (els.logoutBtn) els.logoutBtn.onclick = () => doLogout(); if (els.adminPageBtn){ els.adminPageBtn.style.display = currentUser && currentUser.role==='admin' ? '' : 'none'; els.adminPageBtn.onclick = () => { location.href = 'mmp_admin.html'; }; } }
+
+    async function initAuth(){
+      try{ const meRes = await fetch('/api/me', { credentials: 'include' }); if (meRes.ok){ const me = await meRes.json(); currentUser = { username: me.username, role: me.role, properties: me.properties }; SESSION_ACTIVE = true; showApp(); bindHeaderHandlers(); await initializeAppForUser(); return true; } }catch(e){}
+      showLogin(); return false;
+    }
+
+    async function loadProperties(){
+      try{ const res = await fetch('/api/properties'); const list = await res.json(); properties = (list||[]).map(x => x.name).filter(Boolean); if (!properties.length) throw new Error('empty'); }
+      catch(e){ properties = []; }
+    }
+
+    function renderPropertyOptions(){ if (!els.propertySelect) return; els.propertySelect.innerHTML = properties.map(p => `<option value="${p.replace(/"/g,'&quot;')}">${p}</option>`).join(''); }
+
+    async function initializeAppForUser(){
+      await loadProperties();
+      renderPropertyOptions();
+      if (properties.length){ els.propertySelect.value = properties[0]; setActiveProperty(properties[0]); }
+      els.propertySelect.addEventListener('change', () => setActiveProperty(els.propertySelect.value));
+      els.filterType.addEventListener('change', renderPlansTable);
+      els.filterTerm.addEventListener('input', renderPlansTable);
+      els.newPlanBtn.addEventListener('click', () => openPlanModal());
+    }
+
+    async function setActiveProperty(prop){ currentProperty = prop; await fetchPlans(); renderPlansTable(); hidePlanView(); }
+
+    async function fetchPlans(){
+      if (!currentProperty || !SESSION_ACTIVE) { plans = []; return; }
+      const res = await apiFetch(`/marketing-plans?property=${encodeURIComponent(currentProperty)}`);
+      plans = await res.json();
+    }
+
+    function renderPlansTable(){
+      const tbody = els.plansTbody; tbody.innerHTML = '';
+      const type = els.filterType.value;
+      const term = (els.filterTerm.value||'').trim().toLowerCase();
+      const list = (plans||[]).filter(p => (type==='all' || p.planType===type) && (!term || String(p.termLabel||'').toLowerCase().includes(term)));
+      if (!list.length){ tbody.innerHTML = `<tr><td colspan="6" class="muted" style="padding:12px">No plans for this property.</td></tr>`; return; }
+      for (const p of list){
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(p.name||'')}</td>
+          <td>${p.planType==='60_day'?'60 Day':'30 Day'}</td>
+          <td>${escapeHtml(p.termLabel||'')}</td>
+          <td>${escapeHtml((p.startDate||'') + (p.endDate?(' – '+p.endDate):''))}</td>
+          <td>${escapeHtml(p.createdByUserId||'')}</td>
+          <td>${p.updatedAt ? formatDateTime(p.updatedAt) : ''}</td>
+        `;
+        tr.addEventListener('click', () => openPlanView(p.id));
+        tbody.appendChild(tr);
+      }
+    }
+
+    function hidePlanView(){ els.planViewCard.style.display = 'none'; els.planView.innerHTML = ''; }
+
+    async function openPlanView(id){
+      try{
+        const res = await apiFetch(`/marketing-plans?id=${encodeURIComponent(id)}`);
+        const plan = await res.json();
+        renderPlanView(plan);
+      }catch(e){ alert('Failed to load plan: '+e.message); }
+    }
+
+    function renderPlanView(plan){
+      const el = els.planView; els.planViewCard.style.display='';
+      function sec(title, body){ return `<div style="margin:10px 0"><div style="font-weight:800;color:#111827;margin:8px 0 6px">${title}</div><div>${body||'<span class=\'muted\'>-</span>'}</div></div>`; }
+      const hdr = `
+        <div class="row" style="align-items:flex-start">
+          <div style="flex:1">
+            <div class="mini muted">Property</div>
+            <div class="badge">${escapeHtml(plan.property||currentProperty||'-')}</div>
+          </div>
+          <div style="flex:2">
+            <div class="mini muted">Plan</div>
+            <div style="font-weight:800">${escapeHtml(plan.name||'')}</div>
+            <div class="mini">${plan.planType==='60_day'?'60 Day':'30 Day'}${plan.termLabel?(' • '+escapeHtml(plan.termLabel)) : ''} • ${escapeHtml((plan.startDate||'') + (plan.endDate?(' – '+plan.endDate):''))}</div>
+            <div class="mini muted">Created by ${escapeHtml(plan.createdByUserId||'')} • ${plan.createdAt?formatDateTime(plan.createdAt):''} • Updated ${plan.updatedAt?formatDateTime(plan.updatedAt):''}</div>
+          </div>
+          <div style="flex:0 0 auto; display:flex; gap:8px">
+            <button class="secondary" onclick="(function(){ openPlanModal(${JSON.stringify({mode:'edit'}).replace(/"/g,'&quot;')}, '${plan._id?plan._id:plan.id}'); })()">Edit Plan</button>
+            <button class="secondary" onclick="(function(){ duplicatePlan('${plan._id?plan._id:plan.id}'); })()">Duplicate</button>
+          </div>
+        </div>
+      `;
+      const body = `
+        ${sec('Primary Goals', nl2br(escapeHtml(plan.primaryGoals||'')))}
+        ${sec('Target Audiences', nl2br(escapeHtml(plan.targetAudiences||'')))}
+        ${sec('Key Dates', nl2br(escapeHtml(plan.keyDates||'')))}
+        ${sec('Ongoing Tasks', nl2br(escapeHtml(plan.ongoingTasks||'')))}
+        <div class="section-title" style="margin-top:12px">Weekly Breakdown</div>
+        <div style="display:flex; flex-direction:column; gap:10px">
+          ${(plan.weeks||[]).sort((a,b)=> (a.priority||a.weekNumber||0) - (b.priority||b.weekNumber||0)).map(w => weekReadOnlyHtml(w)).join('')}
+        </div>
+      `;
+      el.innerHTML = hdr + body;
+    }
+
+    function weekReadOnlyHtml(w){
+      const pct = taskCompletionPct(w.tasks||[]);
+      const header = `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><div style="font-weight:800">${escapeHtml(w.weekLabel||`Week ${w.weekNumber||''}`)}</div><div class="mini muted">${escapeHtml((w.dateRangeStart||'') + (w.dateRangeEnd?(' – '+w.dateRangeEnd):''))}</div><div class="mini" style="margin-left:auto">${pct != null ? (pct+"% complete") : ''}</div></div>`;
+      const sec = (label, val) => `<div><div class="mini muted">${label}</div><div>${val?nl2br(escapeHtml(val)): '<span class=\'muted\'>-</span>'}</div></div>`;
+      const tasks = (w.tasks||[]).length ? `<div style="margin-top:6px">
+        <div class="mini muted" style="margin-bottom:4px">Tasks</div>
+        <div style="display:flex;flex-direction:column;gap:4px">${w.tasks.map(t=> taskReadOnlyHtml(t)).join('')}</div>
+      </div>` : '';
+      return `<div style="border:1px solid var(--border);border-radius:10px;padding:10px">${header}
+        <div class="grid-cols" style="margin-top:8px">${sec('Leasing Focus', w.leasingFocus)}${sec('Community Outreach / Events', w.communityOutreach)}${sec('Social & Digital', w.socialDigital)}${sec('Weekly Task Summary', w.weeklyTaskSummary)}</div>
+        ${tasks}
+      </div>`;
+    }
+
+    function taskReadOnlyHtml(t){
+      const statusLabel = t.status==='done' ? 'Done' : (t.status==='in_progress' ? 'In Progress' : 'Not Started');
+      const statusColor = t.status==='done' ? '#16a34a' : (t.status==='in_progress' ? '#2563eb' : '#6b7280');
+      const due = t.dueDate ? ` • Due ${escapeHtml(t.dueDate)}` : '';
+      const ch = t.channel ? ` • ${escapeHtml(t.channel)}` : '';
+      return `<div style="display:flex;align-items:center;gap:8px; border:1px solid var(--border); border-radius:8px; padding:6px 8px">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${statusColor}"></span>
+        <div style="font-weight:700">${escapeHtml(t.title||'')}</div>
+        <div class="mini muted">${statusLabel}${ch}${due}</div>
+        <div class="mini">${escapeHtml(t.notes||'')}</div>
+      </div>`;
+    }
+
+    async function duplicatePlan(id){
+      if (!confirm('Duplicate this plan?')) return;
+      try{
+        const res = await apiFetch('/marketing-plans', { method:'POST', body: JSON.stringify({ action:'duplicate', id }) });
+        const { id: newId } = await res.json();
+        await fetchPlans();
+        renderPlansTable();
+        if (newId) openPlanView(newId);
+      }catch(e){ alert('Duplicate failed: '+e.message); }
+    }
+
+    // Wizard
+    let wizardStep = 1;
+    let wizardData = null;
+
+    function openPlanModal(opts={}, id=null){
+      editingPlanId = (opts && opts.mode==='edit') ? id : null;
+      wizardData = { planType: '30_day', name:'', termLabel:'', startDate:'', endDate:'', primaryGoals:'', targetAudiences:'', keyDates:'', ongoingTasks:'', notes:'', weeks:[] };
+      wizardStep = 1; renderWizard(); els.planModal.style.display='flex';
+      if (editingPlanId){ loadEditingPlan(editingPlanId); els.planModalTitle.textContent = 'Edit Plan'; } else { els.planModalTitle.textContent = 'New Plan'; }
+    }
+    function closePlanModal(){ els.planModal.style.display='none'; wizardData=null; editingPlanId=null; }
+
+    async function loadEditingPlan(id){
+      try{ const res = await apiFetch(`/marketing-plans?id=${encodeURIComponent(id)}`); const plan = await res.json(); wizardData = planToWizard(plan); renderWizard(); }
+      catch(e){ alert('Failed to load plan: '+e.message); }
+    }
+
+    function planToWizard(p){
+      return {
+        planType: p.planType || '30_day',
+        name: p.name || '',
+        termLabel: p.termLabel || '',
+        startDate: (p.startDate||'').slice(0,10),
+        endDate: (p.endDate||'').slice(0,10),
+        primaryGoals: p.primaryGoals||'',
+        targetAudiences: p.targetAudiences||'',
+        keyDates: p.keyDates||'',
+        ongoingTasks: p.ongoingTasks||'',
+        notes: p.notes||'',
+        weeks: Array.isArray(p.weeks) ? p.weeks.map(w => ({
+          weekNumber: w.weekNumber||0,
+          weekLabel: w.weekLabel||'',
+          dateRangeStart: (w.dateRangeStart||'').slice(0,10),
+          dateRangeEnd: (w.dateRangeEnd||'').slice(0,10),
+          leasingFocus: w.leasingFocus||'',
+          communityOutreach: w.communityOutreach||'',
+          socialDigital: w.socialDigital||'',
+          weeklyTaskSummary: w.weeklyTaskSummary||'',
+          priority: w.priority||w.weekNumber||0,
+          tasks: Array.isArray(w.tasks)? w.tasks.map(t=>({ id: t.id||rid(), title:t.title||'', channel:t.channel||'', dueDate:(t.dueDate||'').slice(0,10), status: t.status||'not_started', notes: t.notes||'' })) : []
+        })) : []
+      };
+    }
+
+    function renderWizard(){
+      els.step1.style.display = (wizardStep===1) ? '' : 'none';
+      els.step2.style.display = (wizardStep===2) ? '' : 'none';
+      els.step3.style.display = (wizardStep===3) ? '' : 'none';
+      els.wizardBack.style.display = wizardStep>1 ? '' : 'none';
+      els.wizardNext.style.display = wizardStep<3 ? '' : 'none';
+      els.wizardSave.style.display = wizardStep===3 ? '' : 'none';
+
+      // Step 1 bindings
+      const radios = document.querySelectorAll('input[name="w_planType"]');
+      radios.forEach(r => { r.checked = (r.value === wizardData.planType); r.onchange = () => { wizardData.planType = r.value; suggestEndDate(); } });
+      els.w_name.value = wizardData.name||''; els.w_name.oninput = () => wizardData.name = els.w_name.value;
+      els.w_term.value = wizardData.termLabel||''; els.w_term.oninput = () => wizardData.termLabel = els.w_term.value;
+      els.w_start.value = wizardData.startDate||''; els.w_start.onchange = () => { wizardData.startDate = els.w_start.value; suggestEndDate(); };
+      els.w_end.value = wizardData.endDate||''; els.w_end.onchange = () => wizardData.endDate = els.w_end.value;
+      els.w_goals.value = wizardData.primaryGoals||''; els.w_goals.oninput = () => wizardData.primaryGoals = els.w_goals.value;
+      els.w_targets.value = wizardData.targetAudiences||''; els.w_targets.oninput = () => wizardData.targetAudiences = els.w_targets.value;
+      els.w_keydates.value = wizardData.keyDates||''; els.w_keydates.oninput = () => wizardData.keyDates = els.w_keydates.value;
+      els.w_ongoing.value = wizardData.ongoingTasks||''; els.w_ongoing.oninput = () => wizardData.ongoingTasks = els.w_ongoing.value;
+      els.w_notes.value = wizardData.notes||''; els.w_notes.oninput = () => wizardData.notes = els.w_notes.value;
+
+      if (wizardStep === 2){ ensureWeeks(); renderWeeksEditor(); }
+      if (wizardStep === 3){ renderReview(); }
+    }
+
+    function suggestEndDate(){
+      if (!wizardData.startDate) return;
+      const days = wizardData.planType==='60_day' ? 59 : 29; // inclusive range
+      try{ const d = new Date(wizardData.startDate+'T00:00:00'); d.setDate(d.getDate()+days); const z=new Date(d.getTime()-d.getTimezoneOffset()*60000); wizardData.endDate = z.toISOString().slice(0,10); els.w_end.value = wizardData.endDate; }catch(e){}
+    }
+
+    function ensureWeeks(){
+      const needMin = wizardData.planType==='60_day' ? 8 : 4;
+      const needMax = wizardData.planType==='60_day' ? 9 : 5;
+      if (!wizardData.weeks || !wizardData.weeks.length){
+        const weeks = autoWeeks(wizardData.planType, wizardData.startDate, wizardData.endDate);
+        wizardData.weeks = weeks.map((w,i)=>Object.assign({}, w, { weekNumber:i+1, priority:i+1, tasks: [] }));
+      } else {
+        // re-label date ranges if missing
+        wizardData.weeks.forEach((w,i)=>{ if (!w.weekLabel){ w.weekLabel = `Week ${i+1} (${w.dateRangeStart||''} – ${w.dateRangeEnd||''})`; } if (!w.priority) w.priority = i+1; if (!w.weekNumber) w.weekNumber = i+1; if (!Array.isArray(w.tasks)) w.tasks = []; });
+      }
+      // clamp count to typical range if wildly off
+      if (wizardData.weeks.length < needMin){
+        while (wizardData.weeks.length < needMin){ const i = wizardData.weeks.length; wizardData.weeks.push({ weekNumber:i+1, weekLabel:`Week ${i+1}`, dateRangeStart:'', dateRangeEnd:'', leasingFocus:'', communityOutreach:'', socialDigital:'', weeklyTaskSummary:'', priority:i+1, tasks:[] }); }
+      }
+      if (wizardData.weeks.length > needMax){ wizardData.weeks = wizardData.weeks.slice(0, needMax); }
+    }
+
+    function autoWeeks(planType, start, end){
+      const s = (start||'').slice(0,10); const e = (end||'').slice(0,10);
+      if (!s || !e) return [];
+      const days = dateDiffDays(s, e) || (planType==='60_day'?60:30);
+      let count = Math.round(days/7);
+      if (planType==='60_day'){ count = Math.min(9, Math.max(8, count)); } else { count = Math.min(5, Math.max(4, count)); }
+      const out = []; let cur = s;
+      for (let i=1;i<=count;i++){
+        const endW = i===count ? e : addDaysISO(cur, 6);
+        out.push({ weekNumber:i, weekLabel:`Week ${i} (${cur} – ${endW})`, dateRangeStart: cur, dateRangeEnd: endW, leasingFocus:'', communityOutreach:'', socialDigital:'', weeklyTaskSummary:'', priority:i, tasks:[] });
+        cur = addDaysISO(endW, 1); if (cur > e) break;
+      }
+      return out;
+    }
+
+    function renderWeeksEditor(){
+      const wrap = els.weeksWrap; wrap.innerHTML='';
+      const list = wizardData.weeks || [];
+      wrap.innerHTML = list.map((w,idx)=> weekEditorHtml(w, idx)).join('');
+      // bind inputs
+      list.forEach((w, idx) => bindWeekEditor(idx));
+    }
+
+    function weekEditorHtml(w, idx){
+      const pct = taskCompletionPct(w.tasks||[]);
+      return `
+        <div style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:10px">
+          <div class="row" style="align-items:flex-end">
+            <div>
+              <label>Week Number</label>
+              <input type="number" id="wk_${idx}_num" value="${w.weekNumber||idx+1}" />
+            </div>
+            <div>
+              <label>Week Label</label>
+              <input type="text" id="wk_${idx}_label" value="${escapeAttr(w.weekLabel||`Week ${idx+1}`)}" />
+            </div>
+            <div>
+              <label>Start</label>
+              <input type="date" id="wk_${idx}_s" value="${(w.dateRangeStart||'').slice(0,10)}" />
+            </div>
+            <div>
+              <label>End</label>
+              <input type="date" id="wk_${idx}_e" value="${(w.dateRangeEnd||'').slice(0,10)}" />
+            </div>
+            <div style="flex:0 0 auto">
+              <div class="mini muted">${pct!=null? (pct+'% complete') : ''}</div>
+            </div>
+          </div>
+          <div class="grid-cols" style="margin-top:8px">
+            <div><label>Leasing Focus</label><textarea id="wk_${idx}_lease">${escapeHtml(w.leasingFocus||'')}</textarea></div>
+            <div><label>Community Outreach / Resident Events</label><textarea id="wk_${idx}_comm">${escapeHtml(w.communityOutreach||'')}</textarea></div>
+            <div><label>Social Media & Digital Marketing</label><textarea id="wk_${idx}_social">${escapeHtml(w.socialDigital||'')}</textarea></div>
+            <div><label>Weekly Task Summary / Goals</label><textarea id="wk_${idx}_sum">${escapeHtml(w.weeklyTaskSummary||'')}</textarea></div>
+          </div>
+          <div style="margin-top:8px">
+            <div class="mini muted" style="margin-bottom:6px">Tasks (optional)</div>
+            <div id="wk_${idx}_tasks" style="display:flex;flex-direction:column;gap:6px">${(w.tasks||[]).map((t,ti)=> taskEditorRowHtml(idx, ti, t)).join('')}</div>
+            <div class="row" style="margin-top:6px"><button class="secondary" style="flex:0 0 auto" onclick="(function(){ addTask(${idx}); })()">Add Task</button></div>
+          </div>
+        </div>
+      `;
+    }
+
+    function bindWeekEditor(idx){
+      const w = wizardData.weeks[idx]; if (!w) return;
+      const g = (id)=> document.getElementById(id);
+      g(`wk_${idx}_num`).oninput = (e)=> w.weekNumber = parseInt(e.target.value||'0',10)||0;
+      g(`wk_${idx}_label`).oninput = (e)=> w.weekLabel = e.target.value;
+      g(`wk_${idx}_s`).onchange = (e)=> w.dateRangeStart = e.target.value;
+      g(`wk_${idx}_e`).onchange = (e)=> w.dateRangeEnd = e.target.value;
+      g(`wk_${idx}_lease`).oninput = (e)=> w.leasingFocus = e.target.value;
+      g(`wk_${idx}_comm`).oninput = (e)=> w.communityOutreach = e.target.value;
+      g(`wk_${idx}_social`).oninput = (e)=> w.socialDigital = e.target.value;
+      g(`wk_${idx}_sum`).oninput = (e)=> w.weeklyTaskSummary = e.target.value;
+      // bind tasks
+      const tasksWrap = g(`wk_${idx}_tasks`);
+      if (tasksWrap){ tasksWrap.querySelectorAll('[data-ti]').forEach(row => bindTaskEditor(idx, parseInt(row.getAttribute('data-ti'),10)||0)); }
+    }
+
+    function taskEditorRowHtml(wi, ti, t){
+      const sel = (v, x)=> v===x? 'selected' : '';
+      return `
+        <div data-ti="${ti}" style="display:flex;gap:6px;align-items:flex-end;border:1px solid var(--border);border-radius:8px;padding:8px">
+          <div style="flex:2"><label>Title</label><input id="wk_${wi}_t_${ti}_title" type="text" value="${escapeAttr(t.title||'')}" /></div>
+          <div style="flex:1"><label>Channel</label><select id="wk_${wi}_t_${ti}_ch">
+            <option ${sel(t.channel,'Event')}>Event</option>
+            <option ${sel(t.channel,'On-Campus Outreach')}>On-Campus Outreach</option>
+            <option ${sel(t.channel,'Local Business')}>Local Business</option>
+            <option ${sel(t.channel,'Email')}>Email</option>
+            <option ${sel(t.channel,'Social Media')}>Social Media</option>
+            <option ${sel(t.channel,'Digital Ads')}>Digital Ads</option>
+            <option ${sel(t.channel,'Other')}>Other</option>
+          </select></div>
+          <div style="flex:1"><label>Due Date</label><input id="wk_${wi}_t_${ti}_due" type="date" value="${(t.dueDate||'').slice(0,10)}" /></div>
+          <div style="flex:1"><label>Status</label><select id="wk_${wi}_t_${ti}_st">
+            <option value="not_started" ${sel(t.status,'not_started')}>Not Started</option>
+            <option value="in_progress" ${sel(t.status,'in_progress')}>In Progress</option>
+            <option value="done" ${sel(t.status,'done')}>Done</option>
+          </select></div>
+          <div style="flex:2"><label>Notes</label><input id="wk_${wi}_t_${ti}_notes" type="text" value="${escapeAttr(t.notes||'')}" /></div>
+          <div style="flex:0 0 auto"><button class="secondary" onclick="(function(){ removeTask(${wi}, ${ti}); })()">Remove</button></div>
+        </div>
+      `;
+    }
+
+    function bindTaskEditor(wi, ti){
+      const t = (wizardData.weeks[wi].tasks||[])[ti]; if (!t) return;
+      const g = (id)=> document.getElementById(id);
+      g(`wk_${wi}_t_${ti}_title`).oninput = (e)=> t.title = e.target.value;
+      g(`wk_${wi}_t_${ti}_ch`).onchange = (e)=> t.channel = e.target.value;
+      g(`wk_${wi}_t_${ti}_due`).onchange = (e)=> t.dueDate = e.target.value;
+      g(`wk_${wi}_t_${ti}_st`).onchange = (e)=> t.status = e.target.value;
+      g(`wk_${wi}_t_${ti}_notes`).oninput = (e)=> t.notes = e.target.value;
+    }
+
+    function addTask(wi){ const w = wizardData.weeks[wi]; if (!w.tasks) w.tasks = []; w.tasks.push({ id: rid(), title:'', channel:'', dueDate:'', status:'not_started', notes:'' }); renderWeeksEditor(); }
+    function removeTask(wi, ti){ wizardData.weeks[wi].tasks.splice(ti,1); renderWeeksEditor(); }
+
+    function renderReview(){
+      const p = wizardData;
+      const hdr = `<div style="display:flex;align-items:center;gap:8px"><div style="font-weight:800">${escapeHtml(p.name||'')}</div><div class="mini">${p.planType==='60_day'?'60 Day':'30 Day'}${p.termLabel?(' • '+escapeHtml(p.termLabel)) : ''} • ${escapeHtml((p.startDate||'') + (p.endDate?(' – '+p.endDate):''))}</div></div>`;
+      const sec = (t, v) => `<div style="margin-top:6px"><div class="mini muted">${t}</div><div>${v?nl2br(escapeHtml(v)):'<span class=\'muted\'>-</span>'}</div></div>`;
+      const weeks = (p.weeks||[]).map(w=> weekReadOnlyHtml(w)).join('');
+      els.reviewWrap.innerHTML = hdr + sec('Primary Goals', p.primaryGoals) + sec('Target Audiences', p.targetAudiences) + sec('Key Dates', p.keyDates) + sec('Ongoing Tasks', p.ongoingTasks) + `<div class="section-title" style="margin-top:12px">Weekly Breakdown</div>` + weeks;
+    }
+
+    els.wizardBack.addEventListener('click', ()=>{ if (wizardStep>1){ wizardStep--; renderWizard(); } });
+    els.wizardNext.addEventListener('click', ()=>{
+      if (wizardStep===1){ if (!wizardData.name || !wizardData.startDate || !wizardData.endDate){ alert('Plan Name, Start, and End are required.'); return; } }
+      if (wizardStep<3){ wizardStep++; renderWizard(); }
+    });
+    els.wizardCancel.addEventListener('click', ()=> closePlanModal());
+    els.wizardSave.addEventListener('click', async ()=>{
+      try{
+        const payload = wizardToPayload(wizardData);
+        if (editingPlanId){ await apiFetch('/marketing-plans', { method:'PUT', body: JSON.stringify({ id: editingPlanId, property: currentProperty, ...payload }) }); }
+        else { const res = await apiFetch('/marketing-plans', { method:'POST', body: JSON.stringify({ property: currentProperty, ...payload }) }); const j = await res.json(); editingPlanId = j.id; }
+        await fetchPlans(); renderPlansTable(); closePlanModal(); if (editingPlanId){ openPlanView(editingPlanId); }
+      }catch(e){ alert('Save failed: '+e.message); }
+    });
+
+    function wizardToPayload(p){
+      return {
+        name: p.name,
+        planType: p.planType,
+        termLabel: p.termLabel,
+        startDate: p.startDate,
+        endDate: p.endDate,
+        primaryGoals: p.primaryGoals,
+        targetAudiences: p.targetAudiences,
+        keyDates: p.keyDates,
+        ongoingTasks: p.ongoingTasks,
+        notes: p.notes,
+        weeks: (p.weeks||[]).map((w,i)=>({
+          weekNumber: w.weekNumber || (i+1),
+          weekLabel: w.weekLabel || `Week ${i+1}`,
+          dateRangeStart: w.dateRangeStart || '',
+          dateRangeEnd: w.dateRangeEnd || '',
+          leasingFocus: w.leasingFocus || '',
+          communityOutreach: w.communityOutreach || '',
+          socialDigital: w.socialDigital || '',
+          weeklyTaskSummary: w.weeklyTaskSummary || '',
+          priority: w.priority || (i+1),
+          tasks: (w.tasks||[]).map(t=>({ id: t.id||rid(), title: t.title||'', channel: t.channel||'', dueDate: t.dueDate||'', status: t.status||'not_started', notes: t.notes||'' }))
+        }))
+      };
+    }
+
+    // Utils
+    function escapeHtml(s){ return String(s==null?'':s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;'); }
+    function escapeAttr(s){ return escapeHtml(s).replaceAll('\n',' '); }
+    function nl2br(s){ return String(s||'').replace(/\n/g,'<br/>'); }
+    function rid(){ return Math.random().toString(36).slice(2,9); }
+    function toISO(d){ try{ const z = new Date(d); const t = new Date(z.getTime()-z.getTimezoneOffset()*60000); return t.toISOString().slice(0,10); }catch(e){ return ''; } }
+    function addDaysISO(iso, days){ try{ const d = new Date(iso+'T00:00:00'); d.setDate(d.getDate()+days); return toISO(d); }catch(e){ return iso; } }
+    function dateDiffDays(a,b){ try{ const da=new Date(a+'T00:00:00'); const db=new Date(b+'T00:00:00'); return Math.round((db-da)/86400000)+1; }catch(e){ return 0; } }
+    function formatDateTime(v){ try{ const d = new Date(v); return d.toLocaleString(); }catch(e){ return ''; } }
+    function taskCompletionPct(tasks){ if (!tasks || !tasks.length) return null; const done = tasks.filter(t=>t.status==='done').length; return Math.round((done/tasks.length)*100); }
+
+    // Init
+    (async ()=>{ await initAuth(); })();
+  </script>
+</body>
+</html>
