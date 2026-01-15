@@ -170,9 +170,15 @@
     .toast.success { background: #10b981; }
     .toast.error { background: #ef4444; }
     .mini { font-size: 11px; color: var(--subtext); }
+    .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; z-index: 100; }
+    .loading-overlay.hidden { display: none; }
+    .spinner { width: 40px; height: 40px; border: 4px solid #e5e7eb; border-top-color: #52d5ff; border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
+  <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div></div>
+  
   <header>
     <div class="brand"><img src="logo-main.svg" class="logo-img" alt="Capstone" /><div class="title">Marketing Hub</div></div>
     <div class="pill">
@@ -282,9 +288,7 @@
 
   <script>
     const STORE_CURRENT_PROPERTY_KEY = 'mmp_current_property_v1';
-    const VELOCITY_DATA_KEY = 'mmp_velocity_data_v1';
-    const GOALS_DATA_KEY = 'mmp_velocity_goals_v1';
-    const UNIT_MIX_KEY = 'mmp_unit_mix_v2'; // v2 includes history
+    const API_BASE = '/api';
 
     const MONTH_ORDER = ['Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'];
     const MONTH_NAMES = { Sep: 'September', Oct: 'October', Nov: 'November', Dec: 'December', Jan: 'January', Feb: 'February', Mar: 'March', Apr: 'April', May: 'May', Jun: 'June', Jul: 'July', Aug: 'August' };
@@ -299,9 +303,13 @@
     let velocityChart = null;
     let unitSparklines = {};
     let currentProperty = '';
-    let allVelocityData = {};
-    let allGoalsData = {};
-    let allUnitMixData = {};
+    let currentUser = null;
+    
+    // Data stored on server per property
+    let velocityData = [];  // Array of {month, year, percent}
+    let goalsData = {};     // {year: {month: percent}}
+    let unitMixData = [];   // Array of unit objects with history
+    
     let parsedCsvData = null;
     let selectedGoalYear = "'25/'26";
     let compareYear = '';
@@ -312,6 +320,7 @@
     function formatShortDate(d) { return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }
 
     const els = {
+      loadingOverlay: document.getElementById('loadingOverlay'),
       propertySelect: document.getElementById('propertySelect'),
       logoutBtn: document.getElementById('logoutBtn'),
       adminPageBtn: document.getElementById('adminPageBtn'),
@@ -385,44 +394,294 @@
 
     (function(){ const nav = document.getElementById('mainNav'); if (!nav) return; const path = (location.pathname || '').toLowerCase(); nav.querySelectorAll('.nav-tab').forEach(a => { const href = (a.getAttribute('href') || '').toLowerCase(); if (href && (path.endsWith(href) || path.endsWith('/' + href))) a.classList.add('active'); else a.classList.remove('active'); }); })();
 
+    function showLoading() { els.loadingOverlay.classList.remove('hidden'); }
+    function hideLoading() { els.loadingOverlay.classList.add('hidden'); }
     function showToast(msg, type = 'success') { els.toast.textContent = msg; els.toast.className = 'toast ' + type + ' show'; setTimeout(() => els.toast.classList.remove('show'), 3000); }
     function openModal(m) { m.classList.add('show'); }
     function closeModal(m) { m.classList.remove('show'); }
 
-    function loadAllData() { try { allVelocityData = JSON.parse(localStorage.getItem(VELOCITY_DATA_KEY) || '{}'); allGoalsData = JSON.parse(localStorage.getItem(GOALS_DATA_KEY) || '{}'); allUnitMixData = JSON.parse(localStorage.getItem(UNIT_MIX_KEY) || '{}'); } catch (e) { allVelocityData = {}; allGoalsData = {}; allUnitMixData = {}; } }
-    function saveVelocityData() { localStorage.setItem(VELOCITY_DATA_KEY, JSON.stringify(allVelocityData)); }
-    function saveGoalsData() { localStorage.setItem(GOALS_DATA_KEY, JSON.stringify(allGoalsData)); }
-    function saveUnitMixData() { localStorage.setItem(UNIT_MIX_KEY, JSON.stringify(allUnitMixData)); }
-    function getPropertyData() { return currentProperty ? (allVelocityData[currentProperty] || []) : []; }
-    function setPropertyData(data) { if (currentProperty) { allVelocityData[currentProperty] = data; saveVelocityData(); } }
-    function getPropertyGoals() { return currentProperty ? (allGoalsData[currentProperty] || {}) : {}; }
-    function setPropertyGoals(goals) { if (currentProperty) { allGoalsData[currentProperty] = goals; saveGoalsData(); } }
-    function getPropertyUnitMix() { return currentProperty ? (allUnitMixData[currentProperty] || []) : []; }
-    function setPropertyUnitMix(units) { if (currentProperty) { allUnitMixData[currentProperty] = units; saveUnitMixData(); } }
+    // API helper
+    async function apiFetch(path, opts = {}) {
+      const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+      const res = await fetch(API_BASE + path, Object.assign({}, opts, { headers }));
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || ('HTTP ' + res.status));
+      }
+      return res;
+    }
+
+    // Load velocity data for current property from server
+    async function loadPropertyData() {
+      if (!currentProperty) return;
+      
+      try {
+        showLoading();
+        // Fetch velocity data for this property
+        const res = await apiFetch(`/velocity?property=${encodeURIComponent(currentProperty)}`);
+        const data = await res.json();
+        
+        velocityData = data.velocityData || [];
+        goalsData = data.goalsData || {};
+        unitMixData = data.unitMixData || [];
+      } catch (e) {
+        console.error('Failed to load velocity data:', e);
+        // Initialize empty data
+        velocityData = [];
+        goalsData = {};
+        unitMixData = [];
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // Save velocity data for current property to server
+    async function savePropertyData() {
+      if (!currentProperty) return;
+      
+      try {
+        await apiFetch('/velocity', {
+          method: 'POST',
+          body: JSON.stringify({
+            property: currentProperty,
+            velocityData,
+            goalsData,
+            unitMixData
+          })
+        });
+      } catch (e) {
+        console.error('Failed to save velocity data:', e);
+        showToast('Failed to save data to server', 'error');
+        throw e;
+      }
+    }
 
     function parseCSV(content) { const lines = content.trim().split('\n'); if (lines.length < 2) return null; const headers = lines[0].split(',').map(h => h.trim()); const data = []; for (let i = 1; i < lines.length; i++) { const values = lines[i].split(','); const row = {}; headers.forEach((h, idx) => { row[h] = values[idx] ? values[idx].trim() : ''; }); data.push(row); } return { headers, data }; }
     function csvToVelocityData(parsed) { const result = []; const monthCol = parsed.headers.find(h => /month/i.test(h)) || parsed.headers[0]; const percentCol = parsed.headers.find(h => /pl|percent|prelease/i.test(h)) || parsed.headers[1]; const yearCol = parsed.headers.find(h => /year|academic/i.test(h)) || parsed.headers[2]; parsed.data.forEach(row => { const month = row[monthCol]; const percent = parseFloat(row[percentCol]); const year = row[yearCol]; if (month && year && !isNaN(percent)) result.push({ month, year, percent: percent <= 1 ? percent * 100 : percent }); }); return result; }
 
-    function updateStatusCards() { const data = getPropertyData(); const goals = getPropertyGoals(); const currentMonth = getCurrentMonth(); const currentAcademicYear = getCurrentAcademicYear(); const currentEntry = data.find(d => d.month === currentMonth && d.year === currentAcademicYear); const currentPercent = currentEntry ? currentEntry.percent : null; if (currentPercent !== null) { els.currentPrelease.textContent = Math.round(currentPercent) + '%'; els.currentStatusCard.className = 'status-card ' + (currentPercent >= 90 ? 'ahead' : currentPercent >= 70 ? 'on-track' : 'behind'); els.currentDiff.textContent = currentAcademicYear + ' • ' + MONTH_NAMES[currentMonth]; els.currentDiff.className = 'diff neutral'; } else { els.currentPrelease.textContent = '--'; els.currentStatusCard.className = 'status-card neutral'; els.currentDiff.textContent = 'No data for ' + currentMonth; els.currentDiff.className = 'diff neutral'; } const yearGoals = goals[selectedGoalYear] || {}; const monthGoal = yearGoals[currentMonth]; if (monthGoal !== undefined && monthGoal !== null) { els.goalValue.textContent = Math.round(monthGoal) + '%'; if (currentPercent !== null) { const diff = currentPercent - monthGoal; if (diff >= 0) { els.goalStatusCard.className = 'status-card ahead'; els.goalDiff.textContent = '+' + Math.round(diff) + '% ahead of goal'; els.goalDiff.className = 'diff positive'; } else { els.goalStatusCard.className = 'status-card behind'; els.goalDiff.textContent = Math.round(diff) + '% behind goal'; els.goalDiff.className = 'diff negative'; } } else { els.goalStatusCard.className = 'status-card neutral'; els.goalDiff.textContent = 'No current data'; els.goalDiff.className = 'diff neutral'; } } else { els.goalValue.textContent = '--'; els.goalStatusCard.className = 'status-card neutral'; els.goalDiff.textContent = 'Set goals below'; els.goalDiff.className = 'diff neutral'; } if (compareYear && currentPercent !== null) { const compareEntry = data.find(d => d.month === currentMonth && d.year === compareYear); if (compareEntry) { const diff = currentPercent - compareEntry.percent; els.compareValue.textContent = (diff >= 0 ? '+' : '') + Math.round(diff) + '%'; els.compareStatusCard.className = diff >= 0 ? 'status-card ahead' : 'status-card behind'; } else { els.compareValue.textContent = '--'; els.compareStatusCard.className = 'status-card neutral'; } } else { els.compareValue.textContent = '--'; els.compareStatusCard.className = 'status-card neutral'; } const years = [...new Set(data.map(d => d.year))].filter(y => y !== currentAcademicYear); els.compareYearSelect.innerHTML = '<option value="">Select year</option>' + years.map(y => `<option value="${y}" ${y === compareYear ? 'selected' : ''}>${y}</option>`).join(''); }
+    function updateStatusCards() {
+      const currentMonth = getCurrentMonth();
+      const currentAcademicYear = getCurrentAcademicYear();
+      const currentEntry = velocityData.find(d => d.month === currentMonth && d.year === currentAcademicYear);
+      const currentPercent = currentEntry ? currentEntry.percent : null;
+      
+      if (currentPercent !== null) {
+        els.currentPrelease.textContent = Math.round(currentPercent) + '%';
+        els.currentStatusCard.className = 'status-card ' + (currentPercent >= 90 ? 'ahead' : currentPercent >= 70 ? 'on-track' : 'behind');
+        els.currentDiff.textContent = currentAcademicYear + ' • ' + MONTH_NAMES[currentMonth];
+        els.currentDiff.className = 'diff neutral';
+      } else {
+        els.currentPrelease.textContent = '--';
+        els.currentStatusCard.className = 'status-card neutral';
+        els.currentDiff.textContent = 'No data for ' + currentMonth;
+        els.currentDiff.className = 'diff neutral';
+      }
+      
+      const yearGoals = goalsData[selectedGoalYear] || {};
+      const monthGoal = yearGoals[currentMonth];
+      if (monthGoal !== undefined && monthGoal !== null) {
+        els.goalValue.textContent = Math.round(monthGoal) + '%';
+        if (currentPercent !== null) {
+          const diff = currentPercent - monthGoal;
+          if (diff >= 0) {
+            els.goalStatusCard.className = 'status-card ahead';
+            els.goalDiff.textContent = '+' + Math.round(diff) + '% ahead of goal';
+            els.goalDiff.className = 'diff positive';
+          } else {
+            els.goalStatusCard.className = 'status-card behind';
+            els.goalDiff.textContent = Math.round(diff) + '% behind goal';
+            els.goalDiff.className = 'diff negative';
+          }
+        } else {
+          els.goalStatusCard.className = 'status-card neutral';
+          els.goalDiff.textContent = 'No current data';
+          els.goalDiff.className = 'diff neutral';
+        }
+      } else {
+        els.goalValue.textContent = '--';
+        els.goalStatusCard.className = 'status-card neutral';
+        els.goalDiff.textContent = 'Set goals below';
+        els.goalDiff.className = 'diff neutral';
+      }
+      
+      if (compareYear && currentPercent !== null) {
+        const compareEntry = velocityData.find(d => d.month === currentMonth && d.year === compareYear);
+        if (compareEntry) {
+          const diff = currentPercent - compareEntry.percent;
+          els.compareValue.textContent = (diff >= 0 ? '+' : '') + Math.round(diff) + '%';
+          els.compareStatusCard.className = diff >= 0 ? 'status-card ahead' : 'status-card behind';
+        } else {
+          els.compareValue.textContent = '--';
+          els.compareStatusCard.className = 'status-card neutral';
+        }
+      } else {
+        els.compareValue.textContent = '--';
+        els.compareStatusCard.className = 'status-card neutral';
+      }
+      
+      const currentAcadYear = getCurrentAcademicYear();
+      const years = [...new Set(velocityData.map(d => d.year))].filter(y => y !== currentAcadYear);
+      els.compareYearSelect.innerHTML = '<option value="">Select year</option>' + years.map(y => `<option value="${y}" ${y === compareYear ? 'selected' : ''}>${y}</option>`).join('');
+    }
 
-    function renderChart() { const data = getPropertyData(); const goals = getPropertyGoals(); if (data.length === 0) { els.emptyState.style.display = 'block'; els.chartContainer.style.display = 'none'; els.dataTableContainer.style.display = 'none'; updateStatusCards(); return; } els.emptyState.style.display = 'none'; els.chartContainer.style.display = 'block'; const yearData = {}; data.forEach(d => { if (!yearData[d.year]) yearData[d.year] = {}; yearData[d.year][d.month] = d.percent; }); const years = Object.keys(yearData).sort((a, b) => { const aNum = parseInt(a.replace(/[^0-9]/g, '').slice(0, 2)); const bNum = parseInt(b.replace(/[^0-9]/g, '').slice(0, 2)); return bNum - aNum; }); const datasets = years.map((year, idx) => { const colorInfo = YEAR_COLORS[year] || { color: `hsl(${idx * 60}, 60%, 45%)`, marker: 'circle', hollow: false }; const dataPoints = MONTH_ORDER.map(month => yearData[year][month] ?? null); return { label: year, data: dataPoints, borderColor: colorInfo.color, backgroundColor: colorInfo.hollow ? 'transparent' : colorInfo.color, borderWidth: 2.5, pointRadius: 5, pointHoverRadius: 7, pointStyle: colorInfo.marker === 'triangle' ? 'triangle' : colorInfo.marker === 'square' ? 'rect' : 'circle', pointBorderColor: colorInfo.color, pointBackgroundColor: colorInfo.hollow ? '#fff' : colorInfo.color, pointBorderWidth: 2, fill: false, tension: 0.2, spanGaps: true }; }); const currentYearGoals = goals[selectedGoalYear]; if (currentYearGoals && Object.keys(currentYearGoals).length > 0) { const goalPoints = MONTH_ORDER.map(month => currentYearGoals[month] ?? null); datasets.push({ label: 'Goal', data: goalPoints, borderColor: '#f59e0b', backgroundColor: 'transparent', borderWidth: 2, borderDash: [6, 4], pointRadius: 0, fill: false, tension: 0.2, spanGaps: true }); } if (velocityChart) velocityChart.destroy(); const ctx = document.getElementById('velocityChart').getContext('2d'); velocityChart = new Chart(ctx, { type: 'line', data: { labels: MONTH_ORDER, datasets }, options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'index' }, plugins: { legend: { display: true, position: 'bottom', labels: { usePointStyle: true, padding: 16, font: { size: 11, weight: '500' } } }, tooltip: { backgroundColor: 'rgba(31, 41, 55, 0.95)', titleFont: { size: 13, weight: '600' }, bodyFont: { size: 12 }, padding: 10, cornerRadius: 6, callbacks: { label: ctx => ctx.dataset.label + ': ' + (ctx.parsed.y !== null ? ctx.parsed.y.toFixed(1) + '%' : 'N/A') } } }, scales: { y: { min: 0, max: 110, ticks: { callback: v => v + '%', stepSize: 25, font: { size: 11 } }, title: { display: true, text: 'Preleased %', font: { size: 11, weight: '600' } }, grid: { color: 'rgba(0,0,0,0.06)' } }, x: { grid: { display: false }, ticks: { font: { size: 11, weight: '500' } } } } } }); renderDataTable(years, yearData); updateStatusCards(); }
+    function renderChart() {
+      if (velocityData.length === 0) {
+        els.emptyState.style.display = 'block';
+        els.chartContainer.style.display = 'none';
+        els.dataTableContainer.style.display = 'none';
+        updateStatusCards();
+        return;
+      }
+      
+      els.emptyState.style.display = 'none';
+      els.chartContainer.style.display = 'block';
+      
+      const yearData = {};
+      velocityData.forEach(d => {
+        if (!yearData[d.year]) yearData[d.year] = {};
+        yearData[d.year][d.month] = d.percent;
+      });
+      
+      const years = Object.keys(yearData).sort((a, b) => {
+        const aNum = parseInt(a.replace(/[^0-9]/g, '').slice(0, 2));
+        const bNum = parseInt(b.replace(/[^0-9]/g, '').slice(0, 2));
+        return bNum - aNum;
+      });
+      
+      const datasets = years.map((year, idx) => {
+        const colorInfo = YEAR_COLORS[year] || { color: `hsl(${idx * 60}, 60%, 45%)`, marker: 'circle', hollow: false };
+        const dataPoints = MONTH_ORDER.map(month => yearData[year][month] ?? null);
+        return {
+          label: year,
+          data: dataPoints,
+          borderColor: colorInfo.color,
+          backgroundColor: colorInfo.hollow ? 'transparent' : colorInfo.color,
+          borderWidth: 2.5,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          pointStyle: colorInfo.marker === 'triangle' ? 'triangle' : colorInfo.marker === 'square' ? 'rect' : 'circle',
+          pointBorderColor: colorInfo.color,
+          pointBackgroundColor: colorInfo.hollow ? '#fff' : colorInfo.color,
+          pointBorderWidth: 2,
+          fill: false,
+          tension: 0.2,
+          spanGaps: true
+        };
+      });
+      
+      const currentYearGoals = goalsData[selectedGoalYear];
+      if (currentYearGoals && Object.keys(currentYearGoals).length > 0) {
+        const goalPoints = MONTH_ORDER.map(month => currentYearGoals[month] ?? null);
+        datasets.push({
+          label: 'Goal',
+          data: goalPoints,
+          borderColor: '#f59e0b',
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          borderDash: [6, 4],
+          pointRadius: 0,
+          fill: false,
+          tension: 0.2,
+          spanGaps: true
+        });
+      }
+      
+      if (velocityChart) velocityChart.destroy();
+      const ctx = document.getElementById('velocityChart').getContext('2d');
+      velocityChart = new Chart(ctx, {
+        type: 'line',
+        data: { labels: MONTH_ORDER, datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { intersect: false, mode: 'index' },
+          plugins: {
+            legend: { display: true, position: 'bottom', labels: { usePointStyle: true, padding: 16, font: { size: 11, weight: '500' } } },
+            tooltip: { backgroundColor: 'rgba(31, 41, 55, 0.95)', titleFont: { size: 13, weight: '600' }, bodyFont: { size: 12 }, padding: 10, cornerRadius: 6, callbacks: { label: ctx => ctx.dataset.label + ': ' + (ctx.parsed.y !== null ? ctx.parsed.y.toFixed(1) + '%' : 'N/A') } }
+          },
+          scales: {
+            y: { min: 0, max: 110, ticks: { callback: v => v + '%', stepSize: 25, font: { size: 11 } }, title: { display: true, text: 'Preleased %', font: { size: 11, weight: '600' } }, grid: { color: 'rgba(0,0,0,0.06)' } },
+            x: { grid: { display: false }, ticks: { font: { size: 11, weight: '500' } } }
+          }
+        }
+      });
+      
+      renderDataTable(years, yearData);
+      updateStatusCards();
+    }
 
-    function renderDataTable(years, yearData) { const goals = getPropertyGoals(); const currentYearGoals = goals[selectedGoalYear] || {}; const thead = document.getElementById('dataTableHead'); const tbody = document.getElementById('dataTableBody'); let headerHtml = '<tr><th style="text-align:left">Year</th>'; MONTH_ORDER.forEach(month => { headerHtml += `<th>${month}</th>`; }); headerHtml += '</tr>'; thead.innerHTML = headerHtml; let bodyHtml = ''; years.forEach(year => { const colorInfo = YEAR_COLORS[year] || { color: '#6b7280', marker: 'circle', hollow: false }; let dotClass = 'year-dot'; let dotStyle = `background: ${colorInfo.hollow ? 'transparent' : colorInfo.color}; border: 2px solid ${colorInfo.color};`; if (colorInfo.marker === 'triangle') dotClass += ' triangle'; else if (colorInfo.marker === 'square') dotClass += ' square'; if (colorInfo.hollow) dotClass += ' hollow'; bodyHtml += `<tr><td><div class="year-cell"><span class="${dotClass}" style="${dotStyle}"></span>${year}</div></td>`; MONTH_ORDER.forEach(month => { const val = yearData[year][month]; const goal = currentYearGoals[month]; let cellClass = ''; if (val !== undefined && val !== null && goal !== undefined && goal !== null) cellClass = val < goal ? 'cell-behind' : val > goal ? 'cell-ahead' : ''; bodyHtml += `<td class="${cellClass}">${val !== undefined && val !== null ? Math.round(val) + '%' : ''}</td>`; }); bodyHtml += '</tr>'; }); if (Object.keys(currentYearGoals).length > 0) { bodyHtml += `<tr style="background: #fffbeb;"><td><div class="year-cell"><span class="year-dot" style="background: #f59e0b; border: 2px solid #f59e0b;"></span>Goal</div></td>`; MONTH_ORDER.forEach(month => { const val = currentYearGoals[month]; bodyHtml += `<td style="color: #92400e; font-weight: 600;">${val !== undefined && val !== null ? Math.round(val) + '%' : ''}</td>`; }); bodyHtml += '</tr>'; } tbody.innerHTML = bodyHtml; }
+    function renderDataTable(years, yearData) {
+      const currentYearGoals = goalsData[selectedGoalYear] || {};
+      const thead = document.getElementById('dataTableHead');
+      const tbody = document.getElementById('dataTableBody');
+      
+      let headerHtml = '<tr><th style="text-align:left">Year</th>';
+      MONTH_ORDER.forEach(month => { headerHtml += `<th>${month}</th>`; });
+      headerHtml += '</tr>';
+      thead.innerHTML = headerHtml;
+      
+      let bodyHtml = '';
+      years.forEach(year => {
+        const colorInfo = YEAR_COLORS[year] || { color: '#6b7280', marker: 'circle', hollow: false };
+        let dotClass = 'year-dot';
+        let dotStyle = `background: ${colorInfo.hollow ? 'transparent' : colorInfo.color}; border: 2px solid ${colorInfo.color};`;
+        if (colorInfo.marker === 'triangle') dotClass += ' triangle';
+        else if (colorInfo.marker === 'square') dotClass += ' square';
+        if (colorInfo.hollow) dotClass += ' hollow';
+        bodyHtml += `<tr><td><div class="year-cell"><span class="${dotClass}" style="${dotStyle}"></span>${year}</div></td>`;
+        MONTH_ORDER.forEach(month => {
+          const val = yearData[year][month];
+          const goal = currentYearGoals[month];
+          let cellClass = '';
+          if (val !== undefined && val !== null && goal !== undefined && goal !== null) cellClass = val < goal ? 'cell-behind' : val > goal ? 'cell-ahead' : '';
+          bodyHtml += `<td class="${cellClass}">${val !== undefined && val !== null ? Math.round(val) + '%' : ''}</td>`;
+        });
+        bodyHtml += '</tr>';
+      });
+      
+      if (Object.keys(currentYearGoals).length > 0) {
+        bodyHtml += `<tr style="background: #fffbeb;"><td><div class="year-cell"><span class="year-dot" style="background: #f59e0b; border: 2px solid #f59e0b;"></span>Goal</div></td>`;
+        MONTH_ORDER.forEach(month => {
+          const val = currentYearGoals[month];
+          bodyHtml += `<td style="color: #92400e; font-weight: 600;">${val !== undefined && val !== null ? Math.round(val) + '%' : ''}</td>`;
+        });
+        bodyHtml += '</tr>';
+      }
+      tbody.innerHTML = bodyHtml;
+    }
 
-    function renderGoalsGrid() { const goals = getPropertyGoals(); const yearGoals = goals[selectedGoalYear] || {}; let html = ''; MONTH_ORDER.forEach(month => { const val = yearGoals[month]; html += `<div class="goal-item" data-month="${month}"><div class="goal-month">${month}</div><div class="goal-value"><input type="number" min="0" max="100" step="1" value="${val !== undefined && val !== null ? Math.round(val) : ''}" placeholder="--" data-month="${month}"></div></div>`; }); els.goalsGrid.innerHTML = html; els.goalsGrid.querySelectorAll('input').forEach(input => { input.addEventListener('change', (e) => { const month = e.target.dataset.month; const val = parseFloat(e.target.value); const goals = getPropertyGoals(); if (!goals[selectedGoalYear]) goals[selectedGoalYear] = {}; if (!isNaN(val) && val >= 0 && val <= 100) goals[selectedGoalYear][month] = val; else delete goals[selectedGoalYear][month]; setPropertyGoals(goals); renderChart(); }); }); }
+    function renderGoalsGrid() {
+      const yearGoals = goalsData[selectedGoalYear] || {};
+      let html = '';
+      MONTH_ORDER.forEach(month => {
+        const val = yearGoals[month];
+        html += `<div class="goal-item" data-month="${month}"><div class="goal-month">${month}</div><div class="goal-value"><input type="number" min="0" max="100" step="1" value="${val !== undefined && val !== null ? Math.round(val) : ''}" placeholder="--" data-month="${month}"></div></div>`;
+      });
+      els.goalsGrid.innerHTML = html;
+      
+      els.goalsGrid.querySelectorAll('input').forEach(input => {
+        input.addEventListener('change', (e) => {
+          const month = e.target.dataset.month;
+          const val = parseFloat(e.target.value);
+          if (!goalsData[selectedGoalYear]) goalsData[selectedGoalYear] = {};
+          if (!isNaN(val) && val >= 0 && val <= 100) goalsData[selectedGoalYear][month] = val;
+          else delete goalsData[selectedGoalYear][month];
+          // Don't auto-save on every change, wait for Save button
+        });
+      });
+    }
 
     function renderUnitMix() {
-      const units = getPropertyUnitMix();
       Object.values(unitSparklines).forEach(c => c.destroy());
       unitSparklines = {};
 
-      if (units.length === 0) {
+      if (unitMixData.length === 0) {
         els.unitMixGrid.innerHTML = `<div class="empty-state" style="grid-column: 1 / -1;"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg><h4>No Floor Plans</h4><p>Add floor plans to track prelease velocity by unit type over time.</p></div>`;
         return;
       }
 
       let html = '';
-      units.forEach((unit, idx) => {
+      unitMixData.forEach((unit, idx) => {
         const percent = unit.total > 0 ? (unit.preleased / unit.total) * 100 : 0;
         const progressClass = percent >= 90 ? '' : percent >= 70 ? 'warning' : 'danger';
         const history = unit.history || [];
@@ -468,7 +727,7 @@
 
       // Render sparklines
       setTimeout(() => {
-        units.forEach((unit, idx) => {
+        unitMixData.forEach((unit, idx) => {
           const history = unit.history || [];
           if (history.length > 1) {
             const canvas = document.getElementById(`sparkline-${idx}`);
@@ -492,8 +751,7 @@
     let viewingHistoryIndex = null;
 
     window.editUnit = function(idx) {
-      const units = getPropertyUnitMix();
-      const unit = units[idx];
+      const unit = unitMixData[idx];
       if (!unit) return;
       editingUnitIndex = idx;
       els.editUnitTypeName.value = unit.name || '';
@@ -504,8 +762,7 @@
     };
 
     window.openLogUpdate = function(idx) {
-      const units = getPropertyUnitMix();
-      const unit = units[idx];
+      const unit = unitMixData[idx];
       if (!unit) return;
       loggingUnitIndex = idx;
       els.logUnitName.value = unit.name;
@@ -516,8 +773,7 @@
     };
 
     window.viewHistory = function(idx) {
-      const units = getPropertyUnitMix();
-      const unit = units[idx];
+      const unit = unitMixData[idx];
       if (!unit) return;
       viewingHistoryIndex = idx;
       els.historyUnitName.value = unit.name;
@@ -543,58 +799,215 @@
       openModal(els.historyModal);
     };
 
-    window.deleteUnit = function(idx) {
+    window.deleteUnit = async function(idx) {
       if (!confirm('Delete this floor plan and all its history?')) return;
-      const units = getPropertyUnitMix();
-      units.splice(idx, 1);
-      setPropertyUnitMix(units);
-      renderUnitMix();
-      showToast('Floor plan removed');
+      unitMixData.splice(idx, 1);
+      try {
+        await savePropertyData();
+        renderUnitMix();
+        showToast('Floor plan removed');
+      } catch (e) {
+        showToast('Failed to delete floor plan', 'error');
+      }
     };
 
-    function saveEditUnit() {
+    async function saveEditUnit() {
       if (editingUnitIndex === null) return;
       const name = els.editUnitTypeName.value.trim();
       const total = parseInt(els.editUnitTotal.value);
       const beds = parseInt(els.editUnitBeds.value);
       const rent = parseInt(els.editUnitRent.value);
       if (!name || isNaN(total) || isNaN(beds) || isNaN(rent)) { showToast('Please fill all fields', 'error'); return; }
-      const units = getPropertyUnitMix();
-      units[editingUnitIndex].name = name;
-      units[editingUnitIndex].total = total;
-      units[editingUnitIndex].beds = beds;
-      units[editingUnitIndex].rent = rent;
-      setPropertyUnitMix(units);
-      closeModal(els.editUnitModal);
-      renderUnitMix();
-      showToast('Floor plan updated');
+      
+      unitMixData[editingUnitIndex].name = name;
+      unitMixData[editingUnitIndex].total = total;
+      unitMixData[editingUnitIndex].beds = beds;
+      unitMixData[editingUnitIndex].rent = rent;
+      
+      try {
+        await savePropertyData();
+        closeModal(els.editUnitModal);
+        renderUnitMix();
+        showToast('Floor plan updated');
+      } catch (e) {
+        showToast('Failed to save changes', 'error');
+      }
       editingUnitIndex = null;
     }
 
-    function saveLogUpdate() {
+    async function saveLogUpdate() {
       if (loggingUnitIndex === null) return;
       const newPreleased = parseInt(els.logNewPreleased.value);
       const notes = els.logNotes.value.trim();
       if (isNaN(newPreleased) || newPreleased < 0) { showToast('Please enter a valid preleased count', 'error'); return; }
-      const units = getPropertyUnitMix();
-      const unit = units[loggingUnitIndex];
+      
+      const unit = unitMixData[loggingUnitIndex];
       if (newPreleased > unit.total) { showToast('Preleased cannot exceed total units', 'error'); return; }
+      
       if (!unit.history) unit.history = [];
       unit.history.push({ date: new Date().toISOString(), preleased: newPreleased, notes: notes || null });
       unit.preleased = newPreleased;
-      setPropertyUnitMix(units);
-      closeModal(els.logUpdateModal);
-      renderUnitMix();
-      showToast('Prelease update logged');
+      
+      try {
+        await savePropertyData();
+        closeModal(els.logUpdateModal);
+        renderUnitMix();
+        showToast('Prelease update logged');
+      } catch (e) {
+        showToast('Failed to log update', 'error');
+      }
       loggingUnitIndex = null;
     }
 
-    function setView(view) { if (view === 'chart') { els.chartViewBtn.classList.add('active'); els.tableViewBtn.classList.remove('active'); els.chartContainer.style.display = 'block'; els.dataTableContainer.style.display = 'none'; } else { els.chartViewBtn.classList.remove('active'); els.tableViewBtn.classList.add('active'); els.chartContainer.style.display = 'none'; els.dataTableContainer.style.display = 'block'; } }
-    function exportData() { const data = getPropertyData(); if (data.length === 0) { showToast('No data to export', 'error'); return; } let csv = 'MonthAbbr,Community PL% (Daily),AcademicYearAbbrev\n'; data.forEach(d => { csv += `${d.month},${(d.percent / 100).toFixed(10)},${d.year}\n`; }); const blob = new Blob([csv], { type: 'text/csv' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `velocity_${currentProperty.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}.csv`; a.click(); URL.revokeObjectURL(url); showToast('Data exported successfully'); }
-    function handleFile(file) { if (!file || !file.name.endsWith('.csv')) { showToast('Please select a CSV file', 'error'); return; } const reader = new FileReader(); reader.onload = function(e) { parsedCsvData = parseCSV(e.target.result); if (!parsedCsvData || parsedCsvData.data.length === 0) { showToast('Could not parse CSV file', 'error'); return; } els.fileName.textContent = file.name; els.fileName.style.display = 'block'; let previewHeadHtml = '<tr>'; parsedCsvData.headers.forEach(h => { previewHeadHtml += `<th>${h}</th>`; }); previewHeadHtml += '</tr>'; els.previewHead.innerHTML = previewHeadHtml; let previewBodyHtml = ''; parsedCsvData.data.slice(0, 5).forEach(row => { previewBodyHtml += '<tr>'; parsedCsvData.headers.forEach(h => { previewBodyHtml += `<td>${row[h] || ''}</td>`; }); previewBodyHtml += '</tr>'; }); els.previewBody.innerHTML = previewBodyHtml; els.csvPreview.style.display = 'block'; els.confirmImport.disabled = false; }; reader.readAsText(file); }
-    function importData() { if (!parsedCsvData) return; const newData = csvToVelocityData(parsedCsvData); if (newData.length === 0) { showToast('No valid data found in CSV', 'error'); return; } const mode = els.importMode.value; let existingData = getPropertyData(); if (mode === 'replace') setPropertyData(newData); else { newData.forEach(newEntry => { const existingIdx = existingData.findIndex(e => e.month === newEntry.month && e.year === newEntry.year); if (existingIdx >= 0) existingData[existingIdx] = newEntry; else existingData.push(newEntry); }); setPropertyData(existingData); } closeModal(els.importModal); renderChart(); renderGoalsGrid(); showToast(`Imported ${newData.length} entries successfully`); }
-    function addEntry() { const month = els.entryMonth.value; const year = els.entryYear.value; const percent = parseFloat(els.entryPercent.value); if (!month || !year || isNaN(percent)) { showToast('Please fill all fields', 'error'); return; } if (percent < 0 || percent > 100) { showToast('Percentage must be between 0 and 100', 'error'); return; } const data = getPropertyData(); const existingIdx = data.findIndex(e => e.month === month && e.year === year); if (existingIdx >= 0) data[existingIdx].percent = percent; else data.push({ month, year, percent }); setPropertyData(data); closeModal(els.addEntryModal); renderChart(); showToast('Entry added successfully'); }
-    function addUnitType() { const name = els.unitTypeName.value.trim(); const total = parseInt(els.unitTotal.value); const preleased = parseInt(els.unitPreleased.value); const beds = parseInt(els.unitBeds.value); const rent = parseInt(els.unitRent.value); if (!name || isNaN(total) || isNaN(preleased) || isNaN(beds) || isNaN(rent)) { showToast('Please fill all fields', 'error'); return; } if (preleased > total) { showToast('Preleased cannot exceed total', 'error'); return; } const units = getPropertyUnitMix(); const history = [{ date: new Date().toISOString(), preleased, notes: 'Initial entry' }]; units.push({ name, total, preleased, beds, rent, history }); setPropertyUnitMix(units); closeModal(els.addUnitModal); renderUnitMix(); showToast('Floor plan added'); els.unitTypeName.value = ''; els.unitTotal.value = ''; els.unitPreleased.value = ''; els.unitBeds.value = ''; els.unitRent.value = ''; }
+    function setView(view) {
+      if (view === 'chart') {
+        els.chartViewBtn.classList.add('active');
+        els.tableViewBtn.classList.remove('active');
+        els.chartContainer.style.display = 'block';
+        els.dataTableContainer.style.display = 'none';
+      } else {
+        els.chartViewBtn.classList.remove('active');
+        els.tableViewBtn.classList.add('active');
+        els.chartContainer.style.display = 'none';
+        els.dataTableContainer.style.display = 'block';
+      }
+    }
+    
+    function exportData() {
+      if (velocityData.length === 0) { showToast('No data to export', 'error'); return; }
+      let csv = 'MonthAbbr,Community PL% (Daily),AcademicYearAbbrev\n';
+      velocityData.forEach(d => { csv += `${d.month},${(d.percent / 100).toFixed(10)},${d.year}\n`; });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `velocity_${currentProperty.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Data exported successfully');
+    }
+    
+    function handleFile(file) {
+      if (!file || !file.name.endsWith('.csv')) { showToast('Please select a CSV file', 'error'); return; }
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        parsedCsvData = parseCSV(e.target.result);
+        if (!parsedCsvData || parsedCsvData.data.length === 0) { showToast('Could not parse CSV file', 'error'); return; }
+        els.fileName.textContent = file.name;
+        els.fileName.style.display = 'block';
+        let previewHeadHtml = '<tr>';
+        parsedCsvData.headers.forEach(h => { previewHeadHtml += `<th>${h}</th>`; });
+        previewHeadHtml += '</tr>';
+        els.previewHead.innerHTML = previewHeadHtml;
+        let previewBodyHtml = '';
+        parsedCsvData.data.slice(0, 5).forEach(row => {
+          previewBodyHtml += '<tr>';
+          parsedCsvData.headers.forEach(h => { previewBodyHtml += `<td>${row[h] || ''}</td>`; });
+          previewBodyHtml += '</tr>';
+        });
+        els.previewBody.innerHTML = previewBodyHtml;
+        els.csvPreview.style.display = 'block';
+        els.confirmImport.disabled = false;
+      };
+      reader.readAsText(file);
+    }
+    
+    async function importData() {
+      if (!parsedCsvData) return;
+      const newData = csvToVelocityData(parsedCsvData);
+      if (newData.length === 0) { showToast('No valid data found in CSV', 'error'); return; }
+      
+      const mode = els.importMode.value;
+      if (mode === 'replace') {
+        velocityData = newData;
+      } else {
+        newData.forEach(newEntry => {
+          const existingIdx = velocityData.findIndex(e => e.month === newEntry.month && e.year === newEntry.year);
+          if (existingIdx >= 0) velocityData[existingIdx] = newEntry;
+          else velocityData.push(newEntry);
+        });
+      }
+      
+      try {
+        await savePropertyData();
+        closeModal(els.importModal);
+        renderChart();
+        renderGoalsGrid();
+        showToast(`Imported ${newData.length} entries successfully`);
+      } catch (e) {
+        showToast('Failed to save imported data', 'error');
+      }
+    }
+    
+    async function addEntry() {
+      const month = els.entryMonth.value;
+      const year = els.entryYear.value;
+      const percent = parseFloat(els.entryPercent.value);
+      if (!month || !year || isNaN(percent)) { showToast('Please fill all fields', 'error'); return; }
+      if (percent < 0 || percent > 100) { showToast('Percentage must be between 0 and 100', 'error'); return; }
+      
+      const existingIdx = velocityData.findIndex(e => e.month === month && e.year === year);
+      if (existingIdx >= 0) velocityData[existingIdx].percent = percent;
+      else velocityData.push({ month, year, percent });
+      
+      try {
+        await savePropertyData();
+        closeModal(els.addEntryModal);
+        renderChart();
+        showToast('Entry added successfully');
+      } catch (e) {
+        showToast('Failed to add entry', 'error');
+      }
+    }
+    
+    async function addUnitType() {
+      const name = els.unitTypeName.value.trim();
+      const total = parseInt(els.unitTotal.value);
+      const preleased = parseInt(els.unitPreleased.value);
+      const beds = parseInt(els.unitBeds.value);
+      const rent = parseInt(els.unitRent.value);
+      if (!name || isNaN(total) || isNaN(preleased) || isNaN(beds) || isNaN(rent)) { showToast('Please fill all fields', 'error'); return; }
+      if (preleased > total) { showToast('Preleased cannot exceed total', 'error'); return; }
+      
+      const history = [{ date: new Date().toISOString(), preleased, notes: 'Initial entry' }];
+      unitMixData.push({ name, total, preleased, beds, rent, history });
+      
+      try {
+        await savePropertyData();
+        closeModal(els.addUnitModal);
+        renderUnitMix();
+        showToast('Floor plan added');
+        els.unitTypeName.value = '';
+        els.unitTotal.value = '';
+        els.unitPreleased.value = '';
+        els.unitBeds.value = '';
+        els.unitRent.value = '';
+      } catch (e) {
+        showToast('Failed to add floor plan', 'error');
+      }
+    }
+
+    async function saveGoals() {
+      // Collect all goal values from inputs
+      els.goalsGrid.querySelectorAll('input').forEach(input => {
+        const month = input.dataset.month;
+        const val = parseFloat(input.value);
+        if (!goalsData[selectedGoalYear]) goalsData[selectedGoalYear] = {};
+        if (!isNaN(val) && val >= 0 && val <= 100) {
+          goalsData[selectedGoalYear][month] = val;
+        } else {
+          delete goalsData[selectedGoalYear][month];
+        }
+      });
+      
+      try {
+        await savePropertyData();
+        renderChart();
+        showToast('Goals saved');
+      } catch (e) {
+        showToast('Failed to save goals', 'error');
+      }
+    }
 
     // Event listeners
     els.importCsvBtn.addEventListener('click', () => { parsedCsvData = null; els.fileName.style.display = 'none'; els.csvPreview.style.display = 'none'; els.confirmImport.disabled = true; openModal(els.importModal); });
@@ -627,37 +1040,72 @@
     els.logUpdateModal.addEventListener('click', (e) => { if (e.target === els.logUpdateModal) { closeModal(els.logUpdateModal); loggingUnitIndex = null; } });
     els.historyModal.addEventListener('click', (e) => { if (e.target === els.historyModal) { closeModal(els.historyModal); viewingHistoryIndex = null; } });
     els.goalYearSelect.addEventListener('change', (e) => { selectedGoalYear = e.target.value; renderGoalsGrid(); renderChart(); });
-    els.saveGoalsBtn.addEventListener('click', () => { showToast('Goals saved'); renderChart(); });
+    els.saveGoalsBtn.addEventListener('click', saveGoals);
     els.compareYearSelect.addEventListener('change', (e) => { compareYear = e.target.value; updateStatusCards(); });
 
-    async function api(path, opts={}) { const res = await fetch('/api' + path, opts); if (!res.ok) throw new Error(await res.text() || ('HTTP '+res.status)); return res; }
-    function getAccessible(properties, me) { const names = properties.map(p => p.name).filter(Boolean); if (!me) return names; if (me.role === 'admin') return names; if (me.properties === '*') return names; const allowed = Array.isArray(me.properties) ? me.properties : []; return names.filter(n => allowed.includes(n)); }
+    function getAccessible(properties, me) {
+      const names = properties.map(p => p.name).filter(Boolean);
+      if (!me) return names;
+      if (me.role === 'admin') return names;
+      if (me.properties === '*') return names;
+      const allowed = Array.isArray(me.properties) ? me.properties : [];
+      return names.filter(n => allowed.includes(n));
+    }
 
     async function init() {
-      loadAllData();
       try {
         const meRes = await fetch('/api/me');
         if (!meRes.ok) { location.href = 'index.html'; return; }
         const me = await meRes.json();
-        if (els.adminPageBtn) { els.adminPageBtn.style.display = me.role === 'admin' ? '' : 'none'; els.adminPageBtn.onclick = () => { location.href = 'mmp_admin.html'; }; }
-        if (els.logoutBtn) { els.logoutBtn.onclick = async () => { try { await fetch('/api/auth-logout', { method: 'POST' }); } catch (e) {} location.href = 'index.html'; }; }
+        currentUser = me;
+        
+        if (els.adminPageBtn) {
+          els.adminPageBtn.style.display = me.role === 'admin' ? '' : 'none';
+          els.adminPageBtn.onclick = () => { location.href = 'mmp_admin.html'; };
+        }
+        if (els.logoutBtn) {
+          els.logoutBtn.onclick = async () => {
+            try { await fetch('/api/auth-logout', { method: 'POST' }); } catch (e) {}
+            location.href = 'index.html';
+          };
+        }
+        
         let props = [];
-        try { const pres = await api('/properties'); props = await pres.json(); } catch (e) { props = []; }
+        try {
+          const pres = await fetch('/api/properties');
+          props = await pres.json();
+        } catch (e) { props = []; }
+        
         const list = getAccessible(props, me);
         const saved = (localStorage.getItem(STORE_CURRENT_PROPERTY_KEY) || '').trim();
         currentProperty = list.includes(saved) ? saved : (list[0] || '');
+        
         if (els.propertySelect) {
           els.propertySelect.innerHTML = list.map(p => `<option value="${p.replace(/"/g, '&quot;')}">${p}</option>`).join('');
           els.propertySelect.value = currentProperty;
-          els.propertySelect.onchange = () => { currentProperty = els.propertySelect.value; localStorage.setItem(STORE_CURRENT_PROPERTY_KEY, currentProperty); renderChart(); renderGoalsGrid(); renderUnitMix(); };
+          els.propertySelect.onchange = async () => {
+            currentProperty = els.propertySelect.value;
+            localStorage.setItem(STORE_CURRENT_PROPERTY_KEY, currentProperty);
+            await loadPropertyData();
+            renderChart();
+            renderGoalsGrid();
+            renderUnitMix();
+          };
         }
-        renderChart(); renderGoalsGrid(); renderUnitMix();
+        
+        // Load data for current property from server
+        await loadPropertyData();
+        renderChart();
+        renderGoalsGrid();
+        renderUnitMix();
+        hideLoading();
       } catch (e) {
-        console.log('API not available, running in demo mode');
-        currentProperty = 'Demo Property';
-        renderChart(); renderGoalsGrid(); renderUnitMix();
+        console.error('Init error:', e);
+        hideLoading();
+        location.href = 'index.html';
       }
     }
+    
     init();
   </script>
 </body>
