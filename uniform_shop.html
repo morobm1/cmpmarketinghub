@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Uniform Shop • Marketing Hub</title>
+  <link rel="preconnect" href="https://use.typekit.net" crossorigin>
+  <link rel="preconnect" href="https://p.typekit.net" crossorigin>
+  <link rel="stylesheet" href="https://use.typekit.net/hqv8hwr.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <meta name="description" content="Browse uniform catalog, add items to cart, and request orders via email." />
+  <style>
+    :root{ --brand-primary:#446472; --brand-accent:#ffb732; --brand-accent-2:#52d5ff; --brand-gray:#929497; --page-bg:#e5e7eb; --bg:#ffffff; --panel:#ffffff; --muted:#ffffff; --text:#1f2937; --subtext:#6b7280; --accent:var(--brand-accent-2); --accent-2:var(--brand-accent); --border:#e5e7eb; }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0; font-family:'Open Sans', Arial, sans-serif; background:var(--page-bg); color:var(--text)}
+    header{padding:16px 18px; border-bottom:1px solid var(--border); position:sticky; top:0; background:#ffffff; z-index:20; display:flex; align-items:center; gap:14px; flex-wrap:wrap; box-shadow:0 2px 6px rgba(0,0,0,0.04)}
+    .brand{display:flex;align-items:center;gap:10px}
+    .brand .logo-img{height:32px;width:auto;display:block}
+    .brand .title{color:#ffb732; font-family: zooja-pro, Arial, sans-serif; font-size: clamp(36px, 5vw, 64px); line-height: 1.05}
+    .pill{border:1px solid var(--border); background:#ffffff; border-radius:999px; padding:6px 10px; font-size:12px; color:#374151; display:flex; align-items:center; gap:8px}
+    .pill select, .pill button{ font-family: Roboto, Arial, sans-serif; }
+    .pill select{ background:#ffffff; border:1px solid #d1d5db; border-radius:8px; padding:6px 8px }
+    .pill button{ background:#ffffff; color:#111827; border:1px solid #d1d5db; padding:6px 10px; border-radius:8px; cursor:pointer }
+    .pill button:hover{ background:#f9fafb }
+
+    .nav-bar{ background:#ffffff; border-bottom:1px solid var(--border); box-shadow:0 1px 3px rgba(0,0,0,0.06) }
+    .nav-bar .nav-wrap{ max-width:1200px; margin:0 auto; padding:8px 16px; display:flex; gap:8px; flex-wrap:wrap }
+    .nav-tab{ display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border:1px solid var(--border); border-radius:999px; color:#374151; text-decoration:none; background:#ffffff; transition: all .15s ease; font-family: Roboto, Arial, sans-serif }
+    .nav-tab:hover{ background:#f3f4f6 }
+    .nav-tab.active{ background:#52d5ff; border-color:#52d5ff; color:#0b1b24; font-weight:700 }
+
+    .container{padding:18px; max-width:1400px; margin:0 auto; display:grid; grid-template-columns: 1fr 360px; gap:16px; align-items:start}
+    @media(max-width: 1100px){ .container{ grid-template-columns: 1fr } }
+
+    .toolbar{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:16px }
+    .btn{ display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:10px; border:1px solid #d1d5db; background:#ffffff; color:#111827; font-weight:700; cursor:pointer; font-family: Roboto, Arial, sans-serif; font-size:14px }
+    .btn:hover{ background:#f9fafb }
+    .btn.primary{ background:#52d5ff; border-color:#52d5ff; color:#0b1b24 }
+    .btn.warn{ background:#ffb732; border-color:#ffb732; color:#1f1300 }
+
+    .card{ background:#ffffff; border:1px solid var(--border); border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,0.06); overflow:hidden }
+    .card h3{ margin:0; padding:12px 14px 0 14px; font-size:16px; color:#374151; font-weight:800; font-family: Roboto, Arial, sans-serif }
+    .card .content{ padding:14px }
+
+    .catalog-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:16px }
+    .catalog-item{ border:1px solid var(--border); border-radius:12px; padding:12px; background:#ffffff; box-shadow:0 1px 2px rgba(0,0,0,0.05); display:flex; flex-direction:column; gap:10px }
+    .catalog-item img{ width:100%; height:200px; object-fit:cover; border-radius:8px; background:#f9fafb }
+    .catalog-item .name{ font-weight:700; font-size:15px; color:#111827 }
+    .catalog-item .sku{ font-size:12px; color:#6b7280 }
+    .catalog-item .price{ font-size:14px; font-weight:700; color:#446472 }
+    .catalog-item .desc{ font-size:13px; color:#6b7280; line-height:1.4 }
+    .catalog-item .sizes{ display:flex; gap:6px; flex-wrap:wrap }
+    .catalog-item .size-btn{ padding:6px 10px; border:1px solid #d1d5db; border-radius:6px; background:#ffffff; font-size:12px; cursor:pointer; transition: all .15s }
+    .catalog-item .size-btn:hover{ background:#f3f4f6 }
+    .catalog-item .size-btn.selected{ background:#52d5ff; border-color:#52d5ff; color:#0b1b24; font-weight:700 }
+    .catalog-item .qty-row{ display:flex; gap:8px; align-items:center }
+    .catalog-item .qty-input{ width:70px; padding:6px 8px; border:1px solid #d1d5db; border-radius:6px; text-align:center }
+
+    .cart-section{ position:sticky; top:80px }
+    .cart-item{ border-bottom:1px solid var(--border); padding:10px 0; display:flex; flex-direction:column; gap:6px }
+    .cart-item:last-child{ border-bottom:none }
+    .cart-item .item-name{ font-weight:700; font-size:14px; color:#111827 }
+    .cart-item .item-details{ font-size:12px; color:#6b7280 }
+    .cart-item .item-actions{ display:flex; gap:8px; align-items:center; margin-top:4px }
+    .cart-item .qty-ctrl{ display:flex; gap:4px; align-items:center }
+    .cart-item .qty-ctrl button{ padding:4px 8px; border:1px solid #d1d5db; border-radius:4px; background:#ffffff; cursor:pointer; font-weight:700 }
+    .cart-item .qty-ctrl button:hover{ background:#f3f4f6 }
+    .cart-item .qty-ctrl span{ min-width:30px; text-align:center; font-weight:700 }
+    .cart-item .remove-btn{ padding:4px 8px; border:1px solid #d1d5db; border-radius:4px; background:#ffffff; cursor:pointer; font-size:12px; color:#ef4444 }
+    .cart-item .remove-btn:hover{ background:#fee2e2 }
+
+    .cart-empty{ text-align:center; padding:40px 20px; color:#6b7280; font-size:14px }
+    .cart-total{ padding:12px 0; border-top:2px solid var(--border); margin-top:12px; font-size:16px; font-weight:800; color:#111827 }
+
+    .search-box{ width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:10px; font-size:14px; margin-bottom:16px }
+
+    .badge{ display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; background:#fff7e6; color:#8a5800; border:1px solid #fde68a; font-weight:700; font-family: Roboto, Arial, sans-serif; margin-left:8px }
+
+    .hint{ font-size:12px; color:#6b7280; margin-top:4px }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand"><img src="logo-main.svg" class="logo-img" alt="Capstone" /><div class="title">Marketing Hub</div></div>
+    <div class="pill">
+      <label for="propertySelect" style="font-size:12px;color:#6b7280">Property</label>
+      <select id="propertySelect" style="min-width:220px"></select>
+      <button id="logoutBtn">Logout</button>
+      <button id="adminPageBtn" style="display:none">Admin</button>
+    </div>
+    <div class="muted" style="font-size:13px">Capstone Management Partners</div>
+  </header>
+  <nav id="mainNav" class="nav-bar">
+    <div class="nav-wrap">
+      <a href="mmp_calendar_app.html" class="nav-tab" data-tab="calendar">Marketing Calendar</a>
+      <a href="marketing_plans.html" class="nav-tab" data-tab="plans">Marketing Plans</a>
+      <a href="marketing_contacts.html" class="nav-tab" data-tab="contacts">Marketing Contacts</a>
+      <a href="promo_order_tracker.html" class="nav-tab" data-tab="promo">Promo Order Tracker</a>
+      <a href="renewal_campaign.html" class="nav-tab" data-tab="renewal">Renewal Campaign</a>
+      <a href="velocity_tracker.html" class="nav-tab" data-tab="velocity">Velocity Tracker</a>
+      <a href="uniform_shop.html" class="nav-tab" data-tab="uniform">Uniform Shop</a>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div>
+      <div class="toolbar">
+        <input type="text" id="searchBox" class="search-box" placeholder="Search catalog by name, SKU, or description...">
+      </div>
+
+      <section class="card">
+        <h3>Uniform Catalog <span id="catalogCount" class="badge">0 items</span></h3>
+        <div class="content">
+          <div id="catalogGrid" class="catalog-grid">
+            <div style="text-align:center; padding:40px; color:#6b7280">Loading catalog...</div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <aside class="cart-section">
+      <section class="card">
+        <h3>Cart <span id="cartCount" class="badge">0 items</span></h3>
+        <div class="content">
+          <div id="cartItems"></div>
+          <div id="cartTotal" class="cart-total" style="display:none"></div>
+          <button id="emailCartBtn" class="btn primary" style="width:100%; margin-top:12px">Email Order Request</button>
+          <button id="clearCartBtn" class="btn" style="width:100%; margin-top:8px">Clear Cart</button>
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <script>
+    const STORE_CURRENT_PROPERTY_KEY = 'mmp_current_property_v1';
+    const STORE_CART_KEY = 'mmp_uniform_cart_v1';
+    const API_BASE = '/api';
+
+    // Catalog data - this would normally come from the CommonSKU API
+    // For now, we'll use a sample catalog structure
+    const CATALOG_URL = 'https://login.commonsku.com/present.php?id=4b97bf5b-e3f5-4d5e-9e73-2419f0ae678c';
+    
+    let catalogItems = [
+      {
+        id: 'item-1',
+        name: 'Classic Polo Shirt',
+        sku: 'POLO-001',
+        description: 'Premium cotton polo with embroidered logo',
+        price: 35.00,
+        image: 'https://via.placeholder.com/300x300/446472/ffffff?text=Polo+Shirt',
+        sizes: ['S', 'M', 'L', 'XL', '2XL'],
+        colors: ['Navy', 'White', 'Gray']
+      },
+      {
+        id: 'item-2',
+        name: 'Performance T-Shirt',
+        sku: 'TSHIRT-001',
+        description: 'Moisture-wicking athletic tee',
+        price: 25.00,
+        image: 'https://via.placeholder.com/300x300/52d5ff/000000?text=T-Shirt',
+        sizes: ['S', 'M', 'L', 'XL', '2XL'],
+        colors: ['Black', 'Navy', 'Gray']
+      },
+      {
+        id: 'item-3',
+        name: 'Fleece Jacket',
+        sku: 'JACKET-001',
+        description: 'Soft fleece jacket with full zip',
+        price: 65.00,
+        image: 'https://via.placeholder.com/300x300/ffb732/000000?text=Jacket',
+        sizes: ['S', 'M', 'L', 'XL', '2XL'],
+        colors: ['Navy', 'Black', 'Gray']
+      },
+      {
+        id: 'item-4',
+        name: 'Baseball Cap',
+        sku: 'CAP-001',
+        description: 'Adjustable cap with embroidered logo',
+        price: 20.00,
+        image: 'https://via.placeholder.com/300x300/929497/ffffff?text=Cap',
+        sizes: ['One Size'],
+        colors: ['Navy', 'Black', 'White']
+      },
+      {
+        id: 'item-5',
+        name: 'Hoodie Sweatshirt',
+        sku: 'HOODIE-001',
+        description: 'Comfortable pullover hoodie',
+        price: 55.00,
+        image: 'https://via.placeholder.com/300x300/446472/ffffff?text=Hoodie',
+        sizes: ['S', 'M', 'L', 'XL', '2XL'],
+        colors: ['Navy', 'Gray', 'Black']
+      },
+      {
+        id: 'item-6',
+        name: 'Button-Down Shirt',
+        sku: 'SHIRT-001',
+        description: 'Professional dress shirt',
+        price: 45.00,
+        image: 'https://via.placeholder.com/300x300/52d5ff/000000?text=Dress+Shirt',
+        sizes: ['S', 'M', 'L', 'XL', '2XL'],
+        colors: ['White', 'Light Blue', 'Navy']
+      }
+    ];
+
+    const els = {
+      propertySelect: document.getElementById('propertySelect'),
+      logoutBtn: document.getElementById('logoutBtn'),
+      adminPageBtn: document.getElementById('adminPageBtn'),
+      searchBox: document.getElementById('searchBox'),
+      catalogGrid: document.getElementById('catalogGrid'),
+      catalogCount: document.getElementById('catalogCount'),
+      cartItems: document.getElementById('cartItems'),
+      cartCount: document.getElementById('cartCount'),
+      cartTotal: document.getElementById('cartTotal'),
+      emailCartBtn: document.getElementById('emailCartBtn'),
+      clearCartBtn: document.getElementById('clearCartBtn'),
+    };
+
+    let currentProperty = '';
+    let cart = [];
+    let filteredCatalog = [];
+
+    function saveCart(){ try{ localStorage.setItem(STORE_CART_KEY, JSON.stringify(cart)); }catch(e){} }
+    function loadCart(){ try{ cart = JSON.parse(localStorage.getItem(STORE_CART_KEY)||'[]'); }catch(e){ cart = []; } }
+
+    function esc(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    function fmtMoney(n){ const v = parseFloat(n); if (!isFinite(v)) return '$0.00'; return '$'+v.toFixed(2); }
+
+    function renderCatalog(){
+      const query = (els.searchBox.value || '').toLowerCase().trim();
+      filteredCatalog = catalogItems.filter(item => {
+        if (!query) return true;
+        const searchText = `${item.name} ${item.sku} ${item.description}`.toLowerCase();
+        return searchText.includes(query);
+      });
+
+      els.catalogCount.textContent = `${filteredCatalog.length} items`;
+
+      if (filteredCatalog.length === 0){
+        els.catalogGrid.innerHTML = '<div style="text-align:center; padding:40px; color:#6b7280">No items found</div>';
+        return;
+      }
+
+      els.catalogGrid.innerHTML = filteredCatalog.map(item => {
+        const sizeBtns = item.sizes.map(size => 
+          `<button class="size-btn" data-item="${item.id}" data-size="${size}">${size}</button>`
+        ).join('');
+        
+        return `
+          <div class="catalog-item" data-item-id="${item.id}">
+            <img src="${esc(item.image)}" alt="${esc(item.name)}" onerror="this.src='https://via.placeholder.com/300x300/e5e7eb/6b7280?text=No+Image'">
+            <div class="name">${esc(item.name)}</div>
+            <div class="sku">SKU: ${esc(item.sku)}</div>
+            <div class="price">${fmtMoney(item.price)}</div>
+            <div class="desc">${esc(item.description)}</div>
+            <div>
+              <label style="font-size:12px; color:#6b7280; margin-bottom:4px; display:block">Size:</label>
+              <div class="sizes">${sizeBtns}</div>
+            </div>
+            <div>
+              <label style="font-size:12px; color:#6b7280; margin-bottom:4px; display:block">Color:</label>
+              <select class="color-select" data-item="${item.id}" style="width:100%; padding:6px 8px; border:1px solid #d1d5db; border-radius:6px">
+                ${item.colors.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('')}
+              </select>
+            </div>
+            <div class="qty-row">
+              <label style="font-size:12px; color:#6b7280; white-space:nowrap">Qty:</label>
+              <input type="number" class="qty-input" data-item="${item.id}" value="1" min="1" max="999">
+              <button class="btn primary" data-add-to-cart="${item.id}" style="flex:1">Add to Cart</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Add size selection handlers
+      document.querySelectorAll('.size-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const itemId = btn.getAttribute('data-item');
+          document.querySelectorAll(`.size-btn[data-item="${itemId}"]`).forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+        });
+      });
+    }
+
+    function renderCart(){
+      els.cartCount.textContent = `${cart.length} items`;
+
+      if (cart.length === 0){
+        els.cartItems.innerHTML = '<div class="cart-empty">Your cart is empty</div>';
+        els.cartTotal.style.display = 'none';
+        return;
+      }
+
+      let total = 0;
+      els.cartItems.innerHTML = cart.map((item, idx) => {
+        const subtotal = item.price * item.quantity;
+        total += subtotal;
+        return `
+          <div class="cart-item">
+            <div class="item-name">${esc(item.name)}</div>
+            <div class="item-details">
+              SKU: ${esc(item.sku)}<br>
+              Size: ${esc(item.size)} | Color: ${esc(item.color)}<br>
+              ${fmtMoney(item.price)} × ${item.quantity} = ${fmtMoney(subtotal)}
+            </div>
+            <div class="item-actions">
+              <div class="qty-ctrl">
+                <button data-cart-dec="${idx}">−</button>
+                <span>${item.quantity}</span>
+                <button data-cart-inc="${idx}">+</button>
+              </div>
+              <button class="remove-btn" data-cart-remove="${idx}">Remove</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      els.cartTotal.innerHTML = `Total: ${fmtMoney(total)}`;
+      els.cartTotal.style.display = '';
+    }
+
+    function addToCart(itemId){
+      const item = catalogItems.find(i => i.id === itemId);
+      if (!item) return;
+
+      const sizeBtn = document.querySelector(`.size-btn[data-item="${itemId}"].selected`);
+      if (!sizeBtn && item.sizes.length > 1){
+        alert('Please select a size');
+        return;
+      }
+      const size = sizeBtn ? sizeBtn.getAttribute('data-size') : item.sizes[0];
+
+      const colorSelect = document.querySelector(`.color-select[data-item="${itemId}"]`);
+      const color = colorSelect ? colorSelect.value : item.colors[0];
+
+      const qtyInput = document.querySelector(`.qty-input[data-item="${itemId}"]`);
+      const quantity = parseInt(qtyInput.value, 10) || 1;
+
+      // Check if item with same specs already in cart
+      const existingIdx = cart.findIndex(c => 
+        c.id === itemId && c.size === size && c.color === color
+      );
+
+      if (existingIdx >= 0){
+        cart[existingIdx].quantity += quantity;
+      } else {
+        cart.push({
+          id: itemId,
+          name: item.name,
+          sku: item.sku,
+          price: item.price,
+          size,
+          color,
+          quantity
+        });
+      }
+
+      saveCart();
+      renderCart();
+
+      // Reset quantity input
+      if (qtyInput) qtyInput.value = '1';
+      
+      // Show feedback
+      const btn = document.querySelector(`[data-add-to-cart="${itemId}"]`);
+      if (btn){
+        const orig = btn.textContent;
+        btn.textContent = '✓ Added';
+        btn.style.background = '#34d399';
+        setTimeout(() => {
+          btn.textContent = orig;
+          btn.style.background = '';
+        }, 1000);
+      }
+    }
+
+    function buildEmailSubject(){
+      const prop = currentProperty || 'Property';
+      return `[Uniform Order Request] ${prop} - ${cart.length} items`;
+    }
+
+    function buildEmailBody(){
+      const lines = [];
+      lines.push(`Property: ${currentProperty || 'Not specified'}`);
+      lines.push('');
+      lines.push('UNIFORM ORDER REQUEST');
+      lines.push('='.repeat(50));
+      lines.push('');
+      
+      let total = 0;
+      cart.forEach((item, idx) => {
+        const subtotal = item.price * item.quantity;
+        total += subtotal;
+        lines.push(`${idx + 1}. ${item.name}`);
+        lines.push(`   SKU: ${item.sku}`);
+        lines.push(`   Size: ${item.size} | Color: ${item.color}`);
+        lines.push(`   Quantity: ${item.quantity}`);
+        lines.push(`   Price: ${fmtMoney(item.price)} each`);
+        lines.push(`   Subtotal: ${fmtMoney(subtotal)}`);
+        lines.push('');
+      });
+
+      lines.push('='.repeat(50));
+      lines.push(`TOTAL: ${fmtMoney(total)}`);
+      lines.push('');
+      lines.push('Please process this uniform order at your earliest convenience.');
+      lines.push('');
+      lines.push(`Catalog Reference: ${CATALOG_URL}`);
+      lines.push('');
+      lines.push('Thank you!');
+
+      return lines.join('\n');
+    }
+
+    function openEmailRequest(){
+      if (cart.length === 0){
+        alert('Your cart is empty. Add items before sending an order request.');
+        return;
+      }
+
+      const to = ''; // Add default email if needed
+      const subject = buildEmailSubject();
+      const body = buildEmailBody();
+      const gmail = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      window.open(gmail, '_blank', 'noopener,noreferrer');
+    }
+
+    // Event handlers
+    els.searchBox.addEventListener('input', () => {
+      renderCatalog();
+    });
+
+    els.emailCartBtn.addEventListener('click', openEmailRequest);
+
+    els.clearCartBtn.addEventListener('click', () => {
+      if (cart.length === 0) return;
+      if (confirm('Clear all items from cart?')){
+        cart = [];
+        saveCart();
+        renderCart();
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      const t = e.target;
+      if (!(t instanceof HTMLElement)) return;
+
+      const addToCart = t.getAttribute('data-add-to-cart');
+      const cartInc = t.getAttribute('data-cart-inc');
+      const cartDec = t.getAttribute('data-cart-dec');
+      const cartRemove = t.getAttribute('data-cart-remove');
+
+      if (addToCart){
+        addToCart(addToCart);
+        return;
+      }
+
+      if (cartInc !== null){
+        const idx = parseInt(cartInc, 10);
+        if (cart[idx]){
+          cart[idx].quantity++;
+          saveCart();
+          renderCart();
+        }
+        return;
+      }
+
+      if (cartDec !== null){
+        const idx = parseInt(cartDec, 10);
+        if (cart[idx]){
+          cart[idx].quantity = Math.max(1, cart[idx].quantity - 1);
+          saveCart();
+          renderCart();
+        }
+        return;
+      }
+
+      if (cartRemove !== null){
+        const idx = parseInt(cartRemove, 10);
+        if (confirm('Remove this item from cart?')){
+          cart.splice(idx, 1);
+          saveCart();
+          renderCart();
+        }
+        return;
+      }
+    });
+
+    // Nav active
+    (function(){ 
+      const nav = document.getElementById('mainNav'); 
+      if (!nav) return; 
+      const path = (location.pathname||'').toLowerCase(); 
+      nav.querySelectorAll('.nav-tab').forEach(a=>{ 
+        const href=(a.getAttribute('href')||'').toLowerCase(); 
+        if (href && (path.endsWith(href) || path.endsWith('/'+href))) a.classList.add('active'); 
+      }); 
+    })();
+
+    async function api(path, opts={}){ 
+      const res = await fetch('/api' + path, opts); 
+      if (!res.ok) throw new Error(await res.text() || ('HTTP '+res.status)); 
+      return res; 
+    }
+
+    function getAccessible(properties, me){ 
+      const names = properties.map(p => p.name).filter(Boolean); 
+      if (!me) return names; 
+      if (me.role === 'admin') return names; 
+      if (me.properties === '*') return names; 
+      const allowed = Array.isArray(me.properties) ? me.properties : []; 
+      return names.filter(n => allowed.includes(n)); 
+    }
+
+    async function init(){
+      try{
+        const meRes = await fetch('/api/me');
+        if (!meRes.ok){ location.href = 'index.html'; return; }
+        const me = await meRes.json();
+        
+        if (els.adminPageBtn){ 
+          els.adminPageBtn.style.display = me.role === 'admin' ? '' : 'none'; 
+          els.adminPageBtn.onclick = ()=>{ location.href='mmp_admin.html'; } 
+        }
+        
+        if (els.logoutBtn){ 
+          els.logoutBtn.onclick = async ()=>{ 
+            try{ await fetch('/api/auth-logout', { method:'POST' }); }catch(e){} 
+            location.href='index.html'; 
+          }; 
+        }
+
+        let props = [];
+        try{ const pres = await api('/properties'); props = await pres.json(); }catch(e){ props = []; }
+        const list = getAccessible(props, me);
+        const saved = (localStorage.getItem(STORE_CURRENT_PROPERTY_KEY)||'').trim();
+        const current = list.includes(saved) ? saved : (list[0] || '');
+        
+        if (els.propertySelect){
+          els.propertySelect.innerHTML = list.map(p => `<option value="${p.replace(/"/g,'&quot;')}">${p}</option>`).join('');
+          els.propertySelect.value = current;
+          els.propertySelect.onchange = ()=>{ 
+            currentProperty = els.propertySelect.value;
+            localStorage.setItem(STORE_CURRENT_PROPERTY_KEY, currentProperty);
+          };
+        }
+        
+        currentProperty = current;
+        loadCart();
+        renderCatalog();
+        renderCart();
+      }catch(e){ 
+        location.href = 'index.html'; 
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

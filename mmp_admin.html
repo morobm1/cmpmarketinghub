@@ -255,6 +255,8 @@
         const list = await res.json();
         properties = applyPropertyGrouping(((list||[]).map(x => x.name).filter(Boolean)));
         if (!properties.length){ await ensurePropertiesSeed(); }
+        // Ensure "The Harbour at Occ" exists
+        await ensureSpecificProperty('The Harbour at Occ');
       }catch(e){ alert('Loading properties failed: '+e.message); properties = []; }
       renderCreateProps();
     }
@@ -268,7 +270,7 @@
         'Florida Polytechnic University - Phase II', 'Ivory University House',
         'Florida Polytechnic University - Phase III', 'The Residential Village at UW Bothell',
         'Bryan Flats', 'Nexus on Holmes (Univ of Alabama, Huntsville)', 'Comma Barrington',
-        'Meridian on Main (132 E Main Street)', 'The Village at Mines Park'
+        'Meridian on Main (132 E Main Street)', 'The Village at Mines Park', 'The Harbour at Occ'
       ];
       try{
         for (const name of seed){ await apiFetch('/properties', { method:'POST', body: JSON.stringify({ name }) }); }
@@ -278,6 +280,28 @@
         const list = await res.json();
         properties = applyPropertyGrouping(((list||[]).map(x => x.name).filter(Boolean)));
       }catch(e){ properties = []; }
+    }
+
+    async function ensureSpecificProperty(propertyName){
+      try{
+        // Check if property already exists in the fetched list
+        const res = await apiFetch('/properties');
+        const list = await res.json();
+        const exists = list.some(p => p.name === propertyName);
+        
+        if (!exists) {
+          // Add the property if it doesn't exist
+          await apiFetch('/properties', { method:'POST', body: JSON.stringify({ name: propertyName }) });
+          
+          // Refresh the properties list
+          const newRes = await apiFetch('/properties');
+          const newList = await newRes.json();
+          properties = applyPropertyGrouping(((newList||[]).map(x => x.name).filter(Boolean)));
+        }
+      }catch(e){ 
+        // Silently ignore if property already exists or other errors
+        console.log('Property check/add:', e.message);
+      }
     }
 
     async function fetchUsers(){
