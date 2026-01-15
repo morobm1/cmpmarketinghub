@@ -10,7 +10,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-  <meta name="description" content="Velocity Tracker – Under construction" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta name="description" content="Velocity Tracker – Preleasing velocity by property" />
   <style>
     :root{ --brand-primary:#446472; --brand-accent:#ffb732; --brand-accent-2:#52d5ff; --brand-gray:#929497; --page-bg:#e5e7eb; --bg:#ffffff; --panel:#ffffff; --muted:#ffffff; --text:#1f2937; --subtext:#6b7280; --accent:var(--brand-accent-2); --accent-2:var(--brand-accent); --border:#e5e7eb; }
     *{box-sizing:border-box}
@@ -33,11 +34,76 @@
     .nav-tab.active{ background:#52d5ff; border-color:#52d5ff; color:#0b1b24; font-weight:700 }
 
     .container{padding:18px; max-width:1200px; margin:0 auto}
-    .card{ background:#ffffff; border:1px solid var(--border); border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,0.06); overflow:hidden }
+    .card{ background:#ffffff; border:1px solid var(--border); border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,0.06); overflow:hidden; margin-bottom:18px }
     .card h3{ margin:0; padding:12px 14px 0 14px; font-size:16px; color:#374151; font-weight:800; font-family: Roboto, Arial, sans-serif }
     .card .content{ padding:14px }
     .badge{display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; background:#fff7e6; color:#8a5800; border:1px solid #fde68a; font-weight:700; font-family: Roboto, Arial, sans-serif}
     .muted{ color:#6b7280 }
+
+    /* Velocity Tracker Specific Styles */
+    .toolbar{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; align-items:center }
+    .toolbar-group{ display:flex; gap:8px; align-items:center }
+    .btn{ background:#446472; color:#fff; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-family:Roboto,Arial,sans-serif; font-size:13px; display:inline-flex; align-items:center; gap:6px; transition:background .15s }
+    .btn:hover{ background:#365563 }
+    .btn-secondary{ background:#ffffff; color:#374151; border:1px solid #d1d5db }
+    .btn-secondary:hover{ background:#f3f4f6 }
+    .btn-accent{ background:#52d5ff; color:#0b1b24 }
+    .btn-accent:hover{ background:#3bc9f5 }
+    .btn svg{ width:16px; height:16px }
+
+    .chart-container{ position:relative; height:400px; margin-bottom:20px }
+    .view-toggle{ display:flex; gap:4px; margin-left:auto }
+    .view-toggle button{ background:#f3f4f6; border:1px solid #d1d5db; padding:6px 10px; cursor:pointer; border-radius:6px }
+    .view-toggle button.active{ background:#446472; color:#fff; border-color:#446472 }
+    .view-toggle button svg{ width:18px; height:18px }
+
+    /* Data Table */
+    .data-table-wrap{ overflow-x:auto }
+    .data-table{ width:100%; border-collapse:collapse; font-size:13px; font-family:Roboto,Arial,sans-serif }
+    .data-table th, .data-table td{ padding:8px 12px; text-align:center; border:1px solid #e5e7eb }
+    .data-table th{ background:#f9fafb; font-weight:600; color:#374151 }
+    .data-table td{ color:#4b5563 }
+    .data-table tr:nth-child(even){ background:#fafafa }
+    .year-label{ display:flex; align-items:center; gap:6px; justify-content:flex-start }
+    .year-marker{ width:12px; height:12px; border-radius:50%; display:inline-block }
+    .year-marker.circle{ border:2px solid; background:transparent }
+    .year-marker.triangle{ width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-bottom:10px solid; border-radius:0 }
+    .year-marker.square{ border-radius:2px; border:2px solid; background:transparent }
+
+    /* Modal */
+    .modal-overlay{ position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:100 }
+    .modal-overlay.show{ display:flex }
+    .modal{ background:#fff; border-radius:14px; max-width:500px; width:90%; max-height:90vh; overflow:auto; box-shadow:0 10px 40px rgba(0,0,0,0.2) }
+    .modal-header{ padding:16px 20px; border-bottom:1px solid #e5e7eb; display:flex; justify-content:space-between; align-items:center }
+    .modal-header h4{ margin:0; font-size:18px; font-weight:700 }
+    .modal-close{ background:none; border:none; font-size:24px; cursor:pointer; color:#6b7280; line-height:1 }
+    .modal-body{ padding:20px }
+    .form-group{ margin-bottom:16px }
+    .form-group label{ display:block; margin-bottom:6px; font-weight:600; font-size:13px; color:#374151 }
+    .form-group input, .form-group select{ width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px }
+    .form-group input:focus, .form-group select:focus{ outline:none; border-color:#52d5ff; box-shadow:0 0 0 3px rgba(82,213,255,0.2) }
+    .form-row{ display:grid; grid-template-columns:1fr 1fr; gap:12px }
+    .file-drop{ border:2px dashed #d1d5db; border-radius:10px; padding:30px; text-align:center; cursor:pointer; transition:all .15s }
+    .file-drop:hover, .file-drop.dragover{ border-color:#52d5ff; background:#f0fdff }
+    .file-drop svg{ width:40px; height:40px; color:#9ca3af; margin-bottom:10px }
+    .file-drop p{ margin:0; color:#6b7280; font-size:14px }
+    .file-drop .file-name{ margin-top:10px; font-weight:600; color:#374151 }
+
+    /* Legend */
+    .chart-legend{ display:flex; gap:20px; justify-content:center; margin-top:10px; flex-wrap:wrap }
+    .legend-item{ display:flex; align-items:center; gap:6px; font-size:13px; color:#4b5563 }
+
+    /* Empty State */
+    .empty-state{ text-align:center; padding:60px 20px; color:#6b7280 }
+    .empty-state svg{ width:64px; height:64px; margin-bottom:16px; color:#d1d5db }
+    .empty-state h4{ margin:0 0 8px 0; color:#374151; font-size:18px }
+    .empty-state p{ margin:0 0 20px 0 }
+
+    /* Toast */
+    .toast{ position:fixed; bottom:20px; right:20px; background:#1f2937; color:#fff; padding:12px 20px; border-radius:8px; font-size:14px; z-index:200; opacity:0; transform:translateY(20px); transition:all .3s }
+    .toast.show{ opacity:1; transform:translateY(0) }
+    .toast.success{ background:#059669 }
+    .toast.error{ background:#dc2626 }
   </style>
 </head>
 <body>
@@ -63,17 +129,228 @@
 
   <main class="container">
     <section class="card">
-      <h3>Velocity Tracker</h3>
+      <h3>Preleasing Velocity</h3>
       <div class="content">
-        <div class="badge">Under construction</div>
-        <p class="muted" style="margin-top:8px">This page is being built. Check back soon.</p>
+        <div class="toolbar">
+          <div class="toolbar-group">
+            <button class="btn btn-accent" id="importCsvBtn">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+              Import CSV
+            </button>
+            <button class="btn btn-secondary" id="addEntryBtn">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              Add Entry
+            </button>
+            <button class="btn btn-secondary" id="exportDataBtn">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              Export
+            </button>
+          </div>
+          <div class="view-toggle">
+            <button id="chartViewBtn" class="active" title="Chart View">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
+            </button>
+            <button id="tableViewBtn" title="Table View">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div id="emptyState" class="empty-state" style="display:none">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          <h4>No Velocity Data</h4>
+          <p>Import a CSV file or add entries manually to start tracking preleasing velocity for this property.</p>
+          <button class="btn btn-accent" id="emptyImportBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+            Import CSV
+          </button>
+        </div>
+
+        <div id="chartContainer" class="chart-container">
+          <canvas id="velocityChart"></canvas>
+        </div>
+
+        <div id="dataTableContainer" class="data-table-wrap" style="display:none">
+          <table class="data-table" id="dataTable">
+            <thead id="dataTableHead"></thead>
+            <tbody id="dataTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" id="rawDataCard" style="display:none">
+      <h3>Raw Data</h3>
+      <div class="content">
+        <div class="data-table-wrap">
+          <table class="data-table" id="rawDataTable">
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th>Academic Year</th>
+                <th>Prelease %</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="rawDataBody"></tbody>
+          </table>
+        </div>
       </div>
     </section>
   </main>
 
+  <!-- Import CSV Modal -->
+  <div class="modal-overlay" id="importModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h4>Import CSV Data</h4>
+        <button class="modal-close" id="closeImportModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="file-drop" id="fileDrop">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+          <p>Drag & drop your CSV file here, or click to browse</p>
+          <div class="file-name" id="fileName" style="display:none"></div>
+        </div>
+        <input type="file" id="fileInput" accept=".csv" style="display:none">
+        <div class="form-group" style="margin-top:16px">
+          <label>Import Mode</label>
+          <select id="importMode">
+            <option value="replace">Replace existing data</option>
+            <option value="merge">Merge with existing data</option>
+          </select>
+        </div>
+        <div id="csvPreview" style="margin-top:16px; display:none">
+          <label style="font-weight:600; font-size:13px; color:#374151; margin-bottom:8px; display:block">Preview (first 5 rows)</label>
+          <div class="data-table-wrap" style="max-height:200px; overflow:auto">
+            <table class="data-table" id="previewTable">
+              <thead id="previewHead"></thead>
+              <tbody id="previewBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div style="margin-top:20px; display:flex; gap:10px; justify-content:flex-end">
+          <button class="btn btn-secondary" id="cancelImport">Cancel</button>
+          <button class="btn btn-accent" id="confirmImport" disabled>Import Data</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Entry Modal -->
+  <div class="modal-overlay" id="addEntryModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h4>Add Velocity Entry</h4>
+        <button class="modal-close" id="closeAddModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Month</label>
+            <select id="entryMonth">
+              <option value="Sep">September</option>
+              <option value="Oct">October</option>
+              <option value="Nov">November</option>
+              <option value="Dec">December</option>
+              <option value="Jan">January</option>
+              <option value="Feb">February</option>
+              <option value="Mar">March</option>
+              <option value="Apr">April</option>
+              <option value="May">May</option>
+              <option value="Jun">June</option>
+              <option value="Jul">July</option>
+              <option value="Aug">August</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Academic Year</label>
+            <select id="entryYear">
+              <option value="'25/'26">'25/'26</option>
+              <option value="'24/'25">'24/'25</option>
+              <option value="'23/'24">'23/'24</option>
+              <option value="'22/'23">'22/'23</option>
+              <option value="'21/'22">'21/'22</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Prelease Percentage (0-100)</label>
+          <input type="number" id="entryPercent" min="0" max="100" step="0.01" placeholder="e.g., 45.5">
+        </div>
+        <div style="margin-top:20px; display:flex; gap:10px; justify-content:flex-end">
+          <button class="btn btn-secondary" id="cancelAdd">Cancel</button>
+          <button class="btn btn-accent" id="confirmAdd">Add Entry</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
   <script>
     const STORE_CURRENT_PROPERTY_KEY = 'mmp_current_property_v1';
+    const VELOCITY_DATA_KEY = 'mmp_velocity_data_v1';
 
+    // Month order for chart
+    const MONTH_ORDER = ['Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'];
+    
+    // Year colors matching the screenshot
+    const YEAR_COLORS = {
+      "'25/'26": { color: '#9ca3af', marker: 'circle' },
+      "'24/'25": { color: '#991b1b', marker: 'triangle' },
+      "'23/'24": { color: '#1e3a5f', marker: 'square' },
+      "'22/'23": { color: '#059669', marker: 'circle' },
+      "'21/'22": { color: '#7c3aed', marker: 'triangle' }
+    };
+
+    let velocityChart = null;
+    let currentProperty = '';
+    let allVelocityData = {};
+    let parsedCsvData = null;
+
+    // DOM Elements
+    const els = {
+      propertySelect: document.getElementById('propertySelect'),
+      logoutBtn: document.getElementById('logoutBtn'),
+      adminPageBtn: document.getElementById('adminPageBtn'),
+      importCsvBtn: document.getElementById('importCsvBtn'),
+      addEntryBtn: document.getElementById('addEntryBtn'),
+      exportDataBtn: document.getElementById('exportDataBtn'),
+      chartViewBtn: document.getElementById('chartViewBtn'),
+      tableViewBtn: document.getElementById('tableViewBtn'),
+      chartContainer: document.getElementById('chartContainer'),
+      dataTableContainer: document.getElementById('dataTableContainer'),
+      emptyState: document.getElementById('emptyState'),
+      emptyImportBtn: document.getElementById('emptyImportBtn'),
+      rawDataCard: document.getElementById('rawDataCard'),
+      rawDataBody: document.getElementById('rawDataBody'),
+      // Import Modal
+      importModal: document.getElementById('importModal'),
+      closeImportModal: document.getElementById('closeImportModal'),
+      fileDrop: document.getElementById('fileDrop'),
+      fileInput: document.getElementById('fileInput'),
+      fileName: document.getElementById('fileName'),
+      importMode: document.getElementById('importMode'),
+      csvPreview: document.getElementById('csvPreview'),
+      previewHead: document.getElementById('previewHead'),
+      previewBody: document.getElementById('previewBody'),
+      cancelImport: document.getElementById('cancelImport'),
+      confirmImport: document.getElementById('confirmImport'),
+      // Add Entry Modal
+      addEntryModal: document.getElementById('addEntryModal'),
+      closeAddModal: document.getElementById('closeAddModal'),
+      entryMonth: document.getElementById('entryMonth'),
+      entryYear: document.getElementById('entryYear'),
+      entryPercent: document.getElementById('entryPercent'),
+      cancelAdd: document.getElementById('cancelAdd'),
+      confirmAdd: document.getElementById('confirmAdd'),
+      // Toast
+      toast: document.getElementById('toast')
+    };
+
+    // Navigation highlighting
     (function(){
       const nav = document.getElementById('mainNav');
       if (!nav) return;
@@ -84,12 +361,472 @@
       });
     })();
 
-    const els = {
-      propertySelect: document.getElementById('propertySelect'),
-      logoutBtn: document.getElementById('logoutBtn'),
-      adminPageBtn: document.getElementById('adminPageBtn'),
+    // Toast notification
+    function showToast(message, type = 'success') {
+      els.toast.textContent = message;
+      els.toast.className = 'toast ' + type + ' show';
+      setTimeout(() => { els.toast.classList.remove('show'); }, 3000);
+    }
+
+    // Load velocity data from localStorage
+    function loadVelocityData() {
+      try {
+        const stored = localStorage.getItem(VELOCITY_DATA_KEY);
+        allVelocityData = stored ? JSON.parse(stored) : {};
+      } catch (e) {
+        allVelocityData = {};
+      }
+    }
+
+    // Save velocity data to localStorage
+    function saveVelocityData() {
+      localStorage.setItem(VELOCITY_DATA_KEY, JSON.stringify(allVelocityData));
+    }
+
+    // Get data for current property
+    function getPropertyData() {
+      if (!currentProperty) return [];
+      return allVelocityData[currentProperty] || [];
+    }
+
+    // Set data for current property
+    function setPropertyData(data) {
+      if (!currentProperty) return;
+      allVelocityData[currentProperty] = data;
+      saveVelocityData();
+    }
+
+    // Parse CSV content
+    function parseCSV(content) {
+      const lines = content.trim().split('\n');
+      if (lines.length < 2) return null;
+      
+      const headers = lines[0].split(',').map(h => h.trim());
+      const data = [];
+      
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',');
+        const row = {};
+        headers.forEach((h, idx) => {
+          row[h] = values[idx] ? values[idx].trim() : '';
+        });
+        data.push(row);
+      }
+      
+      return { headers, data };
+    }
+
+    // Convert parsed CSV to velocity data format
+    function csvToVelocityData(parsed) {
+      const result = [];
+      
+      // Try to detect column names
+      const monthCol = parsed.headers.find(h => /month/i.test(h)) || parsed.headers[0];
+      const percentCol = parsed.headers.find(h => /pl|percent|prelease/i.test(h)) || parsed.headers[1];
+      const yearCol = parsed.headers.find(h => /year|academic/i.test(h)) || parsed.headers[2];
+      
+      parsed.data.forEach(row => {
+        const month = row[monthCol];
+        const percent = parseFloat(row[percentCol]);
+        const year = row[yearCol];
+        
+        if (month && year && !isNaN(percent)) {
+          result.push({
+            month: month,
+            year: year,
+            percent: percent <= 1 ? percent * 100 : percent // Convert decimal to percentage if needed
+          });
+        }
+      });
+      
+      return result;
+    }
+
+    // Render chart
+    function renderChart() {
+      const data = getPropertyData();
+      
+      if (data.length === 0) {
+        els.emptyState.style.display = 'block';
+        els.chartContainer.style.display = 'none';
+        els.dataTableContainer.style.display = 'none';
+        els.rawDataCard.style.display = 'none';
+        return;
+      }
+      
+      els.emptyState.style.display = 'none';
+      els.chartContainer.style.display = 'block';
+      els.rawDataCard.style.display = 'block';
+      
+      // Group data by year
+      const yearData = {};
+      data.forEach(d => {
+        if (!yearData[d.year]) yearData[d.year] = {};
+        yearData[d.year][d.month] = d.percent;
+      });
+      
+      // Sort years (newest first)
+      const years = Object.keys(yearData).sort((a, b) => {
+        const aNum = parseInt(a.replace(/[^0-9]/g, '').slice(0, 2));
+        const bNum = parseInt(b.replace(/[^0-9]/g, '').slice(0, 2));
+        return bNum - aNum;
+      });
+      
+      // Create datasets
+      const datasets = years.map((year, idx) => {
+        const colorInfo = YEAR_COLORS[year] || { color: `hsl(${idx * 60}, 60%, 50%)`, marker: 'circle' };
+        const dataPoints = MONTH_ORDER.map(month => yearData[year][month] ?? null);
+        
+        return {
+          label: year,
+          data: dataPoints,
+          borderColor: colorInfo.color,
+          backgroundColor: colorInfo.color,
+          borderWidth: 2,
+          pointRadius: 6,
+          pointStyle: colorInfo.marker === 'triangle' ? 'triangle' : colorInfo.marker === 'square' ? 'rect' : 'circle',
+          pointBorderColor: colorInfo.color,
+          pointBackgroundColor: colorInfo.marker === 'circle' ? 'transparent' : colorInfo.color,
+          pointBorderWidth: 2,
+          fill: false,
+          tension: 0.1,
+          spanGaps: true
+        };
+      });
+      
+      // Destroy existing chart
+      if (velocityChart) {
+        velocityChart.destroy();
+      }
+      
+      // Create new chart
+      const ctx = document.getElementById('velocityChart').getContext('2d');
+      velocityChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: MONTH_ORDER,
+          datasets: datasets
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return context.dataset.label + ': ' + (context.parsed.y !== null ? context.parsed.y.toFixed(0) + '%' : 'N/A');
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              min: 0,
+              max: 150,
+              ticks: {
+                callback: function(value) {
+                  return value + '%';
+                },
+                stepSize: 50
+              },
+              title: {
+                display: true,
+                text: 'Preleased %'
+              }
+            },
+            x: {
+              grid: {
+                display: false
+              }
+            }
+          }
+        }
+      });
+      
+      // Render data table
+      renderDataTable(years, yearData);
+      
+      // Render raw data table
+      renderRawDataTable(data);
+    }
+
+    // Render data table (below chart)
+    function renderDataTable(years, yearData) {
+      const thead = document.getElementById('dataTableHead');
+      const tbody = document.getElementById('dataTableBody');
+      
+      // Header row
+      let headerHtml = '<tr><th></th>';
+      MONTH_ORDER.forEach(month => {
+        headerHtml += `<th>${month}</th>`;
+      });
+      headerHtml += '</tr>';
+      thead.innerHTML = headerHtml;
+      
+      // Data rows
+      let bodyHtml = '';
+      years.forEach(year => {
+        const colorInfo = YEAR_COLORS[year] || { color: '#6b7280', marker: 'circle' };
+        let markerClass = 'year-marker';
+        let markerStyle = '';
+        
+        if (colorInfo.marker === 'triangle') {
+          markerStyle = `border-bottom-color: ${colorInfo.color}`;
+          markerClass += ' triangle';
+        } else if (colorInfo.marker === 'square') {
+          markerStyle = `border-color: ${colorInfo.color}`;
+          markerClass += ' square';
+        } else {
+          markerStyle = `border-color: ${colorInfo.color}`;
+          markerClass += ' circle';
+        }
+        
+        bodyHtml += `<tr><td><div class="year-label"><span class="${markerClass}" style="${markerStyle}"></span>${year}</div></td>`;
+        MONTH_ORDER.forEach(month => {
+          const val = yearData[year][month];
+          bodyHtml += `<td>${val !== undefined && val !== null ? Math.round(val) + '%' : ''}</td>`;
+        });
+        bodyHtml += '</tr>';
+      });
+      tbody.innerHTML = bodyHtml;
+    }
+
+    // Render raw data table
+    function renderRawDataTable(data) {
+      let html = '';
+      data.forEach((d, idx) => {
+        html += `<tr>
+          <td>${d.month}</td>
+          <td>${d.year}</td>
+          <td>${d.percent.toFixed(1)}%</td>
+          <td><button class="btn btn-secondary" style="padding:4px 8px; font-size:11px" onclick="deleteEntry(${idx})">Delete</button></td>
+        </tr>`;
+      });
+      els.rawDataBody.innerHTML = html || '<tr><td colspan="4" style="text-align:center; color:#6b7280">No data</td></tr>';
+    }
+
+    // Delete entry
+    window.deleteEntry = function(idx) {
+      const data = getPropertyData();
+      data.splice(idx, 1);
+      setPropertyData(data);
+      renderChart();
+      showToast('Entry deleted');
     };
 
+    // Toggle views
+    function setView(view) {
+      if (view === 'chart') {
+        els.chartViewBtn.classList.add('active');
+        els.tableViewBtn.classList.remove('active');
+        els.chartContainer.style.display = 'block';
+        els.dataTableContainer.style.display = 'none';
+      } else {
+        els.chartViewBtn.classList.remove('active');
+        els.tableViewBtn.classList.add('active');
+        els.chartContainer.style.display = 'none';
+        els.dataTableContainer.style.display = 'block';
+      }
+    }
+
+    // Export data as CSV
+    function exportData() {
+      const data = getPropertyData();
+      if (data.length === 0) {
+        showToast('No data to export', 'error');
+        return;
+      }
+      
+      let csv = 'MonthAbbr,Community PL% (Daily),AcademicYearAbbrev\n';
+      data.forEach(d => {
+        csv += `${d.month},${(d.percent / 100).toFixed(10)},${d.year}\n`;
+      });
+      
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `velocity_${currentProperty.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Data exported successfully');
+    }
+
+    // Modal handlers
+    function openImportModal() {
+      els.importModal.classList.add('show');
+      parsedCsvData = null;
+      els.fileName.style.display = 'none';
+      els.csvPreview.style.display = 'none';
+      els.confirmImport.disabled = true;
+    }
+
+    function closeImportModal() {
+      els.importModal.classList.remove('show');
+    }
+
+    function openAddModal() {
+      els.addEntryModal.classList.add('show');
+      els.entryPercent.value = '';
+    }
+
+    function closeAddModal() {
+      els.addEntryModal.classList.remove('show');
+    }
+
+    // File handling
+    function handleFile(file) {
+      if (!file || !file.name.endsWith('.csv')) {
+        showToast('Please select a CSV file', 'error');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const content = e.target.result;
+        parsedCsvData = parseCSV(content);
+        
+        if (!parsedCsvData || parsedCsvData.data.length === 0) {
+          showToast('Could not parse CSV file', 'error');
+          return;
+        }
+        
+        els.fileName.textContent = file.name;
+        els.fileName.style.display = 'block';
+        
+        // Show preview
+        let previewHeadHtml = '<tr>';
+        parsedCsvData.headers.forEach(h => {
+          previewHeadHtml += `<th>${h}</th>`;
+        });
+        previewHeadHtml += '</tr>';
+        els.previewHead.innerHTML = previewHeadHtml;
+        
+        let previewBodyHtml = '';
+        parsedCsvData.data.slice(0, 5).forEach(row => {
+          previewBodyHtml += '<tr>';
+          parsedCsvData.headers.forEach(h => {
+            previewBodyHtml += `<td>${row[h] || ''}</td>`;
+          });
+          previewBodyHtml += '</tr>';
+        });
+        els.previewBody.innerHTML = previewBodyHtml;
+        els.csvPreview.style.display = 'block';
+        els.confirmImport.disabled = false;
+      };
+      reader.readAsText(file);
+    }
+
+    // Import data
+    function importData() {
+      if (!parsedCsvData) return;
+      
+      const newData = csvToVelocityData(parsedCsvData);
+      if (newData.length === 0) {
+        showToast('No valid data found in CSV', 'error');
+        return;
+      }
+      
+      const mode = els.importMode.value;
+      let existingData = getPropertyData();
+      
+      if (mode === 'replace') {
+        setPropertyData(newData);
+      } else {
+        // Merge: update existing entries, add new ones
+        newData.forEach(newEntry => {
+          const existingIdx = existingData.findIndex(e => e.month === newEntry.month && e.year === newEntry.year);
+          if (existingIdx >= 0) {
+            existingData[existingIdx] = newEntry;
+          } else {
+            existingData.push(newEntry);
+          }
+        });
+        setPropertyData(existingData);
+      }
+      
+      closeImportModal();
+      renderChart();
+      showToast(`Imported ${newData.length} entries successfully`);
+    }
+
+    // Add manual entry
+    function addEntry() {
+      const month = els.entryMonth.value;
+      const year = els.entryYear.value;
+      const percent = parseFloat(els.entryPercent.value);
+      
+      if (!month || !year || isNaN(percent)) {
+        showToast('Please fill all fields', 'error');
+        return;
+      }
+      
+      if (percent < 0 || percent > 100) {
+        showToast('Percentage must be between 0 and 100', 'error');
+        return;
+      }
+      
+      const data = getPropertyData();
+      const existingIdx = data.findIndex(e => e.month === month && e.year === year);
+      
+      if (existingIdx >= 0) {
+        data[existingIdx].percent = percent;
+      } else {
+        data.push({ month, year, percent });
+      }
+      
+      setPropertyData(data);
+      closeAddModal();
+      renderChart();
+      showToast('Entry added successfully');
+    }
+
+    // Event listeners
+    els.importCsvBtn.addEventListener('click', openImportModal);
+    els.emptyImportBtn.addEventListener('click', openImportModal);
+    els.addEntryBtn.addEventListener('click', openAddModal);
+    els.exportDataBtn.addEventListener('click', exportData);
+    els.chartViewBtn.addEventListener('click', () => setView('chart'));
+    els.tableViewBtn.addEventListener('click', () => setView('table'));
+    
+    els.closeImportModal.addEventListener('click', closeImportModal);
+    els.cancelImport.addEventListener('click', closeImportModal);
+    els.confirmImport.addEventListener('click', importData);
+    
+    els.closeAddModal.addEventListener('click', closeAddModal);
+    els.cancelAdd.addEventListener('click', closeAddModal);
+    els.confirmAdd.addEventListener('click', addEntry);
+    
+    els.fileDrop.addEventListener('click', () => els.fileInput.click());
+    els.fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) handleFile(e.target.files[0]);
+    });
+    
+    els.fileDrop.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      els.fileDrop.classList.add('dragover');
+    });
+    els.fileDrop.addEventListener('dragleave', () => {
+      els.fileDrop.classList.remove('dragover');
+    });
+    els.fileDrop.addEventListener('drop', (e) => {
+      e.preventDefault();
+      els.fileDrop.classList.remove('dragover');
+      if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+    });
+
+    // Close modals on overlay click
+    els.importModal.addEventListener('click', (e) => {
+      if (e.target === els.importModal) closeImportModal();
+    });
+    els.addEntryModal.addEventListener('click', (e) => {
+      if (e.target === els.addEntryModal) closeAddModal();
+    });
+
+    // API helper
     async function api(path, opts={}){
       const res = await fetch('/api' + path, opts);
       if (!res.ok) throw new Error(await res.text() || ('HTTP '+res.status));
@@ -105,7 +842,10 @@
       return names.filter(n => allowed.includes(n));
     }
 
+    // Initialize
     async function init(){
+      loadVelocityData();
+      
       try{
         const meRes = await fetch('/api/me');
         if (!meRes.ok){ location.href = 'index.html'; return; }
@@ -117,13 +857,25 @@
         try{ const pres = await api('/properties'); props = await pres.json(); }catch(e){ props = []; }
         const list = getAccessible(props, me);
         const saved = (localStorage.getItem(STORE_CURRENT_PROPERTY_KEY)||'').trim();
-        const current = list.includes(saved) ? saved : (list[0] || '');
+        currentProperty = list.includes(saved) ? saved : (list[0] || '');
+        
         if (els.propertySelect){
           els.propertySelect.innerHTML = list.map(p => `<option value="${p.replace(/"/g,'&quot;')}">${p}</option>`).join('');
-          els.propertySelect.value = current;
-          els.propertySelect.onchange = ()=>{ localStorage.setItem(STORE_CURRENT_PROPERTY_KEY, els.propertySelect.value); };
+          els.propertySelect.value = currentProperty;
+          els.propertySelect.onchange = ()=>{ 
+            currentProperty = els.propertySelect.value;
+            localStorage.setItem(STORE_CURRENT_PROPERTY_KEY, currentProperty);
+            renderChart();
+          };
         }
-      }catch(e){ location.href = 'index.html'; }
+        
+        renderChart();
+      }catch(e){ 
+        // For local testing without API
+        console.log('API not available, running in demo mode');
+        currentProperty = 'Demo Property';
+        renderChart();
+      }
     }
 
     init();
