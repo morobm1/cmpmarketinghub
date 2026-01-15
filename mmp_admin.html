@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Admin - User Management</title>
-  <meta name="description" content="Manage users, roles, and property access">
+  <title>Admin - User & Catalog Management</title>
+  <meta name="description" content="Manage users, roles, property access, and uniform catalog">
   <style>
     :root{
       --bg:#0f172a; --panel:#111827; --muted:#1f2937; --text:#e5e7eb; --sub:#9ca3af; --border:#374151; --accent:#22d3ee; --good:#34d399; --warn:#f59e0b; --bad:#f87171;
@@ -19,7 +19,7 @@
     .container{padding:18px; max-width:1200px; margin:0 auto; display:flex; flex-direction:column; gap:16px}
 
     .card{background:linear-gradient(180deg, rgba(17,24,39,0.92), rgba(2,6,23,0.85)); border:1px solid var(--border); border-radius:14px; overflow:hidden}
-    .card h3{margin:0; padding:12px 14px 0 14px; font-size:14px; color:var(--sub); font-weight:700}
+    .card h3{margin:0; padding:12px 14px 0 14px; font-size:14px; color:var(--sub); font-weight:700; display:flex; align-items:center; gap:10px}
     .card .content{padding:12px 14px 14px 14px}
 
     .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
@@ -32,6 +32,7 @@
     button.secondary{background:var(--muted); color:var(--text); border:1px solid var(--border); font-weight:700}
     button.warn{background:linear-gradient(180deg,#f59e0b,#fbbf24); color:#1f1300}
     button.danger{background:linear-gradient(180deg,#ef4444,#f87171); color:#1f0a0a}
+    button.good{background:linear-gradient(180deg,#22c55e,#34d399); color:#052e16}
     .mini{font-size:11px; color:var(--sub)}
 
     .grid{max-height:60vh; overflow:auto; border:1px solid var(--border); border-radius:10px}
@@ -44,11 +45,66 @@
     .prop-item.selected{border-color: var(--accent); background: rgba(34,211,238,0.12)}
 
     .hidden{display:none}
+
+    /* Tabs */
+    .tabs{display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap}
+    .tab-btn{flex:0 0 auto; width:auto; padding:10px 20px; border-radius:999px; background:var(--muted); border:1px solid var(--border); color:var(--text); font-weight:700; cursor:pointer}
+    .tab-btn.active{background:linear-gradient(180deg, #0ea5e9, #22d3ee); color:#001018; border-color:transparent}
+    .tab-content{display:none}
+    .tab-content.active{display:block}
+
+    /* Catalog specific styles */
+    .catalog-grid{display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:16px; margin-top:16px}
+    .catalog-card{background:var(--muted); border:1px solid var(--border); border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:10px}
+    .catalog-card img{width:100%; height:160px; object-fit:cover; border-radius:8px; background:#374151}
+    .catalog-card .item-name{font-weight:700; font-size:15px; color:var(--text)}
+    .catalog-card .item-sku{font-size:12px; color:var(--sub)}
+    .catalog-card .item-price{font-size:14px; font-weight:700; color:var(--accent)}
+    .catalog-card .item-category{font-size:11px; color:var(--warn); text-transform:uppercase; letter-spacing:0.5px}
+    .catalog-card .item-desc{font-size:12px; color:var(--sub); line-height:1.4}
+    .catalog-card .item-meta{font-size:11px; color:var(--sub)}
+    .catalog-card .card-actions{display:flex; gap:8px; margin-top:auto}
+    .catalog-card .card-actions button{flex:1; padding:8px 12px; font-size:12px}
+
+    .form-group{margin-bottom:12px}
+    .form-group label{margin-bottom:6px}
+    .form-row{display:grid; grid-template-columns: 1fr 1fr; gap:12px}
+    @media(max-width:600px){.form-row{grid-template-columns:1fr}}
+
+    .tag-input-wrap{display:flex; flex-wrap:wrap; gap:6px; padding:8px; border:1px solid var(--border); border-radius:10px; background:var(--muted); min-height:44px}
+    .tag{display:inline-flex; align-items:center; gap:4px; padding:4px 8px; background:rgba(34,211,238,0.2); border:1px solid var(--accent); border-radius:6px; font-size:12px; color:var(--accent)}
+    .tag .remove-tag{cursor:pointer; font-weight:700; margin-left:4px}
+    .tag-input{flex:1; min-width:80px; border:none; background:transparent; color:var(--text); font-size:13px; padding:4px}
+    .tag-input:focus{outline:none}
+
+    .image-preview{width:100%; max-width:200px; height:120px; object-fit:cover; border-radius:8px; background:#374151; margin-top:8px}
+    .image-preview.empty{display:flex; align-items:center; justify-content:center; color:var(--sub); font-size:12px}
+
+    .search-input{margin-bottom:16px}
+    .filter-row{display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items:center}
+    .filter-row select{width:auto; min-width:150px}
+    .filter-row .search-box{flex:1; min-width:200px}
+
+    .badge{display:inline-block; padding:4px 10px; border-radius:999px; font-size:11px; background:rgba(34,211,238,0.15); color:var(--accent); border:1px solid var(--accent); font-weight:700; margin-left:8px}
+
+    .empty-state{text-align:center; padding:40px 20px; color:var(--sub)}
+    .empty-state svg{width:64px; height:64px; margin-bottom:16px; opacity:0.5}
+
+    /* Modal */
+    .modal-overlay{position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; z-index:100; padding:20px}
+    .modal{background:var(--panel); border:1px solid var(--border); border-radius:14px; max-width:600px; width:100%; max-height:90vh; overflow:auto}
+    .modal-header{padding:16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between}
+    .modal-header h3{margin:0; font-size:16px; color:var(--text)}
+    .modal-close{background:none; border:none; color:var(--sub); font-size:24px; cursor:pointer; padding:0; width:auto}
+    .modal-close:hover{color:var(--text)}
+    .modal-body{padding:16px}
+    .modal-footer{padding:16px; border-top:1px solid var(--border); display:flex; gap:10px; justify-content:flex-end}
+    .modal-footer button{width:auto; padding:10px 20px}
   </style>
 </head>
 <body>
   <header id="appHeader" class="hidden">
-    <div class="title">Admin • User Management</div>
+    <div class="title">Admin • Management Console</div>
     <div class="pill mini">Only admins can access</div>
     <div style="margin-left:auto; display:flex; gap:8px">
       <button id="toCalendarBtn" class="secondary">Back to Calendar</button>
@@ -57,66 +113,338 @@
   </header>
 
   <main id="appContainer" class="container hidden">
-    <section class="card">
-      <h3>Create User</h3>
-      <div class="content">
-        <div class="row">
-          <div>
-            <label for="newUsername">Username</label>
-            <input id="newUsername" type="text" />
-          </div>
-          <div>
-            <label for="newPassword">Temp Password</label>
-            <input id="newPassword" type="password" />
-            <div class="mini" style="margin-top:6px;display:flex;align-items:center;gap:6px">
-              <label style="display:flex;align-items:center;gap:6px;user-select:none"><input id="toggleNewPw" type="checkbox" /> Show password</label>
+    <!-- Tabs Navigation -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="users">👥 User Management</button>
+      <button class="tab-btn" data-tab="catalog">🛒 Uniform Catalog</button>
+    </div>
+
+    <!-- User Management Tab -->
+    <div id="usersTab" class="tab-content active">
+      <section class="card">
+        <h3>Create User</h3>
+        <div class="content">
+          <div class="row">
+            <div>
+              <label for="newUsername">Username</label>
+              <input id="newUsername" type="text" />
+            </div>
+            <div>
+              <label for="newPassword">Temp Password</label>
+              <input id="newPassword" type="password" />
+              <div class="mini" style="margin-top:6px;display:flex;align-items:center;gap:6px">
+                <label style="display:flex;align-items:center;gap:6px;user-select:none"><input id="toggleNewPw" type="checkbox" /> Show password</label>
+              </div>
+            </div>
+            <div>
+              <label for="newRole">Role</label>
+              <select id="newRole"><option value="user">User</option><option value="admin">Admin</option></select>
             </div>
           </div>
-          <div>
-            <label for="newRole">Role</label>
-            <select id="newRole"><option value="user">User</option><option value="admin">Admin</option></select>
-          </div>
-        </div>
-        <div class="row">
-          <div>
-            <label>Assign Properties</label>
-            <div id="newPropsWrap" class="grid" style="padding:8px; max-height:300px; overflow:auto"></div>
-            <div class="mini" style="margin-top:6px; display:flex; gap:8px">
-              <button id="selectAllPropsBtn" class="secondary" style="flex:0 0 auto; padding:6px 8px">Select All</button>
-              <button id="clearAllPropsBtn" class="secondary" style="flex:0 0 auto; padding:6px 8px">Clear All</button>
+          <div class="row">
+            <div>
+              <label>Assign Properties</label>
+              <div id="newPropsWrap" class="grid" style="padding:8px; max-height:300px; overflow:auto"></div>
+              <div class="mini" style="margin-top:6px; display:flex; gap:8px">
+                <button id="selectAllPropsBtn" class="secondary" style="flex:0 0 auto; padding:6px 8px">Select All</button>
+                <button id="clearAllPropsBtn" class="secondary" style="flex:0 0 auto; padding:6px 8px">Clear All</button>
+              </div>
+            </div>
+            <div style="align-self:flex-end">
+              <button id="createUserBtn" class="good">Create User</button>
             </div>
           </div>
-          <div style="align-self:flex-end">
-            <button id="createUserBtn" class="good">Create User</button>
+          <div class="row">
+            <div>
+              <label for="userEmail">User Email Address</label>
+              <input id="userEmail" type="email" placeholder="user@example.com" />
+              <div class="mini" style="margin-top:6px">
+                <label style="display:flex;align-items:center;gap:6px;user-select:none">
+                  <input id="sendEmailCheck" type="checkbox" checked /> Open email client with credentials after creating user
+                </label>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="row">
-          <div>
-            <label for="userEmail">User Email Address</label>
-            <input id="userEmail" type="email" placeholder="user@example.com" />
-            <div class="mini" style="margin-top:6px">
-              <label style="display:flex;align-items:center;gap:6px;user-select:none">
-                <input id="sendEmailCheck" type="checkbox" checked /> Open email client with credentials after creating user
+      </section>
+
+      <section class="card">
+        <h3>Users</h3>
+        <div class="content">
+          <div id="usersTable" class="grid"></div>
+        </div>
+      </section>
+
+      <div class="mini">Changes are saved to the server (MongoDB Atlas) via API.</div>
+    </div>
+
+    <!-- Uniform Catalog Tab -->
+    <div id="catalogTab" class="tab-content">
+      <section class="card">
+        <h3>Add New Catalog Item</h3>
+        <div class="content">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="itemName">Item Name *</label>
+              <input id="itemName" type="text" placeholder="e.g., Classic Polo Shirt" />
+            </div>
+            <div class="form-group">
+              <label for="itemSku">SKU *</label>
+              <input id="itemSku" type="text" placeholder="e.g., POLO-001" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="itemPrice">Price ($) *</label>
+              <input id="itemPrice" type="number" step="0.01" min="0" placeholder="0.00" />
+            </div>
+            <div class="form-group">
+              <label for="itemCategory">Category *</label>
+              <select id="itemCategory">
+                <option value="">Select Category...</option>
+                <option value="Shirts">Shirts</option>
+                <option value="Polos">Polos</option>
+                <option value="T-Shirts">T-Shirts</option>
+                <option value="Jackets">Jackets</option>
+                <option value="Hoodies">Hoodies</option>
+                <option value="Pants">Pants</option>
+                <option value="Shorts">Shorts</option>
+                <option value="Hats">Hats</option>
+                <option value="Accessories">Accessories</option>
+                <option value="Outerwear">Outerwear</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="itemDescription">Description</label>
+            <textarea id="itemDescription" placeholder="Enter item description..."></textarea>
+          </div>
+          <div class="form-group">
+            <label for="itemImage">Image URL</label>
+            <input id="itemImage" type="url" placeholder="https://example.com/image.jpg" />
+            <img id="imagePreview" class="image-preview empty" alt="Preview" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Sizes (press Enter to add)</label>
+              <div id="sizesWrap" class="tag-input-wrap">
+                <input type="text" class="tag-input" id="sizeInput" placeholder="Add size..." />
+              </div>
+              <div class="mini" style="margin-top:6px">
+                <button id="addCommonSizesBtn" class="secondary" style="padding:6px 10px; width:auto">+ Add Common Sizes (S-2XL)</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Colors (press Enter to add)</label>
+              <div id="colorsWrap" class="tag-input-wrap">
+                <input type="text" class="tag-input" id="colorInput" placeholder="Add color..." />
+              </div>
+              <div class="mini" style="margin-top:6px">
+                <button id="addCommonColorsBtn" class="secondary" style="padding:6px 10px; width:auto">+ Add Common Colors</button>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex; gap:10px; margin-top:16px">
+            <button id="addItemBtn" class="good" style="flex:1">Add Item to Catalog</button>
+            <button id="clearFormBtn" class="secondary" style="flex:0 0 auto; width:auto; padding:10px 20px">Clear Form</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3>Catalog Items <span id="catalogCount" class="badge">0 items</span></h3>
+        <div class="content">
+          <div class="filter-row">
+            <input type="text" id="catalogSearch" class="search-box" placeholder="Search by name, SKU, or description..." />
+            <select id="categoryFilter">
+              <option value="">All Categories</option>
+              <option value="Shirts">Shirts</option>
+              <option value="Polos">Polos</option>
+              <option value="T-Shirts">T-Shirts</option>
+              <option value="Jackets">Jackets</option>
+              <option value="Hoodies">Hoodies</option>
+              <option value="Pants">Pants</option>
+              <option value="Shorts">Shorts</option>
+              <option value="Hats">Hats</option>
+              <option value="Accessories">Accessories</option>
+              <option value="Outerwear">Outerwear</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div id="catalogGrid" class="catalog-grid"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3>Import / Export</h3>
+        <div class="content">
+          <div class="row">
+            <div>
+              <button id="exportCatalogBtn" class="secondary">📥 Export Catalog (JSON)</button>
+            </div>
+            <div>
+              <label for="importFile" style="margin-bottom:0">
+                <button id="importCatalogBtn" class="secondary" onclick="document.getElementById('importFile').click()">📤 Import Catalog (JSON)</button>
               </label>
+              <input type="file" id="importFile" accept=".json" style="display:none" />
+            </div>
+            <div>
+              <button id="resetCatalogBtn" class="danger">🗑️ Reset to Default</button>
             </div>
           </div>
+          <div class="mini" style="margin-top:10px">Catalog data is stored in browser localStorage and shared with the Uniform Shop page.</div>
         </div>
-      </div>
-    </section>
-
-    <section class="card">
-      <h3>Users</h3>
-      <div class="content">
-        <div id="usersTable" class="grid"></div>
-      </div>
-    </section>
-
-    <div class="mini">Changes are saved to the server (MongoDB Atlas) via API.</div>
+      </section>
+    </div>
   </main>
 
-  
+  <!-- Edit Item Modal -->
+  <div id="editModal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Edit Catalog Item</h3>
+        <button class="modal-close" id="closeEditModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editItemId" />
+        <div class="form-row">
+          <div class="form-group">
+            <label for="editItemName">Item Name *</label>
+            <input id="editItemName" type="text" />
+          </div>
+          <div class="form-group">
+            <label for="editItemSku">SKU *</label>
+            <input id="editItemSku" type="text" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="editItemPrice">Price ($) *</label>
+            <input id="editItemPrice" type="number" step="0.01" min="0" />
+          </div>
+          <div class="form-group">
+            <label for="editItemCategory">Category *</label>
+            <select id="editItemCategory">
+              <option value="">Select Category...</option>
+              <option value="Shirts">Shirts</option>
+              <option value="Polos">Polos</option>
+              <option value="T-Shirts">T-Shirts</option>
+              <option value="Jackets">Jackets</option>
+              <option value="Hoodies">Hoodies</option>
+              <option value="Pants">Pants</option>
+              <option value="Shorts">Shorts</option>
+              <option value="Hats">Hats</option>
+              <option value="Accessories">Accessories</option>
+              <option value="Outerwear">Outerwear</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="editItemDescription">Description</label>
+          <textarea id="editItemDescription"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="editItemImage">Image URL</label>
+          <input id="editItemImage" type="url" />
+          <img id="editImagePreview" class="image-preview empty" alt="Preview" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Sizes (press Enter to add)</label>
+            <div id="editSizesWrap" class="tag-input-wrap">
+              <input type="text" class="tag-input" id="editSizeInput" placeholder="Add size..." />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Colors (press Enter to add)</label>
+            <div id="editColorsWrap" class="tag-input-wrap">
+              <input type="text" class="tag-input" id="editColorInput" placeholder="Add color..." />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="cancelEditBtn" class="secondary">Cancel</button>
+        <button id="saveEditBtn" class="good">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const API_BASE = '/api';
+    const CATALOG_STORAGE_KEY = 'mmp_uniform_catalog_v1';
+
+    // Default catalog items
+    const DEFAULT_CATALOG = [
+      {
+        id: 'item-1',
+        name: 'Classic Polo Shirt',
+        sku: 'POLO-001',
+        description: 'Premium cotton polo with embroidered logo',
+        price: 35.00,
+        category: 'Polos',
+        image: 'https://via.placeholder.com/300x300/446472/ffffff?text=Polo+Shirt',
+        sizes: ['S', 'M', 'L', 'XL', '2XL'],
+        colors: ['Navy', 'White', 'Gray']
+      },
+      {
+        id: 'item-2',
+        name: 'Performance T-Shirt',
+        sku: 'TSHIRT-001',
+        description: 'Moisture-wicking athletic tee',
+        price: 25.00,
+        category: 'T-Shirts',
+        image: 'https://via.placeholder.com/300x300/52d5ff/000000?text=T-Shirt',
+        sizes: ['S', 'M', 'L', 'XL', '2XL'],
+        colors: ['Black', 'Navy', 'Gray']
+      },
+      {
+        id: 'item-3',
+        name: 'Fleece Jacket',
+        sku: 'JACKET-001',
+        description: 'Soft fleece jacket with full zip',
+        price: 65.00,
+        category: 'Jackets',
+        image: 'https://via.placeholder.com/300x300/ffb732/000000?text=Jacket',
+        sizes: ['S', 'M', 'L', 'XL', '2XL'],
+        colors: ['Navy', 'Black', 'Gray']
+      },
+      {
+        id: 'item-4',
+        name: 'Baseball Cap',
+        sku: 'CAP-001',
+        description: 'Adjustable cap with embroidered logo',
+        price: 20.00,
+        category: 'Hats',
+        image: 'https://via.placeholder.com/300x300/929497/ffffff?text=Cap',
+        sizes: ['One Size'],
+        colors: ['Navy', 'Black', 'White']
+      },
+      {
+        id: 'item-5',
+        name: 'Hoodie Sweatshirt',
+        sku: 'HOODIE-001',
+        description: 'Comfortable pullover hoodie',
+        price: 55.00,
+        category: 'Hoodies',
+        image: 'https://via.placeholder.com/300x300/446472/ffffff?text=Hoodie',
+        sizes: ['S', 'M', 'L', 'XL', '2XL'],
+        colors: ['Navy', 'Gray', 'Black']
+      },
+      {
+        id: 'item-6',
+        name: 'Button-Down Shirt',
+        sku: 'SHIRT-001',
+        description: 'Professional dress shirt',
+        price: 45.00,
+        category: 'Shirts',
+        image: 'https://via.placeholder.com/300x300/52d5ff/000000?text=Dress+Shirt',
+        sizes: ['S', 'M', 'L', 'XL', '2XL'],
+        colors: ['White', 'Light Blue', 'Navy']
+      }
+    ];
 
     // Elements
     const els = {
@@ -125,6 +453,7 @@
       toCalendarBtn: document.getElementById('toCalendarBtn'),
       logoutBtn: document.getElementById('logoutBtn'),
 
+      // User management
       newUsername: document.getElementById('newUsername'),
       newPassword: document.getElementById('newPassword'),
       toggleNewPw: document.getElementById('toggleNewPw'),
@@ -134,8 +463,49 @@
       createUserBtn: document.getElementById('createUserBtn'),
       sendEmailCheck: document.getElementById('sendEmailCheck'),
       userEmail: document.getElementById('userEmail'),
-
       usersTable: document.getElementById('usersTable'),
+
+      // Catalog management
+      itemName: document.getElementById('itemName'),
+      itemSku: document.getElementById('itemSku'),
+      itemPrice: document.getElementById('itemPrice'),
+      itemCategory: document.getElementById('itemCategory'),
+      itemDescription: document.getElementById('itemDescription'),
+      itemImage: document.getElementById('itemImage'),
+      imagePreview: document.getElementById('imagePreview'),
+      sizesWrap: document.getElementById('sizesWrap'),
+      sizeInput: document.getElementById('sizeInput'),
+      colorsWrap: document.getElementById('colorsWrap'),
+      colorInput: document.getElementById('colorInput'),
+      addCommonSizesBtn: document.getElementById('addCommonSizesBtn'),
+      addCommonColorsBtn: document.getElementById('addCommonColorsBtn'),
+      addItemBtn: document.getElementById('addItemBtn'),
+      clearFormBtn: document.getElementById('clearFormBtn'),
+      catalogSearch: document.getElementById('catalogSearch'),
+      categoryFilter: document.getElementById('categoryFilter'),
+      catalogGrid: document.getElementById('catalogGrid'),
+      catalogCount: document.getElementById('catalogCount'),
+      exportCatalogBtn: document.getElementById('exportCatalogBtn'),
+      importFile: document.getElementById('importFile'),
+      resetCatalogBtn: document.getElementById('resetCatalogBtn'),
+
+      // Edit modal
+      editModal: document.getElementById('editModal'),
+      closeEditModal: document.getElementById('closeEditModal'),
+      editItemId: document.getElementById('editItemId'),
+      editItemName: document.getElementById('editItemName'),
+      editItemSku: document.getElementById('editItemSku'),
+      editItemPrice: document.getElementById('editItemPrice'),
+      editItemCategory: document.getElementById('editItemCategory'),
+      editItemDescription: document.getElementById('editItemDescription'),
+      editItemImage: document.getElementById('editItemImage'),
+      editImagePreview: document.getElementById('editImagePreview'),
+      editSizesWrap: document.getElementById('editSizesWrap'),
+      editSizeInput: document.getElementById('editSizeInput'),
+      editColorsWrap: document.getElementById('editColorsWrap'),
+      editColorInput: document.getElementById('editColorInput'),
+      cancelEditBtn: document.getElementById('cancelEditBtn'),
+      saveEditBtn: document.getElementById('saveEditBtn'),
     };
 
     if (els.toggleNewPw){ els.toggleNewPw.addEventListener('change', ()=>{ els.newPassword.type = els.toggleNewPw.checked ? 'text' : 'password'; }); }
@@ -143,6 +513,11 @@
     // Data
     let properties = [];
     let usersList = [];
+    let catalogItems = [];
+    let newItemSizes = [];
+    let newItemColors = [];
+    let editItemSizes = [];
+    let editItemColors = [];
 
     // Property grouping to combine individual names into grouped names
     const OLD_TO_GROUP = {
@@ -168,6 +543,413 @@
 
     function show(el){ if (el) el.classList.remove('hidden'); }
     function hide(el){ if (el) el.classList.add('hidden'); }
+    function esc(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    function fmtMoney(n){ const v = parseFloat(n); if (!isFinite(v)) return '$0.00'; return '$'+v.toFixed(2); }
+    function generateId(){ return 'item-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9); }
+
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        const tabId = btn.getAttribute('data-tab') + 'Tab';
+        document.getElementById(tabId).classList.add('active');
+      });
+    });
+
+    // ==================== CATALOG MANAGEMENT ====================
+
+    function loadCatalog(){
+      try {
+        const stored = localStorage.getItem(CATALOG_STORAGE_KEY);
+        if (stored) {
+          catalogItems = JSON.parse(stored);
+        } else {
+          catalogItems = [...DEFAULT_CATALOG];
+          saveCatalog();
+        }
+      } catch(e) {
+        catalogItems = [...DEFAULT_CATALOG];
+        saveCatalog();
+      }
+    }
+
+    function saveCatalog(){
+      try {
+        localStorage.setItem(CATALOG_STORAGE_KEY, JSON.stringify(catalogItems));
+      } catch(e) {
+        console.error('Failed to save catalog:', e);
+      }
+    }
+
+    function renderCatalog(){
+      const query = (els.catalogSearch.value || '').toLowerCase().trim();
+      const category = els.categoryFilter.value;
+
+      const filtered = catalogItems.filter(item => {
+        const matchesSearch = !query || 
+          item.name.toLowerCase().includes(query) ||
+          item.sku.toLowerCase().includes(query) ||
+          (item.description || '').toLowerCase().includes(query);
+        const matchesCategory = !category || item.category === category;
+        return matchesSearch && matchesCategory;
+      });
+
+      els.catalogCount.textContent = `${filtered.length} items`;
+
+      if (filtered.length === 0) {
+        els.catalogGrid.innerHTML = `
+          <div class="empty-state" style="grid-column: 1/-1">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+            <p>No items found</p>
+            <p class="mini">Try adjusting your search or filter</p>
+          </div>
+        `;
+        return;
+      }
+
+      els.catalogGrid.innerHTML = filtered.map(item => `
+        <div class="catalog-card" data-item-id="${item.id}">
+          <img src="${esc(item.image || '')}" alt="${esc(item.name)}" onerror="this.src='https://via.placeholder.com/300x200/374151/9ca3af?text=No+Image'">
+          <div class="item-category">${esc(item.category || 'Uncategorized')}</div>
+          <div class="item-name">${esc(item.name)}</div>
+          <div class="item-sku">SKU: ${esc(item.sku)}</div>
+          <div class="item-price">${fmtMoney(item.price)}</div>
+          <div class="item-desc">${esc(item.description || 'No description')}</div>
+          <div class="item-meta">
+            Sizes: ${(item.sizes || []).join(', ') || 'N/A'}<br>
+            Colors: ${(item.colors || []).join(', ') || 'N/A'}
+          </div>
+          <div class="card-actions">
+            <button class="secondary edit-item-btn" data-id="${item.id}">✏️ Edit</button>
+            <button class="danger delete-item-btn" data-id="${item.id}">🗑️ Delete</button>
+          </div>
+        </div>
+      `).join('');
+
+      // Attach event listeners
+      els.catalogGrid.querySelectorAll('.edit-item-btn').forEach(btn => {
+        btn.addEventListener('click', () => openEditModal(btn.dataset.id));
+      });
+      els.catalogGrid.querySelectorAll('.delete-item-btn').forEach(btn => {
+        btn.addEventListener('click', () => deleteItem(btn.dataset.id));
+      });
+    }
+
+    function renderTags(wrapEl, tags, inputEl){
+      // Remove existing tags
+      wrapEl.querySelectorAll('.tag').forEach(t => t.remove());
+      // Add tags before input
+      tags.forEach((tag, idx) => {
+        const tagEl = document.createElement('span');
+        tagEl.className = 'tag';
+        tagEl.innerHTML = `${esc(tag)}<span class="remove-tag" data-idx="${idx}">&times;</span>`;
+        wrapEl.insertBefore(tagEl, inputEl);
+      });
+    }
+
+    function setupTagInput(wrapEl, inputEl, tagsArray, renderFn){
+      inputEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const val = inputEl.value.trim();
+          if (val && !tagsArray.includes(val)) {
+            tagsArray.push(val);
+            renderFn();
+          }
+          inputEl.value = '';
+        }
+      });
+
+      wrapEl.addEventListener('click', (e) => {
+        if (e.target.classList.contains('remove-tag')) {
+          const idx = parseInt(e.target.dataset.idx, 10);
+          tagsArray.splice(idx, 1);
+          renderFn();
+        }
+      });
+    }
+
+    function clearAddForm(){
+      els.itemName.value = '';
+      els.itemSku.value = '';
+      els.itemPrice.value = '';
+      els.itemCategory.value = '';
+      els.itemDescription.value = '';
+      els.itemImage.value = '';
+      els.imagePreview.src = '';
+      els.imagePreview.classList.add('empty');
+      newItemSizes = [];
+      newItemColors = [];
+      renderTags(els.sizesWrap, newItemSizes, els.sizeInput);
+      renderTags(els.colorsWrap, newItemColors, els.colorInput);
+    }
+
+    function addItem(){
+      const name = els.itemName.value.trim();
+      const sku = els.itemSku.value.trim();
+      const price = parseFloat(els.itemPrice.value);
+      const category = els.itemCategory.value;
+      const description = els.itemDescription.value.trim();
+      const image = els.itemImage.value.trim();
+
+      if (!name) { alert('Item name is required'); return; }
+      if (!sku) { alert('SKU is required'); return; }
+      if (!price || price <= 0) { alert('Valid price is required'); return; }
+      if (!category) { alert('Category is required'); return; }
+
+      // Check for duplicate SKU
+      if (catalogItems.some(item => item.sku.toLowerCase() === sku.toLowerCase())) {
+        alert('An item with this SKU already exists');
+        return;
+      }
+
+      const newItem = {
+        id: generateId(),
+        name,
+        sku,
+        price,
+        category,
+        description,
+        image: image || 'https://via.placeholder.com/300x200/374151/9ca3af?text=No+Image',
+        sizes: [...newItemSizes],
+        colors: [...newItemColors]
+      };
+
+      catalogItems.push(newItem);
+      saveCatalog();
+      renderCatalog();
+      clearAddForm();
+      alert('Item added successfully!');
+    }
+
+    function deleteItem(id){
+      const item = catalogItems.find(i => i.id === id);
+      if (!item) return;
+      if (!confirm(`Delete "${item.name}"? This cannot be undone.`)) return;
+      
+      catalogItems = catalogItems.filter(i => i.id !== id);
+      saveCatalog();
+      renderCatalog();
+    }
+
+    function openEditModal(id){
+      const item = catalogItems.find(i => i.id === id);
+      if (!item) return;
+
+      els.editItemId.value = item.id;
+      els.editItemName.value = item.name;
+      els.editItemSku.value = item.sku;
+      els.editItemPrice.value = item.price;
+      els.editItemCategory.value = item.category || '';
+      els.editItemDescription.value = item.description || '';
+      els.editItemImage.value = item.image || '';
+      
+      if (item.image) {
+        els.editImagePreview.src = item.image;
+        els.editImagePreview.classList.remove('empty');
+      } else {
+        els.editImagePreview.src = '';
+        els.editImagePreview.classList.add('empty');
+      }
+
+      editItemSizes = [...(item.sizes || [])];
+      editItemColors = [...(item.colors || [])];
+      renderTags(els.editSizesWrap, editItemSizes, els.editSizeInput);
+      renderTags(els.editColorsWrap, editItemColors, els.editColorInput);
+
+      show(els.editModal);
+    }
+
+    function closeEditModal(){
+      hide(els.editModal);
+      els.editItemId.value = '';
+    }
+
+    function saveEditItem(){
+      const id = els.editItemId.value;
+      const idx = catalogItems.findIndex(i => i.id === id);
+      if (idx === -1) { alert('Item not found'); return; }
+
+      const name = els.editItemName.value.trim();
+      const sku = els.editItemSku.value.trim();
+      const price = parseFloat(els.editItemPrice.value);
+      const category = els.editItemCategory.value;
+      const description = els.editItemDescription.value.trim();
+      const image = els.editItemImage.value.trim();
+
+      if (!name) { alert('Item name is required'); return; }
+      if (!sku) { alert('SKU is required'); return; }
+      if (!price || price <= 0) { alert('Valid price is required'); return; }
+      if (!category) { alert('Category is required'); return; }
+
+      // Check for duplicate SKU (excluding current item)
+      if (catalogItems.some(item => item.id !== id && item.sku.toLowerCase() === sku.toLowerCase())) {
+        alert('An item with this SKU already exists');
+        return;
+      }
+
+      catalogItems[idx] = {
+        ...catalogItems[idx],
+        name,
+        sku,
+        price,
+        category,
+        description,
+        image: image || 'https://via.placeholder.com/300x200/374151/9ca3af?text=No+Image',
+        sizes: [...editItemSizes],
+        colors: [...editItemColors]
+      };
+
+      saveCatalog();
+      renderCatalog();
+      closeEditModal();
+      alert('Item updated successfully!');
+    }
+
+    function exportCatalog(){
+      const dataStr = JSON.stringify(catalogItems, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `uniform-catalog-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function importCatalog(file){
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (!Array.isArray(imported)) {
+            alert('Invalid file format. Expected an array of items.');
+            return;
+          }
+          
+          const validItems = imported.filter(item => 
+            item.name && item.sku && typeof item.price === 'number'
+          ).map(item => ({
+            id: item.id || generateId(),
+            name: item.name,
+            sku: item.sku,
+            price: item.price,
+            category: item.category || 'Other',
+            description: item.description || '',
+            image: item.image || '',
+            sizes: Array.isArray(item.sizes) ? item.sizes : [],
+            colors: Array.isArray(item.colors) ? item.colors : []
+          }));
+
+          if (validItems.length === 0) {
+            alert('No valid items found in the file.');
+            return;
+          }
+
+          if (confirm(`Import ${validItems.length} items? This will replace the current catalog.`)) {
+            catalogItems = validItems;
+            saveCatalog();
+            renderCatalog();
+            alert(`Successfully imported ${validItems.length} items.`);
+          }
+        } catch(err) {
+          alert('Failed to parse file: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function resetCatalog(){
+      if (!confirm('Reset catalog to default items? This will delete all custom items.')) return;
+      catalogItems = [...DEFAULT_CATALOG];
+      saveCatalog();
+      renderCatalog();
+      alert('Catalog reset to default items.');
+    }
+
+    function initCatalogHandlers(){
+      // Image preview
+      els.itemImage.addEventListener('input', () => {
+        const url = els.itemImage.value.trim();
+        if (url) {
+          els.imagePreview.src = url;
+          els.imagePreview.classList.remove('empty');
+        } else {
+          els.imagePreview.src = '';
+          els.imagePreview.classList.add('empty');
+        }
+      });
+
+      els.editItemImage.addEventListener('input', () => {
+        const url = els.editItemImage.value.trim();
+        if (url) {
+          els.editImagePreview.src = url;
+          els.editImagePreview.classList.remove('empty');
+        } else {
+          els.editImagePreview.src = '';
+          els.editImagePreview.classList.add('empty');
+        }
+      });
+
+      // Tag inputs for new item
+      setupTagInput(els.sizesWrap, els.sizeInput, newItemSizes, () => renderTags(els.sizesWrap, newItemSizes, els.sizeInput));
+      setupTagInput(els.colorsWrap, els.colorInput, newItemColors, () => renderTags(els.colorsWrap, newItemColors, els.colorInput));
+
+      // Tag inputs for edit modal
+      setupTagInput(els.editSizesWrap, els.editSizeInput, editItemSizes, () => renderTags(els.editSizesWrap, editItemSizes, els.editSizeInput));
+      setupTagInput(els.editColorsWrap, els.editColorInput, editItemColors, () => renderTags(els.editColorsWrap, editItemColors, els.editColorInput));
+
+      // Common sizes/colors buttons
+      els.addCommonSizesBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        ['S', 'M', 'L', 'XL', '2XL'].forEach(size => {
+          if (!newItemSizes.includes(size)) newItemSizes.push(size);
+        });
+        renderTags(els.sizesWrap, newItemSizes, els.sizeInput);
+      });
+
+      els.addCommonColorsBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        ['Black', 'Navy', 'White', 'Gray'].forEach(color => {
+          if (!newItemColors.includes(color)) newItemColors.push(color);
+        });
+        renderTags(els.colorsWrap, newItemColors, els.colorInput);
+      });
+
+      // Form buttons
+      els.addItemBtn.addEventListener('click', addItem);
+      els.clearFormBtn.addEventListener('click', clearAddForm);
+
+      // Search and filter
+      els.catalogSearch.addEventListener('input', renderCatalog);
+      els.categoryFilter.addEventListener('change', renderCatalog);
+
+      // Import/Export
+      els.exportCatalogBtn.addEventListener('click', exportCatalog);
+      els.importFile.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+          importCatalog(e.target.files[0]);
+          e.target.value = '';
+        }
+      });
+      els.resetCatalogBtn.addEventListener('click', resetCatalog);
+
+      // Edit modal
+      els.closeEditModal.addEventListener('click', closeEditModal);
+      els.cancelEditBtn.addEventListener('click', closeEditModal);
+      els.saveEditBtn.addEventListener('click', saveEditItem);
+      els.editModal.addEventListener('click', (e) => {
+        if (e.target === els.editModal) closeEditModal();
+      });
+    }
+
+    // ==================== USER MANAGEMENT ====================
 
     async function apiFetch(path, opts={}){
       const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers||{});
@@ -309,7 +1091,7 @@
       catch(e){ alert('Loading users failed: '+e.message); usersList = []; }
     }
 
-    function initHandlers(){
+    function initUserHandlers(){
       els.selectAllPropsBtn.addEventListener('click', (e)=>{ e.preventDefault(); document.querySelectorAll('#newPropsWrap .prop-item').forEach(it=>it.classList.add('selected')); });
       els.clearAllPropsBtn.addEventListener('click', (e)=>{ e.preventDefault(); document.querySelectorAll('#newPropsWrap .prop-item').forEach(it=>it.classList.remove('selected')); });
       els.createUserBtn.addEventListener('click', async ()=>{
@@ -347,22 +1129,6 @@
 
       els.toCalendarBtn.addEventListener('click', ()=>{ location.href = 'mmp_calendar_app.html'; });
       els.logoutBtn.addEventListener('click', async ()=>{ try{ await fetch('/api/auth-logout', { method:'POST' }); }catch(e){} location.href = 'index.html'; });
-    }
-
-    async function init(){
-      // Enforce server session and admin role
-      try{
-        const meRes = await fetch('/api/me');
-        if (!meRes.ok){ location.href = 'index.html'; return; }
-        const me = await meRes.json();
-        if (me.role !== 'admin'){ location.href = 'index.html'; return; }
-      }catch(e){ location.href = 'index.html'; return; }
-
-      show(els.appHeader); show(els.appContainer);
-      await fetchProperties();
-      await fetchUsers();
-      renderUsers();
-      initHandlers();
     }
 
     // Email function using mailto
@@ -424,6 +1190,31 @@ This email contains confidential information intended only for the recipient.`
       setTimeout(() => {
         alert('Email client opened. Please review and send the welcome email with credentials.');
       }, 500);
+    }
+
+    // ==================== INITIALIZATION ====================
+
+    async function init(){
+      // Enforce server session and admin role
+      try{
+        const meRes = await fetch('/api/me');
+        if (!meRes.ok){ location.href = 'index.html'; return; }
+        const me = await meRes.json();
+        if (me.role !== 'admin'){ location.href = 'index.html'; return; }
+      }catch(e){ location.href = 'index.html'; return; }
+
+      show(els.appHeader); show(els.appContainer);
+      
+      // Initialize catalog
+      loadCatalog();
+      renderCatalog();
+      initCatalogHandlers();
+      
+      // Initialize user management
+      await fetchProperties();
+      await fetchUsers();
+      renderUsers();
+      initUserHandlers();
     }
 
     init();
