@@ -881,6 +881,43 @@
     </div>
   </div>
 
+  <!-- Edit Unit Type Modal -->
+  <div class="modal-backdrop" id="editUnitModal">
+    <div class="modal">
+      <h3>Edit Unit Type</h3>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Unit Type Name</label>
+          <input type="text" id="editUnitTypeName" placeholder="e.g., 2x2, Studio, 4x4">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Total Units</label>
+            <input type="number" id="editUnitTotal" min="0" placeholder="e.g., 48">
+          </div>
+          <div class="form-group">
+            <label>Preleased Units</label>
+            <input type="number" id="editUnitPreleased" min="0" placeholder="e.g., 32">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Beds per Unit</label>
+            <input type="number" id="editUnitBeds" min="1" placeholder="e.g., 2">
+          </div>
+          <div class="form-group">
+            <label>Monthly Rent</label>
+            <input type="number" id="editUnitRent" min="0" placeholder="e.g., 899">
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="secondary" id="cancelEditUnit">Cancel</button>
+        <button class="good" id="confirmEditUnit">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast -->
   <div class="toast" id="toast"></div>
 
@@ -1364,7 +1401,7 @@
               </div>
               <div class="unit-stat">
                 <div class="unit-stat-label">Rent</div>
-                <div class="unit-stat-value">$${unit.rent}</div>
+                <div class="unit-stat-value">${unit.rent}</div>
               </div>
             </div>
             <div class="unit-progress">
@@ -1373,7 +1410,10 @@
               </div>
               <div class="progress-label">
                 <span>${Math.round(percent)}% Preleased</span>
-                <button class="btn-ghost" style="padding: 2px 6px; font-size: 10px;" onclick="deleteUnit(${idx})">Remove</button>
+                <span>
+                  <button class="btn-ghost" style="padding: 2px 6px; font-size: 10px;" onclick="editUnit(${idx})">Edit</button>
+                  <button class="btn-ghost" style="padding: 2px 6px; font-size: 10px;" onclick="deleteUnit(${idx})">Remove</button>
+                </span>
               </div>
             </div>
           </div>
@@ -1381,6 +1421,75 @@
       });
       els.unitMixGrid.innerHTML = html;
     }
+
+    // Edit unit functionality
+    let editingUnitIndex = null;
+    const editUnitModal = document.getElementById('editUnitModal');
+    const editUnitTypeName = document.getElementById('editUnitTypeName');
+    const editUnitTotal = document.getElementById('editUnitTotal');
+    const editUnitPreleased = document.getElementById('editUnitPreleased');
+    const editUnitBeds = document.getElementById('editUnitBeds');
+    const editUnitRent = document.getElementById('editUnitRent');
+    const cancelEditUnit = document.getElementById('cancelEditUnit');
+    const confirmEditUnit = document.getElementById('confirmEditUnit');
+
+    window.editUnit = function(idx) {
+      const units = getPropertyUnitMix();
+      const unit = units[idx];
+      if (!unit) return;
+      
+      editingUnitIndex = idx;
+      editUnitTypeName.value = unit.name || '';
+      editUnitTotal.value = unit.total || '';
+      editUnitPreleased.value = unit.preleased || '';
+      editUnitBeds.value = unit.beds || '';
+      editUnitRent.value = unit.rent || '';
+      
+      openModal(editUnitModal);
+    };
+
+    function saveEditUnit() {
+      if (editingUnitIndex === null) return;
+      
+      const name = editUnitTypeName.value.trim();
+      const total = parseInt(editUnitTotal.value);
+      const preleased = parseInt(editUnitPreleased.value);
+      const beds = parseInt(editUnitBeds.value);
+      const rent = parseInt(editUnitRent.value);
+      
+      if (!name || isNaN(total) || isNaN(preleased) || isNaN(beds) || isNaN(rent)) {
+        showToast('Please fill all fields', 'error');
+        return;
+      }
+      
+      if (preleased > total) {
+        showToast('Preleased cannot exceed total units', 'error');
+        return;
+      }
+      
+      const units = getPropertyUnitMix();
+      units[editingUnitIndex] = { name, total, preleased, beds, rent };
+      setPropertyUnitMix(units);
+      
+      closeModal(editUnitModal);
+      renderUnitMix();
+      showToast('Unit type updated');
+      editingUnitIndex = null;
+    }
+
+    cancelEditUnit.addEventListener('click', () => {
+      closeModal(editUnitModal);
+      editingUnitIndex = null;
+    });
+    
+    confirmEditUnit.addEventListener('click', saveEditUnit);
+    
+    editUnitModal.addEventListener('click', (e) => {
+      if (e.target === editUnitModal) {
+        closeModal(editUnitModal);
+        editingUnitIndex = null;
+      }
+    });
 
     window.deleteUnit = function(idx) {
       const units = getPropertyUnitMix();
