@@ -462,13 +462,19 @@
     function updateStatusCards() {
       const currentMonth = getCurrentMonth();
       const currentAcademicYear = getCurrentAcademicYear();
-      const currentEntry = velocityData.find(d => d.month === currentMonth && d.year === currentAcademicYear);
+      
+      // For current prelease, look for data matching the selected goal year first, then fall back to current academic year
+      let currentEntry = velocityData.find(d => d.month === currentMonth && d.year === selectedGoalYear);
+      if (!currentEntry) {
+        currentEntry = velocityData.find(d => d.month === currentMonth && d.year === currentAcademicYear);
+      }
       const currentPercent = currentEntry ? currentEntry.percent : null;
+      const displayYear = currentEntry ? currentEntry.year : currentAcademicYear;
       
       if (currentPercent !== null) {
         els.currentPrelease.textContent = Math.round(currentPercent) + '%';
         els.currentStatusCard.className = 'status-card ' + (currentPercent >= 90 ? 'ahead' : currentPercent >= 70 ? 'on-track' : 'behind');
-        els.currentDiff.textContent = currentAcademicYear + ' • ' + MONTH_NAMES[currentMonth];
+        els.currentDiff.textContent = displayYear + ' • ' + MONTH_NAMES[currentMonth];
         els.currentDiff.className = 'diff neutral';
       } else {
         els.currentPrelease.textContent = '--';
@@ -477,12 +483,18 @@
         els.currentDiff.className = 'diff neutral';
       }
       
+      // Get goals for the selected year
       const yearGoals = goalsData[selectedGoalYear] || {};
       const monthGoal = yearGoals[currentMonth];
+      
+      // For variance calculation, use velocity data from the same year as the goals
+      const velocityForGoalYear = velocityData.find(d => d.month === currentMonth && d.year === selectedGoalYear);
+      const velocityPercent = velocityForGoalYear ? velocityForGoalYear.percent : currentPercent;
+      
       if (monthGoal !== undefined && monthGoal !== null) {
         els.goalValue.textContent = Math.round(monthGoal) + '%';
-        if (currentPercent !== null) {
-          const diff = currentPercent - monthGoal;
+        if (velocityPercent !== null) {
+          const diff = velocityPercent - monthGoal;
           if (diff >= 0) {
             els.goalStatusCard.className = 'status-card ahead';
             els.goalDiff.textContent = '+' + Math.round(diff) + '% ahead of goal';
@@ -494,7 +506,7 @@
           }
         } else {
           els.goalStatusCard.className = 'status-card neutral';
-          els.goalDiff.textContent = 'No current data';
+          els.goalDiff.textContent = 'No data for ' + selectedGoalYear;
           els.goalDiff.className = 'diff neutral';
         }
       } else {
