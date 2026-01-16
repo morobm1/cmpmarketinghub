@@ -91,7 +91,8 @@
     .empty-state svg{width:64px; height:64px; margin-bottom:16px; opacity:0.5}
 
     /* Modal */
-    .modal-overlay{position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; z-index:100; padding:20px}
+    .modal-overlay{position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); display:none; align-items:center; justify-content:center; z-index:100; padding:20px}
+    .modal-overlay.show{display:flex}
     .modal{background:var(--panel); border:1px solid var(--border); border-radius:14px; max-width:600px; width:100%; max-height:90vh; overflow:auto}
     .modal-header{padding:16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between}
     .modal-header h3{margin:0; font-size:16px; color:var(--text)}
@@ -300,7 +301,7 @@
   </main>
 
   <!-- Edit Item Modal -->
-  <div id="editModal" class="modal-overlay hidden">
+  <div id="editModal" class="modal-overlay">
     <div class="modal">
       <div class="modal-header">
         <h3>Edit Catalog Item</h3>
@@ -761,11 +762,11 @@
       renderTags(els.editSizesWrap, editItemSizes, els.editSizeInput);
       renderTags(els.editColorsWrap, editItemColors, els.editColorInput);
 
-      show(els.editModal);
+      els.editModal.classList.add('show');
     }
 
     function closeEditModal(){
-      hide(els.editModal);
+      els.editModal.classList.remove('show');
       els.editItemId.value = '';
     }
 
