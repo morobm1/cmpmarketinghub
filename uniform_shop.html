@@ -48,6 +48,7 @@
     .catalog-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:16px }
     .catalog-item{ border:1px solid var(--border); border-radius:12px; padding:12px; background:#ffffff; box-shadow:0 1px 2px rgba(0,0,0,0.05); display:flex; flex-direction:column; gap:10px }
     .catalog-item img{ width:100%; height:200px; object-fit:cover; border-radius:8px; background:#f9fafb }
+    .catalog-item .category{ font-size:11px; color:#ffb732; text-transform:uppercase; letter-spacing:0.5px; font-weight:700 }
     .catalog-item .name{ font-weight:700; font-size:15px; color:#111827 }
     .catalog-item .sku{ font-size:12px; color:#6b7280 }
     .catalog-item .price{ font-size:14px; font-weight:700; color:#446472 }
@@ -75,11 +76,15 @@
     .cart-empty{ text-align:center; padding:40px 20px; color:#6b7280; font-size:14px }
     .cart-total{ padding:12px 0; border-top:2px solid var(--border); margin-top:12px; font-size:16px; font-weight:800; color:#111827 }
 
-    .search-box{ width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:10px; font-size:14px; margin-bottom:16px }
+    .search-box{ flex:1; min-width:200px; padding:10px 12px; border:1px solid #d1d5db; border-radius:10px; font-size:14px }
+    .filter-select{ padding:10px 12px; border:1px solid #d1d5db; border-radius:10px; font-size:14px; min-width:150px; background:#ffffff }
 
     .badge{ display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; background:#fff7e6; color:#8a5800; border:1px solid #fde68a; font-weight:700; font-family: Roboto, Arial, sans-serif; margin-left:8px }
 
     .hint{ font-size:12px; color:#6b7280; margin-top:4px }
+
+    .empty-state{ text-align:center; padding:40px 20px; color:#6b7280 }
+    .empty-state svg{ width:64px; height:64px; margin-bottom:16px; opacity:0.5 }
   </style>
 </head>
 <body>
@@ -109,6 +114,20 @@
     <div>
       <div class="toolbar">
         <input type="text" id="searchBox" class="search-box" placeholder="Search catalog by name, SKU, or description...">
+        <select id="categoryFilter" class="filter-select">
+          <option value="">All Categories</option>
+          <option value="Shirts">Shirts</option>
+          <option value="Polos">Polos</option>
+          <option value="T-Shirts">T-Shirts</option>
+          <option value="Jackets">Jackets</option>
+          <option value="Hoodies">Hoodies</option>
+          <option value="Pants">Pants</option>
+          <option value="Shorts">Shorts</option>
+          <option value="Hats">Hats</option>
+          <option value="Accessories">Accessories</option>
+          <option value="Outerwear">Outerwear</option>
+          <option value="Other">Other</option>
+        </select>
       </div>
 
       <section class="card">
@@ -137,19 +156,22 @@
   <script>
     const STORE_CURRENT_PROPERTY_KEY = 'mmp_current_property_v1';
     const STORE_CART_KEY = 'mmp_uniform_cart_v1';
+    const CATALOG_STORAGE_KEY = 'mmp_uniform_catalog_v1';
     const API_BASE = '/api';
 
     // Catalog data - this would normally come from the CommonSKU API
     // For now, we'll use a sample catalog structure
     const CATALOG_URL = 'https://login.commonsku.com/present.php?id=4b97bf5b-e3f5-4d5e-9e73-2419f0ae678c';
     
-    let catalogItems = [
+    // Default catalog items (used if no catalog exists in localStorage)
+    const DEFAULT_CATALOG = [
       {
         id: 'item-1',
         name: 'Classic Polo Shirt',
         sku: 'POLO-001',
         description: 'Premium cotton polo with embroidered logo',
         price: 35.00,
+        category: 'Polos',
         image: 'https://via.placeholder.com/300x300/446472/ffffff?text=Polo+Shirt',
         sizes: ['S', 'M', 'L', 'XL', '2XL'],
         colors: ['Navy', 'White', 'Gray']
@@ -160,6 +182,7 @@
         sku: 'TSHIRT-001',
         description: 'Moisture-wicking athletic tee',
         price: 25.00,
+        category: 'T-Shirts',
         image: 'https://via.placeholder.com/300x300/52d5ff/000000?text=T-Shirt',
         sizes: ['S', 'M', 'L', 'XL', '2XL'],
         colors: ['Black', 'Navy', 'Gray']
@@ -170,6 +193,7 @@
         sku: 'JACKET-001',
         description: 'Soft fleece jacket with full zip',
         price: 65.00,
+        category: 'Jackets',
         image: 'https://via.placeholder.com/300x300/ffb732/000000?text=Jacket',
         sizes: ['S', 'M', 'L', 'XL', '2XL'],
         colors: ['Navy', 'Black', 'Gray']
@@ -180,6 +204,7 @@
         sku: 'CAP-001',
         description: 'Adjustable cap with embroidered logo',
         price: 20.00,
+        category: 'Hats',
         image: 'https://via.placeholder.com/300x300/929497/ffffff?text=Cap',
         sizes: ['One Size'],
         colors: ['Navy', 'Black', 'White']
@@ -190,6 +215,7 @@
         sku: 'HOODIE-001',
         description: 'Comfortable pullover hoodie',
         price: 55.00,
+        category: 'Hoodies',
         image: 'https://via.placeholder.com/300x300/446472/ffffff?text=Hoodie',
         sizes: ['S', 'M', 'L', 'XL', '2XL'],
         colors: ['Navy', 'Gray', 'Black']
@@ -200,17 +226,21 @@
         sku: 'SHIRT-001',
         description: 'Professional dress shirt',
         price: 45.00,
+        category: 'Shirts',
         image: 'https://via.placeholder.com/300x300/52d5ff/000000?text=Dress+Shirt',
         sizes: ['S', 'M', 'L', 'XL', '2XL'],
         colors: ['White', 'Light Blue', 'Navy']
       }
     ];
 
+    let catalogItems = [];
+
     const els = {
       propertySelect: document.getElementById('propertySelect'),
       logoutBtn: document.getElementById('logoutBtn'),
       adminPageBtn: document.getElementById('adminPageBtn'),
       searchBox: document.getElementById('searchBox'),
+      categoryFilter: document.getElementById('categoryFilter'),
       catalogGrid: document.getElementById('catalogGrid'),
       catalogCount: document.getElementById('catalogCount'),
       cartItems: document.getElementById('cartItems'),
@@ -227,46 +257,83 @@
     function saveCart(){ try{ localStorage.setItem(STORE_CART_KEY, JSON.stringify(cart)); }catch(e){} }
     function loadCart(){ try{ cart = JSON.parse(localStorage.getItem(STORE_CART_KEY)||'[]'); }catch(e){ cart = []; } }
 
+    function loadCatalog(){
+      try {
+        const stored = localStorage.getItem(CATALOG_STORAGE_KEY);
+        if (stored) {
+          catalogItems = JSON.parse(stored);
+        } else {
+          catalogItems = [...DEFAULT_CATALOG];
+          // Save default catalog so admin page can see it
+          localStorage.setItem(CATALOG_STORAGE_KEY, JSON.stringify(catalogItems));
+        }
+      } catch(e) {
+        catalogItems = [...DEFAULT_CATALOG];
+      }
+    }
+
     function esc(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
     function fmtMoney(n){ const v = parseFloat(n); if (!isFinite(v)) return '$0.00'; return '$'+v.toFixed(2); }
 
     function renderCatalog(){
       const query = (els.searchBox.value || '').toLowerCase().trim();
+      const category = els.categoryFilter.value;
+
       filteredCatalog = catalogItems.filter(item => {
-        if (!query) return true;
-        const searchText = `${item.name} ${item.sku} ${item.description}`.toLowerCase();
-        return searchText.includes(query);
+        const matchesSearch = !query || 
+          item.name.toLowerCase().includes(query) ||
+          item.sku.toLowerCase().includes(query) ||
+          (item.description || '').toLowerCase().includes(query);
+        const matchesCategory = !category || item.category === category;
+        return matchesSearch && matchesCategory;
       });
 
       els.catalogCount.textContent = `${filteredCatalog.length} items`;
 
       if (filteredCatalog.length === 0){
-        els.catalogGrid.innerHTML = '<div style="text-align:center; padding:40px; color:#6b7280">No items found</div>';
+        els.catalogGrid.innerHTML = `
+          <div class="empty-state" style="grid-column: 1/-1">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+            <p>No items found</p>
+            <p style="font-size:12px">Try adjusting your search or filter</p>
+          </div>
+        `;
         return;
       }
 
       els.catalogGrid.innerHTML = filteredCatalog.map(item => {
-        const sizeBtns = item.sizes.map(size => 
+        const sizeBtns = (item.sizes || []).map(size => 
           `<button class="size-btn" data-item="${item.id}" data-size="${size}">${size}</button>`
+        ).join('');
+        
+        const colorOptions = (item.colors || []).map(c => 
+          `<option value="${esc(c)}">${esc(c)}</option>`
         ).join('');
         
         return `
           <div class="catalog-item" data-item-id="${item.id}">
             <img src="${esc(item.image)}" alt="${esc(item.name)}" onerror="this.src='https://via.placeholder.com/300x300/e5e7eb/6b7280?text=No+Image'">
+            <div class="category">${esc(item.category || 'Uncategorized')}</div>
             <div class="name">${esc(item.name)}</div>
             <div class="sku">SKU: ${esc(item.sku)}</div>
             <div class="price">${fmtMoney(item.price)}</div>
             <div class="desc">${esc(item.description)}</div>
+            ${sizeBtns ? `
             <div>
               <label style="font-size:12px; color:#6b7280; margin-bottom:4px; display:block">Size:</label>
               <div class="sizes">${sizeBtns}</div>
             </div>
+            ` : ''}
+            ${colorOptions ? `
             <div>
               <label style="font-size:12px; color:#6b7280; margin-bottom:4px; display:block">Color:</label>
               <select class="color-select" data-item="${item.id}" style="width:100%; padding:6px 8px; border:1px solid #d1d5db; border-radius:6px">
-                ${item.colors.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('')}
+                ${colorOptions}
               </select>
             </div>
+            ` : ''}
             <div class="qty-row">
               <label style="font-size:12px; color:#6b7280; white-space:nowrap">Qty:</label>
               <input type="number" class="qty-input" data-item="${item.id}" value="1" min="1" max="999">
@@ -304,7 +371,7 @@
             <div class="item-name">${esc(item.name)}</div>
             <div class="item-details">
               SKU: ${esc(item.sku)}<br>
-              Size: ${esc(item.size)} | Color: ${esc(item.color)}<br>
+              ${item.size ? `Size: ${esc(item.size)} | ` : ''}${item.color ? `Color: ${esc(item.color)}` : ''}<br>
               ${fmtMoney(item.price)} × ${item.quantity} = ${fmtMoney(subtotal)}
             </div>
             <div class="item-actions">
@@ -323,19 +390,20 @@
       els.cartTotal.style.display = '';
     }
 
-    function addToCart(itemId){
+    function handleAddToCart(itemId){
       const item = catalogItems.find(i => i.id === itemId);
       if (!item) return;
 
       const sizeBtn = document.querySelector(`.size-btn[data-item="${itemId}"].selected`);
-      if (!sizeBtn && item.sizes.length > 1){
+      const hasSizes = item.sizes && item.sizes.length > 0;
+      if (hasSizes && !sizeBtn && item.sizes.length > 1){
         alert('Please select a size');
         return;
       }
-      const size = sizeBtn ? sizeBtn.getAttribute('data-size') : item.sizes[0];
+      const size = sizeBtn ? sizeBtn.getAttribute('data-size') : (item.sizes && item.sizes[0]) || '';
 
       const colorSelect = document.querySelector(`.color-select[data-item="${itemId}"]`);
-      const color = colorSelect ? colorSelect.value : item.colors[0];
+      const color = colorSelect ? colorSelect.value : (item.colors && item.colors[0]) || '';
 
       const qtyInput = document.querySelector(`.qty-input[data-item="${itemId}"]`);
       const quantity = parseInt(qtyInput.value, 10) || 1;
@@ -397,7 +465,9 @@
         total += subtotal;
         lines.push(`${idx + 1}. ${item.name}`);
         lines.push(`   SKU: ${item.sku}`);
-        lines.push(`   Size: ${item.size} | Color: ${item.color}`);
+        if (item.size || item.color) {
+          lines.push(`   ${item.size ? `Size: ${item.size}` : ''}${item.size && item.color ? ' | ' : ''}${item.color ? `Color: ${item.color}` : ''}`);
+        }
         lines.push(`   Quantity: ${item.quantity}`);
         lines.push(`   Price: ${fmtMoney(item.price)} each`);
         lines.push(`   Subtotal: ${fmtMoney(subtotal)}`);
@@ -434,6 +504,10 @@
       renderCatalog();
     });
 
+    els.categoryFilter.addEventListener('change', () => {
+      renderCatalog();
+    });
+
     els.emailCartBtn.addEventListener('click', openEmailRequest);
 
     els.clearCartBtn.addEventListener('click', () => {
@@ -449,13 +523,13 @@
       const t = e.target;
       if (!(t instanceof HTMLElement)) return;
 
-      const addToCart = t.getAttribute('data-add-to-cart');
+      const addToCartId = t.getAttribute('data-add-to-cart');
       const cartInc = t.getAttribute('data-cart-inc');
       const cartDec = t.getAttribute('data-cart-dec');
       const cartRemove = t.getAttribute('data-cart-remove');
 
-      if (addToCart){
-        addToCart(addToCart);
+      if (addToCartId){
+        handleAddToCart(addToCartId);
         return;
       }
 
@@ -550,6 +624,7 @@
         }
         
         currentProperty = current;
+        loadCatalog();
         loadCart();
         renderCatalog();
         renderCart();
