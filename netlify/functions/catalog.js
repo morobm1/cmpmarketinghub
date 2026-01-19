@@ -9,34 +9,34 @@ const DEFAULT_CATALOG = [
     id: 'nike-swoosh-tee',
     name: 'Nike Swoosh Sleeve rLegend Tee',
     sku: 'NKDX8730',
-    description: 'Nike Swoosh Sleeve rLegend Tee - Men\'s athletic performance tee with signature swoosh branding',
-    price: 42.00,
+    description: 'This is the stuff of which legends are made. Made of 4-ounce, 100% recycled polyester jersey. The all-new Swoosh Sleeve rLegend Tee is built from sustainable recycled polyester and powered by Dri-FIT technology-so you\'ll get peak performance with a lower environmental impact. Heat-transfer label for tag-free comfort. Neck tape for durability. A contrast heat transfer Swoosh logo on left sleeve.',
+    price: 32.11,
     category: 'T-Shirts',
     image: 'https://cdnm.sanmar.com/imglib/mresjpg/2023/f4/NKDX8730_darksmokeheather_model_front.jpg',
-    sizes: ['S', 'M', 'L', 'XL', '2XL', '3XL'],
-    colors: ['Dark Smoke Heather', 'Black', 'Navy']
+    sizes: ['S', 'M', 'L', 'XL'],
+    colors: ['Apple Green', 'Black', 'College Navy', 'Court Purple', 'Dark Smoke Heather', 'Deep Maroon', 'Desert Orange', 'Game Royal', 'Gorge Green', 'Team Maroon', 'University Red', 'Valor Blue', 'White']
   },
   {
     id: 'nike-womens-swoosh-tee',
     name: 'Nike Women\'s Swoosh Sleeve rLegend Tee',
     sku: 'NKDX8734',
-    description: 'Nike Women\'s Swoosh Sleeve rLegend Tee - Women\'s athletic performance tee with signature swoosh branding',
-    price: 42.00,
+    description: 'This is the stuff of which legends are made. Neck tape for durability. The all-new Swoosh Sleeve rLegend Tee is built from sustainable recycled polyester and powered by Dri-FIT technology-so you\'ll get peak performance with a lower environmental impact. Made of 4-ounce, 100% recycled polyester jersey. Heat-transfer label for tag-free comfort. A contrast heat transfer Swoosh logo on left sleeve.',
+    price: 32.11,
     category: 'T-Shirts',
     image: 'https://cdnm.sanmar.com/imglib/mresjpg/2023/f4/NKDX8734_collegenavy_model_front.jpg',
-    sizes: ['XS', 'S', 'M', 'L', 'XL', '2XL'],
-    colors: ['College Navy', 'Black', 'White']
+    sizes: ['S', 'M', 'L', 'XL'],
+    colors: ['Apple Green', 'Black', 'College Navy', 'Court Purple', 'Dark Smoke Heather', 'Deep Maroon', 'Desert Orange', 'Game Royal', 'Gorge Green', 'Team Maroon', 'University Red', 'Valor Blue', 'White']
   },
   {
     id: 'nike-drifit-cotton-tee',
     name: 'Nike Dri-FIT Cotton/Poly Tee',
     sku: 'NKBQ5231',
-    description: 'Nike Dri-FIT Cotton/Poly Tee - Soft cotton feel with moisture-wicking Dri-FIT technology',
-    price: 38.00,
+    description: 'This Nike performance tee features sweat-wicking fabric to help keep you dry and comfortable. Durable rib knit crew neck. Contrast heat transfer Swoosh design trademark on left sleeve. Double-needle stitching throughout. Heat transfer label for tag-free comfort. Made of 4.7-ounce, 60/40 cotton/poly Dri-FIT fabric.',
+    price: 28.11,
     category: 'T-Shirts',
     image: 'https://files.commonsku.com/large/408e1338-5e44-4306-b5a4-9b7cbc221619',
-    sizes: ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'],
-    colors: ['Black', 'Navy', 'White', 'Anthracite']
+    sizes: ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'],
+    colors: ['Anthracite', 'Black', 'Brilliant Orange', 'College Navy', 'Game Royal', 'Gym Red', 'Rush Blue', 'University Red', 'White']
   },
   {
     id: 'comfort-colors-tee',
@@ -77,56 +77,56 @@ const DEFAULT_CATALOG = [
     id: 'port-authority-untucked-oxford',
     name: 'Port Authority Untucked Fit SuperPro Oxford',
     sku: 'S651',
-    description: 'Port Authority Untucked Fit SuperPro Oxford - Designed to be worn untucked with a modern, professional look',
-    price: 38.00,
+    description: 'Look your best in a tried-and-true oxford that performs. Designed to release stains, our wrinkle-resistant SuperPro Oxford has a soft hand to keep you looking neat and professional all day long. Pearlized buttons. Shortened front and back hem for balanced, untucked wear. A slim (but not tight) fit that sits closer to the body. Rounded adjustable cuffs. Button-down collar. Left chest pocket. 4.6-ounce, 60/40 cotton/poly.',
+    price: 31.62,
     category: 'Shirts',
     image: 'https://cdnm.sanmar.com/imglib/mresjpg/2025/f4/S651_oxfordblue_model_front.jpg',
-    sizes: ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'],
-    colors: ['Oxford Blue', 'White', 'Black']
+    sizes: ['XS', 'S', 'M', 'L', 'XL'],
+    colors: ['Black', 'Navy', 'Oxford Blue', 'White']
   },
   {
     id: 'port-authority-superpro-oxford',
     name: 'Port Authority SuperPro Oxford Shirt',
     sku: 'S658',
-    description: 'Port Authority SuperPro Oxford Shirt - Classic oxford with wrinkle-resistant finish',
-    price: 36.00,
+    description: 'Look your best in a tried-and-true oxford that performs. Designed to release stains, our wrinkle-resistant SuperPro Oxford has a soft hand to keep you looking neat and professional all day long. Rounded adjustable cuffs. Back shoulder pleats. Button-down collar. Left chest pocket. Rental-friendly. Pearlized buttons. 4.6-ounce, 60/40 cotton/poly.',
+    price: 30.69,
     category: 'Shirts',
     image: 'https://cdnm.sanmar.com/imglib/mresjpg/2016/f12/S658_black_model_GA17.jpg',
-    sizes: ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'],
-    colors: ['Black', 'White', 'Oxford Blue', 'Navy']
+    sizes: ['XS', 'S', 'M', 'L', 'XL'],
+    colors: ['Black', 'Green', 'Gusty Grey', 'Navy', 'Oxford Blue', 'Soft Purple', 'White']
   },
   {
     id: 'port-authority-womens-superpro-oxford',
     name: 'Port Authority Women\'s SuperPro Oxford Shirt',
     sku: 'L658',
-    description: 'Port Authority Women\'s SuperPro Oxford Shirt - Classic women\'s oxford with wrinkle-resistant finish',
-    price: 36.00,
+    description: 'Look your best in a tried-and-true oxford that performs. Designed to release stains, our wrinkle-resistant SuperPro Oxford has a soft hand to keep you looking neat and professional all day long. Bust darts. Open collar. Rounded adjustable cuffs. Pearlized buttons. Back shoulder pleats. Rental-friendly. 4.6-ounce, 60/40 cotton/poly.',
+    price: 31.62,
     category: 'Shirts',
     image: 'https://cdnm.sanmar.com/imglib/mresjpg/2016/f12/L658_softpurple_model_GA17.jpg',
-    sizes: ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'],
-    colors: ['Soft Purple', 'White', 'Black', 'Oxford Blue']
+    sizes: ['XS', 'S', 'M', 'L', 'XL'],
+    colors: ['Black', 'Green', 'Navy', 'Oxford Blue', 'Soft Purple', 'White']
   },
   {
     id: 'mercer-mettle-womens-oxford',
     name: 'Mercer+Mettle Women\'s Long Sleeve Modern Oxford Shirt',
     sku: 'MM2001',
-    description: 'Mercer+Mettle Women\'s Long Sleeve Modern Oxford Shirt - Contemporary fit with premium fabric',
-    price: 48.00,
+    description: 'Updating the classic oxford, this modern shirt blends crispness with casual flair. Precisely tailored for an impeccable look, it has stretch to give it effortless confidence in any corporate environment. Open collar. Deep back yoke with inverted pleat. Easy care. Popover design with button placket. Rounded hem with slight drop. Drop shoulder. Locker loop. Pearlized buttons. Square single-button cuffs. 4.1-ounce, 56/25/15/4 cotton/Lyocell/polyester/spandex.',
+    price: 41.38,
     category: 'Shirts',
     image: 'https://files.commonsku.com/large/39137b1a-e7a4-4e4b-ab9a-377214486bbf',
-    sizes: ['XS', 'S', 'M', 'L', 'XL', '2XL'],
-    colors: ['White', 'Gusty Grey', 'Night Navy']
+    sizes: ['XS', 'S', 'M', 'L', 'XL'],
+    colors: ['Light Blue', 'White']
   },
   {
     id: 'mercer-mettle-oxford',
     name: 'Mercer+Mettle Long Sleeve Modern Oxford Shirt',
     sku: 'MM2000',
-    description: 'Mercer+Mettle Long Sleeve Modern Oxford Shirt - Contemporary fit with premium fabric',
-    price: 48.00,
+    description: 'Updating the classic oxford, this modern shirt blends crispness with casual flair. Precisely tailored for an impeccable look, it has stretch to give it effortless confidence in any corporate environment. Stretch. Pearlized buttons. Center back box pleat. Adjustable rounded cuffs. Easy care. Button-down collar. 4.1-ounce, 56/25/15/4 cotton/Lyocell/polyester/spandex.',
+    price: 41.38,
     category: 'Shirts',
     image: 'https://files.commonsku.com/large/24ec4f29-3c97-4c17-ab4c-0c00add81def',
-    sizes: ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL'],
-    colors: ['White', 'Gusty Grey', 'Night Navy']
+    sizes: ['XS', 'S', 'M', 'L', 'XL'],
+    colors: ['Cobalt', 'Gusty Grey', 'Light Blue', 'White']
   },
 
   // ===== HATS =====
@@ -134,78 +134,78 @@ const DEFAULT_CATALOG = [
     id: 'port-authority-easy-care-cap',
     name: 'Port Authority Easy Care Cap',
     sku: 'C608',
-    description: 'Port Authority Easy Care Cap - Classic structured cap with adjustable closure',
-    price: 16.00,
+    description: 'Structured mid-profile cap. Self-fabric adjustable slide closure with brushed nickel buckle and grommet. 65/35 poly/cotton fabric.',
+    price: 5.78,
     category: 'Hats',
     image: 'https://files.commonsku.com/large/01d6216a-7da0-41a2-9a39-6515311a8493',
-    sizes: ['One Size'],
-    colors: ['Black', 'Navy', 'White', 'Khaki']
+    sizes: ['OSFA'],
+    colors: ['Black', 'Burgundy', 'Navy', 'Red', 'Royal', 'Steel Grey', 'Stone', 'White']
   },
   {
     id: 'new-era-perforated-snapback',
     name: 'New Era 9SEVENTY Perforated Snapback Cap',
     sku: 'NE407',
-    description: 'New Era 9SEVENTY Perforated Snapback Cap - Breathable perforated design with snapback closure',
-    price: 28.00,
+    description: 'Featuring MICROERA odor-controlling technology and COOLERA sweat-wicking technology, this cap features a stretch snap construction for size customization. Mid-profile structured cap with precurved visor. 9SEVENTY FIT merges the crown of a 9FIFTY with the contour of a 9FORTY for a one-of-a-kind fit. Stretch sweatband. Embroidered New Era flag on left side. 7-position snapback closure. Perforated mid and back panels. 100% polyester.',
+    price: 23.58,
     category: 'Hats',
     image: 'https://files.commonsku.com/large/ef02bd99-6fbf-4d56-a28d-55db5c79c6f8',
-    sizes: ['One Size'],
-    colors: ['Black', 'Navy', 'Graphite']
+    sizes: ['OSFA'],
+    colors: ['Black', 'Deep Navy', 'Graphite', 'Royal', 'Sky Blue', 'White']
   },
   {
     id: 'nike-unstructured-cap',
     name: 'Nike Unstructured Cotton/Poly Twill Cap',
     sku: '580087',
-    description: 'Nike Unstructured Cotton/Poly Twill Cap - Relaxed fit with adjustable back closure',
-    price: 26.00,
+    description: 'The perfect classic look with a contrast underbill as engineered by Nike. This cap has an unstructured, mid-profile design and a self-fabric closure with buckle. The contrast Swoosh logo is embroidered on the center back. Made of 58/42 cotton/poly twill. One Size Fits All (OSFA).',
+    price: 27.32,
     category: 'Hats',
     image: 'https://files.commonsku.com/large/20e91587-9c3f-4e5b-8e04-a9b279c95cf4',
-    sizes: ['One Size'],
-    colors: ['Black', 'Navy', 'White', 'Anthracite']
+    sizes: ['M/L'],
+    colors: ['Black', 'Dark Grey', 'Game Royal', 'Gym Red', 'Khaki', 'Navy', 'Vivid Pink', 'White']
   },
   {
     id: 'carhartt-rugged-pro-cap',
     name: 'Carhartt Rugged Professional Series Cap',
     sku: 'CT106687',
-    description: 'Carhartt Rugged Professional Series Cap - Durable workwear cap with structured fit',
-    price: 24.00,
+    description: 'This all-star canvas hat has stretch technology and a sweat-fighting band. Structured mid profile with pre-curved visor. Adjustable fit with plastic closure. Carhartt Force sweatband fights odors; FastDry technology wicks away sweat for comfort. Carhartt label sewn on side. 59/39/2 cotton/poly/spandex with 100% polyester mesh back.',
+    price: 24.84,
     category: 'Hats',
     image: 'https://cdnm.sanmar.com/imglib/mresjpg/2024/f4/CT106687_darkkhaki_hat_right.jpg',
-    sizes: ['One Size'],
-    colors: ['Dark Khaki', 'Black', 'Navy']
+    sizes: ['OSFA'],
+    colors: ['Black', 'Dark Khaki', 'Navy', 'Shadow Grey']
   },
   {
     id: 'nike-sphere-cap',
     name: 'Nike Sphere Performance Cap',
     sku: '247077',
-    description: 'Nike Sphere Performance Cap - Moisture-wicking performance cap with Dri-FIT technology',
-    price: 32.00,
+    description: 'Nike Sphere Dry technology ensures maximum moisture control and quick-drying performance. This cap has an unstructured, low-profile design with a hook and loop closure. The contrast Swoosh logo is embroidered on the bill and center back. Made of 100% polyester. One Size Fits All (OSFA).',
+    price: 29.80,
     category: 'Hats',
     image: 'https://files.commonsku.com/large/65cef7d7-9d00-4021-8e2d-d3b144436b50',
-    sizes: ['One Size'],
-    colors: ['Black', 'Navy', 'White']
+    sizes: ['M/L'],
+    colors: ['Anthracite', 'Birch', 'Black', 'Black/ Gym Red', 'Black/ White', 'Game Royal/ White', 'Navy', 'White', 'White/ Black']
   },
   {
     id: 'port-authority-flexfit-mesh',
     name: 'Port Authority Flexfit Mesh Back Cap',
     sku: 'C812',
-    description: 'Port Authority Flexfit Mesh Back Cap - Stretch fit with breathable mesh back',
-    price: 22.00,
+    description: 'An ultra-breathable cap with the Flexfit stretch for a comfortable fit. A silver contrast underbill adds character to this trucker-style cap. Structured mid-profile with Permacurv bill to maintain proper shape and curve. Stretch fit closure. 60/40 cotton/poly front panels, 95/5 poly/spandex mesh mid and back panels.',
+    price: 11.36,
     category: 'Hats',
     image: 'https://files.commonsku.com/large/2a16d4da-5a06-4e79-b467-606a02b65cf7',
     sizes: ['S/M', 'L/XL'],
-    colors: ['Black', 'Navy', 'True Navy/White']
+    colors: ['Black/ Black', 'Black/ White', 'Brown/ Khaki', 'Forest Green/ White', 'Graphite/ Black', 'Graphite/ Graphite', 'Graphite/ White', 'Heather Grey/ Black', 'Heather Grey/ White', 'Silver/ Black', 'True Navy/ True Navy', 'True Navy/ White', 'True Red/ White', 'True Royal/ White', 'White/ White']
   },
   {
     id: 'sport-tek-dry-zone-cap',
     name: 'Sport-Tek Dry Zone Nylon Cap',
     sku: 'STC10',
-    description: 'Sport-Tek Dry Zone Nylon Cap - Lightweight moisture-wicking cap for active wear',
-    price: 18.00,
+    description: 'All the Dry Zone moisture-wicking performance you love in Sport-Tek apparel in caps designed for adults and youth. Structured mid-profile with hook and loop closure. 91/9 nylon/cotton twill fabric.',
+    price: 10.32,
     category: 'Hats',
     image: 'https://files.commonsku.com/large/5deb0099-3173-43e9-8a23-2a87981d5d32',
-    sizes: ['One Size'],
-    colors: ['Black', 'True Navy', 'True Royal']
+    sizes: ['OSFA'],
+    colors: ['Black', 'Forest Green', 'Kelly Green', 'Maroon', 'Purple', 'True Navy', 'True Red', 'True Royal', 'White']
   },
 
   // ===== PANTS =====
@@ -423,15 +423,15 @@ const DEFAULT_CATALOG = [
 
   // ===== JACKETS - SOFT SHELL & RAIN =====
   {
-    id: 'carhartt-womens-softshell',
-    name: 'Carhartt Women\'s Rain Defender Soft Shell Jacket',
-    sku: 'CT102538',
-    description: 'Carhartt Women\'s Rain Defender Soft Shell Jacket - Water-repellent soft shell with durable protection',
-    price: 95.00,
-    category: 'Jackets',
-    image: 'https://files.commonsku.com/large/6180eea0-0ad1-4693-b4db-43b4891f1ec3',
-    sizes: ['XS', 'S', 'M', 'L', 'XL', '2XL'],
-    colors: ['Black', 'Navy', 'Shadow']
+  id: 'carhartt-womens-softshell',
+  name: 'Carhartt Women\'s Rain Defender Soft Shell Jacket',
+  sku: 'CT102538',
+  description: 'Rugged Flex stretch technology for ease of movement. Wind Fighter technology tames wind. Adjustable drop tail hem for added coverage. Rain Defender durable water repellent (DWR). Mock neck collar, adjustable cuffs with hook and loop closures, 100% polyester lining, relaxed fit. Interior pocket with hook and loop closure, two lower front zippered pockets. 10-ounce, 87/13 nylon/elastane with reverse coil center front zipper with chin protector.',
+  price: 105.00,
+  category: 'Jackets',
+  image: 'https://files.commonsku.com/large/6180eea0-0ad1-4693-b4db-43b4891f1ec3',
+  sizes: ['XS', 'S', 'M', 'L', 'XL', '2XL'],
+  colors: ['Black', 'Navy', 'Shadow']
   },
   {
     id: 'carhartt-softshell',
