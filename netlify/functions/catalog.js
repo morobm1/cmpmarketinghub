@@ -820,19 +820,31 @@ export async function handler(event) {
       };
     }
 
-    // PATCH - Reset catalog to defaults (admin only)
+    // PATCH - Reset catalog to defaults or import (admin only)
     if (event.httpMethod === 'PATCH') {
       if (user.role !== 'admin') return { statusCode: 403, body: 'Forbidden - Admin only' };
       
-      const { action } = JSON.parse(event.body || '{}');
+      const { action, items } = JSON.parse(event.body || '{}');
+      
       if (action === 'reset') {
         await collection.deleteMany({});
         await collection.insertMany(DEFAULT_CATALOG.map(item => ({ ...item })));
-        const items = await collection.find({}).toArray();
+        const newItems = await collection.find({}).toArray();
         return { 
           statusCode: 200, 
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(items) 
+          body: JSON.stringify(newItems) 
+        };
+      }
+      
+      if (action === 'import' && Array.isArray(items)) {
+        await collection.deleteMany({});
+        await collection.insertMany(items.map(item => ({ ...item })));
+        const newItems = await collection.find({}).toArray();
+        return { 
+          statusCode: 200, 
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newItems) 
         };
       }
       

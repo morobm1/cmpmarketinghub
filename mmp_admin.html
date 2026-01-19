@@ -294,7 +294,7 @@
               <button id="resetCatalogBtn" class="danger">🗑️ Reset to Default</button>
             </div>
           </div>
-          <div class="mini" style="margin-top:10px">Catalog data is stored in browser localStorage and shared with the Uniform Shop page.</div>
+          <div class="mini" style="margin-top:10px">Catalog data is stored on the server (MongoDB Atlas) and synced with the Uniform Shop page.</div>
         </div>
       </section>
     </div>
@@ -561,26 +561,58 @@
 
     // ==================== CATALOG MANAGEMENT ====================
 
-    function loadCatalog(){
+    async function loadCatalog(){
       try {
-        const stored = localStorage.getItem(CATALOG_STORAGE_KEY);
-        if (stored) {
-          catalogItems = JSON.parse(stored);
-        } else {
-          catalogItems = [...DEFAULT_CATALOG];
-          saveCatalog();
-        }
+        const res = await apiFetch('/catalog');
+        catalogItems = await res.json();
+        renderCatalog();
       } catch(e) {
-        catalogItems = [...DEFAULT_CATALOG];
-        saveCatalog();
+        console.error('Failed to load catalog from API:', e);
+        try {
+          const stored = localStorage.getItem(CATALOG_STORAGE_KEY);
+          if (stored) {
+            catalogItems = JSON.parse(stored);
+          } else {
+            catalogItems = [...DEFAULT_CATALOG];
+          }
+        } catch(e2) {
+          catalogItems = [...DEFAULT_CATALOG];
+        }
+        renderCatalog();
       }
     }
 
-    function saveCatalog(){
+    async function saveCatalogItem(item, isNew = false){
       try {
+        if (isNew) {
+          await apiFetch('/catalog', { method: 'POST', body: JSON.stringify(item) });
+        } else {
+          await apiFetch('/catalog', { method: 'PUT', body: JSON.stringify(item) });
+        }
         localStorage.setItem(CATALOG_STORAGE_KEY, JSON.stringify(catalogItems));
       } catch(e) {
-        console.error('Failed to save catalog:', e);
+        console.error('Failed to save catalog item:', e);
+        throw e;
+      }
+    }
+
+    async function deleteCatalogItemFromAPI(id){
+      try {
+        await apiFetch('/catalog', { method: 'DELETE', body: JSON.stringify({ id }) });
+        localStorage.setItem(CATALOG_STORAGE_KEY, JSON.stringify(catalogItems));
+      } catch(e) {
+        console.error('Failed to delete catalog item:', e);
+        throw e;
+      }
+    }
+
+    async function resetCatalogToDefaults(){
+      try {
+        await apiFetch('/catalog', { method: 'PATCH', body: JSON.stringify({ action: 'reset' }) });
+        await loadCatalog();
+      } catch(e) {
+        console.error('Failed to reset catalog:', e);
+        throw e;
       }
     }
 
@@ -689,7 +721,7 @@
       renderTags(els.colorsWrap, newItemColors, els.colorInput);
     }
 
-    function addItem(){
+    async function addItem(){
       const name = els.itemName.value.trim();
       const sku = els.itemSku.value.trim();
       const price = parseFloat(els.itemPrice.value);
@@ -720,21 +752,31 @@
         colors: [...newItemColors]
       };
 
-      catalogItems.push(newItem);
-      saveCatalog();
-      renderCatalog();
-      clearAddForm();
-      alert('Item added successfully!');
+      try {
+        await saveCatalogItem(newItem, true);
+        catalogItems.push(newItem);
+        localStorage.setItem(CATALOG_STORAGE_KEY, JSON.stringify(catalogItems));
+        renderCatalog();
+        clearAddForm();
+        alert('Item added successfully!');
+      } catch(e) {
+        alert('Failed to add item: ' + e.message);
+      }
     }
 
-    function deleteItem(id){
+    async function deleteItem(id){
       const item = catalogItems.find(i => i.id === id);
       if (!item) return;
       if (!confirm(`Delete "${item.name}"? This cannot be undone.`)) return;
       
-      catalogItems = catalogItems.filter(i => i.id !== id);
-      saveCatalog();
-      renderCatalog();
+      try {
+        await deleteCatalogItemFromAPI(id);
+        catalogItems = catalogItems.filter(i => i.id !== id);
+        localStorage.setItem(CATALOG_STORAGE_KEY, JSON.stringify(catalogItems));
+        renderCatalog();
+      } catch(e) {
+        alert('Failed to delete item: ' + e.message);
+      }
     }
 
     function openEditModal(id){
@@ -770,7 +812,7 @@
       els.editItemId.value = '';
     }
 
-    function saveEditItem(){
+    async function saveEditItem(){
       const id = els.editItemId.value;
       const idx = catalogItems.findIndex(i => i.id === id);
       if (idx === -1) { alert('Item not found'); return; }
@@ -793,7 +835,7 @@
         return;
       }
 
-      catalogItems[idx] = {
+      const updatedItem = {
         ...catalogItems[idx],
         name,
         sku,
@@ -805,10 +847,16 @@
         colors: [...editItemColors]
       };
 
-      saveCatalog();
-      renderCatalog();
-      closeEditModal();
-      alert('Item updated successfully!');
+      try {
+        await saveCatalogItem(updatedItem, false);
+        catalogItems[idx] = updatedItem;
+        localStorage.setItem(CATALOG_STORAGE_KEY, JSON.stringify(catalogItems));
+        renderCatalog();
+        closeEditModal();
+        alert('Item updated successfully!');
+      } catch(e) {
+        alert('Failed to update item: ' + e.message);
+      }
     }
 
     function exportCatalog(){
@@ -824,9 +872,9 @@
       URL.revokeObjectURL(url);
     }
 
-    function importCatalog(file){
+    async function importCatalog(file){
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         try {
           const imported = JSON.parse(e.target.result);
           if (!Array.isArray(imported)) {
@@ -854,10 +902,16 @@
           }
 
           if (confirm(`Import ${validItems.length} items? This will replace the current catalog.`)) {
-            catalogItems = validItems;
-            saveCatalog();
-            renderCatalog();
-            alert(`Successfully imported ${validItems.length} items.`);
+            try {
+              // Import via API
+              await apiFetch('/catalog', { method: 'PATCH', body: JSON.stringify({ action: 'import', items: validItems }) });
+              catalogItems = validItems;
+              localStorage.setItem(CATALOG_STORAGE_KEY, JSON.stringify(catalogItems));
+              renderCatalog();
+              alert(`Successfully imported ${validItems.length} items.`);
+            } catch(err) {
+              alert('Failed to import catalog: ' + err.message);
+            }
           }
         } catch(err) {
           alert('Failed to parse file: ' + err.message);
@@ -866,12 +920,15 @@
       reader.readAsText(file);
     }
 
-    function resetCatalog(){
+    async function resetCatalog(){
       if (!confirm('Reset catalog to default items? This will delete all custom items.')) return;
-      catalogItems = [...DEFAULT_CATALOG];
-      saveCatalog();
-      renderCatalog();
-      alert('Catalog reset to default items.');
+      try {
+        await resetCatalogToDefaults();
+        localStorage.setItem(CATALOG_STORAGE_KEY, JSON.stringify(catalogItems));
+        alert('Catalog reset to default items.');
+      } catch(e) {
+        alert('Failed to reset catalog: ' + e.message);
+      }
     }
 
     function initCatalogHandlers(){
