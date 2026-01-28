@@ -1,112 +1,535 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CMP Font • Marketing Hub</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Brand Font Generator • Marketing Hub</title>
   <link rel="preconnect" href="https://use.typekit.net" crossorigin>
   <link rel="preconnect" href="https://p.typekit.net" crossorigin>
   <link rel="stylesheet" href="https://use.typekit.net/hqv8hwr.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <meta name="description" content="Generate transparent PNG images from text using brand fonts">
   <style>
-    :root {
-      --brand-primary: #446472;
-      --brand-accent: #ffb732;
-      --brand-accent-2: #52d5ff;
-      --page-bg: #f8fafc;
-      --text: #1e293b;
-      --subtext: #64748b;
-      --border: #e2e8f0;
+    :root{ --brand-primary:#446472; --brand-accent:#ffb732; --brand-accent-2:#52d5ff; --brand-gray:#929497; --page-bg:#f8fafc; --bg:#ffffff; --panel:#ffffff; --muted:#ffffff; --text:#1e293b; --subtext:#64748b; --accent:var(--brand-accent-2); --accent-2:var(--brand-accent); --border:#e2e8f0; }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{margin:0; font-family:'Open Sans',system-ui,-apple-system,sans-serif; background:var(--page-bg); color:var(--text);font-size:14px;line-height:1.5}
+    
+    /* Header */
+    header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:10px}
+    .brand .logo-img{height:28px;width:auto}
+    .brand .title{color:#ffb732;font-family:zooja-pro,Arial,sans-serif;font-size:clamp(32px,4vw,48px);line-height:1}
+    .header-controls{display:flex;align-items:center;gap:12px;margin-left:auto}
+    .header-btn{background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;transition:all .15s}
+    .header-btn:hover{background:#f8fafc;border-color:#cbd5e1}
+    .company-name{font-size:12px;color:var(--subtext);font-weight:500}
+
+    /* Navigation */
+    .nav-bar{background:#fff;border-bottom:1px solid var(--border)}
+    .nav-wrap{max-width:1400px;margin:0 auto;padding:0 24px;display:flex;gap:2px;overflow-x:auto}
+    .nav-tab{display:flex;align-items:center;gap:6px;padding:14px 16px;color:var(--subtext);text-decoration:none;font-size:13px;font-weight:600;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap}
+    .nav-tab:hover{color:var(--text);background:#f8fafc}
+    .nav-tab.active{color:var(--brand-primary);border-bottom-color:var(--brand-primary)}
+
+    .container{padding:24px; max-width:900px; margin:0 auto; display:flex; flex-direction:column; gap:20px}
+
+    .card{background:#ffffff; border:1px solid var(--border); border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,0.06); overflow:hidden}
+    .card h3{margin:0; padding:16px 20px 0 20px; font-size:15px; color:#374151; font-weight:700; font-family: Roboto, Arial, sans-serif; display:flex; align-items:center; justify-content:space-between}
+    .card .content{padding:20px}
+
+    label{font-size:12px; color:#6b7280; margin-bottom:6px; display:block; font-weight:600}
+    input, select{width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; color:var(--text); background:#fff; transition:border-color .15s, box-shadow .15s}
+    input:focus, select:focus{outline:none; border-color:var(--brand-accent-2); box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
+    input[type="color"]{width:48px; height:40px; padding:4px; cursor:pointer}
+    input[type="number"]{-moz-appearance:textfield}
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+
+    .btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 16px; border-radius:8px; border:1px solid #d1d5db; background:#ffffff; color:#111827; font-weight:600; cursor:pointer; font-family: Roboto, Arial, sans-serif; font-size:14px; transition:all .15s}
+    .btn:hover{background:#f9fafb}
+    .btn.primary{background:#52d5ff; border-color:#52d5ff; color:#0b1b24}
+    .btn.primary:hover{background:#3ecbf5}
+    .btn:disabled{opacity:0.5; cursor:not-allowed}
+
+    .form-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:16px}
+    .form-group{display:flex; flex-direction:column}
+    .color-row{display:flex; gap:10px; align-items:center}
+    .color-row input[type="text"]{flex:1}
+
+    .badge{display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; background:#fff7e6; color:#8a5800; border:1px solid #fde68a; font-weight:600; font-family: Roboto, Arial, sans-serif}
+
+    /* Preview Area */
+    .preview-area{
+      background: 
+        linear-gradient(45deg, #f1f5f9 25%, transparent 25%),
+        linear-gradient(-45deg, #f1f5f9 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #f1f5f9 75%),
+        linear-gradient(-45deg, transparent 75%, #f1f5f9 75%);
+      background-size: 20px 20px;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+      background-color: #fff;
+      border-radius:10px;
+      min-height:160px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:auto;
+      padding:24px;
+      border:1px solid var(--border);
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Open Sans', system-ui, sans-serif;
-      background: var(--page-bg);
-      color: var(--text);
-      min-height: 100vh;
+    #previewText{
+      font-family: "zooja-pro", cursive;
+      white-space: nowrap;
+      user-select:none;
     }
-    header {
-      padding: 12px 24px;
-      border-bottom: 1px solid var(--border);
-      background: #fff;
-      display: flex;
-      align-items: center;
-      gap: 16px;
+
+    /* Color Swatches */
+    .color-swatches{
+      display:grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap:12px;
     }
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+    .color-swatch{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:12px 14px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:#fff;
+      cursor:pointer;
+      transition:all .15s;
     }
-    .brand .logo-img {
-      height: 28px;
-      width: auto;
+    .color-swatch:hover{
+      border-color:var(--brand-accent-2);
+      box-shadow:0 2px 8px rgba(82,213,255,0.15);
     }
-    .brand .title {
-      color: #ffb732;
-      font-family: zooja-pro, Arial, sans-serif;
-      font-size: clamp(32px, 4vw, 48px);
-      line-height: 1;
+    .color-swatch .swatch-color{
+      width:36px;
+      height:36px;
+      border-radius:8px;
+      border:1px solid var(--border);
+      flex-shrink:0;
     }
-    .header-controls {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-left: auto;
+    .color-swatch .swatch-info{
+      display:flex;
+      flex-direction:column;
+      min-width:0;
+      flex:1;
     }
-    .header-btn {
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 16px;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text);
-      cursor: pointer;
-      transition: all .15s;
-      text-decoration: none;
+    .color-swatch .swatch-name{
+      font-size:13px;
+      font-weight:600;
+      color:var(--text);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
-    .header-btn:hover {
-      background: #f8fafc;
-      border-color: #cbd5e1;
+    .color-swatch .swatch-hex{
+      font-size:12px;
+      color:var(--subtext);
+      font-family:ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
     }
-    .header-btn.back {
-      background: #dcfce7;
-      border-color: #86efac;
-      color: #166534;
+    .color-swatch .swatch-delete{
+      padding:6px 10px;
+      font-size:12px;
+      background:transparent;
+      color:var(--subtext);
+      border:1px solid transparent;
+      border-radius:6px;
+      cursor:pointer;
+      opacity:0;
+      transition:all .15s;
     }
-    .main-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 40px 24px;
+    .color-swatch:hover .swatch-delete{opacity:1}
+    .color-swatch .swatch-delete:hover{color:#ef4444; background:#fef2f2; border-color:#fecaca}
+
+    .save-color-row{
+      display:flex;
+      gap:12px;
+      align-items:flex-end;
+      margin-top:20px;
+      padding-top:20px;
+      border-top:1px solid var(--border);
     }
-    h1 {
-      font-size: 28px;
-      font-weight: 700;
-      margin-bottom: 16px;
+    .save-color-row > div{flex:1}
+
+    .empty-state{
+      text-align:center;
+      padding:32px 20px;
+      color:var(--subtext);
+      grid-column:1/-1;
     }
-    p {
-      color: var(--subtext);
-      font-size: 16px;
+
+    .hint{font-size:12px; color:#6b7280; margin-top:8px}
+
+    .actions{display:flex; gap:12px; margin-top:16px}
+    .actions .btn{flex:1}
+
+    canvas{display:none}
+
+    @media(max-width:600px){
+      .form-grid{grid-template-columns:1fr 1fr}
+      .color-swatches{grid-template-columns:1fr}
+      .save-color-row{flex-direction:column}
+      .save-color-row > div{width:100%}
     }
   </style>
 </head>
 <body>
   <header>
     <div class="brand">
-      <img src="logo-main.svg" class="logo-img" alt="Capstone" onerror="this.style.display='none'">
+      <img src="logo-main.svg" class="logo-img" alt="Capstone" />
       <div class="title">Marketing Hub</div>
     </div>
     <div class="header-controls">
-      <a href="mmp_admin.html" class="header-btn back">← Back to Admin</a>
+      <button class="header-btn" id="backBtn">Back to Admin</button>
+      <button class="header-btn" id="logoutBtn">Sign Out</button>
     </div>
+    <span class="company-name">Capstone Management Partners</span>
   </header>
 
-  <div class="main-container">
-    <h1>CMP Font</h1>
-    <p>This page is under construction.</p>
-  </div>
+  <nav class="nav-bar">
+    <div class="nav-wrap">
+      <a href="mmp_calendar_app.html" class="nav-tab">Marketing Calendar</a>
+      <a href="marketing_plans.html" class="nav-tab">Marketing Plans</a>
+      <a href="marketing_contacts.html" class="nav-tab">Marketing Contacts</a>
+      <a href="promo_order_tracker.html" class="nav-tab">Promo Order Tracker</a>
+      <a href="renewal_campaign.html" class="nav-tab">Renewal Campaign</a>
+      <a href="velocity_tracker.html" class="nav-tab">Velocity Tracker</a>
+      <a href="uniform_shop.html" class="nav-tab">Uniform Shop</a>
+      <a href="creative_library.html" class="nav-tab">Creative Library</a>
+    </div>
+  </nav>
+
+  <main class="container">
+    <!-- Text Input -->
+    <section class="card">
+      <h3>Text Input</h3>
+      <div class="content">
+        <label for="textInput">Enter your text</label>
+        <input type="text" id="textInput" value="Hello World" placeholder="Type your text here...">
+        <p class="hint">This text will be rendered using the brand font and exported as a transparent PNG.</p>
+      </div>
+    </section>
+
+    <!-- Style Options -->
+    <section class="card">
+      <h3>Style Options</h3>
+      <div class="content">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="fontSize">Font Size (px)</label>
+            <input type="number" id="fontSize" value="120" min="12" max="500">
+          </div>
+          <div class="form-group">
+            <label>Text Color</label>
+            <div class="color-row">
+              <input type="color" id="fontColorPicker" value="#000000">
+              <input type="text" id="fontColor" value="#000000" maxlength="7" style="font-family:monospace">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="fontWeight">Font Weight</label>
+            <select id="fontWeight">
+              <option value="400">Normal (400)</option>
+              <option value="700">Bold (700)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="letterSpacing">Letter Spacing (px)</label>
+            <input type="number" id="letterSpacing" value="0" min="-20" max="50">
+          </div>
+          <div class="form-group">
+            <label for="scale">Export Scale</label>
+            <select id="scale">
+              <option value="1">1x</option>
+              <option value="2" selected>2x (Recommended)</option>
+              <option value="3">3x</option>
+              <option value="4">4x (High-Res)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Saved Colors -->
+    <section class="card">
+      <h3>Brand Colors <span class="badge" id="colorCount">0 saved</span></h3>
+      <div class="content">
+        <div id="colorSwatches" class="color-swatches">
+          <div class="empty-state">Loading brand colors...</div>
+        </div>
+        <div class="save-color-row">
+          <div>
+            <label for="colorName">Save Current Color</label>
+            <input type="text" id="colorName" placeholder="Enter color name (e.g., Primary Blue)" maxlength="30">
+          </div>
+          <button class="btn" id="saveColorBtn">Save Color</button>
+        </div>
+        <p class="hint">Click any swatch to apply that color. Saved colors are shared across your team.</p>
+      </div>
+    </section>
+
+    <!-- Preview -->
+    <section class="card">
+      <h3>Live Preview</h3>
+      <div class="content">
+        <div class="preview-area">
+          <span id="previewText">Hello World</span>
+        </div>
+        <p class="hint">The checkerboard pattern indicates transparency. Your exported image will have no background.</p>
+        <div class="actions">
+          <button class="btn primary" id="downloadBtn">Download PNG</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <canvas id="canvas"></canvas>
+
+  <script>
+    const API_BASE = '/api';
+    
+    const els = {
+      backBtn: document.getElementById('backBtn'),
+      logoutBtn: document.getElementById('logoutBtn'),
+      textInput: document.getElementById('textInput'),
+      fontSize: document.getElementById('fontSize'),
+      fontColor: document.getElementById('fontColor'),
+      fontColorPicker: document.getElementById('fontColorPicker'),
+      fontWeight: document.getElementById('fontWeight'),
+      letterSpacing: document.getElementById('letterSpacing'),
+      scale: document.getElementById('scale'),
+      previewText: document.getElementById('previewText'),
+      downloadBtn: document.getElementById('downloadBtn'),
+      colorSwatches: document.getElementById('colorSwatches'),
+      colorName: document.getElementById('colorName'),
+      saveColorBtn: document.getElementById('saveColorBtn'),
+      colorCount: document.getElementById('colorCount'),
+      canvas: document.getElementById('canvas')
+    };
+
+    const ctx = els.canvas.getContext('2d');
+    let savedColors = [];
+
+    function escapeHtml(str){ const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
+
+    // Color picker sync
+    els.fontColorPicker.addEventListener('input', () => {
+      els.fontColor.value = els.fontColorPicker.value.toUpperCase();
+      updatePreview();
+    });
+
+    els.fontColor.addEventListener('input', () => {
+      let val = els.fontColor.value.trim();
+      if (val && !val.startsWith('#')) val = '#' + val;
+      if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+        els.fontColorPicker.value = val;
+        els.fontColor.value = val.toUpperCase();
+        updatePreview();
+      }
+    });
+
+    els.fontColor.addEventListener('blur', () => {
+      els.fontColor.value = els.fontColor.value.toUpperCase();
+    });
+
+    // Preview
+    function updatePreview() {
+      const text = els.textInput.value || ' ';
+      els.previewText.textContent = text;
+      els.previewText.style.fontSize = els.fontSize.value + 'px';
+      els.previewText.style.color = els.fontColor.value;
+      els.previewText.style.fontWeight = els.fontWeight.value;
+      els.previewText.style.letterSpacing = els.letterSpacing.value + 'px';
+    }
+
+    // Download
+    function downloadPNG() {
+      const text = els.textInput.value || ' ';
+      const size = parseInt(els.fontSize.value, 10);
+      const color = els.fontColor.value;
+      const weight = els.fontWeight.value;
+      const spacing = parseInt(els.letterSpacing.value, 10);
+      const scaleVal = parseInt(els.scale.value, 10);
+
+      const fontStr = `${weight} ${size * scaleVal}px "zooja-pro", cursive`;
+      ctx.font = fontStr;
+      ctx.textBaseline = 'top';
+
+      let totalWidth = 0;
+      for (let i = 0; i < text.length; i++) {
+        totalWidth += ctx.measureText(text[i]).width;
+        if (i < text.length - 1) totalWidth += spacing * scaleVal;
+      }
+
+      const metrics = ctx.measureText(text);
+      const height = (metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent) || size * scaleVal * 1.2;
+
+      els.canvas.width = Math.ceil(totalWidth) + 20;
+      els.canvas.height = Math.ceil(height) + 20;
+
+      ctx.clearRect(0, 0, els.canvas.width, els.canvas.height);
+      ctx.font = fontStr;
+      ctx.fillStyle = color;
+      ctx.textBaseline = 'top';
+
+      let x = 10;
+      for (let i = 0; i < text.length; i++) {
+        ctx.fillText(text[i], x, 10);
+        x += ctx.measureText(text[i]).width + spacing * scaleVal;
+      }
+
+      const link = document.createElement('a');
+      const safeName = text.substring(0, 20).replace(/[^a-zA-Z0-9]/g, '_') || 'text';
+      link.download = `${safeName}.png`;
+      link.href = els.canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    // Saved Colors
+    async function loadSavedColors() {
+      try {
+        const res = await fetch(API_BASE + '/color-codes');
+        if (!res.ok) throw new Error('Failed to load');
+        savedColors = await res.json();
+        renderColorSwatches();
+      } catch (e) {
+        console.error('Failed to load saved colors:', e);
+        els.colorSwatches.innerHTML = '<div class="empty-state">Could not load colors. Please try again.</div>';
+      }
+    }
+
+    function renderColorSwatches() {
+      els.colorCount.textContent = `${savedColors.length} saved`;
+      
+      if (savedColors.length === 0) {
+        els.colorSwatches.innerHTML = '<div class="empty-state">No brand colors saved yet. Add your first color below.</div>';
+        return;
+      }
+
+      els.colorSwatches.innerHTML = savedColors.map(c => `
+        <div class="color-swatch" data-hex="${c.hex}" data-id="${c.id}">
+          <div class="swatch-color" style="background-color: ${c.hex}"></div>
+          <div class="swatch-info">
+            <span class="swatch-name">${escapeHtml(c.name)}</span>
+            <span class="swatch-hex">${c.hex}</span>
+          </div>
+          <button class="swatch-delete" onclick="event.stopPropagation(); deleteColor('${c.id}')">Remove</button>
+        </div>
+      `).join('');
+
+      els.colorSwatches.querySelectorAll('.color-swatch').forEach(swatch => {
+        swatch.addEventListener('click', () => {
+          const hex = swatch.dataset.hex;
+          els.fontColor.value = hex;
+          els.fontColorPicker.value = hex;
+          updatePreview();
+        });
+      });
+    }
+
+    async function saveColor() {
+      const name = els.colorName.value.trim();
+      const hex = els.fontColor.value.toUpperCase();
+
+      if (!name) {
+        alert('Please enter a name for this color');
+        els.colorName.focus();
+        return;
+      }
+
+      if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+        alert('Invalid color format. Please use a valid hex color.');
+        return;
+      }
+
+      try {
+        els.saveColorBtn.disabled = true;
+        els.saveColorBtn.textContent = 'Saving...';
+
+        const res = await fetch(API_BASE + '/color-codes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, hex })
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(text || 'Failed to save');
+        }
+
+        const newColor = await res.json();
+        savedColors.push(newColor);
+        renderColorSwatches();
+        els.colorName.value = '';
+      } catch (e) {
+        alert('Failed to save color: ' + e.message);
+      } finally {
+        els.saveColorBtn.disabled = false;
+        els.saveColorBtn.textContent = 'Save Color';
+      }
+    }
+
+    async function deleteColor(id) {
+      if (!confirm('Remove this brand color?')) return;
+
+      try {
+        const res = await fetch(API_BASE + '/color-codes', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id })
+        });
+
+        if (!res.ok) throw new Error('Failed to delete');
+
+        savedColors = savedColors.filter(c => c.id !== id);
+        renderColorSwatches();
+      } catch (e) {
+        alert('Failed to remove color: ' + e.message);
+      }
+    }
+
+    window.deleteColor = deleteColor;
+
+    // Event listeners
+    els.downloadBtn.addEventListener('click', downloadPNG);
+    els.saveColorBtn.addEventListener('click', saveColor);
+    els.colorName.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') saveColor();
+    });
+
+    [els.textInput, els.fontSize, els.fontWeight, els.letterSpacing].forEach(el => {
+      el.addEventListener('input', updatePreview);
+    });
+
+    els.backBtn.addEventListener('click', () => { location.href = 'mmp_admin.html'; });
+    els.logoutBtn.addEventListener('click', async () => {
+      try { await fetch('/api/auth-logout', { method: 'POST' }); } catch(e) {}
+      location.href = 'index.html';
+    });
+
+    // Initialize
+    async function init() {
+      try {
+        const meRes = await fetch('/api/me');
+        if (!meRes.ok) { location.href = 'index.html'; return; }
+        const me = await meRes.json();
+        if (me.role !== 'admin') { location.href = 'index.html'; return; }
+      } catch(e) { location.href = 'index.html'; return; }
+
+      document.fonts.ready.then(() => {
+        updatePreview();
+      });
+
+      loadSavedColors();
+    }
+
+    init();
+  </script>
 </body>
 </html>
