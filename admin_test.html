@@ -38,9 +38,11 @@
     .user-list-header h2{font-size:15px; font-weight:700; color:var(--text); margin:0}
     .user-count{font-size:12px; color:var(--subtext); background:#f1f5f9; padding:4px 10px; border-radius:999px}
     
-    .user-search{padding:12px 16px; border-bottom:1px solid var(--border)}
-    .user-search input{width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:8px; font-size:13px}
+    .user-search{padding:12px 16px; border-bottom:1px solid var(--border); position:relative}
+    .user-search input{width:100%; padding:10px 36px 10px 12px; border:1px solid var(--border); border-radius:8px; font-size:13px}
     .user-search input:focus{outline:none; border-color:var(--brand-accent-2); box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
+    .clear-search-btn{position:absolute; right:24px; top:50%; transform:translateY(-50%); background:none; border:none; font-size:18px; color:#9ca3af; cursor:pointer; padding:4px 8px; line-height:1}
+    .clear-search-btn:hover{color:#6b7280}
 
     .user-list{max-height:calc(100vh - 300px); overflow-y:auto}
     .user-item{padding:14px 20px; border-bottom:1px solid var(--border); cursor:pointer; transition:background .15s; display:flex; align-items:center; gap:12px}
@@ -150,6 +152,7 @@
           </div>
           <div class="user-search">
             <input type="text" id="userSearch" placeholder="Search users...">
+            <button id="clearSearchBtn" class="clear-search-btn" style="display:none">&times;</button>
           </div>
           <div class="user-list" id="userList">
             <!-- Users populated here -->
@@ -265,6 +268,7 @@
     const els = {
       userCount: document.getElementById('userCount'),
       userSearch: document.getElementById('userSearch'),
+      clearSearchBtn: document.getElementById('clearSearchBtn'),
       userList: document.getElementById('userList'),
       addUserBtn: document.getElementById('addUserBtn'),
       emptyState: document.getElementById('emptyState'),
@@ -627,7 +631,18 @@ The CMP Marketing Hub Team`
     }
 
     // Event Listeners
-    els.userSearch.addEventListener('input', () => renderUserList());
+    els.userSearch.addEventListener('input', () => {
+      // Show/hide clear button based on search content
+      els.clearSearchBtn.style.display = els.userSearch.value ? 'block' : 'none';
+      renderUserList();
+    });
+    
+    els.clearSearchBtn.addEventListener('click', () => {
+      els.userSearch.value = '';
+      els.clearSearchBtn.style.display = 'none';
+      renderUserList();
+    });
+    
     els.addUserBtn.addEventListener('click', showNewUserForm);
     els.emptyAddBtn.addEventListener('click', showNewUserForm);
     els.cancelBtn.addEventListener('click', cancelEdit);
