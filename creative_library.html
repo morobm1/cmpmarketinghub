@@ -208,6 +208,45 @@
     .lightbox-btn{padding:8px 16px;background:rgba(255,255,255,0.1);border:none;border-radius:6px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s}
     .lightbox-btn:hover{background:rgba(255,255,255,0.2)}
 
+    /* Canva Badge */
+    .canva-badge{position:absolute;top:12px;right:12px;padding:4px 10px;background:linear-gradient(135deg,#7c3aed 0%,#a855f7 100%);color:#fff;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;border-radius:4px;display:flex;align-items:center;gap:4px}
+    .canva-badge svg{width:12px;height:12px}
+    .overlay-btn.canva{background:linear-gradient(135deg,#7c3aed 0%,#a855f7 100%);color:#fff}
+    .overlay-btn.canva:hover{background:linear-gradient(135deg,#6d28d9 0%,#9333ea 100%)}
+
+    /* Canva Editor Modal */
+    .canva-editor-modal{position:fixed;inset:0;background:rgba(15,23,42,0.95);display:none;flex-direction:column;z-index:250}
+    .canva-editor-modal.show{display:flex}
+    .canva-editor-header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:#1e1b4b;border-bottom:1px solid rgba(255,255,255,0.1)}
+    .canva-editor-header .title{display:flex;align-items:center;gap:12px;color:#fff;font-size:15px;font-weight:600}
+    .canva-editor-header .title svg{width:24px;height:24px;color:#a855f7}
+    .canva-editor-header .actions{display:flex;gap:10px}
+    .canva-editor-header .btn-canva{background:linear-gradient(135deg,#7c3aed 0%,#a855f7 100%);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s}
+    .canva-editor-header .btn-canva:hover{background:linear-gradient(135deg,#6d28d9 0%,#9333ea 100%)}
+    .canva-editor-header .btn-close{background:rgba(255,255,255,0.1);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
+    .canva-editor-header .btn-close:hover{background:rgba(255,255,255,0.2)}
+    .canva-editor-body{flex:1;display:flex;align-items:center;justify-content:center;padding:20px;position:relative}
+    .canva-editor-body iframe{width:100%;height:100%;border:none;border-radius:8px;background:#fff}
+    .canva-editor-loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(30,27,75,0.9);color:#fff;gap:16px}
+    .canva-editor-loading .spinner{width:40px;height:40px;border:3px solid rgba(255,255,255,0.2);border-top-color:#a855f7;border-radius:50%;animation:spin .8s linear infinite}
+    .canva-editor-loading p{font-size:14px;color:rgba(255,255,255,0.7)}
+    .canva-editor-instructions{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:32px;max-width:500px;text-align:center}
+    .canva-editor-instructions h3{color:#fff;font-size:18px;margin-bottom:12px}
+    .canva-editor-instructions p{color:rgba(255,255,255,0.7);font-size:14px;line-height:1.6;margin-bottom:20px}
+    .canva-editor-instructions .steps{text-align:left;background:rgba(0,0,0,0.2);border-radius:8px;padding:16px 20px;margin-bottom:20px}
+    .canva-editor-instructions .steps li{color:rgba(255,255,255,0.8);font-size:13px;margin-bottom:8px;padding-left:8px}
+    .canva-editor-instructions .steps li:last-child{margin-bottom:0}
+
+    /* Link Input Group */
+    .link-input-group{display:flex;gap:8px}
+    .link-input-group .form-input{flex:1}
+    .link-input-group .btn-icon{padding:10px 12px;flex-shrink:0}
+    .canva-link-hint{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;background:linear-gradient(135deg,rgba(124,58,237,0.1) 0%,rgba(168,85,247,0.1) 100%);border:1px solid rgba(124,58,237,0.2);border-radius:6px;margin-top:8px}
+    .canva-link-hint svg{width:16px;height:16px;color:#7c3aed;flex-shrink:0;margin-top:1px}
+    .canva-link-hint p{font-size:12px;color:#6b7280;line-height:1.5}
+    .canva-link-hint a{color:#7c3aed;text-decoration:none;font-weight:600}
+    .canva-link-hint a:hover{text-decoration:underline}
+
     /* Toast */
     .toast{position:fixed;bottom:24px;right:24px;padding:14px 20px;background:#1e293b;color:#fff;border-radius:var(--radius);font-size:14px;font-weight:500;z-index:300;opacity:0;transform:translateY(16px);transition:all .3s;box-shadow:var(--shadow-lg)}
     .toast.show{opacity:1;transform:translateY(0)}
@@ -384,6 +423,16 @@
           <label class="form-label">Description</label>
           <textarea class="form-textarea" id="uploadDescription" placeholder="Optional description for these assets..."></textarea>
         </div>
+        <div class="form-group">
+          <label class="form-label">Canva Design Link (Optional)</label>
+          <div class="link-input-group">
+            <input type="url" class="form-input" id="uploadCanvaLink" placeholder="https://www.canva.com/design/...">
+          </div>
+          <div class="canva-link-hint">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <p>Paste a Canva design link to enable in-app editing. <a href="https://www.canva.com" target="_blank">Open Canva</a> to create or find your design, then copy the share link.</p>
+          </div>
+        </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" data-close="uploadModal">Cancel</button>
@@ -428,11 +477,62 @@
           <label class="form-label">Description</label>
           <textarea class="form-textarea" id="editDescription"></textarea>
         </div>
+        <div class="form-group">
+          <label class="form-label">Canva Design Link</label>
+          <div class="link-input-group">
+            <input type="url" class="form-input" id="editCanvaLink" placeholder="https://www.canva.com/design/...">
+            <button class="btn btn-secondary btn-icon" id="openCanvaEditorBtn" title="Edit in Canva" style="display:none">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+            </button>
+          </div>
+          <div class="canva-link-hint">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <p>Add a Canva link to enable in-app editing. Use the edit button to customize this design in Canva.</p>
+          </div>
+        </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" id="deleteAssetBtn" style="margin-right:auto;color:#dc2626">Delete</button>
         <button class="btn btn-secondary" data-close="editModal">Cancel</button>
         <button class="btn btn-primary" id="saveEditBtn">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Canva Editor Modal -->
+  <div class="canva-editor-modal" id="canvaEditorModal">
+    <div class="canva-editor-header">
+      <div class="title">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+        <span id="canvaEditorTitle">Edit Design in Canva</span>
+      </div>
+      <div class="actions">
+        <button class="btn-canva" id="openInCanvaBtn">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          Open in Canva
+        </button>
+        <button class="btn-close" id="closeCanvaEditor">Close</button>
+      </div>
+    </div>
+    <div class="canva-editor-body">
+      <iframe id="canvaEditorFrame" src="" allow="clipboard-write"></iframe>
+      <div class="canva-editor-loading" id="canvaEditorLoading" style="display:none">
+        <div class="spinner"></div>
+        <p>Loading Canva editor...</p>
+      </div>
+      <div class="canva-editor-instructions" id="canvaEditorInstructions">
+        <h3>Edit Your Design in Canva</h3>
+        <p>Your Canva design will open in a new window where you can make edits using your logged-in Canva account.</p>
+        <ol class="steps">
+          <li>Click "Open in Canva" to launch the editor</li>
+          <li>Make your changes in Canva</li>
+          <li>Download or share your updated design</li>
+          <li>Return here and update the asset if needed</li>
+        </ol>
+        <button class="btn-canva" id="launchCanvaBtn" style="width:100%">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          Open Design in Canva
+        </button>
       </div>
     </div>
   </div>
@@ -1077,11 +1177,7 @@
       return names.filter(n=>allowed.includes(n));
     }
 
-    async function init(){
-      try{
-        const meRes = await fetch('/api/me');
-        if (!meRes.ok){ location.href = 'index.html'; return; }
-        const me = await meRes.json();
+    //
         
         if (els.adminPageBtn){ 
           els.adminPageBtn.style.display = me.role === 'admin' ? '' : 'none'; 
