@@ -134,9 +134,41 @@
     .panel-close:hover{background:#f1f5f9;color:var(--text)}
     
     .panel-body{flex:1;overflow-y:auto;padding:24px}
-    .panel-section{margin-bottom:24px}
+    .panel-section{margin-bottom:16px;border:1px solid var(--border);border-radius:12px;overflow:hidden}
     .panel-section:last-child{margin-bottom:0}
+    .section-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:#f8fafc;cursor:pointer;user-select:none;transition:background .15s}
+    .section-header:hover{background:#f1f5f9}
+    .section-header .section-title{font-size:12px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;gap:8px}
+    .section-header .section-toggle{width:24px;height:24px;display:flex;align-items:center;justify-content:center;color:var(--subtext);transition:transform .2s}
+    .section-header .section-toggle svg{width:16px;height:16px}
+    .panel-section.collapsed .section-header .section-toggle{transform:rotate(-90deg)}
+    .section-content{padding:16px;display:block}
+    .panel-section.collapsed .section-content{display:none}
     .section-label{font-size:11px;font-weight:700;color:var(--subtext);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+    
+    /* Channel Picker */
+    .channel-picker{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+    .channel-chip{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid var(--border);border-radius:8px;background:#fff;font-size:13px;font-weight:500;color:var(--subtext);cursor:pointer;transition:all .15s;user-select:none}
+    .channel-chip:hover{border-color:#cbd5e1;background:#f8fafc}
+    .channel-chip.active{border-color:var(--brand-accent-2);background:#f0fdff;color:var(--text)}
+    .channel-chip .channel-icon{font-size:14px}
+    .channel-chip input{display:none}
+    .channel-date-row{display:none;padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:8px}
+    .channel-date-row.visible{display:flex;align-items:center;gap:12px}
+    .channel-date-row .channel-name{font-size:13px;font-weight:600;color:var(--text);min-width:120px}
+    .channel-date-row input{flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px}
+    .channel-date-row input:focus{outline:none;border-color:var(--brand-accent-2)}
+    
+    /* Dynamic KPI List */
+    .kpi-list{display:flex;flex-direction:column;gap:10px}
+    .kpi-row{display:flex;gap:10px;align-items:flex-start}
+    .kpi-row .kpi-select{flex:1}
+    .kpi-row .kpi-target{flex:1}
+    .kpi-row .kpi-remove{width:36px;height:36px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--subtext);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;margin-top:24px}
+    .kpi-row .kpi-remove:hover{background:#fee2e2;border-color:#fecaca;color:#991b1b}
+    .kpi-row:first-child .kpi-remove{display:none}
+    .add-kpi-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border:1px dashed var(--border);border-radius:8px;background:#fff;color:var(--subtext);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;margin-top:8px}
+    .add-kpi-btn:hover{border-color:var(--brand-accent-2);color:var(--brand-accent-2);background:#f0fdff}
     
     .form-group{margin-bottom:16px}
     .form-group:last-child{margin-bottom:0}
@@ -425,267 +457,326 @@
       </div>
       <div class="panel-body">
         
-        <!-- Event Overview -->
-        <div class="panel-section">
-          <div class="section-label">Event Overview</div>
-          <div class="form-group">
-            <label>Activity Name *</label>
-            <input type="text" id="eventTitle" placeholder="e.g., Welcome Week Pool Party, Move-In Day Tabling">
+        <!-- Event Overview - Always Open -->
+        <div class="panel-section" data-section="overview">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="section-title">📋 Event Overview</span>
+            <span class="section-toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
           </div>
-          <div class="form-row">
+          <div class="section-content">
             <div class="form-group">
-              <label>Activity Type *</label>
-              <select id="eventCampaign">
-                <option value="">Select type...</option>
-                <optgroup label="Events & Activations">
-                  <option value="Resident event">Resident Retention Event</option>
-                  <option value="Prospect event">Prospect Event / Open House</option>
-                  <option value="on-campus event">On-Campus Tabling/Activation</option>
-                  <option value="off-campus event">Off-Campus Outreach</option>
-                  <option value="Key Market Event">University/Market Event</option>
-                </optgroup>
-                <optgroup label="Digital & Social">
-                  <option value="Social Media Post">Social Media - Feed Post</option>
-                  <option value="Social Media Story">Social Media - Story/Reel</option>
-                  <option value="Social Media Ad">Paid Social Campaign</option>
-                  <option value="Email Campaign">Email/SMS Campaign</option>
-                  <option value="Influencer">Influencer/Ambassador</option>
-                </optgroup>
-                <optgroup label="Reputation & Reviews">
-                  <option value="Review/Reputation">Review Generation Push</option>
-                  <option value="Reputation Response">Reputation Response</option>
-                </optgroup>
-                <optgroup label="Partnerships & Outreach">
-                  <option value="cross-marketing partnership/scholarship">Campus Partnership</option>
-                  <option value="outreach marketing">Local Business Partnership</option>
-                  <option value="Giveaway">Giveaway/Sweepstakes</option>
-                  <option value="Referral">Referral Program Push</option>
-                </optgroup>
-              </select>
+              <label>Activity Name *</label>
+              <input type="text" id="eventTitle" placeholder="e.g., Welcome Week Pool Party, Move-In Day Tabling">
             </div>
-            <div class="form-group">
-              <label>Leasing Funnel Stage</label>
-              <select id="eventFunnelStage">
-                <option value="">Select stage...</option>
-                <option value="awareness">Awareness (Top of Funnel)</option>
-                <option value="consideration">Consideration (Mid Funnel)</option>
-                <option value="decision">Decision (Bottom Funnel)</option>
-                <option value="retention">Retention / Renewal</option>
-                <option value="advocacy">Advocacy / Referral</option>
-              </select>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Activity Type *</label>
+                <select id="eventCampaign">
+                  <option value="">Select type...</option>
+                  <optgroup label="Events & Activations">
+                    <option value="Resident event">Resident Retention Event</option>
+                    <option value="Prospect event">Prospect Event / Open House</option>
+                    <option value="on-campus event">On-Campus Tabling/Activation</option>
+                    <option value="off-campus event">Off-Campus Outreach</option>
+                    <option value="Key Market Event">University/Market Event</option>
+                  </optgroup>
+                  <optgroup label="Digital & Social">
+                    <option value="Social Media Post">Social Media - Feed Post</option>
+                    <option value="Social Media Story">Social Media - Story/Reel</option>
+                    <option value="Social Media Ad">Paid Social Campaign</option>
+                    <option value="Email Campaign">Email/SMS Campaign</option>
+                    <option value="Influencer">Influencer/Ambassador</option>
+                  </optgroup>
+                  <optgroup label="Reputation & Reviews">
+                    <option value="Review/Reputation">Review Generation Push</option>
+                    <option value="Reputation Response">Reputation Response</option>
+                  </optgroup>
+                  <optgroup label="Partnerships & Outreach">
+                    <option value="cross-marketing partnership/scholarship">Campus Partnership</option>
+                    <option value="outreach marketing">Local Business Partnership</option>
+                    <option value="Giveaway">Giveaway/Sweepstakes</option>
+                    <option value="Referral">Referral Program Push</option>
+                  </optgroup>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Leasing Funnel Stage</label>
+                <select id="eventFunnelStage">
+                  <option value="">Select stage...</option>
+                  <option value="awareness">Awareness (Top of Funnel)</option>
+                  <option value="consideration">Consideration (Mid Funnel)</option>
+                  <option value="decision">Decision (Bottom Funnel)</option>
+                  <option value="retention">Retention / Renewal</option>
+                  <option value="advocacy">Advocacy / Referral</option>
+                </select>
+              </div>
             </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Start Date *</label>
-              <input type="date" id="eventStart">
-            </div>
-            <div class="form-group">
-              <label>End Date</label>
-              <input type="date" id="eventEnd">
-            </div>
-            <div class="form-group">
-              <label>Time</label>
-              <input type="time" id="eventTime">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Start Date *</label>
+                <input type="date" id="eventStart">
+              </div>
+              <div class="form-group">
+                <label>End Date</label>
+                <input type="date" id="eventEnd">
+              </div>
+              <div class="form-group">
+                <label>Time</label>
+                <input type="time" id="eventTime">
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Target Audience -->
-        <div class="panel-section">
-          <div class="section-label">Target Audience</div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Primary Audience</label>
-              <select id="eventAudienceType">
-                <option value="">Select audience...</option>
-                <option value="current_residents">Current Residents</option>
-                <option value="prospects_touring">Active Prospects (Toured)</option>
-                <option value="prospects_leads">Leads (Not Yet Toured)</option>
-                <option value="future_prospects">Future Prospects (Next Lease Term)</option>
-                <option value="renewals">Renewal Eligible Residents</option>
-                <option value="guarantors">Parents/Guarantors</option>
-                <option value="campus_community">Campus Community</option>
-                <option value="local_community">Local Community</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Classification Target</label>
-              <select id="eventClassification">
-                <option value="">Any/All</option>
-                <option value="freshman">Incoming Freshmen</option>
-                <option value="sophomore">Sophomores</option>
-                <option value="upperclassmen">Upperclassmen</option>
-                <option value="graduate">Graduate Students</option>
-                <option value="transfer">Transfer Students</option>
-              </select>
-            </div>
+        <div class="panel-section collapsed" data-section="audience">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="section-title">👥 Target Audience</span>
+            <span class="section-toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
           </div>
-          <div class="form-group">
-            <label>Audience Notes</label>
-            <input type="text" id="eventAudience" placeholder="e.g., Greek life members, Student athletes, International students">
-          </div>
-        </div>
-
-        <!-- Goals & KPIs -->
-        <div class="panel-section">
-          <div class="section-label">Goals & Success Metrics</div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Primary Objective</label>
-              <select id="eventObjective">
-                <option value="">Select objective...</option>
-                <optgroup label="Leasing">
-                  <option value="tours">Drive Tours</option>
-                  <option value="applications">Generate Applications</option>
-                  <option value="leases">Close Leases</option>
-                  <option value="renewals">Secure Renewals</option>
-                </optgroup>
-                <optgroup label="Engagement">
-                  <option value="attendance">Event Attendance</option>
-                  <option value="leads">Lead Capture</option>
-                  <option value="traffic">Website/Social Traffic</option>
-                  <option value="followers">Grow Social Following</option>
-                </optgroup>
-                <optgroup label="Reputation">
-                  <option value="reviews">Collect Reviews</option>
-                  <option value="referrals">Generate Referrals</option>
-                  <option value="brand">Brand Awareness</option>
-                  <option value="satisfaction">Resident Satisfaction</option>
-                </optgroup>
-              </select>
+          <div class="section-content">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Primary Audience</label>
+                <select id="eventAudienceType">
+                  <option value="">Select audience...</option>
+                  <option value="current_residents">Current Residents</option>
+                  <option value="prospects_touring">Active Prospects (Toured)</option>
+                  <option value="prospects_leads">Leads (Not Yet Toured)</option>
+                  <option value="future_prospects">Future Prospects (Next Lease Term)</option>
+                  <option value="renewals">Renewal Eligible Residents</option>
+                  <option value="guarantors">Parents/Guarantors</option>
+                  <option value="campus_community">Campus Community</option>
+                  <option value="local_community">Local Community</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Classification Target</label>
+                <select id="eventClassification">
+                  <option value="">Any/All</option>
+                  <option value="freshman">Incoming Freshmen</option>
+                  <option value="sophomore">Sophomores</option>
+                  <option value="upperclassmen">Upperclassmen</option>
+                  <option value="graduate">Graduate Students</option>
+                  <option value="transfer">Transfer Students</option>
+                </select>
+              </div>
             </div>
             <div class="form-group">
-              <label>Target Goal (Number)</label>
-              <input type="text" id="eventGoal" placeholder="e.g., 50 attendees, 10 tours, 5 leases">
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Secondary KPI</label>
-              <select id="eventSecondaryKPI">
-                <option value="">Select KPI...</option>
-                <option value="guest_cards">Guest Cards Collected</option>
-                <option value="social_engagement">Social Engagement Rate</option>
-                <option value="email_opens">Email Open Rate</option>
-                <option value="click_through">Click-Through Rate</option>
-                <option value="cost_per_lead">Cost Per Lead</option>
-                <option value="cost_per_lease">Cost Per Lease</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Secondary Target</label>
-              <input type="text" id="eventSecondaryGoal" placeholder="e.g., 25 guest cards, 5% CTR">
+              <label>Audience Notes</label>
+              <input type="text" id="eventAudience" placeholder="e.g., Greek life members, Student athletes, International students">
             </div>
           </div>
         </div>
 
-        <!-- Budget & ROI -->
-        <div class="panel-section">
-          <div class="section-label">Budget & Investment</div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Planned Budget</label>
-              <input type="number" id="eventBudget" placeholder="0.00" step="0.01">
-            </div>
-            <div class="form-group">
-              <label>Actual Spend</label>
-              <input type="number" id="eventSpend" placeholder="0.00" step="0.01">
-            </div>
+        <!-- Goals & KPIs - Dynamic -->
+        <div class="panel-section collapsed" data-section="goals">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="section-title">🎯 Goals & KPIs</span>
+            <span class="section-toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
           </div>
-          <div class="form-group">
-            <label>Budget Category</label>
-            <select id="eventBudgetCategory">
-              <option value="">Select category...</option>
-              <option value="events">Events & Programming</option>
-              <option value="digital">Digital Advertising</option>
-              <option value="print">Print & Signage</option>
-              <option value="swag">Promotional Items/Swag</option>
-              <option value="food">Food & Beverage</option>
-              <option value="sponsorship">Sponsorships</option>
-              <option value="influencer">Influencer/Ambassador</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Execution & Promotion -->
-        <div class="panel-section">
-          <div class="section-label">Promotion & Execution Checklist</div>
-          <div class="form-row-3">
-            <div class="form-group">
-              <label>Social Posted</label>
-              <input type="date" id="eventSocialDate">
+          <div class="section-content">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Primary Objective</label>
+                <select id="eventObjective">
+                  <option value="">Select objective...</option>
+                  <optgroup label="Leasing">
+                    <option value="tours">Drive Tours</option>
+                    <option value="applications">Generate Applications</option>
+                    <option value="leases">Close Leases</option>
+                    <option value="renewals">Secure Renewals</option>
+                  </optgroup>
+                  <optgroup label="Engagement">
+                    <option value="attendance">Event Attendance</option>
+                    <option value="leads">Lead Capture</option>
+                    <option value="traffic">Website/Social Traffic</option>
+                    <option value="followers">Grow Social Following</option>
+                  </optgroup>
+                  <optgroup label="Reputation">
+                    <option value="reviews">Collect Reviews</option>
+                    <option value="referrals">Generate Referrals</option>
+                    <option value="brand">Brand Awareness</option>
+                    <option value="satisfaction">Resident Satisfaction</option>
+                  </optgroup>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Target Goal</label>
+                <input type="text" id="eventGoal" placeholder="e.g., 50 attendees, 10 tours">
+              </div>
             </div>
+            
+            <!-- Dynamic KPI List -->
             <div class="form-group">
-              <label>Flyer/Signage Up</label>
-              <input type="date" id="eventFlyerDate">
-            </div>
-            <div class="form-group">
-              <label>Email/SMS Sent</label>
-              <input type="date" id="eventEmailDate">
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Entrata/CRM Updated</label>
-              <input type="date" id="eventCRMDate">
-            </div>
-            <div class="form-group">
-              <label>Resident Portal Posted</label>
-              <input type="date" id="eventPortalDate">
+              <label>Additional KPIs</label>
+              <div class="kpi-list" id="kpiList">
+                <!-- KPI rows will be added dynamically -->
+              </div>
+              <button type="button" class="add-kpi-btn" onclick="addKpiRow()">+ Add KPI</button>
             </div>
           </div>
         </div>
 
-        <!-- Results & Outcomes (shown for past/completed events) -->
-        <div class="panel-section" id="resultsSection">
-          <div class="section-label">Results & Outcomes</div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Actual Attendance/Reach</label>
-              <input type="number" id="eventActualAttendance" placeholder="e.g., 45">
+        <!-- Budget & Investment -->
+        <div class="panel-section collapsed" data-section="budget">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="section-title">💰 Budget & Investment</span>
+            <span class="section-toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+          </div>
+          <div class="section-content">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Planned Budget</label>
+                <input type="number" id="eventBudget" placeholder="0.00" step="0.01">
+              </div>
+              <div class="form-group">
+                <label>Actual Spend</label>
+                <input type="number" id="eventSpend" placeholder="0.00" step="0.01">
+              </div>
             </div>
             <div class="form-group">
-              <label>Leads Generated</label>
-              <input type="number" id="eventLeadsGenerated" placeholder="e.g., 12">
+              <label>Budget Category</label>
+              <select id="eventBudgetCategory">
+                <option value="">Select category...</option>
+                <option value="events">Events & Programming</option>
+                <option value="digital">Digital Advertising</option>
+                <option value="print">Print & Signage</option>
+                <option value="swag">Promotional Items/Swag</option>
+                <option value="food">Food & Beverage</option>
+                <option value="sponsorship">Sponsorships</option>
+                <option value="influencer">Influencer/Ambassador</option>
+                <option value="other">Other</option>
+              </select>
             </div>
           </div>
-          <div class="form-row">
+        </div>
+
+        <!-- Promotion Channels - Channel Picker -->
+        <div class="panel-section collapsed" data-section="promotion">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="section-title">📢 Promotion Channels</span>
+            <span class="section-toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+          </div>
+          <div class="section-content">
             <div class="form-group">
-              <label>Tours Booked</label>
-              <input type="number" id="eventToursBooked" placeholder="e.g., 8">
+              <label>Select channels you're using to promote this activity:</label>
+              <div class="channel-picker" id="channelPicker">
+                <label class="channel-chip" data-channel="social">
+                  <input type="checkbox" id="channelSocial">
+                  <span class="channel-icon">📱</span> Social Media
+                </label>
+                <label class="channel-chip" data-channel="flyer">
+                  <input type="checkbox" id="channelFlyer">
+                  <span class="channel-icon">📄</span> Flyers/Signage
+                </label>
+                <label class="channel-chip" data-channel="email">
+                  <input type="checkbox" id="channelEmail">
+                  <span class="channel-icon">📧</span> Email/SMS
+                </label>
+                <label class="channel-chip" data-channel="crm">
+                  <input type="checkbox" id="channelCRM">
+                  <span class="channel-icon">💻</span> Entrata/CRM
+                </label>
+                <label class="channel-chip" data-channel="portal">
+                  <input type="checkbox" id="channelPortal">
+                  <span class="channel-icon">🏠</span> Resident Portal
+                </label>
+                <label class="channel-chip" data-channel="website">
+                  <input type="checkbox" id="channelWebsite">
+                  <span class="channel-icon">🌐</span> Website
+                </label>
+              </div>
             </div>
-            <div class="form-group">
-              <label>Applications/Leases</label>
-              <input type="number" id="eventLeasesGenerated" placeholder="e.g., 3">
+            
+            <!-- Channel Date Rows (shown when channel is selected) -->
+            <div id="channelDates">
+              <div class="channel-date-row" data-channel="social">
+                <span class="channel-name">📱 Social Media</span>
+                <input type="date" id="eventSocialDate" placeholder="Posted date">
+              </div>
+              <div class="channel-date-row" data-channel="flyer">
+                <span class="channel-name">📄 Flyers/Signage</span>
+                <input type="date" id="eventFlyerDate" placeholder="Posted date">
+              </div>
+              <div class="channel-date-row" data-channel="email">
+                <span class="channel-name">📧 Email/SMS</span>
+                <input type="date" id="eventEmailDate" placeholder="Sent date">
+              </div>
+              <div class="channel-date-row" data-channel="crm">
+                <span class="channel-name">💻 Entrata/CRM</span>
+                <input type="date" id="eventCRMDate" placeholder="Updated date">
+              </div>
+              <div class="channel-date-row" data-channel="portal">
+                <span class="channel-name">🏠 Resident Portal</span>
+                <input type="date" id="eventPortalDate" placeholder="Posted date">
+              </div>
+              <div class="channel-date-row" data-channel="website">
+                <span class="channel-name">🌐 Website</span>
+                <input type="date" id="eventWebsiteDate" placeholder="Posted date">
+              </div>
             </div>
           </div>
-          <div class="form-group">
-            <label>Event Rating (Team Assessment)</label>
-            <select id="eventRating">
-              <option value="">Rate this activity...</option>
-              <option value="5">★★★★★ Exceeded Expectations</option>
-              <option value="4">★★★★☆ Met Goals</option>
-              <option value="3">★★★☆☆ Partially Successful</option>
-              <option value="2">★★☆☆☆ Below Expectations</option>
-              <option value="1">★☆☆☆☆ Did Not Meet Goals</option>
-            </select>
+        </div>
+
+        <!-- Results & Outcomes -->
+        <div class="panel-section collapsed" data-section="results" id="resultsSection">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="section-title">📊 Results & Outcomes</span>
+            <span class="section-toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
           </div>
-          <div class="form-group">
-            <label>Learnings & Notes for Next Time</label>
-            <textarea id="eventNotes" placeholder="What worked well? What would you change? Key takeaways for future events..."></textarea>
+          <div class="section-content">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Actual Attendance/Reach</label>
+                <input type="number" id="eventActualAttendance" placeholder="e.g., 45">
+              </div>
+              <div class="form-group">
+                <label>Leads Generated</label>
+                <input type="number" id="eventLeadsGenerated" placeholder="e.g., 12">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Tours Booked</label>
+                <input type="number" id="eventToursBooked" placeholder="e.g., 8">
+              </div>
+              <div class="form-group">
+                <label>Applications/Leases</label>
+                <input type="number" id="eventLeasesGenerated" placeholder="e.g., 3">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Event Rating (Team Assessment)</label>
+              <select id="eventRating">
+                <option value="">Rate this activity...</option>
+                <option value="5">★★★★★ Exceeded Expectations</option>
+                <option value="4">★★★★☆ Met Goals</option>
+                <option value="3">★★★☆☆ Partially Successful</option>
+                <option value="2">★★☆☆☆ Below Expectations</option>
+                <option value="1">★☆☆☆☆ Did Not Meet Goals</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Learnings & Notes</label>
+              <textarea id="eventNotes" placeholder="What worked well? What would you change?"></textarea>
+            </div>
           </div>
         </div>
 
         <!-- Creative Assets -->
-        <div class="panel-section">
-          <div class="section-label">Creative Assets</div>
-          <div class="form-group">
-            <label>Flyer/Creative URL</label>
-            <input type="url" id="eventFlyerUrl" placeholder="https://drive.google.com/... or Canva link">
+        <div class="panel-section collapsed" data-section="creative">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="section-title">🎨 Creative Assets</span>
+            <span class="section-toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
           </div>
-          <div id="flyerPreview"></div>
+          <div class="section-content">
+            <div class="form-group">
+              <label>Flyer/Creative URL</label>
+              <input type="url" id="eventFlyerUrl" placeholder="https://drive.google.com/... or Canva link">
+            </div>
+            <div id="flyerPreview"></div>
+          </div>
         </div>
       </div>
       <div class="panel-footer">
@@ -1612,8 +1703,7 @@
     }
 
     // ==================== EVENT PANEL ====================
-    function openEventPanel(eventId = null){
-      selectedEventId = eventId;
+    //
       const panel = document.getElementById('eventPanel');
       const deleteBtn = document.getElementById('deleteEventBtn');
       
@@ -1633,9 +1723,10 @@
         document.getElementById('eventAudience').value = ev.audience || '';
         document.getElementById('eventGoal').value = ev.goal || '';
         document.getElementById('eventObjective').value = ev.objective || ev.desired || '';
-        document.getElementById('eventSocialDate').value = ev.postedSocialAt || '';
-        document.getElementById('eventFlyerDate').value = ev.flyerPostedAt || '';
-        document.getElementById('eventEmailDate').value = ev.eblastSentAt || '';
+        // Load channel picker data
+        updateChannelPickerFromData(ev);
+        // Load additional KPIs
+        loadKpisFromEvent(ev);
         document.getElementById('eventFlyerUrl').value = ev.flyerUrl || '';
         deleteBtn.style.display = 'block';
       } else {
@@ -1692,9 +1783,8 @@
         audience: document.getElementById('eventAudience').value || '',
         goal: document.getElementById('eventGoal').value || '',
         objective: document.getElementById('eventObjective').value || '',
-        postedSocialAt: document.getElementById('eventSocialDate').value || '',
-        flyerPostedAt: document.getElementById('eventFlyerDate').value || '',
-        eblastSentAt: document.getElementById('eventEmailDate').value || '',
+        ...getChannelDatesFromForm(),
+        additionalKpis: getKpisFromForm(),
         flyerUrl: document.getElementById('eventFlyerUrl').value || '',
       };
 
@@ -2036,6 +2126,9 @@
 
     // Start
     initAuth();
+    
+    // Initialize channel picker
+    initChannelPicker();
   </script>
 </body>
 </html>
