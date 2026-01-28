@@ -323,15 +323,21 @@
       return name.substring(0, 2).toUpperCase();
     }
 
-    function renderUserList(filter = ''){
-      const filtered = users.filter(u => 
-        u.username.toLowerCase().includes(filter.toLowerCase())
-      );
+    function renderUserList(){
+      const filter = els.userSearch.value.toLowerCase().trim();
+      const filtered = filter 
+        ? users.filter(u => u.username.toLowerCase().includes(filter))
+        : users;
       
       els.userCount.textContent = users.length;
 
-      if (filtered.length === 0){
+      if (users.length === 0){
         els.userList.innerHTML = '<div style="padding:20px;text-align:center;color:#6b7280">No users found</div>';
+        return;
+      }
+
+      if (filtered.length === 0){
+        els.userList.innerHTML = '<div style="padding:20px;text-align:center;color:#6b7280">No matching users</div>';
         return;
       }
 
@@ -350,9 +356,20 @@
         `;
       }).join('');
 
-      // Add click handlers
+      // Add click handlers using event delegation on the list container
+      attachUserListHandlers();
+    }
+
+    function attachUserListHandlers(){
       els.userList.querySelectorAll('.user-item').forEach(item => {
-        item.addEventListener('click', () => selectUser(item.dataset.username));
+        item.onclick = function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          const username = this.dataset.username;
+          if (username) {
+            selectUser(username);
+          }
+        };
       });
     }
 
@@ -410,8 +427,19 @@
       els.deleteUserBtn.classList.remove('hidden');
       els.saveUserBtn.textContent = 'Save Changes';
 
-      // Update list selection
-      renderUserList(els.userSearch.value);
+      // Update list selection - just update active state without re-rendering
+      updateUserListActiveState();
+    }
+
+    function updateUserListActiveState(){
+      els.userList.querySelectorAll('.user-item').forEach(item => {
+        const username = item.dataset.username;
+        if (selectedUserId === username && !isNewUser) {
+          item.classList.add('active');
+        } else {
+          item.classList.remove('active');
+        }
+      });
     }
 
     function showNewUserForm(){
@@ -446,8 +474,8 @@
       els.deleteUserBtn.classList.add('hidden');
       els.saveUserBtn.textContent = 'Create User';
 
-      // Update list - show new user indicator
-      renderUserList(els.userSearch.value);
+      // Update list - clear active state since we're creating new
+      updateUserListActiveState();
     }
 
     function cancelEdit(){
@@ -456,10 +484,10 @@
         els.userDetail.classList.add('hidden');
         isNewUser = false;
         selectedUserId = null;
+        updateUserListActiveState();
       } else if (selectedUserId){
         selectUser(selectedUserId);
       }
-      renderUserList(els.userSearch.value);
     }
 
     async function saveUser(){
@@ -598,7 +626,7 @@ The CMP Marketing Hub Team`
     }
 
     // Event Listeners
-    els.userSearch.addEventListener('input', () => renderUserList(els.userSearch.value));
+    els.userSearch.addEventListener('input', () => renderUserList());
     els.addUserBtn.addEventListener('click', showNewUserForm);
     els.emptyAddBtn.addEventListener('click', showNewUserForm);
     els.cancelBtn.addEventListener('click', cancelEdit);
