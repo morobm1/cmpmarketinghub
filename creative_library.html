@@ -1177,12 +1177,275 @@
       return names.filter(n=>allowed.includes(n));
     }
 
-    //
+    // Canva Editor functionality
+    let currentCanvaLink = '';
+    const canvaEditorModal = document.getElementById('canvaEditorModal');
+    const canvaEditorTitle = document.getElementById('canvaEditorTitle');
+    const canvaEditorFrame = document.getElementById('canvaEditorFrame');
+    const canvaEditorLoading = document.getElementById('canvaEditorLoading');
+    const canvaEditorInstructions = document.getElementById('canvaEditorInstructions');
+    const openInCanvaBtn = document.getElementById('openInCanvaBtn');
+    const closeCanvaEditor = document.getElementById('closeCanvaEditor');
+    const launchCanvaBtn = document.getElementById('launchCanvaBtn');
+    const openCanvaEditorBtn = document.getElementById('openCanvaEditorBtn');
+    const editCanvaLink = document.getElementById('editCanvaLink');
+    const uploadCanvaLink = document.getElementById('uploadCanvaLink');
+
+    function openCanvaEditor(canvaLink, assetName){
+      if (!canvaLink) {
+        showToast('No Canva link available for this asset', 'error');
+        return;
+      }
+      currentCanvaLink = canvaLink;
+      canvaEditorTitle.textContent = assetName ? `Edit: ${assetName}` : 'Edit Design in Canva';
+      canvaEditorModal.classList.add('show');
+      canvaEditorInstructions.style.display = '';
+      canvaEditorFrame.style.display = 'none';
+    }
+
+    function launchCanvaDesign(){
+      if (!currentCanvaLink) return;
+      window.open(currentCanvaLink, '_blank');
+    }
+
+    function closeCanvaEditorModal(){
+      canvaEditorModal.classList.remove('show');
+      currentCanvaLink = '';
+      canvaEditorFrame.src = '';
+    }
+
+    if (openInCanvaBtn) {
+      openInCanvaBtn.addEventListener('click', launchCanvaDesign);
+    }
+    if (launchCanvaBtn) {
+      launchCanvaBtn.addEventListener('click', launchCanvaDesign);
+    }
+    if (closeCanvaEditor) {
+      closeCanvaEditor.addEventListener('click', closeCanvaEditorModal);
+    }
+
+    // Show/hide Canva edit button based on link presence
+    if (editCanvaLink) {
+      editCanvaLink.addEventListener('input', () => {
+        if (openCanvaEditorBtn) {
+          openCanvaEditorBtn.style.display = editCanvaLink.value.trim() ? '' : 'none';
+        }
+      });
+    }
+
+    if (openCanvaEditorBtn) {
+      openCanvaEditorBtn.addEventListener('click', () => {
+        const link = editCanvaLink ? editCanvaLink.value.trim() : '';
+        const name = els.editName ? els.editName.value.trim() : '';
+        if (link) {
+          openCanvaEditor(link, name);
+        }
+      });
+    }
+
+    // Update openEditModal to handle Canva link
+    const originalOpenEditModal = openEditModal;
+    openEditModal = function(assetId){
+      const asset = getAssets().find(a => a.id === assetId);
+      if (!asset) return;
+      els.editAssetId.value = asset.id;
+      els.editName.value = asset.name || '';
+      els.editCategory.value = asset.category || 'other';
+      els.editTags.value = (asset.tags || []).join(', ');
+      els.editDescription.value = asset.description || '';
+      if (editCanvaLink) {
+        editCanvaLink.value = asset.canvaLink || '';
+        if (openCanvaEditorBtn) {
+          openCanvaEditorBtn.style.display = asset.canvaLink ? '' : 'none';
+        }
+      }
+      els.editModal.classList.add('show');
+    };
+
+    // Update save to include Canva link
+    els.saveEditBtn.removeEventListener('click', els.saveEditBtn._handler);
+    els.saveEditBtn._handler = async () => {
+      const id = els.editAssetId.value;
+      const assets = libraryByProperty[currentProperty];
+      const idx = assets.findIndex(a => a.id === id);
+      if (idx === -1) return;
+
+      assets[idx] = {
+        ...assets[idx],
+        name: els.editName.value.trim(),
+        category: els.editCategory.value,
+        tags: els.editTags.value.split(',').map(t => t.trim()).filter(Boolean),
+        description: els.editDescription.value.trim(),
+        canvaLink: editCanvaLink ? editCanvaLink.value.trim() : ''
+      };
+
+      saveStore();
+      try { 
+        await apiJson('/creative-library', { 
+          method: 'PUT', 
+          body: JSON.stringify({ property: currentProperty, asset: assets[idx] }) 
+        }); 
+      } catch(e) { console.warn('Sync failed:', e); }
+      els.editModal.classList.remove('show');
+      render();
+      showToast('Asset updated');
+    };
+    els.saveEditBtn.addEventListener('click', els.saveEditBtn._handler);
+
+    // Update upload to include Canva link
+    els.uploadSubmitBtn.removeEventListener('click', els.uploadSubmitBtn._handler);
+    els.uploadSubmitBtn._handler = async () => {
+      if (pendingFiles.length === 0){
+        showToast('Please select files to upload', 'error');
+        return;
+      }
+      if (!els.uploadCategory.value){
+        showToast('Please select a category', 'error');
+        return;
+      }
+
+      const category = els.uploadCategory.value;
+      const tags = els.uploadTags.value.split(',').map(t => t.trim()).filter(Boolean);
+      const description = els.uploadDescription.value.trim();
+      const canvaLink = uploadCanvaLink ? uploadCanvaLink.value.trim() : '';
+      const now = new Date().toISOString();
+
+      pendingFiles.forEach(f => {
+        libraryByProperty[currentProperty].push({
+          id: f.id,
+          name: f.name,
+          url: f.url,
+          category,
+          tags,
+          description,
+          canvaLink,
+          uploadedAt: now,
+          uploadedBy: 'user'
+        });
+      });
+
+      saveStore();
+      
+      try {
+        await apiJson('/creative-library', {
+          method: 'POST',
+          body: JSON.stringify({
+            property: currentProperty,
+            assets: pendingFiles.map(f => ({
+              id: f.id, name: f.name, url: f.url, category, tags, description, canvaLink, uploadedAt: now
+            }))
+          })
+        });
+      } catch(e) { console.warn('Sync failed:', e); }
+
+      pendingFiles = [];
+      els.uploadModal.classList.remove('show');
+      render();
+      showToast('Assets uploaded successfully');
+    };
+    els.uploadSubmitBtn.addEventListener('click', els.uploadSubmitBtn._handler);
+
+    // Update renderGridView to show Canva badge
+    const originalRenderGridView = renderGridView;
+    renderGridView = function(){
+      const assets = filterAndSortAssets();
+      
+      if (assets.length === 0){
+        els.assetGrid.classList.add('hidden');
+        els.emptyState.style.display = '';
+        return;
+      }
+      
+      els.emptyState.style.display = 'none';
+      els.assetGrid.classList.remove('hidden');
+      
+      els.assetGrid.innerHTML = assets.map((asset, idx) => {
+        const cat = CATEGORIES[asset.category] || 'Other';
+        const isImage = isImageFile(asset.url);
+        const isVideo = isVideoFile(asset.url);
+        const fileType = getFileType(asset.url);
+        const hasCanva = asset.canvaLink && asset.canvaLink.trim();
         
+        let thumbHtml = '';
+        if (isImage){
+          thumbHtml = `<img src="${htmlesc(asset.url)}" alt="${htmlesc(asset.name)}" loading="lazy">`;
+        } else if (isVideo){
+          thumbHtml = `<video src="${htmlesc(asset.url)}" muted></video>`;
+        } else {
+          thumbHtml = `<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f1f5f9;color:#64748b;font-size:32px;font-weight:700">${fileType.charAt(0)}</div>`;
+        }
+        
+        const tags = (asset.tags || []).slice(0, 3).map(t => `<span class="asset-tag">${htmlesc(t)}</span>`).join('');
+        const canvaBadge = hasCanva ? `<span class="canva-badge"><svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>Canva</span>` : '';
+        const canvaBtn = hasCanva ? `<button class="overlay-btn canva" data-canva="${asset.id}">Edit in Canva</button>` : '';
+        
+        return `
+          <div class="asset-card" data-id="${asset.id}" data-index="${idx}">
+            <div class="asset-thumb">
+              ${thumbHtml}
+              <span class="file-type">${fileType}</span>
+              ${canvaBadge}
+              <div class="overlay">
+                <button class="overlay-btn" data-view="${asset.id}">View</button>
+                <button class="overlay-btn" data-edit="${asset.id}">Edit</button>
+                <button class="overlay-btn" data-download="${asset.id}">Download</button>
+                ${canvaBtn}
+              </div>
+            </div>
+            <div class="asset-info">
+              <div class="asset-name" title="${htmlesc(asset.name)}">${htmlesc(asset.name)}</div>
+              <div class="asset-meta">
+                <span>${cat}</span>
+                <span>${formatDateShort(asset.uploadedAt)}</span>
+              </div>
+              ${tags ? `<div class="asset-tags">${tags}</div>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    };
+
+    // Add Canva click handler to event delegation
+    const originalClickHandler = document.onclick;
+    document.addEventListener('click', (e) => {
+      const t = e.target;
+      if (!(t instanceof HTMLElement)) return;
+
+      const canvaId = t.dataset.canva || t.closest('[data-canva]')?.dataset.canva;
+      if (canvaId){
+        const asset = getAssets().find(a => a.id === canvaId);
+        if (asset && asset.canvaLink) {
+          openCanvaEditor(asset.canvaLink, asset.name);
+        }
+        return;
+      }
+    });
+
+    // Keyboard handler for Canva modal
+    document.addEventListener('keydown', (e) => {
+      if (canvaEditorModal && canvaEditorModal.classList.contains('show') && e.key === 'Escape') {
+        closeCanvaEditorModal();
+      }
+    });
+
+    // Main initialization function
+    async function init(){
+      try {
+        // Check authentication
+        const meRes = await fetch('/api/me');
+        if (!meRes.ok) {
+          location.href = 'index.html';
+          return;
+        }
+        const me = await meRes.json();
+        
+        // Setup admin button
         if (els.adminPageBtn){ 
           els.adminPageBtn.style.display = me.role === 'admin' ? '' : 'none'; 
           els.adminPageBtn.onclick = ()=>{ location.href='mmp_admin.html'; }; 
         }
+        
+        // Setup logout button
         if (els.logoutBtn){ 
           els.logoutBtn.onclick = async ()=>{ 
             try{ await fetch('/api/auth-logout', { method:'POST' }); }catch(e){} 
@@ -1190,26 +1453,37 @@
           }; 
         }
 
+        // Load properties
         let props = [];
-        try{ const pres = await fetch('/api/properties'); props = await pres.json(); }catch(e){ props = []; }
+        try{ 
+          const pres = await fetch('/api/properties'); 
+          props = await pres.json(); 
+        }catch(e){ 
+          props = []; 
+        }
+        
         const list = getAccessible(props, me);
         const saved = (localStorage.getItem(STORE_CURRENT_PROPERTY_KEY)||'').trim();
         const current = list.includes(saved) ? saved : (list[0] || '');
         
+        // Setup property selector
         if (els.propertySelect){
           els.propertySelect.innerHTML = list.map(p => `<option value="${p.replace(/"/g,'&quot;')}">${p}</option>`).join('');
           els.propertySelect.value = current;
           els.propertySelect.onchange = ()=>{ setActiveProperty(els.propertySelect.value); };
         }
         
+        // Load local storage and set active property
         loadStore();
         setActiveProperty(current);
-      }catch(e){ 
+        
+      } catch(e) { 
         console.error('Init error:', e);
         location.href = 'index.html'; 
       }
     }
 
+    // Start the application
     init();
   </script>
 </body>
