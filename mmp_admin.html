@@ -3,122 +3,177 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Admin - User & Catalog Management</title>
+  <title>Admin • Marketing Hub</title>
+  <link rel="preconnect" href="https://use.typekit.net" crossorigin>
+  <link rel="preconnect" href="https://p.typekit.net" crossorigin>
+  <link rel="stylesheet" href="https://use.typekit.net/hqv8hwr.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <meta name="description" content="Manage users, roles, property access, and uniform catalog">
   <style>
-    :root{
-      --bg:#0f172a; --panel:#111827; --muted:#1f2937; --text:#e5e7eb; --sub:#9ca3af; --border:#374151; --accent:#22d3ee; --good:#34d399; --warn:#f59e0b; --bad:#f87171;
-    }
-    *{box-sizing:border-box}
+    :root{ --brand-primary:#446472; --brand-accent:#ffb732; --brand-accent-2:#52d5ff; --brand-gray:#929497; --page-bg:#f8fafc; --bg:#ffffff; --panel:#ffffff; --text:#1e293b; --subtext:#64748b; --accent:var(--brand-accent-2); --border:#e2e8f0; --success:#22c55e; --warning:#f59e0b; --danger:#ef4444; }
+    *{box-sizing:border-box;margin:0;padding:0}
     html,body{height:100%}
-    body{margin:0; font-family:system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial; background:linear-gradient(160deg, var(--bg), #020617 60%); color:var(--text)}
-    header{padding:16px 18px; border-bottom:1px solid var(--border); position:sticky; top:0; background:rgba(15,23,42,0.9); backdrop-filter: blur(6px); z-index:10; display:flex; align-items:center; gap:14px; flex-wrap:wrap}
-    header .title{font-weight:800}
-    .pill{border:1px solid var(--border); background:var(--panel); border-radius:999px; padding:6px 10px; font-size:12px; color:var(--sub)}
+    body{margin:0; font-family:'Open Sans',system-ui,-apple-system,sans-serif; background:var(--page-bg); color:var(--text);font-size:14px;line-height:1.5}
+    
+    /* Header */
+    header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:10px}
+    .brand .logo-img{height:28px;width:auto}
+    .brand .title{color:#ffb732;font-family:zooja-pro,Arial,sans-serif;font-size:clamp(32px,4vw,48px);line-height:1}
+    .header-controls{display:flex;align-items:center;gap:12px;margin-left:auto}
+    .header-btn{background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;transition:all .15s}
+    .header-btn:hover{background:#f8fafc;border-color:#cbd5e1}
+    .company-name{font-size:12px;color:var(--subtext);font-weight:500}
+    .admin-badge{background:#fff7e6;color:#8a5800;border:1px solid #fde68a;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:600}
 
-    .container{padding:18px; max-width:1200px; margin:0 auto; display:flex; flex-direction:column; gap:16px}
+    /* Navigation */
+    .nav-bar{background:#fff;border-bottom:1px solid var(--border)}
+    .nav-wrap{max-width:1400px;margin:0 auto;padding:0 24px;display:flex;gap:2px;overflow-x:auto}
+    .nav-tab{display:flex;align-items:center;gap:6px;padding:14px 16px;color:var(--subtext);text-decoration:none;font-size:13px;font-weight:600;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap}
+    .nav-tab:hover{color:var(--text);background:#f8fafc}
+    .nav-tab.active{color:var(--brand-primary);border-bottom-color:var(--brand-primary)}
 
-    .card{background:linear-gradient(180deg, rgba(17,24,39,0.92), rgba(2,6,23,0.85)); border:1px solid var(--border); border-radius:14px; overflow:hidden}
-    .card h3{margin:0; padding:12px 14px 0 14px; font-size:14px; color:var(--sub); font-weight:700; display:flex; align-items:center; gap:10px}
-    .card .content{padding:12px 14px 14px 14px}
+    .container{padding:24px; max-width:1200px; margin:0 auto; display:flex; flex-direction:column; gap:20px}
 
-    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
-    .row > *{flex:1}
+    .card{background:#ffffff; border:1px solid var(--border); border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,0.06); overflow:hidden}
+    .card h3{margin:0; padding:16px 20px 0 20px; font-size:15px; color:#374151; font-weight:700; font-family: Roboto, Arial, sans-serif; display:flex; align-items:center; gap:10px}
+    .card .content{padding:20px}
 
-    label{font-size:12px; color:var(--sub); display:block; margin-bottom:6px}
-    input, select, textarea, button{width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:var(--muted); color:var(--text); font-size:14px}
+    .row{display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap}
+    .row > *{flex:1; min-width:200px}
+
+    label{font-size:12px; color:#6b7280; display:block; margin-bottom:6px; font-weight:600}
+    input, select, textarea{width:100%; padding:10px 12px; border-radius:8px; border:1px solid #d1d5db; background:#fff; color:var(--text); font-size:14px; transition:border-color .15s, box-shadow .15s}
+    input:focus, select:focus, textarea:focus{outline:none; border-color:var(--brand-accent-2); box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
     textarea{min-height:64px; resize:vertical}
-    button{cursor:pointer; border-color:transparent; background:linear-gradient(180deg, #0ea5e9, #22d3ee); color:#001018; font-weight:800}
-    button.secondary{background:var(--muted); color:var(--text); border:1px solid var(--border); font-weight:700}
-    button.warn{background:linear-gradient(180deg,#f59e0b,#fbbf24); color:#1f1300}
-    button.danger{background:linear-gradient(180deg,#ef4444,#f87171); color:#1f0a0a}
-    button.good{background:linear-gradient(180deg,#22c55e,#34d399); color:#052e16}
-    .mini{font-size:11px; color:var(--sub)}
 
-    .grid{max-height:60vh; overflow:auto; border:1px solid var(--border); border-radius:10px}
+    .btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 16px; border-radius:8px; border:1px solid #d1d5db; background:#ffffff; color:#111827; font-weight:600; cursor:pointer; font-family: Roboto, Arial, sans-serif; font-size:14px; transition:all .15s; width:100%}
+    .btn:hover{background:#f9fafb}
+    .btn.primary{background:#52d5ff; border-color:#52d5ff; color:#0b1b24}
+    .btn.primary:hover{background:#3ecbf5}
+    .btn.success{background:#22c55e; border-color:#22c55e; color:#fff}
+    .btn.success:hover{background:#16a34a}
+    .btn.warning{background:#ffb732; border-color:#ffb732; color:#1f1300}
+    .btn.warning:hover{background:#f5a623}
+    .btn.danger{background:#ef4444; border-color:#ef4444; color:#fff}
+    .btn.danger:hover{background:#dc2626}
+    .btn.sm{padding:6px 12px; font-size:13px}
+    .btn:disabled{opacity:0.5; cursor:not-allowed}
 
-    table{width:100%; border-collapse:separate; border-spacing:0;}
-    thead th{background:#0b1021; color:var(--sub); font-weight:700; font-size:12px; text-align:left; padding:10px; border-bottom:1px solid var(--border)}
-    tbody td{padding:10px; border-bottom:1px solid var(--border); font-size:13px; vertical-align:top}
+    .hint{font-size:12px; color:#6b7280; margin-top:6px}
+
+    .grid{max-height:60vh; overflow:auto; border:1px solid var(--border); border-radius:10px; background:#fff}
+
+    table{width:100%; border-collapse:separate; border-spacing:0}
+    thead th{background:#f8fafc; color:#6b7280; font-weight:600; font-size:12px; text-align:left; padding:12px 14px; border-bottom:1px solid var(--border); position:sticky; top:0}
+    tbody td{padding:12px 14px; border-bottom:1px solid var(--border); font-size:13px; vertical-align:top}
+    tbody tr:last-child td{border-bottom:none}
+    tbody tr:hover{background:#f8fafc}
+
     .prop-list{display:flex; flex-direction:column; gap:6px}
-    .prop-item{display:flex; align-items:center; justify-content:flex-start; padding:8px 10px; border:1px solid var(--border); border-radius:8px; cursor:pointer; background:var(--muted); color:var(--text); user-select:none}
-    .prop-item.selected{border-color: var(--accent); background: rgba(34,211,238,0.12)}
+    .prop-item{display:flex; align-items:center; justify-content:flex-start; padding:8px 12px; border:1px solid var(--border); border-radius:8px; cursor:pointer; background:#fff; color:var(--text); user-select:none; font-size:13px; transition:all .15s}
+    .prop-item:hover{background:#f8fafc}
+    .prop-item.selected{border-color:var(--brand-accent-2); background:rgba(82,213,255,0.1); color:var(--brand-primary)}
 
     .hidden{display:none}
 
     /* Tabs */
-    .tabs{display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap}
-    .tab-btn{flex:0 0 auto; width:auto; padding:10px 20px; border-radius:999px; background:var(--muted); border:1px solid var(--border); color:var(--text); font-weight:700; cursor:pointer}
-    .tab-btn.active{background:linear-gradient(180deg, #0ea5e9, #22d3ee); color:#001018; border-color:transparent}
+    .tabs{display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap}
+    .tab-btn{flex:0 0 auto; width:auto; padding:10px 20px; border-radius:8px; background:#fff; border:1px solid var(--border); color:var(--text); font-weight:600; cursor:pointer; font-size:14px; transition:all .15s}
+    .tab-btn:hover{background:#f8fafc; border-color:#cbd5e1}
+    .tab-btn.active{background:var(--brand-primary); color:#fff; border-color:var(--brand-primary)}
     .tab-content{display:none}
     .tab-content.active{display:block}
 
     /* Catalog specific styles */
     .catalog-grid{display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:16px; margin-top:16px}
-    .catalog-card{background:var(--muted); border:1px solid var(--border); border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:10px}
-    .catalog-card img{width:100%; height:160px; object-fit:cover; border-radius:8px; background:#374151}
+    .catalog-card{background:#fff; border:1px solid var(--border); border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:10px; transition:box-shadow .15s}
+    .catalog-card:hover{box-shadow:0 4px 12px rgba(0,0,0,0.08)}
+    .catalog-card img{width:100%; height:180px; object-fit:cover; border-radius:8px; background:#f8fafc}
     .catalog-card .item-name{font-weight:700; font-size:15px; color:var(--text)}
-    .catalog-card .item-sku{font-size:12px; color:var(--sub)}
-    .catalog-card .item-price{font-size:14px; font-weight:700; color:var(--accent)}
-    .catalog-card .item-category{font-size:11px; color:var(--warn); text-transform:uppercase; letter-spacing:0.5px}
-    .catalog-card .item-desc{font-size:12px; color:var(--sub); line-height:1.4}
-    .catalog-card .item-meta{font-size:11px; color:var(--sub)}
+    .catalog-card .item-sku{font-size:12px; color:var(--subtext)}
+    .catalog-card .item-price{font-size:14px; font-weight:700; color:var(--brand-primary)}
+    .catalog-card .item-category{font-size:11px; color:var(--brand-accent); text-transform:uppercase; letter-spacing:0.5px; font-weight:700}
+    .catalog-card .item-desc{font-size:13px; color:var(--subtext); line-height:1.4}
+    .catalog-card .item-meta{font-size:12px; color:var(--subtext)}
     .catalog-card .card-actions{display:flex; gap:8px; margin-top:auto}
-    .catalog-card .card-actions button{flex:1; padding:8px 12px; font-size:12px}
+    .catalog-card .card-actions .btn{flex:1; padding:8px 12px; font-size:13px}
 
-    .form-group{margin-bottom:12px}
-    .form-group label{margin-bottom:6px}
-    .form-row{display:grid; grid-template-columns: 1fr 1fr; gap:12px}
+    .form-group{margin-bottom:16px}
+    .form-row{display:grid; grid-template-columns: 1fr 1fr; gap:16px}
     @media(max-width:600px){.form-row{grid-template-columns:1fr}}
 
-    .tag-input-wrap{display:flex; flex-wrap:wrap; gap:6px; padding:8px; border:1px solid var(--border); border-radius:10px; background:var(--muted); min-height:44px}
-    .tag{display:inline-flex; align-items:center; gap:4px; padding:4px 8px; background:rgba(34,211,238,0.2); border:1px solid var(--accent); border-radius:6px; font-size:12px; color:var(--accent)}
-    .tag .remove-tag{cursor:pointer; font-weight:700; margin-left:4px}
+    .tag-input-wrap{display:flex; flex-wrap:wrap; gap:6px; padding:10px; border:1px solid #d1d5db; border-radius:8px; background:#fff; min-height:44px}
+    .tag{display:inline-flex; align-items:center; gap:4px; padding:4px 10px; background:rgba(82,213,255,0.15); border:1px solid var(--brand-accent-2); border-radius:6px; font-size:12px; color:var(--brand-primary); font-weight:600}
+    .tag .remove-tag{cursor:pointer; font-weight:700; margin-left:4px; color:var(--subtext)}
+    .tag .remove-tag:hover{color:var(--danger)}
     .tag-input{flex:1; min-width:80px; border:none; background:transparent; color:var(--text); font-size:13px; padding:4px}
     .tag-input:focus{outline:none}
 
-    .image-preview{width:100%; max-width:200px; height:120px; object-fit:cover; border-radius:8px; background:#374151; margin-top:8px}
-    .image-preview.empty{display:flex; align-items:center; justify-content:center; color:var(--sub); font-size:12px}
+    .image-preview{width:100%; max-width:200px; height:120px; object-fit:cover; border-radius:8px; background:#f8fafc; margin-top:8px; border:1px solid var(--border)}
 
-    .search-input{margin-bottom:16px}
-    .filter-row{display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items:center}
+    .filter-row{display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap; align-items:center}
     .filter-row select{width:auto; min-width:150px}
     .filter-row .search-box{flex:1; min-width:200px}
 
-    .badge{display:inline-block; padding:4px 10px; border-radius:999px; font-size:11px; background:rgba(34,211,238,0.15); color:var(--accent); border:1px solid var(--accent); font-weight:700; margin-left:8px}
+    .badge{display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; background:#fff7e6; color:#8a5800; border:1px solid #fde68a; font-weight:600; font-family: Roboto, Arial, sans-serif}
 
-    .empty-state{text-align:center; padding:40px 20px; color:var(--sub)}
-    .empty-state svg{width:64px; height:64px; margin-bottom:16px; opacity:0.5}
+    .empty-state{text-align:center; padding:40px 20px; color:var(--subtext)}
 
     /* Modal */
-    .modal-overlay{position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); display:none; align-items:center; justify-content:center; z-index:100; padding:20px}
+    .modal-overlay{position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:100; padding:20px}
     .modal-overlay.show{display:flex}
-    .modal{background:var(--panel); border:1px solid var(--border); border-radius:14px; max-width:600px; width:100%; max-height:90vh; overflow:auto}
-    .modal-header{padding:16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between}
-    .modal-header h3{margin:0; font-size:16px; color:var(--text)}
-    .modal-close{background:none; border:none; color:var(--sub); font-size:24px; cursor:pointer; padding:0; width:auto}
+    .modal{background:#fff; border:1px solid var(--border); border-radius:14px; max-width:600px; width:100%; max-height:90vh; overflow:auto; box-shadow:0 20px 40px rgba(0,0,0,0.15)}
+    .modal-header{padding:20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between}
+    .modal-header h3{margin:0; font-size:16px; color:var(--text); font-weight:700}
+    .modal-close{background:none; border:none; color:var(--subtext); font-size:24px; cursor:pointer; padding:0; width:auto; line-height:1}
     .modal-close:hover{color:var(--text)}
-    .modal-body{padding:16px}
-    .modal-footer{padding:16px; border-top:1px solid var(--border); display:flex; gap:10px; justify-content:flex-end}
-    .modal-footer button{width:auto; padding:10px 20px}
+    .modal-body{padding:20px}
+    .modal-footer{padding:20px; border-top:1px solid var(--border); display:flex; gap:12px; justify-content:flex-end}
+    .modal-footer .btn{width:auto; padding:10px 20px}
+
+    @media(max-width:768px){
+      .row > *{min-width:100%}
+      .tabs{gap:6px}
+      .tab-btn{padding:8px 14px; font-size:13px}
+    }
   </style>
 </head>
 <body>
   <header id="appHeader" class="hidden">
-    <div class="title">Admin • Management Console</div>
-    <div class="pill mini">Only admins can access</div>
-    <div style="margin-left:auto; display:flex; gap:8px">
-      <button id="toCalendarBtn" class="secondary">Back to Calendar</button>
-      <button id="logoutBtn" class="secondary">Logout</button>
+    <div class="brand">
+      <img src="logo-main.svg" class="logo-img" alt="Capstone" />
+      <div class="title">Marketing Hub</div>
     </div>
+    <span class="admin-badge">Admin Console</span>
+    <div class="header-controls">
+      <button id="toCalendarBtn" class="header-btn">Back to Calendar</button>
+      <button id="logoutBtn" class="header-btn">Sign Out</button>
+    </div>
+    <span class="company-name">Capstone Management Partners</span>
   </header>
+
+  <nav class="nav-bar">
+    <div class="nav-wrap">
+      <a href="mmp_calendar_app.html" class="nav-tab">Marketing Calendar</a>
+      <a href="marketing_plans.html" class="nav-tab">Marketing Plans</a>
+      <a href="marketing_contacts.html" class="nav-tab">Marketing Contacts</a>
+      <a href="promo_order_tracker.html" class="nav-tab">Promo Order Tracker</a>
+      <a href="renewal_campaign.html" class="nav-tab">Renewal Campaign</a>
+      <a href="velocity_tracker.html" class="nav-tab">Velocity Tracker</a>
+      <a href="uniform_shop.html" class="nav-tab">Uniform Shop</a>
+      <a href="creative_library.html" class="nav-tab">Creative Library</a>
+    </div>
+  </nav>
 
   <main id="appContainer" class="container hidden">
     <!-- Tabs Navigation -->
     <div class="tabs">
-      <button class="tab-btn active" data-tab="users">👥 User Management</button>
-      <button class="tab-btn" data-tab="catalog">🛒 Uniform Catalog</button>
-      <button class="tab-btn" onclick="location.href='cmpfont.html'">🔤 CMP Font</button>
+      <button class="tab-btn active" data-tab="users">User Management</button>
+      <button class="tab-btn" data-tab="catalog">Uniform Catalog</button>
+      <button class="tab-btn" onclick="location.href='cmpfont.html'">Brand Font Generator</button>
     </div>
 
     <!-- User Management Tab -->
@@ -129,42 +184,47 @@
           <div class="row">
             <div>
               <label for="newUsername">Username</label>
-              <input id="newUsername" type="text" />
+              <input id="newUsername" type="text" placeholder="Enter username" />
             </div>
             <div>
-              <label for="newPassword">Temp Password</label>
-              <input id="newPassword" type="password" />
-              <div class="mini" style="margin-top:6px;display:flex;align-items:center;gap:6px">
-                <label style="display:flex;align-items:center;gap:6px;user-select:none"><input id="toggleNewPw" type="checkbox" /> Show password</label>
+              <label for="newPassword">Temporary Password</label>
+              <input id="newPassword" type="password" placeholder="Enter password" />
+              <div class="hint">
+                <label style="display:flex;align-items:center;gap:6px;user-select:none;margin:0">
+                  <input id="toggleNewPw" type="checkbox" style="width:auto" /> Show password
+                </label>
               </div>
             </div>
             <div>
               <label for="newRole">Role</label>
-              <select id="newRole"><option value="user">User</option><option value="admin">Admin</option></select>
+              <select id="newRole">
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
             </div>
           </div>
-          <div class="row">
+          <div class="row" style="margin-top:16px">
             <div>
               <label>Assign Properties</label>
-              <div id="newPropsWrap" class="grid" style="padding:8px; max-height:300px; overflow:auto"></div>
-              <div class="mini" style="margin-top:6px; display:flex; gap:8px">
-                <button id="selectAllPropsBtn" class="secondary" style="flex:0 0 auto; padding:6px 8px">Select All</button>
-                <button id="clearAllPropsBtn" class="secondary" style="flex:0 0 auto; padding:6px 8px">Clear All</button>
+              <div id="newPropsWrap" class="grid" style="padding:12px; max-height:280px; overflow:auto"></div>
+              <div style="margin-top:10px; display:flex; gap:8px">
+                <button id="selectAllPropsBtn" class="btn sm" style="flex:0 0 auto">Select All</button>
+                <button id="clearAllPropsBtn" class="btn sm" style="flex:0 0 auto">Clear All</button>
               </div>
             </div>
-            <div style="align-self:flex-end">
-              <button id="createUserBtn" class="good">Create User</button>
-            </div>
           </div>
-          <div class="row">
+          <div class="row" style="margin-top:16px">
             <div>
               <label for="userEmail">User Email Address</label>
               <input id="userEmail" type="email" placeholder="user@example.com" />
-              <div class="mini" style="margin-top:6px">
-                <label style="display:flex;align-items:center;gap:6px;user-select:none">
-                  <input id="sendEmailCheck" type="checkbox" checked /> Open email client with credentials after creating user
+              <div class="hint">
+                <label style="display:flex;align-items:center;gap:6px;user-select:none;margin:0">
+                  <input id="sendEmailCheck" type="checkbox" checked style="width:auto" /> Open email client with credentials after creating user
                 </label>
               </div>
+            </div>
+            <div style="align-self:flex-end">
+              <button id="createUserBtn" class="btn success">Create User</button>
             </div>
           </div>
         </div>
@@ -177,7 +237,7 @@
         </div>
       </section>
 
-      <div class="mini">Changes are saved to the server (MongoDB Atlas) via API.</div>
+      <p class="hint">Changes are saved to the server (MongoDB Atlas) via API.</p>
     </div>
 
     <!-- Uniform Catalog Tab -->
@@ -225,7 +285,7 @@
           <div class="form-group">
             <label for="itemImage">Image URL</label>
             <input id="itemImage" type="url" placeholder="https://example.com/image.jpg" />
-            <img id="imagePreview" class="image-preview empty" alt="Preview" />
+            <img id="imagePreview" class="image-preview" alt="Preview" style="display:none" />
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -233,8 +293,8 @@
               <div id="sizesWrap" class="tag-input-wrap">
                 <input type="text" class="tag-input" id="sizeInput" placeholder="Add size..." />
               </div>
-              <div class="mini" style="margin-top:6px">
-                <button id="addCommonSizesBtn" class="secondary" style="padding:6px 10px; width:auto">+ Add Common Sizes (S-2XL)</button>
+              <div style="margin-top:8px">
+                <button id="addCommonSizesBtn" class="btn sm" style="width:auto">Add Common Sizes (S-2XL)</button>
               </div>
             </div>
             <div class="form-group">
@@ -242,14 +302,14 @@
               <div id="colorsWrap" class="tag-input-wrap">
                 <input type="text" class="tag-input" id="colorInput" placeholder="Add color..." />
               </div>
-              <div class="mini" style="margin-top:6px">
-                <button id="addCommonColorsBtn" class="secondary" style="padding:6px 10px; width:auto">+ Add Common Colors</button>
+              <div style="margin-top:8px">
+                <button id="addCommonColorsBtn" class="btn sm" style="width:auto">Add Common Colors</button>
               </div>
             </div>
           </div>
-          <div style="display:flex; gap:10px; margin-top:16px">
-            <button id="addItemBtn" class="good" style="flex:1">Add Item to Catalog</button>
-            <button id="clearFormBtn" class="secondary" style="flex:0 0 auto; width:auto; padding:10px 20px">Clear Form</button>
+          <div style="display:flex; gap:12px; margin-top:20px">
+            <button id="addItemBtn" class="btn success" style="flex:1">Add Item to Catalog</button>
+            <button id="clearFormBtn" class="btn" style="flex:0 0 auto; width:auto">Clear Form</button>
           </div>
         </div>
       </section>
@@ -283,19 +343,19 @@
         <div class="content">
           <div class="row">
             <div>
-              <button id="exportCatalogBtn" class="secondary">📥 Export Catalog (JSON)</button>
+              <button id="exportCatalogBtn" class="btn">Export Catalog (JSON)</button>
             </div>
             <div>
               <label for="importFile" style="margin-bottom:0">
-                <button id="importCatalogBtn" class="secondary" onclick="document.getElementById('importFile').click()">📤 Import Catalog (JSON)</button>
+                <button id="importCatalogBtn" class="btn" onclick="document.getElementById('importFile').click()">Import Catalog (JSON)</button>
               </label>
               <input type="file" id="importFile" accept=".json" style="display:none" />
             </div>
             <div>
-              <button id="resetCatalogBtn" class="danger">🗑️ Reset to Default</button>
+              <button id="resetCatalogBtn" class="btn danger">Reset to Default</button>
             </div>
           </div>
-          <div class="mini" style="margin-top:10px">Catalog data is stored on the server (MongoDB Atlas) and synced with the Uniform Shop page.</div>
+          <p class="hint" style="margin-top:12px">Catalog data is stored on the server (MongoDB Atlas) and synced with the Uniform Shop page.</p>
         </div>
       </section>
     </div>
@@ -350,7 +410,7 @@
         <div class="form-group">
           <label for="editItemImage">Image URL</label>
           <input id="editItemImage" type="url" />
-          <img id="editImagePreview" class="image-preview empty" alt="Preview" />
+          <img id="editImagePreview" class="image-preview" alt="Preview" style="display:none" />
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -368,8 +428,8 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button id="cancelEditBtn" class="secondary">Cancel</button>
-        <button id="saveEditBtn" class="good">Save Changes</button>
+        <button id="cancelEditBtn" class="btn">Cancel</button>
+        <button id="saveEditBtn" class="btn success">Save Changes</button>
       </div>
     </div>
   </div>
@@ -556,7 +616,8 @@
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         btn.classList.add('active');
         const tabId = btn.getAttribute('data-tab') + 'Tab';
-        document.getElementById(tabId).classList.add('active');
+        const tabEl = document.getElementById(tabId);
+        if (tabEl) tabEl.classList.add('active');
       });
     });
 
@@ -635,11 +696,8 @@
       if (filtered.length === 0) {
         els.catalogGrid.innerHTML = `
           <div class="empty-state" style="grid-column: 1/-1">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-            </svg>
             <p>No items found</p>
-            <p class="mini">Try adjusting your search or filter</p>
+            <p style="font-size:12px; margin-top:4px">Try adjusting your search or filter</p>
           </div>
         `;
         return;
@@ -647,7 +705,7 @@
 
       els.catalogGrid.innerHTML = filtered.map(item => `
         <div class="catalog-card" data-item-id="${item.id}">
-          <img src="${esc(item.image || '')}" alt="${esc(item.name)}" onerror="this.src='https://via.placeholder.com/300x200/374151/9ca3af?text=No+Image'">
+          <img src="${esc(item.image || '')}" alt="${esc(item.name)}" onerror="this.src='https://via.placeholder.com/300x200/f8fafc/6b7280?text=No+Image'">
           <div class="item-category">${esc(item.category || 'Uncategorized')}</div>
           <div class="item-name">${esc(item.name)}</div>
           <div class="item-sku">SKU: ${esc(item.sku)}</div>
@@ -658,8 +716,8 @@
             Colors: ${(item.colors || []).join(', ') || 'N/A'}
           </div>
           <div class="card-actions">
-            <button class="secondary edit-item-btn" data-id="${item.id}">✏️ Edit</button>
-            <button class="danger delete-item-btn" data-id="${item.id}">🗑️ Delete</button>
+            <button class="btn edit-item-btn" data-id="${item.id}">Edit</button>
+            <button class="btn danger delete-item-btn" data-id="${item.id}">Delete</button>
           </div>
         </div>
       `).join('');
@@ -715,7 +773,7 @@
       els.itemDescription.value = '';
       els.itemImage.value = '';
       els.imagePreview.src = '';
-      els.imagePreview.classList.add('empty');
+      els.imagePreview.style.display = 'none';
       newItemSizes = [];
       newItemColors = [];
       renderTags(els.sizesWrap, newItemSizes, els.sizeInput);
@@ -748,7 +806,7 @@
         price,
         category,
         description,
-        image: image || 'https://via.placeholder.com/300x200/374151/9ca3af?text=No+Image',
+        image: image || 'https://via.placeholder.com/300x200/f8fafc/6b7280?text=No+Image',
         sizes: [...newItemSizes],
         colors: [...newItemColors]
       };
@@ -794,10 +852,10 @@
       
       if (item.image) {
         els.editImagePreview.src = item.image;
-        els.editImagePreview.classList.remove('empty');
+        els.editImagePreview.style.display = 'block';
       } else {
         els.editImagePreview.src = '';
-        els.editImagePreview.classList.add('empty');
+        els.editImagePreview.style.display = 'none';
       }
 
       editItemSizes = [...(item.sizes || [])];
@@ -843,7 +901,7 @@
         price,
         category,
         description,
-        image: image || 'https://via.placeholder.com/300x200/374151/9ca3af?text=No+Image',
+        image: image || 'https://via.placeholder.com/300x200/f8fafc/6b7280?text=No+Image',
         sizes: [...editItemSizes],
         colors: [...editItemColors]
       };
@@ -938,10 +996,10 @@
         const url = els.itemImage.value.trim();
         if (url) {
           els.imagePreview.src = url;
-          els.imagePreview.classList.remove('empty');
+          els.imagePreview.style.display = 'block';
         } else {
           els.imagePreview.src = '';
-          els.imagePreview.classList.add('empty');
+          els.imagePreview.style.display = 'none';
         }
       });
 
@@ -949,10 +1007,10 @@
         const url = els.editItemImage.value.trim();
         if (url) {
           els.editImagePreview.src = url;
-          els.editImagePreview.classList.remove('empty');
+          els.editImagePreview.style.display = 'block';
         } else {
           els.editImagePreview.src = '';
-          els.editImagePreview.classList.add('empty');
+          els.editImagePreview.style.display = 'none';
         }
       });
 
@@ -1029,9 +1087,9 @@
     }
 
     function renderUsers(){
-      if (!usersList.length){ els.usersTable.innerHTML = '<div class="mini" style="padding:10px">No users found.</div>'; return; }
+      if (!usersList.length){ els.usersTable.innerHTML = '<div style="padding:20px; text-align:center; color:#6b7280">No users found.</div>'; return; }
       let html = '<table><thead><tr>'+
-        '<th>User</th><th>Role</th><th>Properties</th><th style="width:220px"></th></tr></thead><tbody>';
+        '<th>User</th><th>Role</th><th>Properties</th><th style="width:180px">Actions</th></tr></thead><tbody>';
       for (const u of usersList){
         const roleSel = `<select class="uRole" data-u="${u.username}"><option value="user" ${u.role==='user'?'selected':''}>User</option><option value="admin" ${u.role==='admin'?'selected':''}>Admin</option></select>`;
         const items = properties.map(p=>{
@@ -1041,16 +1099,16 @@
           const sel = assigned ? 'prop-item selected' : 'prop-item';
           return `<div class="${sel}" data-u="${u.username}" data-prop="${safe}">${p}</div>`;
         }).join('');
-        const propSel = `<div class="prop-list" data-u="${u.username}" style="max-height:180px; overflow:auto">${items}</div>`;
+        const propSel = `<div class="prop-list" data-u="${u.username}" style="max-height:160px; overflow:auto">${items}</div>`;
         html += `<tr>`+
-          `<td>${u.username}</td>`+
+          `<td><strong>${u.username}</strong></td>`+
           `<td>${roleSel}</td>`+
           `<td>${propSel}</td>`+
           `<td>`+
-            `<div style="display:flex; flex-direction:column; gap:6px; align-items:flex-start">`+
-              `<button class="uSave secondary" data-u="${u.username}">Save</button>`+
-              `<button class="uResetPw secondary" data-u="${u.username}">Reset PW</button>`+
-              `<button class="uDelete danger" data-u="${u.username}">Delete</button>`+
+            `<div style="display:flex; flex-direction:column; gap:6px">`+
+              `<button class="btn sm uSave" data-u="${u.username}">Save</button>`+
+              `<button class="btn sm uResetPw" data-u="${u.username}">Reset Password</button>`+
+              `<button class="btn sm danger uDelete" data-u="${u.username}">Delete</button>`+
             `</div>`+
           `</td>`+
         `</tr>`;
@@ -1125,22 +1183,17 @@
 
     async function ensureSpecificProperty(propertyName){
       try{
-        // Check if property already exists in the fetched list
         const res = await apiFetch('/properties');
         const list = await res.json();
         const exists = list.some(p => p.name === propertyName);
         
         if (!exists) {
-          // Add the property if it doesn't exist
           await apiFetch('/properties', { method:'POST', body: JSON.stringify({ name: propertyName }) });
-          
-          // Refresh the properties list
           const newRes = await apiFetch('/properties');
           const newList = await newRes.json();
           properties = applyPropertyGrouping(((newList||[]).map(x => x.name).filter(Boolean)));
         }
       }catch(e){ 
-        // Silently ignore if property already exists or other errors
         console.log('Property check/add:', e.message);
       }
     }
@@ -1166,12 +1219,10 @@
         try{
           await apiFetch('/auth-users', { method:'POST', body: JSON.stringify({ username, password, role, properties: props }) });
           
-          // Check if email should be sent
           if (els.sendEmailCheck.checked && email) {
             openEmailClient(username, password, email);
           }
           
-          // Clear form
           els.newUsername.value=''; 
           els.newPassword.value=''; 
           els.newRole.value='user';
@@ -1190,11 +1241,9 @@
       els.logoutBtn.addEventListener('click', async ()=>{ try{ await fetch('/api/auth-logout', { method:'POST' }); }catch(e){} location.href = 'index.html'; });
     }
 
-    // Email function using mailto
     function openEmailClient(username, password, recipientEmail) {
       const subject = encodeURIComponent('Welcome to CMP Marketing Hub - Your Login Credentials');
       
-      // Create a professional plain-text email body
       const body = encodeURIComponent(
 `Dear ${username},
 
@@ -1211,41 +1260,18 @@ Temporary Password: ${password}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-⚠️ IMPORTANT SECURITY NOTICE:
-For security reasons, please change your password upon first login. Keep your credentials confidential and do not share them with anyone.
+IMPORTANT: For security reasons, please change your password upon first login.
 
 ACCESS THE PLATFORM:
 https://cmpmarketinghub.com
 
-GETTING STARTED:
-1. Log in using the credentials provided above
-2. Navigate to your profile settings to update your password
-3. Explore the dashboard to view your assigned properties
-4. Access marketing tools and campaign management features
-
-NEED HELP?
-• User Guide: https://cmpmarketinghub.com/help
-• Video Tutorials: https://cmpmarketinghub.com/tutorials
-• FAQs: https://cmpmarketinghub.com/faq
-• Support Center: https://cmpmarketinghub.com/support
-
-If you need assistance, please contact our support team at support@cmpmarketinghub.com
-
 Best regards,
-The CMP Marketing Hub Team
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-© 2024 CMP Marketing Hub. All rights reserved.
-This email contains confidential information intended only for the recipient.`
+The CMP Marketing Hub Team`
       );
       
-      // Create the mailto link
       const mailtoLink = `mailto:${recipientEmail}?subject=${subject}&body=${body}`;
-      
-      // Open the default email client
       window.location.href = mailtoLink;
       
-      // Show confirmation that email client was opened
       setTimeout(() => {
         alert('Email client opened. Please review and send the welcome email with credentials.');
       }, 500);
@@ -1254,7 +1280,6 @@ This email contains confidential information intended only for the recipient.`
     // ==================== INITIALIZATION ====================
 
     async function init(){
-      // Enforce server session and admin role
       try{
         const meRes = await fetch('/api/me');
         if (!meRes.ok){ location.href = 'index.html'; return; }
@@ -1264,12 +1289,10 @@ This email contains confidential information intended only for the recipient.`
 
       show(els.appHeader); show(els.appContainer);
       
-      // Initialize catalog
       loadCatalog();
       renderCatalog();
       initCatalogHandlers();
       
-      // Initialize user management
       await fetchProperties();
       await fetchUsers();
       renderUsers();
