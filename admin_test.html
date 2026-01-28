@@ -344,8 +344,10 @@
       els.userList.innerHTML = filtered.map(u => {
         const propsCount = u.properties === '*' ? 'All' : (u.properties?.length || 0);
         const isActive = selectedUserId === u.username && !isNewUser;
+        // Use data attribute with escaped username
+        const safeUsername = u.username.replace(/"/g, '&quot;');
         return `
-          <div class="user-item ${isActive ? 'active' : ''}" data-username="${u.username}">
+          <div class="user-item ${isActive ? 'active' : ''}" data-username="${safeUsername}">
             <div class="user-avatar ${u.role === 'admin' ? 'admin' : ''}">${getInitials(u.username)}</div>
             <div class="user-info">
               <div class="user-name">${u.username}</div>
@@ -355,21 +357,20 @@
           </div>
         `;
       }).join('');
-
-      // Add click handlers using event delegation on the list container
-      attachUserListHandlers();
     }
 
-    function attachUserListHandlers(){
-      els.userList.querySelectorAll('.user-item').forEach(item => {
-        item.onclick = function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          const username = this.dataset.username;
+    // Use event delegation - attach once to the container
+    function setupUserListClickHandler(){
+      els.userList.addEventListener('click', function(e) {
+        // Find the closest user-item element
+        const userItem = e.target.closest('.user-item');
+        if (userItem) {
+          const username = userItem.getAttribute('data-username');
+          console.log('Clicked user:', username); // Debug log
           if (username) {
             selectUser(username);
           }
-        };
+        }
       });
     }
 
@@ -670,6 +671,9 @@ The CMP Marketing Hub Team`
         if (me.role !== 'admin'){ location.href = 'index.html'; return; }
       } catch(e){ location.href = 'index.html'; return; }
 
+      // Setup event delegation for user list clicks ONCE
+      setupUserListClickHandler();
+      
       await fetchProperties();
       await fetchUsers();
     }
