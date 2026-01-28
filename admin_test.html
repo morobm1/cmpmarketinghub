@@ -1,0 +1,652 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Test • Marketing Hub</title>
+  <link rel="preconnect" href="https://use.typekit.net" crossorigin>
+  <link rel="preconnect" href="https://p.typekit.net" crossorigin>
+  <link rel="stylesheet" href="https://use.typekit.net/hqv8hwr.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root{ --brand-primary:#446472; --brand-accent:#ffb732; --brand-accent-2:#52d5ff; --page-bg:#f8fafc; --text:#1e293b; --subtext:#64748b; --border:#e2e8f0; --success:#22c55e; --danger:#ef4444; }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{font-family:'Open Sans',system-ui,-apple-system,sans-serif; background:var(--page-bg); color:var(--text);font-size:14px;line-height:1.5}
+    
+    header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:10px}
+    .brand .logo-img{height:28px;width:auto}
+    .brand .title{color:#ffb732;font-family:zooja-pro,Arial,sans-serif;font-size:clamp(32px,4vw,48px);line-height:1}
+    .header-controls{display:flex;align-items:center;gap:12px;margin-left:auto}
+    .header-btn{background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;transition:all .15s}
+    .header-btn:hover{background:#f8fafc;border-color:#cbd5e1}
+    .test-badge{background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:600}
+
+    .container{padding:24px; max-width:1400px; margin:0 auto}
+
+    /* Two Column Layout */
+    .layout{display:grid; grid-template-columns:320px 1fr; gap:24px; align-items:start}
+    @media(max-width:900px){.layout{grid-template-columns:1fr}}
+
+    /* Sidebar */
+    .sidebar{position:sticky; top:90px}
+    .user-list-card{background:#fff; border:1px solid var(--border); border-radius:14px; overflow:hidden}
+    .user-list-header{padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between}
+    .user-list-header h2{font-size:15px; font-weight:700; color:var(--text); margin:0}
+    .user-count{font-size:12px; color:var(--subtext); background:#f1f5f9; padding:4px 10px; border-radius:999px}
+    
+    .user-search{padding:12px 16px; border-bottom:1px solid var(--border)}
+    .user-search input{width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:8px; font-size:13px}
+    .user-search input:focus{outline:none; border-color:var(--brand-accent-2); box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
+
+    .user-list{max-height:calc(100vh - 300px); overflow-y:auto}
+    .user-item{padding:14px 20px; border-bottom:1px solid var(--border); cursor:pointer; transition:background .15s; display:flex; align-items:center; gap:12px}
+    .user-item:last-child{border-bottom:none}
+    .user-item:hover{background:#f8fafc}
+    .user-item.active{background:#eff6ff; border-left:3px solid var(--brand-accent-2)}
+    .user-item.new-user{background:#f0fdf4; border-left:3px solid var(--success)}
+    .user-avatar{width:40px; height:40px; border-radius:50%; background:var(--brand-primary); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0}
+    .user-avatar.admin{background:var(--brand-accent)}
+    .user-info{flex:1; min-width:0}
+    .user-name{font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+    .user-role{font-size:12px; color:var(--subtext)}
+    .user-props-count{font-size:11px; color:var(--subtext); background:#f1f5f9; padding:2px 8px; border-radius:999px}
+
+    .add-user-btn{width:100%; padding:14px 20px; background:#fff; border:none; border-top:1px solid var(--border); color:var(--brand-primary); font-weight:600; font-size:14px; cursor:pointer; transition:background .15s; display:flex; align-items:center; justify-content:center; gap:8px}
+    .add-user-btn:hover{background:#f0f9ff}
+
+    /* Main Content */
+    .main-content{min-height:500px}
+    .detail-card{background:#fff; border:1px solid var(--border); border-radius:14px; overflow:hidden}
+    .detail-header{padding:20px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between}
+    .detail-header h2{font-size:18px; font-weight:700; color:var(--text); margin:0; display:flex; align-items:center; gap:12px}
+    .detail-header .role-badge{font-size:12px; padding:4px 12px; border-radius:999px; font-weight:600}
+    .detail-header .role-badge.admin{background:#fff7e6; color:#8a5800; border:1px solid #fde68a}
+    .detail-header .role-badge.user{background:#f0f9ff; color:#0369a1; border:1px solid #bae6fd}
+    .detail-actions{display:flex; gap:8px}
+
+    .detail-body{padding:24px}
+    
+    .form-section{margin-bottom:28px}
+    .form-section:last-child{margin-bottom:0}
+    .form-section-title{font-size:13px; font-weight:700; color:var(--subtext); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:16px; padding-bottom:8px; border-bottom:1px solid var(--border)}
+    
+    .form-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+    @media(max-width:600px){.form-grid{grid-template-columns:1fr}}
+    
+    .form-group{margin-bottom:0}
+    .form-group label{display:block; font-size:12px; font-weight:600; color:var(--subtext); margin-bottom:6px}
+    .form-group input, .form-group select{width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:8px; font-size:14px; color:var(--text); background:#fff}
+    .form-group input:focus, .form-group select:focus{outline:none; border-color:var(--brand-accent-2); box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
+    .form-group .hint{font-size:12px; color:var(--subtext); margin-top:6px}
+
+    /* Properties Grid */
+    .props-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:10px}
+    .prop-checkbox{display:flex; align-items:center; gap:10px; padding:10px 14px; border:1px solid var(--border); border-radius:8px; cursor:pointer; transition:all .15s; background:#fff}
+    .prop-checkbox:hover{background:#f8fafc; border-color:#cbd5e1}
+    .prop-checkbox.selected{background:#eff6ff; border-color:var(--brand-accent-2)}
+    .prop-checkbox input{width:18px; height:18px; accent-color:var(--brand-accent-2)}
+    .prop-checkbox span{font-size:13px; color:var(--text)}
+    
+    .props-actions{display:flex; gap:8px; margin-top:12px}
+    .props-actions button{padding:8px 14px; font-size:12px; font-weight:600; border:1px solid var(--border); border-radius:6px; background:#fff; color:var(--text); cursor:pointer}
+    .props-actions button:hover{background:#f8fafc}
+
+    /* Buttons */
+    .btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 18px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--text); font-weight:600; cursor:pointer; font-size:14px; transition:all .15s}
+    .btn:hover{background:#f8fafc}
+    .btn.primary{background:var(--brand-accent-2); border-color:var(--brand-accent-2); color:#0b1b24}
+    .btn.primary:hover{background:#3ecbf5}
+    .btn.success{background:var(--success); border-color:var(--success); color:#fff}
+    .btn.success:hover{background:#16a34a}
+    .btn.danger{background:var(--danger); border-color:var(--danger); color:#fff}
+    .btn.danger:hover{background:#dc2626}
+    .btn.sm{padding:8px 14px; font-size:13px}
+    .btn:disabled{opacity:0.5; cursor:not-allowed}
+
+    /* Empty State */
+    .empty-state{text-align:center; padding:60px 40px; color:var(--subtext)}
+    .empty-state h3{font-size:18px; color:var(--text); margin-bottom:8px}
+    .empty-state p{font-size:14px; margin-bottom:20px}
+
+    /* Footer Actions */
+    .detail-footer{padding:20px 24px; border-top:1px solid var(--border); background:#f8fafc; display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap}
+    .detail-footer .left{display:flex; gap:8px}
+    .detail-footer .right{display:flex; gap:8px}
+
+    /* Email Section */
+    .email-section{background:#f8fafc; border-radius:10px; padding:16px; margin-top:16px}
+    .email-section label{display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text); cursor:pointer}
+    .email-section input[type="checkbox"]{width:18px; height:18px; accent-color:var(--brand-accent-2)}
+    .email-input{margin-top:12px}
+
+    .hidden{display:none}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <img src="logo-main.svg" class="logo-img" alt="Capstone" />
+      <div class="title">Marketing Hub</div>
+    </div>
+    <span class="test-badge">Test Page - User Management Redesign</span>
+    <div class="header-controls">
+      <button class="header-btn" onclick="location.href='mmp_admin.html'">Back to Admin</button>
+      <button class="header-btn" id="logoutBtn">Sign Out</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="layout">
+      <!-- Sidebar: User List -->
+      <aside class="sidebar">
+        <div class="user-list-card">
+          <div class="user-list-header">
+            <h2>Users</h2>
+            <span class="user-count" id="userCount">0</span>
+          </div>
+          <div class="user-search">
+            <input type="text" id="userSearch" placeholder="Search users...">
+          </div>
+          <div class="user-list" id="userList">
+            <!-- Users populated here -->
+          </div>
+          <button class="add-user-btn" id="addUserBtn">
+            <span style="font-size:18px">+</span> Add New User
+          </button>
+        </div>
+      </aside>
+
+      <!-- Main: User Detail/Edit -->
+      <section class="main-content">
+        <div class="detail-card" id="detailCard">
+          <!-- Empty State -->
+          <div id="emptyState" class="empty-state">
+            <h3>Select a User</h3>
+            <p>Choose a user from the list to view and edit their details, or create a new user.</p>
+            <button class="btn primary" id="emptyAddBtn">Add New User</button>
+          </div>
+
+          <!-- User Detail View -->
+          <div id="userDetail" class="hidden">
+            <div class="detail-header">
+              <h2>
+                <span id="detailUsername">Username</span>
+                <span class="role-badge user" id="detailRoleBadge">User</span>
+              </h2>
+            </div>
+            
+            <div class="detail-body">
+              <div class="form-section">
+                <div class="form-section-title">Account Information</div>
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="editUsername" placeholder="Enter username">
+                  </div>
+                  <div class="form-group">
+                    <label>Role</label>
+                    <select id="editRole">
+                      <option value="user">User</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div class="form-grid" style="margin-top:16px">
+                  <div class="form-group">
+                    <label id="passwordLabel">New Password</label>
+                    <input type="password" id="editPassword" placeholder="Enter new password">
+                    <p class="hint" id="passwordHint">Leave blank to keep current password</p>
+                  </div>
+                  <div class="form-group" style="align-self:flex-end">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                      <input type="checkbox" id="showPassword" style="width:auto"> Show password
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-section">
+                <div class="form-section-title">Property Access</div>
+                <div class="props-grid" id="propsGrid">
+                  <!-- Properties populated here -->
+                </div>
+                <div class="props-actions">
+                  <button id="selectAllProps">Select All</button>
+                  <button id="clearAllProps">Clear All</button>
+                </div>
+              </div>
+
+              <!-- Email Section (only for new users) -->
+              <div class="form-section" id="emailSection">
+                <div class="form-section-title">Welcome Email</div>
+                <div class="email-section">
+                  <label>
+                    <input type="checkbox" id="sendEmail" checked>
+                    Send welcome email with login credentials
+                  </label>
+                  <div class="email-input">
+                    <div class="form-group" style="margin-bottom:0">
+                      <label>Email Address</label>
+                      <input type="email" id="userEmail" placeholder="user@example.com">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="detail-footer">
+              <div class="left">
+                <button class="btn danger" id="deleteUserBtn">Delete User</button>
+              </div>
+              <div class="right">
+                <button class="btn" id="cancelBtn">Cancel</button>
+                <button class="btn success" id="saveUserBtn">Save Changes</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const API_BASE = '/api';
+    
+    let users = [];
+    let properties = [];
+    let selectedUserId = null;
+    let isNewUser = false;
+
+    const els = {
+      userCount: document.getElementById('userCount'),
+      userSearch: document.getElementById('userSearch'),
+      userList: document.getElementById('userList'),
+      addUserBtn: document.getElementById('addUserBtn'),
+      emptyState: document.getElementById('emptyState'),
+      emptyAddBtn: document.getElementById('emptyAddBtn'),
+      userDetail: document.getElementById('userDetail'),
+      detailUsername: document.getElementById('detailUsername'),
+      detailRoleBadge: document.getElementById('detailRoleBadge'),
+      editUsername: document.getElementById('editUsername'),
+      editRole: document.getElementById('editRole'),
+      editPassword: document.getElementById('editPassword'),
+      passwordLabel: document.getElementById('passwordLabel'),
+      passwordHint: document.getElementById('passwordHint'),
+      showPassword: document.getElementById('showPassword'),
+      propsGrid: document.getElementById('propsGrid'),
+      selectAllProps: document.getElementById('selectAllProps'),
+      clearAllProps: document.getElementById('clearAllProps'),
+      emailSection: document.getElementById('emailSection'),
+      sendEmail: document.getElementById('sendEmail'),
+      userEmail: document.getElementById('userEmail'),
+      deleteUserBtn: document.getElementById('deleteUserBtn'),
+      cancelBtn: document.getElementById('cancelBtn'),
+      saveUserBtn: document.getElementById('saveUserBtn'),
+      logoutBtn: document.getElementById('logoutBtn')
+    };
+
+    // Property grouping
+    const OLD_TO_GROUP = {
+      'Cerca Apartments': 'Cerca/Prisma/Zuma',
+      'Prisma Apartments': 'Cerca/Prisma/Zuma',
+      'Zuma Apartments': 'Cerca/Prisma/Zuma',
+      'Stateside Apartments': 'Stateside/Monte',
+      'Monte Apartments': 'Stateside/Monte',
+      'Chorro SLO': 'Chorro/Palomar',
+      'Palomar SLO': 'Chorro/Palomar',
+    };
+    const GROUPED_NAMES = ['Cerca/Prisma/Zuma','Stateside/Monte','Chorro/Palomar'];
+    function mapPropertyNameToGroup(name){ return OLD_TO_GROUP[name] || name; }
+    function applyPropertyGrouping(rawList){
+      const set = new Set();
+      for (const n of (rawList||[])){
+        const g = mapPropertyNameToGroup(n);
+        if (g) set.add(g);
+      }
+      GROUPED_NAMES.forEach(n => set.add(n));
+      return Array.from(set).sort();
+    }
+
+    async function apiFetch(path, opts={}){
+      const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers||{});
+      const res = await fetch(API_BASE + path, Object.assign({}, opts, { headers }));
+      if (!res.ok){ const text = await res.text(); throw new Error(text || ('HTTP '+res.status)); }
+      return res;
+    }
+
+    function getInitials(name){
+      return name.substring(0, 2).toUpperCase();
+    }
+
+    function renderUserList(filter = ''){
+      const filtered = users.filter(u => 
+        u.username.toLowerCase().includes(filter.toLowerCase())
+      );
+      
+      els.userCount.textContent = users.length;
+
+      if (filtered.length === 0){
+        els.userList.innerHTML = '<div style="padding:20px;text-align:center;color:#6b7280">No users found</div>';
+        return;
+      }
+
+      els.userList.innerHTML = filtered.map(u => {
+        const propsCount = u.properties === '*' ? 'All' : (u.properties?.length || 0);
+        const isActive = selectedUserId === u.username && !isNewUser;
+        return `
+          <div class="user-item ${isActive ? 'active' : ''}" data-username="${u.username}">
+            <div class="user-avatar ${u.role === 'admin' ? 'admin' : ''}">${getInitials(u.username)}</div>
+            <div class="user-info">
+              <div class="user-name">${u.username}</div>
+              <div class="user-role">${u.role === 'admin' ? 'Administrator' : 'User'}</div>
+            </div>
+            <span class="user-props-count">${propsCount} props</span>
+          </div>
+        `;
+      }).join('');
+
+      // Add click handlers
+      els.userList.querySelectorAll('.user-item').forEach(item => {
+        item.addEventListener('click', () => selectUser(item.dataset.username));
+      });
+    }
+
+    function renderProperties(selectedProps = []){
+      const selectedSet = new Set(selectedProps.map(mapPropertyNameToGroup));
+      
+      els.propsGrid.innerHTML = properties.map(p => {
+        const isSelected = selectedSet.has(p);
+        return `
+          <label class="prop-checkbox ${isSelected ? 'selected' : ''}" data-prop="${p}">
+            <input type="checkbox" ${isSelected ? 'checked' : ''}>
+            <span>${p}</span>
+          </label>
+        `;
+      }).join('');
+
+      // Add change handlers
+      els.propsGrid.querySelectorAll('.prop-checkbox').forEach(cb => {
+        cb.addEventListener('change', (e) => {
+          cb.classList.toggle('selected', e.target.checked);
+        });
+      });
+    }
+
+    function selectUser(username){
+      const user = users.find(u => u.username === username);
+      if (!user) return;
+
+      selectedUserId = username;
+      isNewUser = false;
+
+      // Update UI
+      els.emptyState.classList.add('hidden');
+      els.userDetail.classList.remove('hidden');
+      
+      // Update header
+      els.detailUsername.textContent = user.username;
+      els.detailRoleBadge.textContent = user.role === 'admin' ? 'Admin' : 'User';
+      els.detailRoleBadge.className = `role-badge ${user.role}`;
+
+      // Fill form
+      els.editUsername.value = user.username;
+      els.editUsername.disabled = true; // Can't change username
+      els.editRole.value = user.role;
+      els.editPassword.value = '';
+      els.passwordLabel.textContent = 'New Password';
+      els.passwordHint.classList.remove('hidden');
+
+      // Properties
+      const userProps = user.properties === '*' ? properties : (user.properties || []);
+      renderProperties(userProps);
+
+      // Hide email section for existing users
+      els.emailSection.classList.add('hidden');
+      els.deleteUserBtn.classList.remove('hidden');
+      els.saveUserBtn.textContent = 'Save Changes';
+
+      // Update list selection
+      renderUserList(els.userSearch.value);
+    }
+
+    function showNewUserForm(){
+      selectedUserId = null;
+      isNewUser = true;
+
+      // Update UI
+      els.emptyState.classList.add('hidden');
+      els.userDetail.classList.remove('hidden');
+      
+      // Update header
+      els.detailUsername.textContent = 'New User';
+      els.detailRoleBadge.textContent = 'User';
+      els.detailRoleBadge.className = 'role-badge user';
+
+      // Clear form
+      els.editUsername.value = '';
+      els.editUsername.disabled = false;
+      els.editRole.value = 'user';
+      els.editPassword.value = '';
+      els.passwordLabel.textContent = 'Password';
+      els.passwordHint.classList.add('hidden');
+
+      // Clear properties
+      renderProperties([]);
+
+      // Show email section for new users
+      els.emailSection.classList.remove('hidden');
+      els.userEmail.value = '';
+      els.sendEmail.checked = true;
+      
+      els.deleteUserBtn.classList.add('hidden');
+      els.saveUserBtn.textContent = 'Create User';
+
+      // Update list - show new user indicator
+      renderUserList(els.userSearch.value);
+    }
+
+    function cancelEdit(){
+      if (isNewUser){
+        els.emptyState.classList.remove('hidden');
+        els.userDetail.classList.add('hidden');
+        isNewUser = false;
+        selectedUserId = null;
+      } else if (selectedUserId){
+        selectUser(selectedUserId);
+      }
+      renderUserList(els.userSearch.value);
+    }
+
+    async function saveUser(){
+      const username = els.editUsername.value.trim();
+      const role = els.editRole.value;
+      const password = els.editPassword.value;
+      
+      // Get selected properties
+      const selectedProps = Array.from(els.propsGrid.querySelectorAll('.prop-checkbox input:checked'))
+        .map(cb => cb.closest('.prop-checkbox').dataset.prop);
+
+      if (!username){
+        alert('Username is required');
+        return;
+      }
+
+      if (isNewUser && !password){
+        alert('Password is required for new users');
+        return;
+      }
+
+      try {
+        els.saveUserBtn.disabled = true;
+        els.saveUserBtn.textContent = isNewUser ? 'Creating...' : 'Saving...';
+
+        if (isNewUser){
+          // Create new user
+          await apiFetch('/auth-users', { 
+            method: 'POST', 
+            body: JSON.stringify({ username, password, role, properties: selectedProps }) 
+          });
+
+          // Send email if checked
+          if (els.sendEmail.checked && els.userEmail.value.trim()){
+            openEmailClient(username, password, els.userEmail.value.trim());
+          }
+
+          alert('User created successfully');
+        } else {
+          // Update existing user
+          const updates = { role, properties: selectedProps };
+          if (password) updates.password = password;
+          
+          await apiFetch('/auth-users', { 
+            method: 'PUT', 
+            body: JSON.stringify({ username: selectedUserId, updates }) 
+          });
+
+          alert('User updated successfully');
+        }
+
+        // Refresh users
+        await fetchUsers();
+        
+        if (isNewUser){
+          selectUser(username);
+        } else {
+          selectUser(selectedUserId);
+        }
+
+      } catch(e){
+        alert('Failed to save: ' + e.message);
+      } finally {
+        els.saveUserBtn.disabled = false;
+        els.saveUserBtn.textContent = isNewUser ? 'Create User' : 'Save Changes';
+      }
+    }
+
+    async function deleteUser(){
+      if (!selectedUserId) return;
+      if (!confirm(`Delete user "${selectedUserId}"? This cannot be undone.`)) return;
+
+      try {
+        await apiFetch('/auth-users', { 
+          method: 'DELETE', 
+          body: JSON.stringify({ username: selectedUserId }) 
+        });
+
+        await fetchUsers();
+        
+        els.emptyState.classList.remove('hidden');
+        els.userDetail.classList.add('hidden');
+        selectedUserId = null;
+        isNewUser = false;
+        
+        renderUserList();
+      } catch(e){
+        alert('Failed to delete: ' + e.message);
+      }
+    }
+
+    function openEmailClient(username, password, email){
+      const subject = encodeURIComponent('Welcome to CMP Marketing Hub - Your Login Credentials');
+      const body = encodeURIComponent(
+`Dear ${username},
+
+Welcome to CMP Marketing Hub!
+
+Your account has been created. Here are your login credentials:
+
+Username: ${username}
+Password: ${password}
+
+Please change your password after your first login.
+
+Access the platform at: https://cmpmarketinghub.com
+
+Best regards,
+The CMP Marketing Hub Team`
+      );
+      
+      window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
+    }
+
+    async function fetchUsers(){
+      try {
+        const res = await apiFetch('/auth-users');
+        users = await res.json();
+        renderUserList();
+      } catch(e){
+        console.error('Failed to load users:', e);
+        users = [];
+        renderUserList();
+      }
+    }
+
+    async function fetchProperties(){
+      try {
+        const res = await apiFetch('/properties');
+        const list = await res.json();
+        properties = applyPropertyGrouping(list.map(x => x.name).filter(Boolean));
+      } catch(e){
+        console.error('Failed to load properties:', e);
+        properties = [];
+      }
+    }
+
+    // Event Listeners
+    els.userSearch.addEventListener('input', () => renderUserList(els.userSearch.value));
+    els.addUserBtn.addEventListener('click', showNewUserForm);
+    els.emptyAddBtn.addEventListener('click', showNewUserForm);
+    els.cancelBtn.addEventListener('click', cancelEdit);
+    els.saveUserBtn.addEventListener('click', saveUser);
+    els.deleteUserBtn.addEventListener('click', deleteUser);
+    
+    els.showPassword.addEventListener('change', () => {
+      els.editPassword.type = els.showPassword.checked ? 'text' : 'password';
+    });
+
+    els.selectAllProps.addEventListener('click', () => {
+      els.propsGrid.querySelectorAll('.prop-checkbox').forEach(cb => {
+        cb.classList.add('selected');
+        cb.querySelector('input').checked = true;
+      });
+    });
+
+    els.clearAllProps.addEventListener('click', () => {
+      els.propsGrid.querySelectorAll('.prop-checkbox').forEach(cb => {
+        cb.classList.remove('selected');
+        cb.querySelector('input').checked = false;
+      });
+    });
+
+    els.editRole.addEventListener('change', () => {
+      els.detailRoleBadge.textContent = els.editRole.value === 'admin' ? 'Admin' : 'User';
+      els.detailRoleBadge.className = `role-badge ${els.editRole.value}`;
+    });
+
+    els.logoutBtn.addEventListener('click', async () => {
+      try { await fetch('/api/auth-logout', { method: 'POST' }); } catch(e){}
+      location.href = 'index.html';
+    });
+
+    // Initialize
+    async function init(){
+      try {
+        const meRes = await fetch('/api/me');
+        if (!meRes.ok){ location.href = 'index.html'; return; }
+        const me = await meRes.json();
+        if (me.role !== 'admin'){ location.href = 'index.html'; return; }
+      } catch(e){ location.href = 'index.html'; return; }
+
+      await fetchProperties();
+      await fetchUsers();
+    }
+
+    init();
+  </script>
+</body>
+</html>
