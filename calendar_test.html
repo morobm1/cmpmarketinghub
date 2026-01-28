@@ -134,8 +134,16 @@
     .panel-close:hover{background:#f1f5f9;color:var(--text)}
     
     .panel-body{flex:1;overflow-y:auto;padding:24px}
-    .panel-section{margin-bottom:24px}
+    .panel-section{margin-bottom:16px;border:1px solid var(--border);border-radius:12px;overflow:hidden}
     .panel-section:last-child{margin-bottom:0}
+    .section-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:#f8fafc;cursor:pointer;user-select:none;transition:background .15s}
+    .section-header:hover{background:#f1f5f9}
+    .section-header .section-title{font-size:12px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;gap:8px}
+    .section-header .section-toggle{width:24px;height:24px;display:flex;align-items:center;justify-content:center;color:var(--subtext);transition:transform .2s}
+    .section-header .section-toggle svg{width:16px;height:16px}
+    .panel-section.collapsed .section-header .section-toggle{transform:rotate(-90deg)}
+    .section-content{padding:16px;display:block}
+    .panel-section.collapsed .section-content{display:none}
     .section-label{font-size:11px;font-weight:700;color:var(--subtext);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
     
     .form-group{margin-bottom:16px}
@@ -195,6 +203,22 @@
     .target-edit-row:last-child{border-bottom:none}
     .target-edit-row .form-group{margin-bottom:0}
     .add-target-btn{margin-top:16px}
+
+    /* Wizard Modal */
+    .wizard-progress{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border)}
+    .wizard-step-indicator{display:flex;align-items:center;gap:8px}
+    .wizard-step-dot{width:32px;height:32px;border-radius:50%;background:#e2e8f0;color:var(--subtext);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;transition:all .2s}
+    .wizard-step-dot.active{background:var(--brand-accent-2);color:#0b1b24}
+    .wizard-step-dot.complete{background:var(--success);color:#fff}
+    .wizard-step-line{width:40px;height:3px;background:#e2e8f0;border-radius:2px}
+    .wizard-step-line.complete{background:var(--success)}
+    .wizard-step{display:none}
+    .wizard-step.active{display:block}
+    .wizard-question{font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px;text-align:center}
+    .wizard-hint{font-size:13px;color:var(--subtext);margin-bottom:20px;text-align:center}
+    .wizard-footer{display:flex;gap:12px;justify-content:space-between;padding-top:20px;border-top:1px solid var(--border);margin-top:24px}
+    .wizard-footer .left{display:flex;gap:8px}
+    .wizard-footer .right{display:flex;gap:8px}
 
     /* Toast */
     .toast{position:fixed;bottom:24px;right:24px;padding:16px 24px;background:#1e293b;color:#fff;border-radius:12px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,0.2);transform:translateY(100px);opacity:0;transition:all .3s;z-index:300}
@@ -353,122 +377,147 @@
         <button class="panel-close" id="closePanel">×</button>
       </div>
       <div class="panel-body">
-        <!-- Basic Info -->
-        <div class="panel-section">
-          <div class="section-label">Basic Info</div>
-          <div class="form-group">
-            <label>Event Title *</label>
-            <input type="text" id="eventTitle" placeholder="e.g., Spring Social BBQ">
+        <!-- Basic Info - Always Open -->
+        <div class="panel-section" data-section="basic">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="section-title">📋 Basic Info</span>
+            <span class="section-toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
           </div>
-          <div class="form-row">
+          <div class="section-content">
             <div class="form-group">
-              <label>Start Date *</label>
-              <input type="date" id="eventStart">
+              <label>Event Title *</label>
+              <input type="text" id="eventTitle" placeholder="e.g., Spring Social BBQ">
             </div>
-            <div class="form-group">
-              <label>End Date</label>
-              <input type="date" id="eventEnd">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Start Date *</label>
+                <input type="date" id="eventStart">
+              </div>
+              <div class="form-group">
+                <label>End Date</label>
+                <input type="date" id="eventEnd">
+              </div>
             </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Time</label>
-              <input type="time" id="eventTime">
-            </div>
-            <div class="form-group">
-              <label>Campaign Type</label>
-              <select id="eventCampaign">
-                <option value="">Select type...</option>
-                <option value="Resident event">Resident Event</option>
-                <option value="on-campus event">On-Campus Event</option>
-                <option value="off-campus event">Off-Campus Event</option>
-                <option value="Social Media Story">Social Story</option>
-                <option value="Social Media Post">Social Post</option>
-                <option value="Review/Reputation">Review Campaign</option>
-                <option value="Giveaway">Giveaway</option>
-                <option value="outreach marketing">Outreach</option>
-                <option value="cross-marketing partnership/scholarship">Partnership</option>
-                <option value="Key Market Event">Key Market Event</option>
-              </select>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Time</label>
+                <input type="time" id="eventTime">
+              </div>
+              <div class="form-group">
+                <label>Campaign Type</label>
+                <select id="eventCampaign">
+                  <option value="">Select type...</option>
+                  <option value="Resident event">Resident Event</option>
+                  <option value="on-campus event">On-Campus Event</option>
+                  <option value="off-campus event">Off-Campus Event</option>
+                  <option value="Social Media Story">Social Story</option>
+                  <option value="Social Media Post">Social Post</option>
+                  <option value="Review/Reputation">Review Campaign</option>
+                  <option value="Giveaway">Giveaway</option>
+                  <option value="outreach marketing">Outreach</option>
+                  <option value="cross-marketing partnership/scholarship">Partnership</option>
+                  <option value="Key Market Event">Key Market Event</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Budget -->
-        <div class="panel-section">
-          <div class="section-label">Budget</div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Planned Budget</label>
-              <input type="number" id="eventBudget" placeholder="0.00" step="0.01">
-            </div>
-            <div class="form-group">
-              <label>Actual Spend</label>
-              <input type="number" id="eventSpend" placeholder="0.00" step="0.01">
+        <div class="panel-section collapsed" data-section="budget">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="section-title">💰 Budget</span>
+            <span class="section-toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+          </div>
+          <div class="section-content">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Planned Budget</label>
+                <input type="number" id="eventBudget" placeholder="0.00" step="0.01">
+              </div>
+              <div class="form-group">
+                <label>Actual Spend</label>
+                <input type="number" id="eventSpend" placeholder="0.00" step="0.01">
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Details -->
-        <div class="panel-section">
-          <div class="section-label">Details</div>
-          <div class="form-group">
-            <label>Description</label>
-            <textarea id="eventNotes" placeholder="Event description, goals, notes..."></textarea>
+        <div class="panel-section collapsed" data-section="details">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="section-title">📝 Details & Goals</span>
+            <span class="section-toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
           </div>
-          <div class="form-row">
+          <div class="section-content">
             <div class="form-group">
-              <label>Target Audience</label>
-              <input type="text" id="eventAudience" placeholder="e.g., Current residents">
+              <label>Description</label>
+              <textarea id="eventNotes" placeholder="Event description, goals, notes..."></textarea>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Target Audience</label>
+                <input type="text" id="eventAudience" placeholder="e.g., Current residents">
+              </div>
+              <div class="form-group">
+                <label>Goal</label>
+                <input type="text" id="eventGoal" placeholder="e.g., 20 attendees">
+              </div>
             </div>
             <div class="form-group">
-              <label>Goal</label>
-              <input type="text" id="eventGoal" placeholder="e.g., 20 attendees">
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Desired Action</label>
-            <select id="eventDesired">
-              <option value="">Select...</option>
-              <option>Social media followers</option>
-              <option>collect review</option>
-              <option>complete guest cards</option>
-              <option>schedule a tour</option>
-              <option>complete application</option>
-              <option>sign new leases</option>
-              <option>sign renewal lease</option>
-              <option>building relationship</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Checklist -->
-        <div class="panel-section">
-          <div class="section-label">Marketing Checklist</div>
-          <div class="form-row-3">
-            <div class="form-group">
-              <label>Social Posted</label>
-              <input type="date" id="eventSocialDate">
-            </div>
-            <div class="form-group">
-              <label>Flyer Posted</label>
-              <input type="date" id="eventFlyerDate">
-            </div>
-            <div class="form-group">
-              <label>Email Sent</label>
-              <input type="date" id="eventEmailDate">
+              <label>Desired Action</label>
+              <select id="eventDesired">
+                <option value="">Select...</option>
+                <option>Social media followers</option>
+                <option>collect review</option>
+                <option>complete guest cards</option>
+                <option>schedule a tour</option>
+                <option>complete application</option>
+                <option>sign new leases</option>
+                <option>sign renewal lease</option>
+                <option>building relationship</option>
+              </select>
             </div>
           </div>
         </div>
 
-        <!-- Flyer -->
-        <div class="panel-section">
-          <div class="section-label">Flyer</div>
-          <div class="form-group">
-            <label>Flyer URL</label>
-            <input type="url" id="eventFlyerUrl" placeholder="https://...">
+        <!-- Marketing Checklist -->
+        <div class="panel-section collapsed" data-section="checklist">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="section-title">✅ Marketing Checklist</span>
+            <span class="section-toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
           </div>
-          <div id="flyerPreview"></div>
+          <div class="section-content">
+            <div class="form-row-3">
+              <div class="form-group">
+                <label>Social Posted</label>
+                <input type="date" id="eventSocialDate">
+              </div>
+              <div class="form-group">
+                <label>Flyer Posted</label>
+                <input type="date" id="eventFlyerDate">
+              </div>
+              <div class="form-group">
+                <label>Email Sent</label>
+                <input type="date" id="eventEmailDate">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Creative Assets -->
+        <div class="panel-section collapsed" data-section="creative">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="section-title">🎨 Creative Assets</span>
+            <span class="section-toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+          </div>
+          <div class="section-content">
+            <div class="form-group">
+              <label>Flyer URL</label>
+              <input type="url" id="eventFlyerUrl" placeholder="https://...">
+            </div>
+            <div id="flyerPreview"></div>
+          </div>
         </div>
       </div>
       <div class="panel-footer">
@@ -524,16 +573,31 @@
     </div>
   </div>
 
-  <!-- Quick Add Modal -->
+  <!-- Wizard Add Event Modal -->
   <div class="modal-overlay" id="quickAddModal">
-    <div class="modal" style="max-width:520px">
+    <div class="modal" style="max-width:560px">
       <div class="modal-header">
-        <h3>Add Event</h3>
+        <h3 id="wizardTitle">Plan Your Marketing Event</h3>
         <button class="modal-close" id="closeQuickAdd">×</button>
       </div>
       <div class="modal-body">
-        <div class="form-group">
-          <label>Event Type</label>
+        <!-- Progress Indicator -->
+        <div class="wizard-progress">
+          <div class="wizard-step-indicator">
+            <div class="wizard-step-dot active" data-step="1">1</div>
+            <div class="wizard-step-line" data-line="1"></div>
+            <div class="wizard-step-dot" data-step="2">2</div>
+            <div class="wizard-step-line" data-line="2"></div>
+            <div class="wizard-step-dot" data-step="3">3</div>
+            <div class="wizard-step-line" data-line="3"></div>
+            <div class="wizard-step-dot" data-step="4">4</div>
+          </div>
+        </div>
+
+        <!-- Step 1: What type of marketing activity? -->
+        <div class="wizard-step active" data-step="1">
+          <div class="wizard-question">What type of marketing activity are you planning?</div>
+          <div class="wizard-hint">Select the category that best describes your event</div>
           <div class="campaign-grid" id="campaignGrid">
             <div class="campaign-option" data-type="Resident event">
               <div class="campaign-icon" style="background:#dcfce7">
@@ -573,25 +637,88 @@
             </div>
           </div>
         </div>
-        <div class="form-group">
-          <label>Event Title *</label>
-          <input type="text" id="quickTitle" placeholder="e.g., Pizza Party">
-        </div>
-        <div class="form-row">
+
+        <!-- Step 2: Who is your target audience? -->
+        <div class="wizard-step" data-step="2">
+          <div class="wizard-question">Who is your target audience?</div>
+          <div class="wizard-hint">Think about who you want to reach with this activity</div>
           <div class="form-group">
-            <label>Date *</label>
-            <input type="date" id="quickDate">
+            <label>Target Audience</label>
+            <select id="wizardAudience">
+              <option value="">Select audience...</option>
+              <option value="Current residents">Current Residents</option>
+              <option value="Prospective students">Prospective Students</option>
+              <option value="Parents">Parents</option>
+              <option value="Local community">Local Community</option>
+              <option value="University staff">University Staff</option>
+              <option value="Social media followers">Social Media Followers</option>
+            </select>
           </div>
           <div class="form-group">
-            <label>Budget</label>
+            <label>What action do you want them to take?</label>
+            <select id="wizardDesired">
+              <option value="">Select desired action...</option>
+              <option value="Social media followers">Follow on social media</option>
+              <option value="collect review">Leave a review</option>
+              <option value="complete guest cards">Complete a guest card</option>
+              <option value="schedule a tour">Schedule a tour</option>
+              <option value="complete application">Complete an application</option>
+              <option value="sign new leases">Sign a new lease</option>
+              <option value="sign renewal lease">Sign a renewal lease</option>
+              <option value="building relationship">Build relationship</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Step 3: Event details -->
+        <div class="wizard-step" data-step="3">
+          <div class="wizard-question">What are the event details?</div>
+          <div class="wizard-hint">Give your event a name and set the date</div>
+          <div class="form-group">
+            <label>Event Title *</label>
+            <input type="text" id="quickTitle" placeholder="e.g., Pizza Party, Spring Social BBQ">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Date *</label>
+              <input type="date" id="quickDate">
+            </div>
+            <div class="form-group">
+              <label>Time (optional)</label>
+              <input type="time" id="wizardTime">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>What's your goal? (e.g., 20 attendees, 5 reviews)</label>
+            <input type="text" id="wizardGoal" placeholder="e.g., 20 attendees, 5 new reviews">
+          </div>
+        </div>
+
+        <!-- Step 4: Budget -->
+        <div class="wizard-step" data-step="4">
+          <div class="wizard-question">What's your budget for this activity?</div>
+          <div class="wizard-hint">Plan your spending to stay within your monthly budget</div>
+          <div class="form-group">
+            <label>Planned Budget ($)</label>
             <input type="number" id="quickBudget" placeholder="0.00" step="0.01">
           </div>
+          <div class="form-group">
+            <label>Any notes or additional details?</label>
+            <textarea id="wizardNotes" placeholder="Add any notes about supplies needed, vendors to contact, etc." style="min-height:80px"></textarea>
+          </div>
         </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn" id="cancelQuickAdd">Cancel</button>
-        <button class="btn primary" id="quickAddMore">Add & Create Another</button>
-        <button class="btn success" id="quickAddSave">Add Event</button>
+
+        <!-- Wizard Footer -->
+        <div class="wizard-footer">
+          <div class="left">
+            <button class="btn" id="wizardBack" style="display:none">← Back</button>
+          </div>
+          <div class="right">
+            <button class="btn" id="cancelQuickAdd">Cancel</button>
+            <button class="btn primary" id="wizardNext">Next →</button>
+            <button class="btn success" id="quickAddSave" style="display:none">Create Event</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -632,7 +759,7 @@
     let currentUser = null;
     let SESSION_ACTIVE = false;
 
-    // Default targets configuration (can be edited by admin)
+    //
     let marketingTargets = [
       { id: 'stories', name: 'Social Stories', goal: 3, period: 'weekly', matchPattern: 'story', color: '#52d5ff' },
       { id: 'posts', name: 'Grid Posts', goal: 1, period: 'weekly', matchPattern: 'social\\s*media\\s*post', color: '#a78bfa' },
@@ -1174,6 +1301,11 @@
       selectedEventId = null;
     }
 
+    function toggleSection(headerEl){
+      const section = headerEl.closest('.panel-section');
+      if (section) section.classList.toggle('collapsed');
+    }
+
     function clearEventForm(){
       document.getElementById('eventTitle').value = '';
       document.getElementById('eventStart').value = '';
@@ -1258,12 +1390,27 @@
     }
 
     // ==================== QUICK ADD ====================
+    let wizardStep = 1;
+    const WIZARD_TOTAL_STEPS = 4;
+
     function openQuickAdd(){
+      wizardStep = 1;
       selectedCampaignType = null;
       document.querySelectorAll('.campaign-option').forEach(el => el.classList.remove('selected'));
       document.getElementById('quickTitle').value = '';
       document.getElementById('quickDate').value = toISO(new Date());
       document.getElementById('quickBudget').value = '';
+      const wizardAudience = document.getElementById('wizardAudience');
+      const wizardDesired = document.getElementById('wizardDesired');
+      const wizardTime = document.getElementById('wizardTime');
+      const wizardGoal = document.getElementById('wizardGoal');
+      const wizardNotes = document.getElementById('wizardNotes');
+      if (wizardAudience) wizardAudience.value = '';
+      if (wizardDesired) wizardDesired.value = '';
+      if (wizardTime) wizardTime.value = '';
+      if (wizardGoal) wizardGoal.value = '';
+      if (wizardNotes) wizardNotes.value = '';
+      updateWizardUI();
       document.getElementById('quickAddModal').classList.add('open');
     }
 
@@ -1274,26 +1421,78 @@
 
     function closeQuickAdd(){
       document.getElementById('quickAddModal').classList.remove('open');
+      wizardStep = 1;
+    }
+
+    function updateWizardUI(){
+      document.querySelectorAll('.wizard-step-dot').forEach(dot => {
+        const step = parseInt(dot.dataset.step, 10);
+        dot.classList.remove('active', 'complete');
+        if (step === wizardStep) dot.classList.add('active');
+        else if (step < wizardStep) dot.classList.add('complete');
+      });
+      document.querySelectorAll('.wizard-step-line').forEach(line => {
+        const lineNum = parseInt(line.dataset.line, 10);
+        line.classList.toggle('complete', lineNum < wizardStep);
+      });
+      document.querySelectorAll('.wizard-step').forEach(step => {
+        const stepNum = parseInt(step.dataset.step, 10);
+        step.classList.toggle('active', stepNum === wizardStep);
+      });
+      const backBtn = document.getElementById('wizardBack');
+      const nextBtn = document.getElementById('wizardNext');
+      const saveBtn = document.getElementById('quickAddSave');
+      backBtn.style.display = wizardStep > 1 ? 'block' : 'none';
+      nextBtn.style.display = wizardStep < WIZARD_TOTAL_STEPS ? 'block' : 'none';
+      saveBtn.style.display = wizardStep === WIZARD_TOTAL_STEPS ? 'block' : 'none';
+    }
+
+    function wizardNext(){
+      if (wizardStep === 1 && !selectedCampaignType){
+        showToast('Please select an event type', 'error');
+        return;
+      }
+      if (wizardStep === 3){
+        const title = document.getElementById('quickTitle').value.trim();
+        const date = document.getElementById('quickDate').value;
+        if (!title){ showToast('Please enter an event title', 'error'); return; }
+        if (!date){ showToast('Please select a date', 'error'); return; }
+      }
+      if (wizardStep < WIZARD_TOTAL_STEPS){
+        wizardStep++;
+        updateWizardUI();
+      }
+    }
+
+    function wizardBack(){
+      if (wizardStep > 1){
+        wizardStep--;
+        updateWizardUI();
+      }
     }
 
     async function quickAddEvent(keepOpen = false){
       const title = document.getElementById('quickTitle').value.trim();
       const date = document.getElementById('quickDate').value;
-      
-      if (!title || !date){
-        showToast('Title and date are required', 'error');
-        return;
-      }
-
+      if (!title || !date){ showToast('Title and date are required', 'error'); return; }
+      const wizardAudience = document.getElementById('wizardAudience');
+      const wizardDesired = document.getElementById('wizardDesired');
+      const wizardTime = document.getElementById('wizardTime');
+      const wizardGoal = document.getElementById('wizardGoal');
+      const wizardNotes = document.getElementById('wizardNotes');
       const payload = {
         title,
         start: date,
         end: date,
+        time: wizardTime ? wizardTime.value : '',
         campaign: selectedCampaignType || '',
         budget: parseFloat(document.getElementById('quickBudget').value) || 0,
         spend: 0,
+        audience: wizardAudience ? wizardAudience.value : '',
+        desired: wizardDesired ? wizardDesired.value : '',
+        goal: wizardGoal ? wizardGoal.value : '',
+        notes: wizardNotes ? wizardNotes.value : '',
       };
-
       try {
         await apiFetch('/events', { method: 'POST', body: JSON.stringify({ property: currentProperty, ...payload }) });
         const res = await apiFetch(`/events?property=${encodeURIComponent(currentProperty)}`);
@@ -1301,11 +1500,19 @@
         refreshCalendar();
         updateStats();
         renderTargets();
-        showToast('Event added!');
-
+        showToast('Event created!');
         if (keepOpen){
+          wizardStep = 1;
+          selectedCampaignType = null;
+          document.querySelectorAll('.campaign-option').forEach(el => el.classList.remove('selected'));
           document.getElementById('quickTitle').value = '';
           document.getElementById('quickBudget').value = '';
+          if (wizardAudience) wizardAudience.value = '';
+          if (wizardDesired) wizardDesired.value = '';
+          if (wizardTime) wizardTime.value = '';
+          if (wizardGoal) wizardGoal.value = '';
+          if (wizardNotes) wizardNotes.value = '';
+          updateWizardUI();
         } else {
           closeQuickAdd();
         }
@@ -1443,7 +1650,6 @@
       document.getElementById('closeQuickAdd').addEventListener('click', closeQuickAdd);
       document.getElementById('cancelQuickAdd').addEventListener('click', closeQuickAdd);
       document.getElementById('quickAddSave').addEventListener('click', () => quickAddEvent(false));
-      document.getElementById('quickAddMore').addEventListener('click', () => quickAddEvent(true));
       document.getElementById('quickAddModal').addEventListener('click', (e) => { if (e.target.id === 'quickAddModal') closeQuickAdd(); });
       
       document.getElementById('campaignGrid').addEventListener('click', (e) => {
@@ -1453,6 +1659,10 @@
         option.classList.add('selected');
         selectedCampaignType = option.dataset.type;
       });
+      
+      // Wizard Navigation
+      document.getElementById('wizardNext').addEventListener('click', wizardNext);
+      document.getElementById('wizardBack').addEventListener('click', wizardBack);
       
       // Targets Modal (Admin)
       document.getElementById('editTargetsBtn').addEventListener('click', openTargetsModal);
