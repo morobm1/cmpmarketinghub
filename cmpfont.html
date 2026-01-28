@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Font Text to Image Generator</title>
+  <title>Font Generator • Marketing Hub</title>
   <link rel="preconnect" href="https://use.typekit.net" crossorigin>
   <link rel="preconnect" href="https://p.typekit.net" crossorigin>
   <link rel="stylesheet" href="https://use.typekit.net/hqv8hwr.css">
@@ -12,257 +12,58 @@
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <meta name="description" content="Generate transparent PNG images from custom text using the Zooja Pro font." />
   <style>
-    :root{
-      --brand-primary:#446472;
-      --brand-accent:#ffb732;
-      --brand-accent-2:#52d5ff;
-      --brand-gray:#929497;
-      --page-bg:#f8f9fa;
-
-      --bg:#ffffff;
-      --panel:#ffffff;
-      --muted:#ffffff;
-      --text:#1f2937;
-      --subtext:#6b7280;
-      --accent:var(--brand-accent-2);
-      --accent-2:var(--brand-accent);
-      --good:#10b981;
-      --warn:#f59e0b;
-      --bad:#ef4444;
-      --border:#e5e7eb;
-      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    }
-    *{box-sizing:border-box; margin:0; padding:0}
+    :root{ --brand-primary:#446472; --brand-accent:#ffb732; --brand-accent-2:#52d5ff; --brand-gray:#929497; --page-bg:#f8fafc; --bg:#ffffff; --panel:#ffffff; --text:#1e293b; --subtext:#64748b; --accent:var(--brand-accent-2); --border:#e2e8f0; --success:#22c55e; --warning:#f59e0b; --danger:#ef4444; }
+    *{box-sizing:border-box;margin:0;padding:0}
     html,body{height:100%}
-    body{ 
-      margin:0; 
-      font-family:'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; 
-      background:var(--page-bg); 
-      color:var(--text);
-      line-height:1.6;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-    header{ 
-      background:#ffffff; 
-      border-bottom:2px solid var(--border); 
-      box-shadow:var(--shadow-sm); 
-      padding:20px 24px; 
-      display:flex; 
-      align-items:center; 
-      gap:16px; 
-      flex-wrap:wrap;
-      position:sticky;
-      top:0;
-      z-index:40;
-    }
-    .brand{display:flex;align-items:center;gap:12px}
-    .brand .logo-img{height:36px;width:auto;display:block}
-    .brand .title{
-      color:#446472; 
-      font-family: zooja-pro, 'Open Sans', Arial, sans-serif; 
-      font-weight: 600; 
-      font-size: clamp(24px, 4vw, 32px); 
-      line-height: 1.2;
-      letter-spacing: -0.02em;
-    }
+    body{margin:0; font-family:'Open Sans',system-ui,-apple-system,sans-serif; background:var(--page-bg); color:var(--text);font-size:14px;line-height:1.5}
+    
+    /* Header */
+    header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:10px}
+    .brand .logo-img{height:28px;width:auto}
+    .brand .title{color:#ffb732;font-family:zooja-pro,Arial,sans-serif;font-size:clamp(32px,4vw,48px);line-height:1}
+    .header-controls{display:flex;align-items:center;gap:12px;margin-left:auto}
+    .header-btn{background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;transition:all .15s;width:auto}
+    .header-btn:hover{background:#f8fafc;border-color:#cbd5e1}
+    .company-name{font-size:12px;color:var(--subtext);font-weight:500}
 
-    .pill{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      border:1px solid var(--border); 
-      background:#ffffff; 
-      border-radius:12px; 
-      padding:8px 14px; 
-      font-size:13px; 
-      color:#374151;
-      box-shadow:var(--shadow-sm);
-    }
-    select,input,textarea,button{ 
-      width:100%; 
-      padding:10px 14px; 
-      border-radius:8px; 
-      border:1px solid #d1d5db; 
-      background:#ffffff; 
-      color:var(--text); 
-      font-size:14px;
-      font-family:inherit;
-      transition: all 0.2s ease;
-    }
-    select:focus, input:focus, textarea:focus {
-      outline:none;
-      border-color:var(--brand-accent-2);
-      box-shadow: 0 0 0 3px rgba(82, 213, 255, 0.1);
-    }
-    label{
-      font-size:13px; 
-      color:#374151; 
-      display:block; 
-      margin-bottom:6px;
-      font-weight:600;
-    }
-    button{ 
-      cursor:pointer; 
-      background:var(--brand-primary); 
-      color:#ffffff; 
-      border:1px solid var(--brand-primary); 
-      font-weight:600;
-      transition: all 0.2s ease;
-      box-shadow:var(--shadow-sm);
-    }
-    button:hover:not(:disabled) {
-      transform: translateY(-1px);
-      box-shadow:var(--shadow-md);
-      opacity:0.95;
-    }
-    button:active:not(:disabled) {
-      transform: translateY(0);
-    }
-    button:disabled {
-      opacity:0.5;
-      cursor:not-allowed;
-    }
-    button.secondary{ 
-      background:#ffffff; 
-      color:#374151; 
-      border:1px solid #d1d5db; 
-      font-weight:600;
-    }
-    button.secondary:hover:not(:disabled) {
-      background:#f9fafb;
-      border-color:#9ca3af;
-    }
-    button.warn{ 
-      background:var(--bad); 
-      color:#ffffff; 
-      border-color:var(--bad);
-    }
-    button.good{ 
-      background:var(--good); 
-      color:#ffffff; 
-      border-color:var(--good);
-    }
+    /* Navigation */
+    .nav-bar{background:#fff;border-bottom:1px solid var(--border)}
+    .nav-wrap{max-width:1400px;margin:0 auto;padding:0 24px;display:flex;gap:2px;overflow-x:auto}
+    .nav-tab{display:flex;align-items:center;gap:6px;padding:14px 16px;color:var(--subtext);text-decoration:none;font-size:13px;font-weight:600;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap}
+    .nav-tab:hover{color:var(--text);background:#f8fafc}
+    .nav-tab.active{color:var(--brand-primary);border-bottom-color:var(--brand-primary)}
 
-    /* Layout */
-    .layout{ 
-      display:grid; 
-      grid-template-columns: 240px 1fr; 
-      gap:24px; 
-      align-items:start; 
-      max-width:1400px; 
-      margin:0 auto; 
-      padding:24px;
-    }
-    @media(max-width: 900px){ 
-      .layout{ 
-        grid-template-columns: 1fr;
-        padding:16px;
-      }
-      .sidebar {
-        position:relative !important;
-        top:0 !important;
-      }
-    }
-    .sidebar{ 
-      background:#ffffff; 
-      border:1px solid var(--border); 
-      border-radius:12px; 
-      padding:16px; 
-      position:sticky; 
-      top:90px; 
-      align-self:start;
-      box-shadow:var(--shadow-sm);
-    }
-    .sidebar .nav-tab{ 
-      display:flex; 
-      align-items:center; 
-      gap:10px; 
-      padding:12px 14px; 
-      border:1px solid transparent; 
-      border-radius:8px; 
-      color:#6b7280; 
-      text-decoration:none; 
-      background:transparent; 
-      margin:4px 0;
-      transition: all 0.2s ease;
-      font-weight:500;
-      font-size:14px;
-    }
-    .sidebar .nav-tab:hover{ 
-      background:#f3f4f6;
-      color:#374151;
-    }
-    .sidebar .nav-tab.active{ 
-      background:var(--brand-accent-2); 
-      border-color:var(--brand-accent-2); 
-      color:#ffffff; 
-      font-weight:600;
-      box-shadow:var(--shadow-sm);
-    }
-    .content-pane{ min-width:0 }
+    .container{padding:24px; max-width:1200px; margin:0 auto; display:flex; flex-direction:column; gap:20px}
 
-    .card{ 
-      background:#ffffff; 
-      border:1px solid var(--border); 
-      border-radius:12px; 
-      overflow:hidden; 
-      box-shadow:var(--shadow-sm);
-      transition: box-shadow 0.2s ease;
-      margin-bottom:20px;
-    }
-    .card:hover {
-      box-shadow:var(--shadow-md);
-    }
-    .card h3{ 
-      margin:0; 
-      padding:16px 20px; 
-      font-size:16px; 
-      color:#111827; 
-      font-weight:700;
-      border-bottom:1px solid var(--border);
-      background:#f9fafb;
-    }
-    .card .content{ 
-      padding:20px;
-    }
+    /* Cards */
+    .card{background:#ffffff; border:1px solid var(--border); border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,0.06); overflow:hidden}
+    .card h3{margin:0; padding:16px 20px; font-size:15px; color:#374151; font-weight:700; font-family: Roboto, Arial, sans-serif; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--border); background:#f8fafc}
+    .card .content{padding:20px}
 
-    .row{ 
-      display:flex; 
-      gap:12px; 
-      align-items:center; 
-      flex-wrap:wrap;
-    }
-    .row > *{ flex:1; min-width:0 }
+    /* Form Elements */
+    label{font-size:12px; color:#6b7280; display:block; margin-bottom:6px; font-weight:600}
+    input, select, textarea{width:100%; padding:10px 12px; border-radius:8px; border:1px solid #d1d5db; background:#fff; color:var(--text); font-size:14px; transition:border-color .15s, box-shadow .15s}
+    input:focus, select:focus, textarea:focus{outline:none; border-color:var(--brand-accent-2); box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
 
-    .mini{ 
-      font-size:12px; 
-      color:#6b7280;
-      line-height:1.4;
-    }
-    .muted{ color:#6b7280 }
+    /* Buttons */
+    .btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 18px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--text); font-weight:600; cursor:pointer; font-size:14px; transition:all .15s; width:auto}
+    .btn:hover{background:#f8fafc}
+    .btn.primary{background:var(--brand-accent-2); border-color:var(--brand-accent-2); color:#0b1b24}
+    .btn.primary:hover{background:#3ecbf5}
+    .btn.success{background:var(--success); border-color:var(--success); color:#fff}
+    .btn.success:hover{background:#16a34a}
+    .btn.danger{background:var(--danger); border-color:var(--danger); color:#fff}
+    .btn.danger:hover{background:#dc2626}
+    .btn.sm{padding:6px 12px; font-size:13px}
+    .btn:disabled{opacity:0.5; cursor:not-allowed}
 
-    .badge{ 
-      display:inline-block; 
-      padding:4px 10px; 
-      border-radius:6px; 
-      font-size:12px; 
-      background:#f3f4f6; 
-      color:#374151; 
-      border:1px solid var(--border);
-      font-weight:600;
-    }
+    .row{display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap}
+    .row > *{flex:1; min-width:150px}
 
-    .footer{ 
-      padding:16px 24px; 
-      color:#6b7280; 
-      font-size:13px;
-      text-align:center;
-      border-top:1px solid var(--border);
-      background:#f9fafb;
-    }
+    .hint{font-size:12px; color:#6b7280; margin-top:6px}
+
+    .badge{display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; background:#fff7e6; color:#8a5800; border:1px solid #fde68a; font-weight:600; font-family: Roboto, Arial, sans-serif}
 
     /* Preview area */
     .preview-area {
@@ -283,31 +84,36 @@
     }
     canvas { display: none; }
 
-    /* Color swatches */
+    /* Color swatches grid */
+    .colors-grid {
+      display:grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap:12px;
+    }
     .color-swatch {
       display:flex;
       align-items:center;
-      gap:10px;
-      padding:10px 12px;
+      gap:12px;
+      padding:12px 14px;
       border:1px solid var(--border);
-      border-radius:8px;
+      border-radius:10px;
       background:#ffffff;
       cursor:pointer;
-      transition: all 0.2s ease;
+      transition: all 0.15s ease;
     }
     .color-swatch:hover {
       border-color:var(--brand-accent-2);
-      box-shadow:var(--shadow-sm);
+      box-shadow:0 2px 8px rgba(0,0,0,0.08);
     }
     .color-swatch.selected {
       border-color:var(--brand-accent-2);
       background:#f0f9ff;
-      box-shadow:0 0 0 3px rgba(82, 213, 255, 0.1);
+      box-shadow:0 0 0 3px rgba(82, 213, 255, 0.15);
     }
     .color-preview {
-      width:32px;
-      height:32px;
-      border-radius:6px;
+      width:40px;
+      height:40px;
+      border-radius:8px;
       border:1px solid rgba(0,0,0,0.1);
       flex-shrink:0;
     }
@@ -328,70 +134,33 @@
       font-size:12px;
       color:#6b7280;
     }
+    .color-meta {
+      font-size:11px;
+      color:#9ca3af;
+      margin-top:2px;
+    }
     .color-actions {
       display:flex;
       gap:6px;
       flex-shrink:0;
     }
-    .color-actions button {
-      padding:6px 10px;
-      font-size:12px;
-      width:auto;
-    }
 
-    /* Modal */
-    .modal-backdrop{
-      position:fixed;
-      inset:0;
-      background:rgba(0,0,0,.5);
-      backdrop-filter:blur(4px);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      z-index:50;
-      animation: fadeIn 0.2s ease;
+    /* Empty State */
+    .empty-state {
+      text-align:center;
+      padding:40px 20px;
+      color:var(--subtext);
     }
-    @keyframes fadeIn {
-      from { opacity:0; }
-      to { opacity:1; }
+    .empty-state svg {
+      width:48px;
+      height:48px;
+      margin-bottom:12px;
+      opacity:0.5;
     }
-    .modal{
-      background:#ffffff;
-      border:1px solid var(--border);
-      border-radius:16px;
-      max-width:480px;
-      width:96%;
-      padding:24px;
-      box-shadow:var(--shadow-lg);
-      max-height:90vh;
-      overflow:auto;
-      animation: slideUp 0.3s ease;
-    }
-    @keyframes slideUp {
-      from { 
-        opacity:0;
-        transform: translateY(20px);
-      }
-      to { 
-        opacity:1;
-        transform: translateY(0);
-      }
-    }
-    .modal h3{
-      margin:0 0 16px 0;
-      color:#111827;
-      font-size:20px;
-      font-weight:700;
-      padding-bottom:12px;
-      border-bottom:2px solid var(--border);
-    }
-    .modal .actions{
-      display:flex;
-      gap:12px;
-      justify-content:flex-end;
-      margin-top:20px;
-      padding-top:20px;
-      border-top:1px solid var(--border);
+    .empty-state h4 {
+      font-size:16px;
+      color:var(--text);
+      margin-bottom:8px;
     }
 
     /* Login View */
@@ -418,22 +187,22 @@
       to { transform: rotate(360deg); }
     }
 
-    /* Saved colors grid */
-    .colors-grid {
-      display:grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap:12px;
-    }
-    .empty-state {
-      text-align:center;
-      padding:40px 20px;
-      color:#6b7280;
-    }
-    .empty-state svg {
-      width:48px;
-      height:48px;
-      margin-bottom:12px;
-      opacity:0.5;
+    .hidden{display:none}
+
+    .form-row{display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:16px}
+
+    /* Tabs */
+    .tabs{display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap}
+    .tab-btn{flex:0 0 auto; width:auto; padding:10px 20px; border-radius:8px; background:#fff; border:1px solid var(--border); color:var(--text); font-weight:600; cursor:pointer; font-size:14px; transition:all .15s}
+    .tab-btn:hover{background:#f8fafc; border-color:#cbd5e1}
+    .tab-btn.active{background:var(--brand-primary); color:#fff; border-color:var(--brand-primary)}
+    .tab-content{display:none}
+    .tab-content.active{display:block}
+
+    @media(max-width:768px){
+      .row > *{min-width:100%}
+      .form-row{grid-template-columns:1fr}
+      .colors-grid{grid-template-columns:1fr}
     }
   </style>
 </head>
@@ -442,15 +211,15 @@
     <div style="display:flex;flex-direction:column;gap:12px;align-items:center">
       <div style="width:48px;height:48px;border:4px solid #e5e7eb;border-top-color:#446472;border-radius:50%;animation:spin 1s linear infinite"></div>
       <div style="font-weight:700;font-size:18px;color:#446472">Marketing Hub</div>
-      <div class="mini" style="color:#6b7280">Loading your workspace…</div>
+      <div style="font-size:12px;color:#6b7280">Loading your workspace…</div>
     </div>
   </div>
 
   <div id="loginView">
-    <div class="card" style="max-width:440px;width:100%;box-shadow:var(--shadow-lg)">
-      <h3 style="text-align:center;font-size:24px;margin-bottom:8px">Welcome Back</h3>
-      <div style="text-align:center;color:#6b7280;font-size:14px;margin-bottom:20px;padding:0 20px">Sign in to access the Font Generator</div>
+    <div class="card" style="max-width:440px;width:100%;box-shadow:0 10px 25px rgba(0,0,0,0.1)">
+      <h3 style="justify-content:center;font-size:18px">Welcome Back</h3>
       <div class="content">
+        <p style="text-align:center;color:#6b7280;font-size:14px;margin-bottom:20px">Sign in to access the Font Generator</p>
         <div style="margin-bottom:16px">
           <label for="loginUsername">Username</label>
           <input id="loginUsername" type="text" autocomplete="username" placeholder="Enter your username" />
@@ -465,40 +234,52 @@
             <span>Show password</span>
           </label>
         </div>
-        <button id="loginBtn" style="width:100%;padding:12px;font-size:15px;font-weight:700">Sign In</button>
+        <button id="loginBtn" class="btn success" style="width:100%;padding:12px;font-size:15px">Sign In</button>
         <div id="loginError" style="margin-top:12px;padding:10px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#dc2626;font-size:13px;display:none"></div>
       </div>
     </div>
   </div>
 
-  <header id="appHeader" style="display:none">
-    <div class="brand"><img src="logo-main.svg" class="logo-img" alt="Capstone" /><div class="title">Marketing Hub</div></div>
-    <div class="pill" style="display:flex;align-items:center;gap:8px">
-      <button id="logoutBtn" class="secondary" style="padding:6px 10px;width:auto">Logout</button>
-      <button id="adminPageBtn" class="secondary" style="padding:6px 10px;width:auto;display:none">Admin</button>
+  <header id="appHeader" class="hidden">
+    <div class="brand">
+      <img src="logo-main.svg" class="logo-img" alt="Capstone" />
+      <div class="title">Marketing Hub</div>
     </div>
-    <div class="mini">Capstone Management Partners • Font Generator</div>
+    <div class="header-controls">
+      <button id="logoutBtn" class="header-btn">Sign Out</button>
+      <button id="adminPageBtn" class="header-btn hidden">Admin</button>
+    </div>
+    <span class="company-name">Capstone Management Partners</span>
   </header>
 
-  <div class="layout">
-    <aside id="mainNav" class="sidebar">
-      <a href="mmp_calendar_app.html" class="nav-tab" data-tab="calendar">Marketing Calendar</a>
-      <a href="marketing_plans.html" class="nav-tab" data-tab="plans">Marketing Plans</a>
-      <a href="marketing_contacts.html" class="nav-tab" data-tab="contacts">Marketing Contacts</a>
-      <a href="promo_order_tracker.html" class="nav-tab" data-tab="promo">Promo Order Tracker</a>
-      <a href="renewal_campaign.html" class="nav-tab" data-tab="renewal">Renewal Campaign</a>
-      <a href="velocity_tracker.html" class="nav-tab" data-tab="velocity">Velocity Tracker</a>
-      <a href="uniform_shop.html" class="nav-tab" data-tab="uniform">Uniform Shop</a>
-      <a href="creative_library.html" class="nav-tab" data-tab="creative">Creative Library</a>
-      <a href="cmpfont.html" class="nav-tab active" data-tab="font">Font Generator</a>
-    </aside>
+  <nav class="nav-bar" id="navBar" style="display:none">
+    <div class="nav-wrap">
+      <a href="mmp_calendar_app.html" class="nav-tab">Marketing Calendar</a>
+      <a href="marketing_plans.html" class="nav-tab">Marketing Plans</a>
+      <a href="marketing_contacts.html" class="nav-tab">Marketing Contacts</a>
+      <a href="promo_order_tracker.html" class="nav-tab">Promo Order Tracker</a>
+      <a href="renewal_campaign.html" class="nav-tab">Renewal Campaign</a>
+      <a href="velocity_tracker.html" class="nav-tab">Velocity Tracker</a>
+      <a href="uniform_shop.html" class="nav-tab">Uniform Shop</a>
+      <a href="creative_library.html" class="nav-tab">Creative Library</a>
+      <a href="cmpfont.html" class="nav-tab active">Font Generator</a>
+    </div>
+  </nav>
 
-    <div class="content-pane" id="appContainer" style="display:none">
+  <main id="appContainer" class="container hidden">
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="generator">Text Generator</button>
+      <button class="tab-btn" data-tab="colors">Saved Colors</button>
+    </div>
+
+    <!-- Generator Tab -->
+    <div id="generatorTab" class="tab-content active">
       <!-- Text Input Card -->
       <div class="card">
-        <h3>Font Text to Transparent PNG</h3>
+        <h3>📝 Font Text to Transparent PNG</h3>
         <div class="content">
-          <p class="mini" style="margin-bottom:16px">Type your text, customize the style, then export as a transparent PNG for Canva or other design tools.</p>
+          <p class="hint" style="margin-bottom:16px">Type your text, customize the style, then export as a transparent PNG for Canva or other design tools.</p>
           <label for="textInput">Your Text</label>
           <input type="text" id="textInput" value="Hello World" placeholder="Type your text here..." autofocus style="font-size:1.1rem" />
         </div>
@@ -506,21 +287,21 @@
 
       <!-- Style Options Card -->
       <div class="card">
-        <h3>Style Options</h3>
+        <h3>🎨 Style Options</h3>
         <div class="content">
-          <div class="row" style="align-items:flex-end;margin-bottom:16px">
-            <div style="flex:0 0 120px">
+          <div class="form-row" style="margin-bottom:16px">
+            <div>
               <label for="fontSize">Font Size (px)</label>
               <input type="number" id="fontSize" value="120" min="12" max="500" step="1" />
             </div>
-            <div style="flex:0 0 200px">
+            <div>
               <label for="fontColor">Text Color</label>
               <div style="display:flex;gap:8px;align-items:center">
-                <input type="color" id="fontColorPicker" value="#000000" style="width:50px;height:40px;padding:2px;cursor:pointer" />
+                <input type="color" id="fontColorPicker" value="#000000" style="width:50px;height:40px;padding:2px;cursor:pointer;border-radius:8px" />
                 <input type="text" id="fontColor" value="#000000" maxlength="7" style="width:100px;font-family:monospace" placeholder="#000000" />
               </div>
             </div>
-            <div style="flex:0 0 140px">
+            <div>
               <label for="fontWeight">Weight</label>
               <select id="fontWeight">
                 <option value="400" selected>Normal (400)</option>
@@ -528,12 +309,12 @@
               </select>
             </div>
           </div>
-          <div class="row" style="align-items:flex-end">
-            <div style="flex:0 0 150px">
+          <div class="form-row">
+            <div>
               <label for="letterSpacing">Letter Spacing (px)</label>
               <input type="number" id="letterSpacing" value="0" min="-20" max="50" step="1" />
             </div>
-            <div style="flex:0 0 180px">
+            <div>
               <label for="scale">Export Scale</label>
               <select id="scale">
                 <option value="1">1x</option>
@@ -542,65 +323,71 @@
                 <option value="4">4x</option>
               </select>
             </div>
-            <div style="flex:1"></div>
+            <div></div>
           </div>
         </div>
       </div>
 
       <!-- Preview Card -->
       <div class="card">
-        <h3>Preview</h3>
+        <h3>👁️ Preview</h3>
         <div class="content">
           <div class="preview-area">
             <div id="previewText">Hello World</div>
           </div>
-          <p class="mini" style="margin-top:12px;color:#6b7280">The checkerboard pattern indicates transparency. Your exported image will have no background.</p>
+          <p class="hint" style="margin-top:12px">The checkerboard pattern indicates transparency. Your exported image will have no background.</p>
           <div style="display:flex;gap:12px;margin-top:16px">
-            <button id="downloadBtn" class="good" style="flex:0 0 auto;width:auto;padding:12px 24px">
-              Download PNG
+            <button id="downloadBtn" class="btn success">
+              ⬇️ Download PNG
             </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Colors Tab -->
+    <div id="colorsTab" class="tab-content">
+      <!-- Add New Color Card -->
+      <div class="card">
+        <h3>➕ Add New Color</h3>
+        <div class="content">
+          <p class="hint" style="margin-bottom:16px">Save color codes for your team. Everyone can see and use saved colors.</p>
+          <div class="form-row" style="align-items:flex-end">
+            <div style="flex:2">
+              <label for="newColorName">Color Name</label>
+              <input type="text" id="newColorName" placeholder="e.g., Brand Blue, CMP Primary" />
+            </div>
+            <div style="flex:1">
+              <label for="newColorHex">Hex Code</label>
+              <div style="display:flex;gap:8px;align-items:center">
+                <input type="color" id="newColorPicker" value="#446472" style="width:50px;height:40px;padding:2px;cursor:pointer;border-radius:8px" />
+                <input type="text" id="newColorHex" value="#446472" maxlength="7" style="font-family:monospace" />
+              </div>
+            </div>
+            <div style="flex:0 0 auto">
+              <button id="saveColorBtn" class="btn success">Save Color</button>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- Saved Colors Card -->
       <div class="card">
-        <h3>Saved Color Codes</h3>
+        <h3>🎨 Saved Colors <span id="colorCount" class="badge" style="margin-left:8px">0 colors</span></h3>
         <div class="content">
-          <p class="mini" style="margin-bottom:16px">Save and share color codes with your team. Click a color to use it.</p>
-          
-          <div style="display:flex;gap:12px;margin-bottom:20px;align-items:flex-end">
-            <div style="flex:0 0 200px">
-              <label for="newColorName">Color Name</label>
-              <input type="text" id="newColorName" placeholder="e.g., Brand Blue" />
-            </div>
-            <div style="flex:0 0 180px">
-              <label for="newColorHex">Hex Code</label>
-              <div style="display:flex;gap:8px;align-items:center">
-                <input type="color" id="newColorPicker" value="#446472" style="width:50px;height:40px;padding:2px;cursor:pointer" />
-                <input type="text" id="newColorHex" value="#446472" maxlength="7" style="width:100px;font-family:monospace" />
-              </div>
-            </div>
-            <button id="saveColorBtn" class="good" style="flex:0 0 auto;width:auto;padding:10px 20px">
-              Save Color
-            </button>
-          </div>
-
           <div id="savedColorsContainer">
             <div class="empty-state">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
               </svg>
-              <div style="font-weight:600;margin-bottom:4px">No saved colors yet</div>
-              <div class="mini">Add your first color above to get started</div>
+              <h4>No saved colors yet</h4>
+              <p class="hint">Add your first color above to get started</p>
             </div>
           </div>
         </div>
       </div>
-
-      <div class="footer">Marketing Hub • Font Text to Transparent PNG Generator</div>
     </div>
-  </div>
+  </main>
 
   <canvas id="canvas"></canvas>
 
@@ -620,6 +407,7 @@
       loginError: document.getElementById('loginError'),
 
       appHeader: document.getElementById('appHeader'),
+      navBar: document.getElementById('navBar'),
       appContainer: document.getElementById('appContainer'),
       logoutBtn: document.getElementById('logoutBtn'),
       adminPageBtn: document.getElementById('adminPageBtn'),
@@ -639,21 +427,28 @@
       newColorHex: document.getElementById('newColorHex'),
       newColorPicker: document.getElementById('newColorPicker'),
       saveColorBtn: document.getElementById('saveColorBtn'),
-      savedColorsContainer: document.getElementById('savedColorsContainer')
+      savedColorsContainer: document.getElementById('savedColorsContainer'),
+      colorCount: document.getElementById('colorCount')
     };
 
     const ctx = els.canvas.getContext('2d');
 
-    // Activate current nav tab
-    (function(){
-      const nav = document.getElementById('mainNav');
-      if (!nav) return;
-      const path = (location.pathname || '').toLowerCase();
-      nav.querySelectorAll('.nav-tab').forEach(a => {
-        const href = (a.getAttribute('href') || '').toLowerCase();
-        if (href && (path.endsWith(href) || path.endsWith('/' + href))) a.classList.add('active');
+    function show(el){ if (el) el.classList.remove('hidden'); }
+    function hide(el){ if (el) el.classList.add('hidden'); }
+    function esc(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!btn.getAttribute('data-tab')) return;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        const tabId = btn.getAttribute('data-tab') + 'Tab';
+        const tabEl = document.getElementById(tabId);
+        if (tabEl) tabEl.classList.add('active');
       });
-    })();
+    });
 
     // Login helpers
     if (els.togglePw){ els.togglePw.addEventListener('change', ()=>{ els.loginPassword.type = els.togglePw.checked ? 'text' : 'password'; }); }
@@ -673,16 +468,18 @@
     }
 
     function showApp(){ 
-      if (els.appHeader) els.appHeader.style.display=''; 
-      if (els.appContainer) els.appContainer.style.display=''; 
-      if (els.loginView) els.loginView.style.display='none'; 
-      if (els.bootLoader) els.bootLoader.style.display='none'; 
+      show(els.appHeader);
+      els.navBar.style.display = '';
+      show(els.appContainer);
+      els.loginView.style.display = 'none';
+      els.bootLoader.style.display = 'none';
     }
     function showLogin(){ 
-      if (els.bootLoader) els.bootLoader.style.display='none'; 
-      if (els.appHeader) els.appHeader.style.display='none'; 
-      if (els.appContainer) els.appContainer.style.display='none'; 
-      if (els.loginView) els.loginView.style.display='flex'; 
+      els.bootLoader.style.display = 'none';
+      hide(els.appHeader);
+      els.navBar.style.display = 'none';
+      hide(els.appContainer);
+      els.loginView.style.display = 'flex';
     }
 
     async function doLogout(){ 
@@ -693,7 +490,11 @@
     function bindHeaderHandlers(){ 
       if (els.logoutBtn) els.logoutBtn.onclick = () => doLogout(); 
       if (els.adminPageBtn){ 
-        els.adminPageBtn.style.display = currentUser && currentUser.role==='admin' ? '' : 'none'; 
+        if (currentUser && currentUser.role==='admin') {
+          show(els.adminPageBtn);
+        } else {
+          hide(els.adminPageBtn);
+        }
         els.adminPageBtn.onclick = () => { location.href = 'mmp_admin.html'; }; 
       } 
     }
@@ -827,6 +628,7 @@
 
     function renderSavedColors() {
       const container = els.savedColorsContainer;
+      els.colorCount.textContent = `${savedColors.length} colors`;
       
       if (!savedColors || savedColors.length === 0) {
         container.innerHTML = `
@@ -834,8 +636,8 @@
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
             </svg>
-            <div style="font-weight:600;margin-bottom:4px">No saved colors yet</div>
-            <div class="mini">Add your first color above to get started</div>
+            <h4>No saved colors yet</h4>
+            <p class="hint">Add your first color above to get started</p>
           </div>
         `;
         return;
@@ -844,16 +646,16 @@
       container.innerHTML = `
         <div class="colors-grid">
           ${savedColors.map(color => `
-            <div class="color-swatch" data-id="${escapeAttr(color.id)}" data-hex="${escapeAttr(color.hex)}" onclick="useColor('${escapeAttr(color.hex)}')">
-              <div class="color-preview" style="background-color:${escapeAttr(color.hex)}"></div>
+            <div class="color-swatch" data-id="${esc(color.id)}" data-hex="${esc(color.hex)}" onclick="useColor('${esc(color.hex)}')">
+              <div class="color-preview" style="background-color:${esc(color.hex)}"></div>
               <div class="color-info">
-                <div class="color-name">${escapeHtml(color.name)}</div>
-                <div class="color-hex">${escapeHtml(color.hex)}</div>
-                <div class="mini muted" style="margin-top:2px">by ${escapeHtml(color.createdBy || 'Unknown')}</div>
+                <div class="color-name">${esc(color.name)}</div>
+                <div class="color-hex">${esc(color.hex)}</div>
+                <div class="color-meta">by ${esc(color.createdBy || 'Unknown')}</div>
               </div>
               <div class="color-actions">
-                <button class="secondary" onclick="event.stopPropagation(); copyColor('${escapeAttr(color.hex)}')" title="Copy hex code">Copy</button>
-                <button class="warn" onclick="event.stopPropagation(); deleteColor('${escapeAttr(color.id)}')" title="Delete color">×</button>
+                <button class="btn sm" onclick="event.stopPropagation(); copyColor('${esc(color.hex)}')" title="Copy hex code">📋</button>
+                <button class="btn sm danger" onclick="event.stopPropagation(); deleteColor('${esc(color.id)}')" title="Delete color">🗑️</button>
               </div>
             </div>
           `).join('')}
@@ -866,6 +668,12 @@
       els.fontColorPicker.value = hex;
       updatePreview();
       
+      // Switch to generator tab
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.querySelector('.tab-btn[data-tab="generator"]').classList.add('active');
+      document.getElementById('generatorTab').classList.add('active');
+      
       // Visual feedback
       document.querySelectorAll('.color-swatch').forEach(el => el.classList.remove('selected'));
       const swatch = document.querySelector(`.color-swatch[data-hex="${hex}"]`);
@@ -874,11 +682,7 @@
 
     function copyColor(hex) {
       navigator.clipboard.writeText(hex).then(() => {
-        // Show brief feedback
-        const btn = event.target;
-        const originalText = btn.textContent;
-        btn.textContent = 'Copied!';
-        setTimeout(() => { btn.textContent = originalText; }, 1000);
+        alert('Color code copied: ' + hex);
       }).catch(err => {
         console.error('Failed to copy:', err);
       });
@@ -940,6 +744,8 @@
           els.newColorName.value = '';
           els.newColorHex.value = '#446472';
           els.newColorPicker.value = '#446472';
+          
+          alert('Color saved successfully!');
         } else {
           const errText = await res.text();
           alert('Failed to save color: ' + errText);
@@ -947,17 +753,6 @@
       } catch(e) {
         alert('Error saving color: ' + e.message);
       }
-    }
-
-    // Utility functions
-    function escapeHtml(str) {
-      if (!str) return '';
-      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
-    
-    function escapeAttr(str) {
-      if (!str) return '';
-      return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
     }
 
     // Event listeners
