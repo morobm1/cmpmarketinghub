@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Font Text to Image Generator</title>
-  <link rel="stylesheet" href="https://use.typekit.net/iol5fuu.css">
+  <link rel="stylesheet" href="https://use.typekit.net/hqv8hwr.css">
   <style>
     :root {
       color-scheme: light dark;
@@ -12,6 +12,7 @@
       --card: #fff;
       --border: #ddd;
       --text: #222;
+      --text-muted: #666;
     }
     @media (prefers-color-scheme: dark) {
       :root {
@@ -19,6 +20,7 @@
         --card: #2a2a2a;
         --border: #444;
         --text: #eee;
+        --text-muted: #999;
       }
     }
     * { box-sizing: border-box; }
@@ -31,6 +33,7 @@
       min-height: 100vh;
     }
     h1 { margin-top: 0; font-size: 1.5rem; }
+    h2 { font-size: 1.1rem; margin: 0 0 1rem 0; color: var(--text-muted); }
     .container { max-width: 900px; margin: 0 auto; }
     .card {
       background: var(--card);
@@ -65,6 +68,24 @@
     }
     button:hover { background: #1249c4; }
     button:disabled { opacity: 0.6; cursor: not-allowed; }
+    button.secondary {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    button.secondary:hover {
+      background: var(--border);
+    }
+    button.danger {
+      background: #dc2626;
+    }
+    button.danger:hover {
+      background: #b91c1c;
+    }
+    button.small {
+      padding: 0.4rem 0.8rem;
+      font-size: 0.85rem;
+    }
     .preview-area {
       background: repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 50% / 20px 20px;
       border-radius: 8px;
@@ -88,11 +109,105 @@
     .actions { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem; }
     .note { font-size: 0.85rem; color: #888; margin-top: 0.5rem; }
     canvas { display: none; }
+
+    /* Color swatches */
+    .color-swatches {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .color-swatch {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0.6rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .color-swatch:hover {
+      border-color: #155eef;
+      transform: translateY(-1px);
+    }
+    .color-swatch .swatch-color {
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+    .color-swatch .swatch-info {
+      display: flex;
+      flex-direction: column;
+    }
+    .color-swatch .swatch-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .color-swatch .swatch-hex {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-family: monospace;
+    }
+    .color-swatch .swatch-delete {
+      margin-left: auto;
+      padding: 0.2rem 0.4rem;
+      font-size: 0.7rem;
+      background: transparent;
+      color: var(--text-muted);
+      border: none;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .color-swatch:hover .swatch-delete {
+      opacity: 1;
+    }
+    .color-swatch .swatch-delete:hover {
+      color: #dc2626;
+    }
+
+    /* Save color form */
+    .save-color-form {
+      display: flex;
+      gap: 0.5rem;
+      align-items: flex-end;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+    .save-color-form input[type="text"] {
+      flex: 1;
+      font-size: 0.9rem;
+      padding: 0.5rem 0.7rem;
+    }
+
+    .empty-state {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .header-row h1 {
+      margin: 0;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Font Text to Transparent PNG</h1>
+    <div class="header-row">
+      <h1>Font Text to Transparent PNG</h1>
+      <button class="secondary small" onclick="location.href='mmp_admin.html'">← Back to Admin</button>
+    </div>
     <p>Type your text, customize the style, then export as a transparent PNG for Canva.</p>
 
     <div class="card">
@@ -138,6 +253,19 @@
       </div>
     </div>
 
+    <!-- Saved Colors Card -->
+    <div class="card">
+      <h2>🎨 Saved Colors (Shared)</h2>
+      <div id="colorSwatches" class="color-swatches">
+        <div class="empty-state">Loading saved colors...</div>
+      </div>
+      <div class="save-color-form">
+        <input type="text" id="colorName" placeholder="Color name (e.g., Brand Blue)" maxlength="30">
+        <button id="saveColorBtn" class="small">Save Current Color</button>
+      </div>
+      <p class="note">Click a swatch to use that color. Saved colors are shared with all users.</p>
+    </div>
+
     <div class="card">
       <label>Preview (transparent background)</label>
       <div class="preview-area">
@@ -153,6 +281,8 @@
   <canvas id="canvas"></canvas>
 
   <script>
+    const API_BASE = '/api';
+    
     const textInput = document.getElementById('textInput');
     const fontSize = document.getElementById('fontSize');
     const fontColor = document.getElementById('fontColor');
@@ -164,7 +294,13 @@
     const downloadBtn = document.getElementById('downloadBtn');
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
+    const colorSwatches = document.getElementById('colorSwatches');
+    const colorName = document.getElementById('colorName');
+    const saveColorBtn = document.getElementById('saveColorBtn');
 
+    let savedColors = [];
+
+    // Color picker sync
     fontColorPicker.addEventListener('input', () => {
       fontColor.value = fontColorPicker.value.toUpperCase();
       updatePreview();
@@ -234,12 +370,128 @@
       link.click();
     }
 
+    // ==================== SAVED COLORS ====================
+
+    async function loadSavedColors() {
+      try {
+        const res = await fetch(API_BASE + '/color-codes');
+        if (!res.ok) throw new Error('Failed to load');
+        savedColors = await res.json();
+        renderColorSwatches();
+      } catch (e) {
+        console.error('Failed to load saved colors:', e);
+        colorSwatches.innerHTML = '<div class="empty-state">Could not load saved colors. Please log in.</div>';
+      }
+    }
+
+    function renderColorSwatches() {
+      if (savedColors.length === 0) {
+        colorSwatches.innerHTML = '<div class="empty-state">No saved colors yet. Save your first color below!</div>';
+        return;
+      }
+
+      colorSwatches.innerHTML = savedColors.map(c => `
+        <div class="color-swatch" data-hex="${c.hex}" data-id="${c.id}">
+          <div class="swatch-color" style="background-color: ${c.hex}"></div>
+          <div class="swatch-info">
+            <span class="swatch-name">${escapeHtml(c.name)}</span>
+            <span class="swatch-hex">${c.hex}</span>
+          </div>
+          <button class="swatch-delete" onclick="event.stopPropagation(); deleteColor('${c.id}')" title="Delete">✕</button>
+        </div>
+      `).join('');
+
+      // Add click handlers to swatches
+      colorSwatches.querySelectorAll('.color-swatch').forEach(swatch => {
+        swatch.addEventListener('click', () => {
+          const hex = swatch.dataset.hex;
+          fontColor.value = hex;
+          fontColorPicker.value = hex;
+          updatePreview();
+        });
+      });
+    }
+
+    async function saveColor() {
+      const name = colorName.value.trim();
+      const hex = fontColor.value.toUpperCase();
+
+      if (!name) {
+        alert('Please enter a name for this color');
+        return;
+      }
+
+      if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+        alert('Invalid color format');
+        return;
+      }
+
+      try {
+        saveColorBtn.disabled = true;
+        saveColorBtn.textContent = 'Saving...';
+
+        const res = await fetch(API_BASE + '/color-codes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, hex })
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(text || 'Failed to save');
+        }
+
+        const newColor = await res.json();
+        savedColors.push(newColor);
+        renderColorSwatches();
+        colorName.value = '';
+      } catch (e) {
+        alert('Failed to save color: ' + e.message);
+      } finally {
+        saveColorBtn.disabled = false;
+        saveColorBtn.textContent = 'Save Current Color';
+      }
+    }
+
+    async function deleteColor(id) {
+      if (!confirm('Delete this saved color?')) return;
+
+      try {
+        const res = await fetch(API_BASE + '/color-codes', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id })
+        });
+
+        if (!res.ok) throw new Error('Failed to delete');
+
+        savedColors = savedColors.filter(c => c.id !== id);
+        renderColorSwatches();
+      } catch (e) {
+        alert('Failed to delete color: ' + e.message);
+      }
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // Event listeners
     downloadBtn.addEventListener('click', downloadPNG);
+    saveColorBtn.addEventListener('click', saveColor);
+    colorName.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') saveColor();
+    });
     [textInput, fontSize, fontWeight, letterSpacing].forEach(el => el.addEventListener('input', updatePreview));
 
+    // Initialize
     document.fonts.ready.then(() => {
       updatePreview();
     });
+
+    loadSavedColors();
   </script>
 </body>
 </html>
