@@ -3,61 +3,76 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Brand Font Generator - CMP Marketing Hub</title>
-  <meta name="description" content="Generate transparent PNG images from text using brand fonts">
+  <title>Brand Font Generator • Marketing Hub</title>
+  <link rel="preconnect" href="https://use.typekit.net" crossorigin>
+  <link rel="preconnect" href="https://p.typekit.net" crossorigin>
   <link rel="stylesheet" href="https://use.typekit.net/hqv8hwr.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <meta name="description" content="Generate transparent PNG images from text using brand fonts">
   <style>
-    :root{
-      --bg:#0f172a; --panel:#111827; --muted:#1f2937; --text:#e5e7eb; --sub:#9ca3af; --border:#374151; --accent:#22d3ee; --good:#34d399; --warn:#f59e0b; --bad:#f87171;
-    }
-    *{box-sizing:border-box}
+    :root{ --brand-primary:#446472; --brand-accent:#ffb732; --brand-accent-2:#52d5ff; --brand-gray:#929497; --page-bg:#f8fafc; --bg:#ffffff; --panel:#ffffff; --muted:#ffffff; --text:#1e293b; --subtext:#64748b; --accent:var(--brand-accent-2); --accent-2:var(--brand-accent); --border:#e2e8f0; }
+    *{box-sizing:border-box;margin:0;padding:0}
     html,body{height:100%}
-    body{margin:0; font-family:system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial; background:linear-gradient(160deg, var(--bg), #020617 60%); color:var(--text)}
+    body{margin:0; font-family:'Open Sans',system-ui,-apple-system,sans-serif; background:var(--page-bg); color:var(--text);font-size:14px;line-height:1.5}
     
-    header{padding:16px 18px; border-bottom:1px solid var(--border); position:sticky; top:0; background:rgba(15,23,42,0.9); backdrop-filter: blur(6px); z-index:10; display:flex; align-items:center; gap:14px; flex-wrap:wrap}
-    header .title{font-weight:800; font-size:15px}
-    .pill{border:1px solid var(--border); background:var(--panel); border-radius:999px; padding:6px 10px; font-size:12px; color:var(--sub)}
+    /* Header */
+    header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:10px}
+    .brand .logo-img{height:28px;width:auto}
+    .brand .title{color:#ffb732;font-family:zooja-pro,Arial,sans-serif;font-size:clamp(32px,4vw,48px);line-height:1}
+    .header-controls{display:flex;align-items:center;gap:12px;margin-left:auto}
+    .header-btn{background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;transition:all .15s}
+    .header-btn:hover{background:#f8fafc;border-color:#cbd5e1}
+    .company-name{font-size:12px;color:var(--subtext);font-weight:500}
 
-    .container{padding:18px; max-width:1000px; margin:0 auto; display:flex; flex-direction:column; gap:16px}
+    /* Navigation */
+    .nav-bar{background:#fff;border-bottom:1px solid var(--border)}
+    .nav-wrap{max-width:1400px;margin:0 auto;padding:0 24px;display:flex;gap:2px;overflow-x:auto}
+    .nav-tab{display:flex;align-items:center;gap:6px;padding:14px 16px;color:var(--subtext);text-decoration:none;font-size:13px;font-weight:600;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap}
+    .nav-tab:hover{color:var(--text);background:#f8fafc}
+    .nav-tab.active{color:var(--brand-primary);border-bottom-color:var(--brand-primary)}
 
-    .card{background:linear-gradient(180deg, rgba(17,24,39,0.92), rgba(2,6,23,0.85)); border:1px solid var(--border); border-radius:14px; overflow:hidden}
-    .card-header{padding:14px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between}
-    .card-header h3{margin:0; font-size:14px; color:var(--text); font-weight:700; display:flex; align-items:center; gap:10px}
-    .card-header .badge{display:inline-block; padding:4px 10px; border-radius:999px; font-size:11px; background:rgba(34,211,238,0.15); color:var(--accent); border:1px solid var(--accent); font-weight:600}
-    .card .content{padding:16px}
+    .container{padding:24px; max-width:900px; margin:0 auto; display:flex; flex-direction:column; gap:20px}
 
-    .row{display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap}
-    .row > *{flex:1; min-width:140px}
+    .card{background:#ffffff; border:1px solid var(--border); border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,0.06); overflow:hidden}
+    .card h3{margin:0; padding:16px 20px 0 20px; font-size:15px; color:#374151; font-weight:700; font-family: Roboto, Arial, sans-serif; display:flex; align-items:center; justify-content:space-between}
+    .card .content{padding:20px}
 
-    label{font-size:12px; color:var(--sub); display:block; margin-bottom:6px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px}
-    input, select, textarea{width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:var(--muted); color:var(--text); font-size:14px; transition:border-color 0.2s, box-shadow 0.2s}
-    input:focus, select:focus, textarea:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(34,211,238,0.1)}
-    input[type="color"]{width:50px; height:42px; padding:4px; cursor:pointer; border-radius:8px}
-    
-    button{cursor:pointer; padding:10px 16px; border-radius:10px; border:1px solid transparent; background:linear-gradient(180deg, #0ea5e9, #22d3ee); color:#001018; font-weight:700; font-size:14px; transition:all 0.2s}
-    button:hover{transform:translateY(-1px); box-shadow:0 4px 12px rgba(34,211,238,0.3)}
-    button:active{transform:translateY(0)}
-    button.secondary{background:var(--muted); color:var(--text); border:1px solid var(--border)}
-    button.secondary:hover{background:var(--border); box-shadow:none}
-    button.danger{background:linear-gradient(180deg,#ef4444,#f87171); color:#1f0a0a}
-    button.small{padding:6px 12px; font-size:12px}
-    button:disabled{opacity:0.5; cursor:not-allowed; transform:none}
+    label{font-size:12px; color:#6b7280; margin-bottom:6px; display:block; font-weight:600}
+    input, select{width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; color:var(--text); background:#fff; transition:border-color .15s, box-shadow .15s}
+    input:focus, select:focus{outline:none; border-color:var(--brand-accent-2); box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
+    input[type="color"]{width:48px; height:40px; padding:4px; cursor:pointer}
+    input[type="number"]{-moz-appearance:textfield}
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 
-    .mini{font-size:11px; color:var(--sub)}
-    .hidden{display:none}
+    .btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 16px; border-radius:8px; border:1px solid #d1d5db; background:#ffffff; color:#111827; font-weight:600; cursor:pointer; font-family: Roboto, Arial, sans-serif; font-size:14px; transition:all .15s}
+    .btn:hover{background:#f9fafb}
+    .btn.primary{background:#52d5ff; border-color:#52d5ff; color:#0b1b24}
+    .btn.primary:hover{background:#3ecbf5}
+    .btn:disabled{opacity:0.5; cursor:not-allowed}
+
+    .form-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:16px}
+    .form-group{display:flex; flex-direction:column}
+    .color-row{display:flex; gap:10px; align-items:center}
+    .color-row input[type="text"]{flex:1}
+
+    .badge{display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; background:#fff7e6; color:#8a5800; border:1px solid #fde68a; font-weight:600; font-family: Roboto, Arial, sans-serif}
 
     /* Preview Area */
     .preview-area{
       background: 
-        linear-gradient(45deg, #1a1a2e 25%, transparent 25%),
-        linear-gradient(-45deg, #1a1a2e 25%, transparent 25%),
-        linear-gradient(45deg, transparent 75%, #1a1a2e 75%),
-        linear-gradient(-45deg, transparent 75%, #1a1a2e 75%);
+        linear-gradient(45deg, #f1f5f9 25%, transparent 25%),
+        linear-gradient(-45deg, #f1f5f9 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #f1f5f9 75%),
+        linear-gradient(-45deg, transparent 75%, #f1f5f9 75%);
       background-size: 20px 20px;
       background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-      background-color: #0d0d1a;
+      background-color: #fff;
       border-radius:10px;
-      min-height:180px;
+      min-height:160px;
       display:flex;
       align-items:center;
       justify-content:center;
@@ -69,36 +84,34 @@
       font-family: "zooja-pro", cursive;
       white-space: nowrap;
       user-select:none;
-      text-shadow: 0 2px 20px rgba(0,0,0,0.3);
     }
 
     /* Color Swatches */
     .color-swatches{
       display:grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap:10px;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap:12px;
     }
     .color-swatch{
       display:flex;
       align-items:center;
-      gap:10px;
-      padding:10px 12px;
+      gap:12px;
+      padding:12px 14px;
       border-radius:10px;
       border:1px solid var(--border);
-      background:var(--muted);
+      background:#fff;
       cursor:pointer;
-      transition:all 0.2s;
+      transition:all .15s;
     }
     .color-swatch:hover{
-      border-color:var(--accent);
-      background:rgba(34,211,238,0.08);
-      transform:translateY(-2px);
+      border-color:var(--brand-accent-2);
+      box-shadow:0 2px 8px rgba(82,213,255,0.15);
     }
     .color-swatch .swatch-color{
-      width:32px;
-      height:32px;
+      width:36px;
+      height:36px;
       border-radius:8px;
-      border:2px solid rgba(255,255,255,0.1);
+      border:1px solid var(--border);
       flex-shrink:0;
     }
     .color-swatch .swatch-info{
@@ -116,106 +129,96 @@
       text-overflow:ellipsis;
     }
     .color-swatch .swatch-hex{
-      font-size:11px;
-      color:var(--sub);
+      font-size:12px;
+      color:var(--subtext);
       font-family:ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
     }
     .color-swatch .swatch-delete{
-      padding:4px 8px;
-      font-size:14px;
+      padding:6px 10px;
+      font-size:12px;
       background:transparent;
-      color:var(--sub);
-      border:none;
+      color:var(--subtext);
+      border:1px solid transparent;
+      border-radius:6px;
       cursor:pointer;
       opacity:0;
-      transition:all 0.2s;
-      border-radius:6px;
+      transition:all .15s;
     }
     .color-swatch:hover .swatch-delete{opacity:1}
-    .color-swatch .swatch-delete:hover{color:var(--bad); background:rgba(248,113,113,0.1)}
+    .color-swatch .swatch-delete:hover{color:#ef4444; background:#fef2f2; border-color:#fecaca}
 
     .save-color-row{
       display:flex;
-      gap:10px;
+      gap:12px;
       align-items:flex-end;
-      margin-top:16px;
-      padding-top:16px;
+      margin-top:20px;
+      padding-top:20px;
       border-top:1px solid var(--border);
     }
-    .save-color-row > div:first-child{flex:1}
-    .save-color-row input{font-size:13px}
+    .save-color-row > div{flex:1}
 
     .empty-state{
       text-align:center;
       padding:32px 20px;
-      color:var(--sub);
+      color:var(--subtext);
       grid-column:1/-1;
     }
-    .empty-state svg{width:48px; height:48px; margin-bottom:12px; opacity:0.4}
 
-    /* Form Grid */
-    .form-grid{
-      display:grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap:16px;
-    }
-    .form-group{display:flex; flex-direction:column}
-    .color-input-group{display:flex; gap:8px; align-items:center}
-    .color-input-group input[type="text"]{flex:1}
+    .hint{font-size:12px; color:#6b7280; margin-top:8px}
 
-    /* Actions */
-    .actions{display:flex; gap:12px; flex-wrap:wrap; margin-top:16px}
-    .actions button{flex:1; min-width:140px}
-
-    /* Intro text */
-    .intro{
-      background:rgba(34,211,238,0.08);
-      border:1px solid rgba(34,211,238,0.2);
-      border-radius:10px;
-      padding:14px 16px;
-      margin-bottom:8px;
-    }
-    .intro p{margin:0; font-size:13px; color:var(--sub); line-height:1.5}
-    .intro strong{color:var(--accent)}
+    .actions{display:flex; gap:12px; margin-top:16px}
+    .actions .btn{flex:1}
 
     canvas{display:none}
 
     @media(max-width:600px){
       .form-grid{grid-template-columns:1fr 1fr}
       .color-swatches{grid-template-columns:1fr}
+      .save-color-row{flex-direction:column}
+      .save-color-row > div{width:100%}
     }
   </style>
 </head>
 <body>
-  <header id="appHeader" class="hidden">
-    <div class="title">Brand Font Generator</div>
-    <div class="pill">Marketing Tools</div>
-    <div style="margin-left:auto; display:flex; gap:8px">
-      <button id="toAdminBtn" class="secondary small">← Back to Admin</button>
-      <button id="logoutBtn" class="secondary small">Logout</button>
+  <header>
+    <div class="brand">
+      <img src="logo-main.svg" class="logo-img" alt="Capstone" />
+      <div class="title">Marketing Hub</div>
     </div>
+    <div class="header-controls">
+      <button class="header-btn" id="backBtn">Back to Admin</button>
+      <button class="header-btn" id="logoutBtn">Sign Out</button>
+    </div>
+    <span class="company-name">Capstone Management Partners</span>
   </header>
 
-  <main id="appContainer" class="container hidden">
-    <div class="intro">
-      <p>Generate <strong>transparent PNG images</strong> from text using the brand font. Perfect for creating custom graphics in Canva, social media posts, and marketing materials.</p>
+  <nav class="nav-bar">
+    <div class="nav-wrap">
+      <a href="mmp_calendar_app.html" class="nav-tab">Marketing Calendar</a>
+      <a href="marketing_plans.html" class="nav-tab">Marketing Plans</a>
+      <a href="marketing_contacts.html" class="nav-tab">Marketing Contacts</a>
+      <a href="promo_order_tracker.html" class="nav-tab">Promo Order Tracker</a>
+      <a href="renewal_campaign.html" class="nav-tab">Renewal Campaign</a>
+      <a href="velocity_tracker.html" class="nav-tab">Velocity Tracker</a>
+      <a href="uniform_shop.html" class="nav-tab">Uniform Shop</a>
+      <a href="creative_library.html" class="nav-tab">Creative Library</a>
     </div>
+  </nav>
 
+  <main class="container">
     <!-- Text Input -->
     <section class="card">
-      <div class="card-header">
-        <h3>📝 Text Input</h3>
-      </div>
+      <h3>Text Input</h3>
       <div class="content">
-        <input type="text" id="textInput" value="Hello World" placeholder="Enter your text here..." style="font-size:16px">
+        <label for="textInput">Enter your text</label>
+        <input type="text" id="textInput" value="Hello World" placeholder="Type your text here...">
+        <p class="hint">This text will be rendered using the brand font and exported as a transparent PNG.</p>
       </div>
     </section>
 
     <!-- Style Options -->
     <section class="card">
-      <div class="card-header">
-        <h3>🎨 Style Options</h3>
-      </div>
+      <h3>Style Options</h3>
       <div class="content">
         <div class="form-grid">
           <div class="form-group">
@@ -223,10 +226,10 @@
             <input type="number" id="fontSize" value="120" min="12" max="500">
           </div>
           <div class="form-group">
-            <label for="fontColor">Text Color</label>
-            <div class="color-input-group">
+            <label>Text Color</label>
+            <div class="color-row">
               <input type="color" id="fontColorPicker" value="#000000">
-              <input type="text" id="fontColor" value="#000000" maxlength="7">
+              <input type="text" id="fontColor" value="#000000" maxlength="7" style="font-family:monospace">
             </div>
           </div>
           <div class="form-group">
@@ -255,44 +258,32 @@
 
     <!-- Saved Colors -->
     <section class="card">
-      <div class="card-header">
-        <h3>🎯 Brand Colors</h3>
-        <span class="badge" id="colorCount">0 saved</span>
-      </div>
+      <h3>Brand Colors <span class="badge" id="colorCount">0 saved</span></h3>
       <div class="content">
         <div id="colorSwatches" class="color-swatches">
-          <div class="empty-state">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-            </svg>
-            <p>Loading brand colors...</p>
-          </div>
+          <div class="empty-state">Loading brand colors...</div>
         </div>
         <div class="save-color-row">
           <div>
             <label for="colorName">Save Current Color</label>
-            <input type="text" id="colorName" placeholder="Color name (e.g., Primary Blue)" maxlength="30">
+            <input type="text" id="colorName" placeholder="Enter color name (e.g., Primary Blue)" maxlength="30">
           </div>
-          <button id="saveColorBtn" class="small">+ Save Color</button>
+          <button class="btn" id="saveColorBtn">Save Color</button>
         </div>
-        <p class="mini" style="margin-top:12px">Click any swatch to apply that color. Saved colors are shared across your team.</p>
+        <p class="hint">Click any swatch to apply that color. Saved colors are shared across your team.</p>
       </div>
     </section>
 
     <!-- Preview -->
     <section class="card">
-      <div class="card-header">
-        <h3>👁️ Live Preview</h3>
-        <span class="mini">Checkerboard indicates transparency</span>
-      </div>
+      <h3>Live Preview</h3>
       <div class="content">
         <div class="preview-area">
           <span id="previewText">Hello World</span>
         </div>
+        <p class="hint">The checkerboard pattern indicates transparency. Your exported image will have no background.</p>
         <div class="actions">
-          <button id="downloadBtn">
-            <span style="margin-right:6px">⬇️</span> Download PNG
-          </button>
+          <button class="btn primary" id="downloadBtn">Download PNG</button>
         </div>
       </div>
     </section>
@@ -303,11 +294,8 @@
   <script>
     const API_BASE = '/api';
     
-    // Elements
     const els = {
-      appHeader: document.getElementById('appHeader'),
-      appContainer: document.getElementById('appContainer'),
-      toAdminBtn: document.getElementById('toAdminBtn'),
+      backBtn: document.getElementById('backBtn'),
       logoutBtn: document.getElementById('logoutBtn'),
       textInput: document.getElementById('textInput'),
       fontSize: document.getElementById('fontSize'),
@@ -328,12 +316,9 @@
     const ctx = els.canvas.getContext('2d');
     let savedColors = [];
 
-    function show(el){ if(el) el.classList.remove('hidden'); }
-    function hide(el){ if(el) el.classList.add('hidden'); }
     function escapeHtml(str){ const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
 
-    // ==================== COLOR SYNC ====================
-    
+    // Color picker sync
     els.fontColorPicker.addEventListener('input', () => {
       els.fontColor.value = els.fontColorPicker.value.toUpperCase();
       updatePreview();
@@ -353,8 +338,7 @@
       els.fontColor.value = els.fontColor.value.toUpperCase();
     });
 
-    // ==================== PREVIEW ====================
-
+    // Preview
     function updatePreview() {
       const text = els.textInput.value || ' ';
       els.previewText.textContent = text;
@@ -364,8 +348,7 @@
       els.previewText.style.letterSpacing = els.letterSpacing.value + 'px';
     }
 
-    // ==================== DOWNLOAD ====================
-
+    // Download
     function downloadPNG() {
       const text = els.textInput.value || ' ';
       const size = parseInt(els.fontSize.value, 10);
@@ -403,13 +386,12 @@
 
       const link = document.createElement('a');
       const safeName = text.substring(0, 20).replace(/[^a-zA-Z0-9]/g, '_') || 'text';
-      link.download = `${safeName}-${Date.now()}.png`;
+      link.download = `${safeName}.png`;
       link.href = els.canvas.toDataURL('image/png');
       link.click();
     }
 
-    // ==================== SAVED COLORS ====================
-
+    // Saved Colors
     async function loadSavedColors() {
       try {
         const res = await fetch(API_BASE + '/color-codes');
@@ -418,14 +400,7 @@
         renderColorSwatches();
       } catch (e) {
         console.error('Failed to load saved colors:', e);
-        els.colorSwatches.innerHTML = `
-          <div class="empty-state">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <p>Could not load colors</p>
-          </div>
-        `;
+        els.colorSwatches.innerHTML = '<div class="empty-state">Could not load colors. Please try again.</div>';
       }
     }
 
@@ -433,14 +408,7 @@
       els.colorCount.textContent = `${savedColors.length} saved`;
       
       if (savedColors.length === 0) {
-        els.colorSwatches.innerHTML = `
-          <div class="empty-state">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-            </svg>
-            <p>No brand colors saved yet.<br>Add your first color below!</p>
-          </div>
-        `;
+        els.colorSwatches.innerHTML = '<div class="empty-state">No brand colors saved yet. Add your first color below.</div>';
         return;
       }
 
@@ -451,11 +419,10 @@
             <span class="swatch-name">${escapeHtml(c.name)}</span>
             <span class="swatch-hex">${c.hex}</span>
           </div>
-          <button class="swatch-delete" onclick="event.stopPropagation(); deleteColor('${c.id}')" title="Delete color">✕</button>
+          <button class="swatch-delete" onclick="event.stopPropagation(); deleteColor('${c.id}')">Remove</button>
         </div>
       `).join('');
 
-      // Add click handlers
       els.colorSwatches.querySelectorAll('.color-swatch').forEach(swatch => {
         swatch.addEventListener('click', () => {
           const hex = swatch.dataset.hex;
@@ -504,12 +471,12 @@
         alert('Failed to save color: ' + e.message);
       } finally {
         els.saveColorBtn.disabled = false;
-        els.saveColorBtn.textContent = '+ Save Color';
+        els.saveColorBtn.textContent = 'Save Color';
       }
     }
 
     async function deleteColor(id) {
-      if (!confirm('Delete this brand color?')) return;
+      if (!confirm('Remove this brand color?')) return;
 
       try {
         const res = await fetch(API_BASE + '/color-codes', {
@@ -523,15 +490,13 @@
         savedColors = savedColors.filter(c => c.id !== id);
         renderColorSwatches();
       } catch (e) {
-        alert('Failed to delete color: ' + e.message);
+        alert('Failed to remove color: ' + e.message);
       }
     }
 
-    // Make deleteColor available globally for onclick
     window.deleteColor = deleteColor;
 
-    // ==================== EVENT LISTENERS ====================
-
+    // Event listeners
     els.downloadBtn.addEventListener('click', downloadPNG);
     els.saveColorBtn.addEventListener('click', saveColor);
     els.colorName.addEventListener('keypress', (e) => {
@@ -542,16 +507,14 @@
       el.addEventListener('input', updatePreview);
     });
 
-    els.toAdminBtn.addEventListener('click', () => { location.href = 'mmp_admin.html'; });
+    els.backBtn.addEventListener('click', () => { location.href = 'mmp_admin.html'; });
     els.logoutBtn.addEventListener('click', async () => {
       try { await fetch('/api/auth-logout', { method: 'POST' }); } catch(e) {}
       location.href = 'index.html';
     });
 
-    // ==================== INITIALIZATION ====================
-
+    // Initialize
     async function init() {
-      // Enforce server session and admin role
       try {
         const meRes = await fetch('/api/me');
         if (!meRes.ok) { location.href = 'index.html'; return; }
@@ -559,10 +522,6 @@
         if (me.role !== 'admin') { location.href = 'index.html'; return; }
       } catch(e) { location.href = 'index.html'; return; }
 
-      show(els.appHeader);
-      show(els.appContainer);
-
-      // Wait for font to load
       document.fonts.ready.then(() => {
         updatePreview();
       });
