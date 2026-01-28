@@ -188,7 +188,19 @@
     .month-input input{padding:10px;border:1px solid var(--border);border-radius:8px;font-size:14px;text-align:center}
     .month-input input:focus{outline:none;border-color:var(--brand-accent-2)}
 
-    /* Quick Add */
+    /* Event Type Selection - Professional Style */
+    .type-selection{display:flex;flex-direction:column;gap:8px}
+    .type-option{display:flex;align-items:center;gap:14px;padding:14px 18px;border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .15s;background:#fff}
+    .type-option:hover{background:#f8fafc;border-color:#cbd5e1}
+    .type-option.selected{background:#f0f9ff;border-color:var(--brand-primary);box-shadow:0 0 0 1px var(--brand-primary)}
+    .type-option .type-indicator{width:12px;height:12px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;transition:all .15s}
+    .type-option.selected .type-indicator{border-color:var(--brand-primary);background:var(--brand-primary)}
+    .type-option .type-color{width:4px;height:32px;border-radius:2px;flex-shrink:0}
+    .type-option .type-info{flex:1}
+    .type-option .type-name{font-size:14px;font-weight:600;color:var(--text)}
+    .type-option .type-desc{font-size:12px;color:var(--subtext);margin-top:2px}
+
+    /* Legacy campaign grid - keep for compatibility */
     .campaign-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
     @media(max-width:500px){.campaign-grid{grid-template-columns:repeat(2,1fr)}}
     .campaign-option{padding:16px 12px;border:2px solid var(--border);border-radius:12px;text-align:center;cursor:pointer;transition:all .15s;background:#fff}
@@ -598,42 +610,70 @@
         <div class="wizard-step active" data-step="1">
           <div class="wizard-question">What type of marketing activity are you planning?</div>
           <div class="wizard-hint">Select the category that best describes your event</div>
-          <div class="campaign-grid" id="campaignGrid">
-            <div class="campaign-option" data-type="Resident event">
-              <div class="campaign-icon" style="background:#dcfce7">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <div class="type-selection" id="campaignGrid">
+            <div class="type-option" data-type="Resident event">
+              <div class="type-indicator"></div>
+              <div class="type-color" style="background:#86efac"></div>
+              <div class="type-info">
+                <div class="type-name">Resident Event</div>
+                <div class="type-desc">Community events for current residents</div>
               </div>
-              <div class="name">Resident Event</div>
             </div>
-            <div class="campaign-option" data-type="on-campus event">
-              <div class="campaign-icon" style="background:#dbeafe">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+            <div class="type-option" data-type="on-campus event">
+              <div class="type-indicator"></div>
+              <div class="type-color" style="background:#3b82f6"></div>
+              <div class="type-info">
+                <div class="type-name">Campus Event</div>
+                <div class="type-desc">On-campus marketing and tabling activities</div>
               </div>
-              <div class="name">Campus Event</div>
             </div>
-            <div class="campaign-option" data-type="Social Media Post">
-              <div class="campaign-icon" style="background:#f3e8ff">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#9333ea" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+            <div class="type-option" data-type="Social Media Post">
+              <div class="type-indicator"></div>
+              <div class="type-color" style="background:#a78bfa"></div>
+              <div class="type-info">
+                <div class="type-name">Social Media Post</div>
+                <div class="type-desc">Instagram, Facebook, or TikTok grid posts</div>
               </div>
-              <div class="name">Social Post</div>
             </div>
-            <div class="campaign-option" data-type="Social Media Story">
-              <div class="campaign-icon" style="background:#fce7f3">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#db2777" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+            <div class="type-option" data-type="Social Media Story">
+              <div class="type-indicator"></div>
+              <div class="type-color" style="background:#f472b6"></div>
+              <div class="type-info">
+                <div class="type-name">Social Media Story</div>
+                <div class="type-desc">Instagram or Facebook stories</div>
               </div>
-              <div class="name">Social Story</div>
             </div>
-            <div class="campaign-option" data-type="Review/Reputation">
-              <div class="campaign-icon" style="background:#fef3c7">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <div class="type-option" data-type="Review/Reputation">
+              <div class="type-indicator"></div>
+              <div class="type-color" style="background:#93c5fd"></div>
+              <div class="type-info">
+                <div class="type-name">Review Campaign</div>
+                <div class="type-desc">Google review push or reputation management</div>
               </div>
-              <div class="name">Review Push</div>
             </div>
-            <div class="campaign-option" data-type="Giveaway">
-              <div class="campaign-icon" style="background:#fee2e2">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+            <div class="type-option" data-type="Giveaway">
+              <div class="type-indicator"></div>
+              <div class="type-color" style="background:#fcd34d"></div>
+              <div class="type-info">
+                <div class="type-name">Giveaway</div>
+                <div class="type-desc">Promotional giveaways and contests</div>
               </div>
-              <div class="name">Giveaway</div>
+            </div>
+            <div class="type-option" data-type="outreach marketing">
+              <div class="type-indicator"></div>
+              <div class="type-color" style="background:#7f1d1d"></div>
+              <div class="type-info">
+                <div class="type-name">Outreach Marketing</div>
+                <div class="type-desc">Flyering, door-to-door, or local business outreach</div>
+              </div>
+            </div>
+            <div class="type-option" data-type="cross-marketing partnership/scholarship">
+              <div class="type-indicator"></div>
+              <div class="type-color" style="background:#f59e0b"></div>
+              <div class="type-info">
+                <div class="type-name">Partnership / Cross-Marketing</div>
+                <div class="type-desc">Collaborations with local businesses or organizations</div>
+              </div>
             </div>
           </div>
         </div>
@@ -1396,7 +1436,7 @@
     function openQuickAdd(){
       wizardStep = 1;
       selectedCampaignType = null;
-      document.querySelectorAll('.campaign-option').forEach(el => el.classList.remove('selected'));
+      document.querySelectorAll('.type-option').forEach(el => el.classList.remove('selected'));
       document.getElementById('quickTitle').value = '';
       document.getElementById('quickDate').value = toISO(new Date());
       document.getElementById('quickBudget').value = '';
@@ -1653,9 +1693,9 @@
       document.getElementById('quickAddModal').addEventListener('click', (e) => { if (e.target.id === 'quickAddModal') closeQuickAdd(); });
       
       document.getElementById('campaignGrid').addEventListener('click', (e) => {
-        const option = e.target.closest('.campaign-option');
+        const option = e.target.closest('.type-option');
         if (!option) return;
-        document.querySelectorAll('.campaign-option').forEach(el => el.classList.remove('selected'));
+        document.querySelectorAll('.type-option').forEach(el => el.classList.remove('selected'));
         option.classList.add('selected');
         selectedCampaignType = option.dataset.type;
       });
