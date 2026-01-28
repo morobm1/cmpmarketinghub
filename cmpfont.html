@@ -4,221 +4,782 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Font Text to Image Generator</title>
-  <!-- Adobe Typekit Font -->
+  <link rel="preconnect" href="https://use.typekit.net" crossorigin>
+  <link rel="preconnect" href="https://p.typekit.net" crossorigin>
   <link rel="stylesheet" href="https://use.typekit.net/hqv8hwr.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <meta name="description" content="Generate transparent PNG images from custom text using the Zooja Pro font." />
   <style>
-    :root {
-      color-scheme: light dark;
-      --bg: #f5f5f5;
-      --card: #fff;
-      --border: #ddd;
-      --text: #222;
+    :root{
+      --brand-primary:#446472;
+      --brand-accent:#ffb732;
+      --brand-accent-2:#52d5ff;
+      --brand-gray:#929497;
+      --page-bg:#f8f9fa;
+
+      --bg:#ffffff;
+      --panel:#ffffff;
+      --muted:#ffffff;
+      --text:#1f2937;
+      --subtext:#6b7280;
+      --accent:var(--brand-accent-2);
+      --accent-2:var(--brand-accent);
+      --good:#10b981;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+      --border:#e5e7eb;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #1a1a1a;
-        --card: #2a2a2a;
-        --border: #444;
-        --text: #eee;
+    *{box-sizing:border-box; margin:0; padding:0}
+    html,body{height:100%}
+    body{ 
+      margin:0; 
+      font-family:'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; 
+      background:var(--page-bg); 
+      color:var(--text);
+      line-height:1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    header{ 
+      background:#ffffff; 
+      border-bottom:2px solid var(--border); 
+      box-shadow:var(--shadow-sm); 
+      padding:20px 24px; 
+      display:flex; 
+      align-items:center; 
+      gap:16px; 
+      flex-wrap:wrap;
+      position:sticky;
+      top:0;
+      z-index:40;
+    }
+    .brand{display:flex;align-items:center;gap:12px}
+    .brand .logo-img{height:36px;width:auto;display:block}
+    .brand .title{
+      color:#446472; 
+      font-family: zooja-pro, 'Open Sans', Arial, sans-serif; 
+      font-weight: 600; 
+      font-size: clamp(24px, 4vw, 32px); 
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+    }
+
+    .pill{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      border:1px solid var(--border); 
+      background:#ffffff; 
+      border-radius:12px; 
+      padding:8px 14px; 
+      font-size:13px; 
+      color:#374151;
+      box-shadow:var(--shadow-sm);
+    }
+    select,input,textarea,button{ 
+      width:100%; 
+      padding:10px 14px; 
+      border-radius:8px; 
+      border:1px solid #d1d5db; 
+      background:#ffffff; 
+      color:var(--text); 
+      font-size:14px;
+      font-family:inherit;
+      transition: all 0.2s ease;
+    }
+    select:focus, input:focus, textarea:focus {
+      outline:none;
+      border-color:var(--brand-accent-2);
+      box-shadow: 0 0 0 3px rgba(82, 213, 255, 0.1);
+    }
+    label{
+      font-size:13px; 
+      color:#374151; 
+      display:block; 
+      margin-bottom:6px;
+      font-weight:600;
+    }
+    button{ 
+      cursor:pointer; 
+      background:var(--brand-primary); 
+      color:#ffffff; 
+      border:1px solid var(--brand-primary); 
+      font-weight:600;
+      transition: all 0.2s ease;
+      box-shadow:var(--shadow-sm);
+    }
+    button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow:var(--shadow-md);
+      opacity:0.95;
+    }
+    button:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    button:disabled {
+      opacity:0.5;
+      cursor:not-allowed;
+    }
+    button.secondary{ 
+      background:#ffffff; 
+      color:#374151; 
+      border:1px solid #d1d5db; 
+      font-weight:600;
+    }
+    button.secondary:hover:not(:disabled) {
+      background:#f9fafb;
+      border-color:#9ca3af;
+    }
+    button.warn{ 
+      background:var(--bad); 
+      color:#ffffff; 
+      border-color:var(--bad);
+    }
+    button.good{ 
+      background:var(--good); 
+      color:#ffffff; 
+      border-color:var(--good);
+    }
+
+    /* Layout */
+    .layout{ 
+      display:grid; 
+      grid-template-columns: 240px 1fr; 
+      gap:24px; 
+      align-items:start; 
+      max-width:1400px; 
+      margin:0 auto; 
+      padding:24px;
+    }
+    @media(max-width: 900px){ 
+      .layout{ 
+        grid-template-columns: 1fr;
+        padding:16px;
+      }
+      .sidebar {
+        position:relative !important;
+        top:0 !important;
       }
     }
-    * { box-sizing: border-box; }
-    body {
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-      margin: 0;
-      padding: 2rem;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
+    .sidebar{ 
+      background:#ffffff; 
+      border:1px solid var(--border); 
+      border-radius:12px; 
+      padding:16px; 
+      position:sticky; 
+      top:90px; 
+      align-self:start;
+      box-shadow:var(--shadow-sm);
     }
-    h1 { margin-top: 0; font-size: 1.5rem; }
-    .container { max-width: 900px; margin: 0 auto; }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 1.5rem;
+    .sidebar .nav-tab{ 
+      display:flex; 
+      align-items:center; 
+      gap:10px; 
+      padding:12px 14px; 
+      border:1px solid transparent; 
+      border-radius:8px; 
+      color:#6b7280; 
+      text-decoration:none; 
+      background:transparent; 
+      margin:4px 0;
+      transition: all 0.2s ease;
+      font-weight:500;
+      font-size:14px;
     }
-    label { display: block; font-weight: 600; margin-bottom: 0.5rem; }
-    input[type="text"], input[type="number"], input[type="color"], select {
-      padding: 0.6rem 0.8rem;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: var(--bg);
-      color: var(--text);
-      font-size: 1rem;
+    .sidebar .nav-tab:hover{ 
+      background:#f3f4f6;
+      color:#374151;
     }
-    input[type="text"] { width: 100%; font-size: 1.1rem; }
-    input[type="color"] { width: 60px; height: 40px; padding: 2px; cursor: pointer; }
-    .row { display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end; margin-bottom: 1rem; }
-    .row > div { flex: 1; min-width: 120px; }
-    button {
-      padding: 0.7rem 1.5rem;
-      border-radius: 8px;
-      border: none;
-      background: #155eef;
-      color: white;
-      font-weight: 600;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: background 0.2s;
+    .sidebar .nav-tab.active{ 
+      background:var(--brand-accent-2); 
+      border-color:var(--brand-accent-2); 
+      color:#ffffff; 
+      font-weight:600;
+      box-shadow:var(--shadow-sm);
     }
-    button:hover { background: #1249c4; }
-    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .content-pane{ min-width:0 }
+
+    .card{ 
+      background:#ffffff; 
+      border:1px solid var(--border); 
+      border-radius:12px; 
+      overflow:hidden; 
+      box-shadow:var(--shadow-sm);
+      transition: box-shadow 0.2s ease;
+      margin-bottom:20px;
+    }
+    .card:hover {
+      box-shadow:var(--shadow-md);
+    }
+    .card h3{ 
+      margin:0; 
+      padding:16px 20px; 
+      font-size:16px; 
+      color:#111827; 
+      font-weight:700;
+      border-bottom:1px solid var(--border);
+      background:#f9fafb;
+    }
+    .card .content{ 
+      padding:20px;
+    }
+
+    .row{ 
+      display:flex; 
+      gap:12px; 
+      align-items:center; 
+      flex-wrap:wrap;
+    }
+    .row > *{ flex:1; min-width:0 }
+
+    .mini{ 
+      font-size:12px; 
+      color:#6b7280;
+      line-height:1.4;
+    }
+    .muted{ color:#6b7280 }
+
+    .badge{ 
+      display:inline-block; 
+      padding:4px 10px; 
+      border-radius:6px; 
+      font-size:12px; 
+      background:#f3f4f6; 
+      color:#374151; 
+      border:1px solid var(--border);
+      font-weight:600;
+    }
+
+    .footer{ 
+      padding:16px 24px; 
+      color:#6b7280; 
+      font-size:13px;
+      text-align:center;
+      border-top:1px solid var(--border);
+      background:#f9fafb;
+    }
+
+    /* Preview area */
     .preview-area {
-      background: repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 50% / 20px 20px;
-      border-radius: 8px;
-      min-height: 150px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: auto;
-      padding: 1rem;
-    }
-    @media (prefers-color-scheme: dark) {
-      .preview-area {
-        background: repeating-conic-gradient(#444 0% 25%, #333 0% 50%) 50% / 20px 20px;
-      }
+      background: repeating-conic-gradient(#e5e7eb 0% 25%, #fff 0% 50%) 50% / 20px 20px;
+      border-radius:8px;
+      min-height:150px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:auto;
+      padding:1.5rem;
+      border:1px solid var(--border);
     }
     #previewText {
       font-family: "zooja-pro", cursive;
       white-space: nowrap;
       user-select: none;
     }
-    .actions { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem; }
-    .note { font-size: 0.85rem; color: #888; margin-top: 0.5rem; }
     canvas { display: none; }
+
+    /* Color swatches */
+    .color-swatch {
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 12px;
+      border:1px solid var(--border);
+      border-radius:8px;
+      background:#ffffff;
+      cursor:pointer;
+      transition: all 0.2s ease;
+    }
+    .color-swatch:hover {
+      border-color:var(--brand-accent-2);
+      box-shadow:var(--shadow-sm);
+    }
+    .color-swatch.selected {
+      border-color:var(--brand-accent-2);
+      background:#f0f9ff;
+      box-shadow:0 0 0 3px rgba(82, 213, 255, 0.1);
+    }
+    .color-preview {
+      width:32px;
+      height:32px;
+      border-radius:6px;
+      border:1px solid rgba(0,0,0,0.1);
+      flex-shrink:0;
+    }
+    .color-info {
+      flex:1;
+      min-width:0;
+    }
+    .color-name {
+      font-weight:600;
+      font-size:14px;
+      color:#111827;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .color-hex {
+      font-family:monospace;
+      font-size:12px;
+      color:#6b7280;
+    }
+    .color-actions {
+      display:flex;
+      gap:6px;
+      flex-shrink:0;
+    }
+    .color-actions button {
+      padding:6px 10px;
+      font-size:12px;
+      width:auto;
+    }
+
+    /* Modal */
+    .modal-backdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.5);
+      backdrop-filter:blur(4px);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:50;
+      animation: fadeIn 0.2s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity:0; }
+      to { opacity:1; }
+    }
+    .modal{
+      background:#ffffff;
+      border:1px solid var(--border);
+      border-radius:16px;
+      max-width:480px;
+      width:96%;
+      padding:24px;
+      box-shadow:var(--shadow-lg);
+      max-height:90vh;
+      overflow:auto;
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp {
+      from { 
+        opacity:0;
+        transform: translateY(20px);
+      }
+      to { 
+        opacity:1;
+        transform: translateY(0);
+      }
+    }
+    .modal h3{
+      margin:0 0 16px 0;
+      color:#111827;
+      font-size:20px;
+      font-weight:700;
+      padding-bottom:12px;
+      border-bottom:2px solid var(--border);
+    }
+    .modal .actions{
+      display:flex;
+      gap:12px;
+      justify-content:flex-end;
+      margin-top:20px;
+      padding-top:20px;
+      border-top:1px solid var(--border);
+    }
+
+    /* Login View */
+    #loginView {
+      min-height:100vh;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+      background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+    #bootLoader {
+      position:fixed;
+      inset:0;
+      background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index:100;
+      color:#111827;
+      font-family:'Open Sans',Arial,sans-serif;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Saved colors grid */
+    .colors-grid {
+      display:grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap:12px;
+    }
+    .empty-state {
+      text-align:center;
+      padding:40px 20px;
+      color:#6b7280;
+    }
+    .empty-state svg {
+      width:48px;
+      height:48px;
+      margin-bottom:12px;
+      opacity:0.5;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Font Text to Transparent PNG</h1>
-    <p class="note">Type your text, customize the style, then export as a transparent PNG for Canva.</p>
-
-    <div class="card">
-      <label for="textInput">Your Text</label>
-      <input type="text" id="textInput" value="Hello World" placeholder="Type your text here..." autofocus />
+  <div id="bootLoader">
+    <div style="display:flex;flex-direction:column;gap:12px;align-items:center">
+      <div style="width:48px;height:48px;border:4px solid #e5e7eb;border-top-color:#446472;border-radius:50%;animation:spin 1s linear infinite"></div>
+      <div style="font-weight:700;font-size:18px;color:#446472">Marketing Hub</div>
+      <div class="mini" style="color:#6b7280">Loading your workspace…</div>
     </div>
+  </div>
 
-    <div class="card">
-      <div class="row">
-        <div>
-          <label for="fontSize">Font Size (px)</label>
-          <input type="number" id="fontSize" value="120" min="12" max="500" step="1" />
+  <div id="loginView">
+    <div class="card" style="max-width:440px;width:100%;box-shadow:var(--shadow-lg)">
+      <h3 style="text-align:center;font-size:24px;margin-bottom:8px">Welcome Back</h3>
+      <div style="text-align:center;color:#6b7280;font-size:14px;margin-bottom:20px;padding:0 20px">Sign in to access the Font Generator</div>
+      <div class="content">
+        <div style="margin-bottom:16px">
+          <label for="loginUsername">Username</label>
+          <input id="loginUsername" type="text" autocomplete="username" placeholder="Enter your username" />
         </div>
-        <div>
-          <label for="fontColor">Text Color</label>
-          <div style="display: flex; gap: 0.5rem; align-items: center;">
-            <input type="color" id="fontColorPicker" value="#000000" />
-            <input type="text" id="fontColor" value="#000000" maxlength="7" style="width: 100px; font-family: monospace;" placeholder="#000000" />
+        <div style="margin-bottom:16px">
+          <label for="loginPassword">Password</label>
+          <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Enter your password" />
+        </div>
+        <div style="margin-bottom:20px">
+          <label style="display:flex;align-items:center;gap:8px;user-select:none;font-size:13px;font-weight:500;cursor:pointer">
+            <input id="togglePw" type="checkbox" style="width:auto;cursor:pointer" /> 
+            <span>Show password</span>
+          </label>
+        </div>
+        <button id="loginBtn" style="width:100%;padding:12px;font-size:15px;font-weight:700">Sign In</button>
+        <div id="loginError" style="margin-top:12px;padding:10px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#dc2626;font-size:13px;display:none"></div>
+      </div>
+    </div>
+  </div>
+
+  <header id="appHeader" style="display:none">
+    <div class="brand"><img src="logo-main.svg" class="logo-img" alt="Capstone" /><div class="title">Marketing Hub</div></div>
+    <div class="pill" style="display:flex;align-items:center;gap:8px">
+      <button id="logoutBtn" class="secondary" style="padding:6px 10px;width:auto">Logout</button>
+      <button id="adminPageBtn" class="secondary" style="padding:6px 10px;width:auto;display:none">Admin</button>
+    </div>
+    <div class="mini">Capstone Management Partners • Font Generator</div>
+  </header>
+
+  <div class="layout">
+    <aside id="mainNav" class="sidebar">
+      <a href="mmp_calendar_app.html" class="nav-tab" data-tab="calendar">Marketing Calendar</a>
+      <a href="marketing_plans.html" class="nav-tab" data-tab="plans">Marketing Plans</a>
+      <a href="marketing_contacts.html" class="nav-tab" data-tab="contacts">Marketing Contacts</a>
+      <a href="promo_order_tracker.html" class="nav-tab" data-tab="promo">Promo Order Tracker</a>
+      <a href="renewal_campaign.html" class="nav-tab" data-tab="renewal">Renewal Campaign</a>
+      <a href="velocity_tracker.html" class="nav-tab" data-tab="velocity">Velocity Tracker</a>
+      <a href="uniform_shop.html" class="nav-tab" data-tab="uniform">Uniform Shop</a>
+      <a href="creative_library.html" class="nav-tab" data-tab="creative">Creative Library</a>
+      <a href="cmpfont.html" class="nav-tab active" data-tab="font">Font Generator</a>
+    </aside>
+
+    <div class="content-pane" id="appContainer" style="display:none">
+      <!-- Text Input Card -->
+      <div class="card">
+        <h3>Font Text to Transparent PNG</h3>
+        <div class="content">
+          <p class="mini" style="margin-bottom:16px">Type your text, customize the style, then export as a transparent PNG for Canva or other design tools.</p>
+          <label for="textInput">Your Text</label>
+          <input type="text" id="textInput" value="Hello World" placeholder="Type your text here..." autofocus style="font-size:1.1rem" />
+        </div>
+      </div>
+
+      <!-- Style Options Card -->
+      <div class="card">
+        <h3>Style Options</h3>
+        <div class="content">
+          <div class="row" style="align-items:flex-end;margin-bottom:16px">
+            <div style="flex:0 0 120px">
+              <label for="fontSize">Font Size (px)</label>
+              <input type="number" id="fontSize" value="120" min="12" max="500" step="1" />
+            </div>
+            <div style="flex:0 0 200px">
+              <label for="fontColor">Text Color</label>
+              <div style="display:flex;gap:8px;align-items:center">
+                <input type="color" id="fontColorPicker" value="#000000" style="width:50px;height:40px;padding:2px;cursor:pointer" />
+                <input type="text" id="fontColor" value="#000000" maxlength="7" style="width:100px;font-family:monospace" placeholder="#000000" />
+              </div>
+            </div>
+            <div style="flex:0 0 140px">
+              <label for="fontWeight">Weight</label>
+              <select id="fontWeight">
+                <option value="400" selected>Normal (400)</option>
+                <option value="700">Bold (700)</option>
+              </select>
+            </div>
+          </div>
+          <div class="row" style="align-items:flex-end">
+            <div style="flex:0 0 150px">
+              <label for="letterSpacing">Letter Spacing (px)</label>
+              <input type="number" id="letterSpacing" value="0" min="-20" max="50" step="1" />
+            </div>
+            <div style="flex:0 0 180px">
+              <label for="scale">Export Scale</label>
+              <select id="scale">
+                <option value="1">1x</option>
+                <option value="2" selected>2x (Recommended)</option>
+                <option value="3">3x</option>
+                <option value="4">4x</option>
+              </select>
+            </div>
+            <div style="flex:1"></div>
           </div>
         </div>
-        <div>
-          <label for="fontWeight">Weight</label>
-          <select id="fontWeight">
-            <option value="400" selected>Normal (400)</option>
-            <option value="700">Bold (700)</option>
-          </select>
-        </div>
       </div>
-      <div class="row">
-        <div>
-          <label for="letterSpacing">Letter Spacing (px)</label>
-          <input type="number" id="letterSpacing" value="0" min="-20" max="50" step="1" />
-        </div>
-        <div>
-          <label for="scale">Export Scale</label>
-          <select id="scale">
-            <option value="1">1x</option>
-            <option value="2" selected>2x (Recommended)</option>
-            <option value="3">3x</option>
-            <option value="4">4x</option>
-          </select>
-        </div>
-      </div>
-    </div>
 
-    <div class="card">
-      <label>Preview (transparent background)</label>
-      <div class="preview-area">
-        <div id="previewText">Hello World</div>
+      <!-- Preview Card -->
+      <div class="card">
+        <h3>Preview</h3>
+        <div class="content">
+          <div class="preview-area">
+            <div id="previewText">Hello World</div>
+          </div>
+          <p class="mini" style="margin-top:12px;color:#6b7280">The checkerboard pattern indicates transparency. Your exported image will have no background.</p>
+          <div style="display:flex;gap:12px;margin-top:16px">
+            <button id="downloadBtn" class="good" style="flex:0 0 auto;width:auto;padding:12px 24px">
+              Download PNG
+            </button>
+          </div>
+        </div>
       </div>
-      <div class="actions">
-        <button id="downloadBtn">Download PNG</button>
+
+      <!-- Saved Colors Card -->
+      <div class="card">
+        <h3>Saved Color Codes</h3>
+        <div class="content">
+          <p class="mini" style="margin-bottom:16px">Save and share color codes with your team. Click a color to use it.</p>
+          
+          <div style="display:flex;gap:12px;margin-bottom:20px;align-items:flex-end">
+            <div style="flex:0 0 200px">
+              <label for="newColorName">Color Name</label>
+              <input type="text" id="newColorName" placeholder="e.g., Brand Blue" />
+            </div>
+            <div style="flex:0 0 180px">
+              <label for="newColorHex">Hex Code</label>
+              <div style="display:flex;gap:8px;align-items:center">
+                <input type="color" id="newColorPicker" value="#446472" style="width:50px;height:40px;padding:2px;cursor:pointer" />
+                <input type="text" id="newColorHex" value="#446472" maxlength="7" style="width:100px;font-family:monospace" />
+              </div>
+            </div>
+            <button id="saveColorBtn" class="good" style="flex:0 0 auto;width:auto;padding:10px 20px">
+              Save Color
+            </button>
+          </div>
+
+          <div id="savedColorsContainer">
+            <div class="empty-state">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+              </svg>
+              <div style="font-weight:600;margin-bottom:4px">No saved colors yet</div>
+              <div class="mini">Add your first color above to get started</div>
+            </div>
+          </div>
+        </div>
       </div>
-      <p class="note">The checkerboard pattern indicates transparency. Your exported image will have no background.</p>
+
+      <div class="footer">Marketing Hub • Font Text to Transparent PNG Generator</div>
     </div>
   </div>
 
   <canvas id="canvas"></canvas>
 
   <script>
-    const textInput = document.getElementById('textInput');
-    const fontSize = document.getElementById('fontSize');
-    const fontColor = document.getElementById('fontColor');
-    const fontColorPicker = document.getElementById('fontColorPicker');
-    const fontWeight = document.getElementById('fontWeight');
-    const letterSpacing = document.getElementById('letterSpacing');
-    const scale = document.getElementById('scale');
-    const previewText = document.getElementById('previewText');
-    const downloadBtn = document.getElementById('downloadBtn');
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
+    // State
+    let SESSION_ACTIVE = false;
+    let currentUser = null;
+    let savedColors = [];
 
-    // Sync color picker and hex input
-    fontColorPicker.addEventListener('input', () => {
-      fontColor.value = fontColorPicker.value.toUpperCase();
+    const els = {
+      bootLoader: document.getElementById('bootLoader'),
+      loginView: document.getElementById('loginView'),
+      loginUsername: document.getElementById('loginUsername'),
+      loginPassword: document.getElementById('loginPassword'),
+      togglePw: document.getElementById('togglePw'),
+      loginBtn: document.getElementById('loginBtn'),
+      loginError: document.getElementById('loginError'),
+
+      appHeader: document.getElementById('appHeader'),
+      appContainer: document.getElementById('appContainer'),
+      logoutBtn: document.getElementById('logoutBtn'),
+      adminPageBtn: document.getElementById('adminPageBtn'),
+
+      textInput: document.getElementById('textInput'),
+      fontSize: document.getElementById('fontSize'),
+      fontColor: document.getElementById('fontColor'),
+      fontColorPicker: document.getElementById('fontColorPicker'),
+      fontWeight: document.getElementById('fontWeight'),
+      letterSpacing: document.getElementById('letterSpacing'),
+      scale: document.getElementById('scale'),
+      previewText: document.getElementById('previewText'),
+      downloadBtn: document.getElementById('downloadBtn'),
+      canvas: document.getElementById('canvas'),
+
+      newColorName: document.getElementById('newColorName'),
+      newColorHex: document.getElementById('newColorHex'),
+      newColorPicker: document.getElementById('newColorPicker'),
+      saveColorBtn: document.getElementById('saveColorBtn'),
+      savedColorsContainer: document.getElementById('savedColorsContainer')
+    };
+
+    const ctx = els.canvas.getContext('2d');
+
+    // Activate current nav tab
+    (function(){
+      const nav = document.getElementById('mainNav');
+      if (!nav) return;
+      const path = (location.pathname || '').toLowerCase();
+      nav.querySelectorAll('.nav-tab').forEach(a => {
+        const href = (a.getAttribute('href') || '').toLowerCase();
+        if (href && (path.endsWith(href) || path.endsWith('/' + href))) a.classList.add('active');
+      });
+    })();
+
+    // Login helpers
+    if (els.togglePw){ els.togglePw.addEventListener('change', ()=>{ els.loginPassword.type = els.togglePw.checked ? 'text' : 'password'; }); }
+    if (els.loginBtn){ els.loginBtn.addEventListener('click', doInlineLogin); }
+    document.addEventListener('keydown', (e)=>{ if (e.key==='Enter' && (document.activeElement===els.loginUsername || document.activeElement===els.loginPassword)){ doInlineLogin(); } });
+
+    async function doInlineLogin(){
+      const u = (els.loginUsername?.value||'').trim();
+      const p = els.loginPassword?.value||'';
+      if (!u || !p){ if (els.loginError){ els.loginError.textContent='Enter username and password'; els.loginError.style.display=''; } return; }
+      try{
+        if (els.loginError) els.loginError.style.display='none';
+        const res = await fetch('/api/auth-login', { method:'POST', headers:{ 'Content-Type':'application/json', 'Accept':'application/json' }, credentials:'include', body: JSON.stringify({ username:u, password:p }) });
+        if (!res.ok){ if (els.loginError){ els.loginError.textContent = (res.status===401||res.status===400)?'Incorrect username or password':'Login failed'; els.loginError.style.display=''; } return; }
+        await initAuth();
+      }catch(e){ if (els.loginError){ els.loginError.textContent='Network error. Try again.'; els.loginError.style.display=''; } }
+    }
+
+    function showApp(){ 
+      if (els.appHeader) els.appHeader.style.display=''; 
+      if (els.appContainer) els.appContainer.style.display=''; 
+      if (els.loginView) els.loginView.style.display='none'; 
+      if (els.bootLoader) els.bootLoader.style.display='none'; 
+    }
+    function showLogin(){ 
+      if (els.bootLoader) els.bootLoader.style.display='none'; 
+      if (els.appHeader) els.appHeader.style.display='none'; 
+      if (els.appContainer) els.appContainer.style.display='none'; 
+      if (els.loginView) els.loginView.style.display='flex'; 
+    }
+
+    async function doLogout(){ 
+      try{ await fetch('/api/auth-logout', { method:'POST' }); }catch(e){} 
+      location.href = 'index.html'; 
+    }
+
+    function bindHeaderHandlers(){ 
+      if (els.logoutBtn) els.logoutBtn.onclick = () => doLogout(); 
+      if (els.adminPageBtn){ 
+        els.adminPageBtn.style.display = currentUser && currentUser.role==='admin' ? '' : 'none'; 
+        els.adminPageBtn.onclick = () => { location.href = 'mmp_admin.html'; }; 
+      } 
+    }
+
+    async function initAuth(){
+      try{ 
+        const meRes = await fetch('/api/me', { credentials: 'include' }); 
+        if (meRes.ok){ 
+          const me = await meRes.json(); 
+          currentUser = { username: me.username, role: me.role, properties: me.properties }; 
+          SESSION_ACTIVE = true; 
+          showApp(); 
+          bindHeaderHandlers(); 
+          await loadSavedColors();
+          return true; 
+        } 
+      }catch(e){}
+      showLogin(); 
+      return false;
+    }
+
+    // Color sync helpers
+    els.fontColorPicker.addEventListener('input', () => {
+      els.fontColor.value = els.fontColorPicker.value.toUpperCase();
       updatePreview();
     });
 
-    fontColor.addEventListener('input', () => {
-      let val = fontColor.value.trim();
-      // Add # if missing
+    els.fontColor.addEventListener('input', () => {
+      let val = els.fontColor.value.trim();
       if (val && !val.startsWith('#')) val = '#' + val;
-      // Validate hex format
       if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
-        fontColorPicker.value = val;
-        fontColor.value = val.toUpperCase();
+        els.fontColorPicker.value = val;
+        els.fontColor.value = val.toUpperCase();
         updatePreview();
       }
     });
 
-    fontColor.addEventListener('blur', () => {
-      // Ensure uppercase on blur
-      fontColor.value = fontColor.value.toUpperCase();
+    els.fontColor.addEventListener('blur', () => {
+      els.fontColor.value = els.fontColor.value.toUpperCase();
+    });
+
+    // New color input sync
+    els.newColorPicker.addEventListener('input', () => {
+      els.newColorHex.value = els.newColorPicker.value.toUpperCase();
+    });
+
+    els.newColorHex.addEventListener('input', () => {
+      let val = els.newColorHex.value.trim();
+      if (val && !val.startsWith('#')) val = '#' + val;
+      if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+        els.newColorPicker.value = val;
+        els.newColorHex.value = val.toUpperCase();
+      }
+    });
+
+    els.newColorHex.addEventListener('blur', () => {
+      els.newColorHex.value = els.newColorHex.value.toUpperCase();
     });
 
     function updatePreview() {
-      const text = textInput.value || ' ';
-      const size = fontSize.value + 'px';
-      const color = fontColor.value;
-      const weight = fontWeight.value;
-      const spacing = letterSpacing.value + 'px';
+      const text = els.textInput.value || ' ';
+      const size = els.fontSize.value + 'px';
+      const color = els.fontColor.value;
+      const weight = els.fontWeight.value;
+      const spacing = els.letterSpacing.value + 'px';
 
-      previewText.textContent = text;
-      previewText.style.fontSize = size;
-      previewText.style.color = color;
-      previewText.style.fontWeight = weight;
-      previewText.style.letterSpacing = spacing;
+      els.previewText.textContent = text;
+      els.previewText.style.fontSize = size;
+      els.previewText.style.color = color;
+      els.previewText.style.fontWeight = weight;
+      els.previewText.style.letterSpacing = spacing;
     }
 
     function downloadPNG() {
-      const text = textInput.value || ' ';
-      const size = parseInt(fontSize.value, 10);
-      const color = fontColor.value;
-      const weight = fontWeight.value;
-      const spacing = parseInt(letterSpacing.value, 10);
-      const scaleVal = parseInt(scale.value, 10);
+      const text = els.textInput.value || ' ';
+      const size = parseInt(els.fontSize.value, 10);
+      const color = els.fontColor.value;
+      const weight = els.fontWeight.value;
+      const spacing = parseInt(els.letterSpacing.value, 10);
+      const scaleVal = parseInt(els.scale.value, 10);
 
-      // Build font string
       const fontStr = `${weight} ${size * scaleVal}px "zooja-pro", cursive`;
 
-      // Measure text
       ctx.font = fontStr;
       ctx.textBaseline = 'top';
 
-      // Calculate width with letter spacing
       let totalWidth = 0;
       for (let i = 0; i < text.length; i++) {
         totalWidth += ctx.measureText(text[i]).width;
@@ -228,20 +789,16 @@
       const metrics = ctx.measureText(text);
       const height = (metrics.actualBoundingBoxAscent || size) + (metrics.actualBoundingBoxDescent || size * 0.3);
       
-      // Add padding
       const padding = size * scaleVal * 0.2;
-      canvas.width = Math.ceil(totalWidth + padding * 2);
-      canvas.height = Math.ceil(height + padding * 2);
+      els.canvas.width = Math.ceil(totalWidth + padding * 2);
+      els.canvas.height = Math.ceil(height + padding * 2);
 
-      // Clear with transparency
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, els.canvas.width, els.canvas.height);
 
-      // Set font again after resize
       ctx.font = fontStr;
       ctx.textBaseline = 'top';
       ctx.fillStyle = color;
 
-      // Draw each character with letter spacing
       let x = padding;
       const y = padding + (metrics.actualBoundingBoxAscent ? 0 : size * 0.1);
       for (let i = 0; i < text.length; i++) {
@@ -249,28 +806,176 @@
         x += ctx.measureText(text[i]).width + (i < text.length - 1 ? spacing * scaleVal : 0);
       }
 
-      // Download
       const link = document.createElement('a');
       link.download = 'text-' + Date.now() + '.png';
-      link.href = canvas.toDataURL('image/png');
+      link.href = els.canvas.toDataURL('image/png');
       link.click();
     }
 
+    // Saved Colors Functions
+    async function loadSavedColors() {
+      try {
+        const res = await fetch('/api/color-codes', { credentials: 'include' });
+        if (res.ok) {
+          savedColors = await res.json();
+          renderSavedColors();
+        }
+      } catch(e) {
+        console.error('Failed to load colors:', e);
+      }
+    }
+
+    function renderSavedColors() {
+      const container = els.savedColorsContainer;
+      
+      if (!savedColors || savedColors.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+            </svg>
+            <div style="font-weight:600;margin-bottom:4px">No saved colors yet</div>
+            <div class="mini">Add your first color above to get started</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="colors-grid">
+          ${savedColors.map(color => `
+            <div class="color-swatch" data-id="${escapeAttr(color.id)}" data-hex="${escapeAttr(color.hex)}" onclick="useColor('${escapeAttr(color.hex)}')">
+              <div class="color-preview" style="background-color:${escapeAttr(color.hex)}"></div>
+              <div class="color-info">
+                <div class="color-name">${escapeHtml(color.name)}</div>
+                <div class="color-hex">${escapeHtml(color.hex)}</div>
+                <div class="mini muted" style="margin-top:2px">by ${escapeHtml(color.createdBy || 'Unknown')}</div>
+              </div>
+              <div class="color-actions">
+                <button class="secondary" onclick="event.stopPropagation(); copyColor('${escapeAttr(color.hex)}')" title="Copy hex code">Copy</button>
+                <button class="warn" onclick="event.stopPropagation(); deleteColor('${escapeAttr(color.id)}')" title="Delete color">×</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function useColor(hex) {
+      els.fontColor.value = hex.toUpperCase();
+      els.fontColorPicker.value = hex;
+      updatePreview();
+      
+      // Visual feedback
+      document.querySelectorAll('.color-swatch').forEach(el => el.classList.remove('selected'));
+      const swatch = document.querySelector(`.color-swatch[data-hex="${hex}"]`);
+      if (swatch) swatch.classList.add('selected');
+    }
+
+    function copyColor(hex) {
+      navigator.clipboard.writeText(hex).then(() => {
+        // Show brief feedback
+        const btn = event.target;
+        const originalText = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = originalText; }, 1000);
+      }).catch(err => {
+        console.error('Failed to copy:', err);
+      });
+    }
+
+    async function deleteColor(id) {
+      if (!confirm('Delete this color? This cannot be undone.')) return;
+      
+      try {
+        const res = await fetch('/api/color-codes', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ id })
+        });
+        
+        if (res.ok) {
+          savedColors = savedColors.filter(c => c.id !== id);
+          renderSavedColors();
+        } else {
+          alert('Failed to delete color');
+        }
+      } catch(e) {
+        alert('Error deleting color: ' + e.message);
+      }
+    }
+
+    async function saveNewColor() {
+      const name = els.newColorName.value.trim();
+      let hex = els.newColorHex.value.trim();
+      
+      if (!name) {
+        alert('Please enter a color name');
+        els.newColorName.focus();
+        return;
+      }
+      
+      if (!hex.startsWith('#')) hex = '#' + hex;
+      if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+        alert('Please enter a valid hex color (e.g., #446472)');
+        els.newColorHex.focus();
+        return;
+      }
+      
+      try {
+        const res = await fetch('/api/color-codes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ name, hex: hex.toUpperCase() })
+        });
+        
+        if (res.ok) {
+          const newColor = await res.json();
+          savedColors.push(newColor);
+          renderSavedColors();
+          
+          // Clear inputs
+          els.newColorName.value = '';
+          els.newColorHex.value = '#446472';
+          els.newColorPicker.value = '#446472';
+        } else {
+          const errText = await res.text();
+          alert('Failed to save color: ' + errText);
+        }
+      } catch(e) {
+        alert('Error saving color: ' + e.message);
+      }
+    }
+
+    // Utility functions
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    
+    function escapeAttr(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
     // Event listeners
-    textInput.addEventListener('input', updatePreview);
-    fontSize.addEventListener('input', updatePreview);
-    fontColor.addEventListener('input', updatePreview);
-    fontWeight.addEventListener('change', updatePreview);
-    letterSpacing.addEventListener('input', updatePreview);
-    downloadBtn.addEventListener('click', downloadPNG);
+    els.textInput.addEventListener('input', updatePreview);
+    els.fontSize.addEventListener('input', updatePreview);
+    els.fontWeight.addEventListener('change', updatePreview);
+    els.letterSpacing.addEventListener('input', updatePreview);
+    els.downloadBtn.addEventListener('click', downloadPNG);
+    els.saveColorBtn.addEventListener('click', saveNewColor);
 
     // Wait for font to load
     document.fonts.ready.then(() => {
       updatePreview();
     });
 
-    // Initial preview
+    // Initialize
     updatePreview();
+    initAuth();
   </script>
 </body>
 </html>
