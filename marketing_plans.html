@@ -224,6 +224,21 @@
     .key-date-remove{background:none; border:none; color:#9ca3af; cursor:pointer; font-size:18px; padding:0; width:auto}
     .key-date-remove:hover{color:var(--danger)}
 
+    /* Template Suggestions */
+    .template-section{margin-top:16px; padding-top:16px; border-top:1px solid var(--border)}
+    .template-section-title{font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:10px}
+    .template-chips{display:flex; flex-wrap:wrap; gap:6px}
+    .template-chip{padding:6px 12px; background:#f1f5f9; border:1px solid var(--border); border-radius:6px; font-size:12px; color:var(--text); cursor:pointer; transition:all .15s}
+    .template-chip:hover{background:#e2e8f0; border-color:#cbd5e1}
+    .template-chip.selected{background:var(--brand-accent-2); border-color:var(--brand-accent-2); color:#fff}
+
+    /* Special Templates */
+    .special-templates{display:flex; flex-direction:column; gap:8px; margin-top:12px}
+    .special-template{padding:12px 14px; background:#fefce8; border:1px solid #fde047; border-radius:8px; cursor:pointer; transition:all .15s}
+    .special-template:hover{background:#fef9c3; border-color:#facc15}
+    .special-template-title{font-size:12px; font-weight:700; color:#854d0e; margin-bottom:4px}
+    .special-template-text{font-size:13px; color:#713f12}
+
     .hidden{display:none}
 
     /* Login */
@@ -377,7 +392,7 @@
 
   <!-- Add Activity Modal -->
   <div id="activityModal" class="modal-overlay">
-    <div class="modal" style="max-width:600px">
+    <div class="modal" style="max-width:700px">
       <div class="modal-header">
         <h3>Add Activity</h3>
         <button class="modal-close" id="closeActivityModal">&times;</button>
@@ -398,7 +413,7 @@
           </div>
           <div>
             <label>Category</label>
-            <select id="actCategory">
+            <select id="actCategory" onchange="updateActivityTemplates()">
               <option value="outreach">Outreach Marketing</option>
               <option value="social">Social Media</option>
               <option value="event">Event</option>
@@ -407,7 +422,14 @@
             </select>
           </div>
         </div>
-        <div style="margin-bottom:16px">
+        
+        <!-- Activity Templates -->
+        <div class="template-section" id="activityTemplatesSection">
+          <div class="template-section-title">Quick Add Templates</div>
+          <div class="template-chips" id="activityTemplateChips"></div>
+        </div>
+        
+        <div style="margin-bottom:16px;margin-top:16px">
           <label>Activity Description</label>
           <textarea id="actDescription" placeholder="Describe the marketing activity..."></textarea>
         </div>
@@ -1035,6 +1057,7 @@
       document.getElementById('actGoal').value = '';
       document.getElementById('actOwner').value = '';
       els.activityModal.classList.add('show');
+      setTimeout(updateActivityTemplates, 0);
     }
 
     els.closeActivityModal.onclick = () => els.activityModal.classList.remove('show');
