@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Marketing Plans</title>
+  <title>Marketing Plans • Marketing Hub</title>
   <link rel="preconnect" href="https://use.typekit.net" crossorigin>
   <link rel="preconnect" href="https://p.typekit.net" crossorigin>
   <link rel="stylesheet" href="https://use.typekit.net/hqv8hwr.css">
@@ -12,657 +12,237 @@
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <meta name="description" content="Create, edit, and track 30 & 60 day marketing plans by property." />
   <style>
-    :root{
-      --brand-primary:#446472;
-      --brand-accent:#ffb732;
-      --brand-accent-2:#52d5ff;
-      --brand-gray:#929497;
-      --page-bg:#f8f9fa;
-
-      --bg:#ffffff;
-      --panel:#ffffff;
-      --muted:#ffffff;
-      --text:#1f2937;
-      --subtext:#6b7280;
-      --accent:var(--brand-accent-2);
-      --accent-2:var(--brand-accent);
-      --good:#10b981;
-      --warn:#f59e0b;
-      --bad:#ef4444;
-      --border:#e5e7eb;
-      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    }
-    *{box-sizing:border-box; margin:0; padding:0}
+    :root{ --brand-primary:#446472; --brand-accent:#ffb732; --brand-accent-2:#52d5ff; --brand-gray:#929497; --page-bg:#f8fafc; --bg:#ffffff; --panel:#ffffff; --text:#1e293b; --subtext:#64748b; --accent:var(--brand-accent-2); --border:#e2e8f0; --success:#22c55e; --warning:#f59e0b; --danger:#ef4444; }
+    *{box-sizing:border-box;margin:0;padding:0}
     html,body{height:100%}
-    body{ 
-      margin:0; 
-      font-family:'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; 
-      background:var(--page-bg); 
-      color:var(--text);
-      line-height:1.6;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-    header{ 
-      background:#ffffff; 
-      border-bottom:2px solid var(--border); 
-      box-shadow:var(--shadow-sm); 
-      padding:20px 24px; 
-      display:flex; 
-      align-items:center; 
-      gap:16px; 
-      flex-wrap:wrap;
-      position:sticky;
-      top:0;
-      z-index:40;
-    }
-    .brand{display:flex;align-items:center;gap:12px}
-    .brand .logo-img{height:36px;width:auto;display:block}
-    .brand .title{
-      color:#446472; 
-      font-family: zooja-pro, 'Open Sans', Arial, sans-serif; 
-      font-weight: 600; 
-      font-size: clamp(24px, 4vw, 32px); 
-      line-height: 1.2;
-      letter-spacing: -0.02em;
-    }
+    body{margin:0; font-family:'Open Sans',system-ui,-apple-system,sans-serif; background:var(--page-bg); color:var(--text);font-size:14px;line-height:1.5}
+    
+    /* Header */
+    header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:10px}
+    .brand .logo-img{height:28px;width:auto}
+    .brand .title{color:#ffb732;font-family:zooja-pro,Arial,sans-serif;font-size:clamp(32px,4vw,48px);line-height:1}
+    .header-controls{display:flex;align-items:center;gap:12px;margin-left:auto}
+    .header-btn{background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;transition:all .15s;width:auto}
+    .header-btn:hover{background:#f8fafc;border-color:#cbd5e1}
+    .company-name{font-size:12px;color:var(--subtext);font-weight:500}
 
-    .pill{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      border:1px solid var(--border); 
-      background:#ffffff; 
-      border-radius:12px; 
-      padding:8px 14px; 
-      font-size:13px; 
-      color:#374151;
-      box-shadow:var(--shadow-sm);
-    }
-    select,input,textarea,button{ 
-      width:100%; 
-      padding:10px 14px; 
-      border-radius:8px; 
-      border:1px solid #d1d5db; 
-      background:#ffffff; 
-      color:var(--text); 
-      font-size:14px;
-      font-family:inherit;
-      transition: all 0.2s ease;
-    }
-    select:focus, input:focus, textarea:focus {
-      outline:none;
-      border-color:var(--brand-accent-2);
-      box-shadow: 0 0 0 3px rgba(82, 213, 255, 0.1);
-    }
-    label{
-      font-size:13px; 
-      color:#374151; 
-      display:block; 
-      margin-bottom:6px;
-      font-weight:600;
-    }
-    button{ 
-      cursor:pointer; 
-      background:var(--brand-primary); 
-      color:#ffffff; 
-      border:1px solid var(--brand-primary); 
-      font-weight:600;
-      transition: all 0.2s ease;
-      box-shadow:var(--shadow-sm);
-    }
-    button:hover:not(:disabled) {
-      transform: translateY(-1px);
-      box-shadow:var(--shadow-md);
-      opacity:0.95;
-    }
-    button:active:not(:disabled) {
-      transform: translateY(0);
-    }
-    button:disabled {
-      opacity:0.5;
-      cursor:not-allowed;
-    }
-    button.secondary{ 
-      background:#ffffff; 
-      color:#374151; 
-      border:1px solid #d1d5db; 
-      font-weight:600;
-    }
-    button.secondary:hover:not(:disabled) {
-      background:#f9fafb;
-      border-color:#9ca3af;
-    }
-    button.warn{ 
-      background:var(--warn); 
-      color:#ffffff; 
-      border-color:var(--warn);
-    }
-    button.good{ 
-      background:var(--good); 
-      color:#ffffff; 
-      border-color:var(--good);
-    }
+    /* Navigation */
+    .nav-bar{background:#fff;border-bottom:1px solid var(--border)}
+    .nav-wrap{max-width:1400px;margin:0 auto;padding:0 24px;display:flex;gap:2px;overflow-x:auto}
+    .nav-tab{display:flex;align-items:center;gap:6px;padding:14px 16px;color:var(--subtext);text-decoration:none;font-size:13px;font-weight:600;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap}
+    .nav-tab:hover{color:var(--text);background:#f8fafc}
+    .nav-tab.active{color:var(--brand-primary);border-bottom-color:var(--brand-primary)}
 
-    .nav-bar{ 
-      background:#ffffff; 
-      border-bottom:1px solid var(--border); 
-      box-shadow:var(--shadow-sm);
-    }
-    .nav-bar .nav-wrap{ 
-      max-width:1200px; 
-      margin:0 auto; 
-      padding:10px 20px; 
-      display:flex; 
-      gap:10px; 
-      flex-wrap:wrap;
-    }
-    .nav-tab{ 
-      display:inline-flex; 
-      align-items:center; 
-      gap:8px; 
-      padding:10px 16px; 
-      border:1px solid transparent; 
-      border-radius:8px; 
-      color:#6b7280; 
-      text-decoration:none; 
-      background:transparent; 
-      transition: all 0.2s ease;
-      font-weight:500;
-      font-size:14px;
-    }
-    .nav-tab:hover{ 
-      background:#f3f4f6;
-      color:#374151;
-    }
-    .nav-tab.active{ 
-      background:var(--brand-accent-2); 
-      border-color:var(--brand-accent-2); 
-      color:#ffffff; 
-      font-weight:600;
-      box-shadow:var(--shadow-sm);
-    }
+    .container{padding:24px; max-width:1600px; margin:0 auto}
 
-    .container{ 
-      padding:24px; 
-      max-width:1400px; 
-      margin: 0 auto; 
-      display:grid; 
-      grid-template-columns: 1fr; 
-      gap:24px;
-    }
-    .card{ 
-      background:#ffffff; 
-      border:1px solid var(--border); 
-      border-radius:12px; 
-      overflow:hidden; 
-      box-shadow:var(--shadow-sm);
-      transition: box-shadow 0.2s ease;
-    }
-    .card:hover {
-      box-shadow:var(--shadow-md);
-    }
-    .card h3{ 
-      margin:0; 
-      padding:16px 20px; 
-      font-size:16px; 
-      color:#111827; 
-      font-weight:700;
-      border-bottom:1px solid var(--border);
-      background:#f9fafb;
-    }
-    .card .content{ 
-      padding:20px;
-    }
+    /* Cards */
+    .card{background:#ffffff; border:1px solid var(--border); border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,0.06); overflow:hidden; margin-bottom:20px}
+    .card h3{margin:0; padding:16px 20px; font-size:15px; color:#374151; font-weight:700; font-family: Roboto, Arial, sans-serif; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--border); background:#f8fafc}
+    .card .content{padding:20px}
 
-    .row{ 
-      display:flex; 
-      gap:12px; 
-      align-items:center; 
-      flex-wrap:wrap;
-    }
-    .row > *{ flex:1; min-width:0 }
+    /* Form Elements */
+    label{font-size:12px; color:#6b7280; display:block; margin-bottom:6px; font-weight:600}
+    input, select, textarea{width:100%; padding:10px 12px; border-radius:8px; border:1px solid #d1d5db; background:#fff; color:var(--text); font-size:14px; transition:border-color .15s, box-shadow .15s; font-family:inherit}
+    input:focus, select:focus, textarea:focus{outline:none; border-color:var(--brand-accent-2); box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
+    textarea{min-height:80px;resize:vertical}
 
-    .toolbar{ 
-      display:flex; 
-      gap:10px; 
-      align-items:center; 
-      flex-wrap:wrap;
-    }
-    .muted{ color:#6b7280 }
-    .mini{ 
-      font-size:12px; 
-      color:#6b7280;
-      line-height:1.4;
-    }
-    .badge{ 
-      display:inline-block; 
-      padding:4px 10px; 
-      border-radius:6px; 
-      font-size:12px; 
-      background:#f3f4f6; 
-      color:#374151; 
-      border:1px solid var(--border);
-      font-weight:600;
-    }
+    /* Buttons */
+    .btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 18px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--text); font-weight:600; cursor:pointer; font-size:14px; transition:all .15s; width:auto}
+    .btn:hover{background:#f8fafc}
+    .btn.primary{background:var(--brand-accent-2); border-color:var(--brand-accent-2); color:#0b1b24}
+    .btn.primary:hover{background:#3ecbf5}
+    .btn.success{background:var(--success); border-color:var(--success); color:#fff}
+    .btn.success:hover{background:#16a34a}
+    .btn.warning{background:var(--warning); border-color:var(--warning); color:#fff}
+    .btn.warning:hover{background:#d97706}
+    .btn.danger{background:var(--danger); border-color:var(--danger); color:#fff}
+    .btn.danger:hover{background:#dc2626}
+    .btn.sm{padding:6px 12px; font-size:13px}
+    .btn:disabled{opacity:0.5; cursor:not-allowed}
 
-    table{ 
-      width:100%; 
-      border-collapse:separate; 
-      border-spacing:0;
-    }
-    thead th{ 
-      position:sticky; 
-      top:0; 
-      background:#f9fafb; 
-      z-index:1; 
-      color:#374151; 
-      font-weight:700; 
-      font-size:13px; 
-      text-align:left; 
-      padding:14px 16px; 
-      border-bottom:2px solid var(--border);
-      text-transform:uppercase;
-      letter-spacing:0.05em;
-    }
-    tbody td{ 
-      padding:14px 16px; 
-      border-bottom:1px solid var(--border); 
-      font-size:14px;
-      vertical-align:middle;
-    }
-    tbody tr{ 
-      transition: background-color 0.15s ease;
-    }
-    tbody tr:hover{ 
-      background:#f9fafb; 
-      cursor:pointer;
-    }
-    tbody tr:last-child td {
-      border-bottom:none;
-    }
+    .badge{display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; background:#f1f5f9; color:#475569; border:1px solid var(--border); font-weight:600}
+    .badge.success{background:#dcfce7;color:#166534;border-color:#bbf7d0}
+    .badge.warning{background:#fef3c7;color:#92400e;border-color:#fde68a}
+    .badge.danger{background:#fee2e2;color:#991b1b;border-color:#fecaca}
+    .badge.info{background:#dbeafe;color:#1e40af;border-color:#bfdbfe}
+    .badge.primary{background:var(--brand-accent-2);color:#fff;border-color:var(--brand-accent-2)}
+
+    .hint{font-size:12px; color:#6b7280; margin-top:6px}
+
+    /* Tabs */
+    .tabs{display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap}
+    .tab-btn{flex:0 0 auto; width:auto; padding:10px 20px; border-radius:8px; background:#fff; border:1px solid var(--border); color:var(--text); font-weight:600; cursor:pointer; font-size:14px; transition:all .15s}
+    .tab-btn:hover{background:#f8fafc; border-color:#cbd5e1}
+    .tab-btn.active{background:var(--brand-primary); color:#fff; border-color:var(--brand-primary)}
+    .tab-content{display:none}
+    .tab-content.active{display:block}
+
+    /* Two Column Layout */
+    .two-col{display:grid; grid-template-columns:340px 1fr; gap:24px; align-items:start}
+    @media(max-width:1000px){.two-col{grid-template-columns:1fr}}
+
+    /* Plan List Sidebar */
+    .plan-list-card{background:#fff; border:1px solid var(--border); border-radius:14px; overflow:hidden; position:sticky; top:140px}
+    .plan-list-header{padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between}
+    .plan-list-header h2{font-size:15px; font-weight:700; color:var(--text); margin:0}
+    .plan-count{font-size:12px; color:var(--subtext); background:#f1f5f9; padding:4px 10px; border-radius:999px}
+    
+    .plan-filters{padding:12px 16px; border-bottom:1px solid var(--border); display:flex; gap:8px; flex-wrap:wrap}
+    .plan-filters select, .plan-filters input{padding:8px 10px; font-size:13px}
+
+    .plan-list{max-height:calc(100vh - 380px); overflow-y:auto}
+    .plan-item{padding:14px 20px; border-bottom:1px solid var(--border); cursor:pointer; transition:background .15s}
+    .plan-item:last-child{border-bottom:none}
+    .plan-item:hover{background:#f8fafc}
+    .plan-item.active{background:#eff6ff; border-left:3px solid var(--brand-accent-2)}
+    .plan-item-name{font-weight:600; color:var(--text); margin-bottom:4px}
+    .plan-item-meta{font-size:12px; color:var(--subtext); display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+
+    .add-plan-btn{width:100%; padding:14px 20px; background:#fff; border:none; border-top:1px solid var(--border); color:var(--brand-primary); font-weight:600; font-size:14px; cursor:pointer; transition:background .15s; display:flex; align-items:center; justify-content:center; gap:8px}
+    .add-plan-btn:hover{background:#f0f9ff}
+
+    /* Plan Detail Panel */
+    .detail-panel{min-width:0}
+    .detail-card{background:#fff; border:1px solid var(--border); border-radius:14px; overflow:hidden}
+    .detail-header{padding:20px 24px; border-bottom:1px solid var(--border); background:linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)}
+    .detail-header h2{font-size:20px; font-weight:700; color:var(--text); margin:0 0 8px 0}
+    .detail-actions{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px}
+
+    /* Week Tabs */
+    .week-tabs{display:flex; gap:4px; padding:16px 20px; border-bottom:1px solid var(--border); overflow-x:auto; background:#f8fafc}
+    .week-tab{padding:10px 16px; border-radius:8px; background:#fff; border:1px solid var(--border); font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; transition:all .15s}
+    .week-tab:hover{border-color:#cbd5e1}
+    .week-tab.active{background:var(--brand-accent-2); border-color:var(--brand-accent-2); color:#fff}
+    .week-tab .week-progress{font-size:11px; font-weight:400; opacity:0.8}
+
+    /* Week Content */
+    .week-content{padding:20px}
+    .week-header{display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:20px; flex-wrap:wrap}
+    .week-title{font-size:18px; font-weight:700; color:var(--text)}
+    .week-dates{font-size:13px; color:var(--subtext)}
+    .week-stats{display:flex; gap:12px}
+    .week-stat{text-align:center; padding:8px 16px; background:#f8fafc; border-radius:8px; border:1px solid var(--border)}
+    .week-stat-value{font-size:20px; font-weight:700; color:var(--brand-primary)}
+    .week-stat-label{font-size:11px; color:var(--subtext); text-transform:uppercase}
+
+    /* Current Special Banner */
+    .special-banner{background:linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border:1px solid #fcd34d; border-radius:10px; padding:16px 20px; margin-bottom:20px}
+    .special-banner-title{font-size:12px; font-weight:700; color:#92400e; text-transform:uppercase; margin-bottom:4px}
+    .special-banner-text{font-size:14px; color:#78350f; font-weight:500}
+
+    /* Activity Table */
+    .activity-section{margin-bottom:24px}
+    .activity-section-header{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px}
+    .activity-section-title{font-size:14px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:8px}
+    
+    .activity-table{width:100%; border-collapse:separate; border-spacing:0; border:1px solid var(--border); border-radius:10px; overflow:hidden}
+    .activity-table th{background:#f8fafc; padding:12px 14px; text-align:left; font-size:12px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.5px; border-bottom:1px solid var(--border)}
+    .activity-table td{padding:12px 14px; border-bottom:1px solid var(--border); font-size:13px; vertical-align:top}
+    .activity-table tr:last-child td{border-bottom:none}
+    .activity-table tr:hover{background:#f8fafc}
+    
+    .activity-day{font-weight:700; color:var(--brand-primary); white-space:nowrap}
+    .activity-desc{max-width:300px}
+    .activity-goal{font-weight:600; color:var(--text)}
+    .activity-owner{font-size:12px; color:var(--subtext)}
+    .activity-status{text-align:center}
+    .activity-actual{font-size:12px; color:var(--subtext)}
+
+    /* Status Checkbox */
+    .status-check{width:20px; height:20px; border-radius:4px; border:2px solid #d1d5db; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .15s; margin:0 auto}
+    .status-check.done{background:var(--success); border-color:var(--success); color:#fff}
+    .status-check.done::after{content:'✓'; font-size:12px; font-weight:700}
+
+    /* Empty State */
+    .empty-state{text-align:center; padding:60px 40px; color:var(--subtext)}
+    .empty-state h3{font-size:18px; color:var(--text); margin-bottom:8px}
+    .empty-state p{font-size:14px; margin-bottom:20px}
 
     /* Modal */
-    .modal-backdrop{
-      position:fixed;
-      inset:0;
-      background:rgba(0,0,0,.5);
-      backdrop-filter:blur(4px);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      z-index:50;
-      animation: fadeIn 0.2s ease;
-    }
-    @keyframes fadeIn {
-      from { opacity:0; }
-      to { opacity:1; }
-    }
-    .modal{
-      background:#ffffff;
-      border:1px solid var(--border);
-      border-radius:16px;
-      max-width:960px;
-      width:96%;
-      padding:24px;
-      box-shadow:var(--shadow-lg);
-      max-height:90vh;
-      overflow:auto;
-      animation: slideUp 0.3s ease;
-    }
-    @keyframes slideUp {
-      from { 
-        opacity:0;
-        transform: translateY(20px);
-      }
-      to { 
-        opacity:1;
-        transform: translateY(0);
-      }
-    }
-    .modal h3{
-      margin:0 0 16px 0;
-      color:#111827;
-      font-size:20px;
-      font-weight:700;
-      padding-bottom:12px;
-      border-bottom:2px solid var(--border);
-    }
-    .modal .actions{
-      display:flex;
-      gap:12px;
-      justify-content:flex-end;
-      margin-top:20px;
-      padding-top:20px;
-      border-top:1px solid var(--border);
-    }
+    .modal-overlay{position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:100; padding:20px; backdrop-filter:blur(4px)}
+    .modal-overlay.show{display:flex}
+    .modal{background:#fff; border:1px solid var(--border); border-radius:14px; max-width:900px; width:100%; max-height:90vh; overflow:auto; box-shadow:0 20px 40px rgba(0,0,0,0.15)}
+    .modal-header{padding:20px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; background:#fff; z-index:1}
+    .modal-header h3{margin:0; font-size:18px; color:var(--text); font-weight:700}
+    .modal-close{background:none; border:none; color:var(--subtext); font-size:24px; cursor:pointer; padding:0; width:auto; line-height:1}
+    .modal-close:hover{color:var(--text)}
+    .modal-body{padding:24px}
+    .modal-footer{padding:20px 24px; border-top:1px solid var(--border); display:flex; gap:12px; justify-content:flex-end; position:sticky; bottom:0; background:#fff}
 
-    .section-title{ 
-      font-weight:700; 
-      color:#111827; 
-      margin:16px 0 8px;
-      font-size:16px;
-    }
-    .section-sub{ 
-      color:#6b7280; 
-      font-size:13px; 
-      margin-top:-4px; 
-      margin-bottom:12px;
-      line-height:1.5;
-    }
+    /* Wizard Steps */
+    .wizard-progress{display:flex; justify-content:center; gap:8px; margin-bottom:24px; padding:0 20px}
+    .wizard-step{display:flex; flex-direction:column; align-items:center; gap:6px; opacity:0.4; transition:opacity .3s}
+    .wizard-step.active{opacity:1}
+    .wizard-step.completed{opacity:0.7}
+    .step-number{width:36px; height:36px; border-radius:50%; background:#e5e7eb; color:#6b7280; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px}
+    .wizard-step.active .step-number{background:var(--brand-accent-2); color:#fff; box-shadow:0 0 0 4px rgba(82,213,255,0.2)}
+    .wizard-step.completed .step-number{background:var(--success); color:#fff}
+    .step-label{font-size:11px; font-weight:600; color:#6b7280; white-space:nowrap}
+    .wizard-step.active .step-label{color:var(--text)}
+    .step-connector{width:40px; height:2px; background:#e5e7eb; margin-top:18px}
 
-    .help{ 
-      color:#6b7280; 
-      font-size:13px;
-      line-height:1.5;
-    }
-    .grid-cols{ 
-      display:grid; 
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); 
-      gap:14px;
-    }
+    /* Form Sections */
+    .form-section{margin-bottom:24px}
+    .form-section-title{font-size:14px; font-weight:700; color:var(--text); margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--border)}
+    .form-row{display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:16px}
+    .form-row:last-child{margin-bottom:0}
 
-    .footer{ 
-      padding:16px 24px; 
-      color:#6b7280; 
-      font-size:13px;
-      text-align:center;
-      border-top:1px solid var(--border);
-      background:#f9fafb;
-    }
-  </style>
-<style>
-    /* Wizard Progress Indicator */
-    .wizard-step {
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      gap:6px;
-      opacity:0.4;
-      transition: opacity 0.3s ease;
-    }
-    .wizard-step.active {
-      opacity:1;
-    }
-    .wizard-step.completed {
-      opacity:0.7;
-    }
-    .step-number {
-      width:36px;
-      height:36px;
-      border-radius:50%;
-      background:#e5e7eb;
-      color:#6b7280;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-weight:700;
-      font-size:14px;
-      transition: all 0.3s ease;
-    }
-    .wizard-step.active .step-number {
-      background:var(--brand-accent-2);
-      color:#ffffff;
-      box-shadow:0 0 0 4px rgba(82, 213, 255, 0.2);
-    }
-    .wizard-step.completed .step-number {
-      background:var(--good);
-      color:#ffffff;
-    }
-    .step-label {
-      font-size:12px;
-      font-weight:600;
-      color:#6b7280;
-      white-space:nowrap;
-    }
-    .wizard-step.active .step-label {
-      color:#111827;
-    }
-    .step-connector {
-      width:60px;
-      height:2px;
-      background:#e5e7eb;
-      margin-top:18px;
-    }
-
-    /* Compact wizard body and collapsible week sections */
-    #planWizard{ 
-      max-height: 62vh; 
-      overflow:auto;
-      padding-right:8px;
-    }
-    #planWizard::-webkit-scrollbar {
-      width: 8px;
-    }
-    #planWizard::-webkit-scrollbar-track {
-      background: #f1f1f1;
-      border-radius: 4px;
-    }
-    #planWizard::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
-      border-radius: 4px;
-    }
-    #planWizard::-webkit-scrollbar-thumb:hover {
-      background: #94a3b8;
-    }
-    .wk-acc .wk-body{ display:block }
-    .wk-acc.collapsed .wk-body{ display:none }
-    .wk-head{ 
-      display:flex; 
-      align-items:center; 
-      justify-content:space-between; 
-      gap:10px; 
-      cursor:pointer; 
-      padding:12px 14px; 
-      border:1px solid var(--border); 
-      border-radius:10px; 
-      background:#f9fafb;
-      transition: all 0.2s ease;
-      font-weight:600;
-    }
-    .wk-head:hover {
-      background:#f3f4f6;
-      border-color:#cbd5e1;
-    }
-    .wk-head .caret{ 
-      display:inline-block; 
-      transform: rotate(90deg); 
-      transition: transform 0.2s ease;
-      font-size:12px;
-    }
-    .wk-acc.collapsed .wk-head .caret{ transform: rotate(0deg) }
-  </style>
-<style>
     /* Plan Type Cards */
-    .plan-type-card {
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      padding:20px;
-      border:2px solid var(--border);
-      border-radius:10px;
-      background:#ffffff;
-      cursor:pointer;
-      transition: all 0.2s ease;
-      text-align:center;
-    }
-    .plan-type-card:hover {
-      border-color:#cbd5e1;
-      box-shadow:var(--shadow-sm);
-    }
-    .plan-type-card.selected {
-      border-color:var(--brand-accent-2);
-      background:#f0f9ff;
-      box-shadow:0 0 0 3px rgba(82, 213, 255, 0.1);
-    }
-    .plan-type-icon {
-      width:60px;
-      height:60px;
-      border-radius:50%;
-      background:var(--border);
-      color:#6b7280;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:24px;
-      font-weight:700;
-      margin-bottom:12px;
-      transition: all 0.2s ease;
-    }
-    .plan-type-card.selected .plan-type-icon {
-      background:var(--brand-accent-2);
-      color:#ffffff;
-    }
-    .plan-type-title {
-      font-size:16px;
-      font-weight:700;
-      color:#111827;
-      margin-bottom:4px;
-    }
-    .plan-type-desc {
-      font-size:13px;
-      color:#6b7280;
-    }
+    .plan-type-cards{display:grid; grid-template-columns:repeat(3, 1fr); gap:12px}
+    @media(max-width:600px){.plan-type-cards{grid-template-columns:1fr}}
+    .plan-type-card{display:flex; flex-direction:column; align-items:center; padding:20px; border:2px solid var(--border); border-radius:10px; background:#fff; cursor:pointer; transition:all .2s; text-align:center}
+    .plan-type-card:hover{border-color:#cbd5e1; box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+    .plan-type-card.selected{border-color:var(--brand-accent-2); background:#f0f9ff; box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
+    .plan-type-icon{width:50px; height:50px; border-radius:50%; background:var(--border); color:#6b7280; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:700; margin-bottom:10px}
+    .plan-type-card.selected .plan-type-icon{background:var(--brand-accent-2); color:#fff}
+    .plan-type-title{font-size:15px; font-weight:700; color:var(--text); margin-bottom:4px}
+    .plan-type-desc{font-size:12px; color:var(--subtext)}
 
-    /* Vertical sidebar layout */
-    .layout{ 
-      display:grid; 
-      grid-template-columns: 240px 1fr; 
-      gap:24px; 
-      align-items:start; 
-      max-width:1400px; 
-      margin:0 auto; 
-      padding:24px;
-    }
-    @media(max-width: 900px){ 
-      .layout{ 
-        grid-template-columns: 1fr;
-        padding:16px;
-      }
-      .sidebar {
-        position:relative !important;
-        top:0 !important;
-      }
-    }
-    .sidebar{ 
-      background:#ffffff; 
-      border:1px solid var(--border); 
-      border-radius:12px; 
-      padding:16px; 
-      position:sticky; 
-      top:90px; 
-      align-self:start;
-      box-shadow:var(--shadow-sm);
-    }
-    .sidebar .nav-tab{ 
-      display:flex; 
-      align-items:center; 
-      gap:10px; 
-      padding:12px 14px; 
-      border:1px solid transparent; 
-      border-radius:8px; 
-      color:#6b7280; 
-      text-decoration:none; 
-      background:transparent; 
-      margin:4px 0;
-      transition: all 0.2s ease;
-      font-weight:500;
-      font-size:14px;
-    }
-    .sidebar .nav-tab:hover{ 
-      background:#f3f4f6;
-      color:#374151;
-    }
-    .sidebar .nav-tab.active{ 
-      background:var(--brand-accent-2); 
-      border-color:var(--brand-accent-2); 
-      color:#ffffff; 
-      font-weight:600;
-      box-shadow:var(--shadow-sm);
-    }
-    .content-pane{ min-width:0 }
-  </style>
-<style>
-    /* Weekly sub-accordions and read-only collapsibles */
-    .wk-sub .wk-sub-body{ display:block }
-    .wk-sub.collapsed .wk-sub-body{ display:none }
-    .wk-sub-head{ 
-      display:flex; 
-      align-items:center; 
-      justify-content:space-between; 
-      gap:10px; 
-      cursor:pointer; 
-      padding:10px 12px; 
-      border:1px dashed #cbd5e1; 
-      border-radius:8px; 
-      background:#fafbfc; 
-      margin-top:10px;
-      transition: all 0.2s ease;
-      font-weight:600;
-      font-size:14px;
-    }
-    .wk-sub-head:hover {
-      background:#f3f4f6;
-      border-color:#94a3b8;
-    }
-    .wk-sub-head .caret{ 
-      display:inline-block; 
-      transform: rotate(90deg); 
-      transition: transform 0.2s ease;
-      font-size:11px;
-    }
-    .wk-sub.collapsed .wk-sub-head .caret{ transform: rotate(0deg) }
+    /* Key Dates List */
+    .key-dates-list{display:flex; flex-direction:column; gap:8px}
+    .key-date-item{display:flex; align-items:center; gap:12px; padding:10px 14px; background:#f8fafc; border:1px solid var(--border); border-radius:8px}
+    .key-date-dot{width:8px; height:8px; border-radius:50%; background:var(--brand-accent-2); flex-shrink:0}
+    .key-date-label{flex:1; font-weight:600; color:var(--text)}
+    .key-date-date{font-size:13px; color:var(--subtext)}
+    .key-date-remove{background:none; border:none; color:#9ca3af; cursor:pointer; font-size:18px; padding:0; width:auto}
+    .key-date-remove:hover{color:var(--danger)}
 
-    .ro-acc .ro-body{ display:block }
-    .ro-acc.collapsed .ro-body{ display:none }
-    .ro-head{ 
-      display:flex; 
-      align-items:center; 
-      justify-content:space-between; 
-      gap:10px; 
-      cursor:pointer; 
-      padding:10px 12px; 
-      border:1px solid var(--border); 
-      border-radius:8px; 
-      background:#f9fafb; 
-      margin-top:8px;
-      transition: all 0.2s ease;
-      font-weight:600;
-      font-size:14px;
+    /* Activity Row Editor */
+    .activity-row-editor{display:grid; grid-template-columns:100px 1fr 120px 100px 80px 40px; gap:8px; align-items:start; padding:12px; background:#f8fafc; border:1px solid var(--border); border-radius:8px; margin-bottom:8px}
+    @media(max-width:900px){.activity-row-editor{grid-template-columns:1fr; gap:12px}}
+    .activity-row-editor input, .activity-row-editor select, .activity-row-editor textarea{padding:8px 10px; font-size:13px}
+    .activity-row-editor textarea{min-height:60px}
+
+    .hidden{display:none}
+
+    /* Login */
+    #loginView{min-height:100vh; display:none; align-items:center; justify-content:center; padding:20px; background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)}
+    #bootLoader{position:fixed; inset:0; background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); display:flex; align-items:center; justify-content:center; z-index:100}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* Print Styles */
+    @media print{
+      header, .nav-bar, .plan-list-card, .detail-actions, .add-plan-btn{display:none !important}
+      .two-col{grid-template-columns:1fr}
+      .detail-card{box-shadow:none; border:none}
     }
-    .ro-head:hover {
-      background:#f3f4f6;
-      border-color:#cbd5e1;
-    }
-    .ro-head .caret{ 
-      display:inline-block; 
-      transform: rotate(90deg); 
-      transition: transform 0.2s ease;
-      font-size:11px;
-    }
-    .ro-acc.collapsed .ro-head .caret{ transform: rotate(0deg) }
   </style>
 </head>
 <body>
-  <div id="bootLoader" style="position:fixed;inset:0;background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);display:flex;align-items:center;justify-content:center;z-index:100;color:#111827;font-family:'Open Sans',Arial,sans-serif">
+  <div id="bootLoader">
     <div style="display:flex;flex-direction:column;gap:12px;align-items:center">
       <div style="width:48px;height:48px;border:4px solid #e5e7eb;border-top-color:#446472;border-radius:50%;animation:spin 1s linear infinite"></div>
       <div style="font-weight:700;font-size:18px;color:#446472">Marketing Hub</div>
-      <div class="mini" style="color:#6b7280">Loading your workspace…</div>
+      <div style="font-size:12px;color:#6b7280">Loading your workspace…</div>
     </div>
   </div>
-  <style>
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-  </style>
-  <div id="loginView" style="min-height:100vh;display:none;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)">
-    <div class="card" style="max-width:440px;width:100%;box-shadow:var(--shadow-lg)">
-      <h3 style="text-align:center;font-size:24px;margin-bottom:8px">Welcome Back</h3>
-      <div style="text-align:center;color:#6b7280;font-size:14px;margin-bottom:20px;padding:0 20px">Sign in to access your marketing plans</div>
+
+  <div id="loginView">
+    <div class="card" style="max-width:440px;width:100%;box-shadow:0 10px 25px rgba(0,0,0,0.1)">
+      <h3 style="justify-content:center;font-size:18px">Welcome Back</h3>
       <div class="content">
+        <p style="text-align:center;color:#6b7280;font-size:14px;margin-bottom:20px">Sign in to access Marketing Plans</p>
         <div style="margin-bottom:16px">
           <label for="loginUsername">Username</label>
           <input id="loginUsername" type="text" autocomplete="username" placeholder="Enter your username" />
@@ -672,169 +252,187 @@
           <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Enter your password" />
         </div>
         <div style="margin-bottom:20px">
-          <label style="display:flex;align-items:center;gap:8px;user-select:none;font-size:13px;font-weight:500;cursor:pointer">
-            <input id="togglePw" type="checkbox" style="width:auto;cursor:pointer" /> 
-            <span>Show password</span>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input id="togglePw" type="checkbox" style="width:auto" /> Show password
           </label>
         </div>
-        <button id="loginBtn" style="width:100%;padding:12px;font-size:15px;font-weight:700">Sign In</button>
+        <button id="loginBtn" class="btn success" style="width:100%">Sign In</button>
         <div id="loginError" style="margin-top:12px;padding:10px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#dc2626;font-size:13px;display:none"></div>
       </div>
     </div>
   </div>
 
-  <header id="appHeader" style="display:none">
-    <div class="brand"><img src="logo-main.svg" class="logo-img" alt="Capstone" /><div class="title">Marketing Hub</div></div>
-    <div class="pill" style="display:flex;align-items:center;gap:8px">
-      <label for="propertySelect" style="font-size:12px;color:#6b7280">Property</label>
-      <select id="propertySelect" style="min-width:220px"></select>
-      <button id="logoutBtn" class="secondary" style="padding:6px 10px">Logout</button>
-      <button id="adminPageBtn" class="secondary" style="padding:6px 10px; display:none">Admin</button>
+  <header id="appHeader" class="hidden">
+    <div class="brand">
+      <img src="logo-main.svg" class="logo-img" alt="Capstone" />
+      <div class="title">Marketing Hub</div>
     </div>
-    <div class="mini">Capstone Management Partners • Marketing Plans</div>
+    <div class="header-controls">
+      <select id="propertySelect" style="min-width:200px;padding:8px 12px"></select>
+      <button id="logoutBtn" class="header-btn">Sign Out</button>
+      <button id="adminPageBtn" class="header-btn hidden">Admin</button>
+    </div>
+    <span class="company-name">Capstone Management Partners</span>
   </header>
-  <div class="layout">
-    <aside id="mainNav" class="sidebar">
-      <a href="mmp_calendar_app.html" class="nav-tab" data-tab="calendar">Marketing Calendar</a>
-      <a href="marketing_plans.html" class="nav-tab" data-tab="plans">Marketing Plans</a>
-      <a href="marketing_contacts.html" class="nav-tab" data-tab="contacts">Marketing Contacts</a>
-      <a href="promo_order_tracker.html" class="nav-tab" data-tab="promo">Promo Order Tracker</a>
-      <a href="renewal_campaign.html" class="nav-tab" data-tab="renewal">Renewal Campaign</a>
-      <a href="velocity_tracker.html" class="nav-tab" data-tab="velocity">Velocity Tracker</a>
-      <a href="uniform_shop.html" class="nav-tab" data-tab="uniform">Uniform Shop</a>
-      <a href="creative_library.html" class="nav-tab" data-tab="creative">Creative Library</a>
-    </aside>
-    <div class="content-pane">
 
-  <div id="appContainer" class="container" style="display:none">
-    <section class="card">
-      <h3>Marketing Plans</h3>
-      <div class="content">
-        <div class="toolbar" style="margin-bottom:8px">
-          <button id="newPlanBtn" class="good" style="flex:0 0 auto">New Plan</button>
-          <div style="flex:1"></div>
-          <div style="display:flex;gap:8px;align-items:flex-end">
-            <div>
-              <label for="filterType">Plan Type</label>
-              <select id="filterType" style="min-width:140px">
-                <option value="all">All</option>
-                <option value="30_day">30 Day</option>
-                <option value="60_day">60 Day</option>
-              </select>
-            </div>
-            <div>
-              <label for="filterTerm">Term</label>
-              <input id="filterTerm" type="text" placeholder="e.g., Fall 25" />
+  <nav class="nav-bar" id="navBar" style="display:none">
+    <div class="nav-wrap">
+      <a href="mmp_calendar_app.html" class="nav-tab">Marketing Calendar</a>
+      <a href="marketing_plans.html" class="nav-tab active">Marketing Plans</a>
+      <a href="marketing_contacts.html" class="nav-tab">Marketing Contacts</a>
+      <a href="promo_order_tracker.html" class="nav-tab">Promo Order Tracker</a>
+      <a href="renewal_campaign.html" class="nav-tab">Renewal Campaign</a>
+      <a href="velocity_tracker.html" class="nav-tab">Velocity Tracker</a>
+      <a href="uniform_shop.html" class="nav-tab">Uniform Shop</a>
+      <a href="creative_library.html" class="nav-tab">Creative Library</a>
+      <a href="cmpfont.html" class="nav-tab">Font Generator</a>
+    </div>
+  </nav>
+
+  <main id="appContainer" class="container hidden">
+    <div class="two-col">
+      <!-- Plan List Sidebar -->
+      <aside>
+        <div class="plan-list-card">
+          <div class="plan-list-header">
+            <h2>📋 Marketing Plans</h2>
+            <span class="plan-count" id="planCount">0</span>
+          </div>
+          <div class="plan-filters">
+            <select id="filterType" style="flex:1">
+              <option value="all">All Types</option>
+              <option value="30_day">30 Day</option>
+              <option value="60_day">60 Day</option>
+              <option value="90_day">90 Day</option>
+            </select>
+            <input id="filterTerm" type="text" placeholder="Search..." style="flex:1" />
+          </div>
+          <div class="plan-list" id="planList">
+            <div class="empty-state" style="padding:40px 20px">
+              <p>No plans yet</p>
             </div>
           </div>
+          <button class="add-plan-btn" id="newPlanBtn">
+            <span style="font-size:18px">+</span> Create New Plan
+          </button>
         </div>
+      </aside>
 
-        <div id="plansTableWrap" style="border:1px solid var(--border); border-radius:10px; overflow:auto; max-height:60vh">
-          <table>
-            <thead>
-              <tr>
-                <th>Plan Name</th>
-                <th>Type</th>
-                <th>Term</th>
-                <th>Start – End</th>
-                <th>Created By</th>
-                <th>Last Updated</th>
-              </tr>
-            </thead>
-            <tbody id="plansTbody"></tbody>
-          </table>
+      <!-- Plan Detail Panel -->
+      <section class="detail-panel">
+        <div id="planDetailCard" class="detail-card">
+          <div id="emptyState" class="empty-state" style="padding:80px 40px">
+            <h3>Select or Create a Plan</h3>
+            <p>Choose a plan from the list to view and track progress, or create a new marketing plan.</p>
+            <button class="btn primary" id="emptyNewPlanBtn">Create New Plan</button>
+          </div>
+
+          <div id="planDetail" class="hidden">
+            <!-- Header -->
+            <div class="detail-header" id="planHeader"></div>
+            
+            <!-- Week Tabs -->
+            <div class="week-tabs" id="weekTabs"></div>
+            
+            <!-- Week Content -->
+            <div class="week-content" id="weekContent"></div>
+          </div>
         </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Create/Edit Plan Modal -->
+  <div id="planModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalTitle">Create Marketing Plan</h3>
+        <button class="modal-close" id="closeModal">&times;</button>
       </div>
-    </section>
-
-    <section id="planViewCard" class="card" style="display:none">
-      <h3>Plan</h3>
-      <div class="content" id="planView"></div>
-    </section>
-
-    <div class="footer">Marketing Hub • Build 30 & 60 day plans by property.</div>
-  </div>
+      <div class="modal-body">
+        <!-- Wizard Progress -->
+        <div class="wizard-progress" id="wizardProgress"></div>
+        
+        <!-- Step Content -->
+        <div id="wizardContent"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="wizardBack">Back</button>
+        <button class="btn primary" id="wizardNext">Next</button>
+        <button class="btn success hidden" id="wizardSave">Save Plan</button>
+        <button class="btn" id="wizardCancel">Cancel</button>
+      </div>
     </div>
   </div>
 
-  <!-- New/Edit Plan Modal -->
-  <div id="planModal" class="modal-backdrop">
-    <div class="modal">
-      <h3 id="planModalTitle">New Plan</h3>
-      <div id="planWizard">
-        <!-- Progress Indicator -->
-        <div style="display:flex;justify-content:center;gap:8px;margin-bottom:24px">
-          <div id="prog1" class="wizard-step active">
-            <div class="step-number">1</div>
-            <div class="step-label">Basic Info</div>
+  <!-- Add Activity Modal -->
+  <div id="activityModal" class="modal-overlay">
+    <div class="modal" style="max-width:600px">
+      <div class="modal-header">
+        <h3>Add Activity</h3>
+        <button class="modal-close" id="closeActivityModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div>
+            <label>Day of Week</label>
+            <select id="actDay">
+              <option>Monday</option>
+              <option>Tuesday</option>
+              <option>Wednesday</option>
+              <option>Thursday</option>
+              <option>Friday</option>
+              <option>Saturday</option>
+              <option>Sunday</option>
+            </select>
           </div>
-          <div class="step-connector"></div>
-          <div id="prog2" class="wizard-step">
-            <div class="step-number">2</div>
-            <div class="step-label">Goals & Details</div>
-          </div>
-          <div class="step-connector"></div>
-          <div id="prog3" class="wizard-step">
-            <div class="step-number">3</div>
-            <div class="step-label">Weekly Plan</div>
-          </div>
-          <div class="step-connector"></div>
-          <div id="prog4" class="wizard-step">
-            <div class="step-number">4</div>
-            <div class="step-label">Review</div>
+          <div>
+            <label>Category</label>
+            <select id="actCategory">
+              <option value="outreach">Outreach Marketing</option>
+              <option value="social">Social Media</option>
+              <option value="event">Event</option>
+              <option value="digital">Digital Marketing</option>
+              <option value="leasing">Leasing Activity</option>
+            </select>
           </div>
         </div>
-
-        <!-- Step 1: Basic Info -->
-        <div id="step1">
-          <div class="section-title">Plan Basics</div>
-          <div class="section-sub">Start by defining your plan type and timeline</div>
-          <div id="step1Flow"></div>
+        <div style="margin-bottom:16px">
+          <label>Activity Description</label>
+          <textarea id="actDescription" placeholder="Describe the marketing activity..."></textarea>
         </div>
-
-        <!-- Step 2: Goals & Details -->
-        <div id="step2" style="display:none">
-          <div class="section-title">Goals & Strategy</div>
-          <div class="section-sub">Define your marketing objectives and target audience</div>
-          <div id="step2Flow"></div>
-        </div>
-
-        <!-- Step 3: Weekly Plan Builder -->
-        <div id="step3" style="display:none">
-          <div class="section-title">Weekly Plan Builder</div>
-          <div class="section-sub">Auto-generated weeks based on your timeline. Customize each week's activities.</div>
-          <div class="row" style="gap:8px; margin:12px 0; align-items:center">
-            <button class="secondary" style="flex:0 0 auto" onclick="expandAllWeeks()">Expand All</button>
-            <button class="secondary" style="flex:0 0 auto" onclick="collapseAllWeeks()">Collapse All</button>
+        <div class="form-row">
+          <div>
+            <label>Goal / Target</label>
+            <input id="actGoal" type="text" placeholder="e.g., 15 Leads, 200+ Views" />
           </div>
-          <div id="weeksWrap"></div>
-        </div>
-
-        <!-- Step 4: Review & Save -->
-        <div id="step4" style="display:none">
-          <div class="section-title">Review Your Plan</div>
-          <div class="section-sub">Review all details before saving</div>
-          <div id="reviewWrap"></div>
+          <div>
+            <label>Responsible Person</label>
+            <input id="actOwner" type="text" placeholder="Team member name" />
+          </div>
         </div>
       </div>
-      <div class="actions">
-        <button id="wizardBack" class="secondary">Back</button>
-        <button id="wizardNext" class="good">Next</button>
-        <button id="wizardSave" class="good" style="display:none">Save Plan</button>
-        <button id="wizardCancel" class="secondary">Cancel</button>
+      <div class="modal-footer">
+        <button class="btn" id="cancelActivity">Cancel</button>
+        <button class="btn success" id="saveActivity">Add Activity</button>
       </div>
     </div>
   </div>
 
   <script>
-    // State
-    let SESSION_ACTIVE = false;
+    // ==================== STATE ====================
     let currentUser = null;
     let properties = [];
     let currentProperty = '';
     let plans = [];
+    let selectedPlanId = null;
+    let selectedWeekIndex = 0;
+    let wizardStep = 1;
+    let wizardData = null;
     let editingPlanId = null;
+    let addingActivityToWeek = null;
 
+    // ==================== ELEMENTS ====================
     const els = {
       bootLoader: document.getElementById('bootLoader'),
       loginView: document.getElementById('loginView'),
@@ -843,1245 +441,898 @@
       togglePw: document.getElementById('togglePw'),
       loginBtn: document.getElementById('loginBtn'),
       loginError: document.getElementById('loginError'),
-
       appHeader: document.getElementById('appHeader'),
+      navBar: document.getElementById('navBar'),
       appContainer: document.getElementById('appContainer'),
       propertySelect: document.getElementById('propertySelect'),
       logoutBtn: document.getElementById('logoutBtn'),
       adminPageBtn: document.getElementById('adminPageBtn'),
-
-      newPlanBtn: document.getElementById('newPlanBtn'),
       filterType: document.getElementById('filterType'),
       filterTerm: document.getElementById('filterTerm'),
-      plansTbody: document.getElementById('plansTbody'),
-
-      planViewCard: document.getElementById('planViewCard'),
-      planView: document.getElementById('planView'),
-
+      planList: document.getElementById('planList'),
+      planCount: document.getElementById('planCount'),
+      newPlanBtn: document.getElementById('newPlanBtn'),
+      emptyNewPlanBtn: document.getElementById('emptyNewPlanBtn'),
+      emptyState: document.getElementById('emptyState'),
+      planDetail: document.getElementById('planDetail'),
+      planHeader: document.getElementById('planHeader'),
+      weekTabs: document.getElementById('weekTabs'),
+      weekContent: document.getElementById('weekContent'),
       planModal: document.getElementById('planModal'),
-      planModalTitle: document.getElementById('planModalTitle'),
+      modalTitle: document.getElementById('modalTitle'),
+      closeModal: document.getElementById('closeModal'),
+      wizardProgress: document.getElementById('wizardProgress'),
+      wizardContent: document.getElementById('wizardContent'),
       wizardBack: document.getElementById('wizardBack'),
       wizardNext: document.getElementById('wizardNext'),
       wizardSave: document.getElementById('wizardSave'),
       wizardCancel: document.getElementById('wizardCancel'),
-
-      step1: document.getElementById('step1'),
-      step2: document.getElementById('step2'),
-      step3: document.getElementById('step3'),
-      w_name: document.getElementById('w_name'),
-      w_term: document.getElementById('w_term'),
-      w_start: document.getElementById('w_start'),
-      w_end: document.getElementById('w_end'),
-      w_goals: document.getElementById('w_goals'),
-      w_targets: document.getElementById('w_targets'),
-      w_keydates: document.getElementById('w_keydates'),
-      w_ongoing: document.getElementById('w_ongoing'),
-      w_notes: document.getElementById('w_notes'),
-      weeksWrap: document.getElementById('weeksWrap'),
-      reviewWrap: document.getElementById('reviewWrap'),
+      activityModal: document.getElementById('activityModal'),
+      closeActivityModal: document.getElementById('closeActivityModal'),
+      cancelActivity: document.getElementById('cancelActivity'),
+      saveActivity: document.getElementById('saveActivity')
     };
 
-    // Activate current nav tab
-    (function(){
-      const nav = document.getElementById('mainNav');
-      if (!nav) return;
-      const path = (location.pathname || '').toLowerCase();
-      nav.querySelectorAll('.nav-tab').forEach(a => {
-        const href = (a.getAttribute('href') || '').toLowerCase();
-        if (href && (path.endsWith(href) || path.endsWith('/' + href))) a.classList.add('active');
-      });
-    })();
+    // ==================== UTILITIES ====================
+    function show(el) { if (el) el.classList.remove('hidden'); }
+    function hide(el) { if (el) el.classList.add('hidden'); }
+    function esc(s) { return String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+    function nl2br(s) { return (s || '').replace(/\n/g, '<br>'); }
+    function formatDate(d) { if (!d) return ''; try { return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); } catch (e) { return d; } }
+    function formatDateTime(d) { if (!d) return ''; try { return new Date(d).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); } catch (e) { return d; } }
+    function rid() { return 'r' + Math.random().toString(36).substr(2, 9); }
+    function addDays(date, days) { const d = new Date(date); d.setDate(d.getDate() + days); return d.toISOString().slice(0, 10); }
 
-    // Login helpers
-    if (els.togglePw){ els.togglePw.addEventListener('change', ()=>{ els.loginPassword.type = els.togglePw.checked ? 'text' : 'password'; }); }
-    if (els.loginBtn){ els.loginBtn.addEventListener('click', doInlineLogin); }
-    document.addEventListener('keydown', (e)=>{ if (e.key==='Enter' && (document.activeElement===els.loginUsername || document.activeElement===els.loginPassword)){ doInlineLogin(); } });
+    // ==================== AUTH ====================
+    els.togglePw?.addEventListener('change', () => { els.loginPassword.type = els.togglePw.checked ? 'text' : 'password'; });
+    els.loginBtn?.addEventListener('click', doLogin);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (document.activeElement === els.loginUsername || document.activeElement === els.loginPassword)) doLogin(); });
 
-    async function doInlineLogin(){
-      const u = (els.loginUsername?.value||'').trim();
-      const p = els.loginPassword?.value||'';
-      if (!u || !p){ if (els.loginError){ els.loginError.textContent='Enter username and password'; els.loginError.style.display=''; } return; }
-      try{
-        if (els.loginError) els.loginError.style.display='none';
-        const res = await fetch('/api/auth-login', { method:'POST', headers:{ 'Content-Type':'application/json', 'Accept':'application/json' }, credentials:'include', body: JSON.stringify({ username:u, password:p }) });
-        if (!res.ok){ if (els.loginError){ els.loginError.textContent = (res.status===401||res.status===400)?'Incorrect username or password':'Login failed'; els.loginError.style.display=''; } return; }
+    async function doLogin() {
+      const u = (els.loginUsername?.value || '').trim();
+      const p = els.loginPassword?.value || '';
+      if (!u || !p) { showError('Enter username and password'); return; }
+      try {
+        hideError();
+        const res = await fetch('/api/auth-login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ username: u, password: p }) });
+        if (!res.ok) { showError(res.status === 401 ? 'Incorrect username or password' : 'Login failed'); return; }
         await initAuth();
-      }catch(e){ if (els.loginError){ els.loginError.textContent='Network error. Try again.'; els.loginError.style.display=''; } }
+      } catch (e) { showError('Network error'); }
     }
 
-    // API
-    async function apiFetch(path, opts={}){
-      const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers||{});
+    function showError(msg) { if (els.loginError) { els.loginError.textContent = msg; els.loginError.style.display = ''; } }
+    function hideError() { if (els.loginError) els.loginError.style.display = 'none'; }
+
+    function showApp() {
+      show(els.appHeader);
+      els.navBar.style.display = '';
+      show(els.appContainer);
+      els.loginView.style.display = 'none';
+      els.bootLoader.style.display = 'none';
+    }
+
+    function showLogin() {
+      els.bootLoader.style.display = 'none';
+      hide(els.appHeader);
+      els.navBar.style.display = 'none';
+      hide(els.appContainer);
+      els.loginView.style.display = 'flex';
+    }
+
+    async function initAuth() {
+      try {
+        const res = await fetch('/api/me', { credentials: 'include' });
+        if (res.ok) {
+          const me = await res.json();
+          currentUser = { username: me.username, role: me.role, properties: me.properties };
+          showApp();
+          bindHeaderHandlers();
+          await initApp();
+          return true;
+        }
+      } catch (e) { }
+      showLogin();
+      return false;
+    }
+
+    function bindHeaderHandlers() {
+      els.logoutBtn.onclick = async () => { try { await fetch('/api/auth-logout', { method: 'POST' }); } catch (e) { } location.href = 'index.html'; };
+      if (currentUser?.role === 'admin') show(els.adminPageBtn);
+      els.adminPageBtn.onclick = () => location.href = 'mmp_admin.html';
+    }
+
+    // ==================== API ====================
+    async function apiFetch(path, opts = {}) {
+      const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
       const res = await fetch('/api' + path, Object.assign({}, opts, { headers, credentials: 'include' }));
-      if (!res.ok){ const text = await res.text(); throw new Error(text || ('HTTP '+res.status)); }
+      if (!res.ok) { const text = await res.text(); throw new Error(text || ('HTTP ' + res.status)); }
       return res;
     }
 
-    function showApp(){ if (els.appHeader) els.appHeader.style.display=''; if (els.appContainer) els.appContainer.style.display=''; if (els.loginView) els.loginView.style.display='none'; const bl=document.getElementById('bootLoader'); if (bl) bl.style.display='none'; }
-    function showLogin(){ const bl=document.getElementById('bootLoader'); if (bl) bl.style.display='none'; if (els.appHeader) els.appHeader.style.display='none'; if (els.appContainer) els.appContainer.style.display='none'; if (els.loginView) els.loginView.style.display='flex'; }
-
-    async function doLogout(){ try{ await fetch('/api/auth-logout', { method:'POST' }); }catch(e){} location.href = 'index.html'; }
-
-    function bindHeaderHandlers(){ if (els.logoutBtn) els.logoutBtn.onclick = () => doLogout(); if (els.adminPageBtn){ els.adminPageBtn.style.display = currentUser && currentUser.role==='admin' ? '' : 'none'; els.adminPageBtn.onclick = () => { location.href = 'mmp_admin.html'; }; } }
-
-    async function initAuth(){
-      try{ const meRes = await fetch('/api/me', { credentials: 'include' }); if (meRes.ok){ const me = await meRes.json(); currentUser = { username: me.username, role: me.role, properties: me.properties }; SESSION_ACTIVE = true; showApp(); bindHeaderHandlers(); await initializeAppForUser(); return true; } }catch(e){}
-      showLogin(); return false;
-    }
-
-    async function loadProperties(){
-      try{ const res = await fetch('/api/properties'); const list = await res.json(); properties = (list||[]).map(x => x.name).filter(Boolean); if (!properties.length) throw new Error('empty'); }
-      catch(e){ properties = []; }
-    }
-
-    function renderPropertyOptions(){ if (!els.propertySelect) return; els.propertySelect.innerHTML = properties.map(p => `<option value="${p.replace(/"/g,'&quot;')}">${p}</option>`).join(''); }
-
-    async function initializeAppForUser(){
+    // ==================== INIT ====================
+    async function initApp() {
       await loadProperties();
       renderPropertyOptions();
-      if (properties.length){ els.propertySelect.value = properties[0]; setActiveProperty(properties[0]); }
-      els.propertySelect.addEventListener('change', () => setActiveProperty(els.propertySelect.value));
-      els.filterType.addEventListener('change', renderPlansTable);
-      els.filterTerm.addEventListener('input', renderPlansTable);
-      els.newPlanBtn.addEventListener('click', () => openPlanModal());
-    }
-
-    async function setActiveProperty(prop){ currentProperty = prop; await fetchPlans(); renderPlansTable(); hidePlanView(); }
-
-    async function fetchPlans(){
-      if (!currentProperty || !SESSION_ACTIVE) { plans = []; return; }
-      const res = await apiFetch(`/marketing-plans?property=${encodeURIComponent(currentProperty)}`);
-      plans = await res.json();
-    }
-
-    function renderPlansTable(){
-      const tbody = els.plansTbody; tbody.innerHTML = '';
-      const type = els.filterType.value;
-      const term = (els.filterTerm.value||'').trim().toLowerCase();
-      const list = (plans||[]).filter(p => (type==='all' || p.planType===type) && (!term || String(p.termLabel||'').toLowerCase().includes(term)));
-      if (!list.length){ tbody.innerHTML = `<tr><td colspan="6" class="muted" style="padding:12px">No plans for this property.</td></tr>`; return; }
-      for (const p of list){
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${escapeHtml(p.name||'')}</td>
-          <td>${p.planType==='60_day'?'60 Day':'30 Day'}</td>
-          <td>${escapeHtml(p.termLabel||'')}</td>
-          <td>${escapeHtml((p.startDate||'') + (p.endDate?(' – '+p.endDate):''))}</td>
-          <td>${escapeHtml(p.createdByUserId||'')}</td>
-          <td>${p.updatedAt ? formatDateTime(p.updatedAt) : ''}</td>
-        `;
-        tr.addEventListener('click', () => openPlanView(p.id));
-        tbody.appendChild(tr);
+      if (properties.length) {
+        els.propertySelect.value = properties[0];
+        await setActiveProperty(properties[0]);
       }
+      els.propertySelect.addEventListener('change', () => setActiveProperty(els.propertySelect.value));
+      els.filterType.addEventListener('change', renderPlanList);
+      els.filterTerm.addEventListener('input', renderPlanList);
+      els.newPlanBtn.addEventListener('click', () => openPlanModal());
+      els.emptyNewPlanBtn.addEventListener('click', () => openPlanModal());
     }
 
-    function hidePlanView(){ els.planViewCard.style.display = 'none'; els.planView.innerHTML = ''; }
+    async function loadProperties() {
+      try {
+        const res = await fetch('/api/properties');
+        const list = await res.json();
+        properties = (list || []).map(x => x.name).filter(Boolean);
+      } catch (e) { properties = []; }
+    }
 
-    async function openPlanView(id){
-      try{
+    function renderPropertyOptions() {
+      els.propertySelect.innerHTML = properties.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('');
+    }
+
+    async function setActiveProperty(prop) {
+      currentProperty = prop;
+      await fetchPlans();
+      renderPlanList();
+      selectedPlanId = null;
+      showEmptyState();
+    }
+
+    async function fetchPlans() {
+      if (!currentProperty) { plans = []; return; }
+      try {
+        const res = await apiFetch(`/marketing-plans?property=${encodeURIComponent(currentProperty)}`);
+        plans = await res.json();
+      } catch (e) { plans = []; }
+    }
+
+    // ==================== PLAN LIST ====================
+    function renderPlanList() {
+      const type = els.filterType.value;
+      const term = (els.filterTerm.value || '').toLowerCase().trim();
+      const filtered = plans.filter(p => (type === 'all' || p.planType === type) && (!term || (p.name || '').toLowerCase().includes(term) || (p.termLabel || '').toLowerCase().includes(term)));
+
+      els.planCount.textContent = filtered.length;
+
+      if (!filtered.length) {
+        els.planList.innerHTML = `<div class="empty-state" style="padding:40px 20px"><p>No plans found</p></div>`;
+        return;
+      }
+
+      els.planList.innerHTML = filtered.map(p => {
+        const isActive = selectedPlanId === (p._id || p.id);
+        const typeLabel = p.planType === '90_day' ? '90 Day' : (p.planType === '60_day' ? '60 Day' : '30 Day');
+        const progress = calcPlanProgress(p);
+        return `
+          <div class="plan-item ${isActive ? 'active' : ''}" data-id="${p._id || p.id}">
+            <div class="plan-item-name">${esc(p.name || 'Untitled Plan')}</div>
+            <div class="plan-item-meta">
+              <span class="badge ${p.planType === '90_day' ? 'warning' : (p.planType === '60_day' ? 'info' : 'success')}">${typeLabel}</span>
+              ${p.termLabel ? `<span>${esc(p.termLabel)}</span>` : ''}
+              <span>${formatDate(p.startDate)} - ${formatDate(p.endDate)}</span>
+            </div>
+            ${progress !== null ? `<div style="margin-top:8px"><div style="height:4px;background:#e5e7eb;border-radius:2px;overflow:hidden"><div style="height:100%;width:${progress}%;background:${progress === 100 ? 'var(--success)' : 'var(--brand-accent-2)'}"></div></div><div style="font-size:11px;color:#6b7280;margin-top:4px">${progress}% complete</div></div>` : ''}
+          </div>
+        `;
+      }).join('');
+
+      els.planList.querySelectorAll('.plan-item').forEach(item => {
+        item.addEventListener('click', () => selectPlan(item.dataset.id));
+      });
+    }
+
+    function calcPlanProgress(plan) {
+      if (!plan.weeks || !plan.weeks.length) return null;
+      let total = 0, done = 0;
+      plan.weeks.forEach(w => {
+        (w.activities || []).forEach(a => { total++; if (a.completed) done++; });
+      });
+      if (total === 0) return null;
+      return Math.round((done / total) * 100);
+    }
+
+    function showEmptyState() {
+      show(els.emptyState);
+      hide(els.planDetail);
+    }
+
+    // ==================== PLAN DETAIL ====================
+    async function selectPlan(id) {
+      selectedPlanId = id;
+      selectedWeekIndex = 0;
+      renderPlanList();
+
+      try {
         const res = await apiFetch(`/marketing-plans?id=${encodeURIComponent(id)}`);
         const plan = await res.json();
-        renderPlanView(plan);
-      }catch(e){ alert('Failed to load plan: '+e.message); }
+        renderPlanDetail(plan);
+      } catch (e) {
+        alert('Failed to load plan: ' + e.message);
+      }
     }
 
-    function renderPlanView(plan){
-      const el = els.planView; els.planViewCard.style.display='';
-      
-      function sec(title, body){ 
-        return `
-          <div style="background:#ffffff;border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px">
-            <div style="font-weight:700;color:#111827;font-size:14px;margin-bottom:8px">${title}</div>
-            <div style="color:#374151;line-height:1.6">${body||'<span class="muted">Not specified</span>'}</div>
-          </div>
-        `; 
-      }
-      
-      function fmtKeyDates(kd){ 
-        if (!Array.isArray(kd) || kd.length === 0) return '<span class="muted">No key dates specified</span>'; 
-        return kd.map(k=>`
-          <div style="display:flex;align-items:center;gap:8px;padding:8px;background:#f9fafb;border-radius:6px;margin-bottom:6px">
-            <div style="width:8px;height:8px;border-radius:50%;background:var(--brand-accent-2)"></div>
-            <strong>${escapeHtml(k.label||'')}</strong>
-            <span class="mini muted" style="margin-left:auto">${escapeHtml(k.date||'')}</span>
-          </div>
-        `).join(''); 
-      }
-      
-      function fmtMetrics(p){ 
-        const hasMetrics = p.preleaseStart != null || p.preleaseEnd != null || 
-                          p.applicationsGoal != null || p.applicationsActual != null ||
-                          p.leasesGoal != null || p.leasesActual != null;
-        
-        if (!hasMetrics) return '<span class="muted">No metrics specified</span>';
-        
-        return `
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
-            ${p.preleaseStart != null || p.preleaseEnd != null ? `
-              <div style="padding:12px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px">
-                <div class="mini muted" style="margin-bottom:4px">Prelease</div>
-                <div style="font-weight:700;color:#0369a1">${p.preleaseStart??'-'}% → ${p.preleaseEnd??'-'}%</div>
-              </div>
-            ` : ''}
-            ${p.applicationsGoal != null || p.applicationsActual != null ? `
-              <div style="padding:12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px">
-                <div class="mini muted" style="margin-bottom:4px">Applications</div>
-                <div style="font-weight:700;color:#15803d">Goal: ${p.applicationsGoal??'-'} | Actual: ${p.applicationsActual??'-'}</div>
-              </div>
-            ` : ''}
-            ${p.leasesGoal != null || p.leasesActual != null ? `
-              <div style="padding:12px;background:#fef3c7;border:1px solid #fde68a;border-radius:8px">
-                <div class="mini muted" style="margin-bottom:4px">Leases</div>
-                <div style="font-weight:700;color:#92400e">Goal: ${p.leasesGoal??'-'} | Actual: ${p.leasesActual??'-'}</div>
-              </div>
-            ` : ''}
-          </div>
-        `;
-      }
-      
-      const hdr = `
-        <div style="background:linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);border:1px solid #bae6fd;border-radius:12px;padding:20px;margin-bottom:24px">
-          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
-            <div style="flex:1;min-width:300px">
-              <div class="mini muted" style="margin-bottom:4px">Property</div>
-              <div class="badge" style="background:#ffffff;margin-bottom:12px">${escapeHtml(plan.property||currentProperty||'-')}</div>
-              
-              <div style="font-size:24px;font-weight:700;color:#111827;margin-bottom:8px">${escapeHtml(plan.name||'Untitled Plan')}</div>
-              
-              <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px">
-                <span class="badge" style="background:var(--brand-accent-2);color:#ffffff;border-color:var(--brand-accent-2)">
-                  ${plan.planType==='60_day'?'60 Day Plan':'30 Day Plan'}
-                </span>
-                ${plan.termLabel ? `<span class="badge">${escapeHtml(plan.termLabel)}</span>` : ''}
-                <span class="badge">${escapeHtml((plan.startDate||'').slice(0,10))} – ${escapeHtml((plan.endDate||'').slice(0,10))}</span>
-              </div>
-              
-              <div class="mini muted">
-                Created by ${escapeHtml(plan.createdByUserId||'Unknown')} • 
-                ${plan.createdAt?formatDateTime(plan.createdAt):''} • 
-                Updated ${plan.updatedAt?formatDateTime(plan.updatedAt):''}
-              </div>
-            </div>
-            
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="secondary" onclick="(function(){ openPlanModal(${JSON.stringify({mode:'edit'}).replace(/"/g,'&quot;')}, '${plan._id?plan._id:plan.id}'); })()">Edit Plan</button>
-              <button class="secondary" onclick="(function(){ duplicatePlan('${plan._id?plan._id:plan.id}'); })()">Duplicate</button>
-              <button class="secondary" onclick="exportPlanPDF()">Export PDF</button>
-              <button class="warn" onclick="(function(){ deletePlan('${plan._id?plan._id:plan.id}'); })()">Delete</button>
-            </div>
-          </div>
-        </div>
-      `;
-      
-      const body = `
-        <div style="display:grid;gap:16px">
-          ${sec('Primary Goals', nl2br(escapeHtml(plan.primaryGoals||'')))}
-          ${sec('Target Audiences', nl2br(escapeHtml(plan.targetAudiences||'')))}
-          ${sec('Key Dates', fmtKeyDates(plan.keyDates))}
-          ${sec('Ongoing Tasks', nl2br(escapeHtml(plan.keyTasks||plan.ongoingTasks||'')))}
-          ${plan.notes ? sec('Additional Notes', nl2br(escapeHtml(plan.notes))) : ''}
-          ${sec('Success Metrics', fmtMetrics(plan))}
-        </div>
-        
-        <div style="margin-top:32px">
-          <div style="font-size:18px;font-weight:700;color:#111827;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid var(--border)">
-            Weekly Breakdown
-          </div>
-          <div style="display:flex;flex-direction:column;gap:12px">
-            ${(plan.weeks||[]).sort((a,b)=> (a.priority||a.weekNumber||0) - (b.priority||b.weekNumber||0)).map(w => weekReadOnlyHtml(w)).join('')}
-          </div>
-        </div>
-      `;
-      
-      window.__lastRenderedPlan = plan;
-      el.innerHTML = hdr + body;
-    }
+    function renderPlanDetail(plan) {
+      hide(els.emptyState);
+      show(els.planDetail);
 
-    function weekReadOnlyHtml(w){
-      const pct = taskCompletionPct(w.tasks||[]);
-      
-      const header = `
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px">
+      // Header
+      const typeLabel = plan.planType === '90_day' ? '90 Day' : (plan.planType === '60_day' ? '60 Day' : '30 Day');
+      els.planHeader.innerHTML = `
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
           <div>
-            <div style="font-weight:700;font-size:16px;color:#111827">${escapeHtml(w.weekLabel||`Week ${w.weekNumber||''}`)}</div>
-            <div class="mini muted">${escapeHtml((w.dateRangeStart||'').slice(0,10))} – ${escapeHtml((w.dateRangeEnd||'').slice(0,10))}</div>
-          </div>
-          ${pct != null ? `
-            <div style="text-align:right">
-              <div class="mini muted">Task Progress</div>
-              <div style="font-weight:700;color:${pct===100?'var(--good)':pct>0?'var(--brand-accent-2)':'#6b7280'}">${pct}% Complete</div>
+            <h2>${esc(plan.name || 'Untitled Plan')}</h2>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+              <span class="badge primary">${typeLabel}</span>
+              ${plan.termLabel ? `<span class="badge">${esc(plan.termLabel)}</span>` : ''}
+              <span class="badge">${formatDate(plan.startDate)} - ${formatDate(plan.endDate)}</span>
             </div>
-          ` : ''}
+            <div style="font-size:12px;color:#64748b">
+              Created by ${esc(plan.createdByUserId || 'Unknown')} • Updated ${formatDateTime(plan.updatedAt)}
+            </div>
+          </div>
+          <div class="detail-actions">
+            <button class="btn" onclick="openPlanModal({mode:'edit'}, '${plan._id || plan.id}')">✏️ Edit</button>
+            <button class="btn" onclick="duplicatePlan('${plan._id || plan.id}')">📋 Duplicate</button>
+            <button class="btn danger" onclick="deletePlan('${plan._id || plan.id}')">🗑️ Delete</button>
+          </div>
         </div>
+        ${plan.currentSpecial ? `
+          <div class="special-banner" style="margin-top:16px">
+            <div class="special-banner-title">Current Special</div>
+            <div class="special-banner-text">${esc(plan.currentSpecial)}</div>
+          </div>
+        ` : ''}
       `;
-      
-      const roSec = (label, val, icon) => {
-        if (!val) return '';
+
+      // Week Tabs
+      const weeks = plan.weeks || [];
+      els.weekTabs.innerHTML = weeks.map((w, i) => {
+        const progress = calcWeekProgress(w);
         return `
-          <div class="ro-acc collapsed" style="margin-bottom:8px">
-            <div class="ro-head" onclick="this.parentElement.classList.toggle('collapsed')">
-              <div style="display:flex;align-items:center;gap:8px">
-                <span class="caret">▶</span>
-                <span>${icon}</span>
-                <strong>${label}</strong>
-              </div>
-            </div>
-            <div class="ro-body" style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:6px;background:#fafbfc">
-              ${nl2br(escapeHtml(val))}
-            </div>
-          </div>
+          <button class="week-tab ${i === selectedWeekIndex ? 'active' : ''}" data-index="${i}">
+            ${esc(w.weekLabel || `Week ${i + 1}`)}
+            ${progress !== null ? `<div class="week-progress">${progress}%</div>` : ''}
+          </button>
         `;
-      };
-      
-      const details = 
-        roSec('Leasing Focus', w.leasingFocus, '🎯') + 
-        roSec('Community Outreach & Events', w.communityOutreach, '🤝') + 
-        roSec('Social Media & Digital', w.socialDigital, '📱') + 
-        roSec('Weekly Task Summary', w.weeklyTaskSummary, '✅');
-      
-      const acts = (w.activities||[]).length > 0 ? `
-        <div style="margin-bottom:12px">
-          <div style="font-weight:700;color:#111827;margin-bottom:8px;font-size:14px">📅 Activities</div>
-          <div style="display:flex;flex-direction:column;gap:6px">
-            ${(w.activities||[]).map(a => {
-              const t = escapeHtml(a.type||'Activity');
-              const title = escapeHtml(a.title||'');
-              const date = escapeHtml((a.date||'').slice(0,10));
-              const time = escapeHtml(a.time||'');
-              const det = escapeHtml(a.details||'');
-              return `
-                <div style="padding:10px;background:#f9fafb;border:1px solid var(--border);border-radius:8px">
-                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-                    <span class="badge" style="background:var(--brand-accent-2);color:#ffffff;border-color:var(--brand-accent-2)">${t}</span>
-                    <strong>${title}</strong>
-                    ${date ? `<span class="mini muted" style="margin-left:auto">${date}${time?' • '+time:''}</span>` : ''}
-                  </div>
-                  ${det ? `<div class="mini" style="color:#6b7280">${det}</div>` : ''}
-                </div>
-              `;
-            }).join('')}
-          </div>
-        </div>
-      ` : '';
-      
-      const tasks = (w.tasks||[]).length ? `
-        <div style="margin-top:12px">
-          <div style="font-weight:700;color:#111827;margin-bottom:8px;font-size:14px">✓ Tasks</div>
-          <div style="display:flex;flex-direction:column;gap:6px">
-            ${w.tasks.map(t=> taskReadOnlyHtml(t)).join('')}
-          </div>
-        </div>
-      ` : '';
-      
-      return `
-        <div style="background:#ffffff;border:1px solid var(--border);border-radius:12px;padding:16px;box-shadow:var(--shadow-sm)">
-          ${header}
-          ${acts}
-          ${details || '<div class="mini muted" style="padding:12px;text-align:center;background:#f9fafb;border-radius:8px">No weekly details specified</div>'}
-          ${tasks}
-        </div>
-      `;
-    }
+      }).join('');
 
-    function taskReadOnlyHtml(t){
-      const statusLabel = t.status==='done' ? 'Done' : (t.status==='in_progress' ? 'In Progress' : 'Not Started');
-      const statusColor = t.status==='done' ? '#10b981' : (t.status==='in_progress' ? '#3b82f6' : '#9ca3af');
-      const statusBg = t.status==='done' ? '#d1fae5' : (t.status==='in_progress' ? '#dbeafe' : '#f3f4f6');
-      
-      return `
-        <div style="display:flex;align-items:flex-start;gap:10px;border:1px solid var(--border);border-radius:8px;padding:12px;background:#fafbfc">
-          <div style="display:flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:${statusBg};flex-shrink:0;margin-top:2px">
-            <span style="display:block;width:10px;height:10px;border-radius:50%;background:${statusColor}"></span>
-          </div>
-          <div style="flex:1;min-width:0">
-            <div style="font-weight:700;color:#111827;margin-bottom:4px">${escapeHtml(t.title||'Untitled Task')}</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-              <span class="badge" style="background:${statusBg};color:${statusColor};border-color:${statusColor}">${statusLabel}</span>
-              ${t.channel ? `<span class="badge">${escapeHtml(t.channel)}</span>` : ''}
-              ${t.dueDate ? `<span class="mini muted">Due: ${escapeHtml((t.dueDate||'').slice(0,10))}</span>` : ''}
-            </div>
-            ${t.notes ? `<div class="mini" style="margin-top:6px;color:#6b7280">${escapeHtml(t.notes)}</div>` : ''}
-          </div>
-        </div>
-      `;
-    }
-
-    async function duplicatePlan(id){
-      if (!confirm('Duplicate this plan?')) return;
-      try{
-        const res = await apiFetch('/marketing-plans', { method:'POST', body: JSON.stringify({ action:'duplicate', id }) });
-        const { id: newId } = await res.json();
-        await fetchPlans();
-        renderPlansTable();
-        if (newId) openPlanView(newId);
-      }catch(e){ alert('Duplicate failed: '+e.message); }
-    }
-
-    async function deletePlan(id){
-      if (!confirm('Delete this plan? This cannot be undone.')) return;
-      try{
-        await apiFetch('/marketing-plans', { method:'DELETE', body: JSON.stringify({ id }) });
-        await fetchPlans();
-        renderPlansTable();
-        hidePlanView();
-      }catch(e){ alert('Delete failed: '+e.message); }
-    }
-
-    async function exportPlanPDF(){
-      try{
-        if (typeof html2pdf === 'undefined'){ alert('PDF engine not loaded. Check network.'); return; }
-        const planEl = els.planView; if (!planEl){ alert('No plan to export.'); return; }
-        const plan = (window.__lastRenderedPlan||{});
-        const filename = `${(plan.property||currentProperty||'Property').replace(/[\\/:*?"<>|]+/g,'-')} - ${(plan.name||'Plan').replace(/[\\/:*?"<>|]+/g,'-')}.pdf`;
-        const clone = planEl.cloneNode(true);
-        clone.querySelectorAll('.ro-acc').forEach(x=> x.classList.remove('collapsed'));
-        clone.querySelectorAll('button').forEach(b=> b.remove());
-        const tmp = document.createElement('div'); tmp.style.position='fixed'; tmp.style.left='-9999px'; tmp.style.top='0'; tmp.style.width='900px'; tmp.appendChild(clone); document.body.appendChild(tmp);
-        const opt = { margin: 0.5, filename, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, scrollY: -window.scrollY }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }, pagebreak: { mode: ['css','legacy'] } };
-        await html2pdf().set(opt).from(clone).save();
-        document.body.removeChild(tmp);
-      }catch(e){ alert('Export failed: '+(e?.message||e)); }
-    }
-
-    // Wizard
-    let wizardStep = 1;
-    let wizardData = null;
-
-    function openPlanModal(opts={}, id=null){
-      editingPlanId = (opts && opts.mode==='edit') ? id : null;
-      wizardData = { planType: '30_day', name:'', termLabel:'', startDate:'', endDate:'', primaryGoals:'', targetAudiences:'', keyDates:'', ongoingTasks:'', notes:'', weeks:[] };
-      wizardStep = 1; renderWizard(); els.planModal.style.display='flex';
-      if (editingPlanId){ loadEditingPlan(editingPlanId); els.planModalTitle.textContent = 'Edit Plan'; } else { els.planModalTitle.textContent = 'New Plan'; }
-    }
-    function closePlanModal(){ els.planModal.style.display='none'; wizardData=null; editingPlanId=null; }
-
-    async function loadEditingPlan(id){
-      try{ const res = await apiFetch(`/marketing-plans?id=${encodeURIComponent(id)}`); const plan = await res.json(); wizardData = planToWizard(plan); renderWizard(); }
-      catch(e){ alert('Failed to load plan: '+e.message); }
-    }
-
-    function planToWizard(p){
-      return {
-        planType: p.planType || '30_day',
-        name: p.name || '',
-        termLabel: p.termLabel || '',
-        startDate: (p.startDate||'').slice(0,10),
-        endDate: (p.endDate||'').slice(0,10),
-        primaryGoals: p.primaryGoals||'',
-        targetAudiences: p.targetAudiences||'',
-        keyDates: Array.isArray(p.keyDates) ? (p.keyDates||[]) : [],
-        keyTasks: p.keyTasks || p.ongoingTasks || '',
-        ongoingTasks: p.ongoingTasks||'',
-        preleaseStart: (typeof p.preleaseStart==='number')?p.preleaseStart:null,
-        preleaseEnd: (typeof p.preleaseEnd==='number')?p.preleaseEnd:null,
-        applicationsGoal: (typeof p.applicationsGoal==='number')?p.applicationsGoal:null,
-        applicationsActual: (typeof p.applicationsActual==='number')?p.applicationsActual:null,
-        leasesGoal: (typeof p.leasesGoal==='number')?p.leasesGoal:null,
-        leasesActual: (typeof p.leasesActual==='number')?p.leasesActual:null,
-        notes: p.notes||'',
-        weeks: Array.isArray(p.weeks) ? p.weeks.map(w => ({
-          weekNumber: w.weekNumber||0,
-          weekLabel: w.weekLabel||'',
-          dateRangeStart: (w.dateRangeStart||'').slice(0,10),
-          dateRangeEnd: (w.dateRangeEnd||'').slice(0,10),
-          leasingFocus: w.leasingFocus||'',
-          communityOutreach: w.communityOutreach||'',
-          socialDigital: w.socialDigital||'',
-          weeklyTaskSummary: w.weeklyTaskSummary||'',
-          priority: w.priority||w.weekNumber||0,
-          tasks: Array.isArray(w.tasks)? w.tasks.map(t=>({ id: t.id||rid(), title:t.title||'', channel:t.channel||'', dueDate:(t.dueDate||'').slice(0,10), status: t.status||'not_started', notes: t.notes||'' })) : [],
-          activities: Array.isArray(w.activities)? w.activities.map(a=>({ type:a.type||'', title:a.title||'', date:(a.date||'').slice(0,10), time:a.time||'', details:a.details||'' })) : []
-        })) : []
-      };
-    }
-
-    function renderWizard(){
-      // Update progress indicator
-      for (let i = 1; i <= 4; i++) {
-        const prog = document.getElementById(`prog${i}`);
-        if (!prog) continue;
-        prog.classList.remove('active', 'completed');
-        if (i === wizardStep) prog.classList.add('active');
-        else if (i < wizardStep) prog.classList.add('completed');
-      }
-
-      // Show/hide steps
-      els.step1.style.display = (wizardStep===1) ? '' : 'none';
-      els.step2.style.display = (wizardStep===2) ? '' : 'none';
-      els.step3.style.display = (wizardStep===3) ? '' : 'none';
-      document.getElementById('step4').style.display = (wizardStep===4) ? '' : 'none';
-      
-      els.wizardBack.style.display = wizardStep>1 ? '' : 'none';
-      els.wizardNext.style.display = wizardStep<4 ? '' : 'none';
-      els.wizardSave.style.display = wizardStep===4 ? '' : 'none';
-
-      // Render step content
-      if (wizardStep === 1){ renderStep1Flow(); }
-      if (wizardStep === 2){ renderStep2Flow(); }
-      if (wizardStep === 3){ ensureWeeks(); renderWeeksEditor(); }
-      if (wizardStep === 4){ renderReview(); }
-    }
-
-    function suggestEndDate(){
-      if (!wizardData.startDate) return;
-      const days = wizardData.planType==='60_day' ? 59 : 29; // inclusive range
-      try{ const d = new Date(wizardData.startDate+'T00:00:00'); d.setDate(d.getDate()+days); const z=new Date(d.getTime()-d.getTimezoneOffset()*60000); wizardData.endDate = z.toISOString().slice(0,10); els.w_end.value = wizardData.endDate; }catch(e){}
-    }
-
-    function ensureWeeks(){
-      const needMin = wizardData.planType==='60_day' ? 8 : 4;
-      const needMax = wizardData.planType==='60_day' ? 9 : 5;
-      if (!wizardData.weeks || !wizardData.weeks.length){
-        const weeks = autoWeeks(wizardData.planType, wizardData.startDate, wizardData.endDate);
-        wizardData.weeks = weeks.map((w,i)=>Object.assign({}, w, { weekNumber:i+1, priority:i+1, tasks: [] }));
-      } else {
-        // re-label date ranges if missing
-        wizardData.weeks.forEach((w,i)=>{ if (!w.weekLabel){ w.weekLabel = `Week ${i+1} (${w.dateRangeStart||''} – ${w.dateRangeEnd||''})`; } if (!w.priority) w.priority = i+1; if (!w.weekNumber) w.weekNumber = i+1; if (!Array.isArray(w.tasks)) w.tasks = []; });
-      }
-      // clamp count to typical range if wildly off
-      if (wizardData.weeks.length < needMin){
-        while (wizardData.weeks.length < needMin){ const i = wizardData.weeks.length; wizardData.weeks.push({ weekNumber:i+1, weekLabel:`Week ${i+1}`, dateRangeStart:'', dateRangeEnd:'', leasingFocus:'', communityOutreach:'', socialDigital:'', weeklyTaskSummary:'', priority:i+1, tasks:[] }); }
-      }
-      if (wizardData.weeks.length > needMax){ wizardData.weeks = wizardData.weeks.slice(0, needMax); }
-    }
-
-    function autoWeeks(planType, start, end){
-      const s = (start||'').slice(0,10); const e = (end||'').slice(0,10);
-      if (!s || !e) return [];
-      const days = dateDiffDays(s, e) || (planType==='60_day'?60:30);
-      let count = Math.round(days/7);
-      if (planType==='60_day'){ count = Math.min(9, Math.max(8, count)); } else { count = Math.min(5, Math.max(4, count)); }
-      const out = []; let cur = s;
-      for (let i=1;i<=count;i++){
-        const endW = i===count ? e : addDaysISO(cur, 6);
-        out.push({ weekNumber:i, weekLabel:`Week ${i} (${cur} – ${endW})`, dateRangeStart: cur, dateRangeEnd: endW, leasingFocus:'', communityOutreach:'', socialDigital:'', weeklyTaskSummary:'', priority:i, tasks:[] });
-        cur = addDaysISO(endW, 1); if (cur > e) break;
-      }
-      return out;
-    }
-
-    function renderWeeksEditor(){
-      const wrap = els.weeksWrap; wrap.innerHTML='';
-      const list = wizardData.weeks || [];
-      wrap.innerHTML = list.map((w,idx)=> weekEditorHtml(w, idx)).join('');
-      // bind inputs
-      list.forEach((w, idx) => bindWeekEditor(idx));
-    }
-
-    function weekEditorHtml(w, idx){
-      const pct = taskCompletionPct((w.tasks)||[]);
-      return `
-        <div id="wk_${idx}_acc" class="wk-acc ${idx===0?'':'collapsed'}" style="margin-bottom:10px">
-          <div class="wk-head" onclick="(function(){ toggleWeek(${idx}); })()">
-            <div style="display:flex;align-items:center;gap:8px">
-              <span class="caret">▶</span>
-              <div style="font-weight:800">${escapeHtml(w.weekLabel||`Week ${idx+1}`)}</div>
-              <div class="mini muted">${escapeHtml((w.dateRangeStart||'') + (w.dateRangeEnd?(' – '+w.dateRangeEnd):''))}</div>
-            </div>
-            <div class="mini">${pct!=null?(pct+'% complete'):''}</div>
-          </div>
-          <div class="wk-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:8px">
-            <div class="row" style="align-items:flex-end">
-              <div>
-                <label>Week Number</label>
-                <input type="number" id="wk_${idx}_num" value="${w.weekNumber||idx+1}" />
-              </div>
-              <div>
-                <label>Week Label</label>
-                <input type="text" id="wk_${idx}_label" value="${escapeAttr(w.weekLabel||`Week ${idx+1}`)}" />
-              </div>
-              <div>
-                <label>Start</label>
-                <input type="date" id="wk_${idx}_s" value="${(w.dateRangeStart||'').slice(0,10)}" />
-              </div>
-              <div>
-                <label>End</label>
-                <input type="date" id="wk_${idx}_e" value="${(w.dateRangeEnd||'').slice(0,10)}" />
-              </div>
-            </div>
-            <div class="wk-sub collapsed" id="wk_${idx}_details">
-              <div class="wk-sub-head" onclick="(function(){ document.getElementById('wk_${idx}_details')?.classList.toggle('collapsed'); })()">
-                <div style="display:flex;align-items:center;gap:8px"><span class="caret">▶</span><strong>Weekly Details</strong></div>
-                <div class="mini muted">Leasing Focus • Community Outreach • Social & Digital • Summary</div>
-              </div>
-              <div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:8px">
-                <div class="grid-cols">
-                  <div><label>Leasing Focus</label><textarea id="wk_${idx}_lease">${escapeHtml(w.leasingFocus||'')}</textarea></div>
-                  <div><label>Community Outreach / Resident Events</label><textarea id="wk_${idx}_comm">${escapeHtml(w.communityOutreach||'')}</textarea></div>
-                  <div><label>Social Media & Digital Marketing</label><textarea id="wk_${idx}_social">${escapeHtml(w.socialDigital||'')}</textarea></div>
-                  <div><label>Weekly Task Summary / Goals</label><textarea id="wk_${idx}_sum">${escapeHtml(w.weeklyTaskSummary||'')}</textarea></div>
-                </div>
-              </div>
-            </div>
-            ${activitiesGroupsHtml(idx)}
-            <div style="margin-top:8px">
-              <div class="mini muted" style="margin-bottom:6px">Tasks (optional)</div>
-              <div id="wk_${idx}_tasks" style="display:flex;flex-direction:column;gap:6px">${(w.tasks||[]).map((t,ti)=> taskEditorRowHtml(idx, ti, t)).join('')}</div>
-              <div class="row" style="margin-top:6px"><button class="secondary" style="flex:0 0 auto" onclick="(function(){ addTask(${idx}); })()">Add Task</button></div>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    function bindWeekEditor(idx){
-      const w = wizardData.weeks[idx]; if (!w) return;
-      const g = (id)=> document.getElementById(id);
-      // no presets/bundles
-      g(`wk_${idx}_num`).oninput = (e)=> w.weekNumber = parseInt(e.target.value||'0',10)||0;
-      g(`wk_${idx}_label`).oninput = (e)=> w.weekLabel = e.target.value;
-      g(`wk_${idx}_s`).onchange = (e)=> w.dateRangeStart = e.target.value;
-      g(`wk_${idx}_e`).onchange = (e)=> w.dateRangeEnd = e.target.value;
-      // bind weekly detail textareas
-      const lease = g(`wk_${idx}_lease`); if (lease) lease.oninput = (e)=> w.leasingFocus = e.target.value;
-      const comm = g(`wk_${idx}_comm`); if (comm) comm.oninput = (e)=> w.communityOutreach = e.target.value;
-      const social = g(`wk_${idx}_social`); if (social) social.oninput = (e)=> w.socialDigital = e.target.value;
-      const sum = g(`wk_${idx}_sum`); if (sum) sum.oninput = (e)=> w.weeklyTaskSummary = e.target.value;
-      // bind tasks
-      const tasksWrap = g(`wk_${idx}_tasks`);
-      if (tasksWrap){ tasksWrap.querySelectorAll('[data-ti]').forEach(row => bindTaskEditor(idx, parseInt(row.getAttribute('data-ti'),10)||0)); }
-      // bind grouped activities (by global index)
-      const weekAcc = document.getElementById(`wk_${idx}_acc`);
-      if (weekAcc){ weekAcc.querySelectorAll('[data-gai]').forEach(row => bindActivityEditorGlobal(idx, parseInt(row.getAttribute('data-gai'),10)||0)); }
-    }
-
-    function taskEditorRowHtml(wi, ti, t){
-      const sel = (v, x)=> v===x? 'selected' : '';
-      return `
-        <div data-ti="${ti}" style="display:flex;gap:6px;align-items:flex-end;border:1px solid var(--border);border-radius:8px;padding:8px">
-          <div style="flex:2"><label>Title</label><input id="wk_${wi}_t_${ti}_title" type="text" value="${escapeAttr(t.title||'')}" /></div>
-          <div style="flex:1"><label>Channel</label><select id="wk_${wi}_t_${ti}_ch">
-            <option ${sel(t.channel,'Event')}>Event</option>
-            <option ${sel(t.channel,'On-Campus Outreach')}>On-Campus Outreach</option>
-            <option ${sel(t.channel,'Local Business')}>Local Business</option>
-            <option ${sel(t.channel,'Email')}>Email</option>
-            <option ${sel(t.channel,'Social Media')}>Social Media</option>
-            <option ${sel(t.channel,'Digital Ads')}>Digital Ads</option>
-            <option ${sel(t.channel,'Other')}>Other</option>
-          </select></div>
-          <div style="flex:1"><label>Due Date</label><input id="wk_${wi}_t_${ti}_due" type="date" value="${(t.dueDate||'').slice(0,10)}" /></div>
-          <div style="flex:1"><label>Status</label><select id="wk_${wi}_t_${ti}_st">
-            <option value="not_started" ${sel(t.status,'not_started')}>Not Started</option>
-            <option value="in_progress" ${sel(t.status,'in_progress')}>In Progress</option>
-            <option value="done" ${sel(t.status,'done')}>Done</option>
-          </select></div>
-          <div style="flex:2"><label>Notes</label><input id="wk_${wi}_t_${ti}_notes" type="text" value="${escapeAttr(t.notes||'')}" /></div>
-          <div style="flex:0 0 auto"><button class="secondary" onclick="(function(){ removeTask(${wi}, ${ti}); })()">Remove</button></div>
-        </div>
-      `;
-    }
-
-    function bindTaskEditor(wi, ti){
-      const t = (wizardData.weeks[wi].tasks||[])[ti]; if (!t) return;
-      const g = (id)=> document.getElementById(id);
-      g(`wk_${wi}_t_${ti}_title`).oninput = (e)=> t.title = e.target.value;
-      g(`wk_${wi}_t_${ti}_ch`).onchange = (e)=> t.channel = e.target.value;
-      g(`wk_${wi}_t_${ti}_due`).onchange = (e)=> t.dueDate = e.target.value;
-      g(`wk_${wi}_t_${ti}_st`).onchange = (e)=> t.status = e.target.value;
-      g(`wk_${wi}_t_${ti}_notes`).oninput = (e)=> t.notes = e.target.value;
-    }
-
-    function addTask(wi){ const w = wizardData.weeks[wi]; if (!w.tasks) w.tasks = []; w.tasks.push({ id: rid(), title:'', channel:'', dueDate:'', status:'not_started', notes:'' }); renderWeeksEditor(); }
-    function removeTask(wi, ti){ wizardData.weeks[wi].tasks.splice(ti,1); renderWeeksEditor(); }
-
-    function renderReview(){
-      const p = wizardData;
-      const hdr = `<div style="display:flex;align-items:center;gap:8px"><div style="font-weight:800">${escapeHtml(p.name||'')}</div><div class="mini">${p.planType==='60_day'?'60 Day':'30 Day'}${p.termLabel?(' • '+escapeHtml(p.termLabel)) : ''} • ${escapeHtml((p.startDate||'') + (p.endDate?(' – '+p.endDate):''))}</div></div>`;
-      const sec = (t, v) => `<div style="margin-top:6px"><div class="mini muted">${t}</div><div>${v?nl2br(escapeHtml(v)):'<span class=\'muted\'>-</span>'}</div></div>`;
-      const kd = Array.isArray(p.keyDates)? p.keyDates.map(k=>`${escapeHtml(k.label||'')}: ${escapeHtml(k.date||'')}`).join('<br/>') : escapeHtml(p.keyDates||'');
-      const metrics = `Prelease Start: ${p.preleaseStart??'-'}% • Prelease End: ${p.preleaseEnd??'-'}%<br/>Apps Goal/Actual: ${p.applicationsGoal??'-'} / ${p.applicationsActual??'-'} • Leases Goal/Actual: ${p.leasesGoal??'-'} / ${p.leasesActual??'-'}`;
-      const weeks = (p.weeks||[]).map(w=> weekReadOnlyHtml(w)).join('');
-      els.reviewWrap.innerHTML = hdr + sec('Primary Goal', p.primaryGoals) + sec('Target Audiences', p.targetAudiences) + sec('Key Dates', kd) + sec('Key Tasks', p.keyTasks||p.ongoingTasks) + sec('Metrics', metrics) + `<div class="section-title" style="margin-top:12px">Weekly Breakdown</div>` + weeks;
-    }
-
-    els.wizardBack.addEventListener('click', ()=>{ if (wizardStep>1){ wizardStep--; renderWizard(); } });
-    els.wizardNext.addEventListener('click', ()=>{
-      // Validation
-      if (wizardStep===1){ 
-        if (!wizardData.name || !wizardData.startDate || !wizardData.endDate){ 
-          alert('Plan Name, Start Date, and End Date are required.'); 
-          return; 
-        } 
-      }
-      if (wizardStep<4){ wizardStep++; renderWizard(); }
-    });
-    els.wizardCancel.addEventListener('click', ()=> closePlanModal());
-    els.wizardSave.addEventListener('click', async ()=>{
-      try{
-        const payload = wizardToPayload(wizardData);
-        if (editingPlanId){ await apiFetch('/marketing-plans', { method:'PUT', body: JSON.stringify({ id: editingPlanId, property: currentProperty, ...payload }) }); }
-        else { const res = await apiFetch('/marketing-plans', { method:'POST', body: JSON.stringify({ property: currentProperty, ...payload }) }); const j = await res.json(); editingPlanId = j.id; }
-        await fetchPlans(); renderPlansTable(); closePlanModal(); if (editingPlanId){ openPlanView(editingPlanId); }
-      }catch(e){ alert('Save failed: '+e.message); }
-    });
-
-    function wizardToPayload(p){
-      return {
-        name: p.name,
-        planType: p.planType,
-        termLabel: p.termLabel,
-        startDate: p.startDate,
-        endDate: p.endDate,
-        primaryGoals: p.primaryGoals,
-        targetAudiences: p.targetAudiences,
-        keyDates: Array.isArray(p.keyDates)? p.keyDates : [],
-        keyTasks: p.keyTasks || p.ongoingTasks,
-        preleaseStart: p.preleaseStart,
-        preleaseEnd: p.preleaseEnd,
-        applicationsGoal: p.applicationsGoal,
-        applicationsActual: p.applicationsActual,
-        leasesGoal: p.leasesGoal,
-        leasesActual: p.leasesActual,
-        notes: p.notes,
-        weeks: (p.weeks||[]).map((w,i)=>({
-          weekNumber: w.weekNumber || (i+1),
-          weekLabel: w.weekLabel || `Week ${i+1}`,
-          dateRangeStart: w.dateRangeStart || '',
-          dateRangeEnd: w.dateRangeEnd || '',
-          leasingFocus: w.leasingFocus || '',
-          communityOutreach: w.communityOutreach || '',
-          socialDigital: w.socialDigital || '',
-          weeklyTaskSummary: w.weeklyTaskSummary || '',
-          priority: w.priority || (i+1),
-          tasks: (w.tasks||[]).map(t=>({ id: t.id||rid(), title: t.title||'', channel: t.channel||'', dueDate: t.dueDate||'', status: t.status||'not_started', notes: t.notes||'' })),
-          activities: (w.activities||[]).map(a=>({ type:a.type||'', title:a.title||'', date:a.date||'', time:a.time||'', details:a.details||'' }))
-        }))
-      };
-    }
-
-/*
-      const wrap = document.getElementById('step1Flow'); if (!wrap) return;
-      const P = wizardData;
-      const html = `
-        <div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:6px">
-          <div class="section-title" style="margin-top:0">Basics</div>
-          <div class="row" style="align-items:flex-end">
-            <div><label>Plan Type</label>
-              <div style="display:flex;gap:12px">
-                <label style="display:flex;align-items:center;gap:6px;user-select:none"><input type="radio" name="s1_type" value="30_day" ${P.planType!=='60_day'?'checked':''}/> 30 Day</label>
-                <label style="display:flex;align-items:center;gap:6px;user-select:none"><input type="radio" name="s1_type" value="60_day" ${P.planType==='60_day'?'checked':''}/> 60 Day</label>
-              </div>
-            </div>
-            <div><label>Term Label</label><input id="s1_term" type="text" value="${escapeAttr(P.termLabel||'')}" placeholder="e.g., Fall 2025" /></div>
-            <div><label>Quick Term</label><select id="w_term_quick" style="min-width:140px"></select></div>
-          </div>
-          <div class="row" style="align-items:flex-end;margin-top:8px">
-            <div><label>Plan Name</label><input id="s1_name" type="text" value="${escapeAttr(P.name||'')}" placeholder="e.g., Fall 2025 60 Day POA" /></div>
-            <div><label>Start Date</label><input id="s1_start" type="date" value="${(P.startDate||'').slice(0,10)}" /></div>
-            <div><label>End Date</label><input id="s1_end" type="date" value="${(P.endDate||'').slice(0,10)}" /></div>
-          </div>
-        </div>
-        <div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:10px">
-          <div class="section-title" style="margin-top:0">Goals & Audience</div>
-          <div class="row" style="align-items:flex-end">
-
-          </div>`;
-          break;
-        case 5: // Target Audience
-          content = `<div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:6px">
-            <div><label>Target Audience</label>
-              <div style="display:flex;gap:6px;flex-wrap:wrap">
-                <select id="s1_targets_select" multiple size="6" style="min-width:200px">
-                  <option>Undergrads</option><option>Graduate Students</option><option>Faculty</option><option>Greek</option><option>Organization</option><option>Local Business</option>
-                </select>
-                <input id="s1_targets_custom" type="text" placeholder="Type another audience (optional)" />
-              </div>
-            </div>
-          </div>`;
-          break;
-        case 6: // Key Dates
-          content = `<div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:6px">
-            <div><label>Key Dates</label><div id="keyDatesWrap" style="display:flex;flex-direction:column;gap:6px"></div>
-              <div class="row" style="margin-top:6px"><input id="kd_label" type="text" placeholder="Label (e.g., Housing Fair)" /><input id="kd_date" type="date" />
-                <button class="secondary" style="flex:0 0 auto" onclick="(function(){ addKeyDate(); })()">Add Date</button></div>
-            </div>
-          </div>`;
-          break;
-        case 7: // Key Tasks
-          content = `<div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:6px">
-            <div><label>Key Tasks</label><textarea id="s1_keytasks" placeholder="Weekly email blasts, reputation mgmt, PPC/social">${escapeHtml(P.keyTasks||P.ongoingTasks||'')}</textarea></div>
-          </div>`;
-          break;
-        case 8: // Metrics
-          content = `<div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:6px">
-            <div class="grid-cols">
-              <div><label>Prelease at Start (%)</label><input id="s1_preleaseStart" type="number" min="0" max="100" step="1" value="${P.preleaseStart ?? ''}" /></div>
-              <div><label>Prelease at End (%)</label><input id="s1_preleaseEnd" type="number" min="0" max="100" step="1" value="${P.preleaseEnd ?? ''}" /></div>
-              <div><label>Applications Goal</label><input id="s1_appGoal" type="number" min="0" step="1" value="${P.applicationsGoal ?? ''}" /></div>
-              <div><label>Applications Actual</label><input id="s1_appActual" type="number" min="0" step="1" value="${P.applicationsActual ?? ''}" /></div>
-              <div><label>Leases Goal</label><input id="s1_leaseGoal" type="number" min="0" step="1" value="${P.leasesGoal ?? ''}" /></div>
-              <div><label>Leases Actual</label><input id="s1_leaseActual" type="number" min="0" step="1" value="${P.leasesActual ?? ''}" /></div>
-            </div>
-          </div>`;
-          break;
-        case 9: // Notes
-          content = `<div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:6px">
-            <div><label>Notes</label><textarea id="s1_notes" placeholder="Assumptions / constraints">${escapeHtml(P.notes||'')}</textarea></div>
-          </div>`;
-          break;
-      }
-      const controls = `<div class="row" style="gap:8px;margin-top:8px"><button class="secondary" style="flex:0 0 auto" ${cur===0?'disabled':''} onclick="(function(){ setStep1Flow(${cur-1}); })()">Back</button><div style="flex:1"></div><button class="good" style="flex:0 0 auto" onclick="(function(){ setStep1Flow(${Math.min(cur+1,steps.length-1)}); })()">${cur===steps.length-1?'Finish':'Next'}</button></div>`;
-      wrap.innerHTML = progress + content + controls;
-      // Bind step controls
-      if (cur===0){ document.querySelectorAll('input[name="s1_type"]').forEach(r=>{ r.onchange=()=>{ wizardData.planType = r.value==='60_day'?'60_day':'30_day'; suggestEndDate(); }; }); }
-      if (cur===1){ populateQuickTerm(); const qt = document.getElementById('w_term_quick'); if (qt){ qt.onchange = ()=>{ if (qt.value){ wizardData.termLabel = qt.value; const t = document.getElementById('s1_term'); if (t) t.value = qt.value; } }; } const t = document.getElementById('s1_term'); if (t){ t.value = wizardData.termLabel||''; t.oninput = ()=> wizardData.termLabel = t.value; } }
-      if (cur===2){ const n = document.getElementById('s1_name'); if (n){ n.value = wizardData.name||''; n.oninput = ()=> wizardData.name = n.value; } }
-      if (cur===3){ const s = document.getElementById('s1_start'); const e = document.getElementById('s1_end'); if (s){ s.value = (wizardData.startDate||'').slice(0,10); s.onchange = ()=>{ wizardData.startDate = s.value; suggestEndDate(); const e2=document.getElementById('s1_end'); if (e2) e2.value = (wizardData.endDate||'').slice(0,10); }; } if (e){ e.value = (wizardData.endDate||'').slice(0,10); e.onchange = ()=> wizardData.endDate = e.value; } }
-      if (cur===4){ const g = document.getElementById('w_goals'); const c = document.getElementById('w_goals_custom'); if (g){ g.value = ['Awareness','Lead Generation','Applications','Leases Signed','Renewals','Move-in Readiness','Reputation & Reviews'].includes(wizardData.primaryGoals)?wizardData.primaryGoals:'__custom'; g.onchange = ()=>{ if (g.value==='__custom'){ c.style.display=''; c.focus(); wizardData.primaryGoals = (c.value||'').trim(); } else { c.style.display='none'; wizardData.primaryGoals = g.value; } }; } if (c){ c.value = (!['Awareness','Lead Generation','Applications','Leases Signed','Renewals','Move-in Readiness','Reputation & Reviews'].includes(wizardData.primaryGoals)?(wizardData.primaryGoals||''):''); c.oninput = ()=> wizardData.primaryGoals = c.value.trim(); } }
-      if (cur===5){ const sel=document.getElementById('s1_targets_select'); const cust=document.getElementById('s1_targets_custom'); if (wizardData.targetAudiences){ const parts = wizardData.targetAudiences.split(',').map(s=>s.trim()); Array.from(sel.options).forEach(o=> o.selected = parts.includes(o.value)); const custom = parts.filter(p=> !Array.from(sel.options).map(o=>o.value).includes(p)); cust.value = custom.join(', '); } const sync=()=>{ const base=Array.from(sel.selectedOptions).map(o=>o.value); const extra=(cust.value||'').trim(); wizardData.targetAudiences = base.concat(extra? [extra] : []).join(', '); }; sel.onchange = sync; cust.oninput = sync; }
-      if (cur===6){ renderKeyDatesEditor(); }
-      if (cur===7){ const kt=document.getElementById('s1_keytasks'); if (kt){ kt.oninput = ()=>{ wizardData.keyTasks = kt.value; wizardData.ongoingTasks = kt.value; }; } }
-      if (cur===8){ const bindNum=(id,key)=>{ const el=document.getElementById(id); if (!el) return; el.oninput = ()=>{ const v=parseFloat(el.value); wizardData[key] = isFinite(v)?v:null; }; }; bindNum('s1_preleaseStart','preleaseStart'); bindNum('s1_preleaseEnd','preleaseEnd'); bindNum('s1_appGoal','applicationsGoal'); bindNum('s1_appActual','applicationsActual'); bindNum('s1_leaseGoal','leasesGoal'); bindNum('s1_leaseActual','leasesActual'); }
-      if (cur===9){ const n=document.getElementById('s1_notes'); if (n){ n.oninput = ()=> wizardData.notes = n.value; } }
-    }
-    function setStep1Flow(step){ step1FlowIdx = Math.max(0, step); renderStep1Flow(); }
-
-*/
-    function renderStep1Flow(){
-      const wrap = document.getElementById('step1Flow'); if (!wrap) return;
-      const P = wizardData || {};
-      wrap.innerHTML = `
-        <div style="display:flex;flex-direction:column;gap:20px">
-          <!-- Plan Type Selection -->
-          <div style="background:#f9fafb;border:1px solid var(--border);border-radius:10px;padding:20px">
-            <label style="font-size:14px;font-weight:700;color:#111827;margin-bottom:12px;display:block">Plan Type</label>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-              <label class="plan-type-card ${P.planType!=='60_day'?'selected':''}" data-type="30_day">
-                <input type="radio" name="s1_type" value="30_day" ${P.planType!=='60_day'?'checked':''} style="display:none"/>
-                <div class="plan-type-icon">30</div>
-                <div class="plan-type-title">30 Day Plan</div>
-                <div class="plan-type-desc">4-5 week sprint campaign</div>
-              </label>
-              <label class="plan-type-card ${P.planType==='60_day'?'selected':''}" data-type="60_day">
-                <input type="radio" name="s1_type" value="60_day" ${P.planType==='60_day'?'checked':''} style="display:none"/>
-                <div class="plan-type-icon">60</div>
-                <div class="plan-type-title">60 Day Plan</div>
-                <div class="plan-type-desc">8-9 week comprehensive campaign</div>
-              </label>
-            </div>
-          </div>
-
-          <!-- Plan Details -->
-          <div style="background:#ffffff;border:1px solid var(--border);border-radius:10px;padding:20px">
-            <label style="font-size:14px;font-weight:700;color:#111827;margin-bottom:12px;display:block">Plan Details</label>
-            <div style="display:grid;gap:16px">
-              <div>
-                <label for="s1_name">Plan Name <span style="color:#ef4444">*</span></label>
-                <input id="s1_name" type="text" value="${escapeAttr(P.name||'')}" placeholder="e.g., Fall 2025 Marketing Campaign" />
-              </div>
-              <div class="row" style="align-items:flex-end">
-                <div style="flex:2">
-                  <label for="s1_term">Term Label</label>
-                  <input id="s1_term" type="text" value="${escapeAttr(P.termLabel||'')}" placeholder="e.g., Fall 2025" />
-                </div>
-                <div style="flex:1">
-                  <label for="w_term_quick">Quick Select</label>
-                  <select id="w_term_quick"></select>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Timeline -->
-          <div style="background:#ffffff;border:1px solid var(--border);border-radius:10px;padding:20px">
-            <label style="font-size:14px;font-weight:700;color:#111827;margin-bottom:12px;display:block">Timeline</label>
-            <div class="row" style="align-items:flex-end">
-              <div>
-                <label for="s1_start">Start Date <span style="color:#ef4444">*</span></label>
-                <input id="s1_start" type="date" value="${(P.startDate||'').slice(0,10)}" />
-              </div>
-              <div>
-                <label for="s1_end">End Date <span style="color:#ef4444">*</span></label>
-                <input id="s1_end" type="date" value="${(P.endDate||'').slice(0,10)}" />
-              </div>
-              <div style="flex:2">
-                <div class="mini" style="padding:10px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;color:#0369a1">
-                  <strong>Tip:</strong> End date will auto-calculate based on plan type
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-
-      // Bind plan type cards
-      document.querySelectorAll('.plan-type-card').forEach(card => {
-        card.addEventListener('click', function() {
-          document.querySelectorAll('.plan-type-card').forEach(c => c.classList.remove('selected'));
-          this.classList.add('selected');
-          const radio = this.querySelector('input[type="radio"]');
-          radio.checked = true;
-          wizardData.planType = radio.value;
-          suggestEndDate();
+      els.weekTabs.querySelectorAll('.week-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          selectedWeekIndex = parseInt(tab.dataset.index);
+          renderPlanDetail(plan);
         });
       });
 
-      const t = document.getElementById('s1_term'); if (t){ t.oninput = ()=> wizardData.termLabel = t.value; }
-      const n = document.getElementById('s1_name'); if (n){ n.oninput = ()=> wizardData.name = n.value; }
-      const s = document.getElementById('s1_start'); if (s){ s.onchange = ()=>{ wizardData.startDate = s.value; suggestEndDate(); const e2=document.getElementById('s1_end'); if (e2) e2.value = (wizardData.endDate||'').slice(0,10); }; }
-      const e = document.getElementById('s1_end'); if (e){ e.onchange = ()=> wizardData.endDate = e.value; }
-      populateQuickTerm(); const qt = document.getElementById('w_term_quick'); if (qt){ qt.onchange = ()=>{ if (qt.value){ wizardData.termLabel = qt.value; const t2 = document.getElementById('s1_term'); if (t2) t2.value = qt.value; } }; }
+      // Week Content
+      if (weeks.length > 0) {
+        renderWeekContent(plan, weeks[selectedWeekIndex], selectedWeekIndex);
+      } else {
+        els.weekContent.innerHTML = `<div class="empty-state"><p>No weeks defined for this plan</p></div>`;
+      }
+
+      window.__currentPlan = plan;
     }
 
-    function renderStep2Flow(){
-      const wrap = document.getElementById('step2Flow'); if (!wrap) return;
-      const P = wizardData || {};
-      wrap.innerHTML = `
-        <div style="display:flex;flex-direction:column;gap:20px">
-          <!-- Primary Goals -->
-          <div style="background:#ffffff;border:1px solid var(--border);border-radius:10px;padding:20px">
-            <label style="font-size:14px;font-weight:700;color:#111827;margin-bottom:8px;display:block">Primary Goals</label>
-            <div class="mini muted" style="margin-bottom:12px">What are the main objectives for this campaign?</div>
-            <textarea id="s2_goals" rows="4" placeholder="e.g., Increase brand awareness, drive applications, boost lease signings...">${escapeHtml(P.primaryGoals||'')}</textarea>
-          </div>
+    function calcWeekProgress(week) {
+      const activities = week.activities || [];
+      if (!activities.length) return null;
+      const done = activities.filter(a => a.completed).length;
+      return Math.round((done / activities.length) * 100);
+    }
 
-          <!-- Target Audiences -->
-          <div style="background:#ffffff;border:1px solid var(--border);border-radius:10px;padding:20px">
-            <label style="font-size:14px;font-weight:700;color:#111827;margin-bottom:8px;display:block">Target Audiences</label>
-            <div class="mini muted" style="margin-bottom:12px">Who are you trying to reach?</div>
-            <textarea id="s2_audiences" rows="3" placeholder="e.g., Undergrads, graduate students, faculty, parents...">${escapeHtml(P.targetAudiences||'')}</textarea>
-          </div>
+    function renderWeekContent(plan, week, weekIndex) {
+      const progress = calcWeekProgress(week);
+      const activities = week.activities || [];
+      
+      // Group activities by category
+      const outreach = activities.filter(a => a.category === 'outreach' || !a.category);
+      const social = activities.filter(a => a.category === 'social');
+      const events = activities.filter(a => a.category === 'event');
+      const digital = activities.filter(a => a.category === 'digital');
+      const leasing = activities.filter(a => a.category === 'leasing');
 
-          <!-- Key Dates -->
-          <div style="background:#ffffff;border:1px solid var(--border);border-radius:10px;padding:20px">
-            <label style="font-size:14px;font-weight:700;color:#111827;margin-bottom:8px;display:block">Key Dates</label>
-            <div class="mini muted" style="margin-bottom:12px">Important dates during this campaign (housing fairs, deadlines, etc.)</div>
-            <div id="keyDatesWrap" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
-            <div class="row" style="gap:8px;align-items:flex-end">
-              <div style="flex:2">
-                <input id="kd_label" type="text" placeholder="Event name (e.g., Housing Fair)" />
+      els.weekContent.innerHTML = `
+        <div class="week-header">
+          <div>
+            <div class="week-title">${esc(week.weekLabel || `Week ${weekIndex + 1}`)}</div>
+            <div class="week-dates">${formatDate(week.dateRangeStart)} - ${formatDate(week.dateRangeEnd)}</div>
+          </div>
+          <div class="week-stats">
+            <div class="week-stat">
+              <div class="week-stat-value">${activities.length}</div>
+              <div class="week-stat-label">Activities</div>
+            </div>
+            <div class="week-stat">
+              <div class="week-stat-value" style="color:var(--success)">${activities.filter(a => a.completed).length}</div>
+              <div class="week-stat-label">Completed</div>
+            </div>
+            ${progress !== null ? `
+              <div class="week-stat">
+                <div class="week-stat-value" style="color:${progress === 100 ? 'var(--success)' : 'var(--brand-accent-2)'}">${progress}%</div>
+                <div class="week-stat-label">Progress</div>
               </div>
-              <div style="flex:1">
-                <input id="kd_date" type="date" />
-              </div>
-              <button class="secondary" style="flex:0 0 auto" onclick="addKeyDate()">Add Date</button>
+            ` : ''}
+          </div>
+        </div>
+
+        ${week.leasingFocus || week.communityOutreach || week.socialDigital ? `
+          <div class="card" style="margin-bottom:20px">
+            <h3>📝 Week Overview</h3>
+            <div class="content">
+              ${week.leasingFocus ? `<div style="margin-bottom:12px"><strong>Leasing Focus:</strong> ${nl2br(esc(week.leasingFocus))}</div>` : ''}
+              ${week.communityOutreach ? `<div style="margin-bottom:12px"><strong>Community Outreach:</strong> ${nl2br(esc(week.communityOutreach))}</div>` : ''}
+              ${week.socialDigital ? `<div><strong>Social & Digital:</strong> ${nl2br(esc(week.socialDigital))}</div>` : ''}
             </div>
           </div>
+        ` : ''}
 
-          <!-- Key Tasks -->
-          <div style="background:#ffffff;border:1px solid var(--border);border-radius:10px;padding:20px">
-            <label style="font-size:14px;font-weight:700;color:#111827;margin-bottom:8px;display:block">Ongoing Tasks</label>
-            <div class="mini muted" style="margin-bottom:12px">Recurring activities throughout the campaign</div>
-            <textarea id="s2_tasks" rows="3" placeholder="e.g., Weekly email blasts, social media posts, reputation management...">${escapeHtml(P.keyTasks||P.ongoingTasks||'')}</textarea>
+        ${renderActivitySection('📣 Outreach Marketing & Deliverables', outreach, plan, weekIndex)}
+        ${renderActivitySection('📱 Social Media', social, plan, weekIndex)}
+        ${renderActivitySection('🎉 Events', events, plan, weekIndex)}
+        ${renderActivitySection('💻 Digital Marketing', digital, plan, weekIndex)}
+        ${renderActivitySection('🏠 Leasing Activities', leasing, plan, weekIndex)}
+
+        <div style="margin-top:20px">
+          <button class="btn primary" onclick="openAddActivityModal(${weekIndex})">+ Add Activity</button>
+        </div>
+      `;
+    }
+
+    function renderActivitySection(title, activities, plan, weekIndex) {
+      if (!activities.length) return '';
+      
+      return `
+        <div class="activity-section">
+          <div class="activity-section-header">
+            <div class="activity-section-title">${title}</div>
+            <span class="badge">${activities.length} items</span>
           </div>
+          <table class="activity-table">
+            <thead>
+              <tr>
+                <th style="width:90px">Day</th>
+                <th>Activity</th>
+                <th style="width:120px">Goal</th>
+                <th style="width:100px">Owner</th>
+                <th style="width:80px">Done</th>
+                <th style="width:100px">Actual</th>
+                <th style="width:60px"></th>
+              </tr>
+            </thead>
+            <tbody>
+              ${activities.map((a, ai) => `
+                <tr>
+                  <td class="activity-day">${esc(a.dayOfWeek || '')}</td>
+                  <td class="activity-desc">${nl2br(esc(a.description || ''))}</td>
+                  <td class="activity-goal">${esc(a.goal || '')}</td>
+                  <td class="activity-owner">${esc(a.owner || '')}</td>
+                  <td class="activity-status">
+                    <div class="status-check ${a.completed ? 'done' : ''}" onclick="toggleActivityStatus('${plan._id || plan.id}', ${weekIndex}, '${a.id}')" title="Click to toggle"></div>
+                  </td>
+                  <td class="activity-actual">
+                    <input type="text" value="${esc(a.actual || '')}" placeholder="Result..." style="padding:6px 8px;font-size:12px" onchange="updateActivityActual('${plan._id || plan.id}', ${weekIndex}, '${a.id}', this.value)" />
+                  </td>
+                  <td>
+                    <button class="btn sm danger" onclick="deleteActivity('${plan._id || plan.id}', ${weekIndex}, '${a.id}')" title="Delete">×</button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
 
-          <!-- Metrics (Optional) -->
-          <div style="background:#f9fafb;border:1px solid var(--border);border-radius:10px;padding:20px">
-            <label style="font-size:14px;font-weight:700;color:#111827;margin-bottom:8px;display:block">Success Metrics <span class="badge" style="background:#e0e7ff;color:#4338ca;border-color:#c7d2fe">Optional</span></label>
-            <div class="mini muted" style="margin-bottom:12px">Track your campaign performance</div>
-            <div class="grid-cols" style="grid-template-columns:repeat(auto-fit, minmax(200px, 1fr))">
-              <div>
-                <label for="s2_preleaseStart">Prelease at Start (%)</label>
-                <input id="s2_preleaseStart" type="number" min="0" max="100" step="1" value="${P.preleaseStart ?? ''}" placeholder="0" />
-              </div>
-              <div>
-                <label for="s2_preleaseEnd">Prelease at End (%)</label>
-                <input id="s2_preleaseEnd" type="number" min="0" max="100" step="1" value="${P.preleaseEnd ?? ''}" placeholder="0" />
-              </div>
-              <div>
-                <label for="s2_appGoal">Applications Goal</label>
-                <input id="s2_appGoal" type="number" min="0" step="1" value="${P.applicationsGoal ?? ''}" placeholder="0" />
-              </div>
-              <div>
-                <label for="s2_appActual">Applications Actual</label>
-                <input id="s2_appActual" type="number" min="0" step="1" value="${P.applicationsActual ?? ''}" placeholder="0" />
-              </div>
-              <div>
-                <label for="s2_leaseGoal">Leases Goal</label>
-                <input id="s2_leaseGoal" type="number" min="0" step="1" value="${P.leasesGoal ?? ''}" placeholder="0" />
-              </div>
-              <div>
-                <label for="s2_leaseActual">Leases Actual</label>
-                <input id="s2_leaseActual" type="number" min="0" step="1" value="${P.leasesActual ?? ''}" placeholder="0" />
-              </div>
+    // ==================== ACTIVITY ACTIONS ====================
+    async function toggleActivityStatus(planId, weekIndex, activityId) {
+      const plan = window.__currentPlan;
+      if (!plan) return;
+
+      const week = plan.weeks[weekIndex];
+      const activity = (week.activities || []).find(a => a.id === activityId);
+      if (!activity) return;
+
+      activity.completed = !activity.completed;
+
+      try {
+        await apiFetch('/marketing-plans', {
+          method: 'PUT',
+          body: JSON.stringify({ id: planId, property: currentProperty, weeks: plan.weeks })
+        });
+        renderPlanDetail(plan);
+        renderPlanList();
+      } catch (e) {
+        alert('Failed to update: ' + e.message);
+      }
+    }
+
+    async function updateActivityActual(planId, weekIndex, activityId, value) {
+      const plan = window.__currentPlan;
+      if (!plan) return;
+
+      const week = plan.weeks[weekIndex];
+      const activity = (week.activities || []).find(a => a.id === activityId);
+      if (!activity) return;
+
+      activity.actual = value;
+
+      try {
+        await apiFetch('/marketing-plans', {
+          method: 'PUT',
+          body: JSON.stringify({ id: planId, property: currentProperty, weeks: plan.weeks })
+        });
+      } catch (e) {
+        alert('Failed to update: ' + e.message);
+      }
+    }
+
+    async function deleteActivity(planId, weekIndex, activityId) {
+      if (!confirm('Delete this activity?')) return;
+
+      const plan = window.__currentPlan;
+      if (!plan) return;
+
+      const week = plan.weeks[weekIndex];
+      week.activities = (week.activities || []).filter(a => a.id !== activityId);
+
+      try {
+        await apiFetch('/marketing-plans', {
+          method: 'PUT',
+          body: JSON.stringify({ id: planId, property: currentProperty, weeks: plan.weeks })
+        });
+        renderPlanDetail(plan);
+        renderPlanList();
+      } catch (e) {
+        alert('Failed to delete: ' + e.message);
+      }
+    }
+
+    function openAddActivityModal(weekIndex) {
+      addingActivityToWeek = weekIndex;
+      document.getElementById('actDay').value = 'Monday';
+      document.getElementById('actCategory').value = 'outreach';
+      document.getElementById('actDescription').value = '';
+      document.getElementById('actGoal').value = '';
+      document.getElementById('actOwner').value = '';
+      els.activityModal.classList.add('show');
+    }
+
+    els.closeActivityModal.onclick = () => els.activityModal.classList.remove('show');
+    els.cancelActivity.onclick = () => els.activityModal.classList.remove('show');
+    els.saveActivity.onclick = async () => {
+      const plan = window.__currentPlan;
+      if (!plan || addingActivityToWeek === null) return;
+
+      const week = plan.weeks[addingActivityToWeek];
+      if (!week.activities) week.activities = [];
+
+      week.activities.push({
+        id: rid(),
+        dayOfWeek: document.getElementById('actDay').value,
+        category: document.getElementById('actCategory').value,
+        description: document.getElementById('actDescription').value,
+        goal: document.getElementById('actGoal').value,
+        owner: document.getElementById('actOwner').value,
+        completed: false,
+        actual: ''
+      });
+
+      try {
+        await apiFetch('/marketing-plans', {
+          method: 'PUT',
+          body: JSON.stringify({ id: plan._id || plan.id, property: currentProperty, weeks: plan.weeks })
+        });
+        els.activityModal.classList.remove('show');
+        renderPlanDetail(plan);
+        renderPlanList();
+      } catch (e) {
+        alert('Failed to add activity: ' + e.message);
+      }
+    };
+
+    // ==================== PLAN ACTIONS ====================
+    async function duplicatePlan(id) {
+      if (!confirm('Duplicate this plan?')) return;
+      try {
+        const res = await apiFetch('/marketing-plans', { method: 'POST', body: JSON.stringify({ action: 'duplicate', id }) });
+        const { id: newId } = await res.json();
+        await fetchPlans();
+        renderPlanList();
+        if (newId) selectPlan(newId);
+      } catch (e) { alert('Duplicate failed: ' + e.message); }
+    }
+
+    async function deletePlan(id) {
+      if (!confirm('Delete this plan? This cannot be undone.')) return;
+      try {
+        await apiFetch('/marketing-plans', { method: 'DELETE', body: JSON.stringify({ id }) });
+        await fetchPlans();
+        renderPlanList();
+        selectedPlanId = null;
+        showEmptyState();
+      } catch (e) { alert('Delete failed: ' + e.message); }
+    }
+
+    // ==================== WIZARD ====================
+    const WIZARD_STEPS = [
+      { id: 1, label: 'Plan Type' },
+      { id: 2, label: 'Details' },
+      { id: 3, label: 'Timeline' },
+      { id: 4, label: 'Goals' },
+      { id: 5, label: 'Weeks' }
+    ];
+
+    function openPlanModal(opts = {}, id = null) {
+      editingPlanId = (opts.mode === 'edit') ? id : null;
+      wizardStep = 1;
+      wizardData = {
+        planType: '30_day',
+        name: '',
+        termLabel: '',
+        startDate: '',
+        endDate: '',
+        currentSpecial: '',
+        primaryGoals: '',
+        targetAudiences: '',
+        keyDates: [],
+        weeks: []
+      };
+
+      if (editingPlanId) {
+        els.modalTitle.textContent = 'Edit Marketing Plan';
+        loadPlanForEdit(editingPlanId);
+      } else {
+        els.modalTitle.textContent = 'Create Marketing Plan';
+        renderWizard();
+      }
+
+      els.planModal.classList.add('show');
+    }
+
+    async function loadPlanForEdit(id) {
+      try {
+        const res = await apiFetch(`/marketing-plans?id=${encodeURIComponent(id)}`);
+        const plan = await res.json();
+        wizardData = {
+          planType: plan.planType || '30_day',
+          name: plan.name || '',
+          termLabel: plan.termLabel || '',
+          startDate: (plan.startDate || '').slice(0, 10),
+          endDate: (plan.endDate || '').slice(0, 10),
+          currentSpecial: plan.currentSpecial || '',
+          primaryGoals: plan.primaryGoals || '',
+          targetAudiences: plan.targetAudiences || '',
+          keyDates: plan.keyDates || [],
+          weeks: plan.weeks || []
+        };
+        renderWizard();
+      } catch (e) {
+        alert('Failed to load plan: ' + e.message);
+        els.planModal.classList.remove('show');
+      }
+    }
+
+    function renderWizard() {
+      // Progress
+      els.wizardProgress.innerHTML = WIZARD_STEPS.map((s, i) => `
+        ${i > 0 ? '<div class="step-connector"></div>' : ''}
+        <div class="wizard-step ${wizardStep === s.id ? 'active' : ''} ${wizardStep > s.id ? 'completed' : ''}">
+          <div class="step-number">${s.id}</div>
+          <div class="step-label">${s.label}</div>
+        </div>
+      `).join('');
+
+      // Buttons
+      els.wizardBack.style.display = wizardStep > 1 ? '' : 'none';
+      els.wizardNext.classList.toggle('hidden', wizardStep === WIZARD_STEPS.length);
+      els.wizardSave.classList.toggle('hidden', wizardStep !== WIZARD_STEPS.length);
+
+      // Content
+      switch (wizardStep) {
+        case 1: renderStep1(); break;
+        case 2: renderStep2(); break;
+        case 3: renderStep3(); break;
+        case 4: renderStep4(); break;
+        case 5: renderStep5(); break;
+      }
+    }
+
+    function renderStep1() {
+      els.wizardContent.innerHTML = `
+        <div class="form-section">
+          <div class="form-section-title">Select Plan Type</div>
+          <div class="plan-type-cards">
+            <div class="plan-type-card ${wizardData.planType === '30_day' ? 'selected' : ''}" data-type="30_day">
+              <div class="plan-type-icon">30</div>
+              <div class="plan-type-title">30 Day Plan</div>
+              <div class="plan-type-desc">4-5 week sprint campaign</div>
             </div>
-          </div>
-
-          <!-- Notes -->
-          <div style="background:#ffffff;border:1px solid var(--border);border-radius:10px;padding:20px">
-            <label style="font-size:14px;font-weight:700;color:#111827;margin-bottom:8px;display:block">Additional Notes</label>
-            <div class="mini muted" style="margin-bottom:12px">Any assumptions, constraints, or special considerations</div>
-            <textarea id="s2_notes" rows="3" placeholder="Add any additional context...">${escapeHtml(P.notes||'')}</textarea>
+            <div class="plan-type-card ${wizardData.planType === '60_day' ? 'selected' : ''}" data-type="60_day">
+              <div class="plan-type-icon">60</div>
+              <div class="plan-type-title">60 Day Plan</div>
+              <div class="plan-type-desc">8-9 week comprehensive</div>
+            </div>
+            <div class="plan-type-card ${wizardData.planType === '90_day' ? 'selected' : ''}" data-type="90_day">
+              <div class="plan-type-icon">90</div>
+              <div class="plan-type-title">90 Day Plan</div>
+              <div class="plan-type-desc">12-13 week full strategy</div>
+            </div>
           </div>
         </div>
       `;
 
-      // Bind inputs
-      const goals = document.getElementById('s2_goals'); if (goals) goals.oninput = ()=> wizardData.primaryGoals = goals.value;
-      const audiences = document.getElementById('s2_audiences'); if (audiences) audiences.oninput = ()=> wizardData.targetAudiences = audiences.value;
-      const tasks = document.getElementById('s2_tasks'); if (tasks) tasks.oninput = ()=> { wizardData.keyTasks = tasks.value; wizardData.ongoingTasks = tasks.value; };
-      const notes = document.getElementById('s2_notes'); if (notes) notes.oninput = ()=> wizardData.notes = notes.value;
-
-      const bindNum = (id, key) => { 
-        const el = document.getElementById(id); 
-        if (!el) return; 
-        el.oninput = ()=> { 
-          const v = parseFloat(el.value); 
-          wizardData[key] = isFinite(v) ? v : null; 
-        }; 
-      };
-      bindNum('s2_preleaseStart', 'preleaseStart');
-      bindNum('s2_preleaseEnd', 'preleaseEnd');
-      bindNum('s2_appGoal', 'applicationsGoal');
-      bindNum('s2_appActual', 'applicationsActual');
-      bindNum('s2_leaseGoal', 'leasesGoal');
-      bindNum('s2_leaseActual', 'leasesActual');
-
-      renderKeyDatesEditor();
-    }
-    // Key dates editor
-    function renderKeyDatesEditor(){
-      const wrap = document.getElementById('keyDatesWrap'); if (!wrap) return;
-      const list = Array.isArray(wizardData.keyDates) ? wizardData.keyDates : [];
-      wrap.innerHTML = list.length ? list.map((k,i)=> keyDateRowHtml(k,i)).join('') : '<div class="mini muted">No key dates yet</div>';
-    }
-    function keyDateRowHtml(k, i){
-      return `<div style="display:flex;gap:8px;align-items:end">
-        <div style="flex:2"><label class="mini muted">Label</label><input id="kd_lbl_${i}" type="text" value="${escapeAttr(k.label||'')}" /></div>
-        <div style="flex:1"><label class="mini muted">Date</label><input id="kd_dt_${i}" type="date" value="${(k.date||'').slice(0,10)}" /></div>
-        <div style="flex:0 0 auto"><button class="secondary" onclick="(function(){ removeKeyDate(${i}); })()">Remove</button></div>
-      </div>`;
-    }
-    function addKeyDate(){
-      if (!Array.isArray(wizardData.keyDates)) wizardData.keyDates = [];
-      const lbl = document.getElementById('kd_label'); const dt = document.getElementById('kd_date');
-      const label = (lbl?.value||'').trim(); const date = dt?.value||'';
-      if (!label || !date){ alert('Enter label and date'); return; }
-      wizardData.keyDates.push({ label, date });
-      if (lbl) lbl.value = ''; if (dt) dt.value = '';
-      renderKeyDatesEditor();
-    }
-    function removeKeyDate(i){ if (!Array.isArray(wizardData.keyDates)) return; wizardData.keyDates.splice(i,1); renderKeyDatesEditor(); }
-
-    // Quick-pick presets and helpers (legacy not used by UI)
-    const GOAL_PRESETS_30 = [
-      { id:'launch', label:'Launch/Transition Sprint', text:'Launch plan: establish consistent social cadence, kick off PPC, quick wins on reputation, and execute 2-3 resident+prospect events per week to drive tours and apps.' },
-      { id:'assets', label:'Asset Development + Digital', text:'Capture new photos/video/UGC, refresh virtual tours, stand up always-on PPC/social, and coordinate quick-turn giveaways.' },
-      { id:'renewals', label:'Renewal + Events Push', text:'Drive renewal urgency and host weekly resident events that also reach prospects (friend invites). Layer in email/social reminders and limited-time incentives.' }
-    ];
-    const GOAL_PRESETS_60 = [
-      { id:'term_campaign', label:'Term Campaign', text:'8–9 week campaign to drive awareness, consideration, and conversion for the selected term. Mix on-campus outreach, local partnerships, weekly social/digital themes, and strong calls-to-action.' },
-      { id:'move_in', label:'Move-in + Early Leases', text:'Promote early move-ins and student-friendly timelines. Balance outreach, digital, and community-building events with a steady drumbeat of urgency messages.' }
-    ];
-    const AUDIENCE_PRESETS = [
-      { id:'std_groups', label:'Students (UG/Grad) + Faculty/Staff', text:'Undergrads, graduate students, faculty, and local professionals' },
-      { id:'parents', label:'Parents + Transfer/International', text:'Parents/guardians; transfer students; international students; local professionals' },
-      { id:'comm', label:'Campus Orgs + Local Community', text:'Campus orgs (Greek, clubs, departments), local businesses, community partners' }
-    ];
-    const KEYDATE_PRESETS = [
-      { id:'acad', label:'Academic Calendar', text:'Add-drop, midterms, breaks, housing fairs, move-in, orientation' },
-      { id:'term_milestones', label:'Term Milestones', text:'Application deadlines, scholarship timelines, exam periods, holidays' }
-    ];
-    const ONGOING_PRESETS = [
-      { id:'always_on', label:'Always-on', text:'Weekly email blasts; reputation management; PPC and paid social always-on; regular IG/TT posting cadence' },
-      { id:'reputation', label:'Reputation + Social', text:'Weekly review requests; social listening/community management; 3x stories + 1 grid post minimum' }
-    ];
-
-    const WEEK_PRESETS_30 = [
-      { id:'w_launch', label:'Launch & Awareness', leasingFocus:'Announce campaigns, highlight top floorplans, limited-time incentives', communityOutreach:'Kickoff resident event + invite prospects; on-campus flyering/tabling', socialDigital:'Introduce weekly theme; paid social + PPC live; story series begins', weeklyTaskSummary:'2-3 events; 3 stories; 1 grid; 1 email' },
-      { id:'w_assets', label:'Assets & Reputation', leasingFocus:'Capture/curate new media; spotlight amenities', communityOutreach:'Photo/video day; resident testimonials', socialDigital:'UGC push; review requests; short-form video posts', weeklyTaskSummary:'3 stories; 1 grid; 1 video; 1 review push' },
-      { id:'w_events', label:'Events Push', leasingFocus:'Event-based CTAs; tours & apps', communityOutreach:'Two resident/prospect events; local partner pop-up', socialDigital:'Event countdowns; giveaways; live stories', weeklyTaskSummary:'2+ events; 3 stories; 1 grid; 1 giveaway' },
-      { id:'w_close', label:'Final Push', leasingFocus:'Urgency (last chance, limited spots)', communityOutreach:'Flyer sweep; on-campus booth', socialDigital:'Deadline creatives; retargeting refresh', weeklyTaskSummary:'3 stories; 1 grid; 1 email' }
-    ];
-    const WEEK_PRESETS_60 = [
-      { id:'awareness', label:'Awareness', leasingFocus:'Top benefits + brand story', communityOutreach:'Campus org introductions; tabling schedule', socialDigital:'Theme kickoff; paid awareness live', weeklyTaskSummary:'3 stories; 1 grid; 1 email' },
-      { id:'outreach', label:'On-Campus Outreach', leasingFocus:'Program highlights; early bird offers', communityOutreach:'Department/club visits; sponsorships', socialDigital:'UGC focus; stories from campus', weeklyTaskSummary:'Outreach + 3 stories; 1 grid' },
-      { id:'partners', label:'Local Partnerships', leasingFocus:'Co-marketing offers', communityOutreach:'Local partner pop-ups', socialDigital:'Co-branded content; giveaway', weeklyTaskSummary:'Partner pop-up; 3 stories; 1 grid' },
-      { id:'social_theme', label:'Social/Digital Theme', leasingFocus:'Feature a differentiator', communityOutreach:'Light events; content capture', socialDigital:'Themed posts all week', weeklyTaskSummary:'3 stories; 2 grids; 1 email' },
-      { id:'urgency', label:'Urgency', leasingFocus:'Deadlines; last-chance messaging', communityOutreach:'Flyer sweep; tabling', socialDigital:'Countdown series; retargeting refresh', weeklyTaskSummary:'3 stories; 1 grid; 1 email' },
-      { id:'last_chance', label:'Last Chance', leasingFocus:'Final units; immediate move-ins', communityOutreach:'Final pop-up/event', socialDigital:'Final CTA; all channels', weeklyTaskSummary:'Close out; 3 stories; 1 grid' }
-    ];
-
-    const TASK_BUNDLES = [
-      { id:'social_pack', label:'Social Week Pack', tasks:[
-        { title:'Social Story #1', channel:'Social Media' },
-        { title:'Social Story #2', channel:'Social Media' },
-        { title:'Social Story #3', channel:'Social Media' },
-        { title:'Grid Post', channel:'Social Media' },
-        { title:'Giveaway Post', channel:'Social Media' }
-      ]},
-      { id:'outreach_pack', label:'Outreach Pack', tasks:[
-        { title:'On-campus tabling', channel:'On-Campus Outreach' },
-        { title:'Local business visit', channel:'Local Business' },
-        { title:'Email blast', channel:'Email' }
-      ]},
-      { id:'digital_pack', label:'Digital Pack', tasks:[
-        { title:'PPC push', channel:'Digital Ads' },
-        { title:'Retargeting refresh', channel:'Digital Ads' },
-        { title:'Email blast', channel:'Email' }
-      ]}
-    ];
-
-    function initQuickPickControls(){
-      populateQuickTerm();
-      // Default Quick Term selection if none
-      const termSel = document.getElementById('w_term_quick');
-      if (termSel && !els.w_term.value){
-        const opt = Array.from(termSel.options).find(o=>o.value);
-        if (opt){ termSel.value = opt.value; els.w_term.value = opt.value; wizardData.termLabel = opt.value; }
-      }
-      bindQuickSelectHandlers();
-    }
-    function populateQuickTerm(){
-      const sel = document.getElementById('w_term_quick'); if (!sel) return;
-      const now = new Date();
-      const y = now.getFullYear();
-      const m = now.getMonth(); // 0=Jan
-      let opts = [];
-      if (m >= 7){ // Aug-Dec
-        opts = [`Fall ${y}`, `Spring ${y+1}`];
-      } else if (m <= 3){ // Jan-Apr
-        opts = [`Spring ${y}`, `Fall ${y}`];
-      } else { // May-Jul
-        opts = [`Fall ${y}`, `Spring ${y+1}`];
-      }
-      sel.innerHTML = '<option value="">-- Select --</option>' + opts.map(o=>`<option value="${o.replace(/"/g,'&quot;')}">${o}</option>`).join('');
-    }
-    function refreshNameSuggestions(){
-      const sel = document.getElementById('w_name_quick'); if (!sel) return;
-      const term = (els.w_term?.value||'').trim();
-      const type = wizardData?.planType==='60_day' ? '60 Day POA' : '30 Day Action Plan';
-      const base = term ? [`${term} ${type}`] : [`${type}`];
-      const alt = term ? [`${term} Marketing Plan`, `${term} ${wizardData?.planType==='60_day'?'8–9 Week':'4–5 Week'} Campaign`] : [];
-      const names = Array.from(new Set(base.concat(alt)));
-      sel.innerHTML = '<option value="">-- Select --</option>' + names.map(n=>`<option value="${n.replace(/"/g,'&quot;')}">${n}</option>`).join('');
-    }
-    function populateStep1PresetSelects(){
-      const goals = (wizardData?.planType==='60_day'? GOAL_PRESETS_60 : GOAL_PRESETS_30);
-      fillSelect('w_goals_quick', goals);
-      fillSelect('w_targets_quick', AUDIENCE_PRESETS);
-      fillSelect('w_keydates_quick', KEYDATE_PRESETS);
-      fillSelect('w_ongoing_quick', ONGOING_PRESETS);
-    }
-    function fillSelect(id, arr){ const el = document.getElementById(id); if (!el) return; el.innerHTML = '<option value="">-- Select --</option>' + arr.map(p=>`<option value="${p.id}">${p.label}</option>`).join(''); }
-
-    function bindQuickSelectHandlers(){
-      const tsel = document.getElementById('w_term_quick'); if (tsel){ tsel.onchange = ()=>{ if (tsel.value){ els.w_term.value = tsel.value; wizardData.termLabel = tsel.value; } } }
-    }
-    function applyPresetToTextarea(selEl, ta, presets){
-      const id = selEl.value; if (!id) return; const p = presets.find(x=>x.id===id); if (!p) return;
-      const text = p.text || '';
-      if (!text) return;
-      const cur = ta.value.trim();
-      ta.value = cur ? (cur + '\n' + text) : text;
-      selEl.value = '';
-      ta.dispatchEvent(new Event('input'));
+      document.querySelectorAll('.plan-type-card').forEach(card => {
+        card.addEventListener('click', () => {
+          document.querySelectorAll('.plan-type-card').forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
+          wizardData.planType = card.dataset.type;
+        });
+      });
     }
 
-    // removed presets/bundles helpers
-    // Activities editor
-    function activityEditorRowHtml(wi, ai, a){
-      return `<div data-ai="${ai}" style="display:flex;gap:6px;align-items:flex-end;border:1px solid var(--border);border-radius:8px;padding:8px">
-        <div style="flex:1"><label>Type</label><input id="wk_${wi}_a_${ai}_type" type="text" value="${escapeAttr(a.type||'')}" /></div>
-        <div style="flex:2"><label>Title/Desc</label><input id="wk_${wi}_a_${ai}_title" type="text" value="${escapeAttr(a.title||'')}" /></div>
-        <div style="flex:1"><label>Date</label><input id="wk_${wi}_a_${ai}_date" type="date" value="${(a.date||'').slice(0,10)}" /></div>
-        <div style="flex:1"><label>Time</label><input id="wk_${wi}_a_${ai}_time" type="text" value="${escapeAttr(a.time||'')}" /></div>
-        <div style="flex:2"><label>Details</label><input id="wk_${wi}_a_${ai}_details" type="text" value="${escapeAttr(a.details||'')}" /></div>
-        <div style="flex:0 0 auto"><button class="secondary" onclick="(function(){ removeActivity(${wi}, ${ai}); })()">Remove</button></div>
-      </div>`;
-    }
-    function bindActivityEditor(wi, ai){
-      const a = (wizardData.weeks[wi].activities||[])[ai]; if (!a) return;
-      const g = (id)=> document.getElementById(id);
-      g(`wk_${wi}_a_${ai}_type`).oninput = (e)=> a.type = e.target.value;
-      g(`wk_${wi}_a_${ai}_title`).oninput = (e)=> a.title = e.target.value;
-      g(`wk_${wi}_a_${ai}_date`).onchange = (e)=> a.date = e.target.value;
-      g(`wk_${wi}_a_${ai}_time`).oninput = (e)=> a.time = e.target.value;
-      g(`wk_${wi}_a_${ai}_details`).oninput = (e)=> a.details = e.target.value;
-    }
-    function addActivity(wi){ const w = wizardData.weeks[wi]; if (!Array.isArray(w.activities)) w.activities = []; const t=document.getElementById(`wk_${wi}_add_type`).value; const ti=document.getElementById(`wk_${wi}_add_title`).value; const d=document.getElementById(`wk_${wi}_add_date`).value; const tm=document.getElementById(`wk_${wi}_add_time`).value; const det=document.getElementById(`wk_${wi}_add_details`).value; if(!ti||!d){ alert('Title and Date are required'); return; } w.activities.push({ type:t, title:ti, date:d, time:tm, details:det }); renderWeeksEditor(); }
-    function removeActivity(wi, ai){ const w = wizardData.weeks[wi]; if (!Array.isArray(w.activities)) return; w.activities.splice(ai,1); renderWeeksEditor(); }
-
-    // Grouped activities UI
-    function activitiesGroups(){
-      return ['Giveaway Challenge','Campus Outreach','Social Media','Resident Event','Local Business','Email','Digital Ads','Other'];
-    }
-    function activitiesGroupsHtml(wi){
-      return activitiesGroups().map((label, gi) => groupSectionHtml(wi, label, gi)).join('');
-    }
-    function groupSectionHtml(wi, label, gi){
-      const w = wizardData.weeks[wi] || {};
-      const list = (w.activities||[]).map((a,i)=>({a,i})).filter(x => (String(x.a?.type||'')===label));
-      const rows = list.length ? list.map(x => groupActivityEditorRowHtml(wi, x.i, x.a)).join('') : '<div class="mini muted">No items yet</div>';
-      return `
-      <div class="wk-sub collapsed" id="wk_${wi}_grp_${gi}">
-        <div class="wk-sub-head" onclick="(function(){ document.getElementById('wk_${wi}_grp_${gi}')?.classList.toggle('collapsed'); })()">
-          <div style="display:flex;align-items:center;gap:8px"><span class="caret">▶</span><strong>${label}</strong></div>
-          <div class="mini muted">Weekly ${label.toLowerCase()}</div>
-        </div>
-        <div class="wk-sub-body" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:8px">
-          <div id="wk_${wi}_grp_${gi}_list" style="display:flex;flex-direction:column;gap:6px">${rows}</div>
-          <div class="row" style="margin-top:6px; align-items:flex-end; gap:8px">
-            <div><label class="mini muted">Title/Description</label><input id="wk_${wi}_grp_${gi}_add_title" type="text" placeholder="Title" /></div>
-            <div><label class="mini muted">Date</label><input id="wk_${wi}_grp_${gi}_add_date" type="date" /></div>
-            <div><label class="mini muted">Time</label><input id="wk_${wi}_grp_${gi}_add_time" type="text" placeholder="e.g., 4 PM - 6 PM" /></div>
-            <div><label class="mini muted">Details</label><input id="wk_${wi}_grp_${gi}_add_details" type="text" placeholder="Optional notes" /></div>
-            <button class="secondary" style="flex:0 0 auto" onclick="(function(){ addGroupActivity(${wi}, ${gi}); })()">Add</button>
+    function renderStep2() {
+      els.wizardContent.innerHTML = `
+        <div class="form-section">
+          <div class="form-section-title">Plan Details</div>
+          <div class="form-row">
+            <div>
+              <label>Plan Name *</label>
+              <input id="wiz_name" type="text" value="${esc(wizardData.name)}" placeholder="e.g., Fall 2025 Leasing Campaign" />
+            </div>
+            <div>
+              <label>Term Label</label>
+              <input id="wiz_term" type="text" value="${esc(wizardData.termLabel)}" placeholder="e.g., Fall 2025" />
+            </div>
+          </div>
+          <div style="margin-top:16px">
+            <label>Current Special / Promotion</label>
+            <textarea id="wiz_special" placeholder="e.g., Sign Fast Save Big! Sign within 48 hours for $1000 gift card or 1.5 months free!">${esc(wizardData.currentSpecial)}</textarea>
+            <div class="hint">This will be displayed as a banner on the plan</div>
           </div>
         </div>
-      </div>`;
-    }
-    function groupActivityEditorRowHtml(wi, gai, a){
-      return `<div data-gai="${gai}" style="display:flex;gap:6px;align-items:flex-end;border:1px solid var(--border);border-radius:8px;padding:8px">
-        <div style="flex:2"><label>Title/Desc</label><input id="wk_${wi}_ga_${gai}_title" type="text" value="${escapeAttr(a.title||'')}" /></div>
-        <div style="flex:1"><label>Date</label><input id="wk_${wi}_ga_${gai}_date" type="date" value="${(a.date||'').slice(0,10)}" /></div>
-        <div style="flex:1"><label>Time</label><input id="wk_${wi}_ga_${gai}_time" type="text" value="${escapeAttr(a.time||'')}" /></div>
-        <div style="flex:2"><label>Details</label><input id="wk_${wi}_ga_${gai}_details" type="text" value="${escapeAttr(a.details||'')}" /></div>
-        <div style="flex:0 0 auto"><button class="secondary" onclick="(function(){ removeGroupActivity(${wi}, ${gai}); })()">Remove</button></div>
-      </div>`;
-    }
-    function bindActivityEditorGlobal(wi, gai){
-      const w = wizardData.weeks[wi]; if (!w || !Array.isArray(w.activities) || !w.activities[gai]) return;
-      const a = w.activities[gai];
-      const g = (id)=> document.getElementById(id);
-      const t = g(`wk_${wi}_ga_${gai}_title`); if (t) t.oninput = (e)=> a.title = e.target.value;
-      const d = g(`wk_${wi}_ga_${gai}_date`); if (d) d.onchange = (e)=> a.date = e.target.value;
-      const tm = g(`wk_${wi}_ga_${gai}_time`); if (tm) tm.oninput = (e)=> a.time = e.target.value;
-      const dt = g(`wk_${wi}_ga_${gai}_details`); if (dt) dt.oninput = (e)=> a.details = e.target.value;
-    }
-    function addGroupActivity(wi, gi){
-      const label = activitiesGroups()[gi]; const w = wizardData.weeks[wi]; if (!w) return; if (!Array.isArray(w.activities)) w.activities = [];
-      const g = (id)=> document.getElementById(id);
-      const title = (g(`wk_${wi}_grp_${gi}_add_title`)?.value||'').trim();
-      const date = g(`wk_${wi}_grp_${gi}_add_date`)?.value||'';
-      const time = (g(`wk_${wi}_grp_${gi}_add_time`)?.value||'').trim();
-      const details = (g(`wk_${wi}_grp_${gi}_add_details`)?.value||'').trim();
-      if (!title || !date){ alert('Title and Date are required'); return; }
-      w.activities.push({ type: label, title, date, time, details });
-      renderWeeksEditor();
-    }
-    function removeGroupActivity(wi, gai){
-      const w = wizardData.weeks[wi]; if (!Array.isArray(w.activities)) return; if (gai<0 || gai>=w.activities.length) return; w.activities.splice(gai,1); renderWeeksEditor();
+      `;
+
+      document.getElementById('wiz_name').oninput = (e) => wizardData.name = e.target.value;
+      document.getElementById('wiz_term').oninput = (e) => wizardData.termLabel = e.target.value;
+      document.getElementById('wiz_special').oninput = (e) => wizardData.currentSpecial = e.target.value;
     }
 
-    // Collapsible week controls
-    function toggleWeek(idx){
-      const acc = document.getElementById(`wk_${idx}_acc`); if (!acc) return;
-      acc.classList.toggle('collapsed');
-    }
-    function expandAllWeeks(){
-      const wrap = document.getElementById('weeksWrap'); if (!wrap) return;
-      wrap.querySelectorAll('.wk-acc').forEach(el => el.classList.remove('collapsed'));
-    }
-    function collapseAllWeeks(){
-      const wrap = document.getElementById('weeksWrap'); if (!wrap) return;
-      wrap.querySelectorAll('.wk-acc').forEach(el => el.classList.add('collapsed'));
+    function renderStep3() {
+      const days = wizardData.planType === '90_day' ? 89 : (wizardData.planType === '60_day' ? 59 : 29);
+      
+      els.wizardContent.innerHTML = `
+        <div class="form-section">
+          <div class="form-section-title">Timeline</div>
+          <div class="form-row">
+            <div>
+              <label>Start Date *</label>
+              <input id="wiz_start" type="date" value="${wizardData.startDate}" />
+            </div>
+            <div>
+              <label>End Date *</label>
+              <input id="wiz_end" type="date" value="${wizardData.endDate}" />
+            </div>
+          </div>
+          <div class="hint" style="margin-top:12px;padding:12px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px">
+            <strong>Tip:</strong> For a ${wizardData.planType.replace('_', ' ')} plan, the end date will be auto-calculated as ${days + 1} days from start.
+          </div>
+        </div>
+
+        <div class="form-section" style="margin-top:24px">
+          <div class="form-section-title">Key Dates</div>
+          <div class="hint" style="margin-bottom:12px">Add important dates like housing fairs, move-in dates, university events, etc.</div>
+          <div id="keyDatesList" class="key-dates-list"></div>
+          <div class="form-row" style="margin-top:12px">
+            <div style="flex:2">
+              <input id="kd_label" type="text" placeholder="Event name (e.g., Housing Fair)" />
+            </div>
+            <div style="flex:1">
+              <input id="kd_date" type="date" />
+            </div>
+            <div style="flex:0 0 auto">
+              <button class="btn" id="addKeyDateBtn">Add</button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      const startInput = document.getElementById('wiz_start');
+      const endInput = document.getElementById('wiz_end');
+
+      startInput.onchange = () => {
+        wizardData.startDate = startInput.value;
+        if (startInput.value) {
+          wizardData.endDate = addDays(startInput.value, days);
+          endInput.value = wizardData.endDate;
+        }
+      };
+      endInput.onchange = () => wizardData.endDate = endInput.value;
+
+      renderKeyDatesList();
+
+      document.getElementById('addKeyDateBtn').onclick = () => {
+        const label = document.getElementById('kd_label').value.trim();
+        const date = document.getElementById('kd_date').value;
+        if (label && date) {
+          wizardData.keyDates.push({ label, date });
+          document.getElementById('kd_label').value = '';
+          document.getElementById('kd_date').value = '';
+          renderKeyDatesList();
+        }
+      };
     }
 
-    // Utils
-    function escapeHtml(s){ return String(s==null?'':s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;'); }
-    function escapeAttr(s){ return escapeHtml(s).replaceAll('\n',' '); }
-    function nl2br(s){ return String(s||'').replace(/\n/g,'<br/>'); }
-    function rid(){ return Math.random().toString(36).slice(2,9); }
-    function toISO(d){ try{ const z = new Date(d); const t = new Date(z.getTime()-z.getTimezoneOffset()*60000); return t.toISOString().slice(0,10); }catch(e){ return ''; } }
-    function addDaysISO(iso, days){ try{ const d = new Date(iso+'T00:00:00'); d.setDate(d.getDate()+days); return toISO(d); }catch(e){ return iso; } }
-    function dateDiffDays(a,b){ try{ const da=new Date(a+'T00:00:00'); const db=new Date(b+'T00:00:00'); return Math.round((db-da)/86400000)+1; }catch(e){ return 0; } }
-    function formatDateTime(v){ try{ const d = new Date(v); return d.toLocaleString(); }catch(e){ return ''; } }
-    function taskCompletionPct(tasks){ if (!tasks || !tasks.length) return null; const done = tasks.filter(t=>t.status==='done').length; return Math.round((done/tasks.length)*100); }
+    function renderKeyDatesList() {
+      const container = document.getElementById('keyDatesList');
+      if (!container) return;
 
-    // Init
-    (async ()=>{ await initAuth(); })();
+      if (!wizardData.keyDates.length) {
+        container.innerHTML = '<div style="color:#6b7280;font-size:13px">No key dates added yet</div>';
+        return;
+      }
+
+      container.innerHTML = wizardData.keyDates.map((kd, i) => `
+        <div class="key-date-item">
+          <div class="key-date-dot"></div>
+          <div class="key-date-label">${esc(kd.label)}</div>
+          <div class="key-date-date">${formatDate(kd.date)}</div>
+          <button class="key-date-remove" data-index="${i}">&times;</button>
+        </div>
+      `).join('');
+
+      container.querySelectorAll('.key-date-remove').forEach(btn => {
+        btn.onclick = () => {
+          wizardData.keyDates.splice(parseInt(btn.dataset.index), 1);
+          renderKeyDatesList();
+        };
+      });
+    }
+
+    function renderStep4() {
+      els.wizardContent.innerHTML = `
+        <div class="form-section">
+          <div class="form-section-title">Goals & Strategy</div>
+          <div style="margin-bottom:16px">
+            <label>Primary Goals</label>
+            <textarea id="wiz_goals" placeholder="e.g., Increase brand awareness, generate 50 leads per week, achieve 95% occupancy...">${esc(wizardData.primaryGoals)}</textarea>
+          </div>
+          <div>
+            <label>Target Audiences</label>
+            <textarea id="wiz_audiences" placeholder="e.g., Undergrads, Graduate Students, Transfer Students, Greek Life...">${esc(wizardData.targetAudiences)}</textarea>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('wiz_goals').oninput = (e) => wizardData.primaryGoals = e.target.value;
+      document.getElementById('wiz_audiences').oninput = (e) => wizardData.targetAudiences = e.target.value;
+    }
+
+    function renderStep5() {
+      // Auto-generate weeks if empty
+      if (!wizardData.weeks.length && wizardData.startDate && wizardData.endDate) {
+        wizardData.weeks = generateWeeks(wizardData.planType, wizardData.startDate, wizardData.endDate);
+      }
+
+      els.wizardContent.innerHTML = `
+        <div class="form-section">
+          <div class="form-section-title">Weekly Structure</div>
+          <div class="hint" style="margin-bottom:16px">Review and customize the weekly breakdown. You can add activities after creating the plan.</div>
+          <div id="weeksPreview"></div>
+        </div>
+      `;
+
+      const container = document.getElementById('weeksPreview');
+      container.innerHTML = wizardData.weeks.map((w, i) => `
+        <div style="padding:16px;background:#f8fafc;border:1px solid var(--border);border-radius:10px;margin-bottom:12px">
+          <div class="form-row">
+            <div style="flex:2">
+              <label>Week Label</label>
+              <input type="text" value="${esc(w.weekLabel)}" data-week="${i}" data-field="weekLabel" />
+            </div>
+            <div>
+              <label>Start</label>
+              <input type="date" value="${w.dateRangeStart}" data-week="${i}" data-field="dateRangeStart" />
+            </div>
+            <div>
+              <label>End</label>
+              <input type="date" value="${w.dateRangeEnd}" data-week="${i}" data-field="dateRangeEnd" />
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      container.querySelectorAll('input').forEach(input => {
+        input.oninput = () => {
+          const weekIndex = parseInt(input.dataset.week);
+          const field = input.dataset.field;
+          wizardData.weeks[weekIndex][field] = input.value;
+        };
+      });
+    }
+
+    function generateWeeks(planType, startDate, endDate) {
+      const weeks = [];
+      const numWeeks = planType === '90_day' ? 13 : (planType === '60_day' ? 9 : 5);
+      let current = startDate;
+
+      for (let i = 0; i < numWeeks; i++) {
+        const weekEnd = i === numWeeks - 1 ? endDate : addDays(current, 6);
+        weeks.push({
+          weekNumber: i + 1,
+          weekLabel: `Week ${i + 1}`,
+          dateRangeStart: current,
+          dateRangeEnd: weekEnd,
+          leasingFocus: '',
+          communityOutreach: '',
+          socialDigital: '',
+          activities: []
+        });
+        current = addDays(weekEnd, 1);
+      }
+
+      return weeks;
+    }
+
+    // Wizard Navigation
+    els.wizardBack.onclick = () => { if (wizardStep > 1) { wizardStep--; renderWizard(); } };
+    els.wizardNext.onclick = () => {
+      // Validation
+      if (wizardStep === 2 && !wizardData.name.trim()) {
+        alert('Plan name is required');
+        return;
+      }
+      if (wizardStep === 3 && (!wizardData.startDate || !wizardData.endDate)) {
+        alert('Start and end dates are required');
+        return;
+      }
+      if (wizardStep < WIZARD_STEPS.length) {
+        wizardStep++;
+        renderWizard();
+      }
+    };
+    els.wizardCancel.onclick = () => els.planModal.classList.remove('show');
+    els.closeModal.onclick = () => els.planModal.classList.remove('show');
+
+    els.wizardSave.onclick = async () => {
+      try {
+        const payload = {
+          name: wizardData.name,
+          planType: wizardData.planType,
+          termLabel: wizardData.termLabel,
+          startDate: wizardData.startDate,
+          endDate: wizardData.endDate,
+          currentSpecial: wizardData.currentSpecial,
+          primaryGoals: wizardData.primaryGoals,
+          targetAudiences: wizardData.targetAudiences,
+          keyDates: wizardData.keyDates,
+          weeks: wizardData.weeks
+        };
+
+        if (editingPlanId) {
+          await apiFetch('/marketing-plans', { method: 'PUT', body: JSON.stringify({ id: editingPlanId, property: currentProperty, ...payload }) });
+        } else {
+          const res = await apiFetch('/marketing-plans', { method: 'POST', body: JSON.stringify({ property: currentProperty, ...payload }) });
+          const { id } = await res.json();
+          editingPlanId = id;
+        }
+
+        els.planModal.classList.remove('show');
+        await fetchPlans();
+        renderPlanList();
+        if (editingPlanId) selectPlan(editingPlanId);
+      } catch (e) {
+        alert('Failed to save: ' + e.message);
+      }
+    };
+
+    // ==================== INIT ====================
+    initAuth();
   </script>
-  <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
 </body>
 </html>
