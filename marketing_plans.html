@@ -148,6 +148,47 @@
     .special-banner-title{font-size:12px; font-weight:700; color:#92400e; text-transform:uppercase; margin-bottom:4px}
     .special-banner-text{font-size:14px; color:#78350f; font-weight:500}
 
+    /* Proposed Specials Section */
+    .specials-section{margin-top:20px}
+    .specials-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:12px}
+    .special-card{background:#fff; border:1px solid var(--border); border-radius:10px; padding:16px; position:relative; transition:all .15s}
+    .special-card:hover{box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+    .special-card.active{border-color:#fcd34d; background:linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)}
+    .special-card.proposed{border-color:#bfdbfe; background:linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)}
+    .special-card.expired{opacity:0.6; border-color:#e5e7eb}
+    .special-status{position:absolute; top:12px; right:12px}
+    .special-name{font-size:15px; font-weight:700; color:var(--text); margin-bottom:6px; padding-right:70px}
+    .special-desc{font-size:13px; color:#64748b; margin-bottom:10px}
+    .special-dates{font-size:12px; color:#94a3b8; display:flex; gap:12px; flex-wrap:wrap}
+    .special-actions{display:flex; gap:6px; margin-top:12px; padding-top:12px; border-top:1px solid var(--border)}
+
+    /* Outreach Tracking Section */
+    .outreach-section{margin-top:20px}
+    .outreach-card{background:#fff; border:1px solid var(--border); border-radius:10px; overflow:hidden}
+    .outreach-header{padding:14px 16px; background:#f8fafc; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:12px}
+    .outreach-title{font-size:14px; font-weight:700; color:var(--text)}
+    .outreach-stats{display:flex; gap:16px}
+    .outreach-stat{text-align:center}
+    .outreach-stat-value{font-size:18px; font-weight:700; color:var(--brand-primary)}
+    .outreach-stat-label{font-size:11px; color:#64748b; text-transform:uppercase}
+    
+    .outreach-table{width:100%; border-collapse:collapse}
+    .outreach-table th{background:#f8fafc; padding:10px 14px; text-align:left; font-size:12px; font-weight:700; color:#475569; text-transform:uppercase; border-bottom:1px solid var(--border)}
+    .outreach-table td{padding:12px 14px; border-bottom:1px solid var(--border); font-size:13px}
+    .outreach-table tr:last-child td{border-bottom:none}
+    .outreach-table tr:hover{background:#f8fafc}
+    
+    .contact-type-badge{display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:600}
+    .contact-type-badge.dept{background:#dbeafe; color:#1e40af}
+    .contact-type-badge.business{background:#dcfce7; color:#166534}
+    .contact-type-badge.general{background:#f3e8ff; color:#7c3aed}
+    
+    .visit-outcome{display:inline-block; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:600}
+    .visit-outcome.positive{background:#dcfce7; color:#166534}
+    .visit-outcome.neutral{background:#fef3c7; color:#92400e}
+    .visit-outcome.followup{background:#dbeafe; color:#1e40af}
+    .visit-outcome.declined{background:#fee2e2; color:#991b1b}
+
     /* Activity Table */
     .activity-section{margin-bottom:24px}
     .activity-section-header{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; padding-bottom:8px; border-bottom:2px solid var(--border)}
@@ -447,6 +488,126 @@
       <div class="modal-footer">
         <button class="btn" id="cancelActivity">Cancel</button>
         <button class="btn success" id="saveActivity">Add Activity</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Special Modal -->
+  <div id="specialModal" class="modal-overlay">
+    <div class="modal" style="max-width:600px">
+      <div class="modal-header">
+        <h3 id="specialModalTitle">Add Proposed Special</h3>
+        <button class="modal-close" id="closeSpecialModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div>
+            <label>Special Name *</label>
+            <input id="specialName" type="text" placeholder="e.g., Sign Fast Save Big" />
+          </div>
+          <div>
+            <label>Status</label>
+            <select id="specialStatus">
+              <option value="proposed">Proposed</option>
+              <option value="active">Active</option>
+              <option value="expired">Expired</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:16px">
+          <label>Description *</label>
+          <textarea id="specialDesc" placeholder="e.g., Sign within 48 hours for $1000 gift card or 1.5 months free!"></textarea>
+        </div>
+        <div class="form-row">
+          <div>
+            <label>Start Date</label>
+            <input id="specialStart" type="date" />
+          </div>
+          <div>
+            <label>End Date</label>
+            <input id="specialEnd" type="date" />
+          </div>
+        </div>
+        <div style="margin-top:16px">
+          <label>Notes</label>
+          <textarea id="specialNotes" placeholder="Any additional notes about this special..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="cancelSpecial">Cancel</button>
+        <button class="btn success" id="saveSpecial">Save Special</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Outreach Visit Modal -->
+  <div id="outreachModal" class="modal-overlay">
+    <div class="modal" style="max-width:700px">
+      <div class="modal-header">
+        <h3>Log Outreach Visit</h3>
+        <button class="modal-close" id="closeOutreachModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div>
+            <label>Contact Type *</label>
+            <select id="outreachType" onchange="loadContactOptions()">
+              <option value="department">Department Contact</option>
+              <option value="business">Local Business</option>
+              <option value="general">General Contact</option>
+              <option value="other">Other (Manual Entry)</option>
+            </select>
+          </div>
+          <div>
+            <label>Select Contact</label>
+            <select id="outreachContact">
+              <option value="">-- Select or enter below --</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row" id="manualContactRow" style="display:none">
+          <div>
+            <label>Contact/Location Name</label>
+            <input id="outreachManualName" type="text" placeholder="Enter name manually" />
+          </div>
+          <div>
+            <label>Department/Business</label>
+            <input id="outreachManualDept" type="text" placeholder="Department or business name" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label>Visit Date *</label>
+            <input id="outreachDate" type="date" />
+          </div>
+          <div>
+            <label>Visited By</label>
+            <input id="outreachVisitor" type="text" placeholder="Team member name" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label>Outcome</label>
+            <select id="outreachOutcome">
+              <option value="positive">Positive - Good Reception</option>
+              <option value="neutral">Neutral - No Commitment</option>
+              <option value="followup">Follow-up Needed</option>
+              <option value="declined">Declined / Not Interested</option>
+            </select>
+          </div>
+          <div>
+            <label>Promo/Materials Left</label>
+            <input id="outreachPromo" type="text" placeholder="e.g., Flyers, Gift Bags" />
+          </div>
+        </div>
+        <div style="margin-top:16px">
+          <label>Notes</label>
+          <textarea id="outreachNotes" placeholder="Details about the visit, who you spoke with, next steps..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="cancelOutreach">Cancel</button>
+        <button class="btn success" id="saveOutreach">Log Visit</button>
       </div>
     </div>
   </div>
@@ -912,6 +1073,12 @@
         ${renderActivitySection('Events', events, plan, weekIndex)}
         ${renderActivitySection('Digital Marketing', digital, plan, weekIndex)}
         ${renderActivitySection('Leasing Activities', leasing, plan, weekIndex)}
+
+        <!-- Outreach Tracking -->
+        ${renderOutreachSection(plan, week, weekIndex)}
+
+        <!-- Proposed Specials (only on first week) -->
+        ${weekIndex === 0 ? renderSpecialsSection(plan) : ''}
 
         <div style="margin-top:20px">
           <button class="btn primary" onclick="openAddActivityModal(${weekIndex})">+ Add Activity</button>
@@ -1551,7 +1718,4 @@
     };
 
     // ==================== INIT ====================
-    initAuth();
-  </script>
-</body>
-</html>
+    //
