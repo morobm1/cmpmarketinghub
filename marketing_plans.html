@@ -102,16 +102,19 @@
     .detail-actions{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px}
 
     /* Metrics Cards */
-    .metrics-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:12px; margin-top:16px}
+    .metrics-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:12px; margin-top:16px}
     .metric-card{background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px 16px; text-align:center}
     .metric-card.highlight{background:linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-color:#bbf7d0}
+    .metric-card.warning-highlight{background:linear-gradient(135deg, #fefce8 0%, #fef9c3 100%); border-color:#fde047}
     .metric-label{font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px}
-    .metric-values{display:flex; align-items:baseline; justify-content:center; gap:6px}
-    .metric-goal{font-size:24px; font-weight:700; color:var(--brand-primary)}
+    .metric-values{display:flex; align-items:baseline; justify-content:center; gap:4px}
+    .metric-goal{font-size:22px; font-weight:700; color:var(--brand-primary)}
     .metric-separator{color:#94a3b8; font-size:14px}
-    .metric-actual{font-size:24px; font-weight:700; color:var(--success)}
-    .metric-single{font-size:24px; font-weight:700; color:var(--brand-primary)}
-    .metric-pct{font-size:12px; color:#64748b; margin-top:4px}
+    .metric-actual{font-size:22px; font-weight:700; color:var(--success)}
+    .metric-single{font-size:22px; font-weight:700; color:var(--brand-primary)}
+    .metric-pct{font-size:11px; color:#64748b; margin-top:4px}
+    .metric-progress{height:4px; background:#e5e7eb; border-radius:2px; margin-top:8px; overflow:hidden}
+    .metric-progress-bar{height:100%; border-radius:2px; transition:width .3s}
 
     /* Week Tabs */
     .week-tabs{display:flex; gap:4px; padding:16px 20px; border-bottom:1px solid var(--border); overflow-x:auto; background:#f8fafc}
@@ -129,6 +132,16 @@
     .week-stat{text-align:center; padding:8px 16px; background:#f8fafc; border-radius:8px; border:1px solid var(--border)}
     .week-stat-value{font-size:20px; font-weight:700; color:var(--brand-primary)}
     .week-stat-label{font-size:11px; color:var(--subtext); text-transform:uppercase}
+
+    /* Weekly KPI Card */
+    .kpi-card{background:#fff; border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:20px}
+    .kpi-card-title{font-size:14px; font-weight:700; color:var(--text); margin-bottom:16px; text-transform:uppercase; letter-spacing:0.5px}
+    .kpi-grid{display:grid; grid-template-columns:repeat(4, 1fr); gap:16px}
+    @media(max-width:700px){.kpi-grid{grid-template-columns:repeat(2, 1fr)}}
+    .kpi-item{text-align:center}
+    .kpi-item label{font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:8px; display:block}
+    .kpi-item input{text-align:center; font-size:18px; font-weight:700; padding:12px; border-radius:8px}
+    .kpi-item .kpi-hint{font-size:11px; color:#94a3b8; margin-top:4px}
 
     /* Current Special Banner */
     .special-banner{background:linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border:1px solid #fcd34d; border-radius:10px; padding:16px 20px; margin-top:16px}
@@ -174,7 +187,7 @@
     .modal-footer{padding:20px 24px; border-top:1px solid var(--border); display:flex; gap:12px; justify-content:flex-end; position:sticky; bottom:0; background:#fff}
 
     /* Wizard Steps */
-    .wizard-progress{display:flex; justify-content:center; gap:8px; margin-bottom:24px; padding:0 20px}
+    .wizard-progress{display:flex; justify-content:center; gap:8px; margin-bottom:24px; padding:0 20px; flex-wrap:wrap}
     .wizard-step{display:flex; flex-direction:column; align-items:center; gap:6px; opacity:0.4; transition:opacity .3s}
     .wizard-step.active{opacity:1}
     .wizard-step.completed{opacity:0.7}
@@ -183,7 +196,7 @@
     .wizard-step.completed .step-number{background:var(--success); color:#fff}
     .step-label{font-size:11px; font-weight:600; color:#6b7280; white-space:nowrap}
     .wizard-step.active .step-label{color:var(--text)}
-    .step-connector{width:40px; height:2px; background:#e5e7eb; margin-top:18px}
+    .step-connector{width:30px; height:2px; background:#e5e7eb; margin-top:18px}
 
     /* Form Sections */
     .form-section{margin-bottom:24px}
@@ -480,6 +493,10 @@
     function rid() { return 'r' + Math.random().toString(36).substr(2, 9); }
     function addDays(date, days) { const d = new Date(date); d.setDate(d.getDate() + days); return d.toISOString().slice(0, 10); }
     function fmtNum(n) { return n != null && !isNaN(n) ? n : '-'; }
+    function sumWeeklyKPI(plan, key) {
+      if (!plan.weeks) return 0;
+      return plan.weeks.reduce((sum, w) => sum + (parseFloat(w[key]) || 0), 0);
+    }
 
     // ==================== AUTH ====================
     els.togglePw?.addEventListener('change', () => { els.loginPassword.type = els.togglePw.checked ? 'text' : 'password'; });
@@ -661,11 +678,27 @@
 
       const typeLabel = plan.planType === '90_day' ? '90 Day' : (plan.planType === '60_day' ? '60 Day' : '30 Day');
       
-      // Calculate prelease percentage if we have goal and actual
-      let preleaseProgress = null;
-      if (plan.preleaseGoal && plan.preleaseActual != null) {
-        preleaseProgress = Math.round((plan.preleaseActual / plan.preleaseGoal) * 100);
+      // Calculate cumulative actuals from weekly data
+      const totalLeads = sumWeeklyKPI(plan, 'leadsActual');
+      const totalTours = sumWeeklyKPI(plan, 'toursActual');
+      const totalLeases = sumWeeklyKPI(plan, 'leasesActual');
+      
+      // Get latest prelease % (from most recent week with data)
+      let latestPrelease = null;
+      if (plan.weeks) {
+        for (let i = plan.weeks.length - 1; i >= 0; i--) {
+          if (plan.weeks[i].preleaseActual != null && !isNaN(plan.weeks[i].preleaseActual)) {
+            latestPrelease = plan.weeks[i].preleaseActual;
+            break;
+          }
+        }
       }
+
+      // Calculate progress percentages
+      const leadsProgress = plan.leadsGoal ? Math.min(100, Math.round((totalLeads / plan.leadsGoal) * 100)) : 0;
+      const toursProgress = plan.toursGoal ? Math.min(100, Math.round((totalTours / plan.toursGoal) * 100)) : 0;
+      const leasesProgress = plan.leasesGoal ? Math.min(100, Math.round((totalLeases / plan.leasesGoal) * 100)) : 0;
+      const preleaseProgress = plan.preleaseGoal && latestPrelease != null ? Math.min(100, Math.round((latestPrelease / plan.preleaseGoal) * 100)) : 0;
 
       els.planHeader.innerHTML = `
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
@@ -687,43 +720,47 @@
           </div>
         </div>
 
-        <!-- Metrics Grid -->
+        <!-- Cumulative Metrics Grid -->
         <div class="metrics-grid">
-          <div class="metric-card">
-            <div class="metric-label">Leads Goal</div>
+          <div class="metric-card ${leadsProgress >= 100 ? 'highlight' : (leadsProgress >= 75 ? 'warning-highlight' : '')}">
+            <div class="metric-label">Leads</div>
             <div class="metric-values">
+              <span class="metric-actual">${totalLeads}</span>
+              <span class="metric-separator">/</span>
               <span class="metric-goal">${fmtNum(plan.leadsGoal)}</span>
-              <span class="metric-separator">/</span>
-              <span class="metric-actual">${fmtNum(plan.leadsActual)}</span>
             </div>
-            <div class="metric-pct">Goal / Actual</div>
+            <div class="metric-progress"><div class="metric-progress-bar" style="width:${leadsProgress}%;background:${leadsProgress >= 100 ? 'var(--success)' : 'var(--brand-accent-2)'}"></div></div>
+            <div class="metric-pct">${leadsProgress}% of goal</div>
           </div>
-          <div class="metric-card">
-            <div class="metric-label">Tours Goal</div>
+          <div class="metric-card ${toursProgress >= 100 ? 'highlight' : (toursProgress >= 75 ? 'warning-highlight' : '')}">
+            <div class="metric-label">Tours</div>
             <div class="metric-values">
+              <span class="metric-actual">${totalTours}</span>
+              <span class="metric-separator">/</span>
               <span class="metric-goal">${fmtNum(plan.toursGoal)}</span>
-              <span class="metric-separator">/</span>
-              <span class="metric-actual">${fmtNum(plan.toursActual)}</span>
             </div>
-            <div class="metric-pct">Goal / Actual</div>
+            <div class="metric-progress"><div class="metric-progress-bar" style="width:${toursProgress}%;background:${toursProgress >= 100 ? 'var(--success)' : 'var(--brand-accent-2)'}"></div></div>
+            <div class="metric-pct">${toursProgress}% of goal</div>
           </div>
-          <div class="metric-card ${preleaseProgress !== null && preleaseProgress >= 100 ? 'highlight' : ''}">
-            <div class="metric-label">Prelease %</div>
+          <div class="metric-card ${preleaseProgress >= 100 ? 'highlight' : (preleaseProgress >= 75 ? 'warning-highlight' : '')}">
+            <div class="metric-label">Prelease</div>
             <div class="metric-values">
+              <span class="metric-actual">${latestPrelease != null ? latestPrelease + '%' : '-'}</span>
+              <span class="metric-separator">/</span>
               <span class="metric-goal">${fmtNum(plan.preleaseGoal)}%</span>
-              <span class="metric-separator">/</span>
-              <span class="metric-actual">${fmtNum(plan.preleaseActual)}%</span>
             </div>
-            <div class="metric-pct">Goal / Actual</div>
+            <div class="metric-progress"><div class="metric-progress-bar" style="width:${preleaseProgress}%;background:${preleaseProgress >= 100 ? 'var(--success)' : 'var(--brand-accent-2)'}"></div></div>
+            <div class="metric-pct">${preleaseProgress}% of goal</div>
           </div>
-          <div class="metric-card">
-            <div class="metric-label">Leases Goal</div>
+          <div class="metric-card ${leasesProgress >= 100 ? 'highlight' : (leasesProgress >= 75 ? 'warning-highlight' : '')}">
+            <div class="metric-label">Leases</div>
             <div class="metric-values">
-              <span class="metric-goal">${fmtNum(plan.leasesGoal)}</span>
+              <span class="metric-actual">${totalLeases}</span>
               <span class="metric-separator">/</span>
-              <span class="metric-actual">${fmtNum(plan.leasesActual)}</span>
+              <span class="metric-goal">${fmtNum(plan.leasesGoal)}</span>
             </div>
-            <div class="metric-pct">Goal / Actual</div>
+            <div class="metric-progress"><div class="metric-progress-bar" style="width:${leasesProgress}%;background:${leasesProgress >= 100 ? 'var(--success)' : 'var(--brand-accent-2)'}"></div></div>
+            <div class="metric-pct">${leasesProgress}% of goal</div>
           </div>
         </div>
 
@@ -806,6 +843,37 @@
           </div>
         </div>
 
+        <!-- Weekly KPI Tracking -->
+        <div class="kpi-card">
+          <div class="kpi-card-title">Weekly KPI Tracking</div>
+          <div class="kpi-grid">
+            <div class="kpi-item">
+              <label>Leads</label>
+              <input type="number" min="0" value="${week.leadsActual || ''}" placeholder="0" 
+                onchange="updateWeeklyKPI('${plan._id || plan.id}', ${weekIndex}, 'leadsActual', this.value)" />
+              <div class="kpi-hint">This week</div>
+            </div>
+            <div class="kpi-item">
+              <label>Tours</label>
+              <input type="number" min="0" value="${week.toursActual || ''}" placeholder="0"
+                onchange="updateWeeklyKPI('${plan._id || plan.id}', ${weekIndex}, 'toursActual', this.value)" />
+              <div class="kpi-hint">This week</div>
+            </div>
+            <div class="kpi-item">
+              <label>Prelease %</label>
+              <input type="number" min="0" max="100" value="${week.preleaseActual || ''}" placeholder="0"
+                onchange="updateWeeklyKPI('${plan._id || plan.id}', ${weekIndex}, 'preleaseActual', this.value)" />
+              <div class="kpi-hint">Current %</div>
+            </div>
+            <div class="kpi-item">
+              <label>Leases</label>
+              <input type="number" min="0" value="${week.leasesActual || ''}" placeholder="0"
+                onchange="updateWeeklyKPI('${plan._id || plan.id}', ${weekIndex}, 'leasesActual', this.value)" />
+              <div class="kpi-hint">This week</div>
+            </div>
+          </div>
+        </div>
+
         ${week.leasingFocus || week.communityOutreach || week.socialDigital ? `
           <div class="card" style="margin-bottom:20px">
             <h3>Week Overview</h3>
@@ -872,6 +940,27 @@
           </table>
         </div>
       `;
+    }
+
+    // ==================== WEEKLY KPI UPDATE ====================
+    async function updateWeeklyKPI(planId, weekIndex, field, value) {
+      const plan = window.__currentPlan;
+      if (!plan) return;
+
+      const week = plan.weeks[weekIndex];
+      const numVal = parseFloat(value);
+      week[field] = isFinite(numVal) ? numVal : null;
+
+      try {
+        await apiFetch('/marketing-plans', {
+          method: 'PUT',
+          body: JSON.stringify({ id: planId, property: currentProperty, weeks: plan.weeks })
+        });
+        // Re-render to update cumulative totals in header
+        renderPlanDetail(plan);
+      } catch (e) {
+        alert('Failed to update: ' + e.message);
+      }
     }
 
     // ==================== ACTIVITY ACTIONS ====================
@@ -1006,11 +1095,11 @@
 
     // ==================== WIZARD ====================
     const WIZARD_STEPS = [
-      { id: 1, label: 'Plan Type' },
+      { id: 1, label: 'Type' },
       { id: 2, label: 'Details' },
       { id: 3, label: 'Timeline' },
-      { id: 4, label: 'Goals' },
-      { id: 5, label: 'Metrics' },
+      { id: 4, label: 'Strategy' },
+      { id: 5, label: 'Goals' },
       { id: 6, label: 'Weeks' }
     ];
 
@@ -1028,13 +1117,9 @@
         targetAudiences: '',
         keyDates: [],
         leadsGoal: null,
-        leadsActual: null,
         toursGoal: null,
-        toursActual: null,
         preleaseGoal: null,
-        preleaseActual: null,
         leasesGoal: null,
-        leasesActual: null,
         weeks: []
       };
 
@@ -1064,13 +1149,9 @@
           targetAudiences: plan.targetAudiences || '',
           keyDates: plan.keyDates || [],
           leadsGoal: plan.leadsGoal,
-          leadsActual: plan.leadsActual,
           toursGoal: plan.toursGoal,
-          toursActual: plan.toursActual,
           preleaseGoal: plan.preleaseGoal,
-          preleaseActual: plan.preleaseActual,
           leasesGoal: plan.leasesGoal,
-          leasesActual: plan.leasesActual,
           weeks: plan.weeks || []
         };
         renderWizard();
@@ -1260,7 +1341,7 @@
     function renderStep4() {
       els.wizardContent.innerHTML = `
         <div class="form-section">
-          <div class="form-section-title">Goals & Strategy</div>
+          <div class="form-section-title">Strategy</div>
           <div style="margin-bottom:16px">
             <label>Primary Goals</label>
             <textarea id="wiz_goals" placeholder="e.g., Increase brand awareness, generate 50 leads per week, achieve 95% occupancy...">${esc(wizardData.primaryGoals)}</textarea>
@@ -1279,28 +1360,19 @@
     function renderStep5() {
       els.wizardContent.innerHTML = `
         <div class="form-section">
-          <div class="form-section-title">Performance Metrics</div>
-          <div class="hint" style="margin-bottom:16px">Set your goals and track actual performance throughout the plan.</div>
+          <div class="form-section-title">Performance Goals</div>
+          <div class="hint" style="margin-bottom:16px">Set your target goals for this plan. You'll track actual performance weekly.</div>
           
           <div class="form-row">
             <div>
-              <label>Leads Goal</label>
+              <label>Leads Goal (Total)</label>
               <input id="wiz_leadsGoal" type="number" min="0" value="${wizardData.leadsGoal || ''}" placeholder="e.g., 100" />
+              <div class="hint">Total leads to generate during plan</div>
             </div>
             <div>
-              <label>Leads Actual</label>
-              <input id="wiz_leadsActual" type="number" min="0" value="${wizardData.leadsActual || ''}" placeholder="Current count" />
-            </div>
-          </div>
-          
-          <div class="form-row">
-            <div>
-              <label>Tours Goal</label>
+              <label>Tours Goal (Total)</label>
               <input id="wiz_toursGoal" type="number" min="0" value="${wizardData.toursGoal || ''}" placeholder="e.g., 50" />
-            </div>
-            <div>
-              <label>Tours Actual</label>
-              <input id="wiz_toursActual" type="number" min="0" value="${wizardData.toursActual || ''}" placeholder="Current count" />
+              <div class="hint">Total tours to schedule during plan</div>
             </div>
           </div>
           
@@ -1308,21 +1380,12 @@
             <div>
               <label>Prelease Goal (%)</label>
               <input id="wiz_preleaseGoal" type="number" min="0" max="100" value="${wizardData.preleaseGoal || ''}" placeholder="e.g., 95" />
+              <div class="hint">Target prelease percentage</div>
             </div>
             <div>
-              <label>Prelease Actual (%)</label>
-              <input id="wiz_preleaseActual" type="number" min="0" max="100" value="${wizardData.preleaseActual || ''}" placeholder="Current %" />
-            </div>
-          </div>
-          
-          <div class="form-row">
-            <div>
-              <label>Leases Goal</label>
+              <label>Leases Goal (Total)</label>
               <input id="wiz_leasesGoal" type="number" min="0" value="${wizardData.leasesGoal || ''}" placeholder="e.g., 30" />
-            </div>
-            <div>
-              <label>Leases Actual</label>
-              <input id="wiz_leasesActual" type="number" min="0" value="${wizardData.leasesActual || ''}" placeholder="Current count" />
+              <div class="hint">Total leases to sign during plan</div>
             </div>
           </div>
         </div>
@@ -1333,13 +1396,9 @@
         if (el) el.oninput = () => { const v = parseFloat(el.value); wizardData[key] = isFinite(v) ? v : null; };
       };
       bindNum('wiz_leadsGoal', 'leadsGoal');
-      bindNum('wiz_leadsActual', 'leadsActual');
       bindNum('wiz_toursGoal', 'toursGoal');
-      bindNum('wiz_toursActual', 'toursActual');
       bindNum('wiz_preleaseGoal', 'preleaseGoal');
-      bindNum('wiz_preleaseActual', 'preleaseActual');
       bindNum('wiz_leasesGoal', 'leasesGoal');
-      bindNum('wiz_leasesActual', 'leasesActual');
     }
 
     function renderStep6() {
@@ -1351,7 +1410,7 @@
       els.wizardContent.innerHTML = `
         <div class="form-section">
           <div class="form-section-title">Weekly Structure</div>
-          <div class="hint" style="margin-bottom:16px">Review and customize the weekly breakdown. You can add activities after creating the plan.</div>
+          <div class="hint" style="margin-bottom:16px">Review and customize the weekly breakdown. You'll track KPIs and add activities after creating the plan.</div>
           <div id="weeksPreview"></div>
         </div>
       `;
@@ -1400,6 +1459,10 @@
           leasingFocus: '',
           communityOutreach: '',
           socialDigital: '',
+          leadsActual: null,
+          toursActual: null,
+          preleaseActual: null,
+          leasesActual: null,
           activities: []
         });
         current = addDays(weekEnd, 1);
@@ -1441,13 +1504,9 @@
           targetAudiences: wizardData.targetAudiences,
           keyDates: wizardData.keyDates,
           leadsGoal: wizardData.leadsGoal,
-          leadsActual: wizardData.leadsActual,
           toursGoal: wizardData.toursGoal,
-          toursActual: wizardData.toursActual,
           preleaseGoal: wizardData.preleaseGoal,
-          preleaseActual: wizardData.preleaseActual,
           leasesGoal: wizardData.leasesGoal,
-          leasesActual: wizardData.leasesActual,
           weeks: wizardData.weeks
         };
 
