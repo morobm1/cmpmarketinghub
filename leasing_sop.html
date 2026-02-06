@@ -1,0 +1,949 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Leasing SOP • Marketing Hub</title>
+  <link rel="preconnect" href="https://use.typekit.net" crossorigin>
+  <link rel="preconnect" href="https://p.typekit.net" crossorigin>
+  <link rel="stylesheet" href="https://use.typekit.net/hqv8hwr.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <meta name="description" content="Leasing SOP library by property. Create, edit, and view SOPs based on assigned property access." />
+  <style>
+:root{
+      --brand-primary:#446472;
+      --brand-accent:#ffb732;
+      --brand-accent-2:#52d5ff;
+      --brand-gray:#929497;
+      --page-bg:#f8fafc;
+      --bg:#ffffff;
+      --panel:#ffffff;
+      --muted:#ffffff;
+      --text:#1e293b;
+      --subtext:#64748b;
+      --accent:var(--brand-accent-2);
+      --accent-2:var(--brand-accent);
+      --good:#22c55e;
+      --warn:#ffb732;
+      --bad:#ef4444;
+      --border:#e2e8f0;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{font-family:'Open Sans',system-ui,-apple-system,sans-serif; background:var(--page-bg); color:var(--text);font-size:14px;line-height:1.5}
+
+    /* Header */
+    header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:10px}
+    .brand .logo-img{height:28px;width:auto}
+    .brand .title{color:#ffb732;font-family:zooja-pro,Arial,sans-serif;font-size:clamp(32px,4vw,48px);line-height:1}
+    .header-controls{display:flex;align-items:center;gap:12px;margin-left:auto}
+    .header-controls select{background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);min-width:200px;cursor:pointer}
+    .header-controls select:focus{outline:none;border-color:var(--brand-accent-2);box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
+    .header-btn{background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;transition:all .15s}
+    .header-btn:hover{background:#f8fafc;border-color:#cbd5e1}
+    .company-name{font-size:12px;color:var(--subtext);font-weight:500}
+
+    /* Navigation */
+    .nav-bar{background:#fff;border-bottom:1px solid var(--border)}
+    .nav-wrap{max-width:1400px;margin:0 auto;padding:0 24px;display:flex;gap:2px;overflow-x:auto}
+    .nav-tab{display:flex;align-items:center;gap:6px;padding:14px 16px;color:var(--subtext);text-decoration:none;font-size:13px;font-weight:600;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap}
+    .nav-tab:hover{color:var(--text);background:#f8fafc}
+    .nav-tab.active{color:var(--brand-primary);border-bottom-color:var(--brand-primary)}
+
+    .container{padding:16px; display:grid; grid-template-columns: 340px 1fr; gap:16px; max-width:1400px; margin:0 auto}
+    @media(max-width: 1100px){ .container{grid-template-columns:1fr} }
+
+    .card{background:#ffffff; border:1px solid var(--border); border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,0.06); overflow:hidden}
+    .card h3{margin:0; padding:16px 20px 0 20px; font-size:15px; color:#374151; font-weight:700; font-family: Roboto, Arial, sans-serif}
+    .card .content{padding:16px 20px 20px 20px}
+
+    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .row > *{flex:1}
+
+    label{font-size:12px; color:var(--subtext); display:block; margin-bottom:6px; font-weight:600}
+    input, select, textarea{width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--text); font-size:14px; transition:border-color .15s, box-shadow .15s}
+    input:focus, select:focus, textarea:focus{outline:none; border-color:var(--brand-accent-2); box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
+    textarea{min-height:64px; resize:vertical}
+
+    button{width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--text); font-size:14px; font-weight:600; cursor:pointer; transition:all .15s; font-family: Roboto, Arial, sans-serif}
+    button:hover{background:#f8fafc}
+    button.secondary{background:#ffffff; color:#111827; border:1px solid #d1d5db}
+    button.secondary:hover{background:#f8fafc}
+    button.warn{background:#ffb732; color:#1f1300; border-color:#ffb732}
+    button.warn:hover{background:#f5a623}
+    button.good{background:#52d5ff; color:#0b1b24; border-color:#52d5ff}
+    button.good:hover{background:#3ecbf5}
+    button.primary{background:var(--brand-primary); color:#fff; border-color:var(--brand-primary)}
+    button.primary:hover{background:#3b5561}
+
+    .grid{max-height:60vh; overflow:auto; border:1px solid var(--border); border-radius:10px; background:#fff}
+    .muted{color:var(--subtext)}
+    .badge{display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; background:#fff7e6; color:#8a5800; border:1px solid #fde68a; font-weight:600}
+    .mini{font-size:11px; color:var(--subtext)}
+
+    #calendar{background:#ffffff; border:1px solid var(--border); border-radius:14px; padding:8px}
+    .summary{display:flex; gap:12px; flex-wrap:wrap}
+    .kpi{flex:1; min-width:160px; border:1px solid var(--border); border-radius:12px; padding:14px; background:#fff}
+    .kpi .label{font-size:12px; color:var(--subtext); font-weight:600}
+    .kpi .value{font-size:20px; font-weight:800; color:#111827}
+    .kpi .value.val-blue{color:#52d5ff !important}
+    .kpi .value.val-primary{color:#446472 !important}
+    .kpi .value.val-amber{color:#ffb732 !important}
+    .kpi .value.val-red{color:#ef4444 !important}
+
+    .footer{padding:12px 18px; color:var(--subtext); font-size:12px; text-align:center}
+
+    /* Modal */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+    .modal{background:#fff;border:1px solid var(--border);border-radius:14px;max-width:560px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 20px 40px rgba(0,0,0,0.15)}
+    .modal-header{padding:20px;border-bottom:1px solid var(--border)}
+    .modal-header h3{margin:0;font-size:16px;color:var(--text);font-weight:700}
+    .modal-body{padding:20px}
+    .modal h3{margin:0 0 16px 0;color:var(--text);font-size:16px;font-weight:700}
+    .modal .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
+    .modal .actions button{width:auto;padding:10px 20px}
+
+    /* Filters */
+    #filtersRow{margin:8px 0}
+    #filtersRow label{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:#fff;border:1px solid var(--border);color:#374151;user-select:none;cursor:pointer;font-size:12px;font-weight:500;transition:all .15s}
+    #filtersRow label:hover{background:#f8fafc;border-color:#cbd5e1}
+    #filtersRow input[type="checkbox"]{width:14px;height:14px;accent-color:var(--brand-accent-2)}
+
+    /* Audit styles */
+    #auditCard .section-title{font-weight:700;color:#111827;margin:8px 0 12px;font-size:14px}
+    #auditCard .audit-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+    #auditCard .audit-item{border:1px solid var(--border);border-radius:12px;background:#fff;padding:14px;display:flex;flex-direction:column;gap:8px}
+    #auditCard .item-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+    #auditCard .item-label{display:flex;align-items:center;gap:8px;font-weight:600;color:#111827;font-size:13px}
+    #auditCard .dot{width:10px;height:10px;border-radius:50%;border:1px solid rgba(0,0,0,0.15)}
+    #auditCard .pct-badge{font-weight:700;font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid var(--border);color:#111827;background:#f8fafc}
+    #auditCard .counts{font-size:12px;color:var(--subtext)}
+    #auditCard .bar{position:relative;height:10px;background:#f1f5f9;border:1px solid var(--border);border-radius:999px;overflow:hidden}
+    #auditCard .bar>div{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--barStart),var(--barEnd));width:var(--w,0%)}
+    #auditCard .opt{color:var(--subtext);font-weight:600;font-size:11px}
+
+    /* FullCalendar */
+    .fc{--fc-border-color:#e2e8f0;--fc-page-bg-color:#ffffff;--fc-neutral-bg-color:#f8fafc;--fc-today-bg-color:#fffbeb}
+    .fc .fc-toolbar{margin-bottom:12px;gap:8px;align-items:center}
+    .fc .fc-toolbar-chunk{display:flex;gap:6px;align-items:center}
+    .fc .fc-toolbar-title{font-size:18px;font-weight:700;color:#111827}
+    .fc .fc-button{background:#52d5ff;border-color:#52d5ff;color:#0b1b24;padding:8px 12px;border-radius:8px;font-weight:600;font-size:13px}
+    .fc .fc-button:hover{background:#3ecbf5;border-color:#3ecbf5}
+    .fc .fc-button:disabled{background:#e0f7ff;border-color:#e0f7ff;color:#6b7280;opacity:1}
+    .fc .fc-button-primary:not(:disabled).fc-button-active{background:#446472;border-color:#446472;color:#fff}
+    .fc .fc-daygrid-day-frame{padding:6px}
+    .fc .fc-daygrid-day-top{padding:4px;align-items:flex-start}
+    .fc .fc-daygrid-day-number{color:#374151;font-weight:500}
+    .fc .fc-event{border-radius:4px;padding:2px 4px;font-size:12px}
+
+    .hidden{display:none}
+
+    /* Leasing SOP specific (keeps core theme identical) */
+    .sop-item{padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;flex-direction:column;gap:6px}
+    .sop-item:hover{background:#f8fafc}
+    .sop-item.active{background:#eef6f9}
+    .sop-item .top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .sop-item .title{font-weight:800;color:#111827}
+    .sop-item .meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;border:1px solid var(--border);background:#fff;font-size:12px;color:#374151;font-weight:600}
+    .pill.good{border-color:rgba(82,213,255,0.35);background:rgba(82,213,255,0.10)}
+    .pill.warn{border-color:rgba(255,183,50,0.40);background:rgba(255,183,50,0.12)}
+    .pill.gray{border-color:#e5e7eb;background:#f9fafb;color:#4b5563}
+    .split{display:grid;grid-template-columns:1fr;gap:12px}
+    .preview{border:1px solid var(--border);border-radius:12px;padding:14px;background:#fff}
+    .preview h4{margin:0 0 10px 0;font-family:Roboto,Arial,sans-serif;font-size:14px;color:#111827}
+    .preview .block{margin:10px 0}
+    .preview .block .label{font-size:12px;color:var(--subtext);font-weight:700;margin-bottom:6px}
+    .preview .block .text{white-space:pre-wrap;color:#111827}
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .toolbar > *{flex:0 0 auto}
+    .toolbar .grow{flex:1 1 260px}
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media(max-width: 560px){ .two-col{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+  <div id="bootLoader" style="position:fixed;inset:0;background:#ffffff;display:flex;align-items:center;justify-content:center;z-index:100;color:#111827;font-family:Roboto,Arial,sans-serif">
+    <div style="display:flex;flex-direction:column;gap:6px;align-items:center">
+      <div style="font-weight:800">Marketing Hub</div>
+      <div class="mini" style="color:#6b7280">Loading…</div>
+    </div>
+  </div>
+
+  <div id="loginView" style="min-height:100vh;display:none;align-items:center;justify-content:center;padding:20px">
+    <div class="card" style="max-width:420px;width:100%">
+      <h3>Login</h3>
+      <div class="content">
+        <div class="row"><div><label for="loginUsername">Username</label><input id="loginUsername" type="text" autocomplete="username" /></div></div>
+        <div class="row"><div><label for="loginPassword">Password</label><input id="loginPassword" type="password" autocomplete="current-password" /></div></div>
+        <div class="row"><label class="mini" style="display:flex;align-items:center;gap:6px;user-select:none"><input id="togglePw" type="checkbox" /> Show password</label></div>
+        <div class="row"><button id="loginBtn">Sign In</button></div>
+        <div id="loginError" class="mini" style="color:#f87171; display:none">Invalid credentials</div>
+      </div>
+    </div>
+  </div>
+
+  <header id="appHeader" style="display:none">
+    <div class="brand">
+      <img src="logo-main.svg" class="logo-img" alt="Capstone" />
+      <div class="title">Marketing Hub</div>
+    </div>
+    <div class="header-controls">
+      <select id="propertySelect"></select>
+      <button class="header-btn" id="logoutBtn">Sign Out</button>
+      <button class="header-btn" id="adminPageBtn" style="display:none">Admin</button>
+    </div>
+    <span class="company-name">Capstone Management Partners</span>
+  </header>
+
+  <nav class="nav-bar">
+    <div class="nav-wrap" id="mainNav">
+      <a href="mmp_calendar_app.html" class="nav-tab">Marketing Calendar</a>
+      <a href="marketing_plans.html" class="nav-tab">Marketing Plans</a>
+      <a href="marketing_contacts.html" class="nav-tab">Marketing Contacts</a>
+      <a href="promo_order_tracker.html" class="nav-tab">Promo Order Tracker</a>
+      <a href="renewal_campaign.html" class="nav-tab">Renewal Campaign</a>
+      <a href="velocity_tracker.html" class="nav-tab">Velocity Tracker</a>
+      <a href="leasing_sop.html" class="nav-tab active">Leasing SOP</a>
+      <a href="uniform_shop.html" class="nav-tab">Uniform Shop</a>
+      <a href="creative_library.html" class="nav-tab">Creative Library</a>
+    </div>
+  </nav>
+
+  <div id="appContainer" class="container" style="display:none">
+    <aside class="card">
+      <h3>Leasing SOP Details</h3>
+      <div class="content">
+        <div class="row">
+          <div>
+            <label for="sopTitle">Title</label>
+            <input id="sopTitle" type="text" placeholder="e.g., Phone Script – Initial Inquiry" />
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div>
+            <label for="sopCategory">Category</label>
+            <select id="sopCategory">
+              <option value="Phone">Phone</option>
+              <option value="Tours">Tours</option>
+              <option value="Follow-Up">Follow-Up</option>
+              <option value="Applications">Applications</option>
+              <option value="Renewals">Renewals</option>
+              <option value="Move-In">Move-In</option>
+              <option value="Resident Support">Resident Support</option>
+              <option value="Fair Housing">Fair Housing</option>
+              <option value="Operations">Operations</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label for="sopRole">Primary Role</label>
+            <input id="sopRole" type="text" placeholder="e.g., Leasing Team Member" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="sopPurpose">Purpose / When to Use</label>
+            <textarea id="sopPurpose" placeholder="Short summary of when this SOP applies."></textarea>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="sopSteps">Steps (one per line or numbered list)</label>
+            <textarea id="sopSteps" placeholder="1) Greet the prospect…&#10;2) Ask timeline…&#10;3) Confirm budget…"></textarea>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="sopResources">Links / Resources (one per line)</label>
+            <textarea id="sopResources" placeholder="https://..."></textarea>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div>
+            <label for="sopOwner">Owner</label>
+            <input id="sopOwner" type="text" placeholder="e.g., PSM / GM / Leasing Manager" />
+          </div>
+          <div>
+            <label for="sopReviewed">Last Reviewed</label>
+            <input id="sopReviewed" type="date" />
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:8px">
+          <button id="saveSopBtn" class="primary">Add SOP</button>
+        </div>
+        <div class="row">
+          <button id="clearSopBtn" class="secondary">Clear</button>
+          <button id="deleteSopBtn" class="warn" disabled>Delete</button>
+        </div>
+        <div class="row">
+          <button id="printSopBtn" class="good" disabled>Print Selected</button>
+        </div>
+
+        <div class="mini" id="sopSaveStatus" style="margin-top:10px"></div>
+      </div>
+    </aside>
+
+    <main class="card">
+      <h3>Leasing SOP Library</h3>
+      <div class="content">
+        <div class="toolbar" style="margin-bottom:12px">
+          <div class="grow" style="flex:1 1 320px;min-width:240px">
+            <label for="searchInput">Search</label>
+            <input id="searchInput" type="text" placeholder="Search title, steps, or purpose…" />
+          </div>
+          <div>
+            <label for="filterCategory">Category</label>
+            <select id="filterCategory">
+              <option value="">All</option>
+              <option value="Phone">Phone</option>
+              <option value="Tours">Tours</option>
+              <option value="Follow-Up">Follow-Up</option>
+              <option value="Applications">Applications</option>
+              <option value="Renewals">Renewals</option>
+              <option value="Move-In">Move-In</option>
+              <option value="Resident Support">Resident Support</option>
+              <option value="Fair Housing">Fair Housing</option>
+              <option value="Operations">Operations</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div style="align-self:flex-end">
+            <button id="newSopBtn" class="secondary" style="width:auto;padding:10px 14px">New SOP</button>
+          </div>
+        </div>
+
+        <div id="sopList" class="grid" style="max-height:46vh"></div>
+
+        <div style="margin-top:14px" class="split">
+          <div class="preview" id="previewBox" style="display:none">
+            <h4 id="previewTitle"></h4>
+            <div class="mini" id="previewMeta" style="margin-bottom:10px"></div>
+
+            <div class="block">
+              <div class="label">Purpose / When to Use</div>
+              <div class="text" id="previewPurpose"></div>
+            </div>
+
+            <div class="block">
+              <div class="label">Steps</div>
+              <div class="text" id="previewSteps"></div>
+            </div>
+
+            <div class="block">
+              <div class="label">Links / Resources</div>
+              <div class="text" id="previewResources"></div>
+            </div>
+          </div>
+
+          <div class="mini" id="emptyState" style="display:none">
+            No SOPs yet for this property. Use <b>New SOP</b> to add your first one.
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">Leasing SOPs are filtered by your assigned properties.</div>
+    </main>
+  </div>
+
+  <script>
+    // ========= Elements =========
+    const els = {
+      // auth
+      loginView: document.getElementById('loginView'),
+      loginUsername: document.getElementById('loginUsername'),
+      loginPassword: document.getElementById('loginPassword'),
+      loginTogglePw: document.getElementById('togglePw'),
+      loginBtn: document.getElementById('loginBtn'),
+      loginError: document.getElementById('loginError'),
+      appHeader: document.getElementById('appHeader'),
+      appContainer: document.getElementById('appContainer'),
+      logoutBtn: document.getElementById('logoutBtn'),
+      adminPageBtn: document.getElementById('adminPageBtn'),
+      propertySelect: document.getElementById('propertySelect'),
+
+      // sop form
+      sopTitle: document.getElementById('sopTitle'),
+      sopCategory: document.getElementById('sopCategory'),
+      sopRole: document.getElementById('sopRole'),
+      sopPurpose: document.getElementById('sopPurpose'),
+      sopSteps: document.getElementById('sopSteps'),
+      sopResources: document.getElementById('sopResources'),
+      sopOwner: document.getElementById('sopOwner'),
+      sopReviewed: document.getElementById('sopReviewed'),
+      saveSopBtn: document.getElementById('saveSopBtn'),
+      clearSopBtn: document.getElementById('clearSopBtn'),
+      deleteSopBtn: document.getElementById('deleteSopBtn'),
+      printSopBtn: document.getElementById('printSopBtn'),
+      sopSaveStatus: document.getElementById('sopSaveStatus'),
+
+      // list
+      searchInput: document.getElementById('searchInput'),
+      filterCategory: document.getElementById('filterCategory'),
+      newSopBtn: document.getElementById('newSopBtn'),
+      sopList: document.getElementById('sopList'),
+      emptyState: document.getElementById('emptyState'),
+
+      // preview
+      previewBox: document.getElementById('previewBox'),
+      previewTitle: document.getElementById('previewTitle'),
+      previewMeta: document.getElementById('previewMeta'),
+      previewPurpose: document.getElementById('previewPurpose'),
+      previewSteps: document.getElementById('previewSteps'),
+      previewResources: document.getElementById('previewResources'),
+    };
+
+    // ========= Nav activation =========
+    (function(){
+      const nav = document.getElementById('mainNav');
+      if (!nav) return;
+      const path = (location.pathname || '').toLowerCase();
+      nav.querySelectorAll('.nav-tab').forEach(a => {
+        const href = (a.getAttribute('href') || '').toLowerCase();
+        if (href && (path.endsWith(href) || path.endsWith('/' + href))) a.classList.add('active');
+      });
+    })();
+
+    // ========= Helpers =========
+    function escapeHtml(str){
+      return String(str||'')
+        .replace(/&/g,'&amp;')
+        .replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;')
+        .replace(/'/g,'&#039;');
+    }
+    function fmtDate(iso){
+      if (!iso) return '';
+      try{
+        const d = new Date(iso);
+        if (isNaN(d.getTime())) return String(iso);
+        return d.toLocaleDateString(undefined, { year:'numeric', month:'short', day:'2-digit' });
+      }catch(e){ return String(iso); }
+    }
+    function setStatus(msg, isError=false){
+      if (!els.sopSaveStatus) return;
+      els.sopSaveStatus.style.color = isError ? '#ef4444' : '';
+      els.sopSaveStatus.textContent = msg || '';
+    }
+
+    // ========= Auth / Properties (mirrors calendar app patterns) =========
+    const STORE_CURRENT_PROPERTY_KEY = 'mmp_current_property_v1';
+    const STORE_LOGIN_TIME_KEY = 'mmp_login_time_v1';
+    const STORE_PROPERTIES_KEY = 'mmp_properties_v1';
+    const SESSION_TTL_MS = 8 * 60 * 60 * 1000; // 8 hours
+    const API_BASE = '/api';
+
+    let SESSION_ACTIVE = false;
+    let currentUser = null;
+    let properties = [];
+    let currentProperty = '';
+
+    async function apiFetch(path, opts={}){
+      const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers||{});
+      const res = await fetch(API_BASE + path, Object.assign({}, opts, { headers, credentials: 'include' }));
+      if (!res.ok){ const text = await res.text(); throw new Error(text || ('HTTP '+res.status)); }
+      return res;
+    }
+
+    function showApp(){
+      if (els.appHeader) els.appHeader.style.display='';
+      if (els.appContainer) els.appContainer.style.display='';
+      if (els.loginView) els.loginView.style.display='none';
+      const bl=document.getElementById('bootLoader'); if (bl) bl.style.display='none';
+    }
+    function showLogin(){
+      const bl=document.getElementById('bootLoader'); if (bl) bl.style.display='none';
+      if (els.appHeader) els.appHeader.style.display='none';
+      if (els.appContainer) els.appContainer.style.display='none';
+      if (els.loginView) els.loginView.style.display='flex';
+    }
+
+    async function doLogout(){
+      try{ await fetch('/api/auth-logout', { method:'POST' }); }catch(e){}
+      try{ localStorage.removeItem(STORE_CURRENT_PROPERTY_KEY); }catch(e){}
+      try{ localStorage.removeItem(STORE_LOGIN_TIME_KEY); }catch(e){}
+      location.href = 'index.html';
+    }
+
+    function bindHeaderHandlers(){
+      if (els.logoutBtn) els.logoutBtn.onclick = () => doLogout();
+      if (els.adminPageBtn){
+        els.adminPageBtn.style.display = currentUser && currentUser.role==='admin' ? '' : 'none';
+        els.adminPageBtn.onclick = () => { location.href = 'mmp_admin.html'; };
+      }
+    }
+
+    function scheduleAutoLogout(){
+      let loginTime = parseInt(localStorage.getItem(STORE_LOGIN_TIME_KEY)||'0', 10) || 0;
+      if (!loginTime){
+        loginTime = Date.now();
+        try{ localStorage.setItem(STORE_LOGIN_TIME_KEY, String(loginTime)); }catch(e){}
+      }
+      let remaining = SESSION_TTL_MS - (Date.now() - loginTime);
+      if (remaining <= 0){
+        try{ localStorage.setItem(STORE_LOGIN_TIME_KEY, String(Date.now())); }catch(e){}
+        remaining = SESSION_TTL_MS;
+      }
+      if (window.__mmpLogoutTimer){ try{ clearTimeout(window.__mmpLogoutTimer); }catch(e){} }
+      window.__mmpLogoutTimer = setTimeout(doLogout, remaining);
+    }
+
+    // Grouped property mapping (same as calendar file)
+    const OLD_TO_GROUP = {
+      'Cerca Apartments': 'Cerca/Prisma/Zuma',
+      'Prisma Apartments': 'Cerca/Prisma/Zuma',
+      'Zuma Apartments': 'Cerca/Prisma/Zuma',
+      'Stateside Apartments': 'Stateside/Monte',
+      'Monte Apartments': 'Stateside/Monte',
+      'Chorro SLO': 'Chorro/Palomar',
+      'Palomar SLO': 'Chorro/Palomar',
+    };
+    const GROUPED_NAMES = ['Cerca/Prisma/Zuma','Stateside/Monte','Chorro/Palomar'];
+    const OLD_NAMES = Object.keys(OLD_TO_GROUP);
+    function mapPropertyNameToGroup(name){ return OLD_TO_GROUP[name] || name; }
+    function displayPropertyName(name){
+      return String(name||'').replace(/University of Bothell/gi,'Cascadia College')
+                            .replace(/UWB/gi,'Cascadia College')
+                            .replace(/UW Bothell/gi,'Cascadia College');
+    }
+
+    function getAccessibleProperties(){
+      if (!currentUser) return [];
+      if (currentUser.role === 'admin') return properties.slice();
+      const rawAssigned = currentUser.properties === '*' ? properties.slice() : (currentUser.properties||[]);
+      const assignedGroups = Array.from(new Set(rawAssigned.map(p => mapPropertyNameToGroup(p))));
+      return properties.filter(p => assignedGroups.includes(p));
+    }
+
+    async function loadProperties(){
+      if (SESSION_ACTIVE){
+        try{
+          const res = await fetch('/api/properties');
+          const list = await res.json();
+          properties = (list||[]).map(x => x.name).filter(Boolean);
+          if (!properties.length) throw new Error('empty');
+          return;
+        }catch(e){ /* fall through to static seed */ }
+      }
+      properties = [
+        'M@College',
+        'Blattner Hall (75 Arkansas)',
+        'Century Hall',
+        'Zuma Apartments',
+        'Cerca Apartments',
+        'Prisma Apartments',
+        'Mountain View Hall',
+        'Lantana Hall',
+        'Founders Hall',
+        'Ferry Street Flats',
+        'The Continuum for UF Grads',
+        'River House Graduate Housing',
+        'Infinity Hall',
+        'Florida Polytechnic University - Phase II',
+        'Ivory University House',
+        'Palomar SLO',
+        'Chorro SLO',
+        'Florida Polytechnic University - Phase III',
+        'The Residential Village at UW Bothell',
+        'Stateside Apartments',
+        'Bryan Flats',
+        'Nexus on Holmes (Univ of Alabama, Huntsville)',
+        'Comma Barrington',
+        'Meridian on Main (132 E Main Street)',
+        'The Village at Mines Park',
+        'Monte Apartments',
+        'The Harbour at Occ',
+      ];
+    }
+
+    function applyPropertyGrouping(){
+      properties = (properties||[]).filter(p => !OLD_NAMES.includes(p));
+      GROUPED_NAMES.forEach(g => { if (!properties.includes(g)) properties.push(g); });
+      if (!SESSION_ACTIVE) migrateLocalSopsToGroups();
+    }
+
+    function renderPropertyOptions(){
+      if (!els.propertySelect) return;
+      const list = getAccessibleProperties();
+      els.propertySelect.innerHTML = list.map(p => `<option value="${p.replace(/"/g,'&quot;')}">${displayPropertyName(p)}</option>`).join('');
+    }
+
+    // ========= Leasing SOP Store =========
+    const STORE_SOPS_BY_PROP_KEY = 'mmp_leasing_sops_by_property_v1';
+    let sopsByProperty = {};
+    let sopItems = [];
+    let selectedSopId = null;
+
+    function loadSopStore(){
+      try{ sopsByProperty = JSON.parse(localStorage.getItem(STORE_SOPS_BY_PROP_KEY)||'{}'); }catch(e){ sopsByProperty = {}; }
+      sopItems = Array.isArray(sopsByProperty[currentProperty]) ? sopsByProperty[currentProperty] : [];
+    }
+    function saveSopStore(){
+      sopsByProperty[currentProperty] = sopItems;
+      try{ localStorage.setItem(STORE_SOPS_BY_PROP_KEY, JSON.stringify(sopsByProperty)); }catch(e){}
+    }
+    function migrateLocalSopsToGroups(){
+      try{
+        if (sopsByProperty && typeof sopsByProperty === 'object'){
+          for (const oldName of OLD_NAMES){
+            const newName = OLD_TO_GROUP[oldName];
+            const oldList = sopsByProperty[oldName];
+            if (Array.isArray(oldList) && oldList.length){
+              sopsByProperty[newName] = (sopsByProperty[newName] || []).concat(oldList);
+              delete sopsByProperty[oldName];
+            }
+          }
+          try{ localStorage.setItem(STORE_SOPS_BY_PROP_KEY, JSON.stringify(sopsByProperty)); }catch(e){}
+        }
+      }catch(e){}
+    }
+
+    function clearForm(){
+      selectedSopId = null;
+      els.sopTitle.value = '';
+      els.sopCategory.value = 'Phone';
+      els.sopRole.value = '';
+      els.sopPurpose.value = '';
+      els.sopSteps.value = '';
+      els.sopResources.value = '';
+      els.sopOwner.value = '';
+      els.sopReviewed.value = '';
+      els.saveSopBtn.textContent = 'Add SOP';
+      els.deleteSopBtn.disabled = true;
+      els.printSopBtn.disabled = true;
+      els.previewBox.style.display = 'none';
+      setStatus('');
+      renderSopList();
+    }
+
+    function getFormPayload(){
+      return {
+        title: (els.sopTitle.value||'').trim(),
+        category: els.sopCategory.value || 'Other',
+        role: (els.sopRole.value||'').trim(),
+        purpose: (els.sopPurpose.value||'').trim(),
+        steps: (els.sopSteps.value||'').trim(),
+        resources: (els.sopResources.value||'').trim(),
+        owner: (els.sopOwner.value||'').trim(),
+        lastReviewed: els.sopReviewed.value || '',
+      };
+    }
+
+    function renderPreview(item){
+      if (!item){ els.previewBox.style.display='none'; return; }
+      els.previewBox.style.display = '';
+      els.previewTitle.textContent = item.title || 'Untitled SOP';
+      const metaParts = [];
+      if (item.category) metaParts.push(`<span class="pill warn">${escapeHtml(item.category)}</span>`);
+      if (item.role) metaParts.push(`<span class="pill gray">${escapeHtml(item.role)}</span>`);
+      if (item.owner) metaParts.push(`<span class="pill">${escapeHtml(item.owner)}</span>`);
+      if (item.updatedAt) metaParts.push(`<span class="mini">Updated: ${escapeHtml(fmtDate(item.updatedAt))}</span>`);
+      if (item.lastReviewed) metaParts.push(`<span class="mini">Reviewed: ${escapeHtml(fmtDate(item.lastReviewed))}</span>`);
+      els.previewMeta.innerHTML = metaParts.join(' ');
+      els.previewPurpose.textContent = item.purpose || '';
+      els.previewSteps.textContent = item.steps || '';
+      els.previewResources.textContent = item.resources || '';
+    }
+
+    function renderSopList(){
+      const q = (els.searchInput.value||'').trim().toLowerCase();
+      const cat = els.filterCategory.value || '';
+      let list = Array.isArray(sopItems) ? sopItems.slice() : [];
+      list.sort((a,b)=> (a.category||'').localeCompare(b.category||'') || (a.title||'').localeCompare(b.title||''));
+      if (cat) list = list.filter(x => (x.category||'') === cat);
+      if (q){
+        list = list.filter(x => {
+          const hay = ((x.title||'')+' '+(x.purpose||'')+' '+(x.steps||'')+' '+(x.resources||'')+' '+(x.role||'')).toLowerCase();
+          return hay.includes(q);
+        });
+      }
+      els.sopList.innerHTML = list.map(item => {
+        const active = String(item.id) === String(selectedSopId) ? 'active' : '';
+        const updated = item.updatedAt ? fmtDate(item.updatedAt) : '';
+        const subtitle = (item.purpose||'').trim().slice(0, 140);
+        return `
+          <div class="sop-item ${active}" data-id="${escapeHtml(item.id)}">
+            <div class="top">
+              <div class="title">${escapeHtml(item.title || 'Untitled SOP')}</div>
+              <span class="badge">${escapeHtml(item.category || 'Other')}</span>
+            </div>
+            <div class="meta">
+              ${ item.role ? `<span class="pill gray">${escapeHtml(item.role)}</span>` : '' }
+              ${ updated ? `<span class="mini">Updated: ${escapeHtml(updated)}</span>` : '<span class="mini">Not yet saved to server</span>' }
+            </div>
+            ${ subtitle ? `<div class="mini">${escapeHtml(subtitle)}${ (item.purpose||'').length>140 ? '…' : '' }</div>` : '' }
+          </div>
+        `;
+      }).join('') || '';
+      els.emptyState.style.display = list.length ? 'none' : '';
+      // click handlers
+      els.sopList.querySelectorAll('.sop-item').forEach(row => {
+        row.addEventListener('click', () => {
+          const id = row.getAttribute('data-id');
+          selectSop(id);
+        });
+      });
+    }
+
+    function selectSop(id){
+      const item = (sopItems||[]).find(x => String(x.id) === String(id));
+      if (!item) return;
+      selectedSopId = item.id;
+      els.sopTitle.value = item.title || '';
+      els.sopCategory.value = item.category || 'Other';
+      els.sopRole.value = item.role || '';
+      els.sopPurpose.value = item.purpose || '';
+      els.sopSteps.value = item.steps || '';
+      els.sopResources.value = item.resources || '';
+      els.sopOwner.value = item.owner || '';
+      els.sopReviewed.value = item.lastReviewed || '';
+      els.saveSopBtn.textContent = 'Update SOP';
+      els.deleteSopBtn.disabled = false;
+      els.printSopBtn.disabled = false;
+      renderPreview(item);
+      renderSopList();
+      setStatus('');
+    }
+
+    async function loadSopsForProperty(){
+      selectedSopId = null;
+      if (SESSION_ACTIVE){
+        try{
+          const res = await apiFetch(`/leasing-sop?property=${encodeURIComponent(currentProperty)}`);
+          const data = await res.json();
+          sopItems = Array.isArray(data) ? data : [];
+          setStatus('');
+        }catch(e){
+          // If server endpoint isn't ready yet, keep UI functional via local fallback
+          setStatus('Could not load from server (falling back to local storage).', true);
+          loadSopStore();
+        }
+      } else {
+        loadSopStore();
+      }
+      // Ensure ids exist for local entries
+      sopItems = (sopItems||[]).map(x => (x && x.id) ? x : Object.assign({ id: (Date.now() + '-' + Math.random().toString(36).slice(2,7)) }, x));
+      if (!SESSION_ACTIVE) saveSopStore();
+      clearForm();
+      renderSopList();
+    }
+
+    async function saveSop(){
+      const payload = getFormPayload();
+      if (!payload.title){ alert('Title is required.'); return; }
+      if (!payload.steps && !payload.purpose){ alert('Add Steps or a Purpose before saving.'); return; }
+
+      try{
+        setStatus('Saving…');
+        if (SESSION_ACTIVE){
+          if (selectedSopId){
+            await apiFetch('/leasing-sop', {
+              method:'PUT',
+              body: JSON.stringify(Object.assign({ id: selectedSopId, property: currentProperty }, payload))
+            });
+          } else {
+            await apiFetch('/leasing-sop', {
+              method:'POST',
+              body: JSON.stringify(Object.assign({ property: currentProperty }, payload))
+            });
+          }
+          const res = await apiFetch(`/leasing-sop?property=${encodeURIComponent(currentProperty)}`);
+          sopItems = await res.json();
+        } else {
+          const nowIso = new Date().toISOString();
+          if (selectedSopId){
+            const idx = sopItems.findIndex(x => String(x.id)===String(selectedSopId));
+            if (idx>=0) sopItems[idx] = Object.assign({}, sopItems[idx], payload, { updatedAt: nowIso });
+          } else {
+            const id = Date.now() + '-' + Math.random().toString(36).slice(2,7);
+            sopItems.push(Object.assign({ id, createdAt: nowIso, updatedAt: nowIso }, payload));
+            selectedSopId = id;
+          }
+          saveSopStore();
+        }
+
+        setStatus('Saved.');
+        renderSopList();
+        if (selectedSopId) selectSop(selectedSopId);
+      }catch(err){
+        setStatus('Save failed: ' + err.message, true);
+        alert('Save failed: ' + err.message);
+      }
+    }
+
+    async function deleteSop(){
+      if (!selectedSopId) return;
+      const item = (sopItems||[]).find(x => String(x.id)===String(selectedSopId));
+      const label = item ? item.title : 'this SOP';
+      if (!confirm('Delete ' + label + '?')) return;
+
+      try{
+        setStatus('Deleting…');
+        if (SESSION_ACTIVE){
+          await apiFetch('/leasing-sop', {
+            method:'DELETE',
+            body: JSON.stringify({ id: selectedSopId, property: currentProperty })
+          });
+          const res = await apiFetch(`/leasing-sop?property=${encodeURIComponent(currentProperty)}`);
+          sopItems = await res.json();
+        } else {
+          sopItems = (sopItems||[]).filter(x => String(x.id)!==String(selectedSopId));
+          saveSopStore();
+        }
+        setStatus('Deleted.');
+        clearForm();
+        renderSopList();
+      }catch(err){
+        setStatus('Delete failed: ' + err.message, true);
+        alert('Delete failed: ' + err.message);
+      }
+    }
+
+    function printSelected(){
+      if (!selectedSopId) return;
+      const item = (sopItems||[]).find(x => String(x.id)===String(selectedSopId));
+      if (!item) return;
+      const w = window.open('', '_blank');
+      const html = `
+        <html>
+          <head>
+            <meta charset="utf-8"/>
+            <title>${escapeHtml(item.title || 'Leasing SOP')}</title>
+            <style>
+              body{font-family:Arial,sans-serif;padding:24px;line-height:1.4}
+              h1{font-size:18px;margin:0 0 10px}
+              .meta{color:#555;font-size:12px;margin-bottom:14px}
+              h2{font-size:14px;margin:18px 0 8px}
+              pre{white-space:pre-wrap;border:1px solid #ddd;border-radius:8px;padding:12px;background:#fafafa}
+            </style>
+          </head>
+          <body>
+            <h1>${escapeHtml(item.title || '')}</h1>
+            <div class="meta">
+              Property: ${escapeHtml(currentProperty)}<br/>
+              Category: ${escapeHtml(item.category||'')}<br/>
+              Role: ${escapeHtml(item.role||'')}<br/>
+              Owner: ${escapeHtml(item.owner||'')}<br/>
+              Updated: ${escapeHtml(fmtDate(item.updatedAt))}<br/>
+              Reviewed: ${escapeHtml(fmtDate(item.lastReviewed))}
+            </div>
+            <h2>Purpose / When to Use</h2>
+            <pre>${escapeHtml(item.purpose||'')}</pre>
+            <h2>Steps</h2>
+            <pre>${escapeHtml(item.steps||'')}</pre>
+            <h2>Links / Resources</h2>
+            <pre>${escapeHtml(item.resources||'')}</pre>
+            <script>window.print();</script>
+          </body>
+        </html>
+      `;
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
+    }
+
+    // ========= Property switching =========
+    async function setActiveProperty(prop){
+      prop = mapPropertyNameToGroup(prop);
+      currentProperty = prop;
+      try{ localStorage.setItem(STORE_CURRENT_PROPERTY_KEY, currentProperty); }catch(e){}
+      await loadSopsForProperty();
+    }
+
+    async function initProperties(){
+      await loadProperties();
+
+      // Local cache only used when not authenticated
+      if (!SESSION_ACTIVE){
+        try{ sopsByProperty = JSON.parse(localStorage.getItem(STORE_SOPS_BY_PROP_KEY)||'{}'); }catch(e){ sopsByProperty = {}; }
+      }
+
+      applyPropertyGrouping();
+
+      const saved = mapPropertyNameToGroup((localStorage.getItem(STORE_CURRENT_PROPERTY_KEY) || '').trim());
+      const list = getAccessibleProperties();
+      currentProperty = list.includes(saved) ? saved : list[0];
+
+      renderPropertyOptions();
+      if (els.propertySelect){
+        els.propertySelect.value = currentProperty;
+        els.propertySelect.addEventListener('change', () => setActiveProperty(els.propertySelect.value));
+      }
+    }
+
+    async function initializeAppForUser(){
+      await initProperties();
+      const list = getAccessibleProperties();
+      if (list.length){
+        if (els.propertySelect) els.propertySelect.value = currentProperty || list[0];
+        await setActiveProperty(currentProperty || list[0]);
+      } else {
+        if (els.propertySelect) els.propertySelect.innerHTML = '';
+        alert('No properties are assigned to your account. Contact an admin to grant access.');
+      }
+    }
+
+    async function initAuth(){
+      try{
+        const meRes = await fetch('/api/me', { credentials: 'include' });
+        if (meRes.ok){
+          const me = await meRes.json();
+          currentUser = { username: me.username, role: me.role, properties: me.properties };
+          SESSION_ACTIVE = true;
+          try{ if (!localStorage.getItem(STORE_LOGIN_TIME_KEY)) localStorage.setItem(STORE_LOGIN_TIME_KEY, String(Date.now())); }catch(e){}
+          showApp();
+          bindHeaderHandlers();
+          await initializeAppForUser();
+          scheduleAutoLogout();
+          return true;
+        }
+      }catch(e){}
+      showLogin();
+      return false;
+    }
+
+    // ========= Login =========
+    if (els.loginTogglePw) els.loginTogglePw.addEventListener('change', ()=>{ els.loginPassword.type = els.loginTogglePw.checked ? 'text' : 'password'; });
+    async function doInlineLogin(){
+      const u = (els.loginUsername?.value||'').trim();
+      const p = els.loginPassword?.value||'';
+      if (!u || !p){ if (els.loginError){ els.loginError.textContent='Enter username and password'; els.loginError.style.display=''; } return; }
+      try{
+        if (els.loginError) els.loginError.style.display='none';
+        const res = await fetch('/api/auth-login', {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json', 'Accept':'application/json' },
+          credentials:'include',
+          body: JSON.stringify({ username:u, password:p })
+        });
+        if (!res.ok){ if (els.loginError){ els.loginError.textContent = (res.status===401||res.status===400)?'Incorrect username or password':'Login failed'; els.loginError.style.display=''; } return; }
+        await initAuth();
+      }catch(e){ if (els.loginError){ els.loginError.textContent='Network error. Try again.'; els.loginError.style.display=''; } }
+    }
+    if (els.loginBtn) els.loginBtn.addEventListener('click', doInlineLogin);
+    document.addEventListener('keydown', (e)=>{ if (e.key==='Enter' && (document.activeElement===els.loginUsername || document.activeElement===els.loginPassword)) doInlineLogin(); });
+
+    // ========= UI Handlers =========
+    if (els.saveSopBtn) els.saveSopBtn.addEventListener('click', (e)=>{ e.preventDefault(); saveSop(); });
+    if (els.clearSopBtn) els.clearSopBtn.addEventListener('click', (e)=>{ e.preventDefault(); clearForm(); });
+    if (els.deleteSopBtn) els.deleteSopBtn.addEventListener('click', (e)=>{ e.preventDefault(); deleteSop(); });
+    if (els.printSopBtn) els.printSopBtn.addEventListener('click', (e)=>{ e.preventDefault(); printSelected(); });
+    if (els.newSopBtn) els.newSopBtn.addEventListener('click', (e)=>{ e.preventDefault(); clearForm(); els.sopTitle.focus(); });
+    if (els.searchInput) els.searchInput.addEventListener('input', renderSopList);
+    if (els.filterCategory) els.filterCategory.addEventListener('change', renderSopList);
+
+    // ========= Init =========
+    (async () => { await initAuth(); })();
+  </script>
+</body>
+</html>
