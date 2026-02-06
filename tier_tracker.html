@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tier Tracker • Marketing Hub</title>
+  <link rel="preconnect" href="https://use.typekit.net" crossorigin>
+  <link rel="preconnect" href="https://p.typekit.net" crossorigin>
+  <link rel="stylesheet" href="https://use.typekit.net/hqv8hwr.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <meta name="description" content="Track and manage pricing tiers by property." />
+  <style>
+    :root{ --brand-primary:#446472; --brand-accent:#ffb732; --brand-accent-2:#52d5ff; --brand-gray:#929497; --page-bg:#f8fafc; --bg:#ffffff; --panel:#ffffff; --text:#1e293b; --subtext:#64748b; --accent:var(--brand-accent-2); --border:#e2e8f0; --success:#22c55e; --warning:#f59e0b; --danger:#ef4444; }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{margin:0; font-family:'Open Sans',system-ui,-apple-system,sans-serif; background:var(--page-bg); color:var(--text);font-size:14px;line-height:1.5}
+    
+    /* Header */
+    header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:10px}
+    .brand .logo-img{height:28px;width:auto}
+    .brand .title{color:#ffb732;font-family:zooja-pro,Arial,sans-serif;font-size:clamp(32px,4vw,48px);line-height:1}
+    .header-controls{display:flex;align-items:center;gap:12px;margin-left:auto}
+    .header-btn{background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;transition:all .15s;width:auto}
+    .header-btn:hover{background:#f8fafc;border-color:#cbd5e1}
+    .company-name{font-size:12px;color:var(--subtext);font-weight:500}
+
+    /* Navigation */
+    .nav-bar{background:#fff;border-bottom:1px solid var(--border)}
+    .nav-wrap{max-width:1400px;margin:0 auto;padding:0 24px;display:flex;gap:2px;overflow-x:auto}
+    .nav-tab{display:flex;align-items:center;gap:6px;padding:14px 16px;color:var(--subtext);text-decoration:none;font-size:13px;font-weight:600;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap}
+    .nav-tab:hover{color:var(--text);background:#f8fafc}
+    .nav-tab.active{color:var(--brand-primary);border-bottom-color:var(--brand-primary)}
+
+    .container{padding:24px; max-width:1600px; margin:0 auto}
+
+    /* Property Selector */
+    .property-selector{display:flex;gap:12px;align-items:center;margin-bottom:24px}
+    .property-selector label{font-weight:600;color:var(--text);white-space:nowrap}
+    .property-selector select{padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text);font-size:14px;min-width:250px}
+
+    /* Cards */
+    .card{background:#ffffff; border:1px solid var(--border); border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,0.06); overflow:hidden; margin-bottom:20px}
+    .card h3{margin:0; padding:16px 20px; font-size:15px; color:#374151; font-weight:700; font-family: Roboto, Arial, sans-serif; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--border); background:#f8fafc}
+    .card .content{padding:20px}
+
+    /* Two Column Layout */
+    .two-col{display:grid; grid-template-columns:300px 1fr; gap:24px; align-items:start}
+    @media(max-width:1000px){.two-col{grid-template-columns:1fr}}
+
+    /* Tier List Sidebar */
+    .tier-list-card{background:#fff; border:1px solid var(--border); border-radius:14px; overflow:hidden; position:sticky; top:200px}
+    .tier-list-header{padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between}
+    .tier-list-header h2{font-size:15px; font-weight:700; color:var(--text); margin:0}
+    .tier-count{font-size:12px; color:var(--subtext); background:#f1f5f9; padding:4px 10px; border-radius:999px}
+    
+    .tier-list{max-height:calc(100vh - 400px); overflow-y:auto}
+    .tier-item{padding:14px 20px; border-bottom:1px solid var(--border); cursor:pointer; transition:background .15s}
+    .tier-item:last-child{border-bottom:none}
+    .tier-item:hover{background:#f8fafc}
+    .tier-item.active{background:#eff6ff; border-left:3px solid var(--brand-accent-2)}
+    .tier-item-name{font-weight:600; color:var(--text); margin-bottom:4px}
+    .tier-item-meta{font-size:12px; color:var(--subtext)}
+
+    .add-tier-btn{width:100%; padding:14px 20px; background:#fff; border:none; border-top:1px solid var(--border); color:var(--brand-primary); font-weight:600; font-size:14px; cursor:pointer; transition:background .15s; display:flex; align-items:center; justify-content:center; gap:8px}
+    .add-tier-btn:hover{background:#f0f9ff}
+
+    /* Detail Panel */
+    .detail-panel{min-width:0}
+    .detail-card{background:#fff; border:1px solid var(--border); border-radius:14px; overflow:hidden}
+    .detail-header{padding:20px 24px; border-bottom:1px solid var(--border); background:linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)}
+    .detail-header h2{font-size:20px; font-weight:700; color:var(--text); margin:0 0 8px 0}
+    .detail-actions{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px}
+
+    /* Metrics Grid */
+    .metrics-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:12px; margin-top:16px}
+    .metric-card{background:#fff; border:1px solid var(--border); border-radius:10px; padding:16px; text-align:center}
+    .metric-card.highlight{background:linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-color:#bbf7d0}
+    .metric-label{font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px}
+    .metric-value{font-size:24px; font-weight:700; color:var(--brand-primary)}
+    .metric-subtext{font-size:12px; color:#64748b; margin-top:4px}
+
+    /* Tier Tabs */
+    .tier-tabs{display:flex; gap:4px; padding:16px 20px; border-bottom:1px solid var(--border); overflow-x:auto; background:#f8fafc}
+    .tier-tab{padding:10px 16px; border-radius:8px; background:#fff; border:1px solid var(--border); font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; transition:all .15s}
+    .tier-tab:hover{border-color:#cbd5e1}
+    .tier-tab.active{background:var(--brand-accent-2); border-color:var(--brand-accent-2); color:#fff}
+
+    /* Tier Content */
+    .tier-content{padding:20px}
+
+    /* Form Elements */
+    label{font-size:12px; color:#6b7280; display:block; margin-bottom:6px; font-weight:600}
+    input, select, textarea{width:100%; padding:10px 12px; border-radius:8px; border:1px solid #d1d5db; background:#fff; color:var(--text); font-size:14px; transition:border-color .15s, box-shadow .15s; font-family:inherit}
+    input:focus, select:focus, textarea:focus{outline:none; border-color:var(--brand-accent-2); box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
+
+    /* Buttons */
+    .btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 18px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--text); font-weight:600; cursor:pointer; font-size:14px; transition:all .15s; width:auto}
+    .btn:hover{background:#f8fafc}
+    .btn.primary{background:var(--brand-accent-2); border-color:var(--brand-accent-2); color:#0b1b24}
+    .btn.primary:hover{background:#3ecbf5}
+    .btn.success{background:var(--success); border-color:var(--success); color:#fff}
+    .btn.success:hover{background:#16a34a}
+    .btn.warning{background:var(--warning); border-color:var(--warning); color:#fff}
+    .btn.warning:hover{background:#d97706}
+    .btn.danger{background:var(--danger); border-color:var(--danger); color:#fff}
+    .btn.danger:hover{background:#dc2626}
+    .btn.sm{padding:6px 12px; font-size:13px}
+    .btn:disabled{opacity:0.5; cursor:not-allowed}
+
+    .badge{display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; background:#f1f5f9; color:#475569; border:1px solid var(--border); font-weight:600}
+    .badge.success{background:#dcfce7;color:#166534;border-color:#bbf7d0}
+    .badge.warning{background:#fef3c7;color:#92400e;border-color:#fde68a}
+    .badge.danger{background:#fee2e2;color:#991b1b;border-color:#fecaca}
+    .badge.info{background:#dbeafe;color:#1e40af;border-color:#bfdbfe}
+    .badge.primary{background:var(--brand-accent-2);color:#fff;border-color:var(--brand-accent-2)}
+
+    /* Table */
+    .tier-table{width:100%; border-collapse:collapse; margin-top:16px}
+    .tier-table th{background:#f8fafc; padding:12px 14px; text-align:left; font-size:12px; font-weight:700; color:#475569; text-transform:uppercase; border-bottom:1px solid var(--border)}
+    .tier-table td{padding:12px 14px; border-bottom:1px solid var(--border); font-size:13px}
+    .tier-table tr:hover{background:#f8fafc}
+
+    .empty-state{text-align:center; padding:60px 40px; color:var(--subtext)}
+    .empty-state h3{color:var(--text); margin-bottom:10px}
+
+    .hidden{display:none !important}
+
+    /* Form Row */
+    .form-row{display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:16px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="title">Marketing Hub</div>
+    </div>
+    <span style="color:var(--border)">|</span>
+    <div style="font-size:13px;color:var(--subtext)">Tier Tracker</div>
+    <span class="company-name" style="margin-left:auto">Capstone Management Partners</span>
+  </header>
+
+  <nav class="nav-bar" id="navBar" style="display:none">
+    <div class="nav-wrap">
+      <a href="mmp_calendar_app.html" class="nav-tab">Marketing Calendar</a>
+      <a href="marketing_plans.html" class="nav-tab">Marketing Plans</a>
+      <a href="marketing_contacts.html" class="nav-tab">Marketing Contacts</a>
+      <a href="promo_order_tracker.html" class="nav-tab">Promo Order Tracker</a>
+      <a href="renewal_campaign.html" class="nav-tab">Renewal Campaign</a>
+      <a href="velocity_tracker.html" class="nav-tab">Velocity Tracker</a>
+      <a href="tier_tracker.html" class="nav-tab active">Tier Tracker</a>
+      <a href="uniform_shop.html" class="nav-tab">Uniform Shop</a>
+      <a href="creative_library.html" class="nav-tab">Creative Library</a>
+      <a href="cmpfont.html" class="nav-tab">Font Generator</a>
+    </div>
+  </nav>
+
+  <main id="appContainer" class="container">
+    <div class="property-selector">
+      <label for="propertySelect">Property:</label>
+      <select id="propertySelect"></select>
+    </div>
+
+    <div class="two-col">
+      <!-- Tier List Sidebar -->
+      <aside>
+        <div class="tier-list-card">
+          <div class="tier-list-header">
+            <h2>Tiers</h2>
+            <span class="tier-count" id="tierCount">0</span>
+          </div>
+          <div class="tier-list" id="tierList">
+            <div class="empty-state" style="padding:40px 20px">
+              <p>No tiers yet</p>
+            </div>
+          </div>
+          <button class="add-tier-btn" id="newTierBtn">
+            + Add Tier
+          </button>
+        </div>
+      </aside>
+
+      <!-- Tier Detail Panel -->
+      <section class="detail-panel">
+        <div id="tierDetailCard" class="detail-card">
+          <div id="emptyState" class="empty-state" style="padding:80px 40px">
+            <h3>Select or Create a Tier</h3>
+            <p>Choose a tier from the list to view and manage pricing, or add a new tier.</p>
+            <button class="btn primary" id="emptyNewTierBtn">Add Tier</button>
+          </div>
+
+          <div id="tierDetail" class="hidden">
+            <!-- Header -->
+            <div class="detail-header" id="tierHeader"></div>
+            
+            <!-- Tier Tabs -->
+            <div class="tier-tabs" id="tierTabs"></div>
+            
+            <!-- Tier Content -->
+            <div class="tier-content" id="tierContent"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Add/Edit Tier Modal -->
+  <div id="tierModal" class="modal-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:100;display:flex;align-items:center;justify-content:center">
+    <div class="modal" style="background:#fff;border-radius:12px;border:1px solid var(--border);width:min(90vw,600px);max-height:90vh;overflow:auto;box-shadow:0 10px 40px rgba(0,0,0,0.1)">
+      <div class="modal-header" style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+        <h3 id="modalTitle" style="margin:0;font-size:18px;font-weight:700">Add Tier</h3>
+        <button class="modal-close" id="closeModal" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--subtext)">&times;</button>
+      </div>
+      <div class="modal-body" style="padding:24px">
+        <div class="form-row">
+          <div>
+            <label for="tierName">Tier Name</label>
+            <input id="tierName" type="text" placeholder="e.g., Tier 1, Premium" />
+          </div>
+          <div>
+            <label for="tierLevel">Level</label>
+            <input id="tierLevel" type="number" placeholder="1" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label for="tierPrice">Base Price</label>
+            <input id="tierPrice" type="number" step="0.01" placeholder="0.00" />
+          </div>
+          <div>
+            <label for="tierCapacity">Capacity</label>
+            <input id="tierCapacity" type="number" placeholder="100" />
+          </div>
+        </div>
+        <div>
+          <label for="tierDescription">Description</label>
+          <textarea id="tierDescription" placeholder="Tier details..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer" style="padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn" id="tierModalCancel">Cancel</button>
+        <button class="btn primary" id="tierModalSave">Save Tier</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==================== ELEMENTS ====================
+    const els = {
+      propertySelect: document.getElementById('propertySelect'),
+      tierList: document.getElementById('tierList'),
+      tierCount: document.getElementById('tierCount'),
+      tierDetailCard: document.getElementById('tierDetailCard'),
+      emptyState: document.getElementById('emptyState'),
+      tierDetail: document.getElementById('tierDetail'),
+      tierHeader: document.getElementById('tierHeader'),
+      tierTabs: document.getElementById('tierTabs'),
+      tierContent: document.getElementById('tierContent'),
+      newTierBtn: document.getElementById('newTierBtn'),
+      emptyNewTierBtn: document.getElementById('emptyNewTierBtn'),
+      tierModal: document.getElementById('tierModal'),
+      modalTitle: document.getElementById('modalTitle'),
+      tierName: document.getElementById('tierName'),
+      tierLevel: document.getElementById('tierLevel'),
+      tierPrice: document.getElementById('tierPrice'),
+      tierCapacity: document.getElementById('tierCapacity'),
+      tierDescription: document.getElementById('tierDescription'),
+      tierModalSave: document.getElementById('tierModalSave'),
+      tierModalCancel: document.getElementById('tierModalCancel'),
+      closeModal: document.getElementById('closeModal'),
+    };
+
+    // ==================== STATE ====================
+    let properties = [];
+    let currentProperty = null;
+    let tiers = [];
+    let selectedTierId = null;
+
+    // ==================== UTILITIES ====================
+    function show(el) { if (el) el.classList.remove('hidden'); }
+    function hide(el) { if (el) el.classList.add('hidden'); }
+    function esc(str) { return (str || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+    async function apiFetch(path, init = {}) {
+      const res = await fetch(path, { credentials: 'include', ...init });
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      return res;
+    }
+
+    // Check auth
+    (async function() {
+      try {
+        const res = await apiFetch('/api/me');
+        if (res.ok) {
+          els.tierModal.style.display = 'none';
+          document.getElementById('navBar').style.display = '';
+          document.getElementById('appContainer').style.display = '';
+          initApp();
+        }
+      } catch (e) {
+        window.location.href = 'index.html';
+      }
+    })();
+
+    // ==================== INIT ====================
+    async function initApp() {
+      await loadProperties();
+      renderPropertyOptions();
+      if (properties.length) {
+        els.propertySelect.value = properties[0];
+        await setActiveProperty(properties[0]);
+      }
+      els.propertySelect.addEventListener('change', () => setActiveProperty(els.propertySelect.value));
+      els.newTierBtn.addEventListener('click', () => openTierModal());
+      els.emptyNewTierBtn.addEventListener('click', () => openTierModal());
+      els.tierModalSave.addEventListener('click', saveTier);
+      els.tierModalCancel.addEventListener('click', closeTierModal);
+      els.closeModal.addEventListener('click', closeTierModal);
+    }
+
+    async function loadProperties() {
+      try {
+        const res = await apiFetch('/api/properties');
+        const list = await res.json();
+        properties = (list || []).map(x => x.name).filter(Boolean);
+      } catch (e) { properties = []; }
+    }
+
+    function renderPropertyOptions() {
+      els.propertySelect.innerHTML = properties.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('');
+    }
+
+    async function setActiveProperty(prop) {
+      currentProperty = prop;
+      await fetchTiers();
+      renderTierList();
+      selectedTierId = null;
+      showEmptyState();
+    }
+
+    async function fetchTiers() {
+      if (!currentProperty) { tiers = []; return; }
+      try {
+        // For now, we'll use localStorage to persist tier data
+        const key = `tiers_${currentProperty}`;
+        const stored = localStorage.getItem(key);
+        tiers = stored ? JSON.parse(stored) : [];
+      } catch (e) { tiers = []; }
+    }
+
+    // ==================== TIER LIST ====================
+    function renderTierList() {
+      els.tierCount.textContent = tiers.length;
+
+      if (!tiers.length) {
+        els.tierList.innerHTML = `<div class="empty-state" style="padding:40px 20px"><p>No tiers yet</p></div>`;
+        return;
+      }
+
+      els.tierList.innerHTML = tiers.map(t => {
+        const isActive = selectedTierId === (t.id || t._id);
+        return `
+          <div class="tier-item ${isActive ? 'active' : ''}" data-id="${t.id || t._id}">
+            <div class="tier-item-name">${esc(t.name || 'Untitled Tier')}</div>
+            <div class="tier-item-meta">
+              <span>Level ${t.level || '-'} • $${(t.price || 0).toFixed(2)}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      els.tierList.querySelectorAll('.tier-item').forEach(item => {
+        item.addEventListener('click', () => selectTier(item.dataset.id));
+      });
+    }
+
+    function showEmptyState() {
+      show(els.emptyState);
+      hide(els.tierDetail);
+    }
+
+    // ==================== TIER DETAIL ====================
+    function selectTier(id) {
+      selectedTierId = id;
+      renderTierList();
+
+      const tier = tiers.find(t => (t.id || t._id) === id);
+      if (tier) {
+        renderTierDetail(tier);
+      }
+    }
+
+    function renderTierDetail(tier) {
+      hide(els.emptyState);
+      show(els.tierDetail);
+
+      els.tierHeader.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px">
+          <div>
+            <h2>${esc(tier.name || 'Untitled Tier')}</h2>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+              <span class="badge primary">Level ${tier.level || '-'}</span>
+              <span class="badge">\$${(tier.price || 0).toFixed(2)}</span>
+              <span class="badge info">Cap: ${tier.capacity || 'Unlimited'}</span>
+            </div>
+            ${tier.description ? `<div style="margin-top:12px;color:var(--subtext);font-size:13px">${esc(tier.description)}</div>` : ''}
+          </div>
+          <div class="detail-actions">
+            <button class="btn" onclick="editTier('${tier.id || tier._id}')">Edit</button>
+            <button class="btn danger" onclick="deleteTier('${tier.id || tier._id}')">Delete</button>
+          </div>
+        </div>
+      `;
+
+      els.tierTabs.innerHTML = `
+        <button class="tier-tab active" onclick="showTierTab(this, 'overview')">Overview</button>
+        <button class="tier-tab" onclick="showTierTab(this, 'floorplans')">Floor Plans</button>
+        <button class="tier-tab" onclick="showTierTab(this, 'pricing')">Pricing</button>
+        <button class="tier-tab" onclick="showTierTab(this, 'inventory')">Inventory</button>
+      `;
+
+      renderTierTab(tier, 'overview');
+    }
+
+    function showTierTab(btn, tab) {
+      document.querySelectorAll('.tier-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      const tier = tiers.find(t => (t.id || t._id) === selectedTierId);
+      if (tier) renderTierTab(tier, tab);
+    }
+
+    function renderTierTab(tier, tab) {
+      let content = '';
+
+      if (tab === 'overview') {
+        content = `
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <div class="metric-label">Tier Level</div>
+              <div class="metric-value">${tier.level || '-'}</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Base Price</div>
+              <div class="metric-value">\$${(tier.price || 0).toFixed(2)}</div>
+            </div>
+            <div class="metric-card highlight">
+              <div class="metric-label">Capacity</div>
+              <div class="metric-value">${tier.capacity || 'Unlimited'}</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Status</div>
+              <div class="metric-value" style="font-size:14px">Active</div>
+            </div>
+          </div>
+          ${tier.description ? `<div style="margin-top:20px;padding:16px;background:#f8fafc;border-radius:8px"><strong>Description</strong><p style="margin:8px 0 0 0;color:var(--subtext)">${esc(tier.description)}</p></div>` : ''}
+          <div style="margin-top:24px">
+            <button class="btn primary" onclick="editTier('${tier.id || tier._id}')">Edit Tier</button>
+          </div>
+        `;
+      } else if (tab === 'floorplans') {
+        content = `
+          <div style="padding:20px;text-align:center;color:var(--subtext)">
+            <p>Manage floor plan assignments for this tier</p>
+            <table class="tier-table" style="margin-top:16px">
+              <thead>
+                <tr>
+                  <th>Floor Plan</th>
+                  <th>Units</th>
+                  <th>Availability</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="3" style="text-align:center;padding:40px">No floor plans assigned yet</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        `;
+      } else if (tab === 'pricing') {
+        content = `
+          <div style="padding:20px">
+            <div class="form-row">
+              <div>
+                <label>Base Price</label>
+                <input type="number" step="0.01" value="${tier.price || 0}" readonly />
+              </div>
+              <div>
+                <label>Seasonal Modifier (%)</label>
+                <input type="number" step="0.01" placeholder="0" />
+              </div>
+              <div>
+                <label>Promotion Discount (%)</label>
+                <input type="number" step="0.01" placeholder="0" />
+              </div>
+            </div>
+            <div style="margin-top:16px;padding:16px;background:#f8fafc;border-radius:8px">
+              <div style="font-weight:600;margin-bottom:8px">Effective Price: \$${(tier.price || 0).toFixed(2)}</div>
+              <div style="font-size:12px;color:var(--subtext)">Calculated from base price and modifiers</div>
+            </div>
+          </div>
+        `;
+      } else if (tab === 'inventory') {
+        content = `
+          <div style="padding:20px">
+            <table class="tier-table">
+              <thead>
+                <tr>
+                  <th>Floor Plan</th>
+                  <th>Total Units</th>
+                  <th>Available</th>
+                  <th>Leased</th>
+                  <th>Occupied %</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="5" style="text-align:center;padding:40px">No inventory data available</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      els.tierContent.innerHTML = content;
+    }
+
+    // ==================== MODAL ====================
+    function openTierModal(tier = null) {
+      els.modalTitle.textContent = tier ? 'Edit Tier' : 'Add Tier';
+      if (tier) {
+        els.tierName.value = tier.name || '';
+        els.tierLevel.value = tier.level || '';
+        els.tierPrice.value = tier.price || '';
+        els.tierCapacity.value = tier.capacity || '';
+        els.tierDescription.value = tier.description || '';
+      } else {
+        els.tierName.value = '';
+        els.tierLevel.value = '';
+        els.tierPrice.value = '';
+        els.tierCapacity.value = '';
+        els.tierDescription.value = '';
+      }
+      els.tierModal.style.display = 'flex';
+    }
+
+    function closeTierModal() {
+      els.tierModal.style.display = 'none';
+    }
+
+    async function saveTier() {
+      const name = els.tierName.value.trim();
+      const level = parseInt(els.tierLevel.value) || 0;
+      const price = parseFloat(els.tierPrice.value) || 0;
+      const capacity = els.tierCapacity.value.trim();
+      const description = els.tierDescription.value.trim();
+
+      if (!name) {
+        alert('Please enter a tier name');
+        return;
+      }
+
+      if (!currentProperty) {
+        alert('Please select a property');
+        return;
+      }
+
+      let tier;
+      if (selectedTierId) {
+        // Edit existing
+        tier = tiers.find(t => (t.id || t._id) === selectedTierId);
+        if (tier) {
+          tier.name = name;
+          tier.level = level;
+          tier.price = price;
+          tier.capacity = capacity;
+          tier.description = description;
+        }
+      } else {
+        // Create new
+        tier = {
+          id: 'tier_' + Date.now(),
+          name,
+          level,
+          price,
+          capacity,
+          description,
+          createdAt: new Date().toISOString(),
+        };
+        tiers.push(tier);
+      }
+
+      // Save to localStorage
+      const key = `tiers_${currentProperty}`;
+      localStorage.setItem(key, JSON.stringify(tiers));
+
+      closeTierModal();
+      renderTierList();
+      if (selectedTierId && tier) {
+        renderTierDetail(tier);
+      }
+    }
+
+    function editTier(id) {
+      const tier = tiers.find(t => (t.id || t._id) === id);
+      if (tier) {
+        openTierModal(tier);
+      }
+    }
+
+    function deleteTier(id) {
+      if (!confirm('Are you sure you want to delete this tier?')) return;
+      tiers = tiers.filter(t => (t.id || t._id) !== id);
+      const key = `tiers_${currentProperty}`;
+      localStorage.setItem(key, JSON.stringify(tiers));
+      selectedTierId = null;
+      renderTierList();
+      showEmptyState();
+    }
+  </script>
+</body>
+</html>
