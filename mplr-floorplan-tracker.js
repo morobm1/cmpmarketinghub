@@ -72,6 +72,7 @@ function addFloorPlan() {
   
   saveFloorPlans();
   renderFloorPlanTracker();
+  notifyFloorPlanChange();
   
   // Clear inputs
   typeInput.value = '';
@@ -87,6 +88,7 @@ window.deleteFloorPlan = function(type) {
   floorPlans = floorPlans.filter(fp => fp.type !== type);
   saveFloorPlans();
   renderFloorPlanTracker();
+  notifyFloorPlanChange();
 };
 
 // Render the floor plan tracker table
@@ -161,4 +163,16 @@ if (originalUpdateStats) {
 // Helper function for escaping HTML
 function esc(s) {
   return String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// Expose function to get floor plans for other modules (like tier pricing)
+window.getFloorPlans = function() {
+  return floorPlans;
+};
+
+// Notify tier pricing tracker when floor plans change
+function notifyFloorPlanChange() {
+  if (typeof window.updateUnitTypeSelector === 'function') {
+    window.updateUnitTypeSelector();
+  }
 }

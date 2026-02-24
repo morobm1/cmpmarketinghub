@@ -1,7 +1,7 @@
 // MPLR Tier Pricing Tracker Functionality
 
-let newLeaseTiers = []; // Array of {tier: string, unitTypes: [{type: string, rate: number}]}
-let renewalTiers = []; // Array of {tier: string, unitTypes: [{type: string, rate: number}]}
+let newLeaseTiers = []; // Array of {tier: string, unitTypes: [{type: string, rate: number, cap: number}]}
+let renewalTiers = []; // Array of {tier: string, unitTypes: [{type: string, rate: number, cap: number}]}
 
 // Initialize tier pricing tracker
 document.addEventListener('DOMContentLoaded', () => {
@@ -83,12 +83,19 @@ function addTier() {
     return;
   }
   
+  // Validate tier name (must be Tier 1, Tier 2, Tier 3, or Tier 4)
+  const validTiers = ['Tier 1', 'Tier 2', 'Tier 3', 'Tier 4'];
+  if (!validTiers.includes(tierName)) {
+    alert('Tier name must be exactly: Tier 1, Tier 2, Tier 3, or Tier 4');
+    return;
+  }
+  
   const tiers = getCurrentTiers();
   
   // Check if tier already exists
-  const existing = tiers.find(t => t.tier.toLowerCase() === tierName.toLowerCase());
+  const existing = tiers.find(t => t.tier === tierName);
   if (existing) {
-    alert(`Tier "${tierName}" already exists in ${category === 'new' ? 'New Lease' : 'Renewal'} tiers`);
+    alert(`${tierName} already exists in ${category === 'new' ? 'New Lease' : 'Renewal'} tiers`);
     return;
   }
   
@@ -106,11 +113,13 @@ function addUnitTypeToTier() {
   const tierSelect = document.getElementById('tierSelect');
   const unitTypeInput = document.getElementById('tierUnitType');
   const rateInput = document.getElementById('tierRate');
+  const capInput = document.getElementById('tierCap');
   const category = getCurrentCategory();
   
   const tierName = tierSelect.value;
   const unitType = unitTypeInput.value.trim();
   const rate = parseFloat(rateInput.value);
+  const cap = parseInt(capInput.value);
   
   if (!tierName) {
     alert('Please select a tier');
@@ -127,6 +136,11 @@ function addUnitTypeToTier() {
     return;
   }
   
+  if (isNaN(cap) || cap < 0) {
+    alert('Please enter a valid cap (number of units)');
+    return;
+  }
+  
   const tiers = getCurrentTiers();
   const tier = tiers.find(t => t.tier === tierName);
   
@@ -135,15 +149,26 @@ function addUnitTypeToTier() {
     return;
   }
   
+  // Check if unit type already exists in ANY tier for this category
+  const existingInOtherTier = tiers.find(t => 
+    t.unitTypes.some(ut => ut.type.toLowerCase() === unitType.toLowerCase())
+  );
+  
+  if (existingInOtherTier && existingInOtherTier.tier !== tierName) {
+    alert(`Unit type "${unitType}" already exists in ${existingInOtherTier.tier}. Each unit type can only be in one tier.`);
+    return;
+  }
+  
   // Check if unit type already exists in this tier
   const existing = tier.unitTypes.find(ut => ut.type.toLowerCase() === unitType.toLowerCase());
   if (existing) {
-    if (!confirm(`Unit type "${unitType}" already exists in ${tierName} with rate $${existing.rate}. Update to $${rate}?`)) {
+    if (!confirm(`Unit type "${unitType}" already exists in ${tierName}. Update rate to $${rate} and cap to ${cap}?`)) {
       return;
     }
     existing.rate = rate;
+    existing.cap = cap;
   } else {
-    tier.unitTypes.push({ type: unitType, rate });
+    tier.unitTypes.push({ type: unitType, rate, cap });
   }
   
   saveTierPricing();
@@ -152,6 +177,7 @@ function addUnitTypeToTier() {
   // Clear inputs
   unitTypeInput.value = '';
   rateInput.value = '';
+  capInput.value = '';
 }
 
 // Update tier selector dropdown
@@ -164,11 +190,36 @@ function updateTierSelector() {
   
   tierSelect.innerHTML = `<option value="">-- Select ${category === 'new' ? 'New Lease' : 'Renewal'} Tier --</option>` +
     tiers.map(t => `<option value="${esc(t.tier)}">${esc(t.tier)}</option>`).join('');
+  
+  // Also update unit type dropdown
+  updateUnitTypeSelector();
 }
+
+// Update unit type selector dropdown with floor plans
+function updateUnitTypeSelector() {
+  const unitTypeSelect = document.getElementById('tierUnitType');
+  if (!unitTypeSelect) return;
+  
+  // Get floor plans from the floor plan tracker
+  let floorPlans = [];
+  if (typeof window.getFloorPlans === 'function') {
+    floorPlans = window.getFloorPlans();
+  }
+  
+  if (floorPlans.length === 0) {
+    unitTypeSelect.innerHTML = '<option value="">-- No Floor Plans Configured --</option>';
+  } else {
+    unitTypeSelect.innerHTML = '<option value="">-- Select Unit Type --</option>' +
+      floorPlans.map(fp => `<option value="${esc(fp.type)}">${esc(fp.type)}</option>`).join('');
+  }
+}
+
+// Expose updateUnitTypeSelector for floor plan tracker to call
+window.updateUnitTypeSelector = updateUnitTypeSelector;
 
 // Delete a tier
 window.deleteTier = function(category, tierName) {
-  if (!confirm(`Delete tier "${tierName}" and all its unit types? This cannot be undone.`)) {
+  if (!confirm(`Delete ${tierName} and all its unit types? This cannot be undone.`)) {
     return;
   }
   
@@ -185,7 +236,7 @@ window.deleteTier = function(category, tierName) {
 
 // Delete a unit type from a tier
 window.deleteUnitTypeFromTier = function(category, tierName, unitType) {
-  if (!confirm(`Remove "${unitType}" from tier "${tierName}"?`)) {
+  if (!confirm(`Remove "${unitType}" from ${tierName}?`)) {
     return;
   }
   
@@ -245,7 +296,7 @@ function renderTierCategory(title, tiers, leases, category, matchedTypes) {
       <div style="margin-bottom:32px">
         <h4 style="font-size:16px;font-weight:700;color:#374151;margin-bottom:12px">${title}</h4>
         <div style="padding:20px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;text-align:center;color:#64748b">
-          No tiers configured. Create a tier to get started.
+          No tiers configured. Create Tier 1, Tier 2, Tier 3, or Tier 4 to get started.
         </div>
       </div>
     `;
@@ -258,23 +309,38 @@ function renderTierCategory(title, tiers, leases, category, matchedTypes) {
     leaseCounts[unitType] = (leaseCounts[unitType] || 0) + 1;
   });
   
+  // Sort tiers by name (Tier 1, Tier 2, Tier 3, Tier 4)
+  const sortedTiers = [...tiers].sort((a, b) => {
+    const aNum = parseInt(a.tier.replace('Tier ', ''));
+    const bNum = parseInt(b.tier.replace('Tier ', ''));
+    return aNum - bNum;
+  });
+  
   // Generate HTML for each tier
-  const tiersHTML = tiers.map(tier => {
+  const tiersHTML = sortedTiers.map(tier => {
     let tierTotal = 0;
+    let tierCap = 0;
     
     const unitTypesHTML = tier.unitTypes.map(ut => {
       const count = leaseCounts[ut.type] || 0;
       tierTotal += count;
+      tierCap += ut.cap;
       
       // Mark this unit type as matched
       if (count > 0) {
         matchedTypes.add(ut.type);
       }
       
+      const remaining = Math.max(0, ut.cap - count);
+      const percentFilled = ut.cap > 0 ? ((count / ut.cap) * 100).toFixed(1) : 0;
+      
       return `
         <tr style="border-bottom:1px solid var(--border)">
           <td style="padding:8px 12px">${esc(ut.type)}</td>
+          <td style="padding:8px 12px;text-align:center">${ut.cap}</td>
           <td style="padding:8px 12px;text-align:center;font-weight:700;color:${count > 0 ? 'var(--brand-accent-2)' : '#94a3b8'}">${count}</td>
+          <td style="padding:8px 12px;text-align:center">${remaining}</td>
+          <td style="padding:8px 12px;text-align:center">${percentFilled}%</td>
           <td style="padding:8px 12px;text-align:right">${formatCurrency(ut.rate)}</td>
           <td style="padding:8px 12px;text-align:center">
             <button class="btn sm danger" onclick="deleteUnitTypeFromTier('${category}', '${esc(tier.tier)}', '${esc(ut.type)}')">Remove</button>
@@ -282,6 +348,9 @@ function renderTierCategory(title, tiers, leases, category, matchedTypes) {
         </tr>
       `;
     }).join('');
+    
+    const tierRemaining = Math.max(0, tierCap - tierTotal);
+    const tierPercent = tierCap > 0 ? ((tierTotal / tierCap) * 100).toFixed(1) : 0;
     
     return `
       <div style="margin-bottom:20px">
@@ -295,17 +364,23 @@ function renderTierCategory(title, tiers, leases, category, matchedTypes) {
             <thead style="background:#f8fafc">
               <tr>
                 <th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;border-bottom:2px solid var(--border)">Unit Type</th>
-                <th style="padding:10px 12px;text-align:center;font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;border-bottom:2px solid var(--border)">Count</th>
-                <th style="padding:10px 12px;text-align:right;font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;border-bottom:2px solid var(--border)">Current Rate</th>
+                <th style="padding:10px 12px;text-align:center;font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;border-bottom:2px solid var(--border)">Cap</th>
+                <th style="padding:10px 12px;text-align:center;font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;border-bottom:2px solid var(--border)">Leased</th>
+                <th style="padding:10px 12px;text-align:center;font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;border-bottom:2px solid var(--border)">Remaining</th>
+                <th style="padding:10px 12px;text-align:center;font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;border-bottom:2px solid var(--border)">% Filled</th>
+                <th style="padding:10px 12px;text-align:right;font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;border-bottom:2px solid var(--border)">Rate</th>
                 <th style="padding:10px 12px;text-align:center;font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;border-bottom:2px solid var(--border)">Actions</th>
               </tr>
             </thead>
             <tbody>
-              ${unitTypesHTML || '<tr><td colspan="4" style="padding:20px;text-align:center;color:#94a3b8">No unit types configured for this tier</td></tr>'}
+              ${unitTypesHTML || '<tr><td colspan="7" style="padding:20px;text-align:center;color:#94a3b8">No unit types configured for this tier</td></tr>'}
               ${tier.unitTypes.length > 0 ? `
                 <tr style="background:#f8fafc;font-weight:700">
                   <td style="padding:10px 12px">Total:</td>
+                  <td style="padding:10px 12px;text-align:center">${tierCap}</td>
                   <td style="padding:10px 12px;text-align:center;color:var(--brand-primary)">${tierTotal}</td>
+                  <td style="padding:10px 12px;text-align:center">${tierRemaining}</td>
+                  <td style="padding:10px 12px;text-align:center">${tierPercent}%</td>
                   <td colspan="2"></td>
                 </tr>
               ` : ''}
