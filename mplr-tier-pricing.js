@@ -30,6 +30,11 @@ document.addEventListener('DOMContentLoaded', () => {
       renderTierPricingTracker();
     };
   }
+  
+  // Initialize unit type selector on page load
+  setTimeout(() => {
+    updateUnitTypeSelector();
+  }, 500);
 });
 
 // Load tier pricing from localStorage

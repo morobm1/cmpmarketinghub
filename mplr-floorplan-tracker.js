@@ -176,3 +176,13 @@ function notifyFloorPlanChange() {
     window.updateUnitTypeSelector();
   }
 }
+
+// Also call on initial load after floor plans are loaded
+const originalLoadFloorPlans = loadFloorPlans;
+loadFloorPlans = function() {
+  originalLoadFloorPlans();
+  // Notify tier pricing after floor plans are loaded
+  setTimeout(() => {
+    notifyFloorPlanChange();
+  }, 100);
+};
