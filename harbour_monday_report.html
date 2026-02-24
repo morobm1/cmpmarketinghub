@@ -269,8 +269,16 @@
         <div class="preview-section" id="previewSection" style="display:none">
           <h3>Email Preview</h3>
           <div class="email-preview" id="emailPreview"></div>
+          <div style="background:#fff3cd; border:1px solid #ffc107; border-radius:8px; padding:12px; margin-top:16px; font-size:13px">
+            <strong>📝 Note:</strong> Gmail compose URLs only support plain text. The formatting you see above will not transfer. You can:
+            <ul style="margin:8px 0 0 20px; padding:0">
+              <li>Copy the formatted text and paste it into Gmail manually, or</li>
+              <li>Use "Open in Gmail" for a quick plain-text version</li>
+            </ul>
+          </div>
           <div class="button-group" style="margin-top:20px">
-            <button id="copyBtn">Copy to Clipboard</button>
+            <button id="copyBtn">Copy Plain Text</button>
+            <button id="copyHtmlBtn">Copy Formatted HTML</button>
             <button id="openEmailBtn">Open in Gmail</button>
             <button onclick="resetWizard()">Start New Report</button>
           </div>
@@ -574,7 +582,7 @@
 
 <p><span class="red-text">MOVE-OUT REPORT</span></p>
 <ul>
-  <li>See attached file</li>
+  <li>${moveOutFileData ? 'See attached file' : 'No report attached'}</li>
 </ul>
 
 <p><span class="red-text">RES-LIFE INITITAVE:</span></p>
@@ -697,10 +705,21 @@ www.capstoneemp.com | P. (813) 638-7711`;
       }
     });
 
+    async function copyHtmlToClipboard() {
+      const html = generateEmailHTML();
+      try {
+        await navigator.clipboard.writeText(html);
+        alert('Formatted HTML copied to clipboard! Paste this into Gmail\'s compose window (Ctrl+V or Cmd+V).');
+      } catch (e) {
+        alert('Failed to copy HTML. Please copy manually from the preview.');
+      }
+    }
+
     // Event listeners
     els.logoutBtn.addEventListener('click', doLogout);
     els.generateBtn.addEventListener('click', generateEmail);
     els.copyBtn.addEventListener('click', copyToClipboard);
+    document.getElementById('copyHtmlBtn').addEventListener('click', copyHtmlToClipboard);
     els.openEmailBtn.addEventListener('click', openInEmailClient);
 
     // Auto-save on input
