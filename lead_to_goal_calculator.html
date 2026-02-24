@@ -444,30 +444,41 @@
         return;
       }
 
-      const property = properties.find(p => p.id === propertyId);
-      const date = new Date(els.calcDate.value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      try {
+        // Check if XLSX library is loaded
+        if (typeof XLSX === 'undefined') {
+          alert('Excel export library is still loading. Please try again in a moment.');
+          return;
+        }
 
-      const data = [
-        ['Lead to Goal Calculator'],
-        ['Property:', property.name],
-        ['Date:', date],
-        [],
-        ['# of Leads Needed to Generate to Hit Goal Based on Current Lease Conversion'],
-        [],
-        ['Metric', 'Value', 'Formula'],
-        ['PL % Goal', els.plGoal.value, ''],
-        ['# of Beds Left to Prelease to Hit Goal', els.bedsLeft.value, ''],
-        ['Current Lease Conversion', els.leaseConversion.value, '15% / 100'],
-        ['Current Lead to Lease Conversion Ratio', els.leadToLeaseRatio.value, '1 / Current Lease Conversion'],
-        ['Total number of Leads Needed (based on lead to lease conversion ratio)', els.totalLeadsNeeded.value, 'Current Lead to Lease Conversion Ratio X # of Beds Left to Prelease to Hit Goal']
-      ];
+        const property = properties.find(p => p.id === propertyId);
+        const date = new Date(els.calcDate.value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
-      const ws = XLSX.utils.aoa_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Lead to Goal');
+        const data = [
+          ['Lead to Goal Calculator'],
+          ['Property:', property.name],
+          ['Date:', date],
+          [],
+          ['# of Leads Needed to Generate to Hit Goal Based on Current Lease Conversion'],
+          [],
+          ['Metric', 'Value', 'Formula'],
+          ['PL % Goal', els.plGoal.value, ''],
+          ['# of Beds Left to Prelease to Hit Goal', els.bedsLeft.value, ''],
+          ['Current Lease Conversion', els.leaseConversion.value, '15% / 100'],
+          ['Current Lead to Lease Conversion Ratio', els.leadToLeaseRatio.value, '1 / Current Lease Conversion'],
+          ['Total number of Leads Needed (based on lead to lease conversion ratio)', els.totalLeadsNeeded.value, 'Current Lead to Lease Conversion Ratio X # of Beds Left to Prelease to Hit Goal']
+        ];
 
-      const filename = `Lead_to_Goal_${property.name.replace(/\s+/g, '_')}_${date.replace(/\s+/g, '_')}.xlsx`;
-      XLSX.writeFile(wb, filename);
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Lead to Goal');
+
+        const filename = `Lead_to_Goal_${property.name.replace(/\s+/g, '_')}_${date.replace(/\s+/g, '_')}.xlsx`;
+        XLSX.writeFile(wb, filename);
+      } catch (err) {
+        console.error('Export error:', err);
+        alert('Failed to export to Excel: ' + err.message);
+      }
     }
 
     // Event listeners
