@@ -1,11 +1,13 @@
 // MPLR Tier Pricing Tracker Functionality
 
-let tierPricingConfig = []; // Array of {tier: string, unitTypes: [{type: string, rate: number}]}
+let newLeaseTiers = []; // Array of {tier: string, unitTypes: [{type: string, rate: number}]}
+let renewalTiers = []; // Array of {tier: string, unitTypes: [{type: string, rate: number}]}
 
 // Initialize tier pricing tracker
 document.addEventListener('DOMContentLoaded', () => {
   const addTierBtn = document.getElementById('addTierBtn');
   const addUnitTypeToTierBtn = document.getElementById('addUnitTypeToTierBtn');
+  const tierCategorySelect = document.getElementById('tierCategory');
   
   if (addTierBtn) {
     addTierBtn.addEventListener('click', addTier);
@@ -13,6 +15,10 @@ document.addEventListener('DOMContentLoaded', () => {
   
   if (addUnitTypeToTierBtn) {
     addUnitTypeToTierBtn.addEventListener('click', addUnitTypeToTier);
+  }
+  
+  if (tierCategorySelect) {
+    tierCategorySelect.addEventListener('change', updateTierSelector);
   }
   
   // Load tier pricing when property changes
@@ -29,41 +35,64 @@ document.addEventListener('DOMContentLoaded', () => {
 // Load tier pricing from localStorage
 function loadTierPricing() {
   if (!currentProperty) {
-    tierPricingConfig = [];
+    newLeaseTiers = [];
+    renewalTiers = [];
     return;
   }
   
-  const key = `mplr_tier_pricing_${currentProperty}`;
-  const stored = localStorage.getItem(key);
-  tierPricingConfig = stored ? JSON.parse(stored) : [];
+  const keyNew = `mplr_new_lease_tiers_${currentProperty}`;
+  const keyRenewal = `mplr_renewal_tiers_${currentProperty}`;
+  
+  const storedNew = localStorage.getItem(keyNew);
+  const storedRenewal = localStorage.getItem(keyRenewal);
+  
+  newLeaseTiers = storedNew ? JSON.parse(storedNew) : [];
+  renewalTiers = storedRenewal ? JSON.parse(storedRenewal) : [];
 }
 
 // Save tier pricing to localStorage
 function saveTierPricing() {
   if (!currentProperty) return;
   
-  const key = `mplr_tier_pricing_${currentProperty}`;
-  localStorage.setItem(key, JSON.stringify(tierPricingConfig));
+  const keyNew = `mplr_new_lease_tiers_${currentProperty}`;
+  const keyRenewal = `mplr_renewal_tiers_${currentProperty}`;
+  
+  localStorage.setItem(keyNew, JSON.stringify(newLeaseTiers));
+  localStorage.setItem(keyRenewal, JSON.stringify(renewalTiers));
+}
+
+// Get current tier category
+function getCurrentCategory() {
+  const tierCategorySelect = document.getElementById('tierCategory');
+  return tierCategorySelect ? tierCategorySelect.value : 'new';
+}
+
+// Get tiers for current category
+function getCurrentTiers() {
+  return getCurrentCategory() === 'new' ? newLeaseTiers : renewalTiers;
 }
 
 // Add a new tier
 function addTier() {
   const tierNameInput = document.getElementById('tierName');
   const tierName = tierNameInput.value.trim();
+  const category = getCurrentCategory();
   
   if (!tierName) {
     alert('Please enter a tier name');
     return;
   }
   
+  const tiers = getCurrentTiers();
+  
   // Check if tier already exists
-  const existing = tierPricingConfig.find(t => t.tier.toLowerCase() === tierName.toLowerCase());
+  const existing = tiers.find(t => t.tier.toLowerCase() === tierName.toLowerCase());
   if (existing) {
-    alert(`Tier "${tierName}" already exists`);
+    alert(`Tier "${tierName}" already exists in ${category === 'new' ? 'New Lease' : 'Renewal'} tiers`);
     return;
   }
   
-  tierPricingConfig.push({ tier: tierName, unitTypes: [] });
+  tiers.push({ tier: tierName, unitTypes: [] });
   saveTierPricing();
   renderTierPricingTracker();
   
@@ -77,6 +106,7 @@ function addUnitTypeToTier() {
   const tierSelect = document.getElementById('tierSelect');
   const unitTypeInput = document.getElementById('tierUnitType');
   const rateInput = document.getElementById('tierRate');
+  const category = getCurrentCategory();
   
   const tierName = tierSelect.value;
   const unitType = unitTypeInput.value.trim();
@@ -97,7 +127,9 @@ function addUnitTypeToTier() {
     return;
   }
   
-  const tier = tierPricingConfig.find(t => t.tier === tierName);
+  const tiers = getCurrentTiers();
+  const tier = tiers.find(t => t.tier === tierName);
+  
   if (!tier) {
     alert('Tier not found');
     return;
@@ -127,29 +159,39 @@ function updateTierSelector() {
   const tierSelect = document.getElementById('tierSelect');
   if (!tierSelect) return;
   
-  tierSelect.innerHTML = '<option value="">-- Select Tier --</option>' +
-    tierPricingConfig.map(t => `<option value="${esc(t.tier)}">${esc(t.tier)}</option>`).join('');
+  const tiers = getCurrentTiers();
+  const category = getCurrentCategory();
+  
+  tierSelect.innerHTML = `<option value="">-- Select ${category === 'new' ? 'New Lease' : 'Renewal'} Tier --</option>` +
+    tiers.map(t => `<option value="${esc(t.tier)}">${esc(t.tier)}</option>`).join('');
 }
 
 // Delete a tier
-window.deleteTier = function(tierName) {
+window.deleteTier = function(category, tierName) {
   if (!confirm(`Delete tier "${tierName}" and all its unit types? This cannot be undone.`)) {
     return;
   }
   
-  tierPricingConfig = tierPricingConfig.filter(t => t.tier !== tierName);
+  if (category === 'new') {
+    newLeaseTiers = newLeaseTiers.filter(t => t.tier !== tierName);
+  } else {
+    renewalTiers = renewalTiers.filter(t => t.tier !== tierName);
+  }
+  
   saveTierPricing();
   renderTierPricingTracker();
   updateTierSelector();
 };
 
 // Delete a unit type from a tier
-window.deleteUnitTypeFromTier = function(tierName, unitType) {
+window.deleteUnitTypeFromTier = function(category, tierName, unitType) {
   if (!confirm(`Remove "${unitType}" from tier "${tierName}"?`)) {
     return;
   }
   
-  const tier = tierPricingConfig.find(t => t.tier === tierName);
+  const tiers = category === 'new' ? newLeaseTiers : renewalTiers;
+  const tier = tiers.find(t => t.tier === tierName);
+  
   if (tier) {
     tier.unitTypes = tier.unitTypes.filter(ut => ut.type !== unitType);
     saveTierPricing();
@@ -161,7 +203,7 @@ window.deleteUnitTypeFromTier = function(tierName, unitType) {
 function renderTierPricingTracker() {
   const tierPricingList = document.getElementById('tierPricingList');
   
-  if (!tierPricingConfig.length) {
+  if (!newLeaseTiers.length && !renewalTiers.length) {
     tierPricingList.style.display = 'none';
     return;
   }
@@ -169,51 +211,83 @@ function renderTierPricingTracker() {
   tierPricingList.style.display = 'block';
   updateTierSelector();
   
-  // Count leases by unit type and lease type
-  const newLeaseCounts = {};
-  const renewalCounts = {};
+  // Separate leases by type
+  const newLeases = leases.filter(l => (l.leaseType || '').toLowerCase().includes('new'));
+  const renewalLeases = leases.filter(l => {
+    const lt = (l.leaseType || '').toLowerCase();
+    return lt.includes('renewal') || lt.includes('transfer');
+  });
   
+  // Track matched unit types
+  const matchedNewLeaseTypes = new Set();
+  const matchedRenewalTypes = new Set();
+  
+  // Generate HTML for New Lease Tiers
+  const newLeaseHTML = renderTierCategory('New Lease Tiers', newLeaseTiers, newLeases, 'new', matchedNewLeaseTypes);
+  
+  // Generate HTML for Renewal Tiers
+  const renewalHTML = renderTierCategory('Renewal Tiers', renewalTiers, renewalLeases, 'renewal', matchedRenewalTypes);
+  
+  // Find unmatched leases
+  const unmatchedNewLeases = newLeases.filter(l => !matchedNewLeaseTypes.has(l.unitType));
+  const unmatchedRenewalLeases = renewalLeases.filter(l => !matchedRenewalTypes.has(l.unitType));
+  
+  // Generate unmatched records HTML
+  const unmatchedHTML = renderUnmatchedRecords(unmatchedNewLeases, unmatchedRenewalLeases);
+  
+  document.getElementById('tierPricingTables').innerHTML = newLeaseHTML + renewalHTML + unmatchedHTML;
+}
+
+// Render a tier category (New Lease or Renewal)
+function renderTierCategory(title, tiers, leases, category, matchedTypes) {
+  if (!tiers.length) {
+    return `
+      <div style="margin-bottom:32px">
+        <h4 style="font-size:16px;font-weight:700;color:#374151;margin-bottom:12px">${title}</h4>
+        <div style="padding:20px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;text-align:center;color:#64748b">
+          No tiers configured. Create a tier to get started.
+        </div>
+      </div>
+    `;
+  }
+  
+  // Count leases by unit type
+  const leaseCounts = {};
   leases.forEach(lease => {
     const unitType = lease.unitType || '';
-    const leaseType = (lease.leaseType || '').toLowerCase();
-    
-    if (leaseType.includes('new')) {
-      newLeaseCounts[unitType] = (newLeaseCounts[unitType] || 0) + 1;
-    } else if (leaseType.includes('renewal')) {
-      renewalCounts[unitType] = (renewalCounts[unitType] || 0) + 1;
-    }
+    leaseCounts[unitType] = (leaseCounts[unitType] || 0) + 1;
   });
   
   // Generate HTML for each tier
-  const tiersHTML = tierPricingConfig.map(tier => {
-    let tierNewTotal = 0;
-    let tierRenewalTotal = 0;
+  const tiersHTML = tiers.map(tier => {
+    let tierTotal = 0;
     
     const unitTypesHTML = tier.unitTypes.map(ut => {
-      const newCount = newLeaseCounts[ut.type] || 0;
-      const renewalCount = renewalCounts[ut.type] || 0;
+      const count = leaseCounts[ut.type] || 0;
+      tierTotal += count;
       
-      tierNewTotal += newCount;
-      tierRenewalTotal += renewalCount;
+      // Mark this unit type as matched
+      if (count > 0) {
+        matchedTypes.add(ut.type);
+      }
       
       return `
         <tr style="border-bottom:1px solid var(--border)">
           <td style="padding:8px 12px">${esc(ut.type)}</td>
-          <td style="padding:8px 12px;text-align:center">${newCount}</td>
-          <td style="padding:8px 12px;text-align:center">${renewalCount}</td>
+          <td style="padding:8px 12px;text-align:center;font-weight:700;color:${count > 0 ? 'var(--brand-accent-2)' : '#94a3b8'}">${count}</td>
           <td style="padding:8px 12px;text-align:right">${formatCurrency(ut.rate)}</td>
           <td style="padding:8px 12px;text-align:center">
-            <button class="btn sm danger" onclick="deleteUnitTypeFromTier('${esc(tier.tier)}', '${esc(ut.type)}')">Remove</button>
+            <button class="btn sm danger" onclick="deleteUnitTypeFromTier('${category}', '${esc(tier.tier)}', '${esc(ut.type)}')">Remove</button>
           </td>
         </tr>
       `;
     }).join('');
     
     return `
-      <div style="margin-bottom:24px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <h4 style="font-size:16px;font-weight:700;color:#374151;margin:0">${esc(tier.tier)}</h4>
-          <button class="btn sm danger" onclick="deleteTier('${esc(tier.tier)}')">Delete Tier</button>
+      <div style="margin-bottom:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <h5 style="font-size:14px;font-weight:700;color:#374151;margin:0">${esc(tier.tier)}</h5>
+          <button class="btn sm danger" onclick="deleteTier('${category}', '${esc(tier.tier)}')">Delete Tier</button>
         </div>
         
         <div style="overflow-x:auto;border:1px solid var(--border);border-radius:8px">
@@ -221,19 +295,17 @@ function renderTierPricingTracker() {
             <thead style="background:#f8fafc">
               <tr>
                 <th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;border-bottom:2px solid var(--border)">Unit Type</th>
-                <th style="padding:10px 12px;text-align:center;font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;border-bottom:2px solid var(--border)">New Leases</th>
-                <th style="padding:10px 12px;text-align:center;font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;border-bottom:2px solid var(--border)">Renewals</th>
+                <th style="padding:10px 12px;text-align:center;font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;border-bottom:2px solid var(--border)">Count</th>
                 <th style="padding:10px 12px;text-align:right;font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;border-bottom:2px solid var(--border)">Current Rate</th>
                 <th style="padding:10px 12px;text-align:center;font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;border-bottom:2px solid var(--border)">Actions</th>
               </tr>
             </thead>
             <tbody>
-              ${unitTypesHTML || '<tr><td colspan="5" style="padding:20px;text-align:center;color:#94a3b8">No unit types configured for this tier</td></tr>'}
+              ${unitTypesHTML || '<tr><td colspan="4" style="padding:20px;text-align:center;color:#94a3b8">No unit types configured for this tier</td></tr>'}
               ${tier.unitTypes.length > 0 ? `
                 <tr style="background:#f8fafc;font-weight:700">
                   <td style="padding:10px 12px">Total:</td>
-                  <td style="padding:10px 12px;text-align:center;color:var(--brand-accent-2)">${tierNewTotal}</td>
-                  <td style="padding:10px 12px;text-align:center;color:var(--success)">${tierRenewalTotal}</td>
+                  <td style="padding:10px 12px;text-align:center;color:var(--brand-primary)">${tierTotal}</td>
                   <td colspan="2"></td>
                 </tr>
               ` : ''}
@@ -244,7 +316,100 @@ function renderTierPricingTracker() {
     `;
   }).join('');
   
-  document.getElementById('tierPricingTables').innerHTML = tiersHTML;
+  return `
+    <div style="margin-bottom:32px">
+      <h4 style="font-size:16px;font-weight:700;color:#374151;margin-bottom:16px">${title}</h4>
+      ${tiersHTML}
+    </div>
+  `;
+}
+
+// Render unmatched records
+function renderUnmatchedRecords(unmatchedNew, unmatchedRenewal) {
+  if (!unmatchedNew.length && !unmatchedRenewal.length) {
+    return '';
+  }
+  
+  let html = `
+    <div style="margin-top:32px;padding-top:32px;border-top:2px solid var(--border)">
+      <h4 style="font-size:16px;font-weight:700;color:#ef4444;margin-bottom:12px">⚠️ Unmatched Records</h4>
+      <p style="font-size:13px;color:#64748b;margin-bottom:16px">
+        These leases don't match any configured tier. Add their unit types to the appropriate tier to include them in tracking.
+      </p>
+  `;
+  
+  if (unmatchedNew.length > 0) {
+    html += `
+      <div style="margin-bottom:20px">
+        <h5 style="font-size:14px;font-weight:700;color:#374151;margin-bottom:8px">Unmatched New Leases (${unmatchedNew.length})</h5>
+        <div style="overflow-x:auto;border:1px solid #fecaca;border-radius:8px;background:#fef2f2">
+          <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead style="background:#fee2e2">
+              <tr>
+                <th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:700;color:#991b1b;text-transform:uppercase;border-bottom:2px solid #fecaca">Unit Type</th>
+                <th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:700;color:#991b1b;text-transform:uppercase;border-bottom:2px solid #fecaca">Resident</th>
+                <th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:700;color:#991b1b;text-transform:uppercase;border-bottom:2px solid #fecaca">Apt/Bed</th>
+                <th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:700;color:#991b1b;text-transform:uppercase;border-bottom:2px solid #fecaca">Lease Start</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${unmatchedNew.map(l => `
+                <tr style="border-bottom:1px solid #fecaca">
+                  <td style="padding:8px 10px;font-weight:700;color:#991b1b">${esc(l.unitType)}</td>
+                  <td style="padding:8px 10px">${esc(l.firstName)} ${esc(l.lastName)}</td>
+                  <td style="padding:8px 10px">${esc(l.floorPlan)}</td>
+                  <td style="padding:8px 10px">${formatDate(l.leaseStart)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+  
+  if (unmatchedRenewal.length > 0) {
+    html += `
+      <div style="margin-bottom:20px">
+        <h5 style="font-size:14px;font-weight:700;color:#374151;margin-bottom:8px">Unmatched Renewals (${unmatchedRenewal.length})</h5>
+        <div style="overflow-x:auto;border:1px solid #fecaca;border-radius:8px;background:#fef2f2">
+          <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead style="background:#fee2e2">
+              <tr>
+                <th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:700;color:#991b1b;text-transform:uppercase;border-bottom:2px solid #fecaca">Unit Type</th>
+                <th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:700;color:#991b1b;text-transform:uppercase;border-bottom:2px solid #fecaca">Resident</th>
+                <th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:700;color:#991b1b;text-transform:uppercase;border-bottom:2px solid #fecaca">Apt/Bed</th>
+                <th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:700;color:#991b1b;text-transform:uppercase;border-bottom:2px solid #fecaca">Lease Type</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${unmatchedRenewal.map(l => `
+                <tr style="border-bottom:1px solid #fecaca">
+                  <td style="padding:8px 10px;font-weight:700;color:#991b1b">${esc(l.unitType)}</td>
+                  <td style="padding:8px 10px">${esc(l.firstName)} ${esc(l.lastName)}</td>
+                  <td style="padding:8px 10px">${esc(l.floorPlan)}</td>
+                  <td style="padding:8px 10px"><span class="badge warning">${esc(l.leaseType)}</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+  
+  html += '</div>';
+  return html;
+}
+
+// Helper function to format date
+function formatDate(d) {
+  if (!d) return '';
+  try {
+    return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  } catch (e) {
+    return d;
+  }
 }
 
 // Override updateStats to also update tier pricing tracker
