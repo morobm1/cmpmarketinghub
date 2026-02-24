@@ -204,12 +204,12 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label for="total2627">26-27 Total</label>
-              <input type="text" id="total2627" placeholder="e.g., X+Y" />
+              <label for="total2627">26-27 Total (Auto-calculated)</label>
+              <input type="text" id="total2627" placeholder="Auto-calculated" readonly style="background:#f8fafc; cursor:not-allowed" />
             </div>
             <div class="form-group">
-              <label for="total2526">25-26 Total</label>
-              <input type="text" id="total2526" placeholder="e.g., X+B" />
+              <label for="total2526">25-26 Total (Auto-calculated)</label>
+              <input type="text" id="total2526" placeholder="Auto-calculated" readonly style="background:#f8fafc; cursor:not-allowed" />
             </div>
           </div>
 
@@ -232,27 +232,17 @@
           </div>
 
           <div class="form-group">
-            <label for="preLease2526YOY">2025-2026 Pre-Lease YOY: (5%)</label>
-            <input type="text" id="preLease2526YOY" placeholder="e.g., 5%" />
-          </div>
-
-          <div class="form-group">
-            <label for="preLeaseOverLastYear">Pre-Lease Over Last Year: (P%)</label>
-            <input type="text" id="preLeaseOverLastYear" placeholder="e.g., P%" />
-          </div>
-
-          <div class="form-group">
             <label for="goal">Goal:</label>
             <input type="text" id="goal" placeholder="e.g., 97%" />
           </div>
 
           <div class="form-group">
-            <label for="appsStarted">Applications Started (Date Range):</label>
+            <label for="appsStarted">Applications Started <span id="dateRangeLabel" style="color:var(--subtext); font-weight:400"></span>:</label>
             <input type="text" id="appsStarted" placeholder="e.g., 15 applications" />
           </div>
 
           <div class="form-group">
-            <label for="appsCompleted">Applications Completed (Date Range):</label>
+            <label for="appsCompleted">Applications Completed <span id="dateRangeLabel2" style="color:var(--subtext); font-weight:400"></span>:</label>
             <input type="text" id="appsCompleted" placeholder="e.g., 10 applications" />
           </div>
 
@@ -732,7 +722,7 @@
 
 <p>Last Week's Leasing Narrative:</p>
 
-<p><strong>${narrative}</strong></p>
+<p>${narrative}</p>
 
 <table>
   <tr>
@@ -772,8 +762,6 @@
 <p><span class="orange-text">LEASING NUMBERS</span></p>
 <ul>
   <li>Current Occupancy: ${els.currentOccupancy.value || 'X%'}</li>
-  <li>2025-2026 Pre-Lease YOY: ${els.preLease2526YOY.value || '(5%)'}</li>
-  <li>Pre-Lease Over Last Year: ${els.preLeaseOverLastYear.value || '(P%)'}</li>
 </ul>
 
 <p>Goal: ${els.goal.value || '97%'}</p>
@@ -864,12 +852,86 @@
     els.generateBtn.addEventListener('click', generateEmail);
     els.openEmailBtn.addEventListener('click', openInEmailClient);
 
+    // Auto-calculate totals when renewals or new leases change
+    function calculateTotals() {
+      const renewals2627 = parseFloat(els.renewals2627.value) || 0;
+      const newLeases2627 = parseFloat(els.newLeases2627.value) || 0;
+      const renewals2526 = parseFloat(els.renewals2526.value) || 0;
+      const newLeases2526 = parseFloat(els.newLeases2526.value) || 0;
+      
+      if (renewals2627 || newLeases2627) {
+        els.total2627.value = renewals2627 + newLeases2627;
+      } else {
+        els.total2627.value = '';
+      }
+      
+      if (renewals2526 || newLeases2526) {
+        els.total2526.value = renewals2526 + newLeases2526;
+      } else {
+        els.total2526.value = '';
+      }
+    }
+
+    // Calculate last week's date range (Mon-Sun) based on report date
+    function updateDateRangeLabels() {
+      const reportDate = els.reportDate.value;
+      if (!reportDate) {
+        document.getElementById('dateRangeLabel').textContent = '';
+        document.getElementById('dateRangeLabel2').textContent = '';
+        return;
+      }
+      
+      // Report date is a Sunday, so we need the previous Monday to Saturday
+      const reportDateObj = new Date(reportDate + 'T00:00:00');
+      
+      // Get last Sunday (day before report date)
+      const lastSunday = new Date(reportDateObj);
+      lastSunday.setDate(lastSunday.getDate() - 1);
+      
+      // Get Monday of that week (6 days before Sunday)
+      const monday = new Date(lastSunday);
+      monday.setDate(monday.getDate() - 6);
+      
+      const mondayStr = (monday.getMonth() + 1).toString().padStart(2, '0') + '/' + 
+                        monday.getDate().toString().padStart(2, '0') + '/' + 
+                        monday.getFullYear();
+      const sundayStr = (lastSunday.getMonth() + 1).toString().padStart(2, '0') + '/' + 
+                        lastSunday.getDate().toString().padStart(2, '0') + '/' + 
+                        lastSunday.getFullYear();
+      
+      const rangeText = `(${mondayStr} - ${sundayStr})`;
+      document.getElementById('dateRangeLabel').textContent = rangeText;
+      document.getElementById('dateRangeLabel2').textContent = rangeText;
+    }
+
+    // Add listeners for auto-calculation
+    els.renewals2627.addEventListener('input', () => {
+      calculateTotals();
+      saveData();
+    });
+    els.renewals2526.addEventListener('input', () => {
+      calculateTotals();
+      saveData();
+    });
+    els.newLeases2627.addEventListener('input', () => {
+      calculateTotals();
+      saveData();
+    });
+    els.newLeases2526.addEventListener('input', () => {
+      calculateTotals();
+      saveData();
+    });
+    
+    // Update date range when report date changes
+    els.reportDate.addEventListener('change', () => {
+      updateDateRangeLabels();
+      saveData();
+    });
+
     // Auto-save on input
-    [els.emailTo, els.emailCc, els.reportDate, els.renewals2627, els.renewals2526, 
-     els.newLeases2627, els.newLeases2526, els.total2627, els.total2526,
-     els.preLease2627, els.preLease2526, els.currentOccupancy, els.preLease2526YOY,
-     els.preLeaseOverLastYear, els.goal, els.appsStarted, els.appsCompleted,
-     els.totalAppsPending, els.leasesStarted, els.staffingNotes].forEach(el => {
+    [els.emailTo, els.emailCc, els.preLease2627, els.preLease2526, 
+     els.currentOccupancy, els.goal, els.appsStarted, els.appsCompleted,
+     els.totalAppsPending, els.leasesStarted, els.staffingNotes, els.narrative].forEach(el => {
       el.addEventListener('input', saveData);
     });
 
