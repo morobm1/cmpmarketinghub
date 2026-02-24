@@ -213,14 +213,20 @@
             </div>
           </div>
 
+          <div class="form-group">
+            <label for="totalBeds">Total Beds/Units</label>
+            <input type="text" id="totalBeds" placeholder="e.g., 571" />
+            <div style="font-size:12px; color:var(--subtext); margin-top:4px">Used to calculate Pre-Lease %</div>
+          </div>
+
           <div class="form-row">
             <div class="form-group">
-              <label for="preLease2627">26-27 Pre-Lease %</label>
-              <input type="text" id="preLease2627" placeholder="e.g., (XX/YYY)% = T%" />
+              <label for="preLease2627">26-27 Pre-Lease % (Auto-calculated)</label>
+              <input type="text" id="preLease2627" placeholder="Auto-calculated" readonly style="background:#f8fafc; cursor:not-allowed" />
             </div>
             <div class="form-group">
-              <label for="preLease2526">25-26 Pre-Lease %</label>
-              <input type="text" id="preLease2526" placeholder="e.g., (XX/YYY)% = G%" />
+              <label for="preLease2526">25-26 Pre-Lease % (Auto-calculated)</label>
+              <input type="text" id="preLease2526" placeholder="Auto-calculated" readonly style="background:#f8fafc; cursor:not-allowed" />
             </div>
           </div>
 
@@ -369,6 +375,7 @@
       newLeases2526: document.getElementById('newLeases2526'),
       total2627: document.getElementById('total2627'),
       total2526: document.getElementById('total2526'),
+      totalBeds: document.getElementById('totalBeds'),
       preLease2627: document.getElementById('preLease2627'),
       preLease2526: document.getElementById('preLease2526'),
       currentOccupancy: document.getElementById('currentOccupancy'),
@@ -870,6 +877,30 @@
       } else {
         els.total2526.value = '';
       }
+      
+      // Also calculate pre-lease percentages when totals change
+      calculatePreLeasePercentages();
+    }
+
+    // Auto-calculate Pre-Lease % based on Total / Total Beds
+    function calculatePreLeasePercentages() {
+      const total2627 = parseFloat(els.total2627.value) || 0;
+      const total2526 = parseFloat(els.total2526.value) || 0;
+      const totalBeds = parseFloat(els.totalBeds.value) || 0;
+      
+      if (total2627 && totalBeds) {
+        const percentage = (total2627 / totalBeds) * 100;
+        els.preLease2627.value = `(${total2627}/${totalBeds}) = ${percentage.toFixed(1)}%`;
+      } else {
+        els.preLease2627.value = '';
+      }
+      
+      if (total2526 && totalBeds) {
+        const percentage = (total2526 / totalBeds) * 100;
+        els.preLease2526.value = `(${total2526}/${totalBeds}) = ${percentage.toFixed(1)}%`;
+      } else {
+        els.preLease2526.value = '';
+      }
     }
 
     // Calculate last week's date range (Mon-Sun) based on report date
@@ -928,10 +959,15 @@
       saveData();
     });
 
+    // Recalculate pre-lease percentages when total beds changes
+    els.totalBeds.addEventListener('input', () => {
+      calculatePreLeasePercentages();
+      saveData();
+    });
+
     // Auto-save on input
-    [els.emailTo, els.emailCc, els.preLease2627, els.preLease2526, 
-     els.currentOccupancy, els.goal, els.appsStarted, els.appsCompleted,
-     els.totalAppsPending, els.leasesStarted, els.staffingNotes, els.narrative].forEach(el => {
+    [els.emailTo, els.emailCc, els.currentOccupancy, els.goal, els.appsStarted, els.appsCompleted,
+     els.totalAppsPending, els.leasesStarted, els.staffingNotes, els.narrative, els.totalBeds].forEach(el => {
       el.addEventListener('input', saveData);
     });
 
