@@ -141,10 +141,25 @@
           </div>
         </div>
 
-        <!-- Step 1: Leasing Numbers -->
+        <!-- Step 1: Email Recipients & Leasing Numbers -->
         <div class="wizard-step" id="step1" style="display:block">
-          <h3 style="margin:0 0 8px 0; font-size:20px; color:#111827">Leasing Numbers</h3>
-          <p style="color:var(--subtext); margin-bottom:24px">Enter the current occupancy and pre-lease numbers for this week.</p>
+          <h3 style="margin:0 0 8px 0; font-size:20px; color:#111827">Email Recipients & Leasing Numbers</h3>
+          <p style="color:var(--subtext); margin-bottom:24px">Set up email recipients and enter the current occupancy and pre-lease numbers for this week.</p>
+
+          <h4 style="margin:0 0 12px 0; font-size:15px; color:#111827">Email Recipients</h4>
+          
+          <div class="form-group">
+            <label for="emailTo">To: (comma-separated emails)</label>
+            <input type="text" id="emailTo" placeholder="e.g., john@example.com, jane@example.com" />
+            <div style="font-size:12px; color:var(--subtext); margin-top:4px">These emails will be saved for next time</div>
+          </div>
+
+          <div class="form-group">
+            <label for="emailCc">CC: (comma-separated emails, optional)</label>
+            <input type="text" id="emailCc" placeholder="e.g., manager@example.com" />
+          </div>
+
+          <h4 style="margin:24px 0 12px 0; font-size:15px; color:#111827">Leasing Numbers</h4>
 
           <div class="form-group">
             <label for="currentOccupancy">Current Occupancy *</label>
@@ -206,12 +221,13 @@
         <!-- Step 4: Move-Out Report & Res-Life -->
         <div class="wizard-step" id="step4" style="display:none">
           <h3 style="margin:0 0 8px 0; font-size:20px; color:#111827">Additional Reports</h3>
-          <p style="color:var(--subtext); margin-bottom:24px">Add move-out report link and res-life initiatives (optional).</p>
+          <p style="color:var(--subtext); margin-bottom:24px">Add move-out report attachment and res-life initiatives (optional).</p>
 
           <div class="form-group">
-            <label for="moveOutLink">Move-Out Report Link</label>
-            <input type="url" id="moveOutLink" placeholder="https://..." />
-            <div style="font-size:12px; color:var(--subtext); margin-top:4px">Leave blank to show "Click Here" without a link</div>
+            <label for="moveOutFile">Move-Out Report Attachment</label>
+            <input type="file" id="moveOutFile" accept=".pdf,.xlsx,.xls,.doc,.docx" />
+            <div style="font-size:12px; color:var(--subtext); margin-top:4px">Upload the move-out report file (PDF, Excel, or Word)</div>
+            <div id="moveOutFileName" style="font-size:12px; color:#22c55e; margin-top:4px; display:none"></div>
           </div>
 
           <h4 style="margin:24px 0 12px 0; font-size:15px; color:#111827">Res-Life Initiative</h4>
@@ -267,6 +283,8 @@
   <script>
     let currentUser = null;
 
+    let moveOutFileData = null;
+
     const els = {
       bootLoader: document.getElementById('bootLoader'),
       appHeader: document.getElementById('appHeader'),
@@ -277,13 +295,16 @@
       openEmailBtn: document.getElementById('openEmailBtn'),
       previewSection: document.getElementById('previewSection'),
       emailPreview: document.getElementById('emailPreview'),
+      emailTo: document.getElementById('emailTo'),
+      emailCc: document.getElementById('emailCc'),
       currentOccupancy: document.getElementById('currentOccupancy'),
       preLeaseFall: document.getElementById('preLeaseFall'),
       totalRenewalLeases: document.getElementById('totalRenewalLeases'),
       totalNewLeases: document.getElementById('totalNewLeases'),
       reletItem1: document.getElementById('reletItem1'),
       reletItem2: document.getElementById('reletItem2'),
-      moveOutLink: document.getElementById('moveOutLink'),
+      moveOutFile: document.getElementById('moveOutFile'),
+      moveOutFileName: document.getElementById('moveOutFileName'),
       resLifeItem1: document.getElementById('resLifeItem1'),
       resLifeItem2: document.getElementById('resLifeItem2'),
       resLifeItem3: document.getElementById('resLifeItem3'),
@@ -332,7 +353,7 @@
         if (saved) {
           const data = JSON.parse(saved);
           Object.keys(data).forEach(key => {
-            if (els[key]) els[key].value = data[key] || '';
+            if (els[key] && key !== 'moveOutFile') els[key].value = data[key] || '';
           });
         }
       } catch (e) {}
@@ -341,13 +362,14 @@
     function saveData() {
       try {
         const data = {
+          emailTo: els.emailTo.value,
+          emailCc: els.emailCc.value,
           currentOccupancy: els.currentOccupancy.value,
           preLeaseFall: els.preLeaseFall.value,
           totalRenewalLeases: els.totalRenewalLeases.value,
           totalNewLeases: els.totalNewLeases.value,
           reletItem1: els.reletItem1.value,
           reletItem2: els.reletItem2.value,
-          moveOutLink: els.moveOutLink.value,
           resLifeItem1: els.resLifeItem1.value,
           resLifeItem2: els.resLifeItem2.value,
           resLifeItem3: els.resLifeItem3.value,
@@ -495,10 +517,45 @@ www.capstoneemp.com | P. (813) 638-7711`;
     }
 
     function openInEmailClient() {
+      const toEmails = els.emailTo.value.trim();
+      const ccEmails = els.emailCc.value.trim();
       const subject = encodeURIComponent('The Harbour at Occ - Weekly Report');
       const body = encodeURIComponent(generatePlainText());
-      window.location.href = `mailto:?subject=${subject}&body=${body}`;
+      
+      // Build Gmail compose URL
+      let gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`;
+      
+      if (toEmails) {
+        gmailUrl += `&to=${encodeURIComponent(toEmails)}`;
+      }
+      
+      if (ccEmails) {
+        gmailUrl += `&cc=${encodeURIComponent(ccEmails)}`;
+      }
+      
+      // Open Gmail in new tab
+      window.open(gmailUrl, '_blank');
+      
+      // Show reminder about attachment if file was uploaded
+      if (moveOutFileData) {
+        setTimeout(() => {
+          alert('Remember to attach the move-out report file to your email:\n' + moveOutFileData.name);
+        }, 500);
+      }
     }
+
+    // File upload handler
+    els.moveOutFile.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        moveOutFileData = file;
+        els.moveOutFileName.textContent = `✓ File selected: ${file.name}`;
+        els.moveOutFileName.style.display = 'block';
+      } else {
+        moveOutFileData = null;
+        els.moveOutFileName.style.display = 'none';
+      }
+    });
 
     // Event listeners
     els.logoutBtn.addEventListener('click', doLogout);
@@ -507,8 +564,8 @@ www.capstoneemp.com | P. (813) 638-7711`;
     els.openEmailBtn.addEventListener('click', openInEmailClient);
 
     // Auto-save on input
-    [els.currentOccupancy, els.preLeaseFall, els.totalRenewalLeases, els.totalNewLeases,
-     els.reletItem1, els.reletItem2, els.moveOutLink, els.resLifeItem1, 
+    [els.emailTo, els.emailCc, els.currentOccupancy, els.preLeaseFall, els.totalRenewalLeases, els.totalNewLeases,
+     els.reletItem1, els.reletItem2, els.resLifeItem1, 
      els.resLifeItem2, els.resLifeItem3].forEach(el => {
       el.addEventListener('input', saveData);
     });
