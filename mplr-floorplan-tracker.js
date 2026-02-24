@@ -21,22 +21,44 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// Load floor plans from localStorage
-function loadFloorPlans() {
+// Load floor plans from API
+async function loadFloorPlans() {
   if (!currentProperty) {
     floorPlans = [];
     return;
   }
   
+  // Try to load from API
+  if (typeof window.loadMPLRData === 'function') {
+    try {
+      const data = await window.loadMPLRData(currentProperty);
+      floorPlans = data.floorPlans || [];
+      return;
+    } catch (e) {
+      console.error('Failed to load floor plans from API:', e);
+    }
+  }
+  
+  // Fallback to localStorage
   const key = `mplr_floorplans_${currentProperty}`;
   const stored = localStorage.getItem(key);
   floorPlans = stored ? JSON.parse(stored) : [];
 }
 
-// Save floor plans to localStorage
-function saveFloorPlans() {
+// Save floor plans to API
+async function saveFloorPlans() {
   if (!currentProperty) return;
   
+  // Save to API
+  if (typeof window.saveMPLRData === 'function') {
+    try {
+      await window.saveMPLRData(currentProperty, { floorPlans });
+    } catch (e) {
+      console.error('Failed to save floor plans to API:', e);
+    }
+  }
+  
+  // Also save to localStorage as backup
   const key = `mplr_floorplans_${currentProperty}`;
   localStorage.setItem(key, JSON.stringify(floorPlans));
 }

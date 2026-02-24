@@ -62,6 +62,15 @@ function handleClearList() {
   // Clear the array
   leases = [];
   
+  // Delete from API
+  if (typeof window.deleteMPLRData === 'function') {
+    window.deleteMPLRData(currentProperty).then(() => {
+      console.log('MPLR data deleted from server');
+    }).catch(e => {
+      console.error('Failed to delete MPLR data from server:', e);
+    });
+  }
+  
   // Remove from localStorage completely
   const storageKey = `mplr_leases_${currentProperty}`;
   localStorage.removeItem(storageKey);

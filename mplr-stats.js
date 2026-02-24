@@ -1,20 +1,43 @@
 // MPLR Statistics and Property Configuration
 
 // ==================== PROPERTY CONFIG ====================
-function getPropertyTotalBeds() {
+async function getPropertyTotalBeds() {
   if (!currentProperty) return 0;
+  
+  // Try to load from API
+  if (typeof window.loadMPLRData === 'function') {
+    try {
+      const data = await window.loadMPLRData(currentProperty);
+      return data.totalBeds || 0;
+    } catch (e) {
+      console.error('Failed to load total beds from API:', e);
+    }
+  }
+  
+  // Fallback to localStorage
   const key = `mplr_total_beds_${currentProperty}`;
   return parseInt(localStorage.getItem(key)) || 0;
 }
 
-function savePropertyTotalBeds(totalBeds) {
+async function savePropertyTotalBeds(totalBeds) {
   if (!currentProperty) return;
+  
+  // Save to API
+  if (typeof window.saveMPLRData === 'function') {
+    try {
+      await window.saveMPLRData(currentProperty, { totalBeds });
+    } catch (e) {
+      console.error('Failed to save total beds to API:', e);
+    }
+  }
+  
+  // Also save to localStorage as backup
   const key = `mplr_total_beds_${currentProperty}`;
   localStorage.setItem(key, totalBeds.toString());
 }
 
-function loadPropertyConfig() {
-  const totalBeds = getPropertyTotalBeds();
+async function loadPropertyConfig() {
+  const totalBeds = await getPropertyTotalBeds();
   const input = document.getElementById('propertyTotalBeds');
   if (input) input.value = totalBeds || '';
 }

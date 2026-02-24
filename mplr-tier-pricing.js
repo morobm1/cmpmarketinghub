@@ -37,14 +37,27 @@ document.addEventListener('DOMContentLoaded', () => {
   }, 500);
 });
 
-// Load tier pricing from localStorage
-function loadTierPricing() {
+// Load tier pricing from API
+async function loadTierPricing() {
   if (!currentProperty) {
     newLeaseTiers = [];
     renewalTiers = [];
     return;
   }
   
+  // Try to load from API
+  if (typeof window.loadMPLRData === 'function') {
+    try {
+      const data = await window.loadMPLRData(currentProperty);
+      newLeaseTiers = data.newLeaseTiers || [];
+      renewalTiers = data.renewalTiers || [];
+      return;
+    } catch (e) {
+      console.error('Failed to load tier pricing from API:', e);
+    }
+  }
+  
+  // Fallback to localStorage
   const keyNew = `mplr_new_lease_tiers_${currentProperty}`;
   const keyRenewal = `mplr_renewal_tiers_${currentProperty}`;
   
@@ -55,10 +68,23 @@ function loadTierPricing() {
   renewalTiers = storedRenewal ? JSON.parse(storedRenewal) : [];
 }
 
-// Save tier pricing to localStorage
-function saveTierPricing() {
+// Save tier pricing to API
+async function saveTierPricing() {
   if (!currentProperty) return;
   
+  // Save to API
+  if (typeof window.saveMPLRData === 'function') {
+    try {
+      await window.saveMPLRData(currentProperty, { 
+        newLeaseTiers, 
+        renewalTiers 
+      });
+    } catch (e) {
+      console.error('Failed to save tier pricing to API:', e);
+    }
+  }
+  
+  // Also save to localStorage as backup
   const keyNew = `mplr_new_lease_tiers_${currentProperty}`;
   const keyRenewal = `mplr_renewal_tiers_${currentProperty}`;
   

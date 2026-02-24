@@ -733,6 +733,12 @@
     async function setActiveProperty(prop) {
       currentProperty = prop;
       await fetchLeases();
+      
+      // Migrate localStorage data to server if exists
+      if (typeof window.migrateLocalStorageToServer === 'function') {
+        await window.migrateLocalStorageToServer(prop);
+      }
+      
       updateStats();
       updateFilterOptions();
       renderTable();
@@ -741,25 +747,41 @@
     async function fetchLeases() {
       if (!currentProperty) { leases = []; return; }
       
-      // Try to fetch from server, fallback to localStorage
-      try {
-        // TODO: Create API endpoint for MPLR data
-        // For now, use localStorage
+      // Load all MPLR data from API
+      if (typeof window.loadMPLRData === 'function') {
+        try {
+          const data = await window.loadMPLRData(currentProperty);
+          leases = data.leases || [];
+        } catch (e) {
+          console.error('Failed to load MPLR data:', e);
+          leases = [];
+        }
+      } else {
+        // Fallback to localStorage if API not loaded
         const key = `mplr_leases_${currentProperty}`;
         const stored = localStorage.getItem(key);
         leases = stored ? JSON.parse(stored) : [];
-      } catch (e) {
-        leases = [];
       }
     }
 
-    function saveLeases() {
+    async function saveLeases() {
       if (!currentProperty) return;
-      const key = `mplr_leases_${currentProperty}`;
-      try {
-        localStorage.setItem(key, JSON.stringify(leases));
-      } catch (e) {
-        console.error('Failed to save leases', e);
+      
+      // Save to API
+      if (typeof window.saveMPLRData === 'function') {
+        try {
+          await window.saveMPLRData(currentProperty, { leases });
+        } catch (e) {
+          console.error('Failed to save leases:', e);
+        }
+      } else {
+        // Fallback to localStorage
+        const key = `mplr_leases_${currentProperty}`;
+        try {
+          localStorage.setItem(key, JSON.stringify(leases));
+        } catch (e) {
+          console.error('Failed to save leases to localStorage', e);
+        }
       }
     }
 
@@ -1058,6 +1080,8 @@
       console.log('XLSX library loaded successfully');
     }
   </script>
+  <!-- MPLR API Integration - Must load before other MPLR scripts -->
+  <script src="mplr-api.js"></script>
   <script src="mplr-import.js"></script>
   <!-- MPLR Statistics and Property Configuration -->
   <script src="mplr-stats.js"></script>
