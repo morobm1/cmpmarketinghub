@@ -72,6 +72,19 @@
     .email-preview .signature-title{color:#666}
     .email-preview .signature-contact{font-size:12px; color:#666}
 
+    /* Progress Steps */
+    .progress-step{flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; position:relative}
+    .progress-step:not(:last-child)::after{content:''; position:absolute; top:16px; left:50%; width:100%; height:2px; background:#e2e8f0; z-index:-1}
+    .step-number{width:32px; height:32px; border-radius:50%; background:#e2e8f0; color:#64748b; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; transition:all .3s; position:relative; z-index:1}
+    .step-label{font-size:12px; color:#64748b; font-weight:600; text-align:center}
+    .progress-step.active .step-number{background:#52d5ff; color:#0b1b24}
+    .progress-step.active .step-label{color:#111827}
+    .progress-step.completed .step-number{background:#22c55e; color:#fff}
+    .progress-step.completed .step-label{color:#111827}
+
+    .wizard-step{animation:fadeIn .3s ease-in}
+    @keyframes fadeIn{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:translateY(0)}}
+
     .hidden{display:none}
   </style>
 </head>
@@ -99,73 +112,153 @@
     <div class="card">
       <h2>The Harbour at Occ Monday Report Generator</h2>
       <div class="content">
-        <p style="color:var(--subtext); margin-bottom:24px">Fill in the weekly leasing numbers to generate the Monday report email.</p>
-
-        <div class="form-group">
-          <label for="currentOccupancy">Current Occupancy</label>
-          <input type="text" id="currentOccupancy" placeholder="e.g., 95%" />
+        <!-- Progress Indicator -->
+        <div id="progressBar" style="margin-bottom:32px">
+          <div style="display:flex; justify-content:space-between; margin-bottom:12px">
+            <div class="progress-step active" data-step="1">
+              <div class="step-number">1</div>
+              <div class="step-label">Leasing Numbers</div>
+            </div>
+            <div class="progress-step" data-step="2">
+              <div class="step-number">2</div>
+              <div class="step-label">Breakdown</div>
+            </div>
+            <div class="progress-step" data-step="3">
+              <div class="step-number">3</div>
+              <div class="step-label">Relets</div>
+            </div>
+            <div class="progress-step" data-step="4">
+              <div class="step-number">4</div>
+              <div class="step-label">Reports</div>
+            </div>
+            <div class="progress-step" data-step="5">
+              <div class="step-number">5</div>
+              <div class="step-label">Review</div>
+            </div>
+          </div>
+          <div style="height:4px; background:#e2e8f0; border-radius:999px; overflow:hidden">
+            <div id="progressFill" style="height:100%; background:#52d5ff; width:20%; transition:width .3s"></div>
+          </div>
         </div>
 
-        <div class="form-group">
-          <label for="preLeaseFall">Pre-Lease Fall 2026</label>
-          <input type="text" id="preLeaseFall" placeholder="e.g., 45%" />
-        </div>
+        <!-- Step 1: Leasing Numbers -->
+        <div class="wizard-step" id="step1" style="display:block">
+          <h3 style="margin:0 0 8px 0; font-size:20px; color:#111827">Leasing Numbers</h3>
+          <p style="color:var(--subtext); margin-bottom:24px">Enter the current occupancy and pre-lease numbers for this week.</p>
 
-        <h3 style="margin:24px 0 16px 0; font-size:16px; color:#111827">Total Prelease Fall Breakdown</h3>
-        
-        <div class="form-row">
           <div class="form-group">
-            <label for="totalRenewalLeases">Total Renewal Leases</label>
-            <input type="text" id="totalRenewalLeases" placeholder="e.g., X" />
+            <label for="currentOccupancy">Current Occupancy *</label>
+            <input type="text" id="currentOccupancy" placeholder="e.g., 95%" />
+          </div>
+
+          <div class="form-group">
+            <label for="preLeaseFall">Pre-Lease Fall 2026 *</label>
+            <input type="text" id="preLeaseFall" placeholder="e.g., 45%" />
+          </div>
+
+          <div class="button-group">
+            <button class="good" onclick="nextStep(2)">Next: Breakdown →</button>
+          </div>
+        </div>
+
+        <!-- Step 2: Prelease Breakdown -->
+        <div class="wizard-step" id="step2" style="display:none">
+          <h3 style="margin:0 0 8px 0; font-size:20px; color:#111827">Total Prelease Fall Breakdown</h3>
+          <p style="color:var(--subtext); margin-bottom:24px">Break down the total prelease numbers into renewals and new leases.</p>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="totalRenewalLeases">Total Renewal Leases *</label>
+              <input type="text" id="totalRenewalLeases" placeholder="e.g., 150" />
+            </div>
+            <div class="form-group">
+              <label for="totalNewLeases">Total New Leases *</label>
+              <input type="text" id="totalNewLeases" placeholder="e.g., 75" />
+            </div>
+          </div>
+
+          <div class="button-group">
+            <button onclick="prevStep(1)">← Back</button>
+            <button class="good" onclick="nextStep(3)">Next: Relets →</button>
+          </div>
+        </div>
+
+        <!-- Step 3: Relet & Mutual Termination -->
+        <div class="wizard-step" id="step3" style="display:none">
+          <h3 style="margin:0 0 8px 0; font-size:20px; color:#111827">Relet & Mutual Termination</h3>
+          <p style="color:var(--subtext); margin-bottom:24px">Add any relet or mutual termination details (optional).</p>
+
+          <div class="form-group">
+            <label for="reletItem1">Relet/Termination Item 1</label>
+            <input type="text" id="reletItem1" placeholder="e.g., Unit 204 - Relet for Fall 2026" />
           </div>
           <div class="form-group">
-            <label for="totalNewLeases">Total New Leases</label>
-            <input type="text" id="totalNewLeases" placeholder="e.g., X" />
+            <label for="reletItem2">Relet/Termination Item 2</label>
+            <input type="text" id="reletItem2" placeholder="e.g., Unit 315 - Mutual termination" />
+          </div>
+
+          <div class="button-group">
+            <button onclick="prevStep(2)">← Back</button>
+            <button class="good" onclick="nextStep(4)">Next: Reports →</button>
           </div>
         </div>
 
-        <h3 style="margin:24px 0 16px 0; font-size:16px; color:#111827">Relet & Mutual Termination</h3>
-        
-        <div class="form-group">
-          <label for="reletItem1">Relet/Termination Item 1 (optional)</label>
-          <input type="text" id="reletItem1" placeholder="e.g., Unit details or leave blank" />
-        </div>
-        <div class="form-group">
-          <label for="reletItem2">Relet/Termination Item 2 (optional)</label>
-          <input type="text" id="reletItem2" placeholder="e.g., Unit details or leave blank" />
+        <!-- Step 4: Move-Out Report & Res-Life -->
+        <div class="wizard-step" id="step4" style="display:none">
+          <h3 style="margin:0 0 8px 0; font-size:20px; color:#111827">Additional Reports</h3>
+          <p style="color:var(--subtext); margin-bottom:24px">Add move-out report link and res-life initiatives (optional).</p>
+
+          <div class="form-group">
+            <label for="moveOutLink">Move-Out Report Link</label>
+            <input type="url" id="moveOutLink" placeholder="https://..." />
+            <div style="font-size:12px; color:var(--subtext); margin-top:4px">Leave blank to show "Click Here" without a link</div>
+          </div>
+
+          <h4 style="margin:24px 0 12px 0; font-size:15px; color:#111827">Res-Life Initiative</h4>
+          
+          <div class="form-group">
+            <label for="resLifeItem1">Initiative Item 1</label>
+            <input type="text" id="resLifeItem1" placeholder="e.g., Game Night - Thursday 7pm" />
+          </div>
+          <div class="form-group">
+            <label for="resLifeItem2">Initiative Item 2</label>
+            <input type="text" id="resLifeItem2" placeholder="e.g., Study Session - Tuesday 6pm" />
+          </div>
+          <div class="form-group">
+            <label for="resLifeItem3">Initiative Item 3</label>
+            <input type="text" id="resLifeItem3" placeholder="e.g., Community BBQ - Saturday 5pm" />
+          </div>
+
+          <div class="button-group">
+            <button onclick="prevStep(3)">← Back</button>
+            <button class="good" onclick="nextStep(5)">Review & Generate →</button>
+          </div>
         </div>
 
-        <h3 style="margin:24px 0 16px 0; font-size:16px; color:#111827">Move-Out Report</h3>
-        
-        <div class="form-group">
-          <label for="moveOutLink">Move-Out Report Link (optional)</label>
-          <input type="url" id="moveOutLink" placeholder="https://..." />
+        <!-- Step 5: Review & Generate -->
+        <div class="wizard-step" id="step5" style="display:none">
+          <h3 style="margin:0 0 8px 0; font-size:20px; color:#111827">Review & Generate</h3>
+          <p style="color:var(--subtext); margin-bottom:24px">Review your information and generate the email report.</p>
+
+          <div id="reviewSummary" style="background:#f8fafc; border:1px solid var(--border); border-radius:8px; padding:20px; margin-bottom:24px">
+            <!-- Summary will be populated by JavaScript -->
+          </div>
+
+          <div class="button-group">
+            <button onclick="prevStep(4)">← Back to Edit</button>
+            <button class="good" id="generateBtn">Generate Email</button>
+          </div>
         </div>
 
-        <h3 style="margin:24px 0 16px 0; font-size:16px; color:#111827">Res-Life Initiative</h3>
-        
-        <div class="form-group">
-          <label for="resLifeItem1">Initiative Item 1 (optional)</label>
-          <input type="text" id="resLifeItem1" placeholder="e.g., Event or activity" />
-        </div>
-        <div class="form-group">
-          <label for="resLifeItem2">Initiative Item 2 (optional)</label>
-          <input type="text" id="resLifeItem2" placeholder="e.g., Event or activity" />
-        </div>
-        <div class="form-group">
-          <label for="resLifeItem3">Initiative Item 3 (optional)</label>
-          <input type="text" id="resLifeItem3" placeholder="e.g., Event or activity" />
-        </div>
-
-        <div class="button-group">
-          <button class="good" id="generateBtn">Generate Email</button>
-          <button id="copyBtn" style="display:none">Copy to Clipboard</button>
-          <button id="openEmailBtn" style="display:none">Open in Email Client</button>
-        </div>
-
+        <!-- Email Preview (shown after generation) -->
         <div class="preview-section" id="previewSection" style="display:none">
           <h3>Email Preview</h3>
           <div class="email-preview" id="emailPreview"></div>
+          <div class="button-group" style="margin-top:20px">
+            <button id="copyBtn">Copy to Clipboard</button>
+            <button id="openEmailBtn">Open in Email Client</button>
+            <button onclick="resetWizard()">Start New Report</button>
+          </div>
         </div>
       </div>
     </div>
@@ -419,6 +512,153 @@ www.capstoneemp.com | P. (813) 638-7711`;
      els.resLifeItem2, els.resLifeItem3].forEach(el => {
       el.addEventListener('input', saveData);
     });
+
+    // Wizard Navigation
+    function nextStep(step) {
+      saveData();
+      // Hide all steps
+      document.querySelectorAll('.wizard-step').forEach(s => s.style.display = 'none');
+      // Show target step
+      document.getElementById('step' + step).style.display = 'block';
+      // Update progress
+      updateProgress(step);
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      
+      // If going to review step, populate summary
+      if (step === 5) {
+        populateReviewSummary();
+      }
+    }
+
+    function prevStep(step) {
+      // Hide all steps
+      document.querySelectorAll('.wizard-step').forEach(s => s.style.display = 'none');
+      // Show target step
+      document.getElementById('step' + step).style.display = 'block';
+      // Update progress
+      updateProgress(step);
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function updateProgress(currentStep) {
+      // Update progress bar fill
+      const progressFill = document.getElementById('progressFill');
+      const percentage = (currentStep / 5) * 100;
+      progressFill.style.width = percentage + '%';
+      
+      // Update step indicators
+      document.querySelectorAll('.progress-step').forEach(step => {
+        const stepNum = parseInt(step.dataset.step);
+        step.classList.remove('active', 'completed');
+        
+        if (stepNum === currentStep) {
+          step.classList.add('active');
+        } else if (stepNum < currentStep) {
+          step.classList.add('completed');
+        }
+      });
+    }
+
+    function populateReviewSummary() {
+      const summary = document.getElementById('reviewSummary');
+      
+      const currentOccupancy = els.currentOccupancy.value || '<em style="color:#ef4444">Not provided</em>';
+      const preLeaseFall = els.preLeaseFall.value || '<em style="color:#ef4444">Not provided</em>';
+      const totalRenewalLeases = els.totalRenewalLeases.value || '<em style="color:#ef4444">Not provided</em>';
+      const totalNewLeases = els.totalNewLeases.value || '<em style="color:#ef4444">Not provided</em>';
+      const reletItem1 = els.reletItem1.value || '<em style="color:#64748b">None</em>';
+      const reletItem2 = els.reletItem2.value || '<em style="color:#64748b">None</em>';
+      const moveOutLink = els.moveOutLink.value || '<em style="color:#64748b">None</em>';
+      const resLifeItem1 = els.resLifeItem1.value || '<em style="color:#64748b">None</em>';
+      const resLifeItem2 = els.resLifeItem2.value || '<em style="color:#64748b">None</em>';
+      const resLifeItem3 = els.resLifeItem3.value || '<em style="color:#64748b">None</em>';
+      
+      summary.innerHTML = `
+        <div style="margin-bottom:20px">
+          <h4 style="margin:0 0 12px 0; font-size:15px; color:#111827; font-weight:700">Leasing Numbers</h4>
+          <div style="display:grid; gap:8px">
+            <div style="display:flex; justify-content:space-between">
+              <span style="color:#64748b">Current Occupancy:</span>
+              <strong>${currentOccupancy}</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between">
+              <span style="color:#64748b">Pre-Lease Fall 2026:</span>
+              <strong>${preLeaseFall}</strong>
+            </div>
+          </div>
+        </div>
+        
+        <div style="margin-bottom:20px">
+          <h4 style="margin:0 0 12px 0; font-size:15px; color:#111827; font-weight:700">Prelease Breakdown</h4>
+          <div style="display:grid; gap:8px">
+            <div style="display:flex; justify-content:space-between">
+              <span style="color:#64748b">Total Renewal Leases:</span>
+              <strong>${totalRenewalLeases}</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between">
+              <span style="color:#64748b">Total New Leases:</span>
+              <strong>${totalNewLeases}</strong>
+            </div>
+          </div>
+        </div>
+        
+        <div style="margin-bottom:20px">
+          <h4 style="margin:0 0 12px 0; font-size:15px; color:#111827; font-weight:700">Relet & Mutual Termination</h4>
+          <div style="display:grid; gap:8px">
+            <div style="display:flex; justify-content:space-between; align-items:start">
+              <span style="color:#64748b">Item 1:</span>
+              <span style="text-align:right; max-width:60%">${reletItem1}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:start">
+              <span style="color:#64748b">Item 2:</span>
+              <span style="text-align:right; max-width:60%">${reletItem2}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div style="margin-bottom:20px">
+          <h4 style="margin:0 0 12px 0; font-size:15px; color:#111827; font-weight:700">Additional Reports</h4>
+          <div style="display:grid; gap:8px">
+            <div style="display:flex; justify-content:space-between; align-items:start">
+              <span style="color:#64748b">Move-Out Link:</span>
+              <span style="text-align:right; max-width:60%; word-break:break-all">${moveOutLink}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div>
+          <h4 style="margin:0 0 12px 0; font-size:15px; color:#111827; font-weight:700">Res-Life Initiative</h4>
+          <div style="display:grid; gap:8px">
+            <div style="display:flex; justify-content:space-between; align-items:start">
+              <span style="color:#64748b">Item 1:</span>
+              <span style="text-align:right; max-width:60%">${resLifeItem1}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:start">
+              <span style="color:#64748b">Item 2:</span>
+              <span style="text-align:right; max-width:60%">${resLifeItem2}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:start">
+              <span style="color:#64748b">Item 3:</span>
+              <span style="text-align:right; max-width:60%">${resLifeItem3}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function resetWizard() {
+      // Hide preview
+      els.previewSection.style.display = 'none';
+      // Show step 1
+      document.querySelectorAll('.wizard-step').forEach(s => s.style.display = 'none');
+      document.getElementById('step1').style.display = 'block';
+      // Reset progress
+      updateProgress(1);
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 
     // Initialize
     (async () => {
