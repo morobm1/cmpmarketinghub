@@ -56,17 +56,30 @@ function handleFileSelect(e) {
 }
 
 function parseImportData(jsonData) {
-  return jsonData.map(row => {
+  return jsonData.map((row, index) => {
     // Helper function to get value from row with flexible key matching
     const getRowValue = (keys) => {
       for (let key of keys) {
         // Try exact match first
-        if (row[key] !== undefined) return row[key];
-        // Try trimmed keys
+        if (row[key] !== undefined && row[key] !== null && row[key] !== '') {
+          return row[key];
+        }
+        // Try trimmed keys (handles extra spaces in column names)
         const trimmedKey = Object.keys(row).find(k => k.trim() === key.trim());
-        if (trimmedKey && row[trimmedKey] !== undefined) return row[trimmedKey];
+        if (trimmedKey && row[trimmedKey] !== undefined && row[trimmedKey] !== null && row[trimmedKey] !== '') {
+          return row[trimmedKey];
+        }
       }
       return '';
+    };
+    
+    // Helper function to parse currency values
+    const parseCurrency = (value) => {
+      if (!value) return 0;
+      // Convert to string and remove $, commas, and spaces
+      const cleaned = String(value).replace(/[$,\s]/g, '').trim();
+      const parsed = parseFloat(cleaned);
+      return isNaN(parsed) ? 0 : parsed;
     };
     
     const approvedDate = parseExcelDate(getRowValue(['Approved Date']));
@@ -75,7 +88,7 @@ function parseImportData(jsonData) {
     
     const floorPlan = String(getRowValue(['Apt/Bed', 'Floor Plan'])).trim();
     
-    // Map lease type codes to full names
+    // Get lease type and map codes to full names
     let leaseTypeRaw = String(getRowValue(['Lease Type'])).trim().toUpperCase();
     let leaseType = leaseTypeRaw;
     
@@ -88,6 +101,23 @@ function parseImportData(jsonData) {
       leaseType = 'Renewal Transfer';
     }
     
+    // Parse all monetary values
+    const monthlyRent = parseCurrency(getRowValue(['Monthly Base Rent', 'Monthly Rent']));
+    const monthlyUtilities = parseCurrency(getRowValue(['Monthly Parking Fee', 'Monthly Utilities']));
+    const liabilityInsurance = parseCurrency(getRowValue(['Liability Insurance Premium', 'Liability Insurance']));
+    const securityDeposit = parseCurrency(getRowValue(['Security Deposit']));
+    const upfrontRent = parseCurrency(getRowValue(['Upfront Rent']));
+    
+    // Debug log for first row
+    if (index === 0) {
+      console.log('First row parsing details:');
+      console.log('  Lease Type Raw:', leaseTypeRaw, '→ Mapped:', leaseType);
+      console.log('  Monthly Rent:', monthlyRent);
+      console.log('  Monthly Utilities:', monthlyUtilities);
+      console.log('  Liability Insurance:', liabilityInsurance);
+      console.log('  Security Deposit:', securityDeposit);
+    }
+    
     return {
       approvedDate,
       unitType: String(getRowValue(['Unit Type'])).trim(),
@@ -98,13 +128,14 @@ function parseImportData(jsonData) {
       leaseStart,
       leaseEnd,
       leasingAgent: String(getRowValue(['Leasing Agent'])).trim(),
-      upfrontRent: parseFloat(String(getRowValue(['Upfront Rent'])).replace(/[$,\s]/g, '')) || 0,
-      monthlyRent: parseFloat(String(getRowValue(['Monthly Base Rent', 'Monthly Rent'])).replace(/[$,\s]/g, '')) || 0,
-      monthlyUtilities: parseFloat(String(getRowValue(['Monthly Parking Fee', 'Monthly Utilities'])).replace(/[$,\s]/g, '')) || 0,
-      liabilityInsurance: parseFloat(String(getRowValue(['Liability Insurance Premium', 'Liability Insurance'])).replace(/[$,\s]/g, '')) || 0,
-      securityDeposit: parseFloat(String(getRowValue(['Security Deposit'])).replace(/[$,\s]/g, '')) || 0
+      upfrontRent,
+      monthlyRent,
+      monthlyUtilities,
+      liabilityInsurance,
+      securityDeposit
     };
   }).filter(row => {
+    // Only include rows with required data
     return row.firstName && row.lastName && row.floorPlan;
   });
 }
