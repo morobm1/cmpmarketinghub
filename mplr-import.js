@@ -74,7 +74,19 @@ function parseImportData(jsonData) {
     const leaseEnd = parseExcelDate(getRowValue(['Lease End']));
     
     const floorPlan = String(getRowValue(['Apt/Bed', 'Floor Plan'])).trim();
-    const leaseType = String(getRowValue(['Lease Type'])).trim();
+    
+    // Map lease type codes to full names
+    let leaseTypeRaw = String(getRowValue(['Lease Type'])).trim().toUpperCase();
+    let leaseType = leaseTypeRaw;
+    
+    // Convert codes to full names
+    if (leaseTypeRaw === 'N') {
+      leaseType = 'New Lease';
+    } else if (leaseTypeRaw === 'R') {
+      leaseType = 'Renewal';
+    } else if (leaseTypeRaw === 'RT' || leaseTypeRaw === 'R/T') {
+      leaseType = 'Renewal Transfer';
+    }
     
     return {
       approvedDate,
