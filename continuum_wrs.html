@@ -174,7 +174,12 @@
           <h3 style="margin:0 0 8px 0; font-size:20px; color:#111827">Leasing Numbers</h3>
           <p style="color:var(--subtext); margin-bottom:24px">Enter the leasing data for the report.</p>
 
-          <h4 style="margin:0 0 12px 0; font-size:15px; color:#111827">Renewals Table</h4>
+          <div class="form-group">
+            <label for="narrative">Last Week's Leasing Narrative *</label>
+            <textarea id="narrative" placeholder="Enter the narrative for last week's leasing performance..." style="min-height:120px"></textarea>
+          </div>
+
+          <h4 style="margin:24px 0 12px 0; font-size:15px; color:#111827">Renewals Table</h4>
           <div class="form-row">
             <div class="form-group">
               <label for="renewals2627">26-27 Renewals</label>
@@ -367,6 +372,7 @@
       reportDate: document.getElementById('reportDate'),
       emailTo: document.getElementById('emailTo'),
       emailCc: document.getElementById('emailCc'),
+      narrative: document.getElementById('narrative'),
       renewals2627: document.getElementById('renewals2627'),
       renewals2526: document.getElementById('renewals2526'),
       newLeases2627: document.getElementById('newLeases2627'),
@@ -661,8 +667,30 @@
       }
     }
 
+    // Helper function to calculate difference
+    function calculateDiff(val2627, val2526) {
+      // Try to parse as numbers
+      const num2627 = parseFloat(val2627);
+      const num2526 = parseFloat(val2526);
+      
+      if (!isNaN(num2627) && !isNaN(num2526)) {
+        const diff = num2627 - num2526;
+        return diff >= 0 ? `+${diff}` : `${diff}`;
+      }
+      
+      // If not numbers, return the formula
+      return `${val2627 || 'X'} - ${val2526 || 'A'}`;
+    }
+
     function generateEmailHTML() {
       const reportDate = els.reportDate.value ? new Date(els.reportDate.value + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '[Date]';
+      const narrative = els.narrative.value || '[Narrative]';
+
+      // Calculate differences for the table
+      const renewalsDiff = calculateDiff(els.renewals2627.value, els.renewals2526.value);
+      const newLeasesDiff = calculateDiff(els.newLeases2627.value, els.newLeases2526.value);
+      const totalDiff = calculateDiff(els.total2627.value, els.total2526.value);
+      const preLeaseDiff = calculateDiff(els.preLease2627.value, els.preLease2526.value);
 
       let marketingList = '';
       if (marketingEfforts.length > 0) {
@@ -704,7 +732,7 @@
 
 <p>Last Week's Leasing Narrative:</p>
 
-<p><strong>[Narrative]</strong></p>
+<p><strong>${narrative}</strong></p>
 
 <table>
   <tr>
@@ -717,25 +745,25 @@
     <td><strong>Renewals</strong></td>
     <td>${els.renewals2627.value || 'X'}</td>
     <td>${els.renewals2526.value || 'A'}</td>
-    <td>-X%</td>
+    <td>${renewalsDiff}</td>
   </tr>
   <tr>
     <td><strong>New Leases</strong></td>
     <td>${els.newLeases2627.value || 'Y'}</td>
     <td>${els.newLeases2526.value || 'B'}</td>
-    <td>-Y%</td>
+    <td>${newLeasesDiff}</td>
   </tr>
   <tr>
     <td><strong>Total</strong></td>
     <td>${els.total2627.value || 'X+Y'}</td>
     <td>${els.total2526.value || 'A+B'}</td>
-    <td>(X+Y) - (A+B)</td>
+    <td>${totalDiff}</td>
   </tr>
   <tr>
     <td><strong>Pre-Lease %</strong></td>
     <td>${els.preLease2627.value || '(XX/YYY)% = T%'}</td>
     <td>${els.preLease2526.value || '(XX/YYY)% = G%'}</td>
-    <td>T% - G% = P%</td>
+    <td>${preLeaseDiff}</td>
   </tr>
 </table>
 
