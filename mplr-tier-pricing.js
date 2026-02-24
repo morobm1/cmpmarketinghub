@@ -307,11 +307,14 @@ function renderTierCategory(title, tiers, leases, category, matchedTypes) {
     `;
   }
   
-  // Count leases by unit type
+  // Count leases by unit type AND rate (monthly base rent)
+  // Key format: "unitType|rate"
   const leaseCounts = {};
   leases.forEach(lease => {
     const unitType = lease.unitType || '';
-    leaseCounts[unitType] = (leaseCounts[unitType] || 0) + 1;
+    const monthlyRent = parseFloat(lease.monthlyRent) || 0;
+    const key = `${unitType}|${monthlyRent}`;
+    leaseCounts[key] = (leaseCounts[key] || 0) + 1;
   });
   
   // Sort tiers by name (Tier 1, Tier 2, Tier 3, Tier 4)
@@ -327,7 +330,9 @@ function renderTierCategory(title, tiers, leases, category, matchedTypes) {
     let tierCap = 0;
     
     const unitTypesHTML = tier.unitTypes.map(ut => {
-      const count = leaseCounts[ut.type] || 0;
+      // Match by unit type AND rate (monthly base rent)
+      const key = `${ut.type}|${ut.rate}`;
+      const count = leaseCounts[key] || 0;
       tierTotal += count;
       tierCap += ut.cap;
       
