@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Custom Tools • Marketing Hub</title>
+  <link rel="preconnect" href="https://use.typekit.net" crossorigin>
+  <link rel="preconnect" href="https://p.typekit.net" crossorigin>
+  <link rel="stylesheet" href="https://use.typekit.net/hqv8hwr.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --brand-primary:#446472;
+      --brand-accent:#ffb732;
+      --brand-accent-2:#52d5ff;
+      --brand-gray:#929497;
+      --page-bg:#f8fafc;
+      --bg:#ffffff;
+      --panel:#ffffff;
+      --muted:#ffffff;
+      --text:#1e293b;
+      --subtext:#64748b;
+      --accent:var(--brand-accent-2);
+      --accent-2:var(--brand-accent);
+      --good:#22c55e;
+      --warn:#ffb732;
+      --bad:#ef4444;
+      --border:#e2e8f0;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{font-family:'Open Sans',system-ui,-apple-system,sans-serif; background:var(--page-bg); color:var(--text);font-size:14px;line-height:1.5}
+
+    /* Header */
+    header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:10px}
+    .brand .logo-img{height:28px;width:auto}
+    .brand .title{color:#ffb732;font-family:zooja-pro,Arial,sans-serif;font-size:clamp(32px,4vw,48px);line-height:1}
+    .header-controls{display:flex;align-items:center;gap:12px;margin-left:auto}
+    .header-btn{background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;transition:all .15s}
+    .header-btn:hover{background:#f8fafc;border-color:#cbd5e1}
+    .company-name{font-size:12px;color:var(--subtext);font-weight:500}
+
+    /* Navigation */
+    .nav-bar{background:#fff;border-bottom:1px solid var(--border)}
+    .nav-wrap{max-width:1400px;margin:0 auto;padding:0 24px;display:flex;gap:2px;overflow-x:auto}
+    .nav-tab{display:flex;align-items:center;gap:6px;padding:14px 16px;color:var(--subtext);text-decoration:none;font-size:13px;font-weight:600;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap}
+    .nav-tab:hover{color:var(--text);background:#f8fafc}
+    .nav-tab.active{color:var(--brand-primary);border-bottom-color:var(--brand-primary)}
+
+    .container{padding:24px; max-width:1200px; margin:0 auto}
+    .card{background:#ffffff; border:1px solid var(--border); border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,0.06); overflow:hidden; margin-bottom:20px}
+    .card h2{margin:0; padding:20px 24px; font-size:18px; color:#111827; font-weight:700; border-bottom:1px solid var(--border)}
+    .card .content{padding:24px}
+
+    .empty-state{text-align:center; padding:60px 20px; color:var(--subtext)}
+    .empty-state h3{font-size:20px; margin-bottom:12px; color:var(--text)}
+    .empty-state p{margin-bottom:24px}
+
+    .tools-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:16px}
+    .tool-card{border:1px solid var(--border); border-radius:12px; padding:20px; background:#fff; transition:all .2s; cursor:pointer; position:relative}
+    .tool-card:hover{box-shadow:0 4px 12px rgba(0,0,0,0.08); transform:translateY(-2px)}
+    .tool-card.disabled{opacity:0.5; cursor:not-allowed}
+    .tool-card.disabled:hover{transform:none; box-shadow:none}
+    .tool-header{display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:12px}
+    .tool-name{font-size:16px; font-weight:700; color:var(--text); margin:0}
+    .tool-actions{display:flex; gap:8px}
+    .tool-btn{background:transparent; border:none; padding:4px 8px; cursor:pointer; color:var(--subtext); font-size:12px; border-radius:4px; transition:all .15s}
+    .tool-btn:hover{background:var(--border); color:var(--text)}
+    .tool-description{font-size:13px; color:var(--subtext); margin-bottom:12px; line-height:1.6}
+    .tool-url{font-size:12px; color:var(--brand-accent-2); word-break:break-all}
+    .tool-status{position:absolute; top:12px; right:12px; padding:4px 10px; border-radius:999px; font-size:11px; font-weight:600}
+    .tool-status.enabled{background:#d1fae5; color:#065f46}
+    .tool-status.disabled{background:#fee2e2; color:#991b1b}
+
+    button{padding:10px 20px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--text); font-size:14px; font-weight:600; cursor:pointer; transition:all .15s; font-family: Roboto, Arial, sans-serif}
+    button:hover{background:#f8fafc}
+    button.primary{background:var(--brand-primary); color:#fff; border-color:var(--brand-primary)}
+    button.primary:hover{background:#3b5561}
+    button.good{background:#52d5ff; color:#0b1b24; border-color:#52d5ff}
+    button.good:hover{background:#3ecbf5}
+    button.warn{background:#ffb732; color:#1f1300; border-color:#ffb732}
+    button.warn:hover{background:#f5a623}
+
+    label{font-size:13px; color:var(--text); display:block; margin-bottom:6px; font-weight:600}
+    input, textarea{width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--text); font-size:14px; transition:border-color .15s, box-shadow .15s; font-family:'Open Sans',system-ui,sans-serif}
+    input:focus, textarea:focus{outline:none; border-color:var(--brand-accent-2); box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
+    textarea{min-height:80px; resize:vertical}
+    .form-group{margin-bottom:16px}
+    .form-actions{display:flex; gap:12px; justify-content:flex-end; margin-top:24px}
+
+    .toggle-switch{position:relative; display:inline-block; width:48px; height:24px}
+    .toggle-switch input{opacity:0; width:0; height:0}
+    .toggle-slider{position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:#cbd5e1; border-radius:24px; transition:.3s}
+    .toggle-slider:before{position:absolute; content:""; height:18px; width:18px; left:3px; bottom:3px; background:white; border-radius:50%; transition:.3s}
+    input:checked + .toggle-slider{background:#52d5ff}
+    input:checked + .toggle-slider:before{transform:translateX(24px)}
+
+    /* Modal */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+    .modal-backdrop.show{display:flex}
+    .modal{background:#fff;border:1px solid var(--border);border-radius:14px;max-width:560px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 20px 40px rgba(0,0,0,0.15)}
+    .modal-header{padding:20px 24px;border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between}
+    .modal-header h3{margin:0;font-size:18px;color:var(--text);font-weight:700}
+    .modal-body{padding:24px}
+    .close-btn{background:transparent; border:none; font-size:24px; color:var(--subtext); cursor:pointer; padding:0; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:6px}
+    .close-btn:hover{background:var(--border); color:var(--text)}
+
+    .hidden{display:none}
+  </style>
+</head>
+<body>
+  <div id="bootLoader" style="position:fixed;inset:0;background:#ffffff;display:flex;align-items:center;justify-content:center;z-index:100;color:#111827;font-family:Roboto,Arial,sans-serif">
+    <div style="display:flex;flex-direction:column;gap:6px;align-items:center">
+      <div style="font-weight:800">Marketing Hub</div>
+      <div style="color:#6b7280; font-size:12px">Loading…</div>
+    </div>
+  </div>
+
+  <header id="appHeader" style="display:none">
+    <div class="brand">
+      <img src="logo-main.svg" class="logo-img" alt="Capstone" />
+      <div class="title">Marketing Hub</div>
+    </div>
+    <div class="header-controls">
+      <button class="header-btn" id="logoutBtn">Sign Out</button>
+    </div>
+    <span class="company-name">Capstone Management Partners</span>
+  </header>
+
+  <nav class="nav-bar" id="mainNav" style="display:none">
+    <div class="nav-wrap">
+      <a href="mmp_calendar_app.html" class="nav-tab">Marketing Calendar</a>
+      <a href="marketing_plans.html" class="nav-tab">Marketing Plans</a>
+      <a href="marketing_contacts.html" class="nav-tab">Marketing Contacts</a>
+      <a href="promo_order_tracker.html" class="nav-tab">Promo Order Tracker</a>
+      <a href="renewal_campaign.html" class="nav-tab">Renewal Campaign</a>
+      <a href="velocity_tracker.html" class="nav-tab">Velocity Tracker</a>
+      <a href="uniform_shop.html" class="nav-tab">Uniform Shop</a>
+      <a href="creative_library.html" class="nav-tab">Creative Library</a>
+      <a href="custom_tools.html" class="nav-tab active">Custom Tools</a>
+    </div>
+  </nav>
+
+  <div class="container" id="appContainer" style="display:none">
+    <div class="card">
+      <h2>My Custom Tools</h2>
+      <div class="content">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px">
+          <p style="color:var(--subtext); margin:0">Create and manage your personal toolbox of custom pages and reports.</p>
+          <button class="good" id="addToolBtn">+ Add Tool</button>
+        </div>
+
+        <div id="toolsContainer">
+          <div class="empty-state" id="emptyState">
+            <h3>No Custom Tools Yet</h3>
+            <p>Add your first custom tool to get started. These tools are private to your account.</p>
+          </div>
+          <div class="tools-grid" id="toolsGrid" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Tool Modal -->
+  <div class="modal-backdrop" id="toolModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalTitle">Add Custom Tool</h3>
+        <button class="close-btn" id="closeModalBtn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="toolForm">
+          <div class="form-group">
+            <label for="toolName">Tool Name *</label>
+            <input type="text" id="toolName" placeholder="e.g., The Harbour at Occ Monday Report" required />
+          </div>
+          <div class="form-group">
+            <label for="toolUrl">Tool URL *</label>
+            <input type="url" id="toolUrl" placeholder="https://example.com/my-tool" required />
+          </div>
+          <div class="form-group">
+            <label for="toolDescription">Description (optional)</label>
+            <textarea id="toolDescription" placeholder="Brief description of what this tool does..."></textarea>
+          </div>
+          <div class="form-group">
+            <label style="display:flex; align-items:center; gap:12px; cursor:pointer">
+              <span>Enabled</span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="toolEnabled" checked />
+                <span class="toggle-slider"></span>
+              </label>
+            </label>
+          </div>
+          <div class="form-actions">
+            <button type="button" id="cancelBtn">Cancel</button>
+            <button type="submit" class="primary" id="saveToolBtn">Save Tool</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentUser = null;
+    let tools = [];
+    let editingToolId = null;
+
+    const els = {
+      bootLoader: document.getElementById('bootLoader'),
+      appHeader: document.getElementById('appHeader'),
+      mainNav: document.getElementById('mainNav'),
+      appContainer: document.getElementById('appContainer'),
+      logoutBtn: document.getElementById('logoutBtn'),
+      addToolBtn: document.getElementById('addToolBtn'),
+      toolsGrid: document.getElementById('toolsGrid'),
+      emptyState: document.getElementById('emptyState'),
+      toolModal: document.getElementById('toolModal'),
+      modalTitle: document.getElementById('modalTitle'),
+      closeModalBtn: document.getElementById('closeModalBtn'),
+      toolForm: document.getElementById('toolForm'),
+      toolName: document.getElementById('toolName'),
+      toolUrl: document.getElementById('toolUrl'),
+      toolDescription: document.getElementById('toolDescription'),
+      toolEnabled: document.getElementById('toolEnabled'),
+      cancelBtn: document.getElementById('cancelBtn'),
+      saveToolBtn: document.getElementById('saveToolBtn'),
+    };
+
+    // Activate current nav tab
+    (function(){
+      const nav = document.getElementById('mainNav');
+      if (!nav) return;
+      const path = (location.pathname || '').toLowerCase();
+      nav.querySelectorAll('.nav-tab').forEach(a => {
+        const href = (a.getAttribute('href') || '').toLowerCase();
+        if (href && (path.endsWith(href) || path.endsWith('/' + href))) a.classList.add('active');
+      });
+    })();
+
+    async function apiFetch(path, opts = {}) {
+      const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+      const res = await fetch('/api' + path, Object.assign({}, opts, { headers, credentials: 'include' }));
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || ('HTTP ' + res.status));
+      }
+      return res;
+    }
+
+    async function initAuth() {
+      try {
+        const meRes = await fetch('/api/me', { credentials: 'include' });
+        if (meRes.ok) {
+          const me = await meRes.json();
+          currentUser = { username: me.username, role: me.role, properties: me.properties };
+          
+          // Only admins can access custom tools
+          if (currentUser.role !== 'admin') {
+            alert('Access Denied: Custom Tools are only available to admin users.');
+            window.location.href = 'mmp_calendar_app.html';
+            return false;
+          }
+
+          showApp();
+          await loadTools();
+          return true;
+        }
+      } catch (e) {
+        console.error('Auth error:', e);
+      }
+      window.location.href = 'index.html';
+      return false;
+    }
+
+    function showApp() {
+      els.bootLoader.style.display = 'none';
+      els.appHeader.style.display = '';
+      els.mainNav.style.display = '';
+      els.appContainer.style.display = '';
+    }
+
+    async function doLogout() {
+      try {
+        await fetch('/api/auth-logout', { method: 'POST', credentials: 'include' });
+      } catch (e) {}
+      window.location.href = 'index.html';
+    }
+
+    async function loadTools() {
+      try {
+        const res = await apiFetch('/custom-tools');
+        tools = await res.json();
+        renderTools();
+      } catch (err) {
+        console.error('Failed to load tools:', err);
+        alert('Failed to load custom tools: ' + err.message);
+      }
+    }
+
+    function renderTools() {
+      if (tools.length === 0) {
+        els.emptyState.style.display = '';
+        els.toolsGrid.style.display = 'none';
+        return;
+      }
+
+      els.emptyState.style.display = 'none';
+      els.toolsGrid.style.display = '';
+
+      els.toolsGrid.innerHTML = tools.map(tool => {
+        const statusClass = tool.enabled ? 'enabled' : 'disabled';
+        const statusText = tool.enabled ? 'Enabled' : 'Disabled';
+        const cardClass = tool.enabled ? '' : 'disabled';
+
+        return `
+          <div class="tool-card ${cardClass}" data-id="${tool._id}" data-enabled="${tool.enabled}">
+            <div class="tool-status ${statusClass}">${statusText}</div>
+            <div class="tool-header">
+              <h3 class="tool-name">${escapeHtml(tool.name)}</h3>
+            </div>
+            ${tool.description ? `<p class="tool-description">${escapeHtml(tool.description)}</p>` : ''}
+            <div class="tool-url">${escapeHtml(tool.url)}</div>
+            <div style="margin-top:16px; display:flex; gap:8px; justify-content:flex-end">
+              <button class="tool-btn edit-btn" data-id="${tool._id}">Edit</button>
+              <button class="tool-btn toggle-btn" data-id="${tool._id}">${tool.enabled ? 'Disable' : 'Enable'}</button>
+              <button class="tool-btn delete-btn" data-id="${tool._id}" style="color:#ef4444">Delete</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Add event listeners
+      els.toolsGrid.querySelectorAll('.tool-card').forEach(card => {
+        const enabled = card.dataset.enabled === 'true';
+        if (enabled) {
+          card.addEventListener('click', (e) => {
+            if (e.target.closest('button')) return;
+            const id = card.dataset.id;
+            const tool = tools.find(t => t._id === id);
+            if (tool) {
+              window.open(tool.url, '_blank');
+            }
+          });
+        }
+      });
+
+      els.toolsGrid.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const id = btn.dataset.id;
+          openEditModal(id);
+        });
+      });
+
+      els.toolsGrid.querySelectorAll('.toggle-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const id = btn.dataset.id;
+          await toggleTool(id);
+        });
+      });
+
+      els.toolsGrid.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const id = btn.dataset.id;
+          await deleteTool(id);
+        });
+      });
+    }
+
+    function openAddModal() {
+      editingToolId = null;
+      els.modalTitle.textContent = 'Add Custom Tool';
+      els.toolName.value = '';
+      els.toolUrl.value = '';
+      els.toolDescription.value = '';
+      els.toolEnabled.checked = true;
+      els.toolModal.classList.add('show');
+    }
+
+    function openEditModal(id) {
+      const tool = tools.find(t => t._id === id);
+      if (!tool) return;
+
+      editingToolId = id;
+      els.modalTitle.textContent = 'Edit Custom Tool';
+      els.toolName.value = tool.name;
+      els.toolUrl.value = tool.url;
+      els.toolDescription.value = tool.description || '';
+      els.toolEnabled.checked = tool.enabled;
+      els.toolModal.classList.add('show');
+    }
+
+    function closeModal() {
+      els.toolModal.classList.remove('show');
+      editingToolId = null;
+    }
+
+    async function saveTool(e) {
+      e.preventDefault();
+
+      const name = els.toolName.value.trim();
+      const url = els.toolUrl.value.trim();
+      const description = els.toolDescription.value.trim();
+      const enabled = els.toolEnabled.checked;
+
+      if (!name || !url) {
+        alert('Name and URL are required');
+        return;
+      }
+
+      try {
+        if (editingToolId) {
+          // Update existing tool
+          await apiFetch('/custom-tools', {
+            method: 'PUT',
+            body: JSON.stringify({ id: editingToolId, name, url, description, enabled }),
+          });
+        } else {
+          // Create new tool
+          await apiFetch('/custom-tools', {
+            method: 'POST',
+            body: JSON.stringify({ name, url, description, enabled }),
+          });
+        }
+
+        closeModal();
+        await loadTools();
+      } catch (err) {
+        alert('Failed to save tool: ' + err.message);
+      }
+    }
+
+    async function toggleTool(id) {
+      const tool = tools.find(t => t._id === id);
+      if (!tool) return;
+
+      try {
+        await apiFetch('/custom-tools', {
+          method: 'PUT',
+          body: JSON.stringify({ id, enabled: !tool.enabled }),
+        });
+        await loadTools();
+      } catch (err) {
+        alert('Failed to toggle tool: ' + err.message);
+      }
+    }
+
+    async function deleteTool(id) {
+      const tool = tools.find(t => t._id === id);
+      if (!tool) return;
+
+      if (!confirm(`Are you sure you want to delete "${tool.name}"?`)) {
+        return;
+      }
+
+      try {
+        await apiFetch('/custom-tools', {
+          method: 'DELETE',
+          body: JSON.stringify({ id }),
+        });
+        await loadTools();
+      } catch (err) {
+        alert('Failed to delete tool: ' + err.message);
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Event listeners
+    els.logoutBtn.addEventListener('click', doLogout);
+    els.addToolBtn.addEventListener('click', openAddModal);
+    els.closeModalBtn.addEventListener('click', closeModal);
+    els.cancelBtn.addEventListener('click', closeModal);
+    els.toolForm.addEventListener('submit', saveTool);
+
+    // Close modal on backdrop click
+    els.toolModal.addEventListener('click', (e) => {
+      if (e.target === els.toolModal) {
+        closeModal();
+      }
+    });
+
+    // Initialize
+    (async () => {
+      await initAuth();
+    })();
+  </script>
+</body>
+</html>
