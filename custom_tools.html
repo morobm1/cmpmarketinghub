@@ -149,14 +149,14 @@
       <h2>My Custom Tools</h2>
       <div class="content">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px">
-          <p style="color:var(--subtext); margin:0">Create and manage your personal toolbox of custom pages and reports.</p>
-          <button class="good" id="addToolBtn">+ Add Tool</button>
+          <p style="color:var(--subtext); margin:0">Add tools from the available list to your personal toolbox.</p>
+          <button class="good" id="addToolBtn">+ Add Tool from Library</button>
         </div>
 
         <div id="toolsContainer">
           <div class="empty-state" id="emptyState">
             <h3>No Custom Tools Yet</h3>
-            <p>Add your first custom tool to get started. These tools are private to your account.</p>
+            <p>Add your first custom tool from the library to get started. These tools are private to your account.</p>
           </div>
           <div class="tools-grid" id="toolsGrid" style="display:none"></div>
         </div>
@@ -164,26 +164,30 @@
     </div>
   </div>
 
-  <!-- Add/Edit Tool Modal -->
+  <!-- Add Tool from Library Modal -->
   <div class="modal-backdrop" id="toolModal">
     <div class="modal">
       <div class="modal-header">
-        <h3 id="modalTitle">Add Custom Tool</h3>
+        <h3 id="modalTitle">Add Tool from Library</h3>
         <button class="close-btn" id="closeModalBtn">&times;</button>
       </div>
       <div class="modal-body">
-        <form id="toolForm">
+        <div id="libraryView">
+          <p style="color:var(--subtext); margin-bottom:16px">Select a tool to add to your toolbox:</p>
+          <div id="toolLibrary" style="display:flex; flex-direction:column; gap:12px"></div>
+        </div>
+        <form id="toolForm" style="display:none">
           <div class="form-group">
             <label for="toolName">Tool Name *</label>
-            <input type="text" id="toolName" placeholder="e.g., The Harbour at Occ Monday Report" required />
+            <input type="text" id="toolName" placeholder="e.g., The Harbour at Occ Monday Report" required readonly />
           </div>
           <div class="form-group">
             <label for="toolUrl">Tool URL *</label>
-            <input type="url" id="toolUrl" placeholder="https://example.com/my-tool" required />
+            <input type="url" id="toolUrl" placeholder="https://example.com/my-tool" required readonly />
           </div>
           <div class="form-group">
-            <label for="toolDescription">Description (optional)</label>
-            <textarea id="toolDescription" placeholder="Brief description of what this tool does..."></textarea>
+            <label for="toolDescription">Description</label>
+            <textarea id="toolDescription" placeholder="Brief description of what this tool does..." readonly></textarea>
           </div>
           <div class="form-group">
             <label style="display:flex; align-items:center; gap:12px; cursor:pointer">
@@ -196,7 +200,7 @@
           </div>
           <div class="form-actions">
             <button type="button" id="cancelBtn">Cancel</button>
-            <button type="submit" class="primary" id="saveToolBtn">Save Tool</button>
+            <button type="submit" class="primary" id="saveToolBtn">Add to My Tools</button>
           </div>
         </form>
       </div>
@@ -207,6 +211,17 @@
     let currentUser = null;
     let tools = [];
     let editingToolId = null;
+    let selectedLibraryTool = null;
+
+    // Available tools library
+    const TOOL_LIBRARY = [
+      {
+        name: 'The Harbour at Occ Monday Report',
+        url: 'harbour_monday_report.html',
+        description: 'Generate weekly leasing report emails for The Harbour at Occ property with pre-formatted template.'
+      },
+      // Add more tools here as they are created
+    ];
 
     const els = {
       bootLoader: document.getElementById('bootLoader'),
@@ -374,12 +389,69 @@
 
     function openAddModal() {
       editingToolId = null;
-      els.modalTitle.textContent = 'Add Custom Tool';
-      els.toolName.value = '';
-      els.toolUrl.value = '';
-      els.toolDescription.value = '';
-      els.toolEnabled.checked = true;
+      selectedLibraryTool = null;
+      els.modalTitle.textContent = 'Add Tool from Library';
+      
+      // Show library view, hide form
+      document.getElementById('libraryView').style.display = '';
+      els.toolForm.style.display = 'none';
+      
+      // Render library
+      const libraryContainer = document.getElementById('toolLibrary');
+      libraryContainer.innerHTML = TOOL_LIBRARY.map((tool, index) => {
+        // Check if tool is already added
+        const alreadyAdded = tools.some(t => t.url === tool.url);
+        const addedBadge = alreadyAdded ? '<span style="color:#22c55e; font-size:11px; font-weight:600">✓ Added</span>' : '';
+        
+        return `
+          <div style="border:1px solid var(--border); border-radius:8px; padding:16px; cursor:${alreadyAdded ? 'not-allowed' : 'pointer'}; opacity:${alreadyAdded ? '0.6' : '1'}; transition:all .15s" 
+               class="library-tool-item" 
+               data-index="${index}"
+               ${alreadyAdded ? 'data-disabled="true"' : ''}>
+            <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:8px">
+              <h4 style="margin:0; font-size:15px; color:var(--text)">${escapeHtml(tool.name)}</h4>
+              ${addedBadge}
+            </div>
+            <p style="margin:0; font-size:13px; color:var(--subtext); line-height:1.5">${escapeHtml(tool.description)}</p>
+          </div>
+        `;
+      }).join('');
+      
+      // Add click handlers
+      libraryContainer.querySelectorAll('.library-tool-item').forEach(item => {
+        if (item.dataset.disabled !== 'true') {
+          item.addEventListener('click', () => {
+            const index = parseInt(item.dataset.index);
+            selectLibraryTool(index);
+          });
+          item.addEventListener('mouseenter', () => {
+            item.style.background = '#f8fafc';
+            item.style.borderColor = '#cbd5e1';
+          });
+          item.addEventListener('mouseleave', () => {
+            item.style.background = '';
+            item.style.borderColor = '';
+          });
+        }
+      });
+      
       els.toolModal.classList.add('show');
+    }
+
+    function selectLibraryTool(index) {
+      selectedLibraryTool = TOOL_LIBRARY[index];
+      
+      // Hide library, show form
+      document.getElementById('libraryView').style.display = 'none';
+      els.toolForm.style.display = '';
+      
+      // Populate form
+      els.toolName.value = selectedLibraryTool.name;
+      els.toolUrl.value = selectedLibraryTool.url;
+      els.toolDescription.value = selectedLibraryTool.description;
+      els.toolEnabled.checked = true;
+      
+      els.modalTitle.textContent = 'Add Tool to Your Toolbox';
     }
 
     function openEditModal(id) {
