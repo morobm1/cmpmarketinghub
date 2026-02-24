@@ -50,28 +50,40 @@ function handleFileSelect(e) {
 
 function parseImportData(jsonData) {
   return jsonData.map(row => {
-    const approvedDate = parseExcelDate(row['Approved Date']);
-    const leaseStart = parseExcelDate(row['Lease Start']);
-    const leaseEnd = parseExcelDate(row['Lease End']);
+    // Helper function to get value from row with flexible key matching
+    const getRowValue = (keys) => {
+      for (let key of keys) {
+        // Try exact match first
+        if (row[key] !== undefined) return row[key];
+        // Try trimmed keys
+        const trimmedKey = Object.keys(row).find(k => k.trim() === key.trim());
+        if (trimmedKey && row[trimmedKey] !== undefined) return row[trimmedKey];
+      }
+      return '';
+    };
     
-    const floorPlan = String(row['Apt/Bed'] || row['Floor Plan'] || '').trim();
+    const approvedDate = parseExcelDate(getRowValue(['Approved Date']));
+    const leaseStart = parseExcelDate(getRowValue(['Lease Start']));
+    const leaseEnd = parseExcelDate(getRowValue(['Lease End']));
     
-    let leaseType = String(row['Lease Type'] || '').trim();
+    const floorPlan = String(getRowValue(['Apt/Bed', 'Floor Plan'])).trim();
+    const leaseType = String(getRowValue(['Lease Type'])).trim();
     
     return {
       approvedDate,
-      unitType: String(row['Unit Type'] || '').trim(),
+      unitType: String(getRowValue(['Unit Type'])).trim(),
       leaseType,
       floorPlan,
-      firstName: String(row['First Name'] || '').trim(),
-      lastName: String(row['Last Name'] || '').trim(),
+      firstName: String(getRowValue(['First Name'])).trim(),
+      lastName: String(getRowValue(['Last Name'])).trim(),
       leaseStart,
       leaseEnd,
-      upfrontRent: parseFloat(row['Upfront Rent'] || 0) || 0,
-      monthlyRent: parseFloat(row['Monthly Base Rent'] || row['Monthly Rent'] || 0) || 0,
-      monthlyUtilities: parseFloat(row['Monthly Parking Fee'] || row['Monthly Utilities'] || 0) || 0,
-      liabilityInsurance: parseFloat(row['Liability Insurance Premium'] || row['Liability Insurance'] || 0) || 0,
-      securityDeposit: parseFloat(row['Security Deposit'] || 0) || 0
+      leasingAgent: String(getRowValue(['Leasing Agent'])).trim(),
+      upfrontRent: parseFloat(String(getRowValue(['Upfront Rent'])).replace(/[$,\s]/g, '')) || 0,
+      monthlyRent: parseFloat(String(getRowValue(['Monthly Base Rent', 'Monthly Rent'])).replace(/[$,\s]/g, '')) || 0,
+      monthlyUtilities: parseFloat(String(getRowValue(['Monthly Parking Fee', 'Monthly Utilities'])).replace(/[$,\s]/g, '')) || 0,
+      liabilityInsurance: parseFloat(String(getRowValue(['Liability Insurance Premium', 'Liability Insurance'])).replace(/[$,\s]/g, '')) || 0,
+      securityDeposit: parseFloat(String(getRowValue(['Security Deposit'])).replace(/[$,\s]/g, '')) || 0
     };
   }).filter(row => {
     return row.firstName && row.lastName && row.floorPlan;
