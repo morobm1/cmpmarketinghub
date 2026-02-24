@@ -482,8 +482,10 @@
             <input id="approvedDate" type="date" required />
           </div>
           <div class="form-group">
-            <label>Unit Type *</label>
-            <input id="unitType" type="text" placeholder="e.g., 2BR/2BA" required />
+            <label>Unit Type (Floor Plan) *</label>
+            <select id="unitType" required>
+              <option value="">-- Select Floor Plan --</option>
+            </select>
           </div>
           <div class="form-group">
             <label>Lease Type *</label>
@@ -498,7 +500,7 @@
 
         <div class="form-row">
           <div class="form-group">
-            <label>Floor Plan *</label>
+            <label>Apt/Bed Number *</label>
             <input id="floorPlan" type="text" placeholder="e.g., 2207 A" required />
           </div>
           <div class="form-group">
@@ -513,33 +515,26 @@
 
         <div class="form-row">
           <div class="form-group">
-            <label>Lease Start *</label>
+            <label>Lease Start Date *</label>
             <input id="leaseStart" type="date" required />
           </div>
           <div class="form-group">
-            <label>Lease End *</label>
+            <label>Lease End Date *</label>
             <input id="leaseEnd" type="date" required />
           </div>
-        </div>
-
-        <div class="form-row">
           <div class="form-group">
-            <label>Upfront Rent</label>
-            <input id="upfrontRent" type="number" step="0.01" placeholder="0.00" />
-          </div>
-          <div class="form-group">
-            <label>Monthly Rent *</label>
+            <label>Monthly Base Rent *</label>
             <input id="monthlyRent" type="number" step="0.01" placeholder="0.00" required />
           </div>
-          <div class="form-group">
-            <label>Monthly Utilities</label>
-            <input id="monthlyUtilities" type="number" step="0.01" placeholder="0.00" />
-          </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label>Liability Insurance</label>
+            <label>Monthly Parking Fee</label>
+            <input id="monthlyUtilities" type="number" step="0.01" placeholder="0.00" />
+          </div>
+          <div class="form-group">
+            <label>Liability Insurance Premium</label>
             <input id="liabilityInsurance" type="number" step="0.01" placeholder="0.00" />
           </div>
           <div class="form-group">
@@ -909,6 +904,9 @@
     function openLeaseModal(id = null) {
       editingLeaseId = id;
       
+      // Populate Unit Type dropdown with floor plans
+      populateUnitTypeDropdown();
+      
       if (id) {
         els.modalTitle.textContent = 'Edit Lease';
         const lease = leases.find(l => l.id === id);
@@ -921,7 +919,6 @@
           els.lastName.value = lease.lastName || '';
           els.leaseStart.value = (lease.leaseStart || '').slice(0, 10);
           els.leaseEnd.value = (lease.leaseEnd || '').slice(0, 10);
-          els.upfrontRent.value = lease.upfrontRent || '';
           els.monthlyRent.value = lease.monthlyRent || '';
           els.monthlyUtilities.value = lease.monthlyUtilities || '';
           els.liabilityInsurance.value = lease.liabilityInsurance || '';
@@ -933,6 +930,21 @@
       }
       
       els.leaseModal.classList.add('show');
+    }
+    
+    function populateUnitTypeDropdown() {
+      // Get floor plans from the floor plan tracker
+      let floorPlans = [];
+      if (typeof window.getFloorPlans === 'function') {
+        floorPlans = window.getFloorPlans();
+      }
+      
+      if (floorPlans.length === 0) {
+        els.unitType.innerHTML = '<option value="">-- No Floor Plans Configured --</option>';
+      } else {
+        els.unitType.innerHTML = '<option value="">-- Select Floor Plan --</option>' +
+          floorPlans.map(fp => `<option value="${esc(fp.type)}">${esc(fp.type)}</option>`).join('');
+      }
     }
 
     function closeLeaseModal() {
@@ -950,7 +962,6 @@
       els.lastName.value = '';
       els.leaseStart.value = '';
       els.leaseEnd.value = '';
-      els.upfrontRent.value = '';
       els.monthlyRent.value = '';
       els.monthlyUtilities.value = '';
       els.liabilityInsurance.value = '';

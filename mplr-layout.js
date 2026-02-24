@@ -383,6 +383,10 @@ function loadSettingsTab(tab) {
   const container = document.getElementById('appContainer');
   if (!body || !container) return;
   
+  // Hide all sections in the settings body
+  body.querySelectorAll('[data-mplr-setup]').forEach(s => s.style.display = 'none');
+  
+  // Find the section we want to show
   let section = null;
   if (tab === 'property') {
     section = Array.from(container.querySelectorAll('[data-mplr-setup]')).find(card => 
@@ -399,10 +403,11 @@ function loadSettingsTab(tab) {
   }
   
   if (section) {
-    // Move the actual section (not clone) so event handlers work
-    body.innerHTML = '';
+    // Move section to settings body if not already there
+    if (section.parentElement !== body) {
+      body.appendChild(section);
+    }
     section.style.display = 'block';
-    body.appendChild(section);
   }
 }
 
