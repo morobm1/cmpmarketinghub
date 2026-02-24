@@ -155,24 +155,28 @@ function addUnitTypeToTier() {
   }
   
   // Check if unit type with SAME RATE already exists in ANY tier for this category
+  // Use Math.abs for floating point comparison (within 0.01 tolerance)
   const existingInOtherTier = tiers.find(t => 
     t.tier !== tierName && t.unitTypes.some(ut => 
-      ut.type.toLowerCase() === unitType.toLowerCase() && ut.rate === rate
+      ut.type.toLowerCase() === unitType.toLowerCase() && Math.abs(ut.rate - rate) < 0.01
     )
   );
   
   if (existingInOtherTier) {
-    alert(`Unit type "${unitType}" with rate ${rate} already exists in ${existingInOtherTier.tier}. Each unit type + rate combination can only be in one tier.`);
+    const existingRate = existingInOtherTier.unitTypes.find(ut => 
+      ut.type.toLowerCase() === unitType.toLowerCase()
+    ).rate;
+    alert(`Unit type "${unitType}" with rate ${existingRate.toFixed(2)} already exists in ${existingInOtherTier.tier}. Each unit type + rate combination can only be in one tier.`);
     return;
   }
   
   // Check if unit type with SAME RATE already exists in this tier
   const existing = tier.unitTypes.find(ut => 
-    ut.type.toLowerCase() === unitType.toLowerCase() && ut.rate === rate
+    ut.type.toLowerCase() === unitType.toLowerCase() && Math.abs(ut.rate - rate) < 0.01
   );
   
   if (existing) {
-    if (!confirm(`Unit type "${unitType}" with rate ${rate} already exists in ${tierName}. Update cap to ${cap}?`)) {
+    if (!confirm(`Unit type "${unitType}" with rate ${rate.toFixed(2)} already exists in ${tierName}. Update cap to ${cap}?`)) {
       return;
     }
     existing.cap = cap;
