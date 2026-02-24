@@ -154,23 +154,27 @@ function addUnitTypeToTier() {
     return;
   }
   
-  // Check if unit type already exists in ANY tier for this category
+  // Check if unit type with SAME RATE already exists in ANY tier for this category
   const existingInOtherTier = tiers.find(t => 
-    t.unitTypes.some(ut => ut.type.toLowerCase() === unitType.toLowerCase())
+    t.tier !== tierName && t.unitTypes.some(ut => 
+      ut.type.toLowerCase() === unitType.toLowerCase() && ut.rate === rate
+    )
   );
   
-  if (existingInOtherTier && existingInOtherTier.tier !== tierName) {
-    alert(`Unit type "${unitType}" already exists in ${existingInOtherTier.tier}. Each unit type can only be in one tier.`);
+  if (existingInOtherTier) {
+    alert(`Unit type "${unitType}" with rate ${rate} already exists in ${existingInOtherTier.tier}. Each unit type + rate combination can only be in one tier.`);
     return;
   }
   
-  // Check if unit type already exists in this tier
-  const existing = tier.unitTypes.find(ut => ut.type.toLowerCase() === unitType.toLowerCase());
+  // Check if unit type with SAME RATE already exists in this tier
+  const existing = tier.unitTypes.find(ut => 
+    ut.type.toLowerCase() === unitType.toLowerCase() && ut.rate === rate
+  );
+  
   if (existing) {
-    if (!confirm(`Unit type "${unitType}" already exists in ${tierName}. Update rate to $${rate} and cap to ${cap}?`)) {
+    if (!confirm(`Unit type "${unitType}" with rate ${rate} already exists in ${tierName}. Update cap to ${cap}?`)) {
       return;
     }
-    existing.rate = rate;
     existing.cap = cap;
   } else {
     tier.unitTypes.push({ type: unitType, rate, cap });
