@@ -908,9 +908,17 @@
     // ==================== INIT ====================
     (async () => { await initAuth(); })();
   </script>
-  <!-- SheetJS library for Excel parsing - Must load before import script -->
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <!-- SheetJS library for Excel parsing - Using unpkg CDN for better reliability -->
+  <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <!-- MPLR Import functionality - Depends on XLSX library -->
+  <script>
+    // Verify XLSX loaded before continuing
+    if (typeof XLSX === 'undefined') {
+      console.error('XLSX library failed to load from CDN');
+    } else {
+      console.log('XLSX library loaded successfully');
+    }
+  </script>
   <script src="mplr-import.js"></script>
 </body>
 </html>
