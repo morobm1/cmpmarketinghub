@@ -1,0 +1,879 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MPLR • Marketing Hub</title>
+  <link rel="preconnect" href="https://use.typekit.net" crossorigin>
+  <link rel="preconnect" href="https://p.typekit.net" crossorigin>
+  <link rel="stylesheet" href="https://use.typekit.net/hqv8hwr.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <meta name="description" content="MPLR - Master Property Lease Registry" />
+  <style>
+    :root{
+      --brand-primary:#446472;
+      --brand-accent:#ffb732;
+      --brand-accent-2:#52d5ff;
+      --brand-gray:#929497;
+      --page-bg:#f8fafc;
+      --bg:#ffffff;
+      --panel:#ffffff;
+      --text:#1e293b;
+      --subtext:#64748b;
+      --accent:var(--brand-accent-2);
+      --border:#e2e8f0;
+      --success:#22c55e;
+      --warning:#f59e0b;
+      --danger:#ef4444;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{font-family:'Open Sans',system-ui,-apple-system,sans-serif; background:var(--page-bg); color:var(--text);font-size:14px;line-height:1.5}
+
+    /* Header */
+    header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:10px}
+    .brand .logo-img{height:28px;width:auto}
+    .brand .title{color:#ffb732;font-family:zooja-pro,Arial,sans-serif;font-size:clamp(32px,4vw,48px);line-height:1}
+    .header-controls{display:flex;align-items:center;gap:12px;margin-left:auto}
+    .header-controls select{background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);min-width:200px;cursor:pointer}
+    .header-controls select:focus{outline:none;border-color:var(--brand-accent-2);box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
+    .header-btn{background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;transition:all .15s;width:auto}
+    .header-btn:hover{background:#f8fafc;border-color:#cbd5e1}
+    .company-name{font-size:12px;color:var(--subtext);font-weight:500}
+
+    /* Navigation */
+    .nav-bar{background:#fff;border-bottom:1px solid var(--border)}
+    .nav-wrap{max-width:1400px;margin:0 auto;padding:0 24px;display:flex;gap:2px;overflow-x:auto}
+    .nav-tab{display:flex;align-items:center;gap:6px;padding:14px 16px;color:var(--subtext);text-decoration:none;font-size:13px;font-weight:600;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap}
+    .nav-tab:hover{color:var(--text);background:#f8fafc}
+    .nav-tab.active{color:var(--brand-primary);border-bottom-color:var(--brand-primary)}
+
+    .container{padding:24px; max-width:1600px; margin:0 auto}
+
+    /* Cards */
+    .card{background:#ffffff; border:1px solid var(--border); border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,0.06); overflow:hidden; margin-bottom:20px}
+    .card h3{margin:0; padding:16px 20px; font-size:15px; color:#374151; font-weight:700; font-family: Roboto, Arial, sans-serif; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--border); background:#f8fafc}
+    .card .content{padding:20px}
+
+    /* Summary Stats */
+    .stats-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:16px; margin-bottom:24px}
+    .stat-card{background:#fff; border:1px solid var(--border); border-radius:12px; padding:20px; text-align:center; transition:all .15s}
+    .stat-card:hover{box-shadow:0 4px 12px rgba(0,0,0,0.08)}
+    .stat-label{font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px}
+    .stat-value{font-size:32px; font-weight:700; color:var(--brand-primary)}
+    .stat-value.accent{color:var(--brand-accent-2)}
+    .stat-value.success{color:var(--success)}
+    .stat-value.warning{color:var(--warning)}
+    .stat-subtext{font-size:12px; color:#94a3b8; margin-top:6px}
+
+    /* Filters */
+    .filters{display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px; padding:16px; background:#f8fafc; border-radius:10px; border:1px solid var(--border)}
+    .filter-group{display:flex; flex-direction:column; gap:6px; flex:1; min-width:160px}
+    .filter-group label{font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase}
+    .filter-group input, .filter-group select{padding:8px 12px; border-radius:6px; border:1px solid var(--border); background:#fff; font-size:13px}
+    .filter-actions{display:flex; gap:8px; align-items:flex-end}
+
+    /* Buttons */
+    .btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 18px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--text); font-weight:600; cursor:pointer; font-size:14px; transition:all .15s; width:auto}
+    .btn:hover{background:#f8fafc}
+    .btn.primary{background:var(--brand-accent-2); border-color:var(--brand-accent-2); color:#0b1b24}
+    .btn.primary:hover{background:#3ecbf5}
+    .btn.success{background:var(--success); border-color:var(--success); color:#fff}
+    .btn.success:hover{background:#16a34a}
+    .btn.warning{background:var(--warning); border-color:var(--warning); color:#fff}
+    .btn.warning:hover{background:#d97706}
+    .btn.danger{background:var(--danger); border-color:var(--danger); color:#fff}
+    .btn.danger:hover{background:#dc2626}
+    .btn.sm{padding:6px 12px; font-size:13px}
+
+    /* Table */
+    .table-container{overflow-x:auto; border:1px solid var(--border); border-radius:10px; background:#fff}
+    .data-table{width:100%; border-collapse:collapse; font-size:13px}
+    .data-table thead{background:#f8fafc; position:sticky; top:0; z-index:10}
+    .data-table th{padding:12px 14px; text-align:left; font-size:11px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.5px; border-bottom:2px solid var(--border); white-space:nowrap}
+    .data-table td{padding:12px 14px; border-bottom:1px solid var(--border); vertical-align:middle}
+    .data-table tbody tr:hover{background:#f8fafc}
+    .data-table tbody tr:last-child td{border-bottom:none}
+
+    /* Badge */
+    .badge{display:inline-block; padding:4px 10px; border-radius:999px; font-size:11px; font-weight:600; white-space:nowrap}
+    .badge.success{background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
+    .badge.warning{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+    .badge.danger{background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
+    .badge.info{background:#dbeafe;color:#1e40af;border:1px solid #bfdbfe}
+    .badge.neutral{background:#f1f5f9;color:#475569;border:1px solid #e2e8f0}
+
+    /* Modal */
+    .modal-overlay{position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:100; padding:20px; backdrop-filter:blur(4px)}
+    .modal-overlay.show{display:flex}
+    .modal{background:#fff; border:1px solid var(--border); border-radius:14px; max-width:900px; width:100%; max-height:90vh; overflow:auto; box-shadow:0 20px 40px rgba(0,0,0,0.15)}
+    .modal-header{padding:20px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; background:#fff; z-index:1}
+    .modal-header h3{margin:0; font-size:18px; color:var(--text); font-weight:700}
+    .modal-close{background:none; border:none; color:var(--subtext); font-size:24px; cursor:pointer; padding:0; width:auto; line-height:1}
+    .modal-close:hover{color:var(--text)}
+    .modal-body{padding:24px}
+    .modal-footer{padding:20px 24px; border-top:1px solid var(--border); display:flex; gap:12px; justify-content:flex-end; position:sticky; bottom:0; background:#fff}
+
+    /* Form */
+    .form-row{display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:16px}
+    .form-row:last-child{margin-bottom:0}
+    .form-group{display:flex; flex-direction:column; gap:6px}
+    label{font-size:12px; color:#6b7280; font-weight:600}
+    input, select, textarea{width:100%; padding:10px 12px; border-radius:8px; border:1px solid #d1d5db; background:#fff; color:var(--text); font-size:14px; transition:border-color .15s, box-shadow .15s; font-family:inherit}
+    input:focus, select:focus, textarea:focus{outline:none; border-color:var(--brand-accent-2); box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
+    textarea{min-height:80px;resize:vertical}
+    .hint{font-size:11px; color:#94a3b8; margin-top:4px}
+
+    .hidden{display:none}
+    .text-right{text-align:right}
+    .text-center{text-align:center}
+
+    /* Login */
+    #loginView{min-height:100vh; display:none; align-items:center; justify-content:center; padding:20px; background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)}
+    #bootLoader{position:fixed; inset:0; background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); display:flex; align-items:center; justify-content:center; z-index:100}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* Empty State */
+    .empty-state{text-align:center; padding:60px 40px; color:var(--subtext)}
+    .empty-state h3{font-size:18px; color:var(--text); margin-bottom:8px}
+    .empty-state p{font-size:14px; margin-bottom:20px}
+  </style>
+</head>
+<body>
+  <div id="bootLoader">
+    <div style="display:flex;flex-direction:column;gap:12px;align-items:center">
+      <div style="width:48px;height:48px;border:4px solid #e5e7eb;border-top-color:#446472;border-radius:50%;animation:spin 1s linear infinite"></div>
+      <div style="font-weight:700;font-size:18px;color:#446472">Marketing Hub</div>
+      <div style="font-size:12px;color:#6b7280">Loading MPLR…</div>
+    </div>
+  </div>
+
+  <div id="loginView">
+    <div class="card" style="max-width:440px;width:100%;box-shadow:0 10px 25px rgba(0,0,0,0.1)">
+      <h3 style="justify-content:center;font-size:18px">Welcome Back</h3>
+      <div class="content">
+        <p style="text-align:center;color:#6b7280;font-size:14px;margin-bottom:20px">Sign in to access MPLR</p>
+        <div style="margin-bottom:16px">
+          <label for="loginUsername">Username</label>
+          <input id="loginUsername" type="text" autocomplete="username" placeholder="Enter your username" />
+        </div>
+        <div style="margin-bottom:16px">
+          <label for="loginPassword">Password</label>
+          <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Enter your password" />
+        </div>
+        <div style="margin-bottom:20px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input id="togglePw" type="checkbox" style="width:auto" /> Show password
+          </label>
+        </div>
+        <button id="loginBtn" class="btn success" style="width:100%">Sign In</button>
+        <div id="loginError" style="margin-top:12px;padding:10px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#dc2626;font-size:13px;display:none"></div>
+      </div>
+    </div>
+  </div>
+
+  <header id="appHeader" class="hidden">
+    <div class="brand">
+      <img src="logo-main.svg" class="logo-img" alt="Capstone" />
+      <div class="title">Marketing Hub</div>
+    </div>
+    <div class="header-controls">
+      <select id="propertySelect"></select>
+      <button id="logoutBtn" class="header-btn">Sign Out</button>
+      <button id="adminPageBtn" class="header-btn hidden">Admin</button>
+    </div>
+    <span class="company-name">Capstone Management Partners</span>
+  </header>
+
+  <nav class="nav-bar" id="navBar" style="display:none">
+    <div class="nav-wrap">
+      <a href="mmp_calendar_app.html" class="nav-tab">Marketing Calendar</a>
+      <a href="marketing_plans.html" class="nav-tab">Marketing Plans</a>
+      <a href="marketing_contacts.html" class="nav-tab">Marketing Contacts</a>
+      <a href="promo_order_tracker.html" class="nav-tab">Promo Order Tracker</a>
+      <a href="renewal_campaign.html" class="nav-tab">Renewal Campaign</a>
+      <a href="velocity_tracker.html" class="nav-tab">Velocity Tracker</a>
+      <a href="uniform_shop.html" class="nav-tab">Uniform Shop</a>
+      <a href="creative_library.html" class="nav-tab">Creative Library</a>
+      <a href="mplr.html" class="nav-tab active">MPLR</a>
+    </div>
+  </nav>
+
+  <main id="appContainer" class="container hidden">
+    <!-- Summary Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Leases</div>
+        <div class="stat-value" id="statTotalLeases">0</div>
+        <div class="stat-subtext">All signed leases</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Units</div>
+        <div class="stat-value accent" id="statTotalUnits">0</div>
+        <div class="stat-subtext">Unique units leased</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Monthly Revenue</div>
+        <div class="stat-value success" id="statMonthlyRevenue">$0</div>
+        <div class="stat-subtext">Total monthly rent</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg Lease Length</div>
+        <div class="stat-value warning" id="statAvgLeaseLength">0</div>
+        <div class="stat-subtext">Months</div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters">
+      <div class="filter-group">
+        <label>Unit Type</label>
+        <select id="filterUnitType">
+          <option value="">All Types</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Lease Type</label>
+        <select id="filterLeaseType">
+          <option value="">All Lease Types</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Floor Plan</label>
+        <select id="filterFloorPlan">
+          <option value="">All Floor Plans</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Search</label>
+        <input id="filterSearch" type="text" placeholder="Name, unit..." />
+      </div>
+      <div class="filter-actions">
+        <button class="btn sm" id="clearFiltersBtn">Clear</button>
+        <button class="btn sm primary" id="exportBtn">Export CSV</button>
+        <button class="btn sm success" id="addLeaseBtn">+ Add Lease</button>
+      </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="card">
+      <h3>Lease Registry</h3>
+      <div class="table-container">
+        <table class="data-table" id="leaseTable">
+          <thead>
+            <tr>
+              <th>Approved Date</th>
+              <th>Unit Type</th>
+              <th>Lease Type</th>
+              <th>Floor Plan</th>
+              <th>First Name</th>
+              <th>Last Name</th>
+              <th>Lease Start</th>
+              <th>Lease End</th>
+              <th class="text-right">Upfront Rent</th>
+              <th class="text-right">Monthly Rent</th>
+              <th class="text-right">Monthly Utilities</th>
+              <th class="text-right">Liability Insurance</th>
+              <th class="text-right">Total Monthly</th>
+              <th class="text-right">Security Deposit</th>
+              <th class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="leaseTableBody">
+            <tr>
+              <td colspan="15" class="text-center" style="padding:40px">
+                <div class="empty-state">
+                  <h3>No Lease Data</h3>
+                  <p>Add your first lease to get started</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- Add/Edit Lease Modal -->
+  <div id="leaseModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalTitle">Add Lease</h3>
+        <button class="modal-close" id="closeModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Approved Date *</label>
+            <input id="approvedDate" type="date" required />
+          </div>
+          <div class="form-group">
+            <label>Unit Type *</label>
+            <input id="unitType" type="text" placeholder="e.g., 2BR/2BA" required />
+          </div>
+          <div class="form-group">
+            <label>Lease Type *</label>
+            <select id="leaseType" required>
+              <option value="">-- Select --</option>
+              <option value="Individual">Individual</option>
+              <option value="Joint">Joint</option>
+              <option value="Corporate">Corporate</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Floor Plan *</label>
+            <input id="floorPlan" type="text" placeholder="e.g., 2207 A" required />
+          </div>
+          <div class="form-group">
+            <label>First Name *</label>
+            <input id="firstName" type="text" required />
+          </div>
+          <div class="form-group">
+            <label>Last Name *</label>
+            <input id="lastName" type="text" required />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Lease Start *</label>
+            <input id="leaseStart" type="date" required />
+          </div>
+          <div class="form-group">
+            <label>Lease End *</label>
+            <input id="leaseEnd" type="date" required />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Upfront Rent</label>
+            <input id="upfrontRent" type="number" step="0.01" placeholder="0.00" />
+          </div>
+          <div class="form-group">
+            <label>Monthly Rent *</label>
+            <input id="monthlyRent" type="number" step="0.01" placeholder="0.00" required />
+          </div>
+          <div class="form-group">
+            <label>Monthly Utilities</label>
+            <input id="monthlyUtilities" type="number" step="0.01" placeholder="0.00" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Liability Insurance</label>
+            <input id="liabilityInsurance" type="number" step="0.01" placeholder="0.00" />
+          </div>
+          <div class="form-group">
+            <label>Security Deposit</label>
+            <input id="securityDeposit" type="number" step="0.01" placeholder="0.00" />
+          </div>
+        </div>
+
+        <div class="hint" style="margin-top:12px">* Required fields</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="cancelModal">Cancel</button>
+        <button class="btn success" id="saveLeaseBtn">Save Lease</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==================== STATE ====================
+    let currentUser = null;
+    let properties = [];
+    let currentProperty = '';
+    let leases = [];
+    let editingLeaseId = null;
+
+    // ==================== ELEMENTS ====================
+    const els = {
+      bootLoader: document.getElementById('bootLoader'),
+      loginView: document.getElementById('loginView'),
+      loginUsername: document.getElementById('loginUsername'),
+      loginPassword: document.getElementById('loginPassword'),
+      togglePw: document.getElementById('togglePw'),
+      loginBtn: document.getElementById('loginBtn'),
+      loginError: document.getElementById('loginError'),
+      appHeader: document.getElementById('appHeader'),
+      navBar: document.getElementById('navBar'),
+      appContainer: document.getElementById('appContainer'),
+      propertySelect: document.getElementById('propertySelect'),
+      logoutBtn: document.getElementById('logoutBtn'),
+      adminPageBtn: document.getElementById('adminPageBtn'),
+      
+      // Stats
+      statTotalLeases: document.getElementById('statTotalLeases'),
+      statTotalUnits: document.getElementById('statTotalUnits'),
+      statMonthlyRevenue: document.getElementById('statMonthlyRevenue'),
+      statAvgLeaseLength: document.getElementById('statAvgLeaseLength'),
+      
+      // Filters
+      filterUnitType: document.getElementById('filterUnitType'),
+      filterLeaseType: document.getElementById('filterLeaseType'),
+      filterFloorPlan: document.getElementById('filterFloorPlan'),
+      filterSearch: document.getElementById('filterSearch'),
+      clearFiltersBtn: document.getElementById('clearFiltersBtn'),
+      exportBtn: document.getElementById('exportBtn'),
+      addLeaseBtn: document.getElementById('addLeaseBtn'),
+      
+      // Table
+      leaseTableBody: document.getElementById('leaseTableBody'),
+      
+      // Modal
+      leaseModal: document.getElementById('leaseModal'),
+      modalTitle: document.getElementById('modalTitle'),
+      closeModal: document.getElementById('closeModal'),
+      cancelModal: document.getElementById('cancelModal'),
+      saveLeaseBtn: document.getElementById('saveLeaseBtn'),
+      
+      // Form fields
+      approvedDate: document.getElementById('approvedDate'),
+      unitType: document.getElementById('unitType'),
+      leaseType: document.getElementById('leaseType'),
+      floorPlan: document.getElementById('floorPlan'),
+      firstName: document.getElementById('firstName'),
+      lastName: document.getElementById('lastName'),
+      leaseStart: document.getElementById('leaseStart'),
+      leaseEnd: document.getElementById('leaseEnd'),
+      upfrontRent: document.getElementById('upfrontRent'),
+      monthlyRent: document.getElementById('monthlyRent'),
+      monthlyUtilities: document.getElementById('monthlyUtilities'),
+      liabilityInsurance: document.getElementById('liabilityInsurance'),
+      securityDeposit: document.getElementById('securityDeposit')
+    };
+
+    // ==================== UTILITIES ====================
+    function show(el) { if (el) el.classList.remove('hidden'); }
+    function hide(el) { if (el) el.classList.add('hidden'); }
+    function esc(s) { return String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+    function formatDate(d) { if (!d) return ''; try { return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); } catch (e) { return d; } }
+    function formatCurrency(n) { if (!isFinite(n)) return '$0.00'; return '$' + n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function rid() { return 'l' + Date.now() + Math.random().toString(36).substr(2, 9); }
+
+    // ==================== AUTH ====================
+    els.togglePw?.addEventListener('change', () => { els.loginPassword.type = els.togglePw.checked ? 'text' : 'password'; });
+    els.loginBtn?.addEventListener('click', doLogin);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (document.activeElement === els.loginUsername || document.activeElement === els.loginPassword)) doLogin(); });
+
+    async function doLogin() {
+      const u = (els.loginUsername?.value || '').trim();
+      const p = els.loginPassword?.value || '';
+      if (!u || !p) { showError('Enter username and password'); return; }
+      try {
+        hideError();
+        const res = await fetch('/api/auth-login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ username: u, password: p }) });
+        if (!res.ok) { showError(res.status === 401 ? 'Incorrect username or password' : 'Login failed'); return; }
+        await initAuth();
+      } catch (e) { showError('Network error'); }
+    }
+
+    function showError(msg) { if (els.loginError) { els.loginError.textContent = msg; els.loginError.style.display = ''; } }
+    function hideError() { if (els.loginError) els.loginError.style.display = 'none'; }
+
+    function showApp() {
+      show(els.appHeader);
+      els.navBar.style.display = '';
+      show(els.appContainer);
+      els.loginView.style.display = 'none';
+      els.bootLoader.style.display = 'none';
+    }
+
+    function showLogin() {
+      els.bootLoader.style.display = 'none';
+      hide(els.appHeader);
+      els.navBar.style.display = 'none';
+      hide(els.appContainer);
+      els.loginView.style.display = 'flex';
+    }
+
+    async function initAuth() {
+      try {
+        const res = await fetch('/api/me', { credentials: 'include' });
+        if (res.ok) {
+          const me = await res.json();
+          currentUser = { username: me.username, role: me.role, properties: me.properties };
+          showApp();
+          bindHeaderHandlers();
+          await initApp();
+          return true;
+        }
+      } catch (e) { }
+      showLogin();
+      return false;
+    }
+
+    function bindHeaderHandlers() {
+      els.logoutBtn.onclick = async () => { try { await fetch('/api/auth-logout', { method: 'POST' }); } catch (e) { } location.href = 'index.html'; };
+      if (currentUser?.role === 'admin') show(els.adminPageBtn);
+      els.adminPageBtn.onclick = () => location.href = 'mmp_admin.html';
+    }
+
+    // ==================== API ====================
+    async function apiFetch(path, opts = {}) {
+      const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+      const res = await fetch('/api' + path, Object.assign({}, opts, { headers, credentials: 'include' }));
+      if (!res.ok) { const text = await res.text(); throw new Error(text || ('HTTP ' + res.status)); }
+      return res;
+    }
+
+    // ==================== INIT ====================
+    async function initApp() {
+      await loadProperties();
+      renderPropertyOptions();
+      if (properties.length) {
+        els.propertySelect.value = properties[0];
+        await setActiveProperty(properties[0]);
+      }
+      
+      els.propertySelect.addEventListener('change', () => setActiveProperty(els.propertySelect.value));
+      els.filterUnitType.addEventListener('change', renderTable);
+      els.filterLeaseType.addEventListener('change', renderTable);
+      els.filterFloorPlan.addEventListener('change', renderTable);
+      els.filterSearch.addEventListener('input', renderTable);
+      els.clearFiltersBtn.addEventListener('click', clearFilters);
+      els.exportBtn.addEventListener('click', exportCSV);
+      els.addLeaseBtn.addEventListener('click', () => openLeaseModal());
+      els.closeModal.addEventListener('click', closeLeaseModal);
+      els.cancelModal.addEventListener('click', closeLeaseModal);
+      els.saveLeaseBtn.addEventListener('click', saveLease);
+    }
+
+    async function loadProperties() {
+      try {
+        const res = await fetch('/api/properties');
+        const list = await res.json();
+        properties = (list || []).map(x => x.name).filter(Boolean);
+      } catch (e) { properties = []; }
+    }
+
+    function renderPropertyOptions() {
+      els.propertySelect.innerHTML = properties.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('');
+    }
+
+    async function setActiveProperty(prop) {
+      currentProperty = prop;
+      await fetchLeases();
+      updateStats();
+      updateFilterOptions();
+      renderTable();
+    }
+
+    async function fetchLeases() {
+      if (!currentProperty) { leases = []; return; }
+      
+      // Try to fetch from server, fallback to localStorage
+      try {
+        // TODO: Create API endpoint for MPLR data
+        // For now, use localStorage
+        const key = `mplr_leases_${currentProperty}`;
+        const stored = localStorage.getItem(key);
+        leases = stored ? JSON.parse(stored) : [];
+      } catch (e) {
+        leases = [];
+      }
+    }
+
+    function saveLeases() {
+      if (!currentProperty) return;
+      const key = `mplr_leases_${currentProperty}`;
+      try {
+        localStorage.setItem(key, JSON.stringify(leases));
+      } catch (e) {
+        console.error('Failed to save leases', e);
+      }
+    }
+
+    // ==================== STATS ====================
+    function updateStats() {
+      const totalLeases = leases.length;
+      const uniqueUnits = new Set(leases.map(l => l.floorPlan)).size;
+      const totalMonthlyRevenue = leases.reduce((sum, l) => sum + (parseFloat(l.monthlyRent) || 0), 0);
+      
+      // Calculate average lease length in months
+      let totalMonths = 0;
+      let validLeases = 0;
+      leases.forEach(l => {
+        if (l.leaseStart && l.leaseEnd) {
+          const start = new Date(l.leaseStart);
+          const end = new Date(l.leaseEnd);
+          const months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+          if (months > 0) {
+            totalMonths += months;
+            validLeases++;
+          }
+        }
+      });
+      const avgLeaseLength = validLeases > 0 ? Math.round(totalMonths / validLeases) : 0;
+
+      els.statTotalLeases.textContent = totalLeases;
+      els.statTotalUnits.textContent = uniqueUnits;
+      els.statMonthlyRevenue.textContent = formatCurrency(totalMonthlyRevenue);
+      els.statAvgLeaseLength.textContent = avgLeaseLength;
+    }
+
+    // ==================== FILTERS ====================
+    function updateFilterOptions() {
+      // Unit Types
+      const unitTypes = [...new Set(leases.map(l => l.unitType).filter(Boolean))].sort();
+      els.filterUnitType.innerHTML = '<option value="">All Types</option>' + 
+        unitTypes.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
+      
+      // Lease Types
+      const leaseTypes = [...new Set(leases.map(l => l.leaseType).filter(Boolean))].sort();
+      els.filterLeaseType.innerHTML = '<option value="">All Lease Types</option>' + 
+        leaseTypes.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
+      
+      // Floor Plans
+      const floorPlans = [...new Set(leases.map(l => l.floorPlan).filter(Boolean))].sort();
+      els.filterFloorPlan.innerHTML = '<option value="">All Floor Plans</option>' + 
+        floorPlans.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
+    }
+
+    function clearFilters() {
+      els.filterUnitType.value = '';
+      els.filterLeaseType.value = '';
+      els.filterFloorPlan.value = '';
+      els.filterSearch.value = '';
+      renderTable();
+    }
+
+    function getFilteredLeases() {
+      const unitType = els.filterUnitType.value.toLowerCase();
+      const leaseType = els.filterLeaseType.value.toLowerCase();
+      const floorPlan = els.filterFloorPlan.value.toLowerCase();
+      const search = els.filterSearch.value.toLowerCase().trim();
+
+      return leases.filter(l => {
+        if (unitType && (l.unitType || '').toLowerCase() !== unitType) return false;
+        if (leaseType && (l.leaseType || '').toLowerCase() !== leaseType) return false;
+        if (floorPlan && (l.floorPlan || '').toLowerCase() !== floorPlan) return false;
+        if (search) {
+          const searchStr = `${l.firstName} ${l.lastName} ${l.floorPlan} ${l.unitType}`.toLowerCase();
+          if (!searchStr.includes(search)) return false;
+        }
+        return true;
+      });
+    }
+
+    // ==================== TABLE ====================
+    function renderTable() {
+      const filtered = getFilteredLeases();
+      
+      if (!filtered.length) {
+        els.leaseTableBody.innerHTML = `
+          <tr>
+            <td colspan="15" class="text-center" style="padding:40px">
+              <div class="empty-state">
+                <h3>No Leases Found</h3>
+                <p>${leases.length ? 'Try adjusting your filters' : 'Add your first lease to get started'}</p>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      els.leaseTableBody.innerHTML = filtered.map(l => {
+        const totalMonthly = (parseFloat(l.monthlyRent) || 0) + 
+                            (parseFloat(l.monthlyUtilities) || 0) + 
+                            (parseFloat(l.liabilityInsurance) || 0);
+        
+        return `
+          <tr>
+            <td>${formatDate(l.approvedDate)}</td>
+            <td>${esc(l.unitType)}</td>
+            <td><span class="badge info">${esc(l.leaseType)}</span></td>
+            <td><strong>${esc(l.floorPlan)}</strong></td>
+            <td>${esc(l.firstName)}</td>
+            <td>${esc(l.lastName)}</td>
+            <td>${formatDate(l.leaseStart)}</td>
+            <td>${formatDate(l.leaseEnd)}</td>
+            <td class="text-right">${formatCurrency(parseFloat(l.upfrontRent) || 0)}</td>
+            <td class="text-right">${formatCurrency(parseFloat(l.monthlyRent) || 0)}</td>
+            <td class="text-right">${formatCurrency(parseFloat(l.monthlyUtilities) || 0)}</td>
+            <td class="text-right">${formatCurrency(parseFloat(l.liabilityInsurance) || 0)}</td>
+            <td class="text-right"><strong>${formatCurrency(totalMonthly)}</strong></td>
+            <td class="text-right">${formatCurrency(parseFloat(l.securityDeposit) || 0)}</td>
+            <td class="text-center">
+              <button class="btn sm" onclick="editLease('${l.id}')">Edit</button>
+              <button class="btn sm danger" onclick="deleteLease('${l.id}')">Delete</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // ==================== MODAL ====================
+    function openLeaseModal(id = null) {
+      editingLeaseId = id;
+      
+      if (id) {
+        els.modalTitle.textContent = 'Edit Lease';
+        const lease = leases.find(l => l.id === id);
+        if (lease) {
+          els.approvedDate.value = (lease.approvedDate || '').slice(0, 10);
+          els.unitType.value = lease.unitType || '';
+          els.leaseType.value = lease.leaseType || '';
+          els.floorPlan.value = lease.floorPlan || '';
+          els.firstName.value = lease.firstName || '';
+          els.lastName.value = lease.lastName || '';
+          els.leaseStart.value = (lease.leaseStart || '').slice(0, 10);
+          els.leaseEnd.value = (lease.leaseEnd || '').slice(0, 10);
+          els.upfrontRent.value = lease.upfrontRent || '';
+          els.monthlyRent.value = lease.monthlyRent || '';
+          els.monthlyUtilities.value = lease.monthlyUtilities || '';
+          els.liabilityInsurance.value = lease.liabilityInsurance || '';
+          els.securityDeposit.value = lease.securityDeposit || '';
+        }
+      } else {
+        els.modalTitle.textContent = 'Add Lease';
+        clearForm();
+      }
+      
+      els.leaseModal.classList.add('show');
+    }
+
+    function closeLeaseModal() {
+      els.leaseModal.classList.remove('show');
+      editingLeaseId = null;
+      clearForm();
+    }
+
+    function clearForm() {
+      els.approvedDate.value = '';
+      els.unitType.value = '';
+      els.leaseType.value = '';
+      els.floorPlan.value = '';
+      els.firstName.value = '';
+      els.lastName.value = '';
+      els.leaseStart.value = '';
+      els.leaseEnd.value = '';
+      els.upfrontRent.value = '';
+      els.monthlyRent.value = '';
+      els.monthlyUtilities.value = '';
+      els.liabilityInsurance.value = '';
+      els.securityDeposit.value = '';
+    }
+
+    async function saveLease() {
+      // Validate required fields
+      if (!els.approvedDate.value || !els.unitType.value || !els.leaseType.value || 
+          !els.floorPlan.value || !els.firstName.value || !els.lastName.value || 
+          !els.leaseStart.value || !els.leaseEnd.value || !els.monthlyRent.value) {
+        alert('Please fill in all required fields');
+        return;
+      }
+
+      const leaseData = {
+        approvedDate: els.approvedDate.value,
+        unitType: els.unitType.value.trim(),
+        leaseType: els.leaseType.value,
+        floorPlan: els.floorPlan.value.trim(),
+        firstName: els.firstName.value.trim(),
+        lastName: els.lastName.value.trim(),
+        leaseStart: els.leaseStart.value,
+        leaseEnd: els.leaseEnd.value,
+        upfrontRent: parseFloat(els.upfrontRent.value) || 0,
+        monthlyRent: parseFloat(els.monthlyRent.value) || 0,
+        monthlyUtilities: parseFloat(els.monthlyUtilities.value) || 0,
+        liabilityInsurance: parseFloat(els.liabilityInsurance.value) || 0,
+        securityDeposit: parseFloat(els.securityDeposit.value) || 0
+      };
+
+      if (editingLeaseId) {
+        // Update existing
+        const index = leases.findIndex(l => l.id === editingLeaseId);
+        if (index >= 0) {
+          leases[index] = { ...leases[index], ...leaseData };
+        }
+      } else {
+        // Add new
+        leases.push({ id: rid(), ...leaseData });
+      }
+
+      saveLeases();
+      updateStats();
+      updateFilterOptions();
+      renderTable();
+      closeLeaseModal();
+    }
+
+    window.editLease = function(id) {
+      openLeaseModal(id);
+    };
+
+    window.deleteLease = function(id) {
+      if (!confirm('Delete this lease? This cannot be undone.')) return;
+      leases = leases.filter(l => l.id !== id);
+      saveLeases();
+      updateStats();
+      updateFilterOptions();
+      renderTable();
+    };
+
+    // ==================== EXPORT ====================
+    function exportCSV() {
+      const filtered = getFilteredLeases();
+      if (!filtered.length) {
+        alert('No data to export');
+        return;
+      }
+
+      const headers = [
+        'Approved Date', 'Unit Type', 'Lease Type', 'Floor Plan', 'First Name', 'Last Name',
+        'Lease Start', 'Lease End', 'Upfront Rent', 'Monthly Rent', 'Monthly Utilities',
+        'Liability Insurance', 'Total Monthly', 'Security Deposit'
+      ];
+
+      const rows = filtered.map(l => {
+        const totalMonthly = (parseFloat(l.monthlyRent) || 0) + 
+                            (parseFloat(l.monthlyUtilities) || 0) + 
+                            (parseFloat(l.liabilityInsurance) || 0);
+        return [
+          l.approvedDate || '',
+          l.unitType || '',
+          l.leaseType || '',
+          l.floorPlan || '',
+          l.firstName || '',
+          l.lastName || '',
+          l.leaseStart || '',
+          l.leaseEnd || '',
+          l.upfrontRent || 0,
+          l.monthlyRent || 0,
+          l.monthlyUtilities || 0,
+          l.liabilityInsurance || 0,
+          totalMonthly,
+          l.securityDeposit || 0
+        ];
+      });
+
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+      ].join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `MPLR_${currentProperty}_${new Date().toISOString().slice(0, 10)}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // ==================== INIT ====================
+    (async () => { await initAuth(); })();
+  </script>
+</body>
+</html>
