@@ -548,14 +548,15 @@ function addQuickActions() {
 }
 
 // Update progress bars when data changes
-const originalUpdateStats = window.updateStats;
-if (originalUpdateStats) {
+if (window.updateStats && !window.updateStats._layoutWrapped) {
+  const originalUpdateStatsLayout = window.updateStats;
   window.updateStats = function() {
-    originalUpdateStats();
+    originalUpdateStatsLayout();
     if (typeof renderProgressBars === 'function') {
       renderProgressBars();
     }
   };
+  window.updateStats._layoutWrapped = true;
 }
 
 // Expose functions
