@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lead to Goal Calculator • Marketing Hub</title>
+  <link rel="preconnect" href="https://use.typekit.net" crossorigin>
+  <link rel="preconnect" href="https://p.typekit.net" crossorigin>
+  <link rel="stylesheet" href="https://use.typekit.net/hqv8hwr.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    :root{
+      --brand-primary:#446472;
+      --brand-accent:#ffb732;
+      --brand-accent-2:#52d5ff;
+      --brand-gray:#929497;
+      --page-bg:#f8fafc;
+      --bg:#ffffff;
+      --text:#1e293b;
+      --subtext:#64748b;
+      --border:#e2e8f0;
+      --red:#dc2626;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{font-family:'Open Sans',system-ui,-apple-system,sans-serif; background:var(--page-bg); color:var(--text);font-size:14px;line-height:1.5}
+
+    /* Header */
+    header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:10px}
+    .brand .logo-img{height:28px;width:auto}
+    .brand .title{color:#ffb732;font-family:zooja-pro,Arial,sans-serif;font-size:clamp(32px,4vw,48px);line-height:1}
+    .header-controls{display:flex;align-items:center;gap:12px;margin-left:auto}
+    .header-btn{background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;transition:all .15s}
+    .header-btn:hover{background:#f8fafc;border-color:#cbd5e1}
+    .company-name{font-size:12px;color:var(--subtext);font-weight:500}
+
+    .container{padding:24px; max-width:1400px; margin:0 auto}
+    .card{background:#ffffff; border:1px solid var(--border); border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,0.06); overflow:hidden; margin-bottom:20px}
+    .card h2{margin:0; padding:20px 24px; font-size:18px; color:#111827; font-weight:700; border-bottom:1px solid var(--border)}
+    .card .content{padding:24px}
+
+    label{font-size:13px; color:var(--text); display:block; margin-bottom:6px; font-weight:600}
+    input, select{width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--text); font-size:14px; transition:border-color .15s, box-shadow .15s; font-family:'Open Sans',system-ui,sans-serif}
+    input:focus, select:focus{outline:none; border-color:var(--brand-accent-2); box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
+    input:read-only{background:#f8fafc; cursor:not-allowed}
+    .form-group{margin-bottom:16px}
+    .form-row{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+    @media(max-width: 768px){.form-row{grid-template-columns:1fr}}
+
+    button{padding:10px 20px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--text); font-size:14px; font-weight:600; cursor:pointer; transition:all .15s; font-family: Roboto, Arial, sans-serif}
+    button:hover{background:#f8fafc}
+    button.primary{background:var(--brand-primary); color:#fff; border-color:var(--brand-primary)}
+    button.primary:hover{background:#3b5561}
+    button.good{background:#52d5ff; color:#0b1b24; border-color:#52d5ff}
+    button.good:hover{background:#3ecbf5}
+    button.danger{background:#ef4444; color:#fff; border-color:#ef4444}
+    button.danger:hover{background:#dc2626}
+
+    .button-group{display:flex; gap:12px; margin-top:24px; flex-wrap:wrap}
+
+    /* Calculator Table */
+    .calc-table{width:100%; border-collapse:collapse; margin:20px 0; font-size:13px}
+    .calc-table th, .calc-table td{border:1px solid #000; padding:12px; text-align:left}
+    .calc-table th{background:#8b0000; color:#fff; font-weight:700; text-align:center}
+    .calc-table .label-cell{background:#f8fafc; font-weight:600; width:50%}
+    .calc-table .value-cell{text-align:center; width:25%}
+    .calc-table .formula-cell{text-align:right; width:25%; font-size:11px; color:#666; font-style:italic}
+    .calc-table input{border:none; background:transparent; text-align:center; padding:4px; width:100%}
+    .calc-table input:focus{outline:2px solid var(--brand-accent-2); border-radius:4px}
+    .calc-table .editable{background:#e3f2fd}
+    .calc-table .calculated{background:#fff3cd}
+    .calc-table .result{background:#d4edda; font-weight:700}
+
+    .saved-calcs{display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px; margin-top:20px}
+    .saved-calc-card{background:#fff; border:1px solid var(--border); border-radius:8px; padding:16px; cursor:pointer; transition:all .15s}
+    .saved-calc-card:hover{border-color:var(--brand-accent-2); box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+    .saved-calc-card h3{font-size:16px; margin-bottom:8px; color:var(--brand-primary)}
+    .saved-calc-card .date{font-size:12px; color:var(--subtext); margin-bottom:8px}
+    .saved-calc-card .stats{font-size:12px; color:var(--text)}
+    .saved-calc-card .actions{margin-top:12px; display:flex; gap:8px}
+    .saved-calc-card .actions button{padding:6px 12px; font-size:12px}
+
+    .note{background:#fff3cd; border:1px solid #ffc107; border-radius:8px; padding:12px; margin:16px 0; font-size:13px}
+    .note strong{color:#856404}
+  </style>
+</head>
+<body>
+  <div id="bootLoader" style="position:fixed;inset:0;background:#ffffff;display:flex;align-items:center;justify-content:center;z-index:100;color:#111827;font-family:Roboto,Arial,sans-serif">
+    <div style="display:flex;flex-direction:column;gap:6px;align-items:center">
+      <div style="font-weight:800">Marketing Hub</div>
+      <div style="color:#6b7280; font-size:12px">Loading…</div>
+    </div>
+  </div>
+
+  <header id="appHeader" style="display:none">
+    <div class="brand">
+      <img src="logo-main.svg" class="logo-img" alt="Capstone" />
+      <div class="title">Marketing Hub</div>
+    </div>
+    <div class="header-controls">
+      <button class="header-btn" onclick="window.location.href='custom_tools.html'">← Back to Custom Tools</button>
+      <button class="header-btn" id="logoutBtn">Sign Out</button>
+    </div>
+    <span class="company-name">Capstone Management Partners</span>
+  </header>
+
+  <div class="container" id="appContainer" style="display:none">
+    <div class="card">
+      <h2>Lead to Goal Calculator</h2>
+      <div class="content">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="propertySelect">Property</label>
+            <select id="propertySelect">
+              <option value="">Select a property...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="calcDate">Date</label>
+            <input type="date" id="calcDate" />
+          </div>
+        </div>
+
+        <div class="note">
+          <strong>Note:</strong> Only edit fields highlighted in <span style="background:#e3f2fd; padding:2px 6px; border-radius:4px">blue</span>. Yellow fields are auto-calculated.
+        </div>
+
+        <table class="calc-table">
+          <thead>
+            <tr>
+              <th colspan="3"># of Leads Needed to Generate to Hit Goal Based on Current Lease Conversion</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="label-cell">PL % Goal</td>
+              <td class="value-cell editable">
+                <input type="text" id="plGoal" placeholder="98%" />
+              </td>
+              <td class="formula-cell"></td>
+            </tr>
+            <tr>
+              <td class="label-cell"># of Beds Left to Prelease to Hit Goal</td>
+              <td class="value-cell editable">
+                <input type="text" id="bedsLeft" placeholder="383" />
+              </td>
+              <td class="formula-cell"></td>
+            </tr>
+            <tr>
+              <td class="label-cell">Current Lease Conversion</td>
+              <td class="value-cell editable">
+                <input type="text" id="leaseConversion" placeholder="4.7%" />
+              </td>
+              <td class="formula-cell">15% / 100</td>
+            </tr>
+            <tr>
+              <td class="label-cell">Current Lead to Lease Conversion Ratio</td>
+              <td class="value-cell calculated">
+                <input type="text" id="leadToLeaseRatio" readonly />
+              </td>
+              <td class="formula-cell">1 / Current Lease Conversion</td>
+            </tr>
+            <tr class="result">
+              <td class="label-cell">Total number of Leads Needed (based on lead to lease conversion ratio)</td>
+              <td class="value-cell">
+                <input type="text" id="totalLeadsNeeded" readonly />
+              </td>
+              <td class="formula-cell">Current Lead to Lease Conversion Ratio X # of Beds Left to Prelease to Hit Goal</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="button-group">
+          <button class="good" id="saveBtn">Save Calculator</button>
+          <button class="primary" id="exportBtn">Export to Excel</button>
+          <button id="newBtn">New Calculator</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Saved Calculators</h2>
+      <div class="content">
+        <div id="savedCalcsList" class="saved-calcs">
+          <!-- Saved calculators will be displayed here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentUser = null;
+    let properties = [];
+    let savedCalculators = [];
+    let currentCalcId = null;
+
+    const els = {
+      bootLoader: document.getElementById('bootLoader'),
+      appHeader: document.getElementById('appHeader'),
+      appContainer: document.getElementById('appContainer'),
+      logoutBtn: document.getElementById('logoutBtn'),
+      propertySelect: document.getElementById('propertySelect'),
+      calcDate: document.getElementById('calcDate'),
+      plGoal: document.getElementById('plGoal'),
+      bedsLeft: document.getElementById('bedsLeft'),
+      leaseConversion: document.getElementById('leaseConversion'),
+      leadToLeaseRatio: document.getElementById('leadToLeaseRatio'),
+      totalLeadsNeeded: document.getElementById('totalLeadsNeeded'),
+      saveBtn: document.getElementById('saveBtn'),
+      exportBtn: document.getElementById('exportBtn'),
+      newBtn: document.getElementById('newBtn'),
+      savedCalcsList: document.getElementById('savedCalcsList')
+    };
+
+    async function initAuth() {
+      try {
+        const meRes = await fetch('/api/me', { credentials: 'include' });
+        if (meRes.ok) {
+          const me = await meRes.json();
+          currentUser = { username: me.username, role: me.role, properties: me.properties };
+          
+          if (currentUser.role !== 'admin') {
+            alert('Access Denied: This tool is only available to admin users.');
+            window.location.href = 'mmp_calendar_app.html';
+            return false;
+          }
+
+          showApp();
+          await loadProperties();
+          loadSavedCalculators();
+          setDefaultDate();
+          return true;
+        }
+      } catch (e) {
+        console.error('Auth error:', e);
+      }
+      window.location.href = 'index.html';
+      return false;
+    }
+
+    function showApp() {
+      els.bootLoader.style.display = 'none';
+      els.appHeader.style.display = '';
+      els.appContainer.style.display = '';
+    }
+
+    async function doLogout() {
+      try {
+        await fetch('/api/auth-logout', { method: 'POST', credentials: 'include' });
+      } catch (e) {}
+      window.location.href = 'index.html';
+    }
+
+    async function loadProperties() {
+      try {
+        const res = await fetch('/api/properties', { credentials: 'include' });
+        if (res.ok) {
+          properties = await res.json();
+          properties.sort((a, b) => a.name.localeCompare(b.name));
+          
+          els.propertySelect.innerHTML = '<option value="">Select a property...</option>';
+          properties.forEach(prop => {
+            const option = document.createElement('option');
+            option.value = prop.id;
+            option.textContent = prop.name;
+            els.propertySelect.appendChild(option);
+          });
+        }
+      } catch (e) {
+        console.error('Error loading properties:', e);
+      }
+    }
+
+    function setDefaultDate() {
+      const today = new Date();
+      els.calcDate.value = today.toISOString().split('T')[0];
+    }
+
+    function parsePercentage(value) {
+      if (!value) return 0;
+      const str = value.toString().replace('%', '').trim();
+      return parseFloat(str) || 0;
+    }
+
+    function calculateFields() {
+      const leaseConversionPercent = parsePercentage(els.leaseConversion.value);
+      const bedsLeft = parseFloat(els.bedsLeft.value) || 0;
+      
+      if (leaseConversionPercent > 0) {
+        const leaseConversionDecimal = leaseConversionPercent / 100;
+        const leadToLeaseRatio = 1 / leaseConversionDecimal;
+        els.leadToLeaseRatio.value = Math.round(leadToLeaseRatio * 100) / 100;
+        
+        if (bedsLeft > 0) {
+          const totalLeads = leadToLeaseRatio * bedsLeft;
+          els.totalLeadsNeeded.value = Math.round(totalLeads);
+        } else {
+          els.totalLeadsNeeded.value = '';
+        }
+      } else {
+        els.leadToLeaseRatio.value = '';
+        els.totalLeadsNeeded.value = '';
+      }
+    }
+
+    function loadSavedCalculators() {
+      try {
+        const saved = localStorage.getItem('lead_to_goal_calculators');
+        if (saved) {
+          savedCalculators = JSON.parse(saved);
+          renderSavedCalculators();
+        }
+      } catch (e) {
+        console.error('Error loading saved calculators:', e);
+      }
+    }
+
+    function saveCalculator() {
+      const propertyId = els.propertySelect.value;
+      if (!propertyId) {
+        alert('Please select a property');
+        return;
+      }
+
+      const property = properties.find(p => p.id === propertyId);
+      const calc = {
+        id: currentCalcId || Date.now().toString(),
+        propertyId: propertyId,
+        propertyName: property.name,
+        date: els.calcDate.value,
+        plGoal: els.plGoal.value,
+        bedsLeft: els.bedsLeft.value,
+        leaseConversion: els.leaseConversion.value,
+        leadToLeaseRatio: els.leadToLeaseRatio.value,
+        totalLeadsNeeded: els.totalLeadsNeeded.value,
+        savedAt: new Date().toISOString()
+      };
+
+      if (currentCalcId) {
+        const index = savedCalculators.findIndex(c => c.id === currentCalcId);
+        if (index !== -1) {
+          savedCalculators[index] = calc;
+        }
+      } else {
+        savedCalculators.unshift(calc);
+      }
+
+      localStorage.setItem('lead_to_goal_calculators', JSON.stringify(savedCalculators));
+      renderSavedCalculators();
+      alert('Calculator saved successfully!');
+    }
+
+    function loadCalculator(calc) {
+      currentCalcId = calc.id;
+      els.propertySelect.value = calc.propertyId;
+      els.calcDate.value = calc.date;
+      els.plGoal.value = calc.plGoal;
+      els.bedsLeft.value = calc.bedsLeft;
+      els.leaseConversion.value = calc.leaseConversion;
+      els.leadToLeaseRatio.value = calc.leadToLeaseRatio;
+      els.totalLeadsNeeded.value = calc.totalLeadsNeeded;
+      
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function deleteCalculator(id) {
+      if (confirm('Are you sure you want to delete this calculator?')) {
+        savedCalculators = savedCalculators.filter(c => c.id !== id);
+        localStorage.setItem('lead_to_goal_calculators', JSON.stringify(savedCalculators));
+        renderSavedCalculators();
+        
+        if (currentCalcId === id) {
+          newCalculator();
+        }
+      }
+    }
+
+    function newCalculator() {
+      currentCalcId = null;
+      els.propertySelect.value = '';
+      els.plGoal.value = '';
+      els.bedsLeft.value = '';
+      els.leaseConversion.value = '';
+      els.leadToLeaseRatio.value = '';
+      els.totalLeadsNeeded.value = '';
+      setDefaultDate();
+    }
+
+    function renderSavedCalculators() {
+      if (savedCalculators.length === 0) {
+        els.savedCalcsList.innerHTML = '<p style="color:var(--subtext)">No saved calculators yet. Create one above!</p>';
+        return;
+      }
+
+      els.savedCalcsList.innerHTML = savedCalculators.map(calc => {
+        const date = new Date(calc.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        return `
+          <div class="saved-calc-card" onclick="loadCalculator(${JSON.stringify(calc).replace(/"/g, '&quot;')})">
+            <h3>${calc.propertyName}</h3>
+            <div class="date">${date}</div>
+            <div class="stats">
+              <div>PL Goal: ${calc.plGoal}</div>
+              <div>Beds Left: ${calc.bedsLeft}</div>
+              <div>Leads Needed: ${calc.totalLeadsNeeded}</div>
+            </div>
+            <div class="actions" onclick="event.stopPropagation()">
+              <button class="good" onclick="loadCalculator(${JSON.stringify(calc).replace(/"/g, '&quot;')})">Edit</button>
+              <button class="danger" onclick="deleteCalculator('${calc.id}')">Delete</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function exportToExcel() {
+      const propertyId = els.propertySelect.value;
+      if (!propertyId) {
+        alert('Please select a property');
+        return;
+      }
+
+      const property = properties.find(p => p.id === propertyId);
+      const date = new Date(els.calcDate.value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+      const data = [
+        ['Lead to Goal Calculator'],
+        ['Property:', property.name],
+        ['Date:', date],
+        [],
+        ['# of Leads Needed to Generate to Hit Goal Based on Current Lease Conversion'],
+        [],
+        ['Metric', 'Value', 'Formula'],
+        ['PL % Goal', els.plGoal.value, ''],
+        ['# of Beds Left to Prelease to Hit Goal', els.bedsLeft.value, ''],
+        ['Current Lease Conversion', els.leaseConversion.value, '15% / 100'],
+        ['Current Lead to Lease Conversion Ratio', els.leadToLeaseRatio.value, '1 / Current Lease Conversion'],
+        ['Total number of Leads Needed (based on lead to lease conversion ratio)', els.totalLeadsNeeded.value, 'Current Lead to Lease Conversion Ratio X # of Beds Left to Prelease to Hit Goal']
+      ];
+
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Lead to Goal');
+
+      const filename = `Lead_to_Goal_${property.name.replace(/\s+/g, '_')}_${date.replace(/\s+/g, '_')}.xlsx`;
+      XLSX.writeFile(wb, filename);
+    }
+
+    // Event listeners
+    els.logoutBtn.addEventListener('click', doLogout);
+    els.saveBtn.addEventListener('click', saveCalculator);
+    els.exportBtn.addEventListener('click', exportToExcel);
+    els.newBtn.addEventListener('click', newCalculator);
+
+    els.leaseConversion.addEventListener('input', calculateFields);
+    els.bedsLeft.addEventListener('input', calculateFields);
+
+    // Initialize
+    (async () => {
+      await initAuth();
+    })();
+  </script>
+</body>
+</html>
