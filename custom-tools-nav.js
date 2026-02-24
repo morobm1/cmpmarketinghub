@@ -1,5 +1,5 @@
 // Shared navigation helper for Marketing Hub
-// This script dynamically adds the Custom Tools link for admin users
+// This script dynamically adds the Custom Tools link for all authenticated users
 
 (function() {
   // Wait for DOM to be ready
@@ -10,14 +10,12 @@
   }
 
   async function initCustomToolsNav() {
-    // Check if user is authenticated and is an admin
+    // Check if user is authenticated
     try {
       const meRes = await fetch('/api/me', { credentials: 'include' });
       if (meRes.ok) {
-        const me = await meRes.json();
-        if (me.role === 'admin') {
-          addCustomToolsLink();
-        }
+        // User is authenticated - add Custom Tools link for everyone
+        addCustomToolsLink();
       }
     } catch (e) {
       // Silently fail if not authenticated
