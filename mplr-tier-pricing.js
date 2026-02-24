@@ -308,19 +308,25 @@ function renderTierPricingTracker() {
     return lt.includes('renewal') || lt.includes('transfer');
   });
   
-  // Track matched unit types
-  const matchedNewLeaseTypes = new Set();
-  const matchedRenewalTypes = new Set();
+  // Track matched leases by unit type AND rate
+  const matchedNewLeases = new Set();
+  const matchedRenewalLeases = new Set();
   
   // Generate HTML for New Lease Tiers
-  const newLeaseHTML = renderTierCategory('New Lease Tiers', newLeaseTiers, newLeases, 'new', matchedNewLeaseTypes);
+  const newLeaseHTML = renderTierCategory('New Lease Tiers', newLeaseTiers, newLeases, 'new', matchedNewLeases);
   
   // Generate HTML for Renewal Tiers
-  const renewalHTML = renderTierCategory('Renewal Tiers', renewalTiers, renewalLeases, 'renewal', matchedRenewalTypes);
+  const renewalHTML = renderTierCategory('Renewal Tiers', renewalTiers, renewalLeases, 'renewal', matchedRenewalLeases);
   
-  // Find unmatched leases
-  const unmatchedNewLeases = newLeases.filter(l => !matchedNewLeaseTypes.has(l.unitType));
-  const unmatchedRenewalLeases = renewalLeases.filter(l => !matchedRenewalTypes.has(l.unitType));
+  // Find unmatched leases - check if the lease's unit type + rate combination was matched
+  const unmatchedNewLeases = newLeases.filter(l => {
+    const key = `${l.unitType}|${parseFloat(l.monthlyRent) || 0}`;
+    return !matchedNewLeases.has(key);
+  });
+  const unmatchedRenewalLeases = renewalLeases.filter(l => {
+    const key = `${l.unitType}|${parseFloat(l.monthlyRent) || 0}`;
+    return !matchedRenewalLeases.has(key);
+  });
   
   // Generate unmatched records HTML
   const unmatchedHTML = renderUnmatchedRecords(unmatchedNewLeases, unmatchedRenewalLeases);
@@ -370,9 +376,9 @@ function renderTierCategory(title, tiers, leases, category, matchedTypes) {
       tierTotal += count;
       tierCap += ut.cap;
       
-      // Mark this unit type as matched
+      // Mark this unit type + rate combination as matched
       if (count > 0) {
-        matchedTypes.add(ut.type);
+        matchedTypes.add(key);
       }
       
       const remaining = Math.max(0, ut.cap - count);
