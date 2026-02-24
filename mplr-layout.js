@@ -1,38 +1,37 @@
-// MPLR Modern Layout - Settings Modal + Dashboard View
+// MPLR Modern Layout - Clean Dashboard with Settings Panel
 
-// Wait for everything to be fully loaded
 window.addEventListener('load', () => {
   setTimeout(() => {
     initializeModernLayout();
-  }, 100);
+  }, 200);
 });
 
 function initializeModernLayout() {
   console.log('Initializing modern MPLR layout...');
   
-  // Hide original setup sections
-  hideSetupSections();
+  // Move setup sections (don't clone, move the originals)
+  moveSetupSections();
   
-  // Add settings button to header
+  // Add settings button
   addSettingsButton();
   
-  // Create settings modal
-  createSettingsModal();
+  // Create settings panel
+  createSettingsPanel();
   
-  // Add visual progress dashboard
+  // Add progress dashboard
   addProgressDashboard();
   
-  // Add quick action buttons
-  addQuickActions();
+  // Reorganize quick actions
+  reorganizeQuickActions();
   
   console.log('Modern MPLR layout complete');
 }
 
-function hideSetupSections() {
+function moveSetupSections() {
   const container = document.getElementById('appContainer');
   if (!container) return;
   
-  // Hide Property Configuration, Floor Plan Tracker, and Tier Pricing Tracker
+  // Find and hide (but don't remove) the setup sections
   const cards = container.querySelectorAll('.card');
   cards.forEach(card => {
     const h3 = card.querySelector('h3');
@@ -42,7 +41,7 @@ function hideSetupSections() {
           text.includes('Floor Plan Tracker') || 
           text.includes('Tier Pricing Tracker')) {
         card.style.display = 'none';
-        card.setAttribute('data-setup-section', 'true');
+        card.setAttribute('data-mplr-setup', 'true');
       }
     }
   });
@@ -50,76 +49,74 @@ function hideSetupSections() {
 
 function addSettingsButton() {
   const headerControls = document.querySelector('.header-controls');
-  if (!headerControls) return;
+  if (!headerControls || document.getElementById('mplrSettingsBtn')) return;
   
-  // Check if button already exists
-  if (document.getElementById('mplrSettingsBtn')) return;
+  const btn = document.createElement('button');
+  btn.id = 'mplrSettingsBtn';
+  btn.className = 'header-btn';
+  btn.textContent = 'Settings';
+  btn.onclick = () => toggleSettingsPanel();
   
-  const settingsBtn = document.createElement('button');
-  settingsBtn.id = 'mplrSettingsBtn';
-  settingsBtn.className = 'header-btn';
-  settingsBtn.innerHTML = '⚙️ Settings';
-  settingsBtn.onclick = openSettingsModal;
-  
-  // Insert before logout button
   const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) {
-    headerControls.insertBefore(settingsBtn, logoutBtn);
-  } else {
-    headerControls.appendChild(settingsBtn);
+    headerControls.insertBefore(btn, logoutBtn);
   }
 }
 
-function createSettingsModal() {
-  // Check if modal already exists
-  if (document.getElementById('mplrSettingsModal')) return;
+function createSettingsPanel() {
+  if (document.getElementById('mplrSettingsPanel')) return;
   
-  const modal = document.createElement('div');
-  modal.id = 'mplrSettingsModal';
-  modal.className = 'mplr-settings-modal';
-  modal.innerHTML = `
-    <div class="mplr-settings-overlay" onclick="closeSettingsModal()"></div>
-    <div class="mplr-settings-panel">
+  const panel = document.createElement('div');
+  panel.id = 'mplrSettingsPanel';
+  panel.className = 'mplr-settings-panel';
+  panel.innerHTML = `
+    <div class="mplr-settings-overlay" onclick="toggleSettingsPanel()"></div>
+    <div class="mplr-settings-content">
       <div class="mplr-settings-header">
-        <h2>⚙️ MPLR Settings</h2>
-        <button class="mplr-close-btn" onclick="closeSettingsModal()">��</button>
+        <h2>MPLR Settings</h2>
+        <button class="mplr-settings-close" onclick="toggleSettingsPanel()">×</button>
       </div>
       <div class="mplr-settings-tabs">
-        <button class="mplr-tab active" onclick="switchSettingsTab('property')">Property</button>
-        <button class="mplr-tab" onclick="switchSettingsTab('floorplans')">Floor Plans</button>
-        <button class="mplr-tab" onclick="switchSettingsTab('tiers')">Tier Pricing</button>
+        <button class="mplr-settings-tab active" data-tab="property">Property</button>
+        <button class="mplr-settings-tab" data-tab="floorplans">Floor Plans</button>
+        <button class="mplr-settings-tab" data-tab="tiers">Tiers</button>
       </div>
-      <div class="mplr-settings-content" id="mplrSettingsContent">
-        <!-- Content will be loaded here -->
-      </div>
+      <div class="mplr-settings-body" id="mplrSettingsBody"></div>
     </div>
   `;
   
-  document.body.appendChild(modal);
-  addSettingsStyles();
+  document.body.appendChild(panel);
+  
+  // Add tab click handlers
+  panel.querySelectorAll('.mplr-settings-tab').forEach(tab => {
+    tab.addEventListener('click', (e) => {
+      panel.querySelectorAll('.mplr-settings-tab').forEach(t => t.classList.remove('active'));
+      e.target.classList.add('active');
+      loadSettingsTab(e.target.dataset.tab);
+    });
+  });
+  
+  addSettingsPanelStyles();
 }
 
-function addSettingsStyles() {
-  if (document.getElementById('mplrSettingsStyles')) return;
+function addSettingsPanelStyles() {
+  if (document.getElementById('mplrPanelStyles')) return;
   
   const style = document.createElement('style');
-  style.id = 'mplrSettingsStyles';
+  style.id = 'mplrPanelStyles';
   style.textContent = `
-    .mplr-settings-modal {
+    .mplr-settings-panel {
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      z-index: 1000;
+      z-index: 9999;
       display: none;
-      opacity: 0;
-      transition: opacity 0.3s ease;
     }
     
-    .mplr-settings-modal.show {
+    .mplr-settings-panel.active {
       display: block;
-      opacity: 1;
     }
     
     .mplr-settings-overlay {
@@ -132,33 +129,33 @@ function addSettingsStyles() {
       backdrop-filter: blur(4px);
     }
     
-    .mplr-settings-panel {
+    .mplr-settings-content {
       position: absolute;
       top: 0;
       right: 0;
       bottom: 0;
       width: 90%;
-      max-width: 900px;
+      max-width: 1000px;
       background: white;
-      box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+      box-shadow: -4px 0 24px rgba(0, 0, 0, 0.2);
       display: flex;
       flex-direction: column;
       transform: translateX(100%);
-      transition: transform 0.3s ease;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
-    .mplr-settings-modal.show .mplr-settings-panel {
+    .mplr-settings-panel.active .mplr-settings-content {
       transform: translateX(0);
     }
     
     .mplr-settings-header {
       padding: 24px;
-      border-bottom: 1px solid #e2e8f0;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: var(--brand-primary);
       color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
     }
     
     .mplr-settings-header h2 {
@@ -167,38 +164,37 @@ function addSettingsStyles() {
       font-weight: 700;
     }
     
-    .mplr-close-btn {
-      background: rgba(255, 255, 255, 0.2);
+    .mplr-settings-close {
+      background: rgba(255,255,255,0.2);
       border: none;
       color: white;
-      font-size: 24px;
-      width: 40px;
-      height: 40px;
+      font-size: 32px;
+      width: 44px;
+      height: 44px;
       border-radius: 8px;
       cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      transition: background 0.2s;
+      line-height: 1;
+      padding: 0;
     }
     
-    .mplr-close-btn:hover {
-      background: rgba(255, 255, 255, 0.3);
+    .mplr-settings-close:hover {
+      background: rgba(255,255,255,0.3);
     }
     
     .mplr-settings-tabs {
       display: flex;
-      gap: 4px;
-      padding: 16px 24px 0;
+      gap: 8px;
+      padding: 16px 24px;
       background: #f8fafc;
       border-bottom: 1px solid #e2e8f0;
     }
     
-    .mplr-tab {
-      padding: 12px 24px;
+    .mplr-settings-tab {
+      padding: 10px 20px;
       background: transparent;
       border: none;
-      border-bottom: 3px solid transparent;
+      border-radius: 6px;
       color: #64748b;
       font-size: 14px;
       font-weight: 600;
@@ -206,58 +202,54 @@ function addSettingsStyles() {
       transition: all 0.2s;
     }
     
-    .mplr-tab:hover {
-      color: #374151;
-      background: rgba(102, 126, 234, 0.1);
+    .mplr-settings-tab:hover {
+      background: rgba(68, 100, 114, 0.1);
+      color: var(--brand-primary);
     }
     
-    .mplr-tab.active {
-      color: #667eea;
-      border-bottom-color: #667eea;
-      background: white;
+    .mplr-settings-tab.active {
+      background: var(--brand-primary);
+      color: white;
     }
     
-    .mplr-settings-content {
+    .mplr-settings-body {
       flex: 1;
       overflow-y: auto;
       padding: 24px;
-      background: white;
     }
     
-    /* Progress Dashboard */
-    .mplr-dashboard {
-      margin-bottom: 24px;
+    /* Dashboard Styles */
+    .mplr-dashboard-section {
+      margin-bottom: 32px;
     }
     
-    .mplr-dashboard-title {
-      font-size: 24px;
+    .mplr-section-title {
+      font-size: 20px;
       font-weight: 700;
       color: #374151;
-      margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #e2e8f0;
     }
     
     .mplr-progress-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 20px;
-      margin-bottom: 32px;
     }
     
     .mplr-progress-card {
       background: white;
       border: 1px solid #e2e8f0;
-      border-radius: 16px;
-      padding: 24px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-      transition: all 0.3s ease;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      transition: all 0.2s;
     }
     
     .mplr-progress-card:hover {
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-      transform: translateY(-4px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      transform: translateY(-2px);
     }
     
     .mplr-progress-header {
@@ -267,72 +259,50 @@ function addSettingsStyles() {
       margin-bottom: 16px;
     }
     
-    .mplr-progress-title {
-      font-size: 14px;
-      font-weight: 600;
+    .mplr-progress-label {
+      font-size: 12px;
+      font-weight: 700;
       color: #64748b;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
     
-    .mplr-progress-value {
-      font-size: 36px;
+    .mplr-progress-percent {
+      font-size: 32px;
       font-weight: 700;
-      color: #667eea;
+      color: var(--brand-primary);
       line-height: 1;
     }
     
-    .mplr-progress-bar-wrapper {
-      margin-top: 16px;
-    }
-    
-    .mplr-progress-bar-bg {
+    .mplr-progress-bar {
       width: 100%;
-      height: 12px;
+      height: 10px;
       background: #e5e7eb;
       border-radius: 999px;
       overflow: hidden;
-      position: relative;
+      margin-top: 12px;
     }
     
-    .mplr-progress-bar-fill {
+    .mplr-progress-fill {
       height: 100%;
-      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(90deg, var(--brand-accent-2), var(--brand-primary));
       border-radius: 999px;
-      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
-      overflow: hidden;
+      transition: width 0.5s ease;
     }
     
-    .mplr-progress-bar-fill::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-      animation: shimmer 2s infinite;
+    .mplr-progress-fill.success {
+      background: linear-gradient(90deg, #22c55e, #16a34a);
     }
     
-    @keyframes shimmer {
-      0% { transform: translateX(-100%); }
-      100% { transform: translateX(100%); }
+    .mplr-progress-fill.warning {
+      background: linear-gradient(90deg, #f59e0b, #d97706);
     }
     
-    .mplr-progress-bar-fill.success {
-      background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
+    .mplr-progress-fill.danger {
+      background: linear-gradient(90deg, #ef4444, #dc2626);
     }
     
-    .mplr-progress-bar-fill.warning {
-      background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
-    }
-    
-    .mplr-progress-bar-fill.danger {
-      background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
-    }
-    
-    .mplr-progress-details {
+    .mplr-progress-stats {
       display: flex;
       justify-content: space-between;
       margin-top: 12px;
@@ -340,21 +310,15 @@ function addSettingsStyles() {
       color: #64748b;
     }
     
-    .mplr-progress-stat {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    
     /* Quick Actions */
-    .mplr-quick-actions {
+    .mplr-actions-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 16px;
       margin-bottom: 32px;
     }
     
-    .mplr-action-card {
+    .mplr-action-btn {
       background: white;
       border: 2px solid #e2e8f0;
       border-radius: 12px;
@@ -364,39 +328,37 @@ function addSettingsStyles() {
       display: flex;
       align-items: center;
       gap: 16px;
+      text-align: left;
     }
     
-    .mplr-action-card:hover {
-      border-color: #667eea;
-      background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+    .mplr-action-btn:hover {
+      border-color: var(--brand-accent-2);
+      background: #f0f9ff;
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+      box-shadow: 0 4px 12px rgba(82, 213, 255, 0.3);
     }
     
     .mplr-action-icon {
-      font-size: 32px;
-      width: 56px;
-      height: 56px;
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, var(--brand-accent-2), var(--brand-primary));
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 12px;
+      font-size: 24px;
       flex-shrink: 0;
     }
     
-    .mplr-action-content {
-      flex: 1;
-    }
-    
-    .mplr-action-title {
+    .mplr-action-text h3 {
+      margin: 0 0 4px 0;
       font-size: 16px;
       font-weight: 700;
       color: #374151;
-      margin-bottom: 4px;
     }
     
-    .mplr-action-desc {
+    .mplr-action-text p {
+      margin: 0;
       font-size: 13px;
       color: #64748b;
     }
@@ -404,77 +366,59 @@ function addSettingsStyles() {
   document.head.appendChild(style);
 }
 
-function openSettingsModal() {
-  const modal = document.getElementById('mplrSettingsModal');
-  if (modal) {
-    modal.classList.add('show');
-    switchSettingsTab('property');
+function toggleSettingsPanel() {
+  const panel = document.getElementById('mplrSettingsPanel');
+  if (!panel) return;
+  
+  if (panel.classList.contains('active')) {
+    panel.classList.remove('active');
+  } else {
+    panel.classList.add('active');
+    loadSettingsTab('property');
   }
 }
 
-function closeSettingsModal() {
-  const modal = document.getElementById('mplrSettingsModal');
-  if (modal) {
-    modal.classList.remove('show');
-  }
-}
-
-function switchSettingsTab(tab) {
-  // Update active tab
-  const tabs = document.querySelectorAll('.mplr-tab');
-  tabs.forEach(t => t.classList.remove('active'));
-  event?.target?.classList.add('active');
-  
-  const content = document.getElementById('mplrSettingsContent');
-  if (!content) return;
-  
+function loadSettingsTab(tab) {
+  const body = document.getElementById('mplrSettingsBody');
   const container = document.getElementById('appContainer');
-  if (!container) return;
+  if (!body || !container) return;
   
-  // Get the appropriate section
   let section = null;
   if (tab === 'property') {
-    section = Array.from(container.querySelectorAll('.card')).find(card => 
+    section = Array.from(container.querySelectorAll('[data-mplr-setup]')).find(card => 
       card.querySelector('h3')?.textContent.includes('Property Configuration')
     );
   } else if (tab === 'floorplans') {
-    section = Array.from(container.querySelectorAll('.card')).find(card => 
+    section = Array.from(container.querySelectorAll('[data-mplr-setup]')).find(card => 
       card.querySelector('h3')?.textContent.includes('Floor Plan Tracker')
     );
   } else if (tab === 'tiers') {
-    section = Array.from(container.querySelectorAll('.card')).find(card => 
+    section = Array.from(container.querySelectorAll('[data-mplr-setup]')).find(card => 
       card.querySelector('h3')?.textContent.includes('Tier Pricing Tracker')
     );
   }
   
   if (section) {
-    content.innerHTML = '';
-    const clone = section.cloneNode(true);
-    clone.style.display = 'block';
-    clone.style.marginBottom = '0';
-    content.appendChild(clone);
+    // Move the actual section (not clone) so event handlers work
+    body.innerHTML = '';
+    section.style.display = 'block';
+    body.appendChild(section);
   }
 }
 
 function addProgressDashboard() {
   const container = document.getElementById('appContainer');
-  if (!container) return;
-  
-  // Check if dashboard already exists
-  if (document.getElementById('mplrDashboard')) return;
+  if (!container || document.getElementById('mplrDashboard')) return;
   
   const dashboard = document.createElement('div');
   dashboard.id = 'mplrDashboard';
-  dashboard.className = 'mplr-dashboard';
   dashboard.innerHTML = `
-    <h1 class="mplr-dashboard-title">
-      <span>📊</span>
-      <span>Leasing Dashboard</span>
-    </h1>
-    <div class="mplr-progress-grid" id="mplrProgressGrid"></div>
+    <div class="mplr-dashboard-section">
+      <h2 class="mplr-section-title">Leasing Progress</h2>
+      <div class="mplr-progress-grid" id="mplrProgressGrid"></div>
+    </div>
   `;
   
-  // Insert after stats
   const statsGrid = container.querySelector('.stats-grid');
   if (statsGrid) {
     statsGrid.after(dashboard);
@@ -487,7 +431,6 @@ async function renderProgressDashboard() {
   const grid = document.getElementById('mplrProgressGrid');
   if (!grid) return;
   
-  // Get total beds
   let totalBeds = 0;
   if (typeof getPropertyTotalBeds === 'function') {
     totalBeds = await getPropertyTotalBeds() || 0;
@@ -495,30 +438,27 @@ async function renderProgressDashboard() {
   
   const totalLeased = leases ? leases.length : 0;
   const remaining = Math.max(0, totalBeds - totalLeased);
-  const percentLeased = totalBeds > 0 ? ((totalLeased / totalBeds) * 100).toFixed(1) : 0;
+  const percent = totalBeds > 0 ? ((totalLeased / totalBeds) * 100).toFixed(1) : 0;
   
   let html = `
-    <!-- Overall Occupancy -->
     <div class="mplr-progress-card">
       <div class="mplr-progress-header">
         <div>
-          <div class="mplr-progress-title">Overall Occupancy</div>
-          <div class="mplr-progress-value">${percentLeased}%</div>
+          <div class="mplr-progress-label">Overall Occupancy</div>
+          <div class="mplr-progress-percent">${percent}%</div>
         </div>
       </div>
-      <div class="mplr-progress-bar-wrapper">
-        <div class="mplr-progress-bar-bg">
-          <div class="mplr-progress-bar-fill ${getProgressClass(percentLeased)}" style="width: ${percentLeased}%"></div>
-        </div>
+      <div class="mplr-progress-bar">
+        <div class="mplr-progress-fill ${getProgressClass(percent)}" style="width: ${percent}%"></div>
       </div>
-      <div class="mplr-progress-details">
-        <span class="mplr-progress-stat">✅ ${totalLeased} leased</span>
-        <span class="mplr-progress-stat">📍 ${remaining} remaining</span>
+      <div class="mplr-progress-stats">
+        <span>${totalLeased} leased</span>
+        <span>${remaining} remaining</span>
       </div>
     </div>
   `;
   
-  // Add floor plan progress
+  // Floor plans
   if (window.getFloorPlans && typeof window.getFloorPlans === 'function') {
     const floorPlans = window.getFloorPlans();
     if (floorPlans && floorPlans.length > 0) {
@@ -530,30 +470,116 @@ async function renderProgressDashboard() {
       
       floorPlans.forEach(fp => {
         const leased = leasedCounts[fp.type] || 0;
-        const percent = fp.total > 0 ? ((leased / fp.total) * 100).toFixed(1) : 0;
+        const fpPercent = fp.total > 0 ? ((leased / fp.total) * 100).toFixed(1) : 0;
         const available = Math.max(0, fp.total - leased);
         
         html += `
           <div class="mplr-progress-card">
             <div class="mplr-progress-header">
               <div>
-                <div class="mplr-progress-title">${fp.type}</div>
-                <div class="mplr-progress-value">${percent}%</div>
+                <div class="mplr-progress-label">${fp.type}</div>
+                <div class="mplr-progress-percent">${fpPercent}%</div>
               </div>
             </div>
-            <div class="mplr-progress-bar-wrapper">
-              <div class="mplr-progress-bar-bg">
-                <div class="mplr-progress-bar-fill ${getProgressClass(percent)}" style="width: ${percent}%"></div>
-              </div>
+            <div class="mplr-progress-bar">
+              <div class="mplr-progress-fill ${getProgressClass(fpPercent)}" style="width: ${fpPercent}%"></div>
             </div>
-            <div class="mplr-progress-details">
-              <span class="mplr-progress-stat">✅ ${leased}/${fp.total}</span>
-              <span class="mplr-progress-stat">📍 ${available} available</span>
+            <div class="mplr-progress-stats">
+              <span>${leased}/${fp.total} leased</span>
+              <span>${available} available</span>
             </div>
           </div>
         `;
       });
     }
+  }
+  
+  // Tier progress
+  const newLeaseTiers = window.newLeaseTiers || [];
+  const renewalTiers = window.renewalTiers || [];
+  
+  if (newLeaseTiers.length > 0 || renewalTiers.length > 0) {
+    const newLeases = leases.filter(l => (l.leaseType || '').toLowerCase().includes('new'));
+    const renewalLeases = leases.filter(l => {
+      const lt = (l.leaseType || '').toLowerCase();
+      return lt.includes('renewal') || lt.includes('transfer');
+    });
+    
+    // New lease tiers
+    newLeaseTiers.forEach(tier => {
+      const leaseCounts = {};
+      newLeases.forEach(lease => {
+        const key = `${lease.unitType}|${parseFloat(lease.monthlyRent) || 0}`;
+        leaseCounts[key] = (leaseCounts[key] || 0) + 1;
+      });
+      
+      let tierTotal = 0;
+      let tierCap = 0;
+      tier.unitTypes.forEach(ut => {
+        const key = `${ut.type}|${ut.rate}`;
+        tierTotal += leaseCounts[key] || 0;
+        tierCap += ut.cap;
+      });
+      
+      const tierPercent = tierCap > 0 ? ((tierTotal / tierCap) * 100).toFixed(1) : 0;
+      const tierRemaining = Math.max(0, tierCap - tierTotal);
+      
+      html += `
+        <div class="mplr-progress-card">
+          <div class="mplr-progress-header">
+            <div>
+              <div class="mplr-progress-label">${tier.tier} (New Lease)</div>
+              <div class="mplr-progress-percent">${tierPercent}%</div>
+            </div>
+          </div>
+          <div class="mplr-progress-bar">
+            <div class="mplr-progress-fill ${getProgressClass(tierPercent)}" style="width: ${tierPercent}%"></div>
+          </div>
+          <div class="mplr-progress-stats">
+            <span>${tierTotal}/${tierCap} leased</span>
+            <span>${tierRemaining} remaining</span>
+          </div>
+        </div>
+      `;
+    });
+    
+    // Renewal tiers
+    renewalTiers.forEach(tier => {
+      const leaseCounts = {};
+      renewalLeases.forEach(lease => {
+        const key = `${lease.unitType}|${parseFloat(lease.monthlyRent) || 0}`;
+        leaseCounts[key] = (leaseCounts[key] || 0) + 1;
+      });
+      
+      let tierTotal = 0;
+      let tierCap = 0;
+      tier.unitTypes.forEach(ut => {
+        const key = `${ut.type}|${ut.rate}`;
+        tierTotal += leaseCounts[key] || 0;
+        tierCap += ut.cap;
+      });
+      
+      const tierPercent = tierCap > 0 ? ((tierTotal / tierCap) * 100).toFixed(1) : 0;
+      const tierRemaining = Math.max(0, tierCap - tierTotal);
+      
+      html += `
+        <div class="mplr-progress-card">
+          <div class="mplr-progress-header">
+            <div>
+              <div class="mplr-progress-label">${tier.tier} (Renewal)</div>
+              <div class="mplr-progress-percent">${tierPercent}%</div>
+            </div>
+          </div>
+          <div class="mplr-progress-bar">
+            <div class="mplr-progress-fill ${getProgressClass(tierPercent)}" style="width: ${tierPercent}%"></div>
+          </div>
+          <div class="mplr-progress-stats">
+            <span>${tierTotal}/${tierCap} leased</span>
+            <span>${tierRemaining} remaining</span>
+          </div>
+        </div>
+      `;
+    });
   }
   
   grid.innerHTML = html;
@@ -567,68 +593,66 @@ function getProgressClass(percent) {
   return 'danger';
 }
 
-function addQuickActions() {
+function reorganizeQuickActions() {
   const container = document.getElementById('appContainer');
-  if (!container) return;
+  if (!container || document.getElementById('mplrActions')) return;
   
-  // Check if quick actions already exist
-  if (document.getElementById('mplrQuickActions')) return;
-  
-  const quickActions = document.createElement('div');
-  quickActions.id = 'mplrQuickActions';
-  quickActions.className = 'mplr-quick-actions';
-  quickActions.innerHTML = `
-    <div class="mplr-action-card" onclick="document.getElementById('importFile').click()">
-      <div class="mplr-action-icon">📥</div>
-      <div class="mplr-action-content">
-        <div class="mplr-action-title">Import Leases</div>
-        <div class="mplr-action-desc">Upload Excel or CSV file</div>
-      </div>
-    </div>
-    
-    <div class="mplr-action-card" onclick="document.getElementById('addLeaseBtn').click()">
-      <div class="mplr-action-icon">➕</div>
-      <div class="mplr-action-content">
-        <div class="mplr-action-title">Add Lease</div>
-        <div class="mplr-action-desc">Manual entry form</div>
-      </div>
-    </div>
-    
-    <div class="mplr-action-card" onclick="document.getElementById('exportBtn').click()">
-      <div class="mplr-action-icon">📤</div>
-      <div class="mplr-action-content">
-        <div class="mplr-action-title">Export Data</div>
-        <div class="mplr-action-desc">Download as CSV</div>
+  const actions = document.createElement('div');
+  actions.id = 'mplrActions';
+  actions.innerHTML = `
+    <div class="mplr-dashboard-section">
+      <h2 class="mplr-section-title">Quick Actions</h2>
+      <div class="mplr-actions-grid">
+        <button class="mplr-action-btn" onclick="document.getElementById('importFile').click()">
+          <div class="mplr-action-icon">↓</div>
+          <div class="mplr-action-text">
+            <h3>Import Leases</h3>
+            <p>Upload Excel or CSV file</p>
+          </div>
+        </button>
+        <button class="mplr-action-btn" onclick="document.getElementById('addLeaseBtn').click()">
+          <div class="mplr-action-icon">+</div>
+          <div class="mplr-action-text">
+            <h3>Add Lease</h3>
+            <p>Manual entry form</p>
+          </div>
+        </button>
+        <button class="mplr-action-btn" onclick="document.getElementById('exportBtn').click()">
+          <div class="mplr-action-icon">↑</div>
+          <div class="mplr-action-text">
+            <h3>Export Data</h3>
+            <p>Download as CSV</p>
+          </div>
+        </button>
       </div>
     </div>
   `;
   
-  // Insert before Import Section
+  const dashboard = document.getElementById('mplrDashboard');
+  if (dashboard) {
+    dashboard.after(actions);
+  }
+  
+  // Hide original import section
   const importSection = Array.from(container.querySelectorAll('.card')).find(card => 
     card.querySelector('h3')?.textContent.includes('Import Data')
   );
-  
   if (importSection) {
-    importSection.before(quickActions);
-    // Hide the import section since we have quick actions
     importSection.style.display = 'none';
   }
 }
 
 // Update dashboard when data changes
-if (window.updateStats && !window.updateStats._dashboardWrapped) {
-  const originalUpdateStatsForDashboard = window.updateStats;
+if (window.updateStats && !window.updateStats._mplrWrapped) {
+  const originalUpdateStats = window.updateStats;
   window.updateStats = function() {
-    originalUpdateStatsForDashboard();
+    originalUpdateStats();
     if (typeof renderProgressDashboard === 'function') {
       renderProgressDashboard();
     }
   };
-  window.updateStats._dashboardWrapped = true;
+  window.updateStats._mplrWrapped = true;
 }
 
-// Expose functions
-window.openSettingsModal = openSettingsModal;
-window.closeSettingsModal = closeSettingsModal;
-window.switchSettingsTab = switchSettingsTab;
+window.toggleSettingsPanel = toggleSettingsPanel;
 window.renderProgressDashboard = renderProgressDashboard;
