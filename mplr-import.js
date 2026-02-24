@@ -56,10 +56,7 @@ function parseImportData(jsonData) {
     
     const floorPlan = String(row['Apt/Bed'] || row['Floor Plan'] || '').trim();
     
-    let leaseType = String(row['Lease Type'] || '').trim().toUpperCase();
-    if (leaseType === 'R' || leaseType === 'RT') leaseType = 'Individual';
-    else if (leaseType === 'N') leaseType = 'Joint';
-    else if (!leaseType) leaseType = 'Individual';
+    let leaseType = String(row['Lease Type'] || '').trim();
     
     return {
       approvedDate,
