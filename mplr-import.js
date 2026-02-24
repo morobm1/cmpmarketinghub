@@ -37,7 +37,14 @@ function handleFileSelect(e) {
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
       const jsonData = XLSX.utils.sheet_to_json(firstSheet);
       
+      console.log('Raw Excel data (first row):', jsonData[0]);
+      console.log('Column names:', Object.keys(jsonData[0]));
+      
       importedData = parseImportData(jsonData);
+      
+      console.log('Parsed data (first row):', importedData[0]);
+      console.log('Lease Type from first row:', importedData[0]?.leaseType);
+      
       showImportPreview(importedData);
       showImportStatus(`Loaded ${importedData.length} rows. Review and click "Import Data" to add to database.`, 'success');
     } catch (err) {
