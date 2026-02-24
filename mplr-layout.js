@@ -1,11 +1,17 @@
 // MPLR Page Reorganization - Admin vs User View
 
-document.addEventListener('DOMContentLoaded', () => {
-  initializePageLayout();
-  checkUserRole();
+// Wait for everything to be fully loaded
+window.addEventListener('load', () => {
+  // Small delay to ensure all other scripts have initialized
+  setTimeout(() => {
+    initializePageLayout();
+    checkUserRole();
+  }, 100);
 });
 
 function initializePageLayout() {
+  console.log('Initializing MPLR layout reorganization...');
+  
   // Move setup sections to admin area
   reorganizePageSections();
   
@@ -14,6 +20,8 @@ function initializePageLayout() {
   
   // Add quick action buttons
   addQuickActions();
+  
+  console.log('MPLR layout reorganization complete');
 }
 
 function checkUserRole() {
@@ -316,12 +324,17 @@ function addProgressBars() {
   renderProgressBars();
 }
 
-function renderProgressBars() {
+async function renderProgressBars() {
   const progressContainer = document.getElementById('progressBarsContainer');
   if (!progressContainer) return;
   
-  const totalBeds = getPropertyTotalBeds() || 0;
-  const totalLeased = leases.length;
+  // Get total beds (handle async)
+  let totalBeds = 0;
+  if (typeof getPropertyTotalBeds === 'function') {
+    totalBeds = await getPropertyTotalBeds() || 0;
+  }
+  
+  const totalLeased = leases ? leases.length : 0;
   const remaining = Math.max(0, totalBeds - totalLeased);
   const percentLeased = totalBeds > 0 ? ((totalLeased / totalBeds) * 100).toFixed(1) : 0;
   
