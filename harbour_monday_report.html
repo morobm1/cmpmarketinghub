@@ -151,7 +151,15 @@
           <h3 style="margin:0 0 8px 0; font-size:20px; color:#111827">Email Recipients & Leasing Numbers</h3>
           <p style="color:var(--subtext); margin-bottom:24px">Set up email recipients and enter the current occupancy and pre-lease numbers for this week.</p>
 
-          <h4 style="margin:0 0 12px 0; font-size:15px; color:#111827">Email Recipients</h4>
+          <h4 style="margin:0 0 12px 0; font-size:15px; color:#111827">Report Details</h4>
+          
+          <div class="form-group">
+            <label for="dateRange">Date Range *</label>
+            <input type="text" id="dateRange" placeholder="e.g., January 6-12, 2025 or Week of Jan 6" />
+            <div style="font-size:12px; color:var(--subtext); margin-top:4px">This will appear in the email subject line</div>
+          </div>
+
+          <h4 style="margin:24px 0 12px 0; font-size:15px; color:#111827">Email Recipients</h4>
           
           <div class="form-group">
             <label for="emailTo">To: (comma-separated emails)</label>
@@ -289,6 +297,7 @@
       openEmailBtn: document.getElementById('openEmailBtn'),
       previewSection: document.getElementById('previewSection'),
       emailPreview: document.getElementById('emailPreview'),
+      dateRange: document.getElementById('dateRange'),
       emailTo: document.getElementById('emailTo'),
       emailCc: document.getElementById('emailCc'),
       currentOccupancy: document.getElementById('currentOccupancy'),
@@ -649,7 +658,8 @@ www.capstoneemp.com | P. (813) 638-7711`;
     function openInEmailClient() {
       const toEmails = els.emailTo.value.trim();
       const ccEmails = els.emailCc.value.trim();
-      const subject = encodeURIComponent('The Harbour at Occ - Weekly Report');
+      const dateRange = els.dateRange.value.trim() || 'Date Range TBD';
+      const subject = encodeURIComponent(`The Harbour Resident Reports - ${dateRange}`);
       const body = encodeURIComponent(generatePlainText());
       
       // Build Gmail compose URL
