@@ -46,7 +46,7 @@
     input:focus, textarea:focus{outline:none; border-color:var(--brand-accent-2); box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
     textarea{min-height:80px; resize:vertical}
     .form-group{margin-bottom:16px}
-    .form-row{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px}
+    .form-row{display:grid; grid-template-columns:1fr 1fr; gap:16px}
     @media(max-width: 768px){.form-row{grid-template-columns:1fr}}
 
     button{padding:10px 20px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--text); font-size:14px; font-weight:600; cursor:pointer; transition:all .15s; font-family: Roboto, Arial, sans-serif}
@@ -55,6 +55,8 @@
     button.primary:hover{background:#3b5561}
     button.good{background:#52d5ff; color:#0b1b24; border-color:#52d5ff}
     button.good:hover{background:#3ecbf5}
+    button.danger{background:#ef4444; color:#fff; border-color:#ef4444}
+    button.danger:hover{background:#dc2626}
 
     .button-group{display:flex; gap:12px; margin-top:24px}
 
@@ -84,6 +86,9 @@
 
     .wizard-step{animation:fadeIn .3s ease-in}
     @keyframes fadeIn{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:translateY(0)}}
+
+    .relet-item, .reslife-item{background:#f8fafc; border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:16px; position:relative}
+    .remove-btn{position:absolute; top:12px; right:12px; padding:4px 8px; font-size:12px}
 
     .hidden{display:none}
   </style>
@@ -201,16 +206,11 @@
         <!-- Step 3: Relet & Mutual Termination -->
         <div class="wizard-step" id="step3" style="display:none">
           <h3 style="margin:0 0 8px 0; font-size:20px; color:#111827">Relet & Mutual Termination</h3>
-          <p style="color:var(--subtext); margin-bottom:24px">Add any relet or mutual termination details (optional).</p>
+          <p style="color:var(--subtext); margin-bottom:24px">Add relet or mutual termination details (optional).</p>
 
-          <div class="form-group">
-            <label for="reletItem1">Relet/Termination Item 1</label>
-            <input type="text" id="reletItem1" placeholder="e.g., Unit 204 - Relet for Fall 2026" />
-          </div>
-          <div class="form-group">
-            <label for="reletItem2">Relet/Termination Item 2</label>
-            <input type="text" id="reletItem2" placeholder="e.g., Unit 315 - Mutual termination" />
-          </div>
+          <div id="reletItemsContainer"></div>
+
+          <button type="button" onclick="addReletItem()" style="margin-top:12px; background:#f8fafc; color:var(--brand-accent-2); border-color:var(--brand-accent-2)">+ Add Relet Item</button>
 
           <div class="button-group">
             <button onclick="prevStep(2)">← Back</button>
@@ -232,18 +232,9 @@
 
           <h4 style="margin:24px 0 12px 0; font-size:15px; color:#111827">Res-Life Initiative</h4>
           
-          <div class="form-group">
-            <label for="resLifeItem1">Initiative Item 1</label>
-            <input type="text" id="resLifeItem1" placeholder="e.g., Game Night - Thursday 7pm" />
-          </div>
-          <div class="form-group">
-            <label for="resLifeItem2">Initiative Item 2</label>
-            <input type="text" id="resLifeItem2" placeholder="e.g., Study Session - Tuesday 6pm" />
-          </div>
-          <div class="form-group">
-            <label for="resLifeItem3">Initiative Item 3</label>
-            <input type="text" id="resLifeItem3" placeholder="e.g., Community BBQ - Saturday 5pm" />
-          </div>
+          <div id="resLifeItemsContainer"></div>
+
+          <button type="button" onclick="addResLifeItem()" style="margin-top:12px; background:#f8fafc; color:var(--brand-accent-2); border-color:var(--brand-accent-2)">+ Add Initiative Item</button>
 
           <div class="button-group">
             <button onclick="prevStep(3)">← Back</button>
@@ -272,7 +263,7 @@
           <div class="email-preview" id="emailPreview"></div>
           <div class="button-group" style="margin-top:20px">
             <button id="copyBtn">Copy to Clipboard</button>
-            <button id="openEmailBtn">Open in Email Client</button>
+            <button id="openEmailBtn">Open in Gmail</button>
             <button onclick="resetWizard()">Start New Report</button>
           </div>
         </div>
@@ -282,8 +273,11 @@
 
   <script>
     let currentUser = null;
-
     let moveOutFileData = null;
+    let reletItems = [];
+    let resLifeItems = [];
+    let reletCounter = 0;
+    let resLifeCounter = 0;
 
     const els = {
       bootLoader: document.getElementById('bootLoader'),
@@ -301,13 +295,10 @@
       preLeaseFall: document.getElementById('preLeaseFall'),
       totalRenewalLeases: document.getElementById('totalRenewalLeases'),
       totalNewLeases: document.getElementById('totalNewLeases'),
-      reletItem1: document.getElementById('reletItem1'),
-      reletItem2: document.getElementById('reletItem2'),
       moveOutFile: document.getElementById('moveOutFile'),
       moveOutFileName: document.getElementById('moveOutFileName'),
-      resLifeItem1: document.getElementById('resLifeItem1'),
-      resLifeItem2: document.getElementById('resLifeItem2'),
-      resLifeItem3: document.getElementById('resLifeItem3'),
+      reletItemsContainer: document.getElementById('reletItemsContainer'),
+      resLifeItemsContainer: document.getElementById('resLifeItemsContainer'),
     };
 
     async function initAuth() {
@@ -347,16 +338,158 @@
       window.location.href = 'index.html';
     }
 
+    function addReletItem() {
+      const id = reletCounter++;
+      const item = {
+        id,
+        originalTenant: '',
+        replacementTenant: '',
+        unitNumber: '',
+        moveInDate: '',
+        additionalDetail: '',
+        showAdditional: false
+      };
+      reletItems.push(item);
+      renderReletItems();
+    }
+
+    function removeReletItem(id) {
+      reletItems = reletItems.filter(item => item.id !== id);
+      renderReletItems();
+    }
+
+    function toggleReletAdditional(id) {
+      const item = reletItems.find(i => i.id === id);
+      if (item) {
+        item.showAdditional = !item.showAdditional;
+        renderReletItems();
+      }
+    }
+
+    function renderReletItems() {
+      els.reletItemsContainer.innerHTML = reletItems.map(item => `
+        <div class="relet-item" data-id="${item.id}">
+          <button type="button" class="remove-btn danger" onclick="removeReletItem(${item.id})">Remove</button>
+          <h5 style="margin:0 0 12px 0; font-size:14px; color:#111827">Relet Item #${item.id + 1}</h5>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>Original Tenant</label>
+              <input type="text" data-relet-id="${item.id}" data-field="originalTenant" value="${item.originalTenant}" placeholder="e.g., John Doe" />
+            </div>
+            <div class="form-group">
+              <label>Replacement Tenant</label>
+              <input type="text" data-relet-id="${item.id}" data-field="replacementTenant" value="${item.replacementTenant}" placeholder="e.g., Jane Smith" />
+            </div>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>Unit Number</label>
+              <input type="text" data-relet-id="${item.id}" data-field="unitNumber" value="${item.unitNumber}" placeholder="e.g., 204" />
+            </div>
+            <div class="form-group">
+              <label>Move-in Date</label>
+              <input type="date" data-relet-id="${item.id}" data-field="moveInDate" value="${item.moveInDate}" />
+            </div>
+          </div>
+          
+          <div style="margin-top:12px">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer">
+              <input type="checkbox" ${item.showAdditional ? 'checked' : ''} onchange="toggleReletAdditional(${item.id})" />
+              <span>Add additional details</span>
+            </label>
+          </div>
+          
+          ${item.showAdditional ? `
+            <div class="form-group" style="margin-top:12px">
+              <label>Additional Detail</label>
+              <textarea data-relet-id="${item.id}" data-field="additionalDetail" placeholder="Any additional information...">${item.additionalDetail}</textarea>
+            </div>
+          ` : ''}
+        </div>
+      `).join('');
+
+      // Add event listeners
+      els.reletItemsContainer.querySelectorAll('input[data-relet-id], textarea[data-relet-id]').forEach(input => {
+        input.addEventListener('input', (e) => {
+          const id = parseInt(e.target.dataset.reletId);
+          const field = e.target.dataset.field;
+          const item = reletItems.find(i => i.id === id);
+          if (item) {
+            item[field] = e.target.value;
+            saveData();
+          }
+        });
+      });
+    }
+
+    function addResLifeItem() {
+      const id = resLifeCounter++;
+      resLifeItems.push({ id, text: '' });
+      renderResLifeItems();
+    }
+
+    function removeResLifeItem(id) {
+      resLifeItems = resLifeItems.filter(item => item.id !== id);
+      renderResLifeItems();
+    }
+
+    function renderResLifeItems() {
+      els.resLifeItemsContainer.innerHTML = resLifeItems.map(item => `
+        <div class="reslife-item" data-id="${item.id}">
+          <button type="button" class="remove-btn danger" onclick="removeResLifeItem(${item.id})">Remove</button>
+          <div class="form-group">
+            <label>Initiative Item #${item.id + 1}</label>
+            <input type="text" data-reslife-id="${item.id}" value="${item.text}" placeholder="e.g., Game Night - Thursday 7pm" />
+          </div>
+        </div>
+      `).join('');
+
+      // Add event listeners
+      els.resLifeItemsContainer.querySelectorAll('input[data-reslife-id]').forEach(input => {
+        input.addEventListener('input', (e) => {
+          const id = parseInt(e.target.dataset.reslifeId);
+          const item = resLifeItems.find(i => i.id === id);
+          if (item) {
+            item.text = e.target.value;
+            saveData();
+          }
+        });
+      });
+    }
+
     function loadSavedData() {
       try {
         const saved = localStorage.getItem('harbour_monday_report_data');
         if (saved) {
           const data = JSON.parse(saved);
-          Object.keys(data).forEach(key => {
-            if (els[key] && key !== 'moveOutFile') els[key].value = data[key] || '';
-          });
+          
+          // Load simple fields
+          if (data.emailTo) els.emailTo.value = data.emailTo;
+          if (data.emailCc) els.emailCc.value = data.emailCc;
+          if (data.currentOccupancy) els.currentOccupancy.value = data.currentOccupancy;
+          if (data.preLeaseFall) els.preLeaseFall.value = data.preLeaseFall;
+          if (data.totalRenewalLeases) els.totalRenewalLeases.value = data.totalRenewalLeases;
+          if (data.totalNewLeases) els.totalNewLeases.value = data.totalNewLeases;
+          
+          // Load relet items
+          if (data.reletItems && Array.isArray(data.reletItems)) {
+            reletItems = data.reletItems;
+            reletCounter = Math.max(...reletItems.map(i => i.id), -1) + 1;
+            renderReletItems();
+          }
+          
+          // Load res-life items
+          if (data.resLifeItems && Array.isArray(data.resLifeItems)) {
+            resLifeItems = data.resLifeItems;
+            resLifeCounter = Math.max(...resLifeItems.map(i => i.id), -1) + 1;
+            renderResLifeItems();
+          }
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error('Error loading saved data:', e);
+      }
     }
 
     function saveData() {
@@ -368,14 +501,13 @@
           preLeaseFall: els.preLeaseFall.value,
           totalRenewalLeases: els.totalRenewalLeases.value,
           totalNewLeases: els.totalNewLeases.value,
-          reletItem1: els.reletItem1.value,
-          reletItem2: els.reletItem2.value,
-          resLifeItem1: els.resLifeItem1.value,
-          resLifeItem2: els.resLifeItem2.value,
-          resLifeItem3: els.resLifeItem3.value,
+          reletItems: reletItems,
+          resLifeItems: resLifeItems,
         };
         localStorage.setItem('harbour_monday_report_data', JSON.stringify(data));
-      } catch (e) {}
+      } catch (e) {
+        console.error('Error saving data:', e);
+      }
     }
 
     function generateEmailHTML() {
@@ -383,27 +515,25 @@
       const preLeaseFall = els.preLeaseFall.value || 'X';
       const totalRenewalLeases = els.totalRenewalLeases.value || 'X';
       const totalNewLeases = els.totalNewLeases.value || 'X';
-      const reletItem1 = els.reletItem1.value;
-      const reletItem2 = els.reletItem2.value;
-      const moveOutLink = els.moveOutLink.value;
-      const resLifeItem1 = els.resLifeItem1.value;
-      const resLifeItem2 = els.resLifeItem2.value;
-      const resLifeItem3 = els.resLifeItem3.value;
 
       let reletList = '';
-      if (reletItem1) reletList += `<li>${reletItem1}</li>`;
-      if (reletItem2) reletList += `<li>${reletItem2}</li>`;
-      if (!reletList) reletList = '<li>&nbsp;</li><li>&nbsp;</li>';
-
-      let moveOutSection = moveOutLink 
-        ? `<a href="${moveOutLink}" style="color:#0066cc">Click Here</a>` 
-        : 'Click Here';
+      if (reletItems.length > 0) {
+        reletItems.forEach(item => {
+          let text = `Unit ${item.unitNumber || 'X'}: ${item.originalTenant || 'Original Tenant'} → ${item.replacementTenant || 'Replacement Tenant'}`;
+          if (item.moveInDate) text += ` (Move-in: ${item.moveInDate})`;
+          if (item.additionalDetail) text += ` - ${item.additionalDetail}`;
+          reletList += `<li>${text}</li>`;
+        });
+      }
+      if (!reletList) reletList = '<li>&nbsp;</li>';
 
       let resLifeList = '';
-      if (resLifeItem1) resLifeList += `<li>${resLifeItem1}</li>`;
-      if (resLifeItem2) resLifeList += `<li>${resLifeItem2}</li>`;
-      if (resLifeItem3) resLifeList += `<li>${resLifeItem3}</li>`;
-      if (!resLifeList) resLifeList = '<li>&nbsp;</li><li>&nbsp;</li><li>&nbsp;</li>';
+      if (resLifeItems.length > 0) {
+        resLifeItems.forEach(item => {
+          if (item.text) resLifeList += `<li>${item.text}</li>`;
+        });
+      }
+      if (!resLifeList) resLifeList = '<li>&nbsp;</li>';
 
       return `
 <p>Hello Everyone,</p>
@@ -435,7 +565,7 @@
 
 <p><span class="red-text">MOVE-OUT REPORT</span></p>
 <ul>
-  <li>${moveOutSection}</li>
+  <li>See attached file</li>
 </ul>
 
 <p><span class="red-text">RES-LIFE INITITAVE:</span></p>
@@ -457,12 +587,6 @@
       const preLeaseFall = els.preLeaseFall.value || 'X';
       const totalRenewalLeases = els.totalRenewalLeases.value || 'X';
       const totalNewLeases = els.totalNewLeases.value || 'X';
-      const reletItem1 = els.reletItem1.value;
-      const reletItem2 = els.reletItem2.value;
-      const moveOutLink = els.moveOutLink.value || 'Click Here';
-      const resLifeItem1 = els.resLifeItem1.value;
-      const resLifeItem2 = els.resLifeItem2.value;
-      const resLifeItem3 = els.resLifeItem3.value;
 
       let text = `Hello Everyone,
 
@@ -478,15 +602,23 @@ Total New Leases: ${totalNewLeases}
 
 RELET & MUTUAL TERMINATION`;
 
-      if (reletItem1) text += `\n• ${reletItem1}`;
-      if (reletItem2) text += `\n• ${reletItem2}`;
+      if (reletItems.length > 0) {
+        reletItems.forEach(item => {
+          let itemText = `\n• Unit ${item.unitNumber || 'X'}: ${item.originalTenant || 'Original Tenant'} → ${item.replacementTenant || 'Replacement Tenant'}`;
+          if (item.moveInDate) itemText += ` (Move-in: ${item.moveInDate})`;
+          if (item.additionalDetail) itemText += ` - ${item.additionalDetail}`;
+          text += itemText;
+        });
+      }
 
-      text += `\n\nMOVE-OUT REPORT\n• ${moveOutLink}`;
+      text += `\n\nMOVE-OUT REPORT\n• See attached file`;
 
       text += `\n\nRES-LIFE INITITAVE:`;
-      if (resLifeItem1) text += `\n• ${resLifeItem1}`;
-      if (resLifeItem2) text += `\n• ${resLifeItem2}`;
-      if (resLifeItem3) text += `\n• ${resLifeItem3}`;
+      if (resLifeItems.length > 0) {
+        resLifeItems.forEach(item => {
+          if (item.text) text += `\n• ${item.text}`;
+        });
+      }
 
       text += `\n\n--
 Brian Strider | Portfolio Sales & Marketing Manager
@@ -501,8 +633,6 @@ www.capstoneemp.com | P. (813) 638-7711`;
       const html = generateEmailHTML();
       els.emailPreview.innerHTML = html;
       els.previewSection.style.display = '';
-      els.copyBtn.style.display = '';
-      els.openEmailBtn.style.display = '';
       els.previewSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
@@ -564,48 +694,35 @@ www.capstoneemp.com | P. (813) 638-7711`;
     els.openEmailBtn.addEventListener('click', openInEmailClient);
 
     // Auto-save on input
-    [els.emailTo, els.emailCc, els.currentOccupancy, els.preLeaseFall, els.totalRenewalLeases, els.totalNewLeases,
-     els.reletItem1, els.reletItem2, els.resLifeItem1, 
-     els.resLifeItem2, els.resLifeItem3].forEach(el => {
+    [els.emailTo, els.emailCc, els.currentOccupancy, els.preLeaseFall, els.totalRenewalLeases, els.totalNewLeases].forEach(el => {
       el.addEventListener('input', saveData);
     });
 
     // Wizard Navigation
     function nextStep(step) {
       saveData();
-      // Hide all steps
       document.querySelectorAll('.wizard-step').forEach(s => s.style.display = 'none');
-      // Show target step
       document.getElementById('step' + step).style.display = 'block';
-      // Update progress
       updateProgress(step);
-      // Scroll to top
       window.scrollTo({ top: 0, behavior: 'smooth' });
       
-      // If going to review step, populate summary
       if (step === 5) {
         populateReviewSummary();
       }
     }
 
     function prevStep(step) {
-      // Hide all steps
       document.querySelectorAll('.wizard-step').forEach(s => s.style.display = 'none');
-      // Show target step
       document.getElementById('step' + step).style.display = 'block';
-      // Update progress
       updateProgress(step);
-      // Scroll to top
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function updateProgress(currentStep) {
-      // Update progress bar fill
       const progressFill = document.getElementById('progressFill');
       const percentage = (currentStep / 5) * 100;
       progressFill.style.width = percentage + '%';
       
-      // Update step indicators
       document.querySelectorAll('.progress-step').forEach(step => {
         const stepNum = parseInt(step.dataset.step);
         step.classList.remove('active', 'completed');
@@ -625,12 +742,18 @@ www.capstoneemp.com | P. (813) 638-7711`;
       const preLeaseFall = els.preLeaseFall.value || '<em style="color:#ef4444">Not provided</em>';
       const totalRenewalLeases = els.totalRenewalLeases.value || '<em style="color:#ef4444">Not provided</em>';
       const totalNewLeases = els.totalNewLeases.value || '<em style="color:#ef4444">Not provided</em>';
-      const reletItem1 = els.reletItem1.value || '<em style="color:#64748b">None</em>';
-      const reletItem2 = els.reletItem2.value || '<em style="color:#64748b">None</em>';
-      const moveOutLink = els.moveOutLink.value || '<em style="color:#64748b">None</em>';
-      const resLifeItem1 = els.resLifeItem1.value || '<em style="color:#64748b">None</em>';
-      const resLifeItem2 = els.resLifeItem2.value || '<em style="color:#64748b">None</em>';
-      const resLifeItem3 = els.resLifeItem3.value || '<em style="color:#64748b">None</em>';
+      
+      let reletSummary = '<em style="color:#64748b">None</em>';
+      if (reletItems.length > 0) {
+        reletSummary = reletItems.map(item => 
+          `Unit ${item.unitNumber || 'X'}: ${item.originalTenant || '?'} → ${item.replacementTenant || '?'}`
+        ).join('<br>');
+      }
+      
+      let resLifeSummary = '<em style="color:#64748b">None</em>';
+      if (resLifeItems.length > 0) {
+        resLifeSummary = resLifeItems.filter(i => i.text).map(i => i.text).join('<br>');
+      }
       
       summary.innerHTML = `
         <div style="margin-bottom:20px">
@@ -663,57 +786,26 @@ www.capstoneemp.com | P. (813) 638-7711`;
         
         <div style="margin-bottom:20px">
           <h4 style="margin:0 0 12px 0; font-size:15px; color:#111827; font-weight:700">Relet & Mutual Termination</h4>
-          <div style="display:grid; gap:8px">
-            <div style="display:flex; justify-content:space-between; align-items:start">
-              <span style="color:#64748b">Item 1:</span>
-              <span style="text-align:right; max-width:60%">${reletItem1}</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; align-items:start">
-              <span style="color:#64748b">Item 2:</span>
-              <span style="text-align:right; max-width:60%">${reletItem2}</span>
-            </div>
-          </div>
+          <div style="font-size:13px; line-height:1.6">${reletSummary}</div>
         </div>
         
         <div style="margin-bottom:20px">
-          <h4 style="margin:0 0 12px 0; font-size:15px; color:#111827; font-weight:700">Additional Reports</h4>
-          <div style="display:grid; gap:8px">
-            <div style="display:flex; justify-content:space-between; align-items:start">
-              <span style="color:#64748b">Move-Out Link:</span>
-              <span style="text-align:right; max-width:60%; word-break:break-all">${moveOutLink}</span>
-            </div>
-          </div>
+          <h4 style="margin:0 0 12px 0; font-size:15px; color:#111827; font-weight:700">Move-Out Report</h4>
+          <div style="font-size:13px">${moveOutFileData ? '✓ File attached: ' + moveOutFileData.name : '<em style="color:#64748b">No file</em>'}</div>
         </div>
         
         <div>
           <h4 style="margin:0 0 12px 0; font-size:15px; color:#111827; font-weight:700">Res-Life Initiative</h4>
-          <div style="display:grid; gap:8px">
-            <div style="display:flex; justify-content:space-between; align-items:start">
-              <span style="color:#64748b">Item 1:</span>
-              <span style="text-align:right; max-width:60%">${resLifeItem1}</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; align-items:start">
-              <span style="color:#64748b">Item 2:</span>
-              <span style="text-align:right; max-width:60%">${resLifeItem2}</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; align-items:start">
-              <span style="color:#64748b">Item 3:</span>
-              <span style="text-align:right; max-width:60%">${resLifeItem3}</span>
-            </div>
-          </div>
+          <div style="font-size:13px; line-height:1.6">${resLifeSummary}</div>
         </div>
       `;
     }
 
     function resetWizard() {
-      // Hide preview
       els.previewSection.style.display = 'none';
-      // Show step 1
       document.querySelectorAll('.wizard-step').forEach(s => s.style.display = 'none');
       document.getElementById('step1').style.display = 'block';
-      // Reset progress
       updateProgress(1);
-      // Scroll to top
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
