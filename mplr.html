@@ -227,6 +227,39 @@
       </div>
     </div>
 
+    <!-- Import Section -->
+    <div class="card" style="margin-bottom:20px">
+      <h3>Import Data</h3>
+      <div class="content">
+        <div style="display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap">
+          <div style="flex:1;min-width:300px">
+            <label for="importFile">Upload Excel File (.xlsx, .xls, .csv)</label>
+            <input id="importFile" type="file" accept=".xlsx,.xls,.csv" style="padding:8px" />
+            <div class="hint" style="margin-top:6px">
+              Select an Excel or CSV file to import lease data. The file should contain columns for: 
+              Approved Date, Unit Type, Lease Type, Apt/Bed (Floor Plan), First Name, Last Name, 
+              Lease Start, Lease End, Monthly Base Rent, Monthly Parking Fee, Liability Insurance Premium, 
+              Total Monthly Fees, Security Deposit
+            </div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn primary" id="importBtn">Import Data</button>
+            <button class="btn" id="downloadTemplateBtn">Download Template</button>
+          </div>
+        </div>
+        <div id="importStatus" style="margin-top:12px;display:none"></div>
+        <div id="importPreview" style="margin-top:16px;display:none">
+          <h4 style="font-size:14px;font-weight:700;margin-bottom:8px">Preview (First 5 rows)</h4>
+          <div style="overflow-x:auto;max-height:200px;border:1px solid var(--border);border-radius:8px">
+            <table id="previewTable" style="width:100%;font-size:12px;border-collapse:collapse">
+              <thead style="background:#f8fafc;position:sticky;top:0"></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Filters -->
     <div class="filters">
       <div class="filter-group">
@@ -875,5 +908,9 @@
     // ==================== INIT ====================
     (async () => { await initAuth(); })();
   </script>
+  <!-- SheetJS library for Excel parsing -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <!-- MPLR Import functionality -->
+  <script src="mplr-import.js"></script>
 </body>
 </html>
