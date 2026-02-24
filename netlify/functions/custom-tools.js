@@ -7,11 +7,6 @@ export async function handler(event) {
     return { statusCode: 401, body: 'Unauthorized' };
   }
 
-  // Only admins can access custom tools
-  if (user.role !== 'admin') {
-    return { statusCode: 403, body: 'Forbidden: Admin access required' };
-  }
-
   const db = await getDb();
   const collection = db.collection('customTools');
 
