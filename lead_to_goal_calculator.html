@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
   <style>
     :root{
       --brand-primary:#446472;
@@ -307,11 +307,11 @@
       }
     }
 
-    function loadSavedCalculators() {
+    async function loadSavedCalculators() {
       try {
-        const saved = localStorage.getItem('lead_to_goal_calculators');
-        if (saved) {
-          savedCalculators = JSON.parse(saved);
+        const res = await fetch('/api/lead-to-goal-calculators', { credentials: 'include' });
+        if (res.ok) {
+          savedCalculators = await res.json();
           renderSavedCalculators();
         }
       } catch (e) {
@@ -319,7 +319,7 @@
       }
     }
 
-    function saveCalculator() {
+    async function saveCalculator() {
       const propertyId = els.propertySelect.value;
       if (!propertyId) {
         alert('Please select a property');
@@ -328,7 +328,6 @@
 
       const property = properties.find(p => p.id === propertyId);
       const calc = {
-        id: currentCalcId || Date.now().toString(),
         propertyId: propertyId,
         propertyName: property.name,
         date: els.calcDate.value,
@@ -336,22 +335,34 @@
         bedsLeft: els.bedsLeft.value,
         leaseConversion: els.leaseConversion.value,
         leadToLeaseRatio: els.leadToLeaseRatio.value,
-        totalLeadsNeeded: els.totalLeadsNeeded.value,
-        savedAt: new Date().toISOString()
+        totalLeadsNeeded: els.totalLeadsNeeded.value
       };
 
-      if (currentCalcId) {
-        const index = savedCalculators.findIndex(c => c.id === currentCalcId);
-        if (index !== -1) {
-          savedCalculators[index] = calc;
+      try {
+        if (currentCalcId) {
+          // Update existing calculator
+          await fetch('/api/lead-to-goal-calculators', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ id: currentCalcId, ...calc })
+          });
+        } else {
+          // Create new calculator
+          await fetch('/api/lead-to-goal-calculators', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(calc)
+          });
         }
-      } else {
-        savedCalculators.unshift(calc);
+        
+        await loadSavedCalculators();
+        alert('Calculator saved successfully!');
+      } catch (e) {
+        console.error('Error saving calculator:', e);
+        alert('Failed to save calculator. Please try again.');
       }
-
-      localStorage.setItem('lead_to_goal_calculators', JSON.stringify(savedCalculators));
-      renderSavedCalculators();
-      alert('Calculator saved successfully!');
     }
 
     function loadCalculator(calc) {
@@ -367,14 +378,24 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    function deleteCalculator(id) {
+    async function deleteCalculator(id) {
       if (confirm('Are you sure you want to delete this calculator?')) {
-        savedCalculators = savedCalculators.filter(c => c.id !== id);
-        localStorage.setItem('lead_to_goal_calculators', JSON.stringify(savedCalculators));
-        renderSavedCalculators();
-        
-        if (currentCalcId === id) {
-          newCalculator();
+        try {
+          await fetch('/api/lead-to-goal-calculators', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ id })
+          });
+          
+          await loadSavedCalculators();
+          
+          if (currentCalcId === id) {
+            newCalculator();
+          }
+        } catch (e) {
+          console.error('Error deleting calculator:', e);
+          alert('Failed to delete calculator. Please try again.');
         }
       }
     }
