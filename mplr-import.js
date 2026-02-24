@@ -1,13 +1,33 @@
 // MPLR Import Functionality
 let importedData = [];
 
-document.getElementById('importFile').addEventListener('change', handleFileSelect);
-document.getElementById('importBtn').addEventListener('click', processImport);
-document.getElementById('downloadTemplateBtn').addEventListener('click', downloadTemplate);
+// Wait for DOM and XLSX library to be ready
+function initImport() {
+  const importFile = document.getElementById('importFile');
+  const importBtn = document.getElementById('importBtn');
+  const downloadBtn = document.getElementById('downloadTemplateBtn');
+  
+  if (importFile) importFile.addEventListener('change', handleFileSelect);
+  if (importBtn) importBtn.addEventListener('click', processImport);
+  if (downloadBtn) downloadBtn.addEventListener('click', downloadTemplate);
+}
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initImport);
+} else {
+  initImport();
+}
 
 function handleFileSelect(e) {
   const file = e.target.files[0];
   if (!file) return;
+
+  // Check if XLSX library is loaded
+  if (typeof XLSX === 'undefined') {
+    showImportStatus('Error: Excel library not loaded. Please refresh the page and try again.', 'error');
+    return;
+  }
 
   const reader = new FileReader();
   reader.onload = function(e) {
