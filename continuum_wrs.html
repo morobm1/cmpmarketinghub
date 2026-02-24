@@ -1,0 +1,926 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Continuum - WRS • Marketing Hub</title>
+  <link rel="preconnect" href="https://use.typekit.net" crossorigin>
+  <link rel="preconnect" href="https://p.typekit.net" crossorigin>
+  <link rel="stylesheet" href="https://use.typekit.net/hqv8hwr.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --brand-primary:#446472;
+      --brand-accent:#ffb732;
+      --brand-accent-2:#52d5ff;
+      --brand-gray:#929497;
+      --page-bg:#f8fafc;
+      --bg:#ffffff;
+      --text:#1e293b;
+      --subtext:#64748b;
+      --border:#e2e8f0;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{font-family:'Open Sans',system-ui,-apple-system,sans-serif; background:var(--page-bg); color:var(--text);font-size:14px;line-height:1.5}
+
+    /* Header */
+    header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:10px}
+    .brand .logo-img{height:28px;width:auto}
+    .brand .title{color:#ffb732;font-family:zooja-pro,Arial,sans-serif;font-size:clamp(32px,4vw,48px);line-height:1}
+    .header-controls{display:flex;align-items:center;gap:12px;margin-left:auto}
+    .header-btn{background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;transition:all .15s}
+    .header-btn:hover{background:#f8fafc;border-color:#cbd5e1}
+    .company-name{font-size:12px;color:var(--subtext);font-weight:500}
+
+    .container{padding:24px; max-width:1200px; margin:0 auto}
+    .card{background:#ffffff; border:1px solid var(--border); border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,0.06); overflow:hidden; margin-bottom:20px}
+    .card h2{margin:0; padding:20px 24px; font-size:18px; color:#111827; font-weight:700; border-bottom:1px solid var(--border)}
+    .card .content{padding:24px}
+
+    label{font-size:13px; color:var(--text); display:block; margin-bottom:6px; font-weight:600}
+    input, textarea{width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--text); font-size:14px; transition:border-color .15s, box-shadow .15s; font-family:'Open Sans',system-ui,sans-serif}
+    input:focus, textarea:focus{outline:none; border-color:var(--brand-accent-2); box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
+    textarea{min-height:80px; resize:vertical}
+    .form-group{margin-bottom:16px}
+    .form-row{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+    @media(max-width: 768px){.form-row{grid-template-columns:1fr}}
+
+    button{padding:10px 20px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--text); font-size:14px; font-weight:600; cursor:pointer; transition:all .15s; font-family: Roboto, Arial, sans-serif}
+    button:hover{background:#f8fafc}
+    button.primary{background:var(--brand-primary); color:#fff; border-color:var(--brand-primary)}
+    button.primary:hover{background:#3b5561}
+    button.good{background:#52d5ff; color:#0b1b24; border-color:#52d5ff}
+    button.good:hover{background:#3ecbf5}
+    button.danger{background:#ef4444; color:#fff; border-color:#ef4444}
+    button.danger:hover{background:#dc2626}
+
+    .button-group{display:flex; gap:12px; margin-top:24px}
+
+    .preview-section{background:#f8fafc; border:1px solid var(--border); border-radius:8px; padding:20px; margin-top:20px}
+    .preview-section h3{margin:0 0 16px 0; font-size:16px; color:#111827}
+    .email-preview{background:#fff; border:1px solid var(--border); border-radius:8px; padding:20px; font-family:Arial, sans-serif; font-size:14px; line-height:1.6}
+    .email-preview p{margin:0 0 12px 0}
+    .email-preview ul{margin:0 0 12px 0; padding-left:20px}
+    .email-preview li{margin-bottom:4px}
+    .email-preview table{border-collapse:collapse; width:100%; margin:12px 0}
+    .email-preview table td, .email-preview table th{border:1px solid #000; padding:8px; text-align:center}
+    .email-preview .orange-text{color:#ff6600; font-weight:bold}
+    .email-preview .purple-text{color:#9933cc; font-weight:bold}
+
+    /* Progress Steps */
+    .progress-step{flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; position:relative}
+    .progress-step:not(:last-child)::after{content:''; position:absolute; top:16px; left:50%; width:100%; height:2px; background:#e2e8f0; z-index:-1}
+    .step-number{width:32px; height:32px; border-radius:50%; background:#e2e8f0; color:#64748b; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; transition:all .3s; position:relative; z-index:1}
+    .step-label{font-size:12px; color:#64748b; font-weight:600; text-align:center}
+    .progress-step.active .step-number{background:#52d5ff; color:#0b1b24}
+    .progress-step.active .step-label{color:#111827}
+    .progress-step.completed .step-number{background:#22c55e; color:#fff}
+    .progress-step.completed .step-label{color:#111827}
+
+    .wizard-step{animation:fadeIn .3s ease-in}
+    @keyframes fadeIn{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:translateY(0)}}
+
+    .dynamic-item{background:#f8fafc; border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:16px; position:relative}
+    .remove-btn{position:absolute; top:12px; right:12px; padding:4px 8px; font-size:12px}
+
+    .hidden{display:none}
+  </style>
+</head>
+<body>
+  <div id="bootLoader" style="position:fixed;inset:0;background:#ffffff;display:flex;align-items:center;justify-content:center;z-index:100;color:#111827;font-family:Roboto,Arial,sans-serif">
+    <div style="display:flex;flex-direction:column;gap:6px;align-items:center">
+      <div style="font-weight:800">Marketing Hub</div>
+      <div style="color:#6b7280; font-size:12px">Loading…</div>
+    </div>
+  </div>
+
+  <header id="appHeader" style="display:none">
+    <div class="brand">
+      <img src="logo-main.svg" class="logo-img" alt="Capstone" />
+      <div class="title">Marketing Hub</div>
+    </div>
+    <div class="header-controls">
+      <button class="header-btn" onclick="window.location.href='custom_tools.html'">← Back to Custom Tools</button>
+      <button class="header-btn" id="logoutBtn">Sign Out</button>
+    </div>
+    <span class="company-name">Capstone Management Partners</span>
+  </header>
+
+  <div class="container" id="appContainer" style="display:none">
+    <div class="card">
+      <h2>Continuum - WRS Generator</h2>
+      <div class="content">
+        <!-- Progress Indicator -->
+        <div id="progressBar" style="margin-bottom:32px">
+          <div style="display:flex; justify-content:space-between; margin-bottom:12px">
+            <div class="progress-step active" data-step="1">
+              <div class="step-number">1</div>
+              <div class="step-label">Basic Info</div>
+            </div>
+            <div class="progress-step" data-step="2">
+              <div class="step-number">2</div>
+              <div class="step-label">Leasing Data</div>
+            </div>
+            <div class="progress-step" data-step="3">
+              <div class="step-number">3</div>
+              <div class="step-label">Marketing</div>
+            </div>
+            <div class="progress-step" data-step="4">
+              <div class="step-number">4</div>
+              <div class="step-label">Staffing</div>
+            </div>
+            <div class="progress-step" data-step="5">
+              <div class="step-number">5</div>
+              <div class="step-label">Review</div>
+            </div>
+          </div>
+          <div style="height:4px; background:#e2e8f0; border-radius:999px; overflow:hidden">
+            <div id="progressFill" style="height:100%; background:#52d5ff; width:20%; transition:width .3s"></div>
+          </div>
+        </div>
+
+        <!-- Step 1: Basic Info -->
+        <div class="wizard-step" id="step1" style="display:block">
+          <h3 style="margin:0 0 8px 0; font-size:20px; color:#111827">Basic Information</h3>
+          <p style="color:var(--subtext); margin-bottom:24px">Enter the report date and email recipients.</p>
+
+          <div class="form-group">
+            <label for="reportDate">Report Date *</label>
+            <input type="date" id="reportDate" />
+          </div>
+
+          <div class="form-group">
+            <label for="emailTo">To: (comma-separated emails)</label>
+            <input type="text" id="emailTo" placeholder="e.g., john@example.com, jane@example.com" />
+            <div style="font-size:12px; color:var(--subtext); margin-top:4px">These emails will be saved for next time</div>
+          </div>
+
+          <div class="form-group">
+            <label for="emailCc">CC: (comma-separated emails, optional)</label>
+            <input type="text" id="emailCc" placeholder="e.g., manager@example.com" />
+          </div>
+
+          <div class="button-group">
+            <button class="good" onclick="nextStep(2)">Next: Leasing Data →</button>
+          </div>
+        </div>
+
+        <!-- Step 2: Leasing Data -->
+        <div class="wizard-step" id="step2" style="display:none">
+          <h3 style="margin:0 0 8px 0; font-size:20px; color:#111827">Leasing Numbers</h3>
+          <p style="color:var(--subtext); margin-bottom:24px">Enter the leasing data for the report.</p>
+
+          <h4 style="margin:0 0 12px 0; font-size:15px; color:#111827">Renewals Table</h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="renewals2627">26-27 Renewals</label>
+              <input type="text" id="renewals2627" placeholder="e.g., X" />
+            </div>
+            <div class="form-group">
+              <label for="renewals2526">25-26 Renewals</label>
+              <input type="text" id="renewals2526" placeholder="e.g., X" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="newLeases2627">26-27 New Leases</label>
+              <input type="text" id="newLeases2627" placeholder="e.g., X" />
+            </div>
+            <div class="form-group">
+              <label for="newLeases2526">25-26 New Leases</label>
+              <input type="text" id="newLeases2526" placeholder="e.g., X" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="total2627">26-27 Total</label>
+              <input type="text" id="total2627" placeholder="e.g., X+Y" />
+            </div>
+            <div class="form-group">
+              <label for="total2526">25-26 Total</label>
+              <input type="text" id="total2526" placeholder="e.g., X+B" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="preLease2627">26-27 Pre-Lease %</label>
+              <input type="text" id="preLease2627" placeholder="e.g., (XX/YYY)% = T%" />
+            </div>
+            <div class="form-group">
+              <label for="preLease2526">25-26 Pre-Lease %</label>
+              <input type="text" id="preLease2526" placeholder="e.g., (XX/YYY)% = G%" />
+            </div>
+          </div>
+
+          <h4 style="margin:24px 0 12px 0; font-size:15px; color:#111827">Additional Leasing Numbers</h4>
+          
+          <div class="form-group">
+            <label for="currentOccupancy">Current Occupancy</label>
+            <input type="text" id="currentOccupancy" placeholder="e.g., 95%" />
+          </div>
+
+          <div class="form-group">
+            <label for="preLease2526YOY">2025-2026 Pre-Lease YOY: (5%)</label>
+            <input type="text" id="preLease2526YOY" placeholder="e.g., 5%" />
+          </div>
+
+          <div class="form-group">
+            <label for="preLeaseOverLastYear">Pre-Lease Over Last Year: (P%)</label>
+            <input type="text" id="preLeaseOverLastYear" placeholder="e.g., P%" />
+          </div>
+
+          <div class="form-group">
+            <label for="goal">Goal:</label>
+            <input type="text" id="goal" placeholder="e.g., 97%" />
+          </div>
+
+          <div class="form-group">
+            <label for="appsStarted">Applications Started (Date Range):</label>
+            <input type="text" id="appsStarted" placeholder="e.g., 15 applications" />
+          </div>
+
+          <div class="form-group">
+            <label for="appsCompleted">Applications Completed (Date Range):</label>
+            <input type="text" id="appsCompleted" placeholder="e.g., 10 applications" />
+          </div>
+
+          <div class="form-group">
+            <label for="totalAppsPending">Total Applications Pending:</label>
+            <input type="text" id="totalAppsPending" placeholder="e.g., 5 applications" />
+          </div>
+
+          <div class="form-group">
+            <label for="leasesStarted">Leases started:</label>
+            <input type="text" id="leasesStarted" placeholder="e.g., 8 leases" />
+          </div>
+
+          <div class="button-group">
+            <button onclick="prevStep(1)">← Back</button>
+            <button class="good" onclick="nextStep(3)">Next: Marketing →</button>
+          </div>
+        </div>
+
+        <!-- Step 3: Marketing & Events -->
+        <div class="wizard-step" id="step3" style="display:none">
+          <h3 style="margin:0 0 8px 0; font-size:20px; color:#111827">Marketing and Resident Events</h3>
+          <p style="color:var(--subtext); margin-bottom:24px">Add marketing efforts and events.</p>
+
+          <h4 style="margin:0 0 12px 0; font-size:15px; color:#111827">Marketing Efforts This Week</h4>
+          <div id="marketingEffortsContainer"></div>
+          <button type="button" onclick="addMarketingEffort()" style="margin-top:12px; background:#f8fafc; color:var(--brand-accent-2); border-color:var(--brand-accent-2)">+ Add Marketing Effort</button>
+
+          <h4 style="margin:24px 0 12px 0; font-size:15px; color:#111827">Lead Outreach</h4>
+          <div id="leadOutreachContainer"></div>
+          <button type="button" onclick="addLeadOutreach()" style="margin-top:12px; background:#f8fafc; color:var(--brand-accent-2); border-color:var(--brand-accent-2)">+ Add Lead Outreach</button>
+
+          <h4 style="margin:24px 0 12px 0; font-size:15px; color:#111827">Content & Social</h4>
+          <div id="contentSocialContainer"></div>
+          <button type="button" onclick="addContentSocial()" style="margin-top:12px; background:#f8fafc; color:var(--brand-accent-2); border-color:var(--brand-accent-2)">+ Add Content & Social</button>
+
+          <h4 style="margin:24px 0 12px 0; font-size:15px; color:#111827">On-Site Activation</h4>
+          <div id="onSiteContainer"></div>
+          <button type="button" onclick="addOnSite()" style="margin-top:12px; background:#f8fafc; color:var(--brand-accent-2); border-color:var(--brand-accent-2)">+ Add On-Site Activation</button>
+
+          <h4 style="margin:24px 0 12px 0; font-size:15px; color:#111827">Social Media Highlights for This Week – The Continuum</h4>
+          <div id="socialHighlightsContainer"></div>
+          <button type="button" onclick="addSocialHighlight()" style="margin-top:12px; background:#f8fafc; color:var(--brand-accent-2); border-color:var(--brand-accent-2)">+ Add Social Highlight</button>
+
+          <div class="button-group">
+            <button onclick="prevStep(2)">← Back</button>
+            <button class="good" onclick="nextStep(4)">Next: Staffing →</button>
+          </div>
+        </div>
+
+        <!-- Step 4: Staffing Updates -->
+        <div class="wizard-step" id="step4" style="display:none">
+          <h3 style="margin:0 0 8px 0; font-size:20px; color:#111827">Staffing Updates</h3>
+          <p style="color:var(--subtext); margin-bottom:24px">Add staffing information and open roles.</p>
+
+          <div class="form-group">
+            <label for="staffingNotes">Currently looking to fill the following roles:</label>
+            <textarea id="staffingNotes" placeholder="Enter staffing notes and open positions..."></textarea>
+          </div>
+
+          <div class="button-group">
+            <button onclick="prevStep(3)">← Back</button>
+            <button class="good" onclick="nextStep(5)">Review & Generate →</button>
+          </div>
+        </div>
+
+        <!-- Step 5: Review & Generate -->
+        <div class="wizard-step" id="step5" style="display:none">
+          <h3 style="margin:0 0 8px 0; font-size:20px; color:#111827">Review & Generate</h3>
+          <p style="color:var(--subtext); margin-bottom:24px">Review your information and generate the email report.</p>
+
+          <div id="reviewSummary" style="background:#f8fafc; border:1px solid var(--border); border-radius:8px; padding:20px; margin-bottom:24px">
+            <!-- Summary will be populated by JavaScript -->
+          </div>
+
+          <div class="button-group">
+            <button onclick="prevStep(4)">← Back to Edit</button>
+            <button class="good" id="generateBtn">Generate Email</button>
+          </div>
+        </div>
+
+        <!-- Email Preview (shown after generation) -->
+        <div class="preview-section" id="previewSection" style="display:none">
+          <h3>Email Preview</h3>
+          <div class="email-preview" id="emailPreview"></div>
+          <div class="button-group" style="margin-top:20px">
+            <button id="openEmailBtn" class="good">Open in Gmail</button>
+            <button onclick="resetWizard()">Start New Report</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentUser = null;
+    let marketingEfforts = [];
+    let leadOutreach = [];
+    let contentSocial = [];
+    let onSite = [];
+    let socialHighlights = [];
+    let marketingCounter = 0;
+    let leadCounter = 0;
+    let contentCounter = 0;
+    let onSiteCounter = 0;
+    let socialCounter = 0;
+
+    const els = {
+      bootLoader: document.getElementById('bootLoader'),
+      appHeader: document.getElementById('appHeader'),
+      appContainer: document.getElementById('appContainer'),
+      logoutBtn: document.getElementById('logoutBtn'),
+      generateBtn: document.getElementById('generateBtn'),
+      openEmailBtn: document.getElementById('openEmailBtn'),
+      previewSection: document.getElementById('previewSection'),
+      emailPreview: document.getElementById('emailPreview'),
+      reportDate: document.getElementById('reportDate'),
+      emailTo: document.getElementById('emailTo'),
+      emailCc: document.getElementById('emailCc'),
+      renewals2627: document.getElementById('renewals2627'),
+      renewals2526: document.getElementById('renewals2526'),
+      newLeases2627: document.getElementById('newLeases2627'),
+      newLeases2526: document.getElementById('newLeases2526'),
+      total2627: document.getElementById('total2627'),
+      total2526: document.getElementById('total2526'),
+      preLease2627: document.getElementById('preLease2627'),
+      preLease2526: document.getElementById('preLease2526'),
+      currentOccupancy: document.getElementById('currentOccupancy'),
+      preLease2526YOY: document.getElementById('preLease2526YOY'),
+      preLeaseOverLastYear: document.getElementById('preLeaseOverLastYear'),
+      goal: document.getElementById('goal'),
+      appsStarted: document.getElementById('appsStarted'),
+      appsCompleted: document.getElementById('appsCompleted'),
+      totalAppsPending: document.getElementById('totalAppsPending'),
+      leasesStarted: document.getElementById('leasesStarted'),
+      staffingNotes: document.getElementById('staffingNotes'),
+      marketingEffortsContainer: document.getElementById('marketingEffortsContainer'),
+      leadOutreachContainer: document.getElementById('leadOutreachContainer'),
+      contentSocialContainer: document.getElementById('contentSocialContainer'),
+      onSiteContainer: document.getElementById('onSiteContainer'),
+      socialHighlightsContainer: document.getElementById('socialHighlightsContainer'),
+    };
+
+    async function initAuth() {
+      try {
+        const meRes = await fetch('/api/me', { credentials: 'include' });
+        if (meRes.ok) {
+          const me = await meRes.json();
+          currentUser = { username: me.username, role: me.role, properties: me.properties };
+          
+          if (currentUser.role !== 'admin') {
+            alert('Access Denied: This tool is only available to admin users.');
+            window.location.href = 'mmp_calendar_app.html';
+            return false;
+          }
+
+          showApp();
+          loadSavedData();
+          return true;
+        }
+      } catch (e) {
+        console.error('Auth error:', e);
+      }
+      window.location.href = 'index.html';
+      return false;
+    }
+
+    function showApp() {
+      els.bootLoader.style.display = 'none';
+      els.appHeader.style.display = '';
+      els.appContainer.style.display = '';
+    }
+
+    async function doLogout() {
+      try {
+        await fetch('/api/auth-logout', { method: 'POST', credentials: 'include' });
+      } catch (e) {}
+      window.location.href = 'index.html';
+    }
+
+    // Marketing Efforts
+    function addMarketingEffort() {
+      const id = marketingCounter++;
+      marketingEfforts.push({ id, text: '' });
+      renderMarketingEfforts();
+    }
+
+    function removeMarketingEffort(id) {
+      marketingEfforts = marketingEfforts.filter(item => item.id !== id);
+      renderMarketingEfforts();
+    }
+
+    function renderMarketingEfforts() {
+      els.marketingEffortsContainer.innerHTML = marketingEfforts.map(item => `
+        <div class="dynamic-item" data-id="${item.id}">
+          <button type="button" class="remove-btn danger" onclick="removeMarketingEffort(${item.id})">Remove</button>
+          <div class="form-group">
+            <label>Marketing Effort #${item.id + 1}</label>
+            <input type="text" data-marketing-id="${item.id}" value="${item.text}" placeholder="e.g., Email campaign to prospects" />
+          </div>
+        </div>
+      `).join('');
+
+      els.marketingEffortsContainer.querySelectorAll('input[data-marketing-id]').forEach(input => {
+        input.addEventListener('input', (e) => {
+          const id = parseInt(e.target.dataset.marketingId);
+          const item = marketingEfforts.find(i => i.id === id);
+          if (item) {
+            item.text = e.target.value;
+            saveData();
+          }
+        });
+      });
+    }
+
+    // Lead Outreach
+    function addLeadOutreach() {
+      const id = leadCounter++;
+      leadOutreach.push({ id, text: '' });
+      renderLeadOutreach();
+    }
+
+    function removeLeadOutreach(id) {
+      leadOutreach = leadOutreach.filter(item => item.id !== id);
+      renderLeadOutreach();
+    }
+
+    function renderLeadOutreach() {
+      els.leadOutreachContainer.innerHTML = leadOutreach.map(item => `
+        <div class="dynamic-item" data-id="${item.id}">
+          <button type="button" class="remove-btn danger" onclick="removeLeadOutreach(${item.id})">Remove</button>
+          <div class="form-group">
+            <label>Lead Outreach #${item.id + 1}</label>
+            <input type="text" data-lead-id="${item.id}" value="${item.text}" placeholder="e.g., Called 20 leads" />
+          </div>
+        </div>
+      `).join('');
+
+      els.leadOutreachContainer.querySelectorAll('input[data-lead-id]').forEach(input => {
+        input.addEventListener('input', (e) => {
+          const id = parseInt(e.target.dataset.leadId);
+          const item = leadOutreach.find(i => i.id === id);
+          if (item) {
+            item.text = e.target.value;
+            saveData();
+          }
+        });
+      });
+    }
+
+    // Content & Social
+    function addContentSocial() {
+      const id = contentCounter++;
+      contentSocial.push({ id, text: '' });
+      renderContentSocial();
+    }
+
+    function removeContentSocial(id) {
+      contentSocial = contentSocial.filter(item => item.id !== id);
+      renderContentSocial();
+    }
+
+    function renderContentSocial() {
+      els.contentSocialContainer.innerHTML = contentSocial.map(item => `
+        <div class="dynamic-item" data-id="${item.id}">
+          <button type="button" class="remove-btn danger" onclick="removeContentSocial(${item.id})">Remove</button>
+          <div class="form-group">
+            <label>Content & Social #${item.id + 1}</label>
+            <input type="text" data-content-id="${item.id}" value="${item.text}" placeholder="e.g., Posted 3 Instagram stories" />
+          </div>
+        </div>
+      `).join('');
+
+      els.contentSocialContainer.querySelectorAll('input[data-content-id]').forEach(input => {
+        input.addEventListener('input', (e) => {
+          const id = parseInt(e.target.dataset.contentId);
+          const item = contentSocial.find(i => i.id === id);
+          if (item) {
+            item.text = e.target.value;
+            saveData();
+          }
+        });
+      });
+    }
+
+    // On-Site Activation
+    function addOnSite() {
+      const id = onSiteCounter++;
+      onSite.push({ id, text: '' });
+      renderOnSite();
+    }
+
+    function removeOnSite(id) {
+      onSite = onSite.filter(item => item.id !== id);
+      renderOnSite();
+    }
+
+    function renderOnSite() {
+      els.onSiteContainer.innerHTML = onSite.map(item => `
+        <div class="dynamic-item" data-id="${item.id}">
+          <button type="button" class="remove-btn danger" onclick="removeOnSite(${item.id})">Remove</button>
+          <div class="form-group">
+            <label>On-Site Activation #${item.id + 1}</label>
+            <input type="text" data-onsite-id="${item.id}" value="${item.text}" placeholder="e.g., Hosted community event" />
+          </div>
+        </div>
+      `).join('');
+
+      els.onSiteContainer.querySelectorAll('input[data-onsite-id]').forEach(input => {
+        input.addEventListener('input', (e) => {
+          const id = parseInt(e.target.dataset.onsiteId);
+          const item = onSite.find(i => i.id === id);
+          if (item) {
+            item.text = e.target.value;
+            saveData();
+          }
+        });
+      });
+    }
+
+    // Social Highlights
+    function addSocialHighlight() {
+      const id = socialCounter++;
+      socialHighlights.push({ id, text: '' });
+      renderSocialHighlights();
+    }
+
+    function removeSocialHighlight(id) {
+      socialHighlights = socialHighlights.filter(item => item.id !== id);
+      renderSocialHighlights();
+    }
+
+    function renderSocialHighlights() {
+      els.socialHighlightsContainer.innerHTML = socialHighlights.map(item => `
+        <div class="dynamic-item" data-id="${item.id}">
+          <button type="button" class="remove-btn danger" onclick="removeSocialHighlight(${item.id})">Remove</button>
+          <div class="form-group">
+            <label>Social Highlight #${item.id + 1}</label>
+            <input type="text" data-social-id="${item.id}" value="${item.text}" placeholder="e.g., Viral TikTok video" />
+          </div>
+        </div>
+      `).join('');
+
+      els.socialHighlightsContainer.querySelectorAll('input[data-social-id]').forEach(input => {
+        input.addEventListener('input', (e) => {
+          const id = parseInt(e.target.dataset.socialId);
+          const item = socialHighlights.find(i => i.id === id);
+          if (item) {
+            item.text = e.target.value;
+            saveData();
+          }
+        });
+      });
+    }
+
+    function loadSavedData() {
+      try {
+        const saved = localStorage.getItem('continuum_wrs_data');
+        if (saved) {
+          const data = JSON.parse(saved);
+          
+          if (data.emailTo) els.emailTo.value = data.emailTo;
+          if (data.emailCc) els.emailCc.value = data.emailCc;
+          
+          // Load all arrays
+          if (data.marketingEfforts) {
+            marketingEfforts = data.marketingEfforts;
+            marketingCounter = Math.max(...marketingEfforts.map(i => i.id), -1) + 1;
+            renderMarketingEfforts();
+          }
+          if (data.leadOutreach) {
+            leadOutreach = data.leadOutreach;
+            leadCounter = Math.max(...leadOutreach.map(i => i.id), -1) + 1;
+            renderLeadOutreach();
+          }
+          if (data.contentSocial) {
+            contentSocial = data.contentSocial;
+            contentCounter = Math.max(...contentSocial.map(i => i.id), -1) + 1;
+            renderContentSocial();
+          }
+          if (data.onSite) {
+            onSite = data.onSite;
+            onSiteCounter = Math.max(...onSite.map(i => i.id), -1) + 1;
+            renderOnSite();
+          }
+          if (data.socialHighlights) {
+            socialHighlights = data.socialHighlights;
+            socialCounter = Math.max(...socialHighlights.map(i => i.id), -1) + 1;
+            renderSocialHighlights();
+          }
+        }
+      } catch (e) {
+        console.error('Error loading saved data:', e);
+      }
+    }
+
+    function saveData() {
+      try {
+        const data = {
+          emailTo: els.emailTo.value,
+          emailCc: els.emailCc.value,
+          marketingEfforts,
+          leadOutreach,
+          contentSocial,
+          onSite,
+          socialHighlights,
+        };
+        localStorage.setItem('continuum_wrs_data', JSON.stringify(data));
+      } catch (e) {
+        console.error('Error saving data:', e);
+      }
+    }
+
+    function generateEmailHTML() {
+      const reportDate = els.reportDate.value ? new Date(els.reportDate.value + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '[Date]';
+
+      let marketingList = '';
+      if (marketingEfforts.length > 0) {
+        marketingEfforts.forEach(item => {
+          if (item.text) marketingList += `<li>${item.text}</li>`;
+        });
+      }
+
+      let leadList = '';
+      if (leadOutreach.length > 0) {
+        leadOutreach.forEach(item => {
+          if (item.text) leadList += `<li>${item.text}</li>`;
+        });
+      }
+
+      let contentList = '';
+      if (contentSocial.length > 0) {
+        contentSocial.forEach(item => {
+          if (item.text) contentList += `<li>${item.text}</li>`;
+        });
+      }
+
+      let onSiteList = '';
+      if (onSite.length > 0) {
+        onSite.forEach(item => {
+          if (item.text) onSiteList += `<li>${item.text}</li>`;
+        });
+      }
+
+      let socialList = '';
+      if (socialHighlights.length > 0) {
+        socialHighlights.forEach(item => {
+          if (item.text) socialList += `<li>${item.text}</li>`;
+        });
+      }
+
+      return `
+<p>Good Afternoon Team,</p>
+
+<p>Last Week's Leasing Narrative:</p>
+
+<p><strong>[Narrative]</strong></p>
+
+<table>
+  <tr>
+    <th></th>
+    <th>26-27</th>
+    <th>25-26</th>
+    <th>Diff</th>
+  </tr>
+  <tr>
+    <td><strong>Renewals</strong></td>
+    <td>${els.renewals2627.value || 'X'}</td>
+    <td>${els.renewals2526.value || 'A'}</td>
+    <td>-X%</td>
+  </tr>
+  <tr>
+    <td><strong>New Leases</strong></td>
+    <td>${els.newLeases2627.value || 'Y'}</td>
+    <td>${els.newLeases2526.value || 'B'}</td>
+    <td>-Y%</td>
+  </tr>
+  <tr>
+    <td><strong>Total</strong></td>
+    <td>${els.total2627.value || 'X+Y'}</td>
+    <td>${els.total2526.value || 'A+B'}</td>
+    <td>(X+Y) - (A+B)</td>
+  </tr>
+  <tr>
+    <td><strong>Pre-Lease %</strong></td>
+    <td>${els.preLease2627.value || '(XX/YYY)% = T%'}</td>
+    <td>${els.preLease2526.value || '(XX/YYY)% = G%'}</td>
+    <td>T% - G% = P%</td>
+  </tr>
+</table>
+
+<p>DATE: ${reportDate}</p>
+
+<p><span class="orange-text">LEASING NUMBERS</span></p>
+<ul>
+  <li>Current Occupancy: ${els.currentOccupancy.value || 'X%'}</li>
+  <li>2025-2026 Pre-Lease YOY: ${els.preLease2526YOY.value || '(5%)'}</li>
+  <li>Pre-Lease Over Last Year: ${els.preLeaseOverLastYear.value || '(P%)'}</li>
+</ul>
+
+<p>Goal: ${els.goal.value || '97%'}</p>
+
+<ul>
+  <li>Applications Started (Date Range): ${els.appsStarted.value || 'X'}</li>
+  <li>Applications Completed (Date Range): ${els.appsCompleted.value || 'X'}</li>
+  <li>Total Applications Pending: ${els.totalAppsPending.value || 'X'}</li>
+  <li>Leases started: ${els.leasesStarted.value || 'X'}</li>
+</ul>
+
+<p><span class="orange-text">MARKETING AND RESIDENT EVENTS</span></p>
+
+<p><strong>Marketing Efforts This Week</strong></p>
+<ul>
+  ${marketingList || '<li>&nbsp;</li>'}
+</ul>
+
+<p><strong>Lead Outreach</strong></p>
+<ul>
+  ${leadList || '<li>&nbsp;</li>'}
+</ul>
+
+<p><strong>Content & Social</strong></p>
+<ul>
+  ${contentList || '<li>&nbsp;</li>'}
+</ul>
+
+<p><strong>On-Site Activation</strong></p>
+<ul>
+  ${onSiteList || '<li>&nbsp;</li>'}
+</ul>
+
+<p><strong>Social Media Highlights for This Week – The Continuum</strong></p>
+<ul>
+  ${socialList || '<li>&nbsp;</li>'}
+</ul>
+
+<p><span class="purple-text">STAFFING UPDATES</span></p>
+<ul>
+  <li>Currently looking to fill the following roles
+    <ul>
+      <li>${els.staffingNotes.value || 'None'}</li>
+    </ul>
+  </li>
+</ul>
+      `;
+    }
+
+    function generateEmail() {
+      saveData();
+      const html = generateEmailHTML();
+      els.emailPreview.innerHTML = html;
+      els.previewSection.style.display = '';
+      els.previewSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function formatReportDate() {
+      const date = els.reportDate.value;
+      if (!date) return 'Date TBD';
+      
+      const dateObj = new Date(date + 'T00:00:00');
+      return dateObj.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+    }
+
+    function openInEmailClient() {
+      const toEmails = els.emailTo.value.trim();
+      const ccEmails = els.emailCc.value.trim();
+      const dateStr = formatReportDate();
+      const subject = encodeURIComponent(`Continuum WRS - ${dateStr}`);
+      const body = encodeURIComponent('Paste email from Marketing hub.');
+      
+      let gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`;
+      
+      if (toEmails) {
+        gmailUrl += `&to=${encodeURIComponent(toEmails)}`;
+      }
+      
+      if (ccEmails) {
+        gmailUrl += `&cc=${encodeURIComponent(ccEmails)}`;
+      }
+      
+      window.open(gmailUrl, '_blank');
+    }
+
+    // Event listeners
+    els.logoutBtn.addEventListener('click', doLogout);
+    els.generateBtn.addEventListener('click', generateEmail);
+    els.openEmailBtn.addEventListener('click', openInEmailClient);
+
+    // Auto-save on input
+    [els.emailTo, els.emailCc, els.reportDate, els.renewals2627, els.renewals2526, 
+     els.newLeases2627, els.newLeases2526, els.total2627, els.total2526,
+     els.preLease2627, els.preLease2526, els.currentOccupancy, els.preLease2526YOY,
+     els.preLeaseOverLastYear, els.goal, els.appsStarted, els.appsCompleted,
+     els.totalAppsPending, els.leasesStarted, els.staffingNotes].forEach(el => {
+      el.addEventListener('input', saveData);
+    });
+
+    // Wizard Navigation
+    function nextStep(step) {
+      saveData();
+      document.querySelectorAll('.wizard-step').forEach(s => s.style.display = 'none');
+      document.getElementById('step' + step).style.display = 'block';
+      updateProgress(step);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      
+      if (step === 5) {
+        populateReviewSummary();
+      }
+    }
+
+    function prevStep(step) {
+      document.querySelectorAll('.wizard-step').forEach(s => s.style.display = 'none');
+      document.getElementById('step' + step).style.display = 'block';
+      updateProgress(step);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function updateProgress(currentStep) {
+      const progressFill = document.getElementById('progressFill');
+      const percentage = (currentStep / 5) * 100;
+      progressFill.style.width = percentage + '%';
+      
+      document.querySelectorAll('.progress-step').forEach(step => {
+        const stepNum = parseInt(step.dataset.step);
+        step.classList.remove('active', 'completed');
+        
+        if (stepNum === currentStep) {
+          step.classList.add('active');
+        } else if (stepNum < currentStep) {
+          step.classList.add('completed');
+        }
+      });
+    }
+
+    function populateReviewSummary() {
+      const summary = document.getElementById('reviewSummary');
+      
+      summary.innerHTML = `
+        <div style="margin-bottom:20px">
+          <h4 style="margin:0 0 12px 0; font-size:15px; color:#111827; font-weight:700">Report Date</h4>
+          <div>${formatReportDate()}</div>
+        </div>
+        
+        <div style="margin-bottom:20px">
+          <h4 style="margin:0 0 12px 0; font-size:15px; color:#111827; font-weight:700">Leasing Numbers</h4>
+          <div style="font-size:13px">26-27 Renewals: ${els.renewals2627.value || 'Not provided'}</div>
+          <div style="font-size:13px">Current Occupancy: ${els.currentOccupancy.value || 'Not provided'}</div>
+        </div>
+        
+        <div style="margin-bottom:20px">
+          <h4 style="margin:0 0 12px 0; font-size:15px; color:#111827; font-weight:700">Marketing Efforts</h4>
+          <div style="font-size:13px">${marketingEfforts.length} items added</div>
+        </div>
+        
+        <div>
+          <h4 style="margin:0 0 12px 0; font-size:15px; color:#111827; font-weight:700">Staffing</h4>
+          <div style="font-size:13px">${els.staffingNotes.value ? 'Notes added' : 'No notes'}</div>
+        </div>
+      `;
+    }
+
+    function resetWizard() {
+      els.previewSection.style.display = 'none';
+      document.querySelectorAll('.wizard-step').forEach(s => s.style.display = 'none');
+      document.getElementById('step1').style.display = 'block';
+      updateProgress(1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Initialize
+    (async () => {
+      await initAuth();
+    })();
+  </script>
+</body>
+</html>

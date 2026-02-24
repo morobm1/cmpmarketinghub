@@ -275,17 +275,8 @@
         <div class="preview-section" id="previewSection" style="display:none">
           <h3>Email Preview</h3>
           <div class="email-preview" id="emailPreview"></div>
-          <div style="background:#fff3cd; border:1px solid #ffc107; border-radius:8px; padding:12px; margin-top:16px; font-size:13px">
-            <strong>📝 Note:</strong> Gmail compose URLs only support plain text. The formatting you see above will not transfer. You can:
-            <ul style="margin:8px 0 0 20px; padding:0">
-              <li>Copy the formatted text and paste it into Gmail manually, or</li>
-              <li>Use "Open in Gmail" for a quick plain-text version</li>
-            </ul>
-          </div>
           <div class="button-group" style="margin-top:20px">
-            <button id="copyBtn">Copy Plain Text</button>
-            <button id="copyHtmlBtn">Copy Formatted HTML</button>
-            <button id="openEmailBtn">Open in Gmail</button>
+            <button id="openEmailBtn" class="good">Open in Gmail</button>
             <button onclick="resetWizard()">Start New Report</button>
           </div>
         </div>
@@ -679,7 +670,7 @@ RELET & MUTUAL TERMINATION`;
       const ccEmails = els.emailCc.value.trim();
       const dateRange = formatDateRange();
       const subject = encodeURIComponent(`The Harbour Resident Reports - ${dateRange}`);
-      const body = encodeURIComponent(generatePlainText());
+      const body = encodeURIComponent('Paste email from Marketing hub.');
       
       // Build Gmail compose URL
       let gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`;
@@ -694,13 +685,6 @@ RELET & MUTUAL TERMINATION`;
       
       // Open Gmail in new tab
       window.open(gmailUrl, '_blank');
-      
-      // Show reminder about attachment if file was uploaded
-      if (moveOutFileData) {
-        setTimeout(() => {
-          alert('Remember to attach the move-out report file to your email:\n' + moveOutFileData.name);
-        }, 500);
-      }
     }
 
     // File upload handler
