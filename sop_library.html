@@ -40,630 +40,1388 @@
     .brand .logo-img{height:28px;width:auto}
     .brand .title{color:#ffb732;font-family:zooja-pro,Arial,sans-serif;font-size:clamp(32px,4vw,48px);line-height:1}
     .header-controls{display:flex;align-items:center;gap:12px;margin-left:auto}
-    .header-controls select{background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);min-width:200px;cursor:pointer}
-    .header-controls select:focus{outline:none;border-color:var(--brand-accent-2);box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
     .header-btn{background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;transition:all .15s}
     .header-btn:hover{background:#f8fafc;border-color:#cbd5e1}
     .company-name{font-size:12px;color:var(--subtext);font-weight:500}
 
-    /* Navigation */
-    .nav-bar{background:#fff;border-bottom:1px solid var(--border)}
-    .nav-wrap{max-width:1400px;margin:0 auto;padding:0 24px;display:flex;gap:2px;overflow-x:auto}
-    .nav-tab{display:flex;align-items:center;gap:6px;padding:14px 16px;color:var(--subtext);text-decoration:none;font-size:13px;font-weight:600;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap}
-    .nav-tab:hover{color:var(--text);background:#f8fafc}
-    .nav-tab.active{color:var(--brand-primary);border-bottom-color:var(--brand-primary)}
+    /* Layout */
+    .app-container{display:grid;grid-template-columns:280px 1fr;height:calc(100vh - 60px);overflow:hidden}
+    @media(max-width:1024px){.app-container{grid-template-columns:1fr}}
 
-    .container{padding:16px; display:grid; grid-template-columns: 300px 1fr; gap:16px; max-width:1400px; margin:0 auto}
-    @media(max-width: 1100px){ .container{grid-template-columns:1fr} }
+    /* Sidebar Navigation */
+    .sidebar{background:#fff;border-right:1px solid var(--border);overflow-y:auto;padding:16px 0}
+    .sidebar-header{padding:12px 20px;font-size:16px;font-weight:700;color:#111827;font-family:Roboto,Arial,sans-serif;border-bottom:1px solid var(--border);margin-bottom:8px}
+    .nav-section{margin-bottom:4px}
+    .nav-section-title{padding:10px 20px;font-size:13px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all .15s}
+    .nav-section-title:hover{background:#f8fafc;color:#111827}
+    .nav-section-title .icon{font-size:10px;transition:transform .2s}
+    .nav-section-title.collapsed .icon{transform:rotate(-90deg)}
+    .nav-items{display:block;overflow:hidden;transition:max-height .3s ease}
+    .nav-items.collapsed{max-height:0!important}
+    .nav-item{padding:10px 20px 10px 32px;font-size:13px;color:#374151;cursor:pointer;transition:all .15s;border-left:3px solid transparent}
+    .nav-item:hover{background:#f8fafc;color:#111827}
+    .nav-item.active{background:#eef6f9;color:var(--brand-primary);border-left-color:var(--brand-accent-2);font-weight:600}
 
-    .card{background:#ffffff; border:1px solid var(--border); border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,0.06); overflow:hidden}
-    .card h3{margin:0; padding:16px 20px 0 20px; font-size:15px; color:#374151; font-weight:700; font-family: Roboto, Arial, sans-serif}
-    .card .content{padding:16px 20px 20px 20px}
+    /* Content Area */
+    .content-area{overflow-y:auto;padding:32px;background:#f8fafc}
+    .content-wrapper{max-width:900px;margin:0 auto;background:#fff;border:1px solid var(--border);border-radius:14px;padding:40px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+    
+    /* Typography */
+    .content-wrapper h1{font-size:32px;color:#111827;margin:0 0 16px 0;font-weight:800;font-family:Roboto,Arial,sans-serif;line-height:1.2}
+    .content-wrapper h2{font-size:24px;color:#111827;margin:32px 0 16px 0;font-weight:700;font-family:Roboto,Arial,sans-serif;border-bottom:2px solid var(--border);padding-bottom:12px}
+    .content-wrapper h3{font-size:18px;color:#374151;margin:24px 0 12px 0;font-weight:700;font-family:Roboto,Arial,sans-serif}
+    .content-wrapper h4{font-size:16px;color:#4b5563;margin:20px 0 10px 0;font-weight:700;font-family:Roboto,Arial,sans-serif}
+    .content-wrapper p{margin:12px 0;line-height:1.7;color:#374151}
+    .content-wrapper ul,.content-wrapper ol{margin:12px 0 12px 28px;line-height:1.8;color:#374151}
+    .content-wrapper li{margin:8px 0}
+    .content-wrapper ul ul,.content-wrapper ol ol{margin:8px 0 8px 24px}
+    .content-wrapper strong{color:#111827;font-weight:700}
+    .content-wrapper em{font-style:italic}
+    .content-wrapper code{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:4px;padding:2px 6px;font-size:13px;color:#be123c;font-family:'Courier New',monospace}
+    .content-wrapper pre{background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:16px;overflow-x:auto;margin:16px 0}
+    .content-wrapper pre code{background:none;border:none;padding:0;color:#111827}
+    .content-wrapper blockquote{border-left:4px solid var(--brand-accent-2);padding-left:20px;margin:20px 0;color:var(--subtext);font-style:italic}
+    .content-wrapper table{width:100%;border-collapse:collapse;margin:20px 0;font-size:13px}
+    .content-wrapper table th{background:#f8fafc;border:1px solid var(--border);padding:12px;text-align:left;font-weight:700;color:#111827}
+    .content-wrapper table td{border:1px solid var(--border);padding:12px;color:#374151}
+    .content-wrapper table tr:nth-child(even){background:#fafbfc}
+    .content-wrapper hr{border:none;border-top:2px solid var(--border);margin:32px 0}
+    .content-wrapper a{color:var(--brand-accent-2);text-decoration:none;font-weight:600}
+    .content-wrapper a:hover{text-decoration:underline}
 
-    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
-    .row > *{flex:1}
+    /* Badges and Pills */
+    .badge{display:inline-block;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:600;margin:4px 4px 4px 0}
+    .badge.category{background:rgba(82,213,255,0.15);color:#0b5d7a;border:1px solid rgba(82,213,255,0.35)}
+    .badge.department{background:rgba(255,183,50,0.15);color:#8a5800;border:1px solid rgba(255,183,50,0.40)}
+    .badge.status{background:rgba(34,197,94,0.15);color:#065f46;border:1px solid rgba(34,197,94,0.35)}
 
-    label{font-size:12px; color:var(--subtext); display:block; margin-bottom:6px; font-weight:600}
-    input, select, textarea{width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--text); font-size:14px; transition:border-color .15s, box-shadow .15s}
-    input:focus, select:focus, textarea:focus{outline:none; border-color:var(--brand-accent-2); box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
-    textarea{min-height:64px; resize:vertical}
+    /* Info Box */
+    .info-box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:16px;margin:20px 0}
+    .info-box.warning{background:#fffbeb;border-color:#fde68a}
+    .info-box.success{background:#f0fdf4;border-color:#bbf7d0}
+    .info-box h4{margin:0 0 8px 0;color:#111827}
 
-    button{width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--text); font-size:14px; font-weight:600; cursor:pointer; transition:all .15s; font-family: Roboto, Arial, sans-serif}
-    button:hover{background:#f8fafc}
-    button.secondary{background:#ffffff; color:#111827; border:1px solid #d1d5db}
-    button.secondary:hover{background:#f8fafc}
-    button.warn{background:#ffb732; color:#1f1300; border-color:#ffb732}
-    button.warn:hover{background:#f5a623}
-    button.good{background:#52d5ff; color:#0b1b24; border-color:#52d5ff}
-    button.good:hover{background:#3ecbf5}
-    button.primary{background:var(--brand-primary); color:#fff; border-color:var(--brand-primary)}
-    button.primary:hover{background:#3b5561}
+    /* Step Numbers */
+    .step-number{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:var(--brand-accent-2);color:#0b1b24;border-radius:50%;font-weight:700;font-size:14px;margin-right:8px}
 
-    .muted{color:var(--subtext)}
-    .badge{display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; background:#fff7e6; color:#8a5800; border:1px solid #fde68a; font-weight:600}
-    .mini{font-size:11px; color:var(--subtext)}
+    /* Search */
+    .search-box{padding:12px 20px;border-bottom:1px solid var(--border);margin-bottom:8px}
+    .search-box input{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px}
+    .search-box input:focus{outline:none;border-color:var(--brand-accent-2);box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
 
-    .footer{padding:12px 18px; color:var(--subtext); font-size:12px; text-align:center}
+    /* Mobile Toggle */
+    .mobile-nav-toggle{display:none;position:fixed;bottom:20px;right:20px;width:56px;height:56px;background:var(--brand-primary);color:#fff;border:none;border-radius:50%;font-size:24px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:50}
+    @media(max-width:1024px){
+      .mobile-nav-toggle{display:flex;align-items:center;justify-content:center}
+      .sidebar{position:fixed;left:-280px;top:60px;height:calc(100vh - 60px);width:280px;z-index:45;transition:left .3s;box-shadow:2px 0 8px rgba(0,0,0,0.1)}
+      .sidebar.open{left:0}
+      .app-container{grid-template-columns:1fr}
+    }
 
     .hidden{display:none}
-
-    /* SOP Library specific */
-    .sop-list{max-height:calc(100vh - 240px); overflow:auto; border:1px solid var(--border); border-radius:10px; background:#fff}
-    .sop-item{padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;flex-direction:column;gap:6px;transition:background .15s}
-    .sop-item:hover{background:#f8fafc}
-    .sop-item.active{background:#eef6f9;border-left:3px solid var(--brand-accent-2)}
-    .sop-item:last-child{border-bottom:none}
-    .sop-item .title{font-weight:700;color:#111827;font-size:14px}
-    .sop-item .meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-    .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;border:1px solid var(--border);background:#fff;font-size:11px;color:#374151;font-weight:600}
-    .pill.category{border-color:rgba(82,213,255,0.35);background:rgba(82,213,255,0.10);color:#0b5d7a}
-    .pill.department{border-color:rgba(255,183,50,0.40);background:rgba(255,183,50,0.12);color:#8a5800}
-    .pill.date{border-color:#e5e7eb;background:#f9fafb;color:#4b5563}
-
-    /* Document viewer */
-    .doc-viewer{background:#fff;border:1px solid var(--border);border-radius:12px;padding:24px 32px;max-height:calc(100vh - 200px);overflow:auto}
-    .doc-viewer h1{font-size:24px;color:#111827;margin:0 0 8px 0;font-weight:800;font-family:Roboto,Arial,sans-serif}
-    .doc-viewer .doc-meta{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid var(--border)}
-    .doc-viewer .doc-meta .meta-item{font-size:12px;color:var(--subtext)}
-    .doc-viewer .doc-meta .meta-item strong{color:#111827;font-weight:700}
-    .doc-viewer h2{font-size:20px;color:#111827;margin:32px 0 12px 0;font-weight:700;font-family:Roboto,Arial,sans-serif;border-bottom:2px solid var(--border);padding-bottom:8px}
-    .doc-viewer h3{font-size:16px;color:#374151;margin:24px 0 10px 0;font-weight:700;font-family:Roboto,Arial,sans-serif}
-    .doc-viewer h4{font-size:14px;color:#4b5563;margin:18px 0 8px 0;font-weight:700;font-family:Roboto,Arial,sans-serif}
-    .doc-viewer p{margin:10px 0;line-height:1.7;color:#374151}
-    .doc-viewer ul, .doc-viewer ol{margin:10px 0 10px 24px;line-height:1.8;color:#374151}
-    .doc-viewer li{margin:6px 0}
-    .doc-viewer ul ul, .doc-viewer ol ol{margin:6px 0 6px 20px}
-    .doc-viewer code{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:4px;padding:2px 6px;font-size:13px;color:#be123c;font-family:'Courier New',monospace}
-    .doc-viewer pre{background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:14px;overflow-x:auto;margin:12px 0}
-    .doc-viewer pre code{background:none;border:none;padding:0;color:#111827}
-    .doc-viewer blockquote{border-left:4px solid var(--brand-accent-2);padding-left:16px;margin:16px 0;color:var(--subtext);font-style:italic}
-    .doc-viewer table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
-    .doc-viewer table th{background:#f8fafc;border:1px solid var(--border);padding:10px;text-align:left;font-weight:700;color:#111827}
-    .doc-viewer table td{border:1px solid var(--border);padding:10px;color:#374151}
-    .doc-viewer table tr:nth-child(even){background:#fafbfc}
-    .doc-viewer hr{border:none;border-top:2px solid var(--border);margin:24px 0}
-    .doc-viewer a{color:var(--brand-accent-2);text-decoration:none;font-weight:600}
-    .doc-viewer a:hover{text-decoration:underline}
-    .doc-viewer input[type="checkbox"]{margin-right:8px;width:16px;height:16px;accent-color:var(--brand-accent-2)}
-    .doc-viewer strong{color:#111827;font-weight:700}
-    .doc-viewer em{font-style:italic}
-
-    .empty-state{text-align:center;padding:48px 24px;color:var(--subtext)}
-    .empty-state .icon{font-size:48px;margin-bottom:16px;opacity:0.3}
-    .empty-state .title{font-size:18px;font-weight:700;color:#374151;margin-bottom:8px}
-    .empty-state .desc{font-size:14px}
-
-    .toolbar{display:flex;gap:10px;margin-bottom:16px;align-items:center;flex-wrap:wrap}
-    .toolbar input{flex:1;min-width:240px}
-    .toolbar button{width:auto;padding:10px 16px}
-
-    .loading{text-align:center;padding:32px;color:var(--subtext)}
   </style>
 </head>
 <body>
-  <div id="bootLoader" style="position:fixed;inset:0;background:#ffffff;display:flex;align-items:center;justify-content:center;z-index:100;color:#111827;font-family:Roboto,Arial,sans-serif">
-    <div style="display:flex;flex-direction:column;gap:6px;align-items:center">
-      <div style="font-weight:800">Marketing Hub</div>
-      <div class="mini" style="color:#6b7280">Loading…</div>
-    </div>
-  </div>
-
-  <div id="loginView" style="min-height:100vh;display:none;align-items:center;justify-content:center;padding:20px">
-    <div class="card" style="max-width:420px;width:100%">
-      <h3>Login</h3>
-      <div class="content">
-        <div class="row"><div><label for="loginUsername">Username</label><input id="loginUsername" type="text" autocomplete="username" /></div></div>
-        <div class="row"><div><label for="loginPassword">Password</label><input id="loginPassword" type="password" autocomplete="current-password" /></div></div>
-        <div class="row"><label class="mini" style="display:flex;align-items:center;gap:6px;user-select:none"><input id="togglePw" type="checkbox" /> Show password</label></div>
-        <div class="row"><button id="loginBtn">Sign In</button></div>
-        <div id="loginError" class="mini" style="color:#f87171; display:none">Invalid credentials</div>
-      </div>
-    </div>
-  </div>
-
-  <header id="appHeader" style="display:none">
+  <header>
     <div class="brand">
       <img src="logo-main.svg" class="logo-img" alt="Capstone" />
-      <div class="title">Marketing Hub</div>
+      <div class="title">SOP Library</div>
     </div>
     <div class="header-controls">
-      <select id="propertySelect"></select>
-      <button class="header-btn" id="logoutBtn">Sign Out</button>
-      <button class="header-btn" id="adminPageBtn" style="display:none">Admin</button>
+      <button class="header-btn" onclick="window.location.href='mmp_calendar_app.html'">← Back to Hub</button>
     </div>
     <span class="company-name">Capstone Management Partners</span>
   </header>
 
-  <nav class="nav-bar">
-    <div class="nav-wrap" id="mainNav">
-      <a href="mmp_calendar_app.html" class="nav-tab">Marketing Calendar</a>
-      <a href="marketing_plans.html" class="nav-tab">Marketing Plans</a>
-      <a href="marketing_contacts.html" class="nav-tab">Marketing Contacts</a>
-      <a href="promo_order_tracker.html" class="nav-tab">Promo Order Tracker</a>
-      <a href="renewal_campaign.html" class="nav-tab">Renewal Campaign</a>
-      <a href="velocity_tracker.html" class="nav-tab">Velocity Tracker</a>
-      <a href="leasing_sop.html" class="nav-tab">Leasing SOP</a>
-      <a href="sop_library.html" class="nav-tab active">SOP Library</a>
-      <a href="uniform_shop.html" class="nav-tab">Uniform Shop</a>
-      <a href="creative_library.html" class="nav-tab">Creative Library</a>
-    </div>
-  </nav>
-
-  <div id="appContainer" class="container" style="display:none">
-    <aside class="card">
-      <h3>SOP Documents</h3>
-      <div class="content">
-        <div class="row">
-          <input id="searchInput" type="text" placeholder="Search SOPs…" />
-        </div>
-        <div class="row">
-          <select id="categoryFilter">
-            <option value="">All Categories</option>
-            <option value="Leasing">Leasing</option>
-            <option value="Marketing">Marketing</option>
-            <option value="Operations">Operations</option>
-            <option value="Maintenance">Maintenance</option>
-            <option value="Resident Services">Resident Services</option>
-            <option value="Compliance">Compliance</option>
-            <option value="Technology">Technology</option>
-            <option value="Finance">Finance</option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
-        <div id="sopList" class="sop-list"></div>
+  <div class="app-container">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">📚 SOP Categories</div>
+      
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Search SOPs..." />
       </div>
+
+      <nav id="navContainer">
+        <!-- Navigation will be generated by JavaScript -->
+      </nav>
     </aside>
 
-    <main class="card">
-      <h3>Document Viewer</h3>
-      <div class="content">
-        <div class="toolbar">
-          <button id="printBtn" class="good" disabled>Print Document</button>
-          <button id="downloadBtn" class="secondary" disabled>Download</button>
-        </div>
-        <div id="docViewer" class="doc-viewer">
-          <div class="empty-state">
-            <div class="icon">📄</div>
-            <div class="title">Select an SOP to view</div>
-            <div class="desc">Choose a document from the list on the left to get started</div>
-          </div>
-        </div>
+    <main class="content-area">
+      <div class="content-wrapper" id="contentArea">
+        <!-- Content will be loaded here -->
       </div>
-      <div class="footer">Standard Operating Procedures for Capstone Management Partners</div>
     </main>
   </div>
 
-  <!-- Marked.js for Markdown parsing -->
-  <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+  <button class="mobile-nav-toggle" id="mobileToggle" onclick="toggleSidebar()">☰</button>
 
   <script>
-    // ========= Elements =========
-    const els = {
-      // auth
-      loginView: document.getElementById('loginView'),
-      loginUsername: document.getElementById('loginUsername'),
-      loginPassword: document.getElementById('loginPassword'),
-      loginTogglePw: document.getElementById('togglePw'),
-      loginBtn: document.getElementById('loginBtn'),
-      loginError: document.getElementById('loginError'),
-      appHeader: document.getElementById('appHeader'),
-      appContainer: document.getElementById('appContainer'),
-      logoutBtn: document.getElementById('logoutBtn'),
-      adminPageBtn: document.getElementById('adminPageBtn'),
-      propertySelect: document.getElementById('propertySelect'),
+    // SOP Content Database
+    const sopContent = {
+      home: {
+        title: 'Welcome to the SOP Library',
+        category: 'Home',
+        content: `
+          <h1>📚 Standard Operating Procedures Library</h1>
+          <p>Welcome to the Capstone Management Partners SOP Library. This comprehensive resource contains all standard operating procedures for our marketing and leasing operations.</p>
+          
+          <div class="info-box">
+            <h4>🎯 Quick Start Guide</h4>
+            <p>Use the navigation menu on the left to browse SOPs by category. You can also use the search box to find specific procedures quickly.</p>
+          </div>
 
-      // sop library
-      searchInput: document.getElementById('searchInput'),
-      categoryFilter: document.getElementById('categoryFilter'),
-      sopList: document.getElementById('sopList'),
-      docViewer: document.getElementById('docViewer'),
-      printBtn: document.getElementById('printBtn'),
-      downloadBtn: document.getElementById('downloadBtn'),
+          <h2>📋 What's Inside</h2>
+          <ul>
+            <li><strong>Leasing Operations:</strong> Tour scripts, application processing, move-in procedures</li>
+            <li><strong>Marketing:</strong> Social media guidelines, event planning, campaign management</li>
+            <li><strong>Technology:</strong> Entrata guides, software tutorials, system access</li>
+            <li><strong>Compliance:</strong> Fair housing, safety protocols, legal requirements</li>
+            <li><strong>Resident Services:</strong> Communication templates, service requests, renewals</li>
+          </ul>
+
+          <h2>🔄 Recently Updated</h2>
+          <p><span class="badge status">Updated Jan 2024</span> Entrata: Remove Primary & Promote Co-Applicant</p>
+          <p><span class="badge status">Updated Jan 2024</span> Social Media Posting Guidelines</p>
+          <p><span class="badge status">Updated Dec 2023</span> Tour Script & Best Practices</p>
+
+          <h2>💡 Need Help?</h2>
+          <p>If you can't find what you're looking for or need assistance with a procedure, contact your Property Manager or the Marketing Hub support team.</p>
+        `
+      },
+
+      // LEASING OPERATIONS
+      'leasing-tour-script': {
+        title: 'Tour Script & Best Practices',
+        category: 'Leasing Operations',
+        department: 'Leasing Team',
+        content: `
+          <h1>🏠 Tour Script & Best Practices</h1>
+          <p><span class="badge category">Leasing</span> <span class="badge department">Leasing Team</span></p>
+
+          <h2>Purpose</h2>
+          <p>This SOP provides a structured approach to conducting property tours that engage prospects, highlight key features, and increase conversion rates.</p>
+
+          <h2>Pre-Tour Preparation</h2>
+          <ul>
+            <li>Review prospect's guest card and preferences</li>
+            <li>Confirm tour appointment 24 hours in advance</li>
+            <li>Prepare model unit or tour-ready apartment</li>
+            <li>Have floor plans and pricing sheets ready</li>
+            <li>Check that amenity areas are clean and accessible</li>
+          </ul>
+
+          <h2>Tour Script</h2>
+          
+          <h3><span class="step-number">1</span> Greeting & Introduction (2 minutes)</h3>
+          <blockquote>
+          "Hi [Name]! Welcome to [Property Name]. I'm [Your Name], and I'm excited to show you around today. Before we start, I'd love to learn a bit more about what you're looking for. What brings you to our community?"
+          </blockquote>
+          <p><strong>Key Actions:</strong></p>
+          <ul>
+            <li>Smile and make eye contact</li>
+            <li>Offer water or coffee</li>
+            <li>Ask open-ended questions about their needs</li>
+            <li>Take notes on their responses</li>
+          </ul>
+
+          <h3><span class="step-number">2</span> Leasing Office Overview (3 minutes)</h3>
+          <p>Highlight office hours, package services, and resident portal access.</p>
+
+          <h3><span class="step-number">3</span> Amenity Tour (10-15 minutes)</h3>
+          <p>Show amenities in order of prospect's stated priorities:</p>
+          <ul>
+            <li><strong>Fitness Center:</strong> "Our 24/7 fitness center features [equipment]. Many residents love the [unique feature]."</li>
+            <li><strong>Pool/Outdoor Areas:</strong> "This is perfect for [relate to their lifestyle]."</li>
+            <li><strong>Study Rooms/Business Center:</strong> "Great for [their specific need]."</li>
+            <li><strong>Social Spaces:</strong> "We host monthly resident events here."</li>
+          </ul>
+
+          <h3><span class="step-number">4</span> Apartment Viewing (10 minutes)</h3>
+          <blockquote>
+          "Now let's check out a [floor plan type]. This is one of our most popular layouts because [key selling point]."
+          </blockquote>
+          <p><strong>Highlight Features:</strong></p>
+          <ul>
+            <li>Natural lighting and views</li>
+            <li>Storage space and closets</li>
+            <li>Kitchen appliances and counter space</li>
+            <li>Bathroom features</li>
+            <li>In-unit washer/dryer (if applicable)</li>
+          </ul>
+          <p><strong>Pro Tip:</strong> Let them explore on their own for 2-3 minutes while you observe their reactions.</p>
+
+          <h3><span class="step-number">5</span> Closing & Next Steps (5 minutes)</h3>
+          <blockquote>
+          "What did you think? Does this feel like a good fit for you? I'd love to help you secure this apartment. Our availability is limited, so I recommend applying today to hold your spot."
+          </blockquote>
+          <p><strong>Trial Close Questions:</strong></p>
+          <ul>
+            <li>"Can you see yourself living here?"</li>
+            <li>"Which floor plan do you prefer?"</li>
+            <li>"When are you looking to move in?"</li>
+          </ul>
+
+          <h2>Best Practices</h2>
+          <div class="info-box success">
+            <h4>✅ Do's</h4>
+            <ul>
+              <li>Personalize the tour based on their needs</li>
+              <li>Use the prospect's name frequently</li>
+              <li>Point out unique features and benefits</li>
+              <li>Create urgency with availability updates</li>
+              <li>Follow up within 24 hours</li>
+            </ul>
+          </div>
+
+          <div class="info-box warning">
+            <h4>⚠️ Don'ts</h4>
+            <ul>
+              <li>Don't rush through the tour</li>
+              <li>Don't talk too much - listen more</li>
+              <li>Don't show unavailable units without explanation</li>
+              <li>Don't make promises you can't keep</li>
+              <li>Don't forget to ask for the application</li>
+            </ul>
+          </div>
+
+          <h2>Follow-Up Protocol</h2>
+          <table>
+            <tr>
+              <th>Timeframe</th>
+              <th>Action</th>
+            </tr>
+            <tr>
+              <td>Within 2 hours</td>
+              <td>Send thank you email with floor plans and pricing</td>
+            </tr>
+            <tr>
+              <td>Next day</td>
+              <td>Phone call to answer questions</td>
+            </tr>
+            <tr>
+              <td>Day 3</td>
+              <td>Text message with availability update</td>
+            </tr>
+            <tr>
+              <td>Day 7</td>
+              <td>Final follow-up email with special offer (if applicable)</td>
+            </tr>
+          </table>
+        `
+      },
+
+      'leasing-application-processing': {
+        title: 'Application Processing',
+        category: 'Leasing Operations',
+        department: 'Leasing Team',
+        content: `
+          <h1>📝 Application Processing</h1>
+          <p><span class="badge category">Leasing</span> <span class="badge department">Leasing Team</span></p>
+
+          <h2>Overview</h2>
+          <p>This procedure outlines the step-by-step process for reviewing, approving, and processing rental applications in Entrata.</p>
+
+          <h2>Application Submission</h2>
+          <h3><span class="step-number">1</span> Initial Review (Within 1 hour)</h3>
+          <ul>
+            <li>Verify all required fields are completed</li>
+            <li>Check that application fee was paid</li>
+            <li>Confirm income documentation is attached</li>
+            <li>Review for any red flags or inconsistencies</li>
+          </ul>
+
+          <h3><span class="step-number">2</span> Screening Process (24-48 hours)</h3>
+          <p>Applications are automatically sent to our screening partner. Review includes:</p>
+          <ul>
+            <li><strong>Credit Check:</strong> Minimum score of 600 (may vary by property)</li>
+            <li><strong>Criminal Background:</strong> Review per Fair Housing guidelines</li>
+            <li><strong>Eviction History:</strong> No evictions in past 7 years</li>
+            <li><strong>Income Verification:</strong> 3x monthly rent minimum</li>
+          </ul>
+
+          <h2>Approval Criteria</h2>
+          <table>
+            <tr>
+              <th>Criteria</th>
+              <th>Requirement</th>
+              <th>Notes</th>
+            </tr>
+            <tr>
+              <td>Credit Score</td>
+              <td>600+</td>
+              <td>May accept lower with co-signer</td>
+            </tr>
+            <tr>
+              <td>Income</td>
+              <td>3x monthly rent</td>
+              <td>Gross income before taxes</td>
+            </tr>
+            <tr>
+              <td>Employment</td>
+              <td>Stable history</td>
+              <td>2+ years preferred</td>
+            </tr>
+            <tr>
+              <td>Rental History</td>
+              <td>Positive references</td>
+              <td>Contact previous landlords</td>
+            </tr>
+          </table>
+
+          <h2>Decision Making</h2>
+          <h3>Approved Applications</h3>
+          <ol>
+            <li>Send approval email within 24 hours</li>
+            <li>Request security deposit and first month's rent</li>
+            <li>Schedule lease signing appointment</li>
+            <li>Generate lease documents in Entrata</li>
+          </ol>
+
+          <h3>Conditional Approvals</h3>
+          <p>May require:</p>
+          <ul>
+            <li>Additional security deposit</li>
+            <li>Co-signer or guarantor</li>
+            <li>Proof of additional income</li>
+            <li>Letter of explanation for credit issues</li>
+          </ul>
+
+          <h3>Denied Applications</h3>
+          <div class="info-box warning">
+            <h4>⚠️ Important: Fair Housing Compliance</h4>
+            <p>All denials must be based on objective criteria and documented. Send adverse action letter within 7 days stating specific reasons for denial.</p>
+          </div>
+
+          <h2>Communication Templates</h2>
+          <h3>Approval Email</h3>
+          <pre><code>Subject: Application Approved - [Property Name]
+
+Dear [Applicant Name],
+
+Congratulations! Your application for [Unit Number] at [Property Name] has been approved.
+
+Next Steps:
+1. Security Deposit: $[Amount] due by [Date]
+2. First Month's Rent: $[Amount] due by [Date]
+3. Lease Signing: Scheduled for [Date/Time]
+
+Please reply to confirm your move-in date. We're excited to welcome you to our community!
+
+Best regards,
+[Your Name]
+[Property Name] Leasing Team</code></pre>
+
+          <h2>Common Issues & Solutions</h2>
+          <table>
+            <tr>
+              <th>Issue</th>
+              <th>Solution</th>
+            </tr>
+            <tr>
+              <td>Incomplete application</td>
+              <td>Contact applicant within 2 hours to request missing info</td>
+            </tr>
+            <tr>
+              <td>Low credit score</td>
+              <td>Offer co-signer option or increased deposit</td>
+            </tr>
+            <tr>
+              <td>Insufficient income</td>
+              <td>Request additional income documentation or guarantor</td>
+            </tr>
+            <tr>
+              <td>Negative rental history</td>
+              <td>Request letter of explanation and additional references</td>
+            </tr>
+          </table>
+        `
+      },
+
+      'entrata-remove-primary': {
+        title: 'Entrata: Remove Primary & Promote Co-Applicant',
+        category: 'Technology',
+        department: 'Leasing Team',
+        content: `
+          <h1>💻 Entrata: Remove Primary Applicant & Promote Co-Applicant</h1>
+          <p><span class="badge category">Technology</span> <span class="badge department">Leasing Team</span></p>
+
+          <h2>Purpose</h2>
+          <p>This SOP outlines the process for removing a current Primary Applicant or Resident from a household and promoting an existing Co-Applicant to Primary status within Entrata.</p>
+
+          <h2>When to Use This Procedure</h2>
+          <ul>
+            <li>Current Primary is moving out but other occupants are remaining</li>
+            <li>Household requests a change in primary responsibility</li>
+            <li>Lease modification is required to reflect new primary resident</li>
+          </ul>
+
+          <div class="info-box warning">
+            <h4>⚠️ Prerequisites</h4>
+            <ul>
+              <li>Manager approval obtained (if required by property policy)</li>
+              <li>Forwarding address collected from old Primary</li>
+              <li>Authorization documented in resident file</li>
+              <li>New Primary agrees to assume responsibility</li>
+            </ul>
+          </div>
+
+          <h2>Step-by-Step Procedure</h2>
+
+          <h3><span class="step-number">1</span> Locate the Resident Account</h3>
+          <ol>
+            <li>Log into Entrata</li>
+            <li>Use the <strong>Search bar</strong> at the top of the screen</li>
+            <li>Enter the old Primary's name or unit number</li>
+            <li>Select the correct resident account from search results</li>
+          </ol>
+          <p><strong>Note:</strong> Ensure you have selected the correct household, especially in properties with similar names.</p>
+
+          <h3><span class="step-number">2</span> Access the Household Tab</h3>
+          <ol>
+            <li>Once in the resident account, click on the <strong>Household</strong> tab</li>
+            <li>Review current household composition to confirm:
+              <ul>
+                <li>Old Primary is listed as Primary</li>
+                <li>Co-applicant who will become new Primary is listed</li>
+              </ul>
+            </li>
+            <li>Click the <strong>Edit Occupants</strong> button</li>
+          </ol>
+
+          <h3><span class="step-number">3</span> Place the Old Primary on Notice</h3>
+          <ol>
+            <li>In the Edit Occupants screen, locate the current Primary</li>
+            <li>Click on the <strong>Notice</strong> or <strong>Place on Notice</strong> option</li>
+            <li>Enter the required information:
+              <ul>
+                <li>Notice date (typically today's date)</li>
+                <li>Move-out date</li>
+                <li>Reason for move-out</li>
+              </ul>
+            </li>
+          </ol>
+          <div class="info-box">
+            <h4>💡 Important</h4>
+            <p>Do not skip this step. Placing the resident on notice is required before the system will allow you to change the Primary designation.</p>
+          </div>
+
+          <h3><span class="step-number">4</span> Enter Forwarding Address</h3>
+          <ol>
+            <li>A forwarding address field will appear after placing resident on notice</li>
+            <li>Enter the complete forwarding address:
+              <ul>
+                <li>Street address</li>
+                <li>City, State, ZIP code</li>
+              </ul>
+            </li>
+            <li>Verify the address is accurate and complete</li>
+          </ol>
+          <p><strong>Critical:</strong> The forwarding address is a required field. You must obtain it before continuing.</p>
+
+          <h3><span class="step-number">5</span> Assign the New Primary</h3>
+          <ol>
+            <li>In the same Edit Occupants screen, locate the co-applicant</li>
+            <li>Look for the <strong>Primary</strong> designation option</li>
+            <li>Select or click to assign this co-applicant as the <strong>new Primary</strong></li>
+            <li>The system will automatically update the designation</li>
+          </ol>
+
+          <h3><span class="step-number">6</span> Submit the Changes</h3>
+          <ol>
+            <li>Review all changes on the screen</li>
+            <li>Click <strong>Submit</strong> or <strong>Save</strong></li>
+            <li>Wait for the system to process (may take a few seconds)</li>
+          </ol>
+
+          <h3><span class="step-number">7</span> Verify Lease Modification Status</h3>
+          <p>After submitting, the account should automatically change to <strong>Lease Modification</strong> status.</p>
+          <ol>
+            <li>Navigate to the <strong>Application</strong> or <strong>Lease</strong> tab</li>
+            <li>Verify status shows "Lease Modification"</li>
+          </ol>
+
+          <h3><span class="step-number">8</span> Determine Rescreening Requirements</h3>
+          <p><strong>Rescreening Required If:</strong></p>
+          <ul>
+            <li>Co-applicant was not fully screened initially</li>
+            <li>Original screening is older than 6 months</li>
+            <li>Property policy requires rescreening for all Primary promotions</li>
+          </ul>
+          <p><strong>If Rescreening IS Required:</strong></p>
+          <ol>
+            <li>Navigate to the <strong>Screening</strong> section</li>
+            <li>Initiate a new screening for the new Primary</li>
+            <li>Process payment for screening fees (if applicable)</li>
+            <li>Wait for screening results</li>
+            <li>Review results per property screening criteria</li>
+          </ol>
+
+          <h3><span class="step-number">9</span> Generate the Lease Packet</h3>
+          <ol>
+            <li>Navigate to the <strong>Lease</strong> or <strong>Documents</strong> tab</li>
+            <li>Click <strong>Generate Lease</strong></li>
+            <li>Select the appropriate lease template</li>
+            <li>Review the lease document to ensure:
+              <ul>
+                <li>New Primary's name appears as primary leaseholder</li>
+                <li>Old Primary is not included</li>
+                <li>All terms and dates are correct</li>
+              </ul>
+            </li>
+            <li>Send lease packet to new Primary for e-signature</li>
+          </ol>
+
+          <h3><span class="step-number">10</span> Process Move-Out for Old Primary</h3>
+          <div class="info-box warning">
+            <h4>⚠️ Important</h4>
+            <p>This step should only be completed AFTER the new lease is fully signed and approved.</p>
+          </div>
+          <ol>
+            <li>Return to the <strong>Household</strong> tab</li>
+            <li>Locate the old Primary (should show as "On Notice")</li>
+            <li>Click <strong>Move Out</strong></li>
+            <li>Enter move-out details and confirm forwarding address</li>
+            <li>Click <strong>Submit</strong> or <strong>Complete Move-Out</strong></li>
+          </ol>
+
+          <h3><span class="step-number">11</span> Final Verification</h3>
+          <p>Verify the following:</p>
+          <ul>
+            <li>✅ New Primary is listed as the Primary resident</li>
+            <li>✅ Old Primary appears in "Past Occupants" section</li>
+            <li>✅ New lease is marked as Active</li>
+            <li>✅ Billing is assigned to the new Primary</li>
+            <li>✅ Contact information is current</li>
+          </ul>
+
+          <h2>Troubleshooting</h2>
+          <table>
+            <tr>
+              <th>Issue</th>
+              <th>Solution</th>
+            </tr>
+            <tr>
+              <td>"Edit Occupants" button not available</td>
+              <td>Check user permissions with supervisor or IT admin</td>
+            </tr>
+            <tr>
+              <td>Lease Modification status not appearing</td>
+              <td>Refresh page, log out/in, wait 5-10 minutes, or contact Entrata support</td>
+            </tr>
+            <tr>
+              <td>Cannot complete move-out</td>
+              <td>Verify new lease is fully executed and approved first</td>
+            </tr>
+            <tr>
+              <td>Lease packet not generating</td>
+              <td>Verify application is "Approved" and all required fields are completed</td>
+            </tr>
+          </table>
+
+          <h2>Documentation Requirements</h2>
+          <p>Add a note to the resident file documenting:</p>
+          <ul>
+            <li>Date of change</li>
+            <li>Reason for change</li>
+            <li>Authorization/approval received</li>
+            <li>Forwarding address captured</li>
+            <li>New lease number and effective date</li>
+          </ul>
+        `
+      },
+
+      // MARKETING
+      'marketing-social-media': {
+        title: 'Social Media Posting Guidelines',
+        category: 'Marketing',
+        department: 'Marketing Team',
+        content: `
+          <h1>📱 Social Media Posting Guidelines</h1>
+          <p><span class="badge category">Marketing</span> <span class="badge department">Marketing Team</span></p>
+
+          <h2>Overview</h2>
+          <p>This guide outlines best practices for creating and posting content across all social media platforms for Capstone Management Partners properties.</p>
+
+          <h2>Platform-Specific Guidelines</h2>
+
+          <h3>Instagram</h3>
+          <ul>
+            <li><strong>Post Frequency:</strong> 3-5 times per week</li>
+            <li><strong>Stories:</strong> Daily (minimum 3 per week)</li>
+            <li><strong>Optimal Times:</strong> 11am-1pm, 7pm-9pm</li>
+            <li><strong>Image Size:</strong> 1080x1080px (square) or 1080x1350px (portrait)</li>
+            <li><strong>Hashtags:</strong> 15-20 relevant hashtags per post</li>
+          </ul>
+
+          <h3>Facebook</h3>
+          <ul>
+            <li><strong>Post Frequency:</strong> 4-6 times per week</li>
+            <li><strong>Optimal Times:</strong> 1pm-3pm weekdays</li>
+            <li><strong>Image Size:</strong> 1200x630px</li>
+            <li><strong>Video Length:</strong> 1-3 minutes optimal</li>
+          </ul>
+
+          <h3>TikTok</h3>
+          <ul>
+            <li><strong>Post Frequency:</strong> 3-5 times per week</li>
+            <li><strong>Video Length:</strong> 15-60 seconds</li>
+            <li><strong>Trending Sounds:</strong> Use current trending audio</li>
+            <li><strong>Hashtags:</strong> 3-5 relevant hashtags</li>
+          </ul>
+
+          <h2>Content Calendar</h2>
+          <table>
+            <tr>
+              <th>Day</th>
+              <th>Content Type</th>
+              <th>Example</th>
+            </tr>
+            <tr>
+              <td>Monday</td>
+              <td>Motivation/Inspiration</td>
+              <td>"Monday Motivation" quote or resident success story</td>
+            </tr>
+            <tr>
+              <td>Tuesday</td>
+              <td>Amenity Highlight</td>
+              <td>Showcase fitness center, pool, or study room</td>
+            </tr>
+            <tr>
+              <td>Wednesday</td>
+              <td>Community Event</td>
+              <td>Promote upcoming event or recap recent one</td>
+            </tr>
+            <tr>
+              <td>Thursday</td>
+              <td>Resident Feature</td>
+              <td>Resident spotlight or testimonial</td>
+            </tr>
+            <tr>
+              <td>Friday</td>
+              <td>Weekend Vibes</td>
+              <td>Local area highlights or weekend plans</td>
+            </tr>
+          </table>
+
+          <h2>Content Types & Examples</h2>
+
+          <h3>1. Property Tours & Amenities</h3>
+          <ul>
+            <li>Virtual apartment tours</li>
+            <li>Amenity walkthroughs</li>
+            <li>Before/after renovation reveals</li>
+            <li>360° views of common areas</li>
+          </ul>
+
+          <h3>2. Resident Life</h3>
+          <ul>
+            <li>Resident testimonials (with permission)</li>
+            <li>Community event photos</li>
+            <li>Pet features (#PetOfTheWeek)</li>
+            <li>Move-in day celebrations</li>
+          </ul>
+
+          <h3>3. Educational Content</h3>
+          <ul>
+            <li>Apartment living tips</li>
+            <li>Local area guides</li>
+            <li>Sustainability practices</li>
+            <li>Safety reminders</li>
+          </ul>
+
+          <h3>4. Promotional Content</h3>
+          <ul>
+            <li>Leasing specials</li>
+            <li>Limited-time offers</li>
+            <li>Referral program details</li>
+            <li>Availability updates</li>
+          </ul>
+
+          <h2>Caption Writing Best Practices</h2>
+          <div class="info-box success">
+            <h4>✅ Do's</h4>
+            <ul>
+              <li>Start with a hook in the first line</li>
+              <li>Use emojis to break up text (2-3 per caption)</li>
+              <li>Include a clear call-to-action</li>
+              <li>Ask questions to encourage engagement</li>
+              <li>Keep it conversational and authentic</li>
+            </ul>
+          </div>
+
+          <h3>Caption Template</h3>
+          <pre><code>[Hook/Opening Line] 🏠
+
+[Main Content - 2-3 sentences about the post]
+
+[Call-to-Action]
+
+[Relevant Hashtags]
+
+Example:
+Your dream apartment is waiting! ✨
+
+Our newly renovated units feature modern kitchens, spacious closets, and stunning views. Plus, you'll love our resort-style pool and 24/7 fitness center.
+
+📍 Schedule your tour today - link in bio!
+
+#ApartmentLiving #StudentHousing #[CityName]Living #[PropertyName]</code></pre>
+
+          <h2>Hashtag Strategy</h2>
+          <p><strong>Mix of:</strong></p>
+          <ul>
+            <li><strong>Branded:</strong> #PropertyName, #CapstoneManagement</li>
+            <li><strong>Location:</strong> #CityName, #UniversityName, #DowntownLiving</li>
+            <li><strong>Industry:</strong> #StudentHousing, #ApartmentLife, #RentNow</li>
+            <li><strong>Trending:</strong> Current relevant trends (research weekly)</li>
+          </ul>
+
+          <h2>Visual Guidelines</h2>
+          <ul>
+            <li><strong>Lighting:</strong> Natural light preferred, avoid harsh shadows</li>
+            <li><strong>Composition:</strong> Rule of thirds, clean backgrounds</li>
+            <li><strong>Branding:</strong> Include property logo on graphics</li>
+            <li><strong>Colors:</strong> Use brand colors consistently</li>
+            <li><strong>Text Overlay:</strong> Large, readable fonts (minimum 60pt)</li>
+          </ul>
+
+          <h2>Engagement Guidelines</h2>
+          <h3>Response Times</h3>
+          <ul>
+            <li><strong>Comments:</strong> Respond within 2 hours during business hours</li>
+            <li><strong>Direct Messages:</strong> Respond within 1 hour</li>
+            <li><strong>Reviews:</strong> Respond within 24 hours</li>
+          </ul>
+
+          <h3>Response Templates</h3>
+          <pre><code>For Tour Inquiries:
+"Thanks for your interest! 🏠 We'd love to show you around. Please DM us or call [phone] to schedule your tour!"
+
+For Compliments:
+"Thank you so much! 💙 We're thrilled you love [specific thing mentioned]. Come visit us soon!"
+
+For Questions:
+"Great question! [Answer]. Feel free to reach out if you need anything else. 📞 [phone]"</code></pre>
+
+          <h2>Compliance & Legal</h2>
+          <div class="info-box warning">
+            <h4>⚠️ Never Post</h4>
+            <ul>
+              <li>Resident information without written consent</li>
+              <li>Photos of minors without parental permission</li>
+              <li>Discriminatory language or imagery</li>
+              <li>Unverified claims about property features</li>
+              <li>Negative comments about competitors</li>
+            </ul>
+          </div>
+
+          <h2>Performance Metrics</h2>
+          <p>Track weekly:</p>
+          <ul>
+            <li>Follower growth rate</li>
+            <li>Engagement rate (likes + comments / followers)</li>
+            <li>Reach and impressions</li>
+            <li>Click-through rate on bio link</li>
+            <li>Story completion rate</li>
+          </ul>
+
+          <h2>Monthly Reporting</h2>
+          <p>Include in monthly reports:</p>
+          <ul>
+            <li>Top performing posts (by engagement)</li>
+            <li>Follower demographics</li>
+            <li>Best posting times</li>
+            <li>Hashtag performance</li>
+            <li>Conversion metrics (tours scheduled from social)</li>
+          </ul>
+        `
+      },
+
+      'marketing-event-planning': {
+        title: 'Event Planning & Execution',
+        category: 'Marketing',
+        department: 'Marketing Team',
+        content: `
+          <h1>🎉 Event Planning & Execution</h1>
+          <p><span class="badge category">Marketing</span> <span class="badge department">Marketing Team</span></p>
+
+          <h2>Purpose</h2>
+          <p>This SOP provides a comprehensive guide for planning, executing, and evaluating resident and prospect events at Capstone properties.</p>
+
+          <h2>Event Types</h2>
+          <ul>
+            <li><strong>Resident Events:</strong> Community building, retention</li>
+            <li><strong>Prospect Events:</strong> Tours, open houses, leasing promotions</li>
+            <li><strong>On-Campus Events:</strong> University partnerships, tabling</li>
+            <li><strong>Off-Campus Events:</strong> Local business partnerships</li>
+          </ul>
+
+          <h2>Planning Timeline</h2>
+
+          <h3>6-8 Weeks Before Event</h3>
+          <ul>
+            <li>Define event goals and target audience</li>
+            <li>Set budget and get approval</li>
+            <li>Choose date, time, and location</li>
+            <li>Book vendors or entertainment</li>
+            <li>Create event concept and theme</li>
+          </ul>
+
+          <h3>4-6 Weeks Before Event</h3>
+          <ul>
+            <li>Design promotional materials (flyers, social graphics)</li>
+            <li>Order supplies and decorations</li>
+            <li>Confirm vendor contracts</li>
+            <li>Create event registration form (if needed)</li>
+            <li>Begin social media promotion</li>
+          </ul>
+
+          <h3>2-4 Weeks Before Event</h3>
+          <ul>
+            <li>Send email invitations to residents/prospects</li>
+            <li>Post flyers in common areas</li>
+            <li>Increase social media posts</li>
+            <li>Confirm RSVPs and adjust quantities</li>
+            <li>Finalize event schedule and staff assignments</li>
+          </ul>
+
+          <h3>1 Week Before Event</h3>
+          <ul>
+            <li>Send reminder emails/texts</li>
+            <li>Confirm all vendor deliveries</li>
+            <li>Prepare event checklist</li>
+            <li>Brief staff on roles and responsibilities</li>
+            <li>Test any equipment or technology</li>
+          </ul>
+
+          <h3>Day Before Event</h3>
+          <ul>
+            <li>Set up decorations (if possible)</li>
+            <li>Confirm final headcount</li>
+            <li>Prepare sign-in sheets and materials</li>
+            <li>Charge cameras and devices</li>
+            <li>Review weather forecast (for outdoor events)</li>
+          </ul>
+
+          <h2>Event Day Checklist</h2>
+
+          <h3>Setup (2-3 hours before)</h3>
+          <ul>
+            <li>☐ Arrive early and assess space</li>
+            <li>☐ Set up tables, chairs, and decorations</li>
+            <li>☐ Test audio/visual equipment</li>
+            <li>☐ Arrange food and beverage stations</li>
+            <li>☐ Set up registration/check-in table</li>
+            <li>☐ Post directional signage</li>
+            <li>☐ Prepare photo backdrop or branded area</li>
+          </ul>
+
+          <h3>During Event</h3>
+          <ul>
+            <li>☐ Greet attendees at entrance</li>
+            <li>☐ Collect sign-ins and contact information</li>
+            <li>☐ Take photos and videos for social media</li>
+            <li>☐ Engage with attendees</li>
+            <li>☐ Monitor food/beverage levels</li>
+            <li>☐ Address any issues promptly</li>
+            <li>☐ Conduct any planned activities or games</li>
+          </ul>
+
+          <h3>Breakdown (immediately after)</h3>
+          <ul>
+            <li>☐ Thank attendees as they leave</li>
+            <li>☐ Clean up and pack supplies</li>
+            <li>☐ Return rented equipment</li>
+            <li>☐ Dispose of trash properly</li>
+            <li>☐ Secure any leftover items</li>
+            <li>☐ Debrief with team</li>
+          </ul>
+
+          <h2>Budget Template</h2>
+          <table>
+            <tr>
+              <th>Category</th>
+              <th>Estimated Cost</th>
+              <th>Actual Cost</th>
+            </tr>
+            <tr>
+              <td>Food & Beverages</td>
+              <td>$___</td>
+              <td>$___</td>
+            </tr>
+            <tr>
+              <td>Decorations</td>
+              <td>$___</td>
+              <td>$___</td>
+            </tr>
+            <tr>
+              <td>Entertainment/Activities</td>
+              <td>$___</td>
+              <td>$___</td>
+            </tr>
+            <tr>
+              <td>Promotional Materials</td>
+              <td>$___</td>
+              <td>$___</td>
+            </tr>
+            <tr>
+              <td>Rentals (tables, chairs, etc.)</td>
+              <td>$___</td>
+              <td>$___</td>
+            </tr>
+            <tr>
+              <td>Giveaways/Prizes</td>
+              <td>$___</td>
+              <td>$___</td>
+            </tr>
+            <tr>
+              <td>Miscellaneous</td>
+              <td>$___</td>
+              <td>$___</td>
+            </tr>
+            <tr>
+              <td><strong>Total</strong></td>
+              <td><strong>$___</strong></td>
+              <td><strong>$___</strong></td>
+            </tr>
+          </table>
+
+          <h2>Popular Event Ideas</h2>
+
+          <h3>Resident Events</h3>
+          <ul>
+            <li>🍕 Pizza & Movie Night</li>
+            <li>🏊 Pool Party (summer)</li>
+            <li>🎃 Halloween Costume Contest</li>
+            <li>🎄 Holiday Cookie Decorating</li>
+            <li>🐶 Pet Adoption Day</li>
+            <li>💪 Fitness Class Series</li>
+            <li>🎮 Game Tournament Night</li>
+            <li>🍳 Breakfast Bar</li>
+          </ul>
+
+          <h3>Prospect Events</h3>
+          <ul>
+            <li>🏠 Open House with Refreshments</li>
+            <li>🎓 Student Move-In Fair</li>
+            <li>🎁 Leasing Special Launch Party</li>
+            <li>📸 Photo Booth Experience</li>
+            <li>🍔 Food Truck Friday</li>
+          </ul>
+
+          <h2>Post-Event Follow-Up</h2>
+
+          <h3>Within 24 Hours</h3>
+          <ul>
+            <li>Post event photos on social media</li>
+            <li>Send thank you email to attendees</li>
+            <li>Follow up with prospects who attended</li>
+            <li>Submit expense receipts</li>
+          </ul>
+
+          <h3>Within 1 Week</h3>
+          <ul>
+            <li>Complete event evaluation form</li>
+            <li>Analyze attendance and engagement metrics</li>
+            <li>Document lessons learned</li>
+            <li>Update event planning templates</li>
+          </ul>
+
+          <h2>Event Evaluation Metrics</h2>
+          <ul>
+            <li><strong>Attendance:</strong> Number of attendees vs. RSVPs</li>
+            <li><strong>Engagement:</strong> Participation in activities</li>
+            <li><strong>Social Media:</strong> Posts, shares, reach</li>
+            <li><strong>Lead Generation:</strong> New prospects captured</li>
+            <li><strong>Cost Per Attendee:</strong> Total cost ÷ attendees</li>
+            <li><strong>Satisfaction:</strong> Feedback survey results</li>
+            <li><strong>ROI:</strong> Leases signed from event</li>
+          </ul>
+
+          <h2>Safety & Compliance</h2>
+          <div class="info-box warning">
+            <h4>⚠️ Important Considerations</h4>
+            <ul>
+              <li>Verify all vendors have proper insurance</li>
+              <li>Check for food allergies and dietary restrictions</li>
+              <li>Have first aid kit available</li>
+              <li>Follow alcohol service laws (if applicable)</li>
+              <li>Obtain photo release forms</li>
+              <li>Comply with noise ordinances</li>
+              <li>Have emergency contact list on hand</li>
+            </ul>
+          </div>
+        `
+      },
+
+      // COMPLIANCE
+      'compliance-fair-housing': {
+        title: 'Fair Housing Compliance',
+        category: 'Compliance',
+        department: 'All Staff',
+        content: `
+          <h1>⚖️ Fair Housing Compliance</h1>
+          <p><span class="badge category">Compliance</span> <span class="badge department">All Staff</span></p>
+
+          <h2>Overview</h2>
+          <p>Fair Housing laws prohibit discrimination in housing based on protected classes. All Capstone employees must understand and comply with these regulations.</p>
+
+          <h2>Protected Classes</h2>
+          <p>Federal law prohibits discrimination based on:</p>
+          <ul>
+            <li>🏠 <strong>Race</strong></li>
+            <li>🌈 <strong>Color</strong></li>
+            <li>🌍 <strong>National Origin</strong></li>
+            <li>⛪ <strong>Religion</strong></li>
+            <li>👥 <strong>Sex (including gender identity and sexual orientation)</strong></li>
+            <li>👨‍👩‍👧‍👦 <strong>Familial Status</strong> (families with children under 18)</li>
+            <li>♿ <strong>Disability</strong> (physical or mental)</li>
+          </ul>
+
+          <div class="info-box warning">
+            <h4>⚠️ State & Local Laws</h4>
+            <p>Some states and cities add additional protected classes such as:</p>
+            <ul>
+              <li>Source of income</li>
+              <li>Marital status</li>
+              <li>Age</li>
+              <li>Military/veteran status</li>
+            </ul>
+            <p>Always check your local requirements.</p>
+          </div>
+
+          <h2>Prohibited Actions</h2>
+
+          <h3>❌ Never Do These Things</h3>
+          <ul>
+            <li>Refuse to rent to someone based on a protected class</li>
+            <li>Provide different terms, conditions, or privileges</li>
+            <li>Advertise in a discriminatory manner</li>
+            <li>Falsely deny availability</li>
+            <li>Steer prospects to certain units or floors</li>
+            <li>Set different standards for screening</li>
+            <li>Retaliate against someone who files a complaint</li>
+            <li>Intimidate, threaten, or interfere with housing rights</li>
+          </ul>
+
+          <h2>Advertising Guidelines</h2>
+
+          <h3>✅ Acceptable Language</h3>
+          <ul>
+            <li>"Quiet community"</li>
+            <li>"Professional atmosphere"</li>
+            <li>"Near [specific location]"</li>
+            <li>"Perfect for students"</li>
+            <li>"Pet-friendly"</li>
+          </ul>
+
+          <h3>❌ Prohibited Language</h3>
+          <ul>
+            <li>"Adults only" (unless legally qualified senior housing)</li>
+            <li>"No children"</li>
+            <li>"Perfect for couples"</li>
+            <li>"Christian community"</li>
+            <li>"English speakers preferred"</li>
+            <li>"Able-bodied individuals"</li>
+          </ul>
+
+          <h2>Reasonable Accommodations</h2>
+
+          <h3>What is a Reasonable Accommodation?</h3>
+          <p>A change in rules, policies, practices, or services to allow a person with a disability equal opportunity to use and enjoy a dwelling.</p>
+
+          <h3>Common Examples</h3>
+          <ul>
+            <li>Allowing a service or emotional support animal despite "no pets" policy</li>
+            <li>Assigning an accessible parking space</li>
+            <li>Providing a ground-floor unit</li>
+            <li>Allowing a caregiver to assist with lease signing</li>
+            <li>Adjusting payment due dates</li>
+          </ul>
+
+          <h3>Request Process</h3>
+          <ol>
+            <li><strong>Receive Request:</strong> Can be verbal or written</li>
+            <li><strong>Verify Disability:</strong> May request documentation if disability is not obvious</li>
+            <li><strong>Evaluate:</strong> Determine if request is reasonable
+              <ul>
+                <li>Does it impose undue financial burden?</li>
+                <li>Does it fundamentally alter the nature of operations?</li>
+                <li>Does it pose direct threat to health/safety?</li>
+              </ul>
+            </li>
+            <li><strong>Respond:</strong> Approve or engage in interactive process</li>
+            <li><strong>Document:</strong> Keep records of all requests and decisions</li>
+          </ol>
+
+          <div class="info-box">
+            <h4>💡 Important</h4>
+            <p>You cannot charge a fee or deposit for a reasonable accommodation. You cannot ask about the nature or severity of the disability.</p>
+          </div>
+
+          <h2>Service & Support Animals</h2>
+
+          <h3>Service Animals</h3>
+          <ul>
+            <li>Trained to perform specific tasks for person with disability</li>
+            <li>Typically dogs (sometimes miniature horses)</li>
+            <li>Must be allowed even with "no pets" policy</li>
+            <li>No pet deposit or rent can be charged</li>
+          </ul>
+
+          <h3>Emotional Support Animals (ESA)</h3>
+          <ul>
+            <li>Provide therapeutic benefit through companionship</li>
+            <li>Require documentation from healthcare provider</li>
+            <li>Must be allowed as reasonable accommodation</li>
+            <li>No pet deposit or rent can be charged</li>
+            <li>Resident responsible for any damage caused</li>
+          </ul>
+
+          <h3>What You Can Ask</h3>
+          <p>For Service Animals:</p>
+          <ul>
+            <li>"Is this a service animal required because of a disability?"</li>
+            <li>"What task has the animal been trained to perform?"</li>
+          </ul>
+          <p>For ESAs:</p>
+          <ul>
+            <li>Request letter from healthcare provider stating:
+              <ul>
+                <li>Person has a disability</li>
+                <li>Animal provides therapeutic benefit</li>
+                <li>Provider's credentials</li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3>What You Cannot Ask</h3>
+          <ul>
+            <li>Nature or extent of disability</li>
+            <li>Medical records</li>
+            <li>Demonstration of animal's tasks</li>
+            <li>Certification or registration papers</li>
+          </ul>
+
+          <h2>Screening & Selection</h2>
+
+          <h3>✅ Objective Criteria</h3>
+          <ul>
+            <li>Credit score minimums</li>
+            <li>Income requirements (3x rent)</li>
+            <li>Rental history verification</li>
+            <li>Criminal background (with limitations)</li>
+            <li>Employment verification</li>
+          </ul>
+
+          <h3>Apply Consistently</h3>
+          <p>Use the same criteria for all applicants. Document your decision-making process.</p>
+
+          <div class="info-box warning">
+            <h4>⚠️ Criminal Background Checks</h4>
+            <p>HUD guidance on criminal records:</p>
+            <ul>
+              <li>Cannot have blanket policy denying all with criminal history</li>
+              <li>Must consider nature, severity, and recency of crime</li>
+              <li>Allow opportunity to provide context</li>
+              <li>Document individualized assessment</li>
+            </ul>
+          </div>
+
+          <h2>Handling Complaints</h2>
+
+          <h3>If Someone Files a Complaint</h3>
+          <ol>
+            <li><strong>Do Not Retaliate:</strong> Continue normal business operations</li>
+            <li><strong>Document Everything:</strong> Keep detailed records</li>
+            <li><strong>Notify Management:</strong> Inform supervisor immediately</li>
+            <li><strong>Cooperate:</strong> Provide requested information to investigators</li>
+            <li><strong>Seek Legal Counsel:</strong> Consult attorney if needed</li>
+          </ol>
+
+          <h2>Training Requirements</h2>
+          <ul>
+            <li>All staff must complete Fair Housing training annually</li>
+            <li>New hires must complete training within 30 days</li>
+            <li>Keep certificates of completion on file</li>
+            <li>Review policies regularly</li>
+          </ul>
+
+          <h2>Red Flag Scenarios</h2>
+
+          <h3>Scenario 1: "Do you have any units without stairs?"</h3>
+          <p><strong>✅ Correct Response:</strong> "Yes, we have ground-floor units available. Would you like to see one?"</p>
+          <p><strong>❌ Wrong Response:</strong> "Why do you need that? Do you have a disability?"</p>
+
+          <h3>Scenario 2: Prospect asks about schools in area</h3>
+          <p><strong>✅ Correct Response:</strong> "I can provide you with contact information for the school district, and you can research schools online."</p>
+          <p><strong>❌ Wrong Response:</strong> "Oh, you have kids? This might not be the best place for families."</p>
+
+          <h3>Scenario 3: Applicant has service dog</h3>
+          <p><strong>✅ Correct Response:</strong> "Is this a service animal required because of a disability? What task has it been trained to perform?"</p>
+          <p><strong>❌ Wrong Response:</strong> "We don't allow pets. You'll need to pay a pet deposit."</p>
+
+          <h2>Resources</h2>
+          <ul>
+            <li><strong>HUD Fair Housing:</strong> hud.gov/fairhousing</li>
+            <li><strong>File a Complaint:</strong> 1-800-669-9777</li>
+            <li><strong>Fair Housing Training:</strong> [Internal training portal]</li>
+            <li><strong>Questions:</strong> Contact Regional Manager or Legal Department</li>
+          </ul>
+
+          <div class="info-box">
+            <h4>💡 When in Doubt</h4>
+            <p>If you're unsure whether something violates Fair Housing laws, ask your supervisor or legal counsel before taking action. It's better to pause and get guidance than to risk a violation.</p>
+          </div>
+        `
+      }
     };
 
-    // ========= Nav activation =========
-    (function(){
-      const nav = document.getElementById('mainNav');
-      if (!nav) return;
-      const path = (location.pathname || '').toLowerCase();
-      nav.querySelectorAll('.nav-tab').forEach(a => {
-        const href = (a.getAttribute('href') || '').toLowerCase();
-        if (href && (path.endsWith(href) || path.endsWith('/' + href))) a.classList.add('active');
-      });
-    })();
-
-    // ========= Helpers =========
-    function escapeHtml(str){
-      return String(str||'')
-        .replace(/&/g,'&amp;')
-        .replace(/</g,'&lt;')
-        .replace(/>/g,'&gt;')
-        .replace(/"/g,'&quot;')
-        .replace(/'/g,'&#039;');
-    }
-
-    // ========= Auth / Properties =========
-    const STORE_CURRENT_PROPERTY_KEY = 'mmp_current_property_v1';
-    const STORE_LOGIN_TIME_KEY = 'mmp_login_time_v1';
-    const SESSION_TTL_MS = 8 * 60 * 60 * 1000; // 8 hours
-    const API_BASE = '/api';
-
-    let SESSION_ACTIVE = false;
-    let currentUser = null;
-    let properties = [];
-    let currentProperty = '';
-
-    async function apiFetch(path, opts={}){
-      const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers||{});
-      const res = await fetch(API_BASE + path, Object.assign({}, opts, { headers, credentials: 'include' }));
-      if (!res.ok){ const text = await res.text(); throw new Error(text || ('HTTP '+res.status)); }
-      return res;
-    }
-
-    function showApp(){
-      if (els.appHeader) els.appHeader.style.display='';
-      if (els.appContainer) els.appContainer.style.display='';
-      if (els.loginView) els.loginView.style.display='none';
-      const bl=document.getElementById('bootLoader'); if (bl) bl.style.display='none';
-    }
-    function showLogin(){
-      const bl=document.getElementById('bootLoader'); if (bl) bl.style.display='none';
-      if (els.appHeader) els.appHeader.style.display='none';
-      if (els.appContainer) els.appContainer.style.display='none';
-      if (els.loginView) els.loginView.style.display='flex';
-    }
-
-    async function doLogout(){
-      try{ await fetch('/api/auth-logout', { method:'POST' }); }catch(e){}
-      try{ localStorage.removeItem(STORE_CURRENT_PROPERTY_KEY); }catch(e){}
-      try{ localStorage.removeItem(STORE_LOGIN_TIME_KEY); }catch(e){}
-      location.href = 'index.html';
-    }
-
-    function bindHeaderHandlers(){
-      if (els.logoutBtn) els.logoutBtn.onclick = () => doLogout();
-      if (els.adminPageBtn){
-        els.adminPageBtn.style.display = currentUser && currentUser.role==='admin' ? '' : 'none';
-        els.adminPageBtn.onclick = () => { location.href = 'mmp_admin.html'; };
-      }
-    }
-
-    function scheduleAutoLogout(){
-      let loginTime = parseInt(localStorage.getItem(STORE_LOGIN_TIME_KEY)||'0', 10) || 0;
-      if (!loginTime){
-        loginTime = Date.now();
-        try{ localStorage.setItem(STORE_LOGIN_TIME_KEY, String(loginTime)); }catch(e){}
-      }
-      let remaining = SESSION_TTL_MS - (Date.now() - loginTime);
-      if (remaining <= 0){
-        try{ localStorage.setItem(STORE_LOGIN_TIME_KEY, String(Date.now())); }catch(e){}
-        remaining = SESSION_TTL_MS;
-      }
-      if (window.__mmpLogoutTimer){ try{ clearTimeout(window.__mmpLogoutTimer); }catch(e){} }
-      window.__mmpLogoutTimer = setTimeout(doLogout, remaining);
-    }
-
-    function displayPropertyName(name){
-      return String(name||'').replace(/University of Bothell/gi,'Cascadia College')
-                            .replace(/UWB/gi,'Cascadia College')
-                            .replace(/UW Bothell/gi,'Cascadia College');
-    }
-
-    function getAccessibleProperties(){
-      if (!currentUser) return [];
-      if (currentUser.role === 'admin') return properties.slice();
-      const rawAssigned = currentUser.properties === '*' ? properties.slice() : (currentUser.properties||[]);
-      return properties.filter(p => rawAssigned.includes(p));
-    }
-
-    async function loadProperties(){
-      if (SESSION_ACTIVE){
-        try{
-          const res = await fetch('/api/properties');
-          const list = await res.json();
-          properties = (list||[]).map(x => x.name).filter(Boolean);
-          if (!properties.length) throw new Error('empty');
-          return;
-        }catch(e){ /* fall through to static seed */ }
-      }
-      properties = [
-        'M@College',
-        'Blattner Hall (75 Arkansas)',
-        'Century Hall',
-        'Zuma Apartments',
-        'Cerca Apartments',
-        'Prisma Apartments',
-        'Mountain View Hall',
-        'Lantana Hall',
-        'Founders Hall',
-        'Ferry Street Flats',
-        'The Continuum for UF Grads',
-        'River House Graduate Housing',
-        'Infinity Hall',
-        'Florida Polytechnic University - Phase II',
-        'Ivory University House',
-        'Palomar SLO',
-        'Chorro SLO',
-        'Florida Polytechnic University - Phase III',
-        'The Residential Village at UW Bothell',
-        'Stateside Apartments',
-        'Bryan Flats',
-        'Nexus on Holmes (Univ of Alabama, Huntsville)',
-        'Comma Barrington',
-        'Meridian on Main (132 E Main Street)',
-        'The Village at Mines Park',
-        'Monte Apartments',
-        'The Harbour at Occ',
-      ];
-    }
-
-    function renderPropertyOptions(){
-      if (!els.propertySelect) return;
-      const list = getAccessibleProperties();
-      els.propertySelect.innerHTML = list.map(p => `<option value="${p.replace(/"/g,'&quot;')}">${displayPropertyName(p)}</option>`).join('');
-    }
-
-    async function setActiveProperty(prop){
-      currentProperty = prop;
-      try{ localStorage.setItem(STORE_CURRENT_PROPERTY_KEY, currentProperty); }catch(e){}
-      // Reload SOPs when property changes
-      await loadSOPs();
-    }
-
-    async function initProperties(){
-      await loadProperties();
-      const saved = (localStorage.getItem(STORE_CURRENT_PROPERTY_KEY) || '').trim();
-      const list = getAccessibleProperties();
-      currentProperty = list.includes(saved) ? saved : list[0];
-
-      renderPropertyOptions();
-      if (els.propertySelect){
-        els.propertySelect.value = currentProperty;
-        els.propertySelect.addEventListener('change', () => setActiveProperty(els.propertySelect.value));
-      }
-    }
-
-    async function initializeAppForUser(){
-      await initProperties();
-      const list = getAccessibleProperties();
-      if (list.length){
-        if (els.propertySelect) els.propertySelect.value = currentProperty || list[0];
-        // Load SOPs after properties are initialized
-        await loadSOPs();
-      } else {
-        if (els.propertySelect) els.propertySelect.innerHTML = '';
-        // Still show the app even if no properties
-        renderSOPList();
-      }
-    }
-
-    async function initAuth(){
-      try{
-        const meRes = await fetch('/api/me', { credentials: 'include' });
-        if (meRes.ok){
-          const me = await meRes.json();
-          currentUser = { username: me.username, role: me.role, properties: me.properties };
-          SESSION_ACTIVE = true;
-          try{ if (!localStorage.getItem(STORE_LOGIN_TIME_KEY)) localStorage.setItem(STORE_LOGIN_TIME_KEY, String(Date.now())); }catch(e){}
-          showApp();
-          bindHeaderHandlers();
-          await initializeAppForUser();
-          scheduleAutoLogout();
-          return true;
-        }
-      }catch(e){}
-      showLogin();
-      return false;
-    }
-
-    // ========= Login =========
-    if (els.loginTogglePw) els.loginTogglePw.addEventListener('change', ()=>{ els.loginPassword.type = els.loginTogglePw.checked ? 'text' : 'password'; });
-    async function doInlineLogin(){
-      const u = (els.loginUsername?.value||'').trim();
-      const p = els.loginPassword?.value||'';
-      if (!u || !p){ if (els.loginError){ els.loginError.textContent='Enter username and password'; els.loginError.style.display=''; } return; }
-      try{
-        if (els.loginError) els.loginError.style.display='none';
-        const res = await fetch('/api/auth-login', {
-          method:'POST',
-          headers:{ 'Content-Type':'application/json', 'Accept':'application/json' },
-          credentials:'include',
-          body: JSON.stringify({ username:u, password:p })
-        });
-        if (!res.ok){ if (els.loginError){ els.loginError.textContent = (res.status===401||res.status===400)?'Incorrect username or password':'Login failed'; els.loginError.style.display=''; } return; }
-        await initAuth();
-      }catch(e){ if (els.loginError){ els.loginError.textContent='Network error. Try again.'; els.loginError.style.display=''; } }
-    }
-    if (els.loginBtn) els.loginBtn.addEventListener('click', doInlineLogin);
-    document.addEventListener('keydown', (e)=>{ if (e.key==='Enter' && (document.activeElement===els.loginUsername || document.activeElement===els.loginPassword)) doInlineLogin(); });
-
-    // ========= SOP Library =========
-    let sopDocuments = [];
-    let selectedSOP = null;
-
-    // Sample SOP data structure - in production this would come from backend
-    const SAMPLE_SOPS = [
+    // Navigation structure
+    const navStructure = [
       {
-        id: 'entrata_remove_primary',
-        title: 'Remove Primary Applicant and Promote Co-Applicant (Entrata)',
-        category: 'Leasing',
-        department: 'Leasing Team',
-        effectiveDate: '2024-01-15',
-        lastReviewed: '2024-01-15',
-        filename: 'entrata_remove_primary_promote_coapplicant.md',
-        description: 'Process for removing a primary applicant/resident and promoting a co-applicant to primary status in Entrata'
+        title: 'Home',
+        id: 'home',
+        items: []
+      },
+      {
+        title: 'Leasing Operations',
+        id: 'leasing',
+        items: [
+          { title: 'Tour Script & Best Practices', id: 'leasing-tour-script' },
+          { title: 'Application Processing', id: 'leasing-application-processing' }
+        ]
+      },
+      {
+        title: 'Marketing',
+        id: 'marketing',
+        items: [
+          { title: 'Social Media Guidelines', id: 'marketing-social-media' },
+          { title: 'Event Planning & Execution', id: 'marketing-event-planning' }
+        ]
+      },
+      {
+        title: 'Technology',
+        id: 'technology',
+        items: [
+          { title: 'Entrata: Remove Primary & Promote Co-Applicant', id: 'entrata-remove-primary' }
+        ]
+      },
+      {
+        title: 'Compliance',
+        id: 'compliance',
+        items: [
+          { title: 'Fair Housing Compliance', id: 'compliance-fair-housing' }
+        ]
       }
     ];
 
-    async function loadSOPs(){
-      els.sopList.innerHTML = '<div class="loading">Loading SOPs...</div>';
-      
-      try {
-        // Try to load from backend first
-        if (SESSION_ACTIVE) {
-          // TODO: Implement backend endpoint for SOP list
-          // const res = await apiFetch('/sop-library');
-          // sopDocuments = await res.json();
-        }
-        
-        // For now, use sample data
-        sopDocuments = SAMPLE_SOPS;
-        
-        renderSOPList();
-      } catch(e) {
-        console.error('Failed to load SOPs:', e);
-        sopDocuments = SAMPLE_SOPS;
-        renderSOPList();
-      }
-    }
+    // Generate navigation
+    function generateNav() {
+      const navContainer = document.getElementById('navContainer');
+      let html = '';
 
-    function renderSOPList(){
-      const q = (els.searchInput.value||'').trim().toLowerCase();
-      const cat = els.categoryFilter.value || '';
-      
-      let list = sopDocuments.slice();
-      
-      // Filter by category
-      if (cat) list = list.filter(x => (x.category||'') === cat);
-      
-      // Filter by search
-      if (q){
-        list = list.filter(x => {
-          const hay = ((x.title||'')+' '+(x.description||'')+' '+(x.category||'')+' '+(x.department||'')).toLowerCase();
-          return hay.includes(q);
-        });
-      }
-      
-      // Sort by title
-      list.sort((a,b)=> (a.title||'').localeCompare(b.title||''));
-      
-      if (list.length === 0) {
-        els.sopList.innerHTML = '<div class="empty-state" style="padding:24px"><div class="mini">No SOPs found</div></div>';
-        return;
-      }
-      
-      els.sopList.innerHTML = list.map(sop => {
-        const active = selectedSOP && selectedSOP.id === sop.id ? 'active' : '';
-        return `
-          <div class="sop-item ${active}" data-id="${escapeHtml(sop.id)}">
-            <div class="title">${escapeHtml(sop.title)}</div>
-            <div class="meta">
-              ${sop.category ? `<span class="pill category">${escapeHtml(sop.category)}</span>` : ''}
-              ${sop.department ? `<span class="pill department">${escapeHtml(sop.department)}</span>` : ''}
-              ${sop.lastReviewed ? `<span class="pill date">Updated: ${escapeHtml(sop.lastReviewed)}</span>` : ''}
+      navStructure.forEach(section => {
+        if (section.items.length === 0) {
+          // Single item (like Home)
+          html += `<div class="nav-item" data-page="${section.id}">${section.title}</div>`;
+        } else {
+          // Section with items
+          html += `
+            <div class="nav-section">
+              <div class="nav-section-title" onclick="toggleSection(this)">
+                ${section.title}
+                <span class="icon">▼</span>
+              </div>
+              <div class="nav-items">
+                ${section.items.map(item => 
+                  `<div class="nav-item" data-page="${item.id}">${item.title}</div>`
+                ).join('')}
+              </div>
             </div>
-            ${sop.description ? `<div class="mini">${escapeHtml(sop.description)}</div>` : ''}
-          </div>
-        `;
-      }).join('');
-      
-      // Bind click handlers
-      els.sopList.querySelectorAll('.sop-item').forEach(item => {
-        item.addEventListener('click', () => {
-          const id = item.getAttribute('data-id');
-          selectSOP(id);
+          `;
+        }
+      });
+
+      navContainer.innerHTML = html;
+
+      // Add click handlers
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', function() {
+          loadPage(this.dataset.page);
         });
+      });
+
+      // Set max-height for nav-items
+      document.querySelectorAll('.nav-items').forEach(items => {
+        items.style.maxHeight = items.scrollHeight + 'px';
       });
     }
 
-    async function selectSOP(id){
-      const sop = sopDocuments.find(x => x.id === id);
-      if (!sop) return;
-      
-      selectedSOP = sop;
-      renderSOPList();
-      
-      els.printBtn.disabled = false;
-      els.downloadBtn.disabled = false;
-      
-      // Load and render the markdown content
-      try {
-        els.docViewer.innerHTML = '<div class="loading">Loading document...</div>';
-        
-        // In production, this would fetch from backend
-        // For now, fetch from the SOP directory
-        const response = await fetch(`/SOP/${sop.filename}`);
-        if (!response.ok) throw new Error('Failed to load document');
-        
-        const markdown = await response.text();
-        const html = marked.parse(markdown);
-        
-        els.docViewer.innerHTML = html;
-        els.docViewer.scrollTop = 0;
-      } catch(e) {
-        console.error('Failed to load SOP content:', e);
-        els.docViewer.innerHTML = `
-          <div class="empty-state">
-            <div class="icon">⚠️</div>
-            <div class="title">Failed to load document</div>
-            <div class="desc">${escapeHtml(e.message)}</div>
-          </div>
-        `;
+    // Toggle section
+    function toggleSection(element) {
+      const navItems = element.nextElementSibling;
+      element.classList.toggle('collapsed');
+      navItems.classList.toggle('collapsed');
+    }
+
+    // Load page content
+    function loadPage(pageId) {
+      const content = sopContent[pageId];
+      if (!content) return;
+
+      const contentArea = document.getElementById('contentArea');
+      contentArea.innerHTML = content.content;
+      contentArea.scrollTop = 0;
+
+      // Update active state
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      document.querySelector(`[data-page="${pageId}"]`).classList.add('active');
+
+      // Close mobile sidebar
+      if (window.innerWidth <= 1024) {
+        document.getElementById('sidebar').classList.remove('open');
       }
     }
 
-    function printDocument(){
-      if (!selectedSOP) return;
-      
-      const content = els.docViewer.innerHTML;
-      const w = window.open('', '_blank');
-      const html = `
-        <html>
-          <head>
-            <meta charset="utf-8"/>
-            <title>${escapeHtml(selectedSOP.title)}</title>
-            <style>
-              body{font-family:Arial,sans-serif;padding:24px;line-height:1.6;max-width:900px;margin:0 auto}
-              h1{font-size:24px;margin:0 0 16px;border-bottom:2px solid #333;padding-bottom:8px}
-              h2{font-size:20px;margin:24px 0 12px;border-bottom:1px solid #666;padding-bottom:6px}
-              h3{font-size:16px;margin:18px 0 10px}
-              h4{font-size:14px;margin:14px 0 8px}
-              p{margin:10px 0}
-              ul,ol{margin:10px 0 10px 24px}
-              li{margin:6px 0}
-              table{width:100%;border-collapse:collapse;margin:16px 0}
-              th{background:#f0f0f0;border:1px solid #ccc;padding:8px;text-align:left}
-              td{border:1px solid #ccc;padding:8px}
-              code{background:#f5f5f5;padding:2px 6px;border-radius:3px;font-size:13px}
-              pre{background:#f5f5f5;padding:12px;border-radius:6px;overflow-x:auto}
-              pre code{background:none;padding:0}
-              blockquote{border-left:4px solid #ccc;padding-left:16px;margin:16px 0;color:#666}
-              @media print{
-                body{padding:0}
-                h1,h2,h3{page-break-after:avoid}
-                table,pre,blockquote{page-break-inside:avoid}
-              }
-            </style>
-          </head>
-          <body>
-            ${content}
-            <script>window.print();</script>
-          </body>
-        </html>
-      `;
-      w.document.open();
-      w.document.write(html);
-      w.document.close();
+    // Search functionality
+    document.getElementById('searchInput').addEventListener('input', function(e) {
+      const query = e.target.value.toLowerCase();
+      document.querySelectorAll('.nav-item').forEach(item => {
+        const text = item.textContent.toLowerCase();
+        const parent = item.closest('.nav-section');
+        
+        if (text.includes(query)) {
+          item.style.display = '';
+          if (parent) {
+            parent.style.display = '';
+            parent.querySelector('.nav-items').classList.remove('collapsed');
+            parent.querySelector('.nav-section-title').classList.remove('collapsed');
+          }
+        } else {
+          item.style.display = 'none';
+        }
+      });
+
+      // Hide empty sections
+      document.querySelectorAll('.nav-section').forEach(section => {
+        const visibleItems = section.querySelectorAll('.nav-item:not([style*="display: none"])');
+        if (visibleItems.length === 0) {
+          section.style.display = 'none';
+        }
+      });
+    });
+
+    // Mobile sidebar toggle
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
     }
 
-    function downloadDocument(){
-      if (!selectedSOP) return;
-      
-      // Create a download link for the markdown file
-      const link = document.createElement('a');
-      link.href = `/SOP/${selectedSOP.filename}`;
-      link.download = selectedSOP.filename;
-      link.click();
-    }
-
-    // ========= UI Handlers =========
-    if (els.searchInput) els.searchInput.addEventListener('input', renderSOPList);
-    if (els.categoryFilter) els.categoryFilter.addEventListener('change', renderSOPList);
-    if (els.printBtn) els.printBtn.addEventListener('click', printDocument);
-    if (els.downloadBtn) els.downloadBtn.addEventListener('click', downloadDocument);
-
-    // ========= Init =========
-    (async () => { await initAuth(); })();
+    // Initialize
+    generateNav();
+    loadPage('home');
   </script>
 </body>
 </html>
