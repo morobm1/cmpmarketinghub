@@ -406,6 +406,7 @@
     async function setActiveProperty(prop){
       currentProperty = prop;
       try{ localStorage.setItem(STORE_CURRENT_PROPERTY_KEY, currentProperty); }catch(e){}
+      // Reload SOPs when property changes
       await loadSOPs();
     }
 
@@ -427,10 +428,12 @@
       const list = getAccessibleProperties();
       if (list.length){
         if (els.propertySelect) els.propertySelect.value = currentProperty || list[0];
-        await setActiveProperty(currentProperty || list[0]);
+        // Load SOPs after properties are initialized
+        await loadSOPs();
       } else {
         if (els.propertySelect) els.propertySelect.innerHTML = '';
-        alert('No properties are assigned to your account. Contact an admin to grant access.');
+        // Still show the app even if no properties
+        renderSOPList();
       }
     }
 
