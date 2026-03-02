@@ -291,8 +291,6 @@
     let comparisonResult = null;
     let historyLog = [];
 
-    const STORAGE_KEY = 'weekly_admit_comparison_history';
-
     const els = {
       bootLoader: document.getElementById('bootLoader'),
       appHeader: document.getElementById('appHeader'),
@@ -677,11 +675,15 @@
     }
 
     // History Management
-    function loadHistory() {
+    async function loadHistory() {
       try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-          historyLog = JSON.parse(saved);
+        const res = await fetch('/api/admit-comparison', { 
+          method: 'GET',
+          credentials: 'include' 
+        });
+        
+        if (res.ok) {
+          historyLog = await res.json();
           renderHistory();
         }
       } catch (e) {
@@ -689,31 +691,35 @@
       }
     }
 
-    function saveToHistory() {
+    async function saveToHistory() {
       const entry = {
-        id: Date.now(),
         weekProcessed: new Date().toLocaleDateString('en-US'),
         prevFileDate: extractDateFromFilename(comparisonResult.prevFileName),
         currFileDate: extractDateFromFilename(comparisonResult.currFileName),
-        totalCurrent: comparisonResult.currTotal,
+        prevFileName: comparisonResult.prevFileName,
+        currFileName: comparisonResult.currFileName,
+        prevTotal: comparisonResult.prevTotal,
+        currTotal: comparisonResult.currTotal,
         newThisWeek: comparisonResult.newAdmits.length,
-        timestamp: comparisonResult.timestamp,
-        data: comparisonResult,
+        newAdmits: comparisonResult.newAdmits,
       };
       
-      historyLog.unshift(entry);
-      
-      // Keep only last 50 entries
-      if (historyLog.length > 50) {
-        historyLog = historyLog.slice(0, 50);
-      }
-      
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(historyLog));
-        renderHistory();
+        const res = await fetch('/api/admit-comparison', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(entry),
+        });
+        
+        if (res.ok) {
+          await loadHistory();
+        } else {
+          showWarning('History could not be saved to server.');
+        }
       } catch (e) {
         console.error('Failed to save history:', e);
-        showWarning('History could not be saved due to storage limitations.');
+        showWarning('History could not be saved to server.');
       }
     }
 
@@ -773,12 +779,26 @@
       XLSX.writeFile(workbook, fileName);
     }
 
-    function deleteHistoryEntry(id) {
+    async function deleteHistoryEntry(id) {
       if (!confirm('Are you sure you want to delete this history entry?')) return;
       
-      historyLog = historyLog.filter(e => e.id !== id);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(historyLog));
-      renderHistory();
+      try {
+        const res = await fetch('/api/admit-comparison', {
+          method: 'DELETE',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id }),
+        });
+        
+        if (res.ok) {
+          await loadHistory();
+        } else {
+          alert('Failed to delete history entry');
+        }
+      } catch (e) {
+        console.error('Failed to delete history:', e);
+        alert('Failed to delete history entry');
+      }
     }
 
     function exportHistory() {
@@ -791,7 +811,7 @@
         'Week Processed': entry.weekProcessed,
         'Previous File Date': entry.prevFileDate,
         'Current File Date': entry.currFileDate,
-        'Total Current': entry.totalCurrent,
+        'Total Current': entry.currTotal || entry.totalCurrent,
         'New This Week': entry.newThisWeek,
       }));
       
@@ -803,12 +823,25 @@
       XLSX.writeFile(workbook, fileName);
     }
 
-    function clearHistory() {
+    async function clearHistory() {
       if (!confirm('Are you sure you want to clear all history? This cannot be undone.')) return;
       
-      historyLog = [];
-      localStorage.removeItem(STORAGE_KEY);
-      renderHistory();
+      try {
+        // Delete all entries one by one
+        for (const entry of historyLog) {
+          await fetch('/api/admit-comparison', {
+            method: 'DELETE',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: entry._id }),
+          });
+        }
+        
+        await loadHistory();
+      } catch (e) {
+        console.error('Failed to clear history:', e);
+        alert('Failed to clear history');
+      }
     }
 
     function resetForm() {
