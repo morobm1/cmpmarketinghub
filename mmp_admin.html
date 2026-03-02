@@ -900,24 +900,177 @@
 
     function openEmailClient(username, password, email){
       const subject = encodeURIComponent('Welcome to CMP Marketing Hub - Your Login Credentials');
-      const body = encodeURIComponent(
-`Dear ${username},
+      
+      // Create a more professional HTML email body
+      const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Open Sans', Arial, sans-serif; background-color: #f8fafc;">
+  <table role="presentation" style="width: 100%; border-collapse: collapse;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;">
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px 40px 30px; text-align: center; background: linear-gradient(135deg, #446472 0%, #52d5ff 100%); border-radius: 14px 14px 0 0;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">Welcome to CMP Marketing Hub</h1>
+              <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 14px;">Capstone Management Partners</p>
+            </td>
+          </tr>
+          
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px;">
+              <p style="margin: 0 0 20px; color: #1e293b; font-size: 16px; line-height: 1.6;">Hello <strong>${username}</strong>,</p>
+              
+              <p style="margin: 0 0 25px; color: #1e293b; font-size: 16px; line-height: 1.6;">Your account has been created for the CMP Marketing Hub platform. You now have access to our comprehensive marketing management tools.</p>
+              
+              <!-- Credentials Box -->
+              <table role="presentation" style="width: 100%; background-color: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0; margin: 0 0 25px;">
+                <tr>
+                  <td style="padding: 25px;">
+                    <p style="margin: 0 0 15px; color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Your Login Credentials</p>
+                    
+                    <table role="presentation" style="width: 100%;">
+                      <tr>
+                        <td style="padding: 8px 0; color: #64748b; font-size: 14px; font-weight: 600;">Username:</td>
+                        <td style="padding: 8px 0; color: #1e293b; font-size: 14px; font-family: 'Courier New', monospace; font-weight: 600;">${username}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; color: #64748b; font-size: 14px; font-weight: 600;">Password:</td>
+                        <td style="padding: 8px 0; color: #1e293b; font-size: 14px; font-family: 'Courier New', monospace; font-weight: 600;">${password}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- CTA Button -->
+              <table role="presentation" style="width: 100%; margin: 0 0 25px;">
+                <tr>
+                  <td align="center">
+                    <a href="https://cmpmarketinghub.netlify.app/" style="display: inline-block; padding: 14px 32px; background-color: #52d5ff; color: #0b1b24; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 2px 8px rgba(82,213,255,0.3);">Access Marketing Hub</a>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Security Notice -->
+              <table role="presentation" style="width: 100%; background-color: #fff7e6; border-radius: 8px; border-left: 4px solid #ffb732; margin: 0 0 25px;">
+                <tr>
+                  <td style="padding: 16px 20px;">
+                    <p style="margin: 0; color: #8a5800; font-size: 13px; line-height: 1.5;"><strong>🔒 Security Reminder:</strong> Please change your password after your first login. Keep your credentials secure and do not share them with others.</p>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin: 0 0 15px; color: #1e293b; font-size: 16px; line-height: 1.6;">If you have any questions or need assistance, please contact your administrator.</p>
+              
+              <p style="margin: 0; color: #1e293b; font-size: 16px; line-height: 1.6;">Best regards,<br><strong>The CMP Marketing Hub Team</strong></p>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 30px 40px; text-align: center; background-color: #f8fafc; border-radius: 0 0 14px 14px; border-top: 1px solid #e2e8f0;">
+              <p style="margin: 0 0 8px; color: #64748b; font-size: 12px;">Capstone Management Partners</p>
+              <p style="margin: 0; color: #64748b; font-size: 12px;">
+                <a href="https://cmpmarketinghub.netlify.app/" style="color: #446472; text-decoration: none;">cmpmarketinghub.netlify.app</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+      // For Gmail, we'll use a simplified plain text version with better formatting
+      const plainTextBody = encodeURIComponent(
+`Hello ${username},
 
 Welcome to CMP Marketing Hub!
 
-Your account has been created. Here are your login credentials:
+Your account has been created for the CMP Marketing Hub platform. You now have access to our comprehensive marketing management tools.
+
+━━━━━━━━━━━━━━━━━━━���━━━━━━━━━━━━━━
+YOUR LOGIN CREDENTIALS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Username: ${username}
 Password: ${password}
 
-Please change your password after your first login.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Access the platform at: https://cmpmarketinghub.com
+🔗 Access the platform at:
+https://cmpmarketinghub.netlify.app/
+
+🔒 SECURITY REMINDER:
+Please change your password after your first login. Keep your credentials secure and do not share them with others.
+
+If you have any questions or need assistance, please contact your administrator.
 
 Best regards,
-The CMP Marketing Hub Team`
+The CMP Marketing Hub Team
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Capstone Management Partners
+https://cmpmarketinghub.netlify.app/
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
       );
-      window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
+      
+      // Open Gmail with the formatted email
+      window.open(`mailto:${email}?subject=${subject}&body=${plainTextBody}`, '_blank');
+      
+      // Also copy HTML version to clipboard for manual pasting if needed
+      copyHTMLEmailToClipboard(htmlBody, username, email);
+    }
+    
+    function copyHTMLEmailToClipboard(htmlBody, username, email){
+      // Create a temporary element to hold the HTML
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = htmlBody;
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      document.body.appendChild(tempDiv);
+      
+      try {
+        // Try to copy HTML to clipboard
+        const range = document.createRange();
+        range.selectNodeContents(tempDiv);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        
+        // Show a notification that HTML email is available
+        setTimeout(() => {
+          const copyHtml = confirm(
+            `Gmail opened with plain text email.\n\n` +
+            `For a better-looking HTML email:\n` +
+            `1. Click OK to copy the HTML version\n` +
+            `2. Compose a new email in Gmail\n` +
+            `3. Click the three dots menu → "Show original"\n` +
+            `4. Or use an email client that supports HTML composition\n\n` +
+            `Would you like to copy the HTML version now?`
+          );
+          
+          if (copyHtml) {
+            navigator.clipboard.writeText(htmlBody).then(() => {
+              alert('HTML email template copied to clipboard!\n\nYou can paste this into an HTML email composer.');
+            }).catch(() => {
+              alert('Could not copy to clipboard. Please use the plain text email that opened in Gmail.');
+            });
+          }
+        }, 500);
+      } catch(e) {
+        console.error('Could not copy HTML email:', e);
+      } finally {
+        document.body.removeChild(tempDiv);
+      }
     }
 
     async function fetchUsers(){
