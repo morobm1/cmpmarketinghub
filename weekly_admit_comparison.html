@@ -1,0 +1,890 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Weekly Admit Comparison Tool • Marketing Hub</title>
+  <link rel="preconnect" href="https://use.typekit.net" crossorigin>
+  <link rel="preconnect" href="https://p.typekit.net" crossorigin>
+  <link rel="stylesheet" href="https://use.typekit.net/hqv8hwr.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    :root{
+      --brand-primary:#446472;
+      --brand-accent:#ffb732;
+      --brand-accent-2:#52d5ff;
+      --brand-gray:#929497;
+      --page-bg:#f8fafc;
+      --bg:#ffffff;
+      --text:#1e293b;
+      --subtext:#64748b;
+      --border:#e2e8f0;
+      --good:#22c55e;
+      --warn:#ffb732;
+      --bad:#ef4444;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{font-family:'Open Sans',system-ui,-apple-system,sans-serif; background:var(--page-bg); color:var(--text);font-size:14px;line-height:1.5}
+
+    /* Header */
+    header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:10px}
+    .brand .logo-img{height:28px;width:auto}
+    .brand .title{color:#ffb732;font-family:zooja-pro,Arial,sans-serif;font-size:clamp(32px,4vw,48px);line-height:1}
+    .header-controls{display:flex;align-items:center;gap:12px;margin-left:auto}
+    .header-btn{background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;transition:all .15s}
+    .header-btn:hover{background:#f8fafc;border-color:#cbd5e1}
+    .company-name{font-size:12px;color:var(--subtext);font-weight:500}
+
+    .container{padding:24px; max-width:1400px; margin:0 auto}
+    .card{background:#ffffff; border:1px solid var(--border); border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,0.06); overflow:hidden; margin-bottom:20px}
+    .card h2{margin:0; padding:20px 24px; font-size:18px; color:#111827; font-weight:700; border-bottom:1px solid var(--border)}
+    .card .content{padding:24px}
+
+    label{font-size:13px; color:var(--text); display:block; margin-bottom:6px; font-weight:600}
+    input[type="file"]{width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--text); font-size:14px; transition:border-color .15s, box-shadow .15s; font-family:'Open Sans',system-ui,sans-serif}
+    input[type="file"]:focus{outline:none; border-color:var(--brand-accent-2); box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
+    select{width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--text); font-size:14px; transition:border-color .15s, box-shadow .15s; font-family:'Open Sans',system-ui,sans-serif}
+    select:focus{outline:none; border-color:var(--brand-accent-2); box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
+    .form-group{margin-bottom:16px}
+    .form-row{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+    @media(max-width: 768px){.form-row{grid-template-columns:1fr}}
+
+    button{padding:10px 20px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--text); font-size:14px; font-weight:600; cursor:pointer; transition:all .15s; font-family: Roboto, Arial, sans-serif}
+    button:hover{background:#f8fafc}
+    button:disabled{opacity:0.5; cursor:not-allowed}
+    button.primary{background:var(--brand-primary); color:#fff; border-color:var(--brand-primary)}
+    button.primary:hover:not(:disabled){background:#3b5561}
+    button.good{background:#52d5ff; color:#0b1b24; border-color:#52d5ff}
+    button.good:hover:not(:disabled){background:#3ecbf5}
+    button.danger{background:#ef4444; color:#fff; border-color:#ef4444}
+    button.danger:hover:not(:disabled){background:#dc2626}
+
+    .button-group{display:flex; gap:12px; margin-top:24px; flex-wrap:wrap}
+
+    .upload-zone{border:2px dashed var(--border); border-radius:12px; padding:32px; text-align:center; background:#f8fafc; transition:all .2s; cursor:pointer}
+    .upload-zone:hover{border-color:var(--brand-accent-2); background:#f0f9ff}
+    .upload-zone.has-file{border-color:var(--good); background:#f0fdf4}
+    .upload-zone.error{border-color:var(--bad); background:#fef2f2}
+    .upload-icon{font-size:48px; margin-bottom:12px; color:var(--subtext)}
+    .upload-zone.has-file .upload-icon{color:var(--good)}
+    .upload-text{font-size:14px; color:var(--text); font-weight:600; margin-bottom:4px}
+    .upload-subtext{font-size:12px; color:var(--subtext)}
+    .file-name{font-size:13px; color:var(--good); font-weight:600; margin-top:8px}
+
+    .stats-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:24px}
+    .stat-card{background:#f8fafc; border:1px solid var(--border); border-radius:12px; padding:20px; text-align:center}
+    .stat-value{font-size:36px; font-weight:700; color:var(--text); margin-bottom:4px}
+    .stat-value.highlight{color:var(--brand-accent-2); font-size:48px}
+    .stat-label{font-size:13px; color:var(--subtext); font-weight:600; text-transform:uppercase; letter-spacing:0.5px}
+
+    .history-table{width:100%; border-collapse:collapse; margin-top:16px}
+    .history-table th{background:#f8fafc; padding:12px; text-align:left; font-size:13px; font-weight:700; color:var(--text); border-bottom:2px solid var(--border)}
+    .history-table td{padding:12px; border-bottom:1px solid var(--border); font-size:13px}
+    .history-table tr:hover{background:#f8fafc}
+    .history-table .actions{display:flex; gap:8px}
+    .history-table .actions button{padding:4px 12px; font-size:12px}
+
+    .alert{padding:16px 20px; border-radius:8px; margin-bottom:20px; display:flex; align-items:center; gap:12px; font-size:13px; line-height:1.6}
+    .alert.info{background:#e0f2fe; border:1px solid #7dd3fc; color:#0c4a6e}
+    .alert.success{background:#dcfce7; border:1px solid #86efac; color:#14532d}
+    .alert.warning{background:#fef3c7; border:1px solid #fcd34d; color:#713f12}
+    .alert.error{background:#fee2e2; border:1px solid #fca5a5; color:#7f1d1d}
+    .alert-icon{font-size:20px}
+
+    .hidden{display:none}
+
+    .empty-state{text-align:center; padding:60px 20px; color:var(--subtext)}
+    .empty-state h3{font-size:20px; margin-bottom:12px; color:var(--text)}
+    .empty-state p{margin-bottom:24px}
+
+    .loading{display:inline-block; width:20px; height:20px; border:3px solid rgba(82,213,255,0.3); border-radius:50%; border-top-color:#52d5ff; animation:spin 1s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .identifier-selector{background:#f8fafc; border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:20px}
+    .identifier-selector h4{margin:0 0 12px 0; font-size:14px; color:var(--text); font-weight:700}
+    .identifier-selector p{font-size:12px; color:var(--subtext); margin-bottom:12px}
+  </style>
+</head>
+<body>
+  <div id="bootLoader" style="position:fixed;inset:0;background:#ffffff;display:flex;align-items:center;justify-content:center;z-index:100;color:#111827;font-family:Roboto,Arial,sans-serif">
+    <div style="display:flex;flex-direction:column;gap:6px;align-items:center">
+      <div style="font-weight:800">Marketing Hub</div>
+      <div style="color:#6b7280; font-size:12px">Loading…</div>
+    </div>
+  </div>
+
+  <header id="appHeader" style="display:none">
+    <div class="brand">
+      <img src="logo-main.svg" class="logo-img" alt="Capstone" />
+      <div class="title">Marketing Hub</div>
+    </div>
+    <div class="header-controls">
+      <button class="header-btn" onclick="window.location.href='custom_tools.html'">← Back to Custom Tools</button>
+      <button class="header-btn" id="logoutBtn">Sign Out</button>
+    </div>
+    <span class="company-name">Capstone Management Partners</span>
+  </header>
+
+  <div class="container" id="appContainer" style="display:none">
+    <!-- Title Section -->
+    <div class="card">
+      <h2>Weekly Admit Comparison Tool</h2>
+      <div class="content">
+        <p style="color:var(--subtext); margin-bottom:20px">
+          Upload two Excel files (Previous Week and Current Week admit lists) to identify new admits. 
+          The tool will compare the files, generate a downloadable report, and maintain a weekly history log.
+        </p>
+        
+        <div class="alert info">
+          <span class="alert-icon">ℹ️</span>
+          <div>
+            <strong>Supported file types:</strong> .xlsx and .csv<br>
+            <strong>Matching logic:</strong> Email Address (primary), or First Name + Last Name (fallback)
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- File Upload Section -->
+    <div class="card">
+      <h2>1. Upload Files</h2>
+      <div class="content">
+        <div id="errorAlert" class="alert error hidden">
+          <span class="alert-icon">⚠️</span>
+          <div id="errorMessage"></div>
+        </div>
+
+        <div id="warningAlert" class="alert warning hidden">
+          <span class="alert-icon">⚠️</span>
+          <div id="warningMessage"></div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Previous Week File</label>
+            <div class="upload-zone" id="prevUploadZone">
+              <div class="upload-icon">📄</div>
+              <div class="upload-text">Click to upload or drag & drop</div>
+              <div class="upload-subtext">Excel (.xlsx) or CSV files only</div>
+              <div class="file-name hidden" id="prevFileName"></div>
+            </div>
+            <input type="file" id="prevFileInput" accept=".xlsx,.xls,.csv" style="display:none" />
+          </div>
+
+          <div class="form-group">
+            <label>Current Week File</label>
+            <div class="upload-zone" id="currUploadZone">
+              <div class="upload-icon">📄</div>
+              <div class="upload-text">Click to upload or drag & drop</div>
+              <div class="upload-subtext">Excel (.xlsx) or CSV files only</div>
+              <div class="file-name hidden" id="currFileName"></div>
+            </div>
+            <input type="file" id="currFileInput" accept=".xlsx,.xls,.csv" style="display:none" />
+          </div>
+        </div>
+
+        <!-- Identifier Selection -->
+        <div class="identifier-selector" id="identifierSelector" style="display:none">
+          <h4>Select Unique Identifier Column</h4>
+          <p>Choose which column to use as the primary identifier for matching records:</p>
+          <div class="form-group">
+            <label for="identifierColumn">Primary Identifier</label>
+            <select id="identifierColumn">
+              <option value="auto">Auto-detect (Email or First Name + Last Name)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="button-group">
+          <button class="good" id="compareBtn" disabled>
+            <span id="compareBtnText">Compare Files</span>
+            <span id="compareBtnLoader" class="loading hidden" style="margin-left:8px"></span>
+          </button>
+          <button id="resetBtn">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="card" id="resultsSection" style="display:none">
+      <h2>2. Comparison Results</h2>
+      <div class="content">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="statPrevTotal">0</div>
+            <div class="stat-label">Total Last Week</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statCurrTotal">0</div>
+            <div class="stat-label">Total This Week</div>
+          </div>
+          <div class="stat-card" style="background:#e0f2fe; border-color:#7dd3fc">
+            <div class="stat-value highlight" id="statNewAdmits">0</div>
+            <div class="stat-label" style="color:#0c4a6e">New Admits This Week</div>
+          </div>
+        </div>
+
+        <div class="button-group">
+          <button class="primary" id="downloadBtn">
+            📥 Download New Admits Report
+          </button>
+          <button id="viewDetailsBtn">View Details</button>
+        </div>
+
+        <!-- Details Table (collapsible) -->
+        <div id="detailsTable" style="display:none; margin-top:24px">
+          <h3 style="margin:0 0 16px 0; font-size:16px; color:#111827">New Admits Details</h3>
+          <div style="overflow-x:auto">
+            <table class="history-table" id="newAdmitsTable">
+              <thead>
+                <tr id="newAdmitsTableHeader"></tr>
+              </thead>
+              <tbody id="newAdmitsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weekly History Log -->
+    <div class="card">
+      <h2>3. Weekly History Log</h2>
+      <div class="content">
+        <p style="color:var(--subtext); margin-bottom:16px">
+          Track all previous comparisons. Data is stored locally in your browser.
+        </p>
+
+        <div id="historyEmpty" class="empty-state">
+          <h3>No History Yet</h3>
+          <p>Your comparison history will appear here after you run your first comparison.</p>
+        </div>
+
+        <div id="historyTableContainer" style="display:none">
+          <div style="overflow-x:auto">
+            <table class="history-table">
+              <thead>
+                <tr>
+                  <th>Week Processed</th>
+                  <th>Previous File Date</th>
+                  <th>Current File Date</th>
+                  <th>Total Current</th>
+                  <th>New This Week</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="historyTableBody"></tbody>
+            </table>
+          </div>
+          <div class="button-group">
+            <button id="exportHistoryBtn">📥 Export History to Excel</button>
+            <button id="clearHistoryBtn" class="danger">Clear All History</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentUser = null;
+    let prevFileData = null;
+    let currFileData = null;
+    let prevFileName = '';
+    let currFileName = '';
+    let comparisonResult = null;
+    let historyLog = [];
+
+    const STORAGE_KEY = 'weekly_admit_comparison_history';
+
+    const els = {
+      bootLoader: document.getElementById('bootLoader'),
+      appHeader: document.getElementById('appHeader'),
+      appContainer: document.getElementById('appContainer'),
+      logoutBtn: document.getElementById('logoutBtn'),
+      prevUploadZone: document.getElementById('prevUploadZone'),
+      currUploadZone: document.getElementById('currUploadZone'),
+      prevFileInput: document.getElementById('prevFileInput'),
+      currFileInput: document.getElementById('currFileInput'),
+      prevFileName: document.getElementById('prevFileName'),
+      currFileName: document.getElementById('currFileName'),
+      identifierSelector: document.getElementById('identifierSelector'),
+      identifierColumn: document.getElementById('identifierColumn'),
+      compareBtn: document.getElementById('compareBtn'),
+      compareBtnText: document.getElementById('compareBtnText'),
+      compareBtnLoader: document.getElementById('compareBtnLoader'),
+      resetBtn: document.getElementById('resetBtn'),
+      errorAlert: document.getElementById('errorAlert'),
+      errorMessage: document.getElementById('errorMessage'),
+      warningAlert: document.getElementById('warningAlert'),
+      warningMessage: document.getElementById('warningMessage'),
+      resultsSection: document.getElementById('resultsSection'),
+      statPrevTotal: document.getElementById('statPrevTotal'),
+      statCurrTotal: document.getElementById('statCurrTotal'),
+      statNewAdmits: document.getElementById('statNewAdmits'),
+      downloadBtn: document.getElementById('downloadBtn'),
+      viewDetailsBtn: document.getElementById('viewDetailsBtn'),
+      detailsTable: document.getElementById('detailsTable'),
+      newAdmitsTable: document.getElementById('newAdmitsTable'),
+      newAdmitsTableHeader: document.getElementById('newAdmitsTableHeader'),
+      newAdmitsTableBody: document.getElementById('newAdmitsTableBody'),
+      historyEmpty: document.getElementById('historyEmpty'),
+      historyTableContainer: document.getElementById('historyTableContainer'),
+      historyTableBody: document.getElementById('historyTableBody'),
+      exportHistoryBtn: document.getElementById('exportHistoryBtn'),
+      clearHistoryBtn: document.getElementById('clearHistoryBtn'),
+    };
+
+    async function initAuth() {
+      try {
+        const meRes = await fetch('/api/me', { credentials: 'include' });
+        if (meRes.ok) {
+          const me = await meRes.json();
+          currentUser = { username: me.username, role: me.role, properties: me.properties };
+          
+          showApp();
+          loadHistory();
+          return true;
+        }
+      } catch (e) {
+        console.error('Auth error:', e);
+      }
+      window.location.href = 'index.html';
+      return false;
+    }
+
+    function showApp() {
+      els.bootLoader.style.display = 'none';
+      els.appHeader.style.display = '';
+      els.appContainer.style.display = '';
+    }
+
+    async function doLogout() {
+      try {
+        await fetch('/api/auth-logout', { method: 'POST', credentials: 'include' });
+      } catch (e) {}
+      window.location.href = 'index.html';
+    }
+
+    // File Upload Handlers
+    function setupUploadZone(zone, input, fileNameEl, callback) {
+      zone.addEventListener('click', () => input.click());
+      
+      zone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        zone.style.borderColor = 'var(--brand-accent-2)';
+        zone.style.background = '#f0f9ff';
+      });
+      
+      zone.addEventListener('dragleave', () => {
+        zone.style.borderColor = '';
+        zone.style.background = '';
+      });
+      
+      zone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        zone.style.borderColor = '';
+        zone.style.background = '';
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          input.files = files;
+          handleFileSelect(input, zone, fileNameEl, callback);
+        }
+      });
+      
+      input.addEventListener('change', () => {
+        handleFileSelect(input, zone, fileNameEl, callback);
+      });
+    }
+
+    function handleFileSelect(input, zone, fileNameEl, callback) {
+      const file = input.files[0];
+      if (!file) return;
+      
+      // Validate file type
+      const validTypes = ['.xlsx', '.xls', '.csv'];
+      const fileExt = '.' + file.name.split('.').pop().toLowerCase();
+      
+      if (!validTypes.includes(fileExt)) {
+        showError('Invalid file type. Please upload .xlsx or .csv files only.');
+        zone.classList.add('error');
+        setTimeout(() => zone.classList.remove('error'), 2000);
+        input.value = '';
+        return;
+      }
+      
+      // Update UI
+      zone.classList.add('has-file');
+      fileNameEl.textContent = '✓ ' + file.name;
+      fileNameEl.classList.remove('hidden');
+      
+      // Read file
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+          
+          callback(jsonData, file.name);
+          checkFilesReady();
+        } catch (err) {
+          showError('Failed to read file: ' + err.message);
+          zone.classList.remove('has-file');
+          fileNameEl.classList.add('hidden');
+          input.value = '';
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function checkFilesReady() {
+      if (prevFileData && currFileData) {
+        els.compareBtn.disabled = false;
+        hideError();
+        
+        // Populate identifier dropdown with available columns
+        populateIdentifierOptions();
+      }
+    }
+
+    function populateIdentifierOptions() {
+      if (!currFileData || currFileData.length === 0) return;
+      
+      const columns = Object.keys(currFileData[0]);
+      els.identifierColumn.innerHTML = '<option value="auto">Auto-detect (Email or First Name + Last Name)</option>';
+      
+      columns.forEach(col => {
+        const option = document.createElement('option');
+        option.value = col;
+        option.textContent = col;
+        els.identifierColumn.appendChild(option);
+      });
+      
+      els.identifierSelector.style.display = '';
+    }
+
+    function showError(message) {
+      els.errorMessage.textContent = message;
+      els.errorAlert.classList.remove('hidden');
+    }
+
+    function hideError() {
+      els.errorAlert.classList.add('hidden');
+    }
+
+    function showWarning(message) {
+      els.warningMessage.innerHTML = message;
+      els.warningAlert.classList.remove('hidden');
+    }
+
+    function hideWarning() {
+      els.warningAlert.classList.add('hidden');
+    }
+
+    // Comparison Logic
+    function normalizeString(str) {
+      if (!str) return '';
+      return String(str).toLowerCase().trim();
+    }
+
+    function getIdentifier(record, identifierMode) {
+      if (identifierMode === 'auto') {
+        // Try email first
+        const emailFields = ['email', 'email address', 'e-mail', 'emailaddress'];
+        for (const field of emailFields) {
+          const key = Object.keys(record).find(k => normalizeString(k) === field);
+          if (key && record[key]) {
+            return normalizeString(record[key]);
+          }
+        }
+        
+        // Fallback to first name + last name
+        const firstNameFields = ['first name', 'firstname', 'first', 'fname'];
+        const lastNameFields = ['last name', 'lastname', 'last', 'lname'];
+        
+        let firstName = '';
+        let lastName = '';
+        
+        for (const field of firstNameFields) {
+          const key = Object.keys(record).find(k => normalizeString(k) === field);
+          if (key && record[key]) {
+            firstName = normalizeString(record[key]);
+            break;
+          }
+        }
+        
+        for (const field of lastNameFields) {
+          const key = Object.keys(record).find(k => normalizeString(k) === field);
+          if (key && record[key]) {
+            lastName = normalizeString(record[key]);
+            break;
+          }
+        }
+        
+        if (firstName && lastName) {
+          return firstName + '|' + lastName;
+        }
+        
+        return null;
+      } else {
+        // Use specified column
+        return record[identifierMode] ? normalizeString(record[identifierMode]) : null;
+      }
+    }
+
+    function compareFiles() {
+      hideError();
+      hideWarning();
+      
+      els.compareBtn.disabled = true;
+      els.compareBtnText.textContent = 'Processing...';
+      els.compareBtnLoader.classList.remove('hidden');
+      
+      setTimeout(() => {
+        try {
+          const identifierMode = els.identifierColumn.value;
+          
+          // Validate column headers match
+          if (prevFileData.length === 0 || currFileData.length === 0) {
+            throw new Error('One or both files are empty');
+          }
+          
+          const prevColumns = Object.keys(prevFileData[0]).sort();
+          const currColumns = Object.keys(currFileData[0]).sort();
+          
+          if (JSON.stringify(prevColumns) !== JSON.stringify(currColumns)) {
+            showWarning('<strong>Warning:</strong> Column headers do not match between files. Comparison will continue but results may be inaccurate.');
+          }
+          
+          // Deduplicate records
+          const prevUnique = new Map();
+          const currUnique = new Map();
+          let prevDuplicates = 0;
+          let currDuplicates = 0;
+          
+          prevFileData.forEach(record => {
+            const id = getIdentifier(record, identifierMode);
+            if (id) {
+              if (prevUnique.has(id)) {
+                prevDuplicates++;
+              } else {
+                prevUnique.set(id, record);
+              }
+            }
+          });
+          
+          currFileData.forEach(record => {
+            const id = getIdentifier(record, identifierMode);
+            if (id) {
+              if (currUnique.has(id)) {
+                currDuplicates++;
+              } else {
+                currUnique.set(id, record);
+              }
+            }
+          });
+          
+          // Show duplicate warning if any
+          if (prevDuplicates > 0 || currDuplicates > 0) {
+            const msg = `<strong>Duplicates removed:</strong> ${prevDuplicates} from Previous Week, ${currDuplicates} from Current Week`;
+            showWarning(msg);
+          }
+          
+          // Find new admits (in current but not in previous)
+          const newAdmits = [];
+          currUnique.forEach((record, id) => {
+            if (!prevUnique.has(id)) {
+              // Add "Week Identified As New" column
+              const newRecord = { ...record };
+              newRecord['Week Identified As New'] = new Date().toLocaleDateString('en-US');
+              newAdmits.push(newRecord);
+            }
+          });
+          
+          // Store results
+          comparisonResult = {
+            prevTotal: prevUnique.size,
+            currTotal: currUnique.size,
+            newAdmits: newAdmits,
+            prevFileName: prevFileName,
+            currFileName: currFileName,
+            timestamp: new Date().toISOString(),
+          };
+          
+          // Update UI
+          displayResults();
+          
+          // Save to history
+          saveToHistory();
+          
+        } catch (err) {
+          showError('Comparison failed: ' + err.message);
+        } finally {
+          els.compareBtn.disabled = false;
+          els.compareBtnText.textContent = 'Compare Files';
+          els.compareBtnLoader.classList.add('hidden');
+        }
+      }, 500);
+    }
+
+    function displayResults() {
+      els.statPrevTotal.textContent = comparisonResult.prevTotal.toLocaleString();
+      els.statCurrTotal.textContent = comparisonResult.currTotal.toLocaleString();
+      els.statNewAdmits.textContent = comparisonResult.newAdmits.length.toLocaleString();
+      
+      els.resultsSection.style.display = '';
+      els.resultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      
+      // Populate details table
+      if (comparisonResult.newAdmits.length > 0) {
+        const columns = Object.keys(comparisonResult.newAdmits[0]);
+        
+        els.newAdmitsTableHeader.innerHTML = columns.map(col => 
+          `<th>${escapeHtml(col)}</th>`
+        ).join('');
+        
+        els.newAdmitsTableBody.innerHTML = comparisonResult.newAdmits.map(record => 
+          '<tr>' + columns.map(col => 
+            `<td>${escapeHtml(String(record[col] || ''))}</td>`
+          ).join('') + '</tr>'
+        ).join('');
+      }
+    }
+
+    function downloadExcel() {
+      if (!comparisonResult || comparisonResult.newAdmits.length === 0) {
+        alert('No new admits to download');
+        return;
+      }
+      
+      const worksheet = XLSX.utils.json_to_sheet(comparisonResult.newAdmits);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'New Admits');
+      
+      const date = new Date().toISOString().split('T')[0];
+      const fileName = `New_Admits_${date}.xlsx`;
+      
+      XLSX.writeFile(workbook, fileName);
+    }
+
+    function toggleDetails() {
+      if (els.detailsTable.style.display === 'none') {
+        els.detailsTable.style.display = '';
+        els.viewDetailsBtn.textContent = 'Hide Details';
+      } else {
+        els.detailsTable.style.display = 'none';
+        els.viewDetailsBtn.textContent = 'View Details';
+      }
+    }
+
+    // History Management
+    function loadHistory() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          historyLog = JSON.parse(saved);
+          renderHistory();
+        }
+      } catch (e) {
+        console.error('Failed to load history:', e);
+      }
+    }
+
+    function saveToHistory() {
+      const entry = {
+        id: Date.now(),
+        weekProcessed: new Date().toLocaleDateString('en-US'),
+        prevFileDate: extractDateFromFilename(comparisonResult.prevFileName),
+        currFileDate: extractDateFromFilename(comparisonResult.currFileName),
+        totalCurrent: comparisonResult.currTotal,
+        newThisWeek: comparisonResult.newAdmits.length,
+        timestamp: comparisonResult.timestamp,
+        data: comparisonResult,
+      };
+      
+      historyLog.unshift(entry);
+      
+      // Keep only last 50 entries
+      if (historyLog.length > 50) {
+        historyLog = historyLog.slice(0, 50);
+      }
+      
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(historyLog));
+        renderHistory();
+      } catch (e) {
+        console.error('Failed to save history:', e);
+        showWarning('History could not be saved due to storage limitations.');
+      }
+    }
+
+    function extractDateFromFilename(filename) {
+      // Try to extract date from filename (common patterns)
+      const datePatterns = [
+        /(\d{4}-\d{2}-\d{2})/,  // YYYY-MM-DD
+        /(\d{2}-\d{2}-\d{4})/,  // MM-DD-YYYY
+        /(\d{1,2}\/\d{1,2}\/\d{4})/,  // M/D/YYYY
+      ];
+      
+      for (const pattern of datePatterns) {
+        const match = filename.match(pattern);
+        if (match) return match[1];
+      }
+      
+      return filename;
+    }
+
+    function renderHistory() {
+      if (historyLog.length === 0) {
+        els.historyEmpty.style.display = '';
+        els.historyTableContainer.style.display = 'none';
+        return;
+      }
+      
+      els.historyEmpty.style.display = 'none';
+      els.historyTableContainer.style.display = '';
+      
+      els.historyTableBody.innerHTML = historyLog.map(entry => `
+        <tr>
+          <td>${escapeHtml(entry.weekProcessed)}</td>
+          <td>${escapeHtml(entry.prevFileDate)}</td>
+          <td>${escapeHtml(entry.currFileDate)}</td>
+          <td>${entry.totalCurrent.toLocaleString()}</td>
+          <td><strong style="color:var(--brand-accent-2)">${entry.newThisWeek.toLocaleString()}</strong></td>
+          <td class="actions">
+            <button onclick="downloadHistoryEntry(${entry.id})">Download</button>
+            <button class="danger" onclick="deleteHistoryEntry(${entry.id})">Delete</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function downloadHistoryEntry(id) {
+      const entry = historyLog.find(e => e.id === id);
+      if (!entry || !entry.data || entry.data.newAdmits.length === 0) {
+        alert('No data available for this entry');
+        return;
+      }
+      
+      const worksheet = XLSX.utils.json_to_sheet(entry.data.newAdmits);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'New Admits');
+      
+      const fileName = `New_Admits_${entry.currFileDate}.xlsx`;
+      XLSX.writeFile(workbook, fileName);
+    }
+
+    function deleteHistoryEntry(id) {
+      if (!confirm('Are you sure you want to delete this history entry?')) return;
+      
+      historyLog = historyLog.filter(e => e.id !== id);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(historyLog));
+      renderHistory();
+    }
+
+    function exportHistory() {
+      if (historyLog.length === 0) {
+        alert('No history to export');
+        return;
+      }
+      
+      const exportData = historyLog.map(entry => ({
+        'Week Processed': entry.weekProcessed,
+        'Previous File Date': entry.prevFileDate,
+        'Current File Date': entry.currFileDate,
+        'Total Current': entry.totalCurrent,
+        'New This Week': entry.newThisWeek,
+      }));
+      
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'History');
+      
+      const fileName = `Admit_Comparison_History_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(workbook, fileName);
+    }
+
+    function clearHistory() {
+      if (!confirm('Are you sure you want to clear all history? This cannot be undone.')) return;
+      
+      historyLog = [];
+      localStorage.removeItem(STORAGE_KEY);
+      renderHistory();
+    }
+
+    function resetForm() {
+      prevFileData = null;
+      currFileData = null;
+      prevFileName = '';
+      currFileName = '';
+      comparisonResult = null;
+      
+      els.prevFileInput.value = '';
+      els.currFileInput.value = '';
+      els.prevUploadZone.classList.remove('has-file');
+      els.currUploadZone.classList.remove('has-file');
+      els.prevFileName.classList.add('hidden');
+      els.currFileName.classList.add('hidden');
+      els.compareBtn.disabled = true;
+      els.resultsSection.style.display = 'none';
+      els.identifierSelector.style.display = 'none';
+      els.detailsTable.style.display = 'none';
+      els.viewDetailsBtn.textContent = 'View Details';
+      
+      hideError();
+      hideWarning();
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Event Listeners
+    els.logoutBtn.addEventListener('click', doLogout);
+    els.compareBtn.addEventListener('click', compareFiles);
+    els.resetBtn.addEventListener('click', resetForm);
+    els.downloadBtn.addEventListener('click', downloadExcel);
+    els.viewDetailsBtn.addEventListener('click', toggleDetails);
+    els.exportHistoryBtn.addEventListener('click', exportHistory);
+    els.clearHistoryBtn.addEventListener('click', clearHistory);
+
+    // Setup upload zones
+    setupUploadZone(
+      els.prevUploadZone,
+      els.prevFileInput,
+      els.prevFileName,
+      (data, filename) => {
+        prevFileData = data;
+        prevFileName = filename;
+      }
+    );
+
+    setupUploadZone(
+      els.currUploadZone,
+      els.currFileInput,
+      els.currFileName,
+      (data, filename) => {
+        currFileData = data;
+        currFileName = filename;
+      }
+    );
+
+    // Make functions globally accessible for inline onclick handlers
+    window.downloadHistoryEntry = downloadHistoryEntry;
+    window.deleteHistoryEntry = deleteHistoryEntry;
+
+    // Initialize
+    (async () => {
+      await initAuth();
+    })();
+  </script>
+</body>
+</html>
