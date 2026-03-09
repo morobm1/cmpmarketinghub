@@ -1,0 +1,1506 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Market Survey Analyze • Marketing Hub</title>
+  <link rel="preconnect" href="https://use.typekit.net" crossorigin>
+  <link rel="preconnect" href="https://p.typekit.net" crossorigin>
+  <link rel="stylesheet" href="https://use.typekit.net/hqv8hwr.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root{
+      --brand-primary:#446472;
+      --brand-accent:#ffb732;
+      --brand-accent-2:#52d5ff;
+      --brand-gray:#929497;
+      --page-bg:#f8fafc;
+      --bg:#ffffff;
+      --text:#1e293b;
+      --subtext:#64748b;
+      --border:#e2e8f0;
+      --good:#22c55e;
+      --warn:#ffb732;
+      --bad:#ef4444;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{font-family:'Open Sans',system-ui,-apple-system,sans-serif; background:var(--page-bg); color:var(--text);font-size:14px;line-height:1.5}
+
+    /* Header */
+    header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:10px}
+    .brand .logo-img{height:28px;width:auto}
+    .brand .title{color:#ffb732;font-family:zooja-pro,Arial,sans-serif;font-size:clamp(32px,4vw,48px);line-height:1}
+    .header-controls{display:flex;align-items:center;gap:12px;margin-left:auto}
+    .header-btn{background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;transition:all .15s}
+    .header-btn:hover{background:#f8fafc;border-color:#cbd5e1}
+    .company-name{font-size:12px;color:var(--subtext);font-weight:500}
+
+    .container{padding:24px; max-width:1400px; margin:0 auto}
+    .card{background:#ffffff; border:1px solid var(--border); border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,0.06); overflow:hidden; margin-bottom:20px}
+    .card h2{margin:0; padding:20px 24px; font-size:18px; color:#111827; font-weight:700; border-bottom:1px solid var(--border)}
+    .card .content{padding:24px}
+
+    label{font-size:13px; color:var(--text); display:block; margin-bottom:6px; font-weight:600}
+    input, select, textarea{width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--text); font-size:14px; transition:border-color .15s, box-shadow .15s; font-family:'Open Sans',system-ui,sans-serif}
+    input:focus, select:focus, textarea:focus{outline:none; border-color:var(--brand-accent-2); box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
+
+    button{padding:10px 20px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--text); font-size:14px; font-weight:600; cursor:pointer; transition:all .15s; font-family: Roboto, Arial, sans-serif}
+    button:hover{background:#f8fafc}
+    button:disabled{opacity:0.5; cursor:not-allowed}
+    button.primary{background:var(--brand-primary); color:#fff; border-color:var(--brand-primary)}
+    button.primary:hover:not(:disabled){background:#3b5561}
+    button.good{background:#52d5ff; color:#0b1b24; border-color:#52d5ff}
+    button.good:hover:not(:disabled){background:#3ecbf5}
+    button.danger{background:#ef4444; color:#fff; border-color:#ef4444}
+    button.danger:hover:not(:disabled){background:#dc2626}
+
+    .button-group{display:flex; gap:12px; margin-top:24px; flex-wrap:wrap}
+
+    /* Upload zone */
+    .upload-zone{border:2px dashed var(--border); border-radius:12px; padding:48px 32px; text-align:center; background:#f8fafc; transition:all .2s; cursor:pointer}
+    .upload-zone:hover{border-color:var(--brand-accent-2); background:#f0f9ff}
+    .upload-zone.has-file{border-color:var(--good); background:#f0fdf4}
+    .upload-zone.error{border-color:var(--bad); background:#fef2f2}
+    .upload-zone.dragover{border-color:var(--brand-accent-2); background:#e0f2fe}
+    .upload-icon{font-size:48px; margin-bottom:12px; color:var(--subtext)}
+    .upload-zone.has-file .upload-icon{color:var(--good)}
+    .upload-text{font-size:15px; color:var(--text); font-weight:600; margin-bottom:4px}
+    .upload-subtext{font-size:12px; color:var(--subtext)}
+    .file-name{font-size:13px; color:var(--good); font-weight:600; margin-top:8px}
+
+    /* Alert */
+    .alert{padding:16px 20px; border-radius:8px; margin-bottom:20px; display:flex; align-items:flex-start; gap:12px; font-size:13px; line-height:1.6}
+    .alert.info{background:#e0f2fe; border:1px solid #7dd3fc; color:#0c4a6e}
+    .alert.success{background:#dcfce7; border:1px solid #86efac; color:#14532d}
+    .alert.warning{background:#fef3c7; border:1px solid #fcd34d; color:#713f12}
+    .alert.error{background:#fee2e2; border:1px solid #fca5a5; color:#7f1d1d}
+
+    /* Loading */
+    .loading-spinner{display:inline-block; width:20px; height:20px; border:3px solid rgba(82,213,255,0.3); border-radius:50%; border-top-color:#52d5ff; animation:spin 1s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .loading-overlay{display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px 20px; gap:16px}
+    .loading-overlay .loading-spinner{width:40px; height:40px; border-width:4px}
+    .loading-text{font-size:14px; color:var(--subtext); font-weight:600}
+
+    /* Stats grid */
+    .stats-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:16px; margin-bottom:24px}
+    .stat-card{background:#f8fafc; border:1px solid var(--border); border-radius:12px; padding:20px; text-align:center}
+    .stat-card.accent{background:linear-gradient(135deg, #446472 0%, #3b5561 100%); border-color:#446472}
+    .stat-card.accent .stat-value{color:#fff}
+    .stat-card.accent .stat-label{color:rgba(255,255,255,0.7)}
+    .stat-value{font-size:28px; font-weight:700; color:var(--text); margin-bottom:4px; line-height:1.2}
+    .stat-label{font-size:12px; color:var(--subtext); font-weight:600; text-transform:uppercase; letter-spacing:0.5px}
+
+    /* Report sections */
+    .report-section{margin-bottom:32px}
+    .report-section:last-child{margin-bottom:0}
+    .section-title{font-size:16px; font-weight:700; color:var(--brand-primary); margin-bottom:12px; padding-bottom:8px; border-bottom:2px solid var(--brand-accent-2)}
+    .section-narrative{font-size:14px; line-height:1.7; color:var(--text); margin-bottom:16px}
+    .section-narrative p{margin-bottom:12px}
+    .section-narrative p:last-child{margin-bottom:0}
+
+    /* Comparison table */
+    .comparison-table{width:100%; border-collapse:collapse; font-size:13px; margin-bottom:16px}
+    .comparison-table th{background:var(--brand-primary); color:#fff; padding:12px 14px; text-align:left; font-weight:700; font-size:12px; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap}
+    .comparison-table td{padding:10px 14px; border-bottom:1px solid var(--border); vertical-align:top}
+    .comparison-table tr:hover{background:#f8fafc}
+    .comparison-table .subject-row{background:#e0f2fe; font-weight:600}
+    .comparison-table .avg-row{background:#fef3c7; font-weight:600}
+    .comparison-table .positive{color:#16a34a; font-weight:600}
+    .comparison-table .negative{color:#dc2626; font-weight:600}
+    .comparison-table .neutral{color:var(--subtext)}
+
+    /* Detailed market table */
+    .market-table-wrap{overflow-x:auto; margin-top:16px; border:1px solid var(--border); border-radius:8px}
+    .market-table{width:100%; border-collapse:collapse; font-size:12px; min-width:800px}
+    .market-table th{background:#f1f5f9; color:var(--text); padding:10px 12px; text-align:left; font-weight:700; font-size:11px; text-transform:uppercase; letter-spacing:0.3px; border-bottom:2px solid var(--border); white-space:nowrap; position:sticky; top:0}
+    .market-table td{padding:8px 12px; border-bottom:1px solid var(--border); white-space:nowrap}
+    .market-table tr:hover{background:#f8fafc}
+    .market-table .subject-highlight{background:#e0f2fe}
+
+    /* Strengths / Weaknesses */
+    .sw-grid{display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:16px}
+    @media(max-width:768px){.sw-grid{grid-template-columns:1fr}}
+    .sw-card{border:1px solid var(--border); border-radius:10px; padding:20px; background:#fff}
+    .sw-card.strengths{border-left:4px solid var(--good)}
+    .sw-card.weaknesses{border-left:4px solid var(--bad)}
+    .sw-card h4{font-size:14px; font-weight:700; margin-bottom:12px}
+    .sw-card.strengths h4{color:#16a34a}
+    .sw-card.weaknesses h4{color:#dc2626}
+    .sw-list{list-style:none; padding:0; margin:0}
+    .sw-list li{padding:8px 0; border-bottom:1px solid #f1f5f9; font-size:13px; line-height:1.5; display:flex; align-items:flex-start; gap:8px}
+    .sw-list li:last-child{border-bottom:none}
+    .sw-list .icon{flex-shrink:0; margin-top:2px}
+
+    /* Recommendations */
+    .rec-list{list-style:none; padding:0; margin:0}
+    .rec-list li{padding:12px 16px; margin-bottom:8px; background:#f8fafc; border:1px solid var(--border); border-radius:8px; font-size:13px; line-height:1.6; display:flex; align-items:flex-start; gap:10px}
+    .rec-list li:last-child{margin-bottom:0}
+    .rec-number{background:var(--brand-primary); color:#fff; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; flex-shrink:0; margin-top:1px}
+
+    /* Chart container */
+    .chart-container{position:relative; height:300px; margin:16px 0}
+    @media(max-width:768px){.chart-container{height:250px}}
+
+    /* Variance bar */
+    .variance-bar-wrap{display:flex; align-items:center; gap:8px; margin:4px 0}
+    .variance-bar{height:8px; border-radius:4px; min-width:4px; transition:width .3s}
+    .variance-bar.positive{background:#22c55e}
+    .variance-bar.negative{background:#ef4444}
+
+    .hidden{display:none}
+
+    /* Print styles */
+    @media print{
+      header,.header-controls,.button-group{display:none!important}
+      .card{box-shadow:none; break-inside:avoid}
+      body{background:#fff}
+    }
+  </style>
+</head>
+<body>
+  <!-- ===== BOOT LOADER ===== -->
+  <div id="bootLoader" style="position:fixed;inset:0;background:#ffffff;display:flex;align-items:center;justify-content:center;z-index:100;color:#111827;font-family:Roboto,Arial,sans-serif">
+    <div style="display:flex;flex-direction:column;gap:6px;align-items:center">
+      <div style="font-weight:800">Marketing Hub</div>
+      <div style="color:#6b7280; font-size:12px">Loading…</div>
+    </div>
+  </div>
+
+  <!-- ===== HEADER ===== -->
+  <header id="appHeader" style="display:none">
+    <div class="brand">
+      <img src="logo-main.svg" class="logo-img" alt="Capstone" />
+      <div class="title">Marketing Hub</div>
+    </div>
+    <div class="header-controls">
+      <button class="header-btn" onclick="window.location.href='custom_tools.html'">← Back to Custom Tools</button>
+      <button class="header-btn" id="logoutBtn">Sign Out</button>
+    </div>
+    <span class="company-name">Capstone Management Partners</span>
+  </header>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <div class="container" id="appContainer" style="display:none">
+
+    <!-- Upload Card -->
+    <div class="card" id="uploadCard">
+      <h2>Market Survey Analyze</h2>
+      <div class="content">
+        <p style="color:var(--subtext); margin-bottom:20px">
+          Upload a market survey Excel file to generate a full competitive analysis report. The tool will identify the subject property, parse comp data, and produce a presentation-ready market analysis.
+        </p>
+
+        <div class="alert info" id="infoAlert">
+          <div>
+            <strong>Supported files:</strong> .xlsx and .xls<br>
+            <strong>What to expect:</strong> The parser will look for property names, floorplans, rates, amenities, fees, distances, and other comparable fields. Spreadsheet formats vary — the tool uses best-effort logic to extract what it can.
+          </div>
+        </div>
+
+        <div id="errorAlert" class="alert error hidden">
+          <div id="errorMessage"></div>
+        </div>
+
+        <div class="upload-zone" id="uploadZone">
+          <div class="upload-icon">📊</div>
+          <div class="upload-text">Click to upload or drag & drop your market survey</div>
+          <div class="upload-subtext">Excel files (.xlsx, .xls) accepted</div>
+          <div class="file-name hidden" id="uploadFileName"></div>
+        </div>
+        <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none" />
+
+        <div id="loadingState" class="loading-overlay hidden">
+          <div class="loading-spinner"></div>
+          <div class="loading-text">Parsing workbook and analyzing market data…</div>
+        </div>
+
+        <div class="button-group" id="uploadActions">
+          <button class="good" id="analyzeBtn" disabled>Analyze Market Survey</button>
+          <button id="resetBtn">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Report Output (hidden until analysis completes) -->
+    <div id="reportOutput" class="hidden">
+
+      <!-- Report Header -->
+      <div class="card">
+        <h2 id="reportTitle">Market Survey Analysis</h2>
+        <div class="content">
+          <div class="stats-grid" id="summaryStats"></div>
+          <div class="button-group" style="margin-top:0">
+            <button class="primary" id="printBtn">Print / Export PDF</button>
+            <button id="newAnalysisBtn">New Analysis</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Executive Summary -->
+      <div class="card">
+        <h2>Executive Summary</h2>
+        <div class="content">
+          <div class="section-narrative" id="execSummary"></div>
+        </div>
+      </div>
+
+      <!-- Subject Property Overview -->
+      <div class="card">
+        <h2>Subject Property Overview</h2>
+        <div class="content" id="subjectOverview"></div>
+      </div>
+
+      <!-- Market Averages vs Subject -->
+      <div class="card">
+        <h2>Market Averages vs Subject Property</h2>
+        <div class="content">
+          <div class="chart-container" id="comparisonChartWrap">
+            <canvas id="comparisonChart"></canvas>
+          </div>
+          <div id="comparisonTableWrap"></div>
+        </div>
+      </div>
+
+      <!-- Floorplan Analysis -->
+      <div class="card">
+        <h2>Floorplan Analysis</h2>
+        <div class="content" id="floorplanAnalysis"></div>
+      </div>
+
+      <!-- Strengths & Weaknesses -->
+      <div class="card">
+        <h2>Competitive Position</h2>
+        <div class="content" id="swSection"></div>
+      </div>
+
+      <!-- Strategic Recommendations -->
+      <div class="card">
+        <h2>Strategic Recommendations</h2>
+        <div class="content" id="recommendations"></div>
+      </div>
+
+      <!-- Detailed Market Table -->
+      <div class="card">
+        <h2>Detailed Market Survey Data</h2>
+        <div class="content">
+          <p style="color:var(--subtext); margin-bottom:12px; font-size:13px">Full parsed data from the uploaded workbook. Scroll horizontally to view all columns.</p>
+          <div class="market-table-wrap" id="detailedTableWrap"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+  // ===== GLOBALS =====
+  let currentUser = null;
+  let rawWorkbook = null;
+  let parsedSurvey = null;
+  let comparisonChartInstance = null;
+
+  const els = {
+    bootLoader: document.getElementById('bootLoader'),
+    appHeader: document.getElementById('appHeader'),
+    appContainer: document.getElementById('appContainer'),
+    logoutBtn: document.getElementById('logoutBtn'),
+    uploadCard: document.getElementById('uploadCard'),
+    uploadZone: document.getElementById('uploadZone'),
+    fileInput: document.getElementById('fileInput'),
+    uploadFileName: document.getElementById('uploadFileName'),
+    errorAlert: document.getElementById('errorAlert'),
+    errorMessage: document.getElementById('errorMessage'),
+    infoAlert: document.getElementById('infoAlert'),
+    loadingState: document.getElementById('loadingState'),
+    analyzeBtn: document.getElementById('analyzeBtn'),
+    resetBtn: document.getElementById('resetBtn'),
+    reportOutput: document.getElementById('reportOutput'),
+    reportTitle: document.getElementById('reportTitle'),
+    summaryStats: document.getElementById('summaryStats'),
+    execSummary: document.getElementById('execSummary'),
+    subjectOverview: document.getElementById('subjectOverview'),
+    comparisonChartWrap: document.getElementById('comparisonChartWrap'),
+    comparisonTableWrap: document.getElementById('comparisonTableWrap'),
+    floorplanAnalysis: document.getElementById('floorplanAnalysis'),
+    swSection: document.getElementById('swSection'),
+    recommendations: document.getElementById('recommendations'),
+    detailedTableWrap: document.getElementById('detailedTableWrap'),
+    printBtn: document.getElementById('printBtn'),
+    newAnalysisBtn: document.getElementById('newAnalysisBtn'),
+    uploadActions: document.getElementById('uploadActions'),
+  };
+
+  // ===== AUTH =====
+  async function initAuth() {
+    try {
+      const meRes = await fetch('/api/me', { credentials: 'include' });
+      if (meRes.ok) {
+        const me = await meRes.json();
+        currentUser = { username: me.username, role: me.role, properties: me.properties };
+        showApp();
+        return true;
+      }
+    } catch (e) {
+      console.error('Auth error:', e);
+    }
+    window.location.href = 'index.html';
+    return false;
+  }
+
+  function showApp() {
+    els.bootLoader.style.display = 'none';
+    els.appHeader.style.display = '';
+    els.appContainer.style.display = '';
+  }
+
+  async function doLogout() {
+    try { await fetch('/api/auth-logout', { method: 'POST', credentials: 'include' }); } catch (e) {}
+    window.location.href = 'index.html';
+  }
+
+  // ===== HELPERS =====
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function showError(msg) {
+    els.errorMessage.innerHTML = msg;
+    els.errorAlert.classList.remove('hidden');
+  }
+
+  function hideError() {
+    els.errorAlert.classList.add('hidden');
+  }
+
+  function fmt$(val) {
+    if (val == null || isNaN(val)) return '—';
+    return '$' + Number(val).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  }
+
+  function fmtPct(val) {
+    if (val == null || isNaN(val)) return '—';
+    const sign = val > 0 ? '+' : '';
+    return sign + val.toFixed(1) + '%';
+  }
+
+  function parseCurrency(val) {
+    if (val == null) return null;
+    if (typeof val === 'number') return val;
+    const cleaned = String(val).replace(/[$,\s]/g, '');
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? null : num;
+  }
+
+  function parseNum(val) {
+    if (val == null) return null;
+    if (typeof val === 'number') return val;
+    const cleaned = String(val).replace(/[,\s]/g, '');
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? null : num;
+  }
+
+  function normalizeHeader(h) {
+    if (!h) return '';
+    return String(h).toLowerCase().trim().replace(/[\s_\-\/]+/g, ' ');
+  }
+
+  function avg(arr) {
+    const valid = arr.filter(v => v != null && !isNaN(v));
+    if (valid.length === 0) return null;
+    return valid.reduce((a, b) => a + b, 0) / valid.length;
+  }
+
+  function minVal(arr) {
+    const valid = arr.filter(v => v != null && !isNaN(v));
+    return valid.length ? Math.min(...valid) : null;
+  }
+
+  function maxVal(arr) {
+    const valid = arr.filter(v => v != null && !isNaN(v));
+    return valid.length ? Math.max(...valid) : null;
+  }
+
+  // ===== FILE UPLOAD =====
+  function setupUpload() {
+    const zone = els.uploadZone;
+    const input = els.fileInput;
+
+    zone.addEventListener('click', () => input.click());
+
+    zone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      zone.classList.add('dragover');
+    });
+
+    zone.addEventListener('dragleave', () => {
+      zone.classList.remove('dragover');
+    });
+
+    zone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      zone.classList.remove('dragover');
+      if (e.dataTransfer.files.length > 0) {
+        input.files = e.dataTransfer.files;
+        handleFile(e.dataTransfer.files[0]);
+      }
+    });
+
+    input.addEventListener('change', () => {
+      if (input.files[0]) handleFile(input.files[0]);
+    });
+  }
+
+  function handleFile(file) {
+    hideError();
+    const ext = '.' + file.name.split('.').pop().toLowerCase();
+    if (ext !== '.xlsx' && ext !== '.xls') {
+      showError('Invalid file type. Please upload an Excel file (.xlsx or .xls).');
+      els.uploadZone.classList.add('error');
+      setTimeout(() => els.uploadZone.classList.remove('error'), 2500);
+      return;
+    }
+
+    els.uploadZone.classList.add('has-file');
+    els.uploadFileName.textContent = '✓ ' + file.name;
+    els.uploadFileName.classList.remove('hidden');
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        rawWorkbook = XLSX.read(data, { type: 'array' });
+        els.analyzeBtn.disabled = false;
+      } catch (err) {
+        showError('Failed to read the Excel file: ' + escapeHtml(err.message));
+        els.uploadZone.classList.remove('has-file');
+        els.uploadFileName.classList.add('hidden');
+        rawWorkbook = null;
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  // ===== PARSER =====
+  // The parser is designed to be flexible. Market survey spreadsheets vary widely.
+  // We use header detection and keyword matching to infer structure.
+
+  function parseWorkbook(wb) {
+    // Try each sheet — pick the one that looks most like a market survey
+    let bestSheet = null;
+    let bestScore = -1;
+
+    for (const name of wb.SheetNames) {
+      const sheet = wb.Sheets[name];
+      const json = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+      const score = scoreSurveySheet(json);
+      if (score > bestScore) {
+        bestScore = score;
+        bestSheet = { name, json };
+      }
+    }
+
+    if (!bestSheet || bestSheet.json.length < 3) {
+      throw new Error('Could not find a valid market survey sheet in this workbook.');
+    }
+
+    return extractSurveyData(bestSheet.json, bestSheet.name);
+  }
+
+  // Score a sheet to determine if it looks like a market survey
+  function scoreSurveySheet(rows) {
+    let score = 0;
+    const keywords = [
+      'property', 'comp', 'subject', 'floorplan', 'floor plan', 'unit type',
+      'rate', 'rent', 'price', 'bed', 'bath', 'sqft', 'sq ft', 'square',
+      'amenity', 'amenities', 'distance', 'campus', 'utility', 'utilities',
+      'fee', 'concession', 'deposit', 'parking', 'market', 'survey',
+      'community', 'apartment', 'per bed', 'per unit', 'monthly'
+    ];
+    const flat = rows.slice(0, 20).flat().map(c => normalizeHeader(String(c)));
+    for (const kw of keywords) {
+      if (flat.some(c => c.includes(kw))) score++;
+    }
+    // Bonus for having many rows (data)
+    if (rows.length > 5) score += 2;
+    if (rows.length > 15) score += 2;
+    return score;
+  }
+
+  // Extract structured data from the best sheet
+  function extractSurveyData(rows, sheetName) {
+    // Step 1: Find the header row
+    const headerInfo = findHeaderRow(rows);
+    if (!headerInfo) throw new Error('Could not detect column headers in the spreadsheet.');
+
+    const { headerRowIndex, headers } = headerInfo;
+    const dataRows = rows.slice(headerRowIndex + 1).filter(r => r.some(c => c !== '' && c != null));
+
+    // Step 2: Map columns to known fields
+    const colMap = mapColumns(headers);
+
+    // Step 3: Parse properties
+    const properties = [];
+    for (const row of dataRows) {
+      const prop = parsePropertyRow(row, headers, colMap);
+      if (prop && prop.name) {
+        properties.push(prop);
+      }
+    }
+
+    if (properties.length === 0) {
+      throw new Error('No property data found in the spreadsheet. Check that the file contains property names and rates.');
+    }
+
+    // Step 4: Identify subject property
+    const subjectIndex = identifySubject(properties, rows, headerRowIndex);
+    const subject = properties[subjectIndex];
+    subject.isSubject = true;
+    const comps = properties.filter((_, i) => i !== subjectIndex);
+
+    // Step 5: Extract floorplan data if present
+    const floorplans = extractFloorplans(properties, colMap, headers);
+
+    return {
+      sheetName,
+      headers,
+      colMap,
+      rawHeaders: headers,
+      subject,
+      comps,
+      allProperties: properties,
+      floorplans,
+      dataRows,
+      rawRows: rows,
+    };
+  }
+
+  function findHeaderRow(rows) {
+    // Look for the row with the most "header-like" cells
+    const headerKeywords = [
+      'property', 'name', 'community', 'comp', 'rate', 'rent', 'price',
+      'bed', 'bath', 'sqft', 'sq ft', 'floorplan', 'floor plan', 'unit',
+      'amenity', 'fee', 'distance', 'campus', 'utility', 'deposit',
+      'concession', 'parking', 'address', 'location', 'type', 'monthly',
+      'per bed', 'per unit', 'total', 'year built', 'built', 'units'
+    ];
+
+    let bestRow = -1;
+    let bestScore = 0;
+
+    for (let i = 0; i < Math.min(rows.length, 15); i++) {
+      const row = rows[i];
+      if (!row || row.length < 2) continue;
+      let score = 0;
+      for (const cell of row) {
+        const norm = normalizeHeader(String(cell));
+        if (norm.length < 2 || norm.length > 60) continue;
+        for (const kw of headerKeywords) {
+          if (norm.includes(kw)) { score++; break; }
+        }
+      }
+      // Prefer rows with more non-empty cells
+      const nonEmpty = row.filter(c => c !== '' && c != null).length;
+      score += nonEmpty * 0.1;
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestRow = i;
+      }
+    }
+
+    if (bestRow < 0 || bestScore < 2) return null;
+
+    const headers = rows[bestRow].map(c => String(c).trim());
+    return { headerRowIndex: bestRow, headers };
+  }
+
+  function mapColumns(headers) {
+    const map = {};
+    const patterns = {
+      name: /^(property|name|community|comp|apartment|complex|subject)/,
+      rate: /(rate|rent|price|monthly|cost)/,
+      perBed: /(per\s*bed)/,
+      perUnit: /(per\s*unit|total\s*rent|unit\s*rate)/,
+      beds: /^(bed|br|bedroom)/,
+      baths: /^(bath|ba|bathroom)/,
+      sqft: /(sq\s*ft|sqft|square\s*f|size)/,
+      floorplan: /(floor\s*plan|unit\s*type|plan\s*name|fp|model)/,
+      distance: /(distance|campus|mile|walk)/,
+      amenities: /(amenit)/,
+      utilities: /(utilit|included)/,
+      fees: /(fee|admin|app)/,
+      deposit: /(deposit|security)/,
+      concession: /(concession|special|promo)/,
+      parking: /(parking)/,
+      yearBuilt: /(year\s*built|built|constructed)/,
+      totalUnits: /(total\s*unit|unit\s*count|# of unit|number of unit)/,
+      address: /(address|location|street)/,
+    };
+
+    for (let i = 0; i < headers.length; i++) {
+      const norm = normalizeHeader(headers[i]);
+      if (!norm) continue;
+      for (const [key, regex] of Object.entries(patterns)) {
+        if (regex.test(norm)) {
+          // For rate, check if it's per-bed or per-unit specifically
+          if (key === 'rate') {
+            if (/per\s*bed/.test(norm)) {
+              if (!map.perBed) map.perBed = i;
+              continue;
+            }
+            if (/per\s*unit/.test(norm)) {
+              if (!map.perUnit) map.perUnit = i;
+              continue;
+            }
+          }
+          if (!map[key]) {
+            map[key] = i;
+          }
+        }
+      }
+    }
+
+    // If we found a generic "rate" but no perBed/perUnit, assign it
+    if (map.rate && !map.perBed && !map.perUnit) {
+      // Default to treating the rate column as the primary rate
+      // We'll label it generically
+    }
+
+    return map;
+  }
+
+  function parsePropertyRow(row, headers, colMap) {
+    const nameIdx = colMap.name;
+    if (nameIdx == null) {
+      // Try first non-empty cell as name
+      const firstNonEmpty = row.findIndex(c => c !== '' && c != null);
+      if (firstNonEmpty < 0) return null;
+      // Only use if it looks like a name (not a number)
+      const val = String(row[firstNonEmpty]).trim();
+      if (!val || !isNaN(val)) return null;
+    }
+
+    const name = nameIdx != null ? String(row[nameIdx] || '').trim() : String(row[0] || '').trim();
+    if (!name || name.length < 2) return null;
+    // Skip rows that look like headers or totals
+    const nameLower = name.toLowerCase();
+    if (['average', 'avg', 'market avg', 'market average', 'total', 'min', 'max', 'median', 'mean'].includes(nameLower)) return null;
+
+    const prop = { name, raw: row };
+
+    // Extract all mapped fields
+    if (colMap.rate != null) prop.rate = parseCurrency(row[colMap.rate]);
+    if (colMap.perBed != null) prop.perBed = parseCurrency(row[colMap.perBed]);
+    if (colMap.perUnit != null) prop.perUnit = parseCurrency(row[colMap.perUnit]);
+    if (colMap.beds != null) prop.beds = parseNum(row[colMap.beds]);
+    if (colMap.baths != null) prop.baths = parseNum(row[colMap.baths]);
+    if (colMap.sqft != null) prop.sqft = parseNum(row[colMap.sqft]);
+    if (colMap.floorplan != null) prop.floorplan = String(row[colMap.floorplan] || '').trim();
+    if (colMap.distance != null) prop.distance = String(row[colMap.distance] || '').trim();
+    if (colMap.amenities != null) prop.amenities = String(row[colMap.amenities] || '').trim();
+    if (colMap.utilities != null) prop.utilities = String(row[colMap.utilities] || '').trim();
+    if (colMap.fees != null) prop.fees = String(row[colMap.fees] || '').trim();
+    if (colMap.deposit != null) prop.deposit = String(row[colMap.deposit] || '').trim();
+    if (colMap.concession != null) prop.concession = String(row[colMap.concession] || '').trim();
+    if (colMap.parking != null) prop.parking = String(row[colMap.parking] || '').trim();
+    if (colMap.yearBuilt != null) prop.yearBuilt = String(row[colMap.yearBuilt] || '').trim();
+    if (colMap.totalUnits != null) prop.totalUnits = parseNum(row[colMap.totalUnits]);
+    if (colMap.address != null) prop.address = String(row[colMap.address] || '').trim();
+
+    // Determine primary rate
+    prop.primaryRate = prop.perBed || prop.perUnit || prop.rate || null;
+    prop.rateType = prop.perBed ? 'per bed' : (prop.perUnit ? 'per unit' : (prop.rate ? 'rate' : null));
+
+    // Collect all extra columns as metadata
+    prop.extras = {};
+    for (let i = 0; i < headers.length; i++) {
+      const alreadyMapped = Object.values(colMap).includes(i);
+      if (!alreadyMapped && row[i] !== '' && row[i] != null) {
+        prop.extras[headers[i]] = row[i];
+      }
+    }
+
+    return prop;
+  }
+
+  function identifySubject(properties, rows, headerRowIndex) {
+    // Strategy 1: Look for "subject" keyword in the rows above or in the property name
+    for (let i = 0; i < properties.length; i++) {
+      const nameLower = properties[i].name.toLowerCase();
+      if (nameLower.includes('subject') || nameLower.includes('(subj)') || nameLower.includes('*subject*')) {
+        return i;
+      }
+    }
+
+    // Strategy 2: Check rows above header for "subject" label pointing to a property
+    for (let r = 0; r < headerRowIndex; r++) {
+      const rowText = rows[r].map(c => String(c).toLowerCase()).join(' ');
+      if (rowText.includes('subject')) {
+        // Try to find a property name in this row
+        for (let i = 0; i < properties.length; i++) {
+          if (rowText.includes(properties[i].name.toLowerCase())) return i;
+        }
+      }
+    }
+
+    // Strategy 3: Check if first property is highlighted or separated
+    // In many surveys, the subject is listed first
+    // Also check if any property row has a "subject" marker in extra columns
+    for (let i = 0; i < properties.length; i++) {
+      const extras = Object.values(properties[i].extras || {}).map(v => String(v).toLowerCase()).join(' ');
+      if (extras.includes('subject')) return i;
+    }
+
+    // Default: first property is the subject
+    return 0;
+  }
+
+  function extractFloorplans(properties, colMap, headers) {
+    // Group by floorplan or bed count
+    const fpMap = {};
+
+    for (const prop of properties) {
+      const fpKey = prop.floorplan || (prop.beds != null ? prop.beds + 'BR' : 'Unknown');
+      if (!fpMap[fpKey]) {
+        fpMap[fpKey] = { name: fpKey, beds: prop.beds, entries: [] };
+      }
+      fpMap[fpKey].entries.push(prop);
+    }
+
+    // If everything is "Unknown", try grouping by bed count
+    const keys = Object.keys(fpMap);
+    if (keys.length === 1 && keys[0] === 'Unknown') {
+      // No floorplan differentiation possible
+      return [];
+    }
+
+    return Object.values(fpMap);
+  }
+
+  // ===== ANALYSIS ENGINE =====
+  function analyzeMarket(survey) {
+    const { subject, comps, allProperties, floorplans } = survey;
+    const analysis = {};
+
+    // Overall market rates
+    const compRates = comps.map(c => c.primaryRate).filter(v => v != null);
+    analysis.marketAvgRate = avg(compRates);
+    analysis.marketMinRate = minVal(compRates);
+    analysis.marketMaxRate = maxVal(compRates);
+    analysis.subjectRate = subject.primaryRate;
+    analysis.rateType = subject.rateType || 'rate';
+
+    if (analysis.subjectRate != null && analysis.marketAvgRate != null) {
+      analysis.rateVariance = analysis.subjectRate - analysis.marketAvgRate;
+      analysis.rateVariancePct = (analysis.rateVariance / analysis.marketAvgRate) * 100;
+    }
+
+    // Sqft comparison
+    const compSqft = comps.map(c => c.sqft).filter(v => v != null);
+    analysis.marketAvgSqft = avg(compSqft);
+    analysis.subjectSqft = subject.sqft;
+
+    // Per-floorplan analysis
+    analysis.floorplanAnalysis = [];
+    for (const fp of floorplans) {
+      const subjectEntries = fp.entries.filter(e => e.isSubject);
+      const compEntries = fp.entries.filter(e => !e.isSubject);
+      const compFpRates = compEntries.map(e => e.primaryRate).filter(v => v != null);
+
+      const fpAnalysis = {
+        name: fp.name,
+        beds: fp.beds,
+        subjectRate: subjectEntries.length > 0 ? subjectEntries[0].primaryRate : null,
+        marketAvg: avg(compFpRates),
+        marketMin: minVal(compFpRates),
+        marketMax: maxVal(compFpRates),
+        compCount: compEntries.length,
+        variance: null,
+        variancePct: null,
+        position: 'unknown',
+      };
+
+      if (fpAnalysis.subjectRate != null && fpAnalysis.marketAvg != null) {
+        fpAnalysis.variance = fpAnalysis.subjectRate - fpAnalysis.marketAvg;
+        fpAnalysis.variancePct = (fpAnalysis.variance / fpAnalysis.marketAvg) * 100;
+
+        if (fpAnalysis.variancePct > 5) fpAnalysis.position = 'premium';
+        else if (fpAnalysis.variancePct < -5) fpAnalysis.position = 'value';
+        else fpAnalysis.position = 'in-line';
+      }
+
+      analysis.floorplanAnalysis.push(fpAnalysis);
+    }
+
+    // Strengths and weaknesses
+    analysis.strengths = [];
+    analysis.weaknesses = [];
+
+    // Rate positioning
+    if (analysis.rateVariancePct != null) {
+      if (analysis.rateVariancePct < -3) {
+        analysis.strengths.push('Priced below market average by ' + Math.abs(analysis.rateVariancePct).toFixed(1) + '%, which could drive lease-up velocity.');
+      } else if (analysis.rateVariancePct > 5) {
+        analysis.weaknesses.push('Priced ' + analysis.rateVariancePct.toFixed(1) + '% above market average — may need to justify the premium through amenities or location.');
+      }
+    }
+
+    // Distance to campus
+    if (subject.distance) {
+      const subDist = parseFloat(String(subject.distance).replace(/[^\d.]/g, ''));
+      const compDists = comps.map(c => parseFloat(String(c.distance || '').replace(/[^\d.]/g, ''))).filter(v => !isNaN(v));
+      const avgDist = avg(compDists);
+      if (!isNaN(subDist) && avgDist != null) {
+        if (subDist < avgDist) {
+          analysis.strengths.push('Closer to campus than the average comp (' + subDist.toFixed(1) + ' vs ' + avgDist.toFixed(1) + ' mi avg).');
+        } else if (subDist > avgDist * 1.2) {
+          analysis.weaknesses.push('Farther from campus than most comps (' + subDist.toFixed(1) + ' vs ' + avgDist.toFixed(1) + ' mi avg), which may affect demand from students who prioritize walkability.');
+        }
+      }
+    }
+
+    // Amenities
+    if (subject.amenities) {
+      analysis.strengths.push('Amenity package includes: ' + subject.amenities + '.');
+    }
+
+    // Utilities included
+    if (subject.utilities) {
+      const utilLower = subject.utilities.toLowerCase();
+      if (utilLower.includes('all') || utilLower.includes('included') || utilLower.includes('yes')) {
+        analysis.strengths.push('Utilities are included in rent, simplifying the value proposition for residents.');
+      } else if (utilLower.includes('none') || utilLower.includes('no') || utilLower.includes('not')) {
+        analysis.weaknesses.push('Utilities are not included — residents bear additional monthly costs beyond rent.');
+      }
+    }
+
+    // Concessions
+    if (subject.concession) {
+      const concLower = subject.concession.toLowerCase();
+      if (concLower.includes('none') || concLower === '' || concLower === 'n/a') {
+        // Check if comps are offering concessions
+        const compsWithConcessions = comps.filter(c => c.concession && !['none', 'n/a', ''].includes(c.concession.toLowerCase().trim()));
+        if (compsWithConcessions.length > 0) {
+          analysis.weaknesses.push('Not currently offering concessions while ' + compsWithConcessions.length + ' comp(s) are running specials.');
+        }
+      } else {
+        analysis.strengths.push('Currently offering concessions: ' + subject.concession + '.');
+      }
+    }
+
+    // Sqft
+    if (analysis.subjectSqft != null && analysis.marketAvgSqft != null) {
+      if (analysis.subjectSqft > analysis.marketAvgSqft * 1.05) {
+        analysis.strengths.push('Larger average unit size (' + Math.round(analysis.subjectSqft) + ' sqft vs ' + Math.round(analysis.marketAvgSqft) + ' sqft market avg).');
+      } else if (analysis.subjectSqft < analysis.marketAvgSqft * 0.95) {
+        analysis.weaknesses.push('Smaller average unit size (' + Math.round(analysis.subjectSqft) + ' sqft vs ' + Math.round(analysis.marketAvgSqft) + ' sqft market avg).');
+      }
+    }
+
+    // Year built
+    if (subject.yearBuilt) {
+      const yr = parseInt(subject.yearBuilt);
+      if (!isNaN(yr)) {
+        const compYears = comps.map(c => parseInt(c.yearBuilt)).filter(v => !isNaN(v));
+        const avgYear = avg(compYears);
+        if (avgYear != null) {
+          if (yr > avgYear + 3) {
+            analysis.strengths.push('Newer construction (built ' + yr + ') compared to the comp set average (' + Math.round(avgYear) + ').');
+          } else if (yr < avgYear - 5) {
+            analysis.weaknesses.push('Older property (built ' + yr + ') compared to the comp set average (' + Math.round(avgYear) + '). May need renovation investment to stay competitive.');
+          }
+        }
+      }
+    }
+
+    // Fallback if no strengths/weaknesses detected
+    if (analysis.strengths.length === 0) {
+      analysis.strengths.push('Data available in the spreadsheet did not surface clear standout advantages. A deeper qualitative review is recommended.');
+    }
+    if (analysis.weaknesses.length === 0) {
+      analysis.weaknesses.push('No significant vulnerabilities detected from the available data. Continue monitoring comp activity.');
+    }
+
+    // Recommendations
+    analysis.recommendations = generateRecommendations(analysis, survey);
+
+    return analysis;
+  }
+
+  function generateRecommendations(analysis, survey) {
+    const recs = [];
+    const { subject, comps } = survey;
+
+    if (analysis.rateVariancePct != null) {
+      if (analysis.rateVariancePct > 8) {
+        recs.push('Consider evaluating whether the current rate premium is supported by occupancy performance. If lease-up is lagging, a targeted rate adjustment or concession on slower-moving floorplans could help close the gap.');
+      } else if (analysis.rateVariancePct > 3) {
+        recs.push('Rates are slightly above market. This is manageable if the property delivers a noticeably better experience. Make sure marketing materials clearly communicate the value-adds that justify the premium.');
+      } else if (analysis.rateVariancePct < -5) {
+        recs.push('There may be room to push rates closer to market average without hurting velocity. Test a modest increase on the strongest-performing floorplans first.');
+      } else {
+        recs.push('Rates are in line with the market. Focus on maintaining occupancy and differentiating through service, amenities, and marketing rather than price.');
+      }
+    }
+
+    // Floorplan-specific recs
+    for (const fp of analysis.floorplanAnalysis) {
+      if (fp.position === 'premium' && fp.variancePct > 10) {
+        recs.push('The ' + fp.name + ' floorplan is priced well above market (' + fmtPct(fp.variancePct) + '). Monitor lease velocity closely — if traffic is soft, consider a targeted concession rather than a rate cut.');
+      } else if (fp.position === 'value' && fp.variancePct < -8) {
+        recs.push('The ' + fp.name + ' floorplan is priced significantly below market (' + fmtPct(fp.variancePct) + '). If demand is strong, there is likely upside to capture through a rate increase.');
+      }
+    }
+
+    // Concession strategy
+    const compsWithConcessions = comps.filter(c => c.concession && !['none', 'n/a', ''].includes(String(c.concession).toLowerCase().trim()));
+    if (compsWithConcessions.length >= comps.length * 0.5 && compsWithConcessions.length > 0) {
+      recs.push('More than half the comp set is running concessions. If the property is not offering any, consider a limited-time incentive to stay competitive during peak leasing season.');
+    }
+
+    // Marketing angle
+    if (subject.distance) {
+      const subDist = parseFloat(String(subject.distance).replace(/[^\d.]/g, ''));
+      if (!isNaN(subDist) && subDist <= 1) {
+        recs.push('Proximity to campus is a strong selling point. Lean into location-based messaging in digital ads and social content — "steps from campus" resonates with student renters.');
+      }
+    }
+
+    if (recs.length === 0) {
+      recs.push('Continue monitoring the comp set on a monthly basis. Maintain current pricing strategy and focus on resident experience to drive renewals and referrals.');
+    }
+
+    return recs;
+  }
+
+  // ===== REPORT RENDERER =====
+  function renderReport(survey, analysis) {
+    const { subject, comps, allProperties, floorplans } = survey;
+
+    // Report title
+    els.reportTitle.textContent = 'Market Survey Analysis — ' + subject.name;
+
+    // Summary stat cards
+    const statCards = [];
+    statCards.push({ label: 'Subject Property', value: subject.name, accent: true });
+    statCards.push({ label: 'Comps Analyzed', value: comps.length });
+    if (analysis.subjectRate != null) {
+      statCards.push({ label: 'Subject Rate (' + analysis.rateType + ')', value: fmt$(analysis.subjectRate) });
+    }
+    if (analysis.marketAvgRate != null) {
+      statCards.push({ label: 'Market Average', value: fmt$(analysis.marketAvgRate) });
+    }
+    if (analysis.rateVariancePct != null) {
+      const cls = analysis.rateVariancePct > 0 ? 'color:var(--bad)' : (analysis.rateVariancePct < 0 ? 'color:var(--good)' : '');
+      statCards.push({ label: 'Rate Variance', value: fmtPct(analysis.rateVariancePct), style: cls });
+    }
+
+    els.summaryStats.innerHTML = statCards.map(s => {
+      const accentClass = s.accent ? ' accent' : '';
+      const valStyle = s.style ? ' style="' + s.style + '"' : '';
+      return `<div class="stat-card${accentClass}">
+        <div class="stat-value"${valStyle}>${escapeHtml(String(s.value))}</div>
+        <div class="stat-label">${escapeHtml(s.label)}</div>
+      </div>`;
+    }).join('');
+
+    // Executive Summary
+    renderExecSummary(survey, analysis);
+
+    // Subject Property Overview
+    renderSubjectOverview(survey, analysis);
+
+    // Comparison chart + table
+    renderComparisonSection(survey, analysis);
+
+    // Floorplan analysis
+    renderFloorplanAnalysis(survey, analysis);
+
+    // Strengths & Weaknesses
+    renderSW(analysis);
+
+    // Recommendations
+    renderRecommendations(analysis);
+
+    // Detailed table
+    renderDetailedTable(survey);
+
+    // Show report
+    els.reportOutput.classList.remove('hidden');
+    els.reportOutput.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function renderExecSummary(survey, analysis) {
+    const { subject, comps } = survey;
+    let html = '<p>';
+
+    html += escapeHtml(subject.name) + ' was evaluated against ' + comps.length + ' comparable propert' + (comps.length === 1 ? 'y' : 'ies') + ' in the local market. ';
+
+    if (analysis.subjectRate != null && analysis.marketAvgRate != null) {
+      const dir = analysis.rateVariancePct > 0 ? 'above' : (analysis.rateVariancePct < 0 ? 'below' : 'right at');
+      html += 'At ' + fmt$(analysis.subjectRate) + ' ' + analysis.rateType + ', the subject is currently priced ';
+      if (Math.abs(analysis.rateVariancePct) < 1) {
+        html += 'essentially in line with the market average of ' + fmt$(analysis.marketAvgRate) + '. ';
+      } else {
+        html += Math.abs(analysis.rateVariancePct).toFixed(1) + '% ' + dir + ' the market average of ' + fmt$(analysis.marketAvgRate) + '. ';
+      }
+    }
+
+    if (analysis.marketMinRate != null && analysis.marketMaxRate != null) {
+      html += 'Comp rates range from ' + fmt$(analysis.marketMinRate) + ' to ' + fmt$(analysis.marketMaxRate) + '. ';
+    }
+
+    // Positioning summary
+    const premiumFPs = analysis.floorplanAnalysis.filter(f => f.position === 'premium');
+    const valueFPs = analysis.floorplanAnalysis.filter(f => f.position === 'value');
+    const inlineFPs = analysis.floorplanAnalysis.filter(f => f.position === 'in-line');
+
+    if (analysis.floorplanAnalysis.length > 1) {
+      html += '</p><p>';
+      if (premiumFPs.length > 0 && valueFPs.length > 0) {
+        html += 'Pricing is mixed across floorplans — some are positioned at a premium while others sit below market, suggesting there may be opportunities to rebalance the rate sheet. ';
+      } else if (premiumFPs.length > 0) {
+        html += 'Across the board, the property is positioned at a premium to the comp set. This works if the product and location support it, but warrants close attention to leasing pace. ';
+      } else if (valueFPs.length > 0) {
+        html += 'The property is generally priced below market, which could be an intentional lease-up strategy or a signal that there is room to capture additional revenue. ';
+      } else if (inlineFPs.length > 0) {
+        html += 'Rates are generally aligned with the market across floorplans, putting the property in a competitive position without significant pricing risk. ';
+      }
+    }
+
+    // Closing
+    html += '</p><p>';
+    if (analysis.strengths.length > 1) {
+      html += 'Key advantages include proximity, amenities, and overall value. ';
+    }
+    if (analysis.weaknesses.length > 1) {
+      html += 'Areas to watch include competitive pressure from concessions and rate positioning on select floorplans. ';
+    }
+    html += 'See the detailed sections below for a full breakdown.</p>';
+
+    els.execSummary.innerHTML = html;
+  }
+
+  function renderSubjectOverview(survey, analysis) {
+    const s = survey.subject;
+    let html = '<div class="stats-grid" style="margin-bottom:20px">';
+
+    const fields = [];
+    if (s.address) fields.push({ label: 'Address', value: s.address });
+    if (s.distance) fields.push({ label: 'Distance to Campus', value: s.distance });
+    if (s.beds != null) fields.push({ label: 'Bedrooms', value: s.beds });
+    if (s.baths != null) fields.push({ label: 'Bathrooms', value: s.baths });
+    if (s.sqft != null) fields.push({ label: 'Sq Ft', value: s.sqft.toLocaleString() });
+    if (s.primaryRate != null) fields.push({ label: 'Rate (' + (s.rateType || 'rate') + ')', value: fmt$(s.primaryRate) });
+    if (s.yearBuilt) fields.push({ label: 'Year Built', value: s.yearBuilt });
+    if (s.totalUnits != null) fields.push({ label: 'Total Units', value: s.totalUnits.toLocaleString() });
+
+    if (fields.length > 0) {
+      html += fields.map(f => `<div class="stat-card"><div class="stat-value" style="font-size:20px">${escapeHtml(String(f.value))}</div><div class="stat-label">${escapeHtml(f.label)}</div></div>`).join('');
+    }
+    html += '</div>';
+
+    // Additional details
+    const details = [];
+    if (s.utilities) details.push({ label: 'Utilities', value: s.utilities });
+    if (s.fees) details.push({ label: 'Fees', value: s.fees });
+    if (s.deposit) details.push({ label: 'Deposit', value: s.deposit });
+    if (s.concession) details.push({ label: 'Concessions', value: s.concession });
+    if (s.parking) details.push({ label: 'Parking', value: s.parking });
+    if (s.amenities) details.push({ label: 'Amenities', value: s.amenities });
+
+    if (details.length > 0) {
+      html += '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:12px">';
+      for (const d of details) {
+        html += `<div style="padding:12px 16px; background:#f8fafc; border:1px solid var(--border); border-radius:8px">
+          <div style="font-size:11px; font-weight:700; color:var(--subtext); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px">${escapeHtml(d.label)}</div>
+          <div style="font-size:13px; color:var(--text)">${escapeHtml(d.value)}</div>
+        </div>`;
+      }
+      html += '</div>';
+    }
+
+    // Extra fields
+    const extraKeys = Object.keys(s.extras || {}).filter(k => s.extras[k] !== '' && s.extras[k] != null);
+    if (extraKeys.length > 0) {
+      html += '<div style="margin-top:16px"><div style="font-size:12px; font-weight:700; color:var(--subtext); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px">Additional Data</div>';
+      html += '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:8px">';
+      for (const k of extraKeys) {
+        html += `<div style="padding:8px 12px; background:#f8fafc; border:1px solid var(--border); border-radius:6px; font-size:12px">
+          <span style="font-weight:600; color:var(--subtext)">${escapeHtml(k)}:</span> ${escapeHtml(String(s.extras[k]))}
+        </div>`;
+      }
+      html += '</div></div>';
+    }
+
+    if (fields.length === 0 && details.length === 0 && extraKeys.length === 0) {
+      html += '<p style="color:var(--subtext)">Limited property detail was found in the spreadsheet. The analysis below is based on rate and floorplan data.</p>';
+    }
+
+    els.subjectOverview.innerHTML = html;
+  }
+
+  function renderComparisonSection(survey, analysis) {
+    const { subject, comps } = survey;
+    const fpData = analysis.floorplanAnalysis;
+
+    // Build comparison table
+    let tableHtml = '<div style="overflow-x:auto"><table class="comparison-table"><thead><tr>';
+    tableHtml += '<th>Floorplan</th><th>Subject Rate</th><th>Market Avg</th><th>Market Min</th><th>Market Max</th><th>Variance</th><th>Variance %</th>';
+    tableHtml += '</tr></thead><tbody>';
+
+    if (fpData.length > 0) {
+      for (const fp of fpData) {
+        const varClass = fp.variancePct != null ? (fp.variancePct > 0 ? 'negative' : (fp.variancePct < 0 ? 'positive' : 'neutral')) : 'neutral';
+        tableHtml += '<tr>';
+        tableHtml += '<td style="font-weight:600">' + escapeHtml(fp.name) + '</td>';
+        tableHtml += '<td>' + fmt$(fp.subjectRate) + '</td>';
+        tableHtml += '<td>' + fmt$(fp.marketAvg) + '</td>';
+        tableHtml += '<td>' + fmt$(fp.marketMin) + '</td>';
+        tableHtml += '<td>' + fmt$(fp.marketMax) + '</td>';
+        tableHtml += '<td class="' + varClass + '">' + (fp.variance != null ? fmt$(fp.variance) : '—') + '</td>';
+        tableHtml += '<td class="' + varClass + '">' + (fp.variancePct != null ? fmtPct(fp.variancePct) : '—') + '</td>';
+        tableHtml += '</tr>';
+      }
+    } else {
+      // Single row for overall
+      const varClass = analysis.rateVariancePct != null ? (analysis.rateVariancePct > 0 ? 'negative' : (analysis.rateVariancePct < 0 ? 'positive' : 'neutral')) : 'neutral';
+      tableHtml += '<tr>';
+      tableHtml += '<td style="font-weight:600">Overall</td>';
+      tableHtml += '<td>' + fmt$(analysis.subjectRate) + '</td>';
+      tableHtml += '<td>' + fmt$(analysis.marketAvgRate) + '</td>';
+      tableHtml += '<td>' + fmt$(analysis.marketMinRate) + '</td>';
+      tableHtml += '<td>' + fmt$(analysis.marketMaxRate) + '</td>';
+      tableHtml += '<td class="' + varClass + '">' + (analysis.rateVariance != null ? fmt$(analysis.rateVariance) : '—') + '</td>';
+      tableHtml += '<td class="' + varClass + '">' + (analysis.rateVariancePct != null ? fmtPct(analysis.rateVariancePct) : '—') + '</td>';
+      tableHtml += '</tr>';
+    }
+
+    tableHtml += '</tbody></table></div>';
+
+    if (analysis.rateType) {
+      tableHtml += '<p style="font-size:11px; color:var(--subtext); margin-top:8px; font-style:italic">Note: Rates shown are ' + analysis.rateType + '. Variance is calculated as Subject minus Market Average. A negative variance means the subject is priced below market.</p>';
+    }
+
+    els.comparisonTableWrap.innerHTML = tableHtml;
+
+    // Chart
+    renderComparisonChart(survey, analysis);
+  }
+
+  function renderComparisonChart(survey, analysis) {
+    if (comparisonChartInstance) {
+      comparisonChartInstance.destroy();
+      comparisonChartInstance = null;
+    }
+
+    const { subject, comps } = survey;
+
+    // Build chart data: subject + each comp
+    const labels = [subject.name, ...comps.map(c => c.name)];
+    const rates = [subject.primaryRate, ...comps.map(c => c.primaryRate)];
+    const colors = [
+      'rgba(68, 100, 114, 0.85)', // brand-primary for subject
+      ...comps.map(() => 'rgba(82, 213, 255, 0.6)')
+    ];
+    const borderColors = [
+      '#446472',
+      ...comps.map(() => '#52d5ff')
+    ];
+
+    // Only render if we have rate data
+    const validRates = rates.filter(r => r != null);
+    if (validRates.length < 2) {
+      document.getElementById('comparisonChartWrap').innerHTML = '<p style="color:var(--subtext); text-align:center; padding:20px">Not enough rate data to generate a comparison chart.</p>';
+      return;
+    }
+
+    const ctx = document.getElementById('comparisonChart').getContext('2d');
+    comparisonChartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels.map(l => l.length > 20 ? l.substring(0, 18) + '…' : l),
+        datasets: [{
+          label: 'Rate (' + (analysis.rateType || 'rate') + ')',
+          data: rates,
+          backgroundColor: colors,
+          borderColor: borderColors,
+          borderWidth: 2,
+          borderRadius: 6,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(ctx) {
+                return ctx.raw != null ? fmt$(ctx.raw) : 'N/A';
+              },
+              title: function(items) {
+                // Show full name
+                const idx = items[0].dataIndex;
+                return labels[idx];
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: false,
+            ticks: {
+              callback: function(val) { return fmt$(val); },
+              font: { size: 11 }
+            },
+            grid: { color: '#f1f5f9' }
+          },
+          x: {
+            ticks: {
+              font: { size: 10 },
+              maxRotation: 45,
+              minRotation: 0
+            },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+
+    // Add market average line annotation (manual via plugin)
+    if (analysis.marketAvgRate != null) {
+      const avgLine = {
+        id: 'avgLine',
+        afterDraw(chart) {
+          const yScale = chart.scales.y;
+          const yPos = yScale.getPixelForValue(analysis.marketAvgRate);
+          const ctx = chart.ctx;
+          ctx.save();
+          ctx.beginPath();
+          ctx.setLineDash([6, 4]);
+          ctx.strokeStyle = '#ffb732';
+          ctx.lineWidth = 2;
+          ctx.moveTo(chart.chartArea.left, yPos);
+          ctx.lineTo(chart.chartArea.right, yPos);
+          ctx.stroke();
+          ctx.fillStyle = '#ffb732';
+          ctx.font = '11px Open Sans, sans-serif';
+          ctx.fillText('Market Avg: ' + fmt$(analysis.marketAvgRate), chart.chartArea.right - 140, yPos - 6);
+          ctx.restore();
+        }
+      };
+      comparisonChartInstance.config.plugins = [avgLine];
+      comparisonChartInstance.update();
+    }
+  }
+
+  function renderFloorplanAnalysis(survey, analysis) {
+    const fpData = analysis.floorplanAnalysis;
+
+    if (fpData.length === 0) {
+      els.floorplanAnalysis.innerHTML = '<p style="color:var(--subtext)">Floorplan-level data was not detected in the spreadsheet. The overall rate comparison above covers the available data.</p>';
+      return;
+    }
+
+    let html = '';
+
+    for (const fp of fpData) {
+      html += '<div class="report-section">';
+      html += '<div class="section-title">' + escapeHtml(fp.name);
+      if (fp.beds != null) html += ' (' + fp.beds + ' Bed)';
+      html += '</div>';
+
+      html += '<div class="section-narrative"><p>';
+
+      if (fp.subjectRate != null && fp.marketAvg != null) {
+        const posLabel = fp.position === 'premium' ? 'at a premium' : (fp.position === 'value' ? 'below market' : 'in line with the market');
+        html += 'For the ' + escapeHtml(fp.name) + ' floorplan, the subject property is priced ' + posLabel + ' at ' + fmt$(fp.subjectRate) + ' compared to a market average of ' + fmt$(fp.marketAvg) + '. ';
+
+        if (fp.marketMin != null && fp.marketMax != null) {
+          html += 'Comp rates for this floorplan range from ' + fmt$(fp.marketMin) + ' to ' + fmt$(fp.marketMax) + '. ';
+        }
+
+        if (fp.position === 'premium') {
+          html += 'This premium positioning means the property needs to deliver a noticeably better experience or location advantage to justify the higher price point. If leasing velocity is strong, the premium is working. If not, it may be worth revisiting.';
+        } else if (fp.position === 'value') {
+          html += 'Being priced below market could be a deliberate strategy to drive occupancy, or it could signal untapped revenue. If demand is healthy, consider testing a modest rate increase.';
+        } else {
+          html += 'This puts the property in a competitive spot — not leaving money on the table, but not creating a barrier to entry either. Maintaining this position while differentiating on experience is the play.';
+        }
+      } else if (fp.subjectRate != null) {
+        html += 'The subject property is priced at ' + fmt$(fp.subjectRate) + ' for this floorplan. Insufficient comp data was available to calculate a market average for direct comparison.';
+      } else {
+        html += 'No subject rate was found for this floorplan. ' + fp.compCount + ' comp(s) reported data with an average of ' + fmt$(fp.marketAvg) + '.';
+      }
+
+      html += '</p></div>';
+
+      // Mini variance bar
+      if (fp.variancePct != null) {
+        const barWidth = Math.min(Math.abs(fp.variancePct) * 3, 100);
+        const barClass = fp.variancePct > 0 ? 'negative' : 'positive';
+        html += '<div class="variance-bar-wrap">';
+        html += '<span style="font-size:12px; font-weight:600; color:var(--subtext); min-width:80px">Variance:</span>';
+        html += '<div class="variance-bar ' + barClass + '" style="width:' + barWidth + '%"></div>';
+        html += '<span style="font-size:12px; font-weight:600">' + fmtPct(fp.variancePct) + '</span>';
+        html += '</div>';
+      }
+
+      html += '</div>';
+    }
+
+    els.floorplanAnalysis.innerHTML = html;
+  }
+
+  function renderSW(analysis) {
+    let html = '<div class="sw-grid">';
+
+    // Strengths
+    html += '<div class="sw-card strengths"><h4>Competitive Strengths</h4><ul class="sw-list">';
+    for (const s of analysis.strengths) {
+      html += '<li><span class="icon" style="color:var(--good)">✓</span><span>' + escapeHtml(s) + '</span></li>';
+    }
+    html += '</ul></div>';
+
+    // Weaknesses
+    html += '<div class="sw-card weaknesses"><h4>Competitive Weaknesses</h4><ul class="sw-list">';
+    for (const w of analysis.weaknesses) {
+      html += '<li><span class="icon" style="color:var(--bad)">⚠</span><span>' + escapeHtml(w) + '</span></li>';
+    }
+    html += '</ul></div>';
+
+    html += '</div>';
+
+    els.swSection.innerHTML = html;
+  }
+
+  function renderRecommendations(analysis) {
+    let html = '<ul class="rec-list">';
+    analysis.recommendations.forEach((rec, i) => {
+      html += '<li><span class="rec-number">' + (i + 1) + '</span><span>' + escapeHtml(rec) + '</span></li>';
+    });
+    html += '</ul>';
+
+    els.recommendations.innerHTML = html;
+  }
+
+  function renderDetailedTable(survey) {
+    const { allProperties, rawHeaders, colMap } = survey;
+
+    if (allProperties.length === 0) {
+      els.detailedTableWrap.innerHTML = '<p style="color:var(--subtext)">No data to display.</p>';
+      return;
+    }
+
+    // Build table from raw headers and raw row data
+    let html = '<table class="market-table"><thead><tr>';
+    for (const h of rawHeaders) {
+      if (h) html += '<th>' + escapeHtml(h) + '</th>';
+    }
+    html += '</tr></thead><tbody>';
+
+    for (const prop of allProperties) {
+      const rowClass = prop.isSubject ? ' class="subject-highlight"' : '';
+      html += '<tr' + rowClass + '>';
+      for (let i = 0; i < rawHeaders.length; i++) {
+        if (!rawHeaders[i]) continue;
+        const val = prop.raw[i];
+        html += '<td>' + escapeHtml(val != null ? String(val) : '') + '</td>';
+      }
+      html += '</tr>';
+    }
+
+    html += '</tbody></table>';
+
+    if (survey.subject) {
+      html += '<p style="font-size:11px; color:var(--subtext); margin-top:8px; font-style:italic">The subject property (' + escapeHtml(survey.subject.name) + ') is highlighted in blue.</p>';
+    }
+
+    els.detailedTableWrap.innerHTML = html;
+  }
+
+  // ===== MAIN FLOW =====
+  function runAnalysis() {
+    hideError();
+
+    if (!rawWorkbook) {
+      showError('Please upload an Excel file first.');
+      return;
+    }
+
+    // Show loading
+    els.analyzeBtn.disabled = true;
+    els.loadingState.classList.remove('hidden');
+    els.uploadActions.style.display = 'none';
+    els.infoAlert.style.display = 'none';
+
+    // Use setTimeout to allow the UI to update before heavy parsing
+    setTimeout(() => {
+      try {
+        parsedSurvey = parseWorkbook(rawWorkbook);
+        const analysis = analyzeMarket(parsedSurvey);
+        renderReport(parsedSurvey, analysis);
+
+        // Hide upload card content, keep it minimal
+        els.loadingState.classList.add('hidden');
+        els.uploadActions.style.display = '';
+        els.analyzeBtn.disabled = false;
+
+      } catch (err) {
+        console.error('Analysis error:', err);
+        showError('Analysis failed: ' + escapeHtml(err.message) + '. Make sure the file contains a market survey with property names and rate data.');
+        els.loadingState.classList.add('hidden');
+        els.uploadActions.style.display = '';
+        els.infoAlert.style.display = '';
+        els.analyzeBtn.disabled = false;
+      }
+    }, 300);
+  }
+
+  function resetAll() {
+    rawWorkbook = null;
+    parsedSurvey = null;
+
+    els.fileInput.value = '';
+    els.uploadZone.classList.remove('has-file');
+    els.uploadFileName.classList.add('hidden');
+    els.analyzeBtn.disabled = true;
+    els.reportOutput.classList.add('hidden');
+    els.infoAlert.style.display = '';
+    els.loadingState.classList.add('hidden');
+    els.uploadActions.style.display = '';
+
+    if (comparisonChartInstance) {
+      comparisonChartInstance.destroy();
+      comparisonChartInstance = null;
+    }
+
+    hideError();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ===== EVENT LISTENERS =====
+  els.logoutBtn.addEventListener('click', doLogout);
+  els.analyzeBtn.addEventListener('click', runAnalysis);
+  els.resetBtn.addEventListener('click', resetAll);
+  els.newAnalysisBtn.addEventListener('click', resetAll);
+  els.printBtn.addEventListener('click', () => window.print());
+
+  setupUpload();
+
+  // ===== INIT =====
+  (async () => {
+    await initAuth();
+  })();
+  </script>
+</body>
+</html>
