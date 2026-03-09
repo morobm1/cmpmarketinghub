@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     :root{
@@ -299,6 +299,9 @@
   </div>
 
   <script>
+  console.log('Market Survey Tool Loaded');
+  console.log('XLSX loaded:', !!window.XLSX);
+
   // ===== GLOBALS =====
   let currentUser = null;
   let rawWorkbook = null;
@@ -460,6 +463,9 @@
 
   function handleFile(file) {
     hideError();
+    console.log('Uploaded file:', file.name);
+
+    // Validate file type
     const ext = '.' + file.name.split('.').pop().toLowerCase();
     if (ext !== '.xlsx' && ext !== '.xls') {
       showError('Invalid file type. Please upload an Excel file (.xlsx or .xls).');
@@ -468,22 +474,41 @@
       return;
     }
 
+    // Defensive check: ensure XLSX library is available
+    if (typeof window.XLSX === 'undefined') {
+      console.error('XLSX library not loaded');
+      showError('Excel parser failed to load. Please refresh the page and try again.');
+      return;
+    }
+
     els.uploadZone.classList.add('has-file');
     els.uploadFileName.textContent = '✓ ' + file.name;
     els.uploadFileName.classList.remove('hidden');
+    els.analyzeBtn.disabled = true; // Keep disabled until workbook loads
 
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const data = new Uint8Array(e.target.result);
-        rawWorkbook = XLSX.read(data, { type: 'array' });
+        rawWorkbook = window.XLSX.read(data, { type: 'array' });
+        console.log('Workbook parsed successfully');
         els.analyzeBtn.disabled = false;
       } catch (err) {
-        showError('Failed to read the Excel file: ' + escapeHtml(err.message));
+        console.error('Excel parse error:', err);
+        showError('Unable to read the Excel file. Please verify the spreadsheet format.');
         els.uploadZone.classList.remove('has-file');
         els.uploadFileName.classList.add('hidden');
+        els.analyzeBtn.disabled = true;
         rawWorkbook = null;
       }
+    };
+    reader.onerror = () => {
+      console.error('FileReader error');
+      showError('Unable to read the file. Please try again.');
+      els.uploadZone.classList.remove('has-file');
+      els.uploadFileName.classList.add('hidden');
+      els.analyzeBtn.disabled = true;
+      rawWorkbook = null;
     };
     reader.readAsArrayBuffer(file);
   }
@@ -493,13 +518,18 @@
   // We use header detection and keyword matching to infer structure.
 
   function parseWorkbook(wb) {
+    // Defensive check before parsing
+    if (typeof window.XLSX === 'undefined') {
+      throw new Error('Excel parser is not available. Please refresh the page.');
+    }
+
     // Try each sheet — pick the one that looks most like a market survey
     let bestSheet = null;
     let bestScore = -1;
 
     for (const name of wb.SheetNames) {
       const sheet = wb.Sheets[name];
-      const json = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+      const json = window.XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
       const score = scoreSurveySheet(json);
       if (score > bestScore) {
         bestScore = score;
