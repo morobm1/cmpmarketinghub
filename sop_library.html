@@ -85,9 +85,9 @@ header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;p
 .nav-section-title.collapsed .icon{transform:rotate(-90deg)}
 .nav-items{display:block;overflow:hidden;transition:max-height .3s ease}
 .nav-items.collapsed{max-height:0!important}
-.nav-item{padding:8px 20px 8px 36px;font-size:13px;color:#374151;cursor:pointer;transition:all .15s;border-left:3px solid transparent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.nav-item:hover{background:#f8fafc;color:#111827}
-.nav-item.active{background:#eef6f9;color:var(--brand-primary);border-left-color:var(--brand-accent-2);font-weight:600}
+.nav-item{padding:9px 20px 9px 36px;font-size:13px;color:#1e293b;font-weight:500;cursor:pointer;transition:all .15s;border-left:3px solid transparent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid #f1f5f9}
+.nav-item:hover{background:#e8f4f8;color:#0f172a;border-left-color:#cbd5e1}
+.nav-item.active{background:#d4eef7;color:#1e3a47;border-left-color:var(--brand-accent-2);font-weight:700}
 .nav-empty{padding:12px 20px;font-size:12px;color:var(--subtext);font-style:italic}
 
 /* Admin create button */
@@ -326,14 +326,30 @@ header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;p
         </div>
         <div>
           <label for="fCategory">Category</label>
-          <input id="fCategory" type="text" placeholder="e.g., Resident Services, Leasing, Marketing" />
+          <select id="fCategory">
+            <option value="">— Select Category —</option>
+            <option value="Leasing">Leasing</option>
+            <option value="Operations">Operations</option>
+            <option value="Maintenance">Maintenance</option>
+            <option value="Accounting">Accounting</option>
+            <option value="__other__">Other (type below)</option>
+          </select>
+          <input id="fCategoryOther" type="text" placeholder="Type category name…" style="display:none" />
         </div>
       </div>
 
       <div class="row-2">
         <div>
           <label for="fDepartment">Department</label>
-          <input id="fDepartment" type="text" placeholder="e.g., Leasing Team" />
+          <select id="fDepartment">
+            <option value="">— Select Department —</option>
+            <option value="Office Staff">Office Staff</option>
+            <option value="Leasing Staff">Leasing Staff</option>
+            <option value="Maintenance Team">Maintenance Team</option>
+            <option value="University Partner">University Partner</option>
+            <option value="__vendor__">Third-Party Vendor (type below)</option>
+          </select>
+          <input id="fDepartmentVendor" type="text" placeholder="Type vendor name…" style="display:none" />
         </div>
         <div>
           <label>Last Updated</label>
@@ -341,6 +357,12 @@ header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;p
           <div class="hint">Auto-populated when saved</div>
         </div>
       </div>
+
+      <!-- Training Video / Image -->
+      <div class="form-section-head">Training Video or Image <span class="optional-tag">Optional</span></div>
+      <label for="fTrainingUrl">Video or Image URL</label>
+      <input id="fTrainingUrl" type="text" placeholder="Paste a YouTube, Loom, Google Drive, or image URL…" />
+      <div class="hint">Supports: YouTube, Loom, Vimeo, Google Drive video links, or direct image URLs (.jpg, .png, .gif, .webp)</div>
 
       <!-- Section 1 – Purpose -->
       <div class="form-section-head" style="margin-top:24px">Section 1 – Purpose</div>
@@ -526,11 +548,14 @@ function renderNav() {
   const companySops = getCompanySops();
   const siteSops = getSiteSops();
 
-  // Filter by search
+  // Filter by search — searches title, category, system, department, property
   const filterFn = s => {
     if (!q) return true;
-    const hay = ((s.title || '') + ' ' + (s.category || '') + ' ' + (s.department || '') + ' ' + (s.purpose || '') + ' ' + (s.property || '')).toLowerCase();
-    return hay.includes(q);
+    const fields = [s.title, s.category, s.department, s.system, s.property, s.purpose, s.sopType === 'company' ? 'company-wide' : 'site'];
+    const hay = fields.filter(Boolean).join(' ').toLowerCase();
+    // Support multi-word: each word in query must match somewhere
+    const words = q.split(/\s+/).filter(Boolean);
+    return words.every(w => hay.includes(w));
   };
 
   const filteredCompany = companySops.filter(filterFn);
@@ -786,9 +811,63 @@ function textToBulletHtml(text) {
   return html;
 }
 
+// ===== CATEGORY / DEPARTMENT DROPDOWN HELPERS =====
+function getCategoryValue() {
+  const sel = document.getElementById('fCategory');
+  if (sel.value === '__other__') return document.getElementById('fCategoryOther').value.trim();
+  return sel.value;
+}
+function setCategoryValue(val) {
+  const sel = document.getElementById('fCategory');
+  const other = document.getElementById('fCategoryOther');
+  const presets = Array.from(sel.options).map(o => o.value).filter(v => v && v !== '__other__');
+  if (presets.includes(val)) { sel.value = val; other.style.display = 'none'; other.value = ''; }
+  else if (val) { sel.value = '__other__'; other.style.display = ''; other.value = val; }
+  else { sel.value = ''; other.style.display = 'none'; other.value = ''; }
+}
+function getDepartmentValue() {
+  const sel = document.getElementById('fDepartment');
+  if (sel.value === '__vendor__') return 'Third-Party Vendor: ' + document.getElementById('fDepartmentVendor').value.trim();
+  return sel.value;
+}
+function setDepartmentValue(val) {
+  const sel = document.getElementById('fDepartment');
+  const vendor = document.getElementById('fDepartmentVendor');
+  const presets = Array.from(sel.options).map(o => o.value).filter(v => v && v !== '__vendor__');
+  if (presets.includes(val)) { sel.value = val; vendor.style.display = 'none'; vendor.value = ''; }
+  else if (val && val.startsWith('Third-Party Vendor:')) { sel.value = '__vendor__'; vendor.style.display = ''; vendor.value = val.replace('Third-Party Vendor:', '').trim(); }
+  else if (val) { sel.value = '__vendor__'; vendor.style.display = ''; vendor.value = val; }
+  else { sel.value = ''; vendor.style.display = 'none'; vendor.value = ''; }
+}
+
+// ===== TRAINING VIDEO/IMAGE EMBED =====
+function buildTrainingEmbed(url) {
+  if (!url) return '';
+  // Image
+  if (/\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(url)) {
+    return `<div style="margin:20px 0;text-align:center"><img src="${escHtml(url)}" alt="Training Image" style="max-width:100%;border-radius:8px;border:1px solid #e2e8f0" /></div>\n`;
+  }
+  // YouTube
+  let m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  if (m) return `<div style="position:relative;width:100%;padding-bottom:56.25%;margin:20px 0;border-radius:8px;overflow:hidden"><iframe src="https://www.youtube.com/embed/${m[1]}?rel=0" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div>\n`;
+  // Loom
+  m = url.match(/loom\.com\/(?:share|embed)\/([a-zA-Z0-9]+)/);
+  if (m) return `<div style="position:relative;width:100%;padding-bottom:56.25%;margin:20px 0;border-radius:8px;overflow:hidden"><iframe src="https://www.loom.com/embed/${m[1]}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none" allowfullscreen></iframe></div>\n`;
+  // Vimeo
+  m = url.match(/vimeo\.com\/(\d+)/);
+  if (m) return `<div style="position:relative;width:100%;padding-bottom:56.25%;margin:20px 0;border-radius:8px;overflow:hidden"><iframe src="https://player.vimeo.com/video/${m[1]}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none" allow="autoplay;fullscreen;picture-in-picture" allowfullscreen></iframe></div>\n`;
+  // Google Drive
+  m = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (m) return `<div style="position:relative;width:100%;padding-bottom:56.25%;margin:20px 0;border-radius:8px;overflow:hidden"><iframe src="https://drive.google.com/file/d/${m[1]}/preview" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none" allow="autoplay" allowfullscreen></iframe></div>\n`;
+  // Direct video
+  if (/\.(mp4|webm|mov|ogg)(\?|$)/i.test(url)) return `<div style="margin:20px 0"><video controls preload="metadata" style="width:100%;border-radius:8px"><source src="${escHtml(url)}">Your browser does not support video.</video></div>\n`;
+  // Fallback: link
+  return `<div class="info-box"><h4>📹 Training Resource</h4><p><a href="${escHtml(url)}" target="_blank">${escHtml(url)}</a></p></div>\n`;
+}
+
 // ===== GENERATE HTML CONTENT FROM FORM =====
 function buildContentHtml(data) {
-  const { title, property, system, category, department, purpose, whenToUse, stepsData, expectedResults, bestPractices } = data;
+  const { title, property, system, category, department, purpose, whenToUse, stepsData, expectedResults, bestPractices, trainingUrl } = data;
 
   let html = '';
 
@@ -807,6 +886,9 @@ function buildContentHtml(data) {
   if (property) metaParts.push(`<strong>Property:</strong> ${escHtml(property)}`);
   if (system) metaParts.push(`<strong>System:</strong> ${escHtml(system)}`);
   if (metaParts.length) html += `<p>${metaParts.join(' &nbsp;|&nbsp; ')}</p>\n`;
+
+  // Training video/image
+  if (trainingUrl) html += buildTrainingEmbed(trainingUrl);
 
   // Section 1 – Purpose
   if (purpose) {
@@ -868,8 +950,9 @@ function openCreateModal() {
   document.getElementById('modalTitle').textContent = 'Create New SOP';
   document.getElementById('fSopType').value = 'company';
   document.getElementById('fTitle').value = '';
-  document.getElementById('fCategory').value = '';
-  document.getElementById('fDepartment').value = '';
+  setCategoryValue('');
+  setDepartmentValue('');
+  document.getElementById('fTrainingUrl').value = '';
   document.getElementById('fPurpose').value = '';
   document.getElementById('fWhenToUse').value = '';
   document.getElementById('fExpectedResults').value = '';
@@ -890,8 +973,9 @@ function openEditModal(id) {
   document.getElementById('modalTitle').textContent = 'Edit SOP';
   document.getElementById('fSopType').value = sop.sopType || 'company';
   document.getElementById('fTitle').value = sop.title || '';
-  document.getElementById('fCategory').value = sop.category || '';
-  document.getElementById('fDepartment').value = sop.department || '';
+  setCategoryValue(sop.category || '');
+  setDepartmentValue(sop.department || '');
+  document.getElementById('fTrainingUrl').value = sop.trainingUrl || '';
   document.getElementById('fPurpose').value = sop.purpose || '';
   document.getElementById('fWhenToUse').value = sop.whenToUse || '';
   document.getElementById('fExpectedResults').value = sop.expectedResults || '';
@@ -937,9 +1021,10 @@ async function saveSopFromModal() {
   const sopType = document.getElementById('fSopType').value;
   const property = sopType === 'site' ? document.getElementById('fProperty').value : null;
   const title = document.getElementById('fTitle').value.trim();
-  const category = document.getElementById('fCategory').value.trim() || 'General';
-  const department = document.getElementById('fDepartment').value.trim();
+  const category = getCategoryValue() || 'General';
+  const department = getDepartmentValue();
   const system = getSystemValue();
+  const trainingUrl = document.getElementById('fTrainingUrl').value.trim();
   const purpose = document.getElementById('fPurpose').value.trim();
   const whenToUse = document.getElementById('fWhenToUse').value.trim();
   const expectedResults = document.getElementById('fExpectedResults').value.trim();
@@ -952,11 +1037,12 @@ async function saveSopFromModal() {
   if (sopType === 'site' && !property) { alert('Select a property for site-specific SOPs.'); return; }
 
   // Auto-generate HTML content from structured fields
-  const content = buildContentHtml({ title, property, system, category, department, purpose, whenToUse, stepsData, expectedResults, bestPractices });
+  const content = buildContentHtml({ title, property, system, category, department, purpose, whenToUse, stepsData, expectedResults, bestPractices, trainingUrl });
 
   const payload = {
     sopType, property, title, category, department, system, content,
     purpose, whenToUse, stepsData, expectedResults, bestPractices,
+    trainingUrl,
     steps: '', resources: '', owner: '', lastReviewed: ''
   };
 
@@ -1049,6 +1135,12 @@ document.getElementById('modalSaveBtn').addEventListener('click', saveSopFromMod
 document.getElementById('fSopType').addEventListener('change', togglePropertyField);
 document.getElementById('fSystem').addEventListener('change', function() {
   document.getElementById('fSystemOther').style.display = this.value === '__other__' ? '' : 'none';
+});
+document.getElementById('fCategory').addEventListener('change', function() {
+  document.getElementById('fCategoryOther').style.display = this.value === '__other__' ? '' : 'none';
+});
+document.getElementById('fDepartment').addEventListener('change', function() {
+  document.getElementById('fDepartmentVendor').style.display = this.value === '__vendor__' ? '' : 'none';
 });
 document.getElementById('addStepBtn').addEventListener('click', () => addStep('', ''));
 document.getElementById('searchInput').addEventListener('input', renderNav);
