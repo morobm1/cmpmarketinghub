@@ -79,15 +79,15 @@ header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;p
 .nav-group-title .dot.company{background:var(--brand-accent-2)}
 .nav-group-title .dot.site{background:var(--brand-accent)}
 .nav-section{margin-bottom:2px}
-.nav-section-title{padding:8px 20px;font-size:13px;font-weight:700;color:#374151;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all .15s;user-select:none}
-.nav-section-title:hover{background:#f8fafc;color:#111827}
-.nav-section-title .icon{font-size:10px;transition:transform .2s}
-.nav-section-title.collapsed .icon{transform:rotate(-90deg)}
-.nav-items{display:block;overflow:hidden;transition:max-height .3s ease}
-.nav-items.collapsed{max-height:0!important}
-.nav-item{padding:10px 20px 10px 36px;font-size:13px;color:#0f172a;font-weight:600;cursor:pointer;transition:all .15s;border-left:3px solid transparent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid #e2e8f0;background:#f8fafc}
-.nav-item:hover{background:#dbeafe;color:#1e3a5f;border-left-color:#446472}
-.nav-item.active{background:#bae6fd;color:#0c4a6e;border-left-color:var(--brand-accent-2);font-weight:700}
+.nav-scroll .nav-section-title{padding:8px 20px;font-size:13px;font-weight:700;color:#374151;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all .15s;user-select:none}
+.nav-scroll .nav-section-title:hover{background:#f1f5f9;color:#111827}
+.nav-scroll .nav-section-title .icon{font-size:10px;transition:transform .2s}
+.nav-scroll .nav-section-title.collapsed .icon{transform:rotate(-90deg)}
+.nav-scroll .nav-items{display:block;overflow:hidden;transition:max-height .3s ease}
+.nav-scroll .nav-items.collapsed{max-height:0!important}
+.nav-scroll .sop-nav-link{display:block;padding:10px 20px 10px 36px;font-size:13px;color:#0f172a !important;font-weight:600;cursor:pointer;transition:all .15s;border-left:3px solid transparent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid #e2e8f0;background:#f8fafc;text-decoration:none}
+.nav-scroll .sop-nav-link:hover{background:#dbeafe;color:#1e3a5f !important;border-left-color:#446472}
+.nav-scroll .sop-nav-link.active{background:#bae6fd;color:#0c4a6e !important;border-left-color:var(--brand-accent-2);font-weight:700}
 .nav-empty{padding:12px 20px;font-size:12px;color:var(--subtext);font-style:italic}
 
 /* Admin create button */
@@ -575,7 +575,7 @@ function renderNav() {
         <div class="nav-items">`;
       items.forEach(s => {
         const active = s.id === selectedSopId ? ' active' : '';
-        html += `<div class="nav-item${active}" data-id="${escHtml(s.id)}">${escHtml(s.title)}</div>`;
+        html += `<div class="sop-nav-link${active}" data-id="${escHtml(s.id)}">${escHtml(s.title)}</div>`;
       });
       html += '</div></div>';
     }
@@ -601,7 +601,7 @@ function renderNav() {
         items.forEach(s => {
           const active = s.id === selectedSopId ? ' active' : '';
           const propLabel = (!isAdmin() && getUserProperties().length > 1) ? ` <span style="font-size:10px;color:#94a3b8">[${escHtml(s.property)}]</span>` : '';
-          html += `<div class="nav-item${active}" data-id="${escHtml(s.id)}">${escHtml(s.title)}${propLabel}</div>`;
+          html += `<div class="sop-nav-link${active}" data-id="${escHtml(s.id)}">${escHtml(s.title)}${propLabel}</div>`;
         });
         html += '</div></div>';
       }
@@ -619,7 +619,7 @@ function renderNav() {
           <div class="nav-items">`;
         items.sort((a, b) => (a.title || '').localeCompare(b.title || '')).forEach(s => {
           const active = s.id === selectedSopId ? ' active' : '';
-          html += `<div class="nav-item${active}" data-id="${escHtml(s.id)}">${escHtml(s.title)}</div>`;
+          html += `<div class="sop-nav-link${active}" data-id="${escHtml(s.id)}">${escHtml(s.title)}</div>`;
         });
         html += '</div></div>';
       }
@@ -631,8 +631,8 @@ function renderNav() {
   // Set max-height for nav-items
   nav.querySelectorAll('.nav-items').forEach(el => { el.style.maxHeight = el.scrollHeight + 'px'; });
 
-  // Click handlers
-  nav.querySelectorAll('.nav-item[data-id]').forEach(el => {
+  // Click handlers for SOP nav links
+  nav.querySelectorAll('.sop-nav-link[data-id]').forEach(el => {
     el.addEventListener('click', () => viewSop(el.dataset.id));
   });
 }
