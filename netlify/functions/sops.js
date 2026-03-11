@@ -24,6 +24,109 @@ import { getDb, ObjectId } from './_db.js';
    }
 ────────────────────────────────────────────── */
 
+// ─── Seed: preload default SOPs if collection is empty ───
+let seeded = false;
+async function ensureSeedSops(col) {
+  if (seeded) return;
+  seeded = true;
+  const count = await col.countDocuments();
+  if (count > 0) return; // already has data
+
+  const now = new Date();
+  const seeds = [
+    {
+      sopType: 'site',
+      property: 'Ivory University House',
+      title: 'Sending a Renewal Interview Invitation Email',
+      category: 'Resident Services',
+      department: 'Leasing Team',
+      owner: 'Leasing Manager',
+      lastReviewed: '',
+      purpose: 'This Standard Operating Procedure outlines the process for sending a Renewal Interview Invitation email to residents who have renewed their lease at Ivory University House. It is intended as an internal training guide for leasing staff using the Entrata platform.',
+      steps: '',
+      resources: '',
+      content: `<h1>Ivory University House – Sending a Renewal Interview Invitation Email</h1>
+<p><span class="badge category">Resident Services</span> <span class="badge department">Leasing Team</span></p>
+<p><strong>Property:</strong> Ivory University House &nbsp;|&nbsp; <strong>System:</strong> Entrata</p>
+
+<h2>Section 1 – Purpose</h2>
+<p>This Standard Operating Procedure outlines the process for sending a <strong>Renewal Interview Invitation</strong> email to residents who have renewed their lease at Ivory University House. It is intended as an internal training guide for leasing staff using the Entrata platform.</p>
+
+<h2>Section 2 – When to Use This Process</h2>
+<p>This process should be used <strong>after a resident renews their lease</strong> and needs to receive the Renewal Interview Invitation email. The email invites the resident to participate in a short renewal check-in conversation to ensure a smooth transition into their renewed lease term.</p>
+
+<h2>Section 3 – Step-by-Step Instructions</h2>
+
+<h3><span class="step-number">1</span> Log into Entrata</h3>
+<p>Open your browser and navigate to the Entrata login page. Enter your credentials and log in to the system.</p>
+
+<h3><span class="step-number">2</span> Search for the Resident by Name</h3>
+<p>Use the <strong>Search bar</strong> at the top of the Entrata dashboard. Type the resident's name and select the correct profile from the search results.</p>
+
+<h3><span class="step-number">3</span> Open the Resident Profile</h3>
+<p>Click on the resident's name to open their full profile page. Verify you have the correct resident and unit.</p>
+
+<h3><span class="step-number">4</span> Click the Email Button</h3>
+<p>Locate the <strong>Email</strong> button near the resident's name at the top of their profile. Click it to open the email composition window.</p>
+
+<h3><span class="step-number">5</span> Scroll to the Message Editor</h3>
+<p>Scroll down within the email window until you reach the message editor area where you can compose or insert email content.</p>
+
+<h3><span class="step-number">6</span> Locate the Responses Button</h3>
+<p>In the message toolbar (next to the camera icon), find the <strong>Responses</strong> button. This button provides access to saved email templates.</p>
+
+<h3><span class="step-number">7</span> Click Responses</h3>
+<p>Click the <strong>Responses</strong> button to open the list of saved email templates available for your property.</p>
+
+<h3><span class="step-number">8</span> Select "Renewal Interview Invitation"</h3>
+<p>From the list of saved templates, locate and select <strong>"Renewal Interview Invitation"</strong>. The template content will automatically populate in the message editor.</p>
+
+<h3><span class="step-number">9</span> Review the Email Content</h3>
+<p>Carefully review the populated email to confirm:</p>
+<ul>
+  <li>The resident's name is correct</li>
+  <li>All merge fields populated properly</li>
+  <li>The email content reads correctly and is free of errors</li>
+  <li>The tone and messaging are appropriate</li>
+</ul>
+
+<h3><span class="step-number">10</span> Click Send</h3>
+<p>Once you have verified the email content, click the <strong>Send</strong> button to deliver the Renewal Interview Invitation email to the resident.</p>
+
+<h2>Section 4 – Expected Result</h2>
+<div class="info-box success">
+  <h4>Expected Outcome</h4>
+  <p>The resident receives the <strong>Renewal Interview Invitation</strong> email in their inbox, inviting them to participate in a short renewal check-in conversation. This conversation helps ensure resident satisfaction and a smooth transition into their renewed lease term.</p>
+</div>
+
+<h2>Section 5 – Best Practices</h2>
+<div class="info-box">
+  <h4>Recommendations</h4>
+  <ul>
+    <li><strong>Always verify the resident has renewed their lease</strong> before sending the email. Sending the invitation prematurely may cause confusion.</li>
+    <li><strong>Use the Responses template</strong> instead of typing the email manually. This ensures consistency, accuracy, and saves time.</li>
+    <li><strong>Review the email before sending.</strong> Double-check all fields, the resident's name, and the overall content to avoid errors.</li>
+    <li>If the "Renewal Interview Invitation" template is missing from the Responses list, contact your Property Manager or system administrator.</li>
+    <li>Log the communication in the resident's file for record-keeping purposes.</li>
+  </ul>
+</div>
+
+<hr>
+<p><em>Document: Ivory University House – SOP: Sending a Renewal Interview Invitation Email</em></p>
+<p><em>System: Entrata &nbsp;|&nbsp; Department: Leasing Team</em></p>`,
+      createdAt: now,
+      updatedAt: now,
+      createdBy: 'system-seed'
+    }
+  ];
+
+  try {
+    await col.insertMany(seeds);
+  } catch (e) {
+    console.error('SOP seed error:', e.message);
+  }
+}
+
 export async function handler(event) {
   const user = verifyReqAuth(event);
   if (!user) return { statusCode: 401, body: 'Unauthorized' };
@@ -31,6 +134,9 @@ export async function handler(event) {
   const db = await getDb();
   const col = db.collection('sops');
   const method = event.httpMethod;
+
+  // Auto-seed on first access
+  await ensureSeedSops(col);
 
   try {
     // ─── GET: list / read SOPs ───
@@ -106,7 +212,7 @@ export async function handler(event) {
       if (user.role !== 'admin') return { statusCode: 403, body: 'Admin only' };
 
       const body = JSON.parse(event.body || '{}');
-      const { sopType, property, title, category, department, content, purpose, steps, resources, owner, lastReviewed } = body;
+      const { sopType, property, title, category, department, system, content, purpose, whenToUse, stepsData, expectedResults, bestPractices, steps, resources, owner, lastReviewed } = body;
 
       if (!title) return { statusCode: 400, body: 'Title is required' };
       if (!sopType || !['company', 'site'].includes(sopType)) {
@@ -122,8 +228,13 @@ export async function handler(event) {
         title: title.trim(),
         category: (category || 'General').trim(),
         department: (department || '').trim(),
+        system: (system || '').trim(),
         content: content || '',
         purpose: (purpose || '').trim(),
+        whenToUse: (whenToUse || '').trim(),
+        stepsData: stepsData || [],
+        expectedResults: (expectedResults || '').trim(),
+        bestPractices: (bestPractices || '').trim(),
         steps: (steps || '').trim(),
         resources: (resources || '').trim(),
         owner: (owner || '').trim(),
@@ -144,7 +255,7 @@ export async function handler(event) {
       if (user.role !== 'admin') return { statusCode: 403, body: 'Admin only' };
 
       const body = JSON.parse(event.body || '{}');
-      const { id, sopType, property, title, category, department, content, purpose, steps, resources, owner, lastReviewed } = body;
+      const { id, sopType, property, title, category, department, system, content, purpose, whenToUse, stepsData, expectedResults, bestPractices, steps, resources, owner, lastReviewed } = body;
 
       if (!id) return { statusCode: 400, body: 'id is required' };
       if (!title) return { statusCode: 400, body: 'Title is required' };
@@ -153,8 +264,13 @@ export async function handler(event) {
         title: title.trim(),
         category: (category || 'General').trim(),
         department: (department || '').trim(),
+        system: (system || '').trim(),
         content: content || '',
         purpose: (purpose || '').trim(),
+        whenToUse: (whenToUse || '').trim(),
+        stepsData: stepsData || [],
+        expectedResults: (expectedResults || '').trim(),
+        bestPractices: (bestPractices || '').trim(),
         steps: (steps || '').trim(),
         resources: (resources || '').trim(),
         owner: (owner || '').trim(),

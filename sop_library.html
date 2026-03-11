@@ -181,6 +181,26 @@ header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;p
   .app-container{grid-template-columns:1fr}
 }
 
+/* Form section headers in modal */
+.form-section-head{font-size:14px;font-weight:700;color:#111827;font-family:Roboto,Arial,sans-serif;padding:10px 0 8px;margin-top:18px;border-bottom:2px solid var(--brand-accent-2);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.form-section-head:first-child{margin-top:0}
+.optional-tag{font-size:10px;font-weight:600;color:var(--subtext);background:#f1f5f9;border:1px solid var(--border);border-radius:999px;padding:2px 8px;text-transform:uppercase;letter-spacing:.3px}
+
+/* Step cards in modal */
+.step-card{border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;background:#fafbfc;position:relative}
+.step-card .step-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.step-card .step-num{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:var(--brand-accent-2);color:#0b1b24;border-radius:50%;font-weight:700;font-size:13px;flex-shrink:0}
+.step-card .step-title-input{flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:14px;font-weight:600}
+.step-card .step-title-input:focus{outline:none;border-color:var(--brand-accent-2);box-shadow:0 0 0 3px rgba(82,213,255,.15)}
+.step-card .step-remove{background:none;border:none;color:#ef4444;font-size:18px;cursor:pointer;padding:4px 8px;border-radius:4px;flex-shrink:0;width:auto;margin:0}
+.step-card .step-remove:hover{background:#fef2f2}
+.step-card .step-desc{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;min-height:70px;resize:vertical;font-family:inherit}
+.step-card .step-desc:focus{outline:none;border-color:var(--brand-accent-2);box-shadow:0 0 0 3px rgba(82,213,255,.15)}
+.step-card .step-desc-hint{font-size:11px;color:var(--subtext);margin-top:4px}
+
+.add-step-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border:2px dashed var(--border);border-radius:8px;background:#fff;color:var(--brand-primary);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;width:auto;margin-bottom:14px}
+.add-step-btn:hover{border-color:var(--brand-accent-2);background:#f0f9ff}
+
 .hidden{display:none}
   </style>
 </head>
@@ -259,12 +279,19 @@ header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;p
 
 <!-- Create / Edit Modal -->
 <div class="modal-backdrop" id="sopModal">
-  <div class="modal">
+  <div class="modal" style="max-width:800px">
     <div class="modal-header">
       <h3 id="modalTitle">Create New SOP</h3>
       <button class="close-btn" onclick="closeModal()">&times;</button>
     </div>
     <div class="modal-body">
+
+      <!-- SOP Info Header -->
+      <div class="form-section-head">SOP Information</div>
+
+      <label for="fTitle">SOP Title *</label>
+      <input id="fTitle" type="text" placeholder="e.g., Sending a Renewal Interview Invitation Email" />
+
       <div class="row-2">
         <div>
           <label for="fSopType">SOP Type</label>
@@ -274,48 +301,73 @@ header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;p
           </select>
         </div>
         <div id="fPropertyWrap">
-          <label for="fProperty">Property / Site</label>
+          <label for="fProperty">Property</label>
           <select id="fProperty"></select>
         </div>
       </div>
 
-      <label for="fTitle">Title *</label>
-      <input id="fTitle" type="text" placeholder="e.g., Tour Script & Best Practices" />
-
       <div class="row-2">
         <div>
-          <label for="fCategory">Category</label>
-          <input id="fCategory" type="text" placeholder="e.g., Leasing, Marketing, Technology" />
+          <label for="fSystem">System</label>
+          <select id="fSystem">
+            <option value="">— Select System —</option>
+            <option value="Entrata">Entrata</option>
+            <option value="Gmail">Gmail</option>
+            <option value="EZOS">EZOS</option>
+            <option value="Microsoft">Microsoft</option>
+            <option value="Teams">Teams</option>
+            <option value="Canva">Canva</option>
+            <option value="Instagram">Instagram</option>
+            <option value="Facebook">Facebook</option>
+            <option value="TikTok">TikTok</option>
+            <option value="__other__">Other (type below)</option>
+          </select>
+          <input id="fSystemOther" type="text" placeholder="Type system name…" style="display:none" />
         </div>
+        <div>
+          <label for="fCategory">Category</label>
+          <input id="fCategory" type="text" placeholder="e.g., Resident Services, Leasing, Marketing" />
+        </div>
+      </div>
+
+      <div class="row-2">
         <div>
           <label for="fDepartment">Department</label>
           <input id="fDepartment" type="text" placeholder="e.g., Leasing Team" />
         </div>
-      </div>
-
-      <div class="row-2">
         <div>
-          <label for="fOwner">Owner</label>
-          <input id="fOwner" type="text" placeholder="e.g., Property Manager" />
-        </div>
-        <div>
-          <label for="fReviewed">Last Reviewed</label>
-          <input id="fReviewed" type="date" />
+          <label>Last Updated</label>
+          <input id="fLastUpdated" type="text" readonly style="background:#f8fafc;color:var(--subtext);cursor:default" />
+          <div class="hint">Auto-populated when saved</div>
         </div>
       </div>
 
-      <label for="fPurpose">Purpose / Summary</label>
-      <textarea id="fPurpose" placeholder="Brief description of when and why this SOP is used…" style="min-height:80px"></textarea>
+      <!-- Section 1 – Purpose -->
+      <div class="form-section-head" style="margin-top:24px">Section 1 – Purpose</div>
+      <label for="fPurpose">Describe the purpose of this SOP</label>
+      <textarea id="fPurpose" placeholder="This Standard Operating Procedure outlines the process for…" style="min-height:90px"></textarea>
 
-      <label for="fContent">Content (HTML)</label>
-      <textarea id="fContent" placeholder="Full SOP content in HTML. Use &lt;h2&gt;, &lt;h3&gt;, &lt;p&gt;, &lt;ul&gt;, etc." style="min-height:200px;font-family:'Courier New',monospace;font-size:13px"></textarea>
-      <div class="hint">Supports HTML tags: h1-h4, p, ul, ol, li, table, blockquote, strong, em, code, pre, div.info-box, span.step-number, span.badge</div>
+      <!-- Section 2 – When to Use -->
+      <div class="form-section-head">Section 2 – When to Use This Process</div>
+      <label for="fWhenToUse">Describe when this process should be used</label>
+      <textarea id="fWhenToUse" placeholder="This process should be used after a resident renews their lease and needs to receive…" style="min-height:90px"></textarea>
 
-      <label for="fSteps">Steps (plain text, optional)</label>
-      <textarea id="fSteps" placeholder="1) Step one…&#10;2) Step two…" style="min-height:80px"></textarea>
+      <!-- Section 3 – Step-by-Step Instructions -->
+      <div class="form-section-head">Section 3 – Step-by-Step Instructions</div>
+      <div class="hint" style="margin:0 0 10px">Add each step below. Use the description to explain the step in detail. Start lines with • or - for bullet points.</div>
+      <div id="stepsContainer"></div>
+      <button type="button" class="add-step-btn" id="addStepBtn">+ Add Step</button>
 
-      <label for="fResources">Resources / Links (one per line, optional)</label>
-      <textarea id="fResources" placeholder="https://…" style="min-height:60px"></textarea>
+      <!-- Section 4 – Expected Results (optional) -->
+      <div class="form-section-head">Section 4 – Expected Results <span class="optional-tag">Optional</span></div>
+      <label for="fExpectedResults">What should happen after completing this SOP?</label>
+      <textarea id="fExpectedResults" placeholder="The resident receives the Renewal Interview Invitation email in their inbox…" style="min-height:80px"></textarea>
+
+      <!-- Section 5 – Best Practices (optional) -->
+      <div class="form-section-head">Section 5 – Best Practices <span class="optional-tag">Optional</span></div>
+      <label for="fBestPractices">List recommendations and tips (one per line, or use • for bullets)</label>
+      <textarea id="fBestPractices" placeholder="• Always verify the resident has renewed their lease before sending&#10;• Use the Responses template instead of typing manually&#10;• Review the email before sending" style="min-height:100px"></textarea>
+
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal()">Cancel</button>
@@ -649,6 +701,167 @@ function showWelcome() {
   renderNav();
 }
 
+// ===== STEP MANAGEMENT =====
+let modalSteps = []; // array of { title, description }
+
+function addStep(title, description) {
+  modalSteps.push({ title: title || '', description: description || '' });
+  renderSteps();
+}
+
+function removeStep(idx) {
+  modalSteps.splice(idx, 1);
+  renderSteps();
+}
+
+function renderSteps() {
+  const container = document.getElementById('stepsContainer');
+  container.innerHTML = modalSteps.map((step, i) => `
+    <div class="step-card" data-idx="${i}">
+      <div class="step-header">
+        <span class="step-num">${i + 1}</span>
+        <input class="step-title-input" type="text" placeholder="Step title (e.g., Log into Entrata)" value="${escHtml(step.title)}" data-field="title" data-idx="${i}" />
+        <button type="button" class="step-remove" onclick="removeStep(${i})" title="Remove step">&times;</button>
+      </div>
+      <textarea class="step-desc" placeholder="Describe this step in detail…&#10;Use • or - at the start of a line for bullet points" data-field="description" data-idx="${i}">${escHtml(step.description)}</textarea>
+      <div class="step-desc-hint">Tip: Start lines with • or - for bullet points</div>
+    </div>
+  `).join('');
+
+  // Bind input events to sync back to modalSteps
+  container.querySelectorAll('.step-title-input').forEach(el => {
+    el.addEventListener('input', () => { modalSteps[parseInt(el.dataset.idx)].title = el.value; });
+  });
+  container.querySelectorAll('.step-desc').forEach(el => {
+    el.addEventListener('input', () => { modalSteps[parseInt(el.dataset.idx)].description = el.value; });
+  });
+}
+
+// ===== SYSTEM DROPDOWN =====
+function getSystemValue() {
+  const sel = document.getElementById('fSystem');
+  if (sel.value === '__other__') return document.getElementById('fSystemOther').value.trim();
+  return sel.value;
+}
+
+function setSystemValue(val) {
+  const sel = document.getElementById('fSystem');
+  const otherInput = document.getElementById('fSystemOther');
+  // Check if val matches a preset option
+  const presets = Array.from(sel.options).map(o => o.value).filter(v => v && v !== '__other__');
+  if (presets.includes(val)) {
+    sel.value = val;
+    otherInput.style.display = 'none';
+    otherInput.value = '';
+  } else if (val) {
+    sel.value = '__other__';
+    otherInput.style.display = '';
+    otherInput.value = val;
+  } else {
+    sel.value = '';
+    otherInput.style.display = 'none';
+    otherInput.value = '';
+  }
+}
+
+// ===== TEXT TO BULLET HTML =====
+function textToBulletHtml(text) {
+  if (!text) return '';
+  const lines = text.split('\n');
+  let html = '';
+  let inList = false;
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) { if (inList) { html += '</ul>\n'; inList = false; } continue; }
+    const isBullet = /^[•\-\*]\s*/.test(line);
+    if (isBullet) {
+      if (!inList) { html += '<ul>\n'; inList = true; }
+      html += '  <li>' + escHtml(line.replace(/^[•\-\*]\s*/, '')) + '</li>\n';
+    } else {
+      if (inList) { html += '</ul>\n'; inList = false; }
+      html += '<p>' + escHtml(line) + '</p>\n';
+    }
+  }
+  if (inList) html += '</ul>\n';
+  return html;
+}
+
+// ===== GENERATE HTML CONTENT FROM FORM =====
+function buildContentHtml(data) {
+  const { title, property, system, category, department, purpose, whenToUse, stepsData, expectedResults, bestPractices } = data;
+
+  let html = '';
+
+  // Title
+  const titlePrefix = property ? (property + ' – ') : '';
+  html += `<h1>${escHtml(titlePrefix)}${escHtml(title)}</h1>\n`;
+
+  // Badges
+  const badges = [];
+  if (category) badges.push(`<span class="badge category">${escHtml(category)}</span>`);
+  if (department) badges.push(`<span class="badge department">${escHtml(department)}</span>`);
+  if (badges.length) html += `<p>${badges.join(' ')}</p>\n`;
+
+  // Meta line
+  const metaParts = [];
+  if (property) metaParts.push(`<strong>Property:</strong> ${escHtml(property)}`);
+  if (system) metaParts.push(`<strong>System:</strong> ${escHtml(system)}`);
+  if (metaParts.length) html += `<p>${metaParts.join(' &nbsp;|&nbsp; ')}</p>\n`;
+
+  // Section 1 – Purpose
+  if (purpose) {
+    html += `\n<h2>Section 1 – Purpose</h2>\n`;
+    html += textToBulletHtml(purpose);
+  }
+
+  // Section 2 – When to Use
+  if (whenToUse) {
+    html += `\n<h2>Section 2 – When to Use This Process</h2>\n`;
+    html += textToBulletHtml(whenToUse);
+  }
+
+  // Section 3 – Steps
+  if (stepsData && stepsData.length > 0) {
+    html += `\n<h2>Section 3 – Step-by-Step Instructions</h2>\n`;
+    stepsData.forEach((step, i) => {
+      if (!step.title && !step.description) return;
+      html += `\n<h3><span class="step-number">${i + 1}</span> ${escHtml(step.title)}</h3>\n`;
+      if (step.description) {
+        html += textToBulletHtml(step.description);
+      }
+    });
+  }
+
+  // Section 4 – Expected Results
+  if (expectedResults) {
+    html += `\n<h2>Section 4 – Expected Result</h2>\n`;
+    html += `<div class="info-box success">\n<h4>Expected Outcome</h4>\n`;
+    html += textToBulletHtml(expectedResults);
+    html += `</div>\n`;
+  }
+
+  // Section 5 – Best Practices
+  if (bestPractices) {
+    html += `\n<h2>Section 5 – Best Practices</h2>\n`;
+    html += `<div class="info-box">\n<h4>Recommendations</h4>\n`;
+    html += textToBulletHtml(bestPractices);
+    html += `</div>\n`;
+  }
+
+  // Footer
+  html += `\n<hr>\n`;
+  const footerParts = [];
+  if (property) footerParts.push(escHtml(property));
+  footerParts.push('SOP: ' + escHtml(title));
+  html += `<p><em>Document: ${footerParts.join(' – ')}</em></p>\n`;
+  const footerMeta = [];
+  if (system) footerMeta.push('System: ' + escHtml(system));
+  if (department) footerMeta.push('Department: ' + escHtml(department));
+  if (footerMeta.length) html += `<p><em>${footerMeta.join(' &nbsp;|&nbsp; ')}</em></p>\n`;
+
+  return html;
+}
+
 // ===== CREATE / EDIT MODAL =====
 function openCreateModal() {
   editingSopId = null;
@@ -657,12 +870,14 @@ function openCreateModal() {
   document.getElementById('fTitle').value = '';
   document.getElementById('fCategory').value = '';
   document.getElementById('fDepartment').value = '';
-  document.getElementById('fOwner').value = '';
-  document.getElementById('fReviewed').value = '';
   document.getElementById('fPurpose').value = '';
-  document.getElementById('fContent').value = '';
-  document.getElementById('fSteps').value = '';
-  document.getElementById('fResources').value = '';
+  document.getElementById('fWhenToUse').value = '';
+  document.getElementById('fExpectedResults').value = '';
+  document.getElementById('fBestPractices').value = '';
+  document.getElementById('fLastUpdated').value = 'Will be set on save';
+  setSystemValue('');
+  modalSteps = [];
+  addStep('', ''); // start with one empty step
   updatePropertyDropdown();
   togglePropertyField();
   document.getElementById('sopModal').classList.add('open');
@@ -677,12 +892,26 @@ function openEditModal(id) {
   document.getElementById('fTitle').value = sop.title || '';
   document.getElementById('fCategory').value = sop.category || '';
   document.getElementById('fDepartment').value = sop.department || '';
-  document.getElementById('fOwner').value = sop.owner || '';
-  document.getElementById('fReviewed').value = sop.lastReviewed || '';
   document.getElementById('fPurpose').value = sop.purpose || '';
-  document.getElementById('fContent').value = sop.content || '';
-  document.getElementById('fSteps').value = sop.steps || '';
-  document.getElementById('fResources').value = sop.resources || '';
+  document.getElementById('fWhenToUse').value = sop.whenToUse || '';
+  document.getElementById('fExpectedResults').value = sop.expectedResults || '';
+  document.getElementById('fBestPractices').value = sop.bestPractices || '';
+  setSystemValue(sop.system || '');
+
+  // Last updated
+  if (sop.updatedAt) {
+    const d = new Date(sop.updatedAt);
+    document.getElementById('fLastUpdated').value = d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  } else {
+    document.getElementById('fLastUpdated').value = '—';
+  }
+
+  // Steps
+  modalSteps = Array.isArray(sop.stepsData) && sop.stepsData.length > 0
+    ? sop.stepsData.map(s => ({ title: s.title || '', description: s.description || '' }))
+    : [{ title: '', description: '' }];
+  renderSteps();
+
   updatePropertyDropdown();
   if (sop.property) document.getElementById('fProperty').value = sop.property;
   togglePropertyField();
@@ -710,17 +939,26 @@ async function saveSopFromModal() {
   const title = document.getElementById('fTitle').value.trim();
   const category = document.getElementById('fCategory').value.trim() || 'General';
   const department = document.getElementById('fDepartment').value.trim();
-  const owner = document.getElementById('fOwner').value.trim();
-  const lastReviewed = document.getElementById('fReviewed').value;
+  const system = getSystemValue();
   const purpose = document.getElementById('fPurpose').value.trim();
-  const content = document.getElementById('fContent').value;
-  const steps = document.getElementById('fSteps').value.trim();
-  const resources = document.getElementById('fResources').value.trim();
+  const whenToUse = document.getElementById('fWhenToUse').value.trim();
+  const expectedResults = document.getElementById('fExpectedResults').value.trim();
+  const bestPractices = document.getElementById('fBestPractices').value.trim();
+
+  // Filter out empty steps
+  const stepsData = modalSteps.filter(s => s.title.trim() || s.description.trim());
 
   if (!title) { alert('Title is required.'); return; }
   if (sopType === 'site' && !property) { alert('Select a property for site-specific SOPs.'); return; }
 
-  const payload = { sopType, property, title, category, department, content, purpose, steps, resources, owner, lastReviewed };
+  // Auto-generate HTML content from structured fields
+  const content = buildContentHtml({ title, property, system, category, department, purpose, whenToUse, stepsData, expectedResults, bestPractices });
+
+  const payload = {
+    sopType, property, title, category, department, system, content,
+    purpose, whenToUse, stepsData, expectedResults, bestPractices,
+    steps: '', resources: '', owner: '', lastReviewed: ''
+  };
 
   try {
     let savedId = editingSopId;
@@ -734,7 +972,6 @@ async function saveSopFromModal() {
     closeModal();
     await loadAllSops();
     if (savedId) {
-      // If it's a site SOP and admin, set the site filter so it's visible
       if (sopType === 'site' && property && isAdmin()) {
         adminSiteFilter = property;
         const siteSel = document.getElementById('siteSelect');
@@ -810,6 +1047,10 @@ document.getElementById('logoutBtn').addEventListener('click', doLogout);
 document.getElementById('createSopBtn').addEventListener('click', openCreateModal);
 document.getElementById('modalSaveBtn').addEventListener('click', saveSopFromModal);
 document.getElementById('fSopType').addEventListener('change', togglePropertyField);
+document.getElementById('fSystem').addEventListener('change', function() {
+  document.getElementById('fSystemOther').style.display = this.value === '__other__' ? '' : 'none';
+});
+document.getElementById('addStepBtn').addEventListener('click', () => addStep('', ''));
 document.getElementById('searchInput').addEventListener('input', renderNav);
 
 // Start
