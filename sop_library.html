@@ -11,11 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <meta name="description" content="Standard Operating Procedures library for Capstone Management Partners" />
-  <!-- Export libraries -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-  <style>
+    <style>
 :root{
       --brand-primary:#446472;
       --brand-accent:#ffb732;
@@ -1625,146 +1621,386 @@ For Questions:
 
     // ===== EXPORT FUNCTIONS =====
 
-    // Export current SOP as PDF
+    function getExportDate() {
+      return new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    }
+
+    // Build clean, professional SOP document HTML (no UI elements)
+    function buildExportHTML(sop) {
+      // Parse the raw SOP content template (not the rendered DOM with video etc.)
+      const temp = document.createElement('div');
+      temp.innerHTML = sop.content;
+
+      // ── Strip ALL UI / non-document elements ──
+      const uiSelectors = [
+        '.video-tutorial-section', '.video-tutorial-header', '.video-tutorial-body',
+        '.vt-embed', '.video-placeholder', '.vt-caption',
+        'iframe', 'video', 'audio', 'source',
+        'button', '.export-btn', '.export-bar', '.export-label',
+        '.badge', '.pill',
+        '.mobile-nav-toggle', '.sidebar', '.nav-section', '.nav-item',
+        '.header-controls', '.header-btn',
+        '.app-container', '.search-box'
+      ];
+      temp.querySelectorAll(uiSelectors.join(',')).forEach(function(el) { el.remove(); });
+
+      // Strip the first h1 (we rebuild the header)
+      const firstH1 = temp.querySelector('h1');
+      if (firstH1) firstH1.remove();
+
+      // Remove badge/metadata paragraphs near the top (contain badge spans or Property:/System: lines)
+      const allP = temp.querySelectorAll('p');
+      for (let i = 0; i < Math.min(4, allP.length); i++) {
+        const txt = allP[i].textContent.trim();
+        if (txt.match(/^(Property:|System:|Resident Services|Leasing|Technology|Marketing|Compliance)/) || allP[i].querySelector('.badge') || allP[i].querySelector('.pill')) {
+          allP[i].remove();
+        }
+      }
+
+      // Convert .info-box containers to clean titled blocks
+      temp.querySelectorAll('.info-box').forEach(function(box) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'sop-callout';
+        // Determine callout type
+        if (box.classList.contains('warning')) wrapper.className += ' callout-caution';
+        else if (box.classList.contains('success')) wrapper.className += ' callout-success';
+        else wrapper.className += ' callout-info';
+        wrapper.innerHTML = box.innerHTML;
+        box.parentNode.replaceChild(wrapper, box);
+      });
+
+      // Convert step-number spans to bold numbered step labels
+      temp.querySelectorAll('.step-number').forEach(function(sn) {
+        const num = sn.textContent.trim();
+        const b = document.createElement('strong');
+        b.textContent = 'Step ' + num + '. ';
+        b.className = 'step-label';
+        sn.parentNode.replaceChild(b, sn);
+      });
+
+      // Remove trailing <hr> and footer paragraphs (Document: ... / System: ...)
+      const hrs = temp.querySelectorAll('hr');
+      hrs.forEach(function(hr) {
+        let next = hr.nextElementSibling;
+        while (next) {
+          const toRemove = next;
+          next = next.nextElementSibling;
+          if (toRemove.tagName === 'P' && toRemove.querySelector('em')) toRemove.remove();
+        }
+        hr.remove();
+      });
+
+      // Remove any remaining empty divs that were UI wrappers
+      temp.querySelectorAll('div:empty').forEach(function(el) { el.remove(); });
+
+      const propertyName = sop.property || 'Capstone Management Partners';
+      const docTitle = (sop.title || '').replace(/^.*?–\s*/, '').replace(/^SOP:\s*/i, '');
+      const dateStr = getExportDate();
+      const systemName = sop.system || '';
+      const departmentName = sop.department || 'Leasing Team';
+      const footerLeft = propertyName + ' SOP';
+      const footerRight = (systemName ? 'System: ' + systemName + ' | ' : '') + departmentName + ' | ' + dateStr;
+
+      return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>${sop.title || 'SOP Document'}</title>
+<style>
+  /* ── Page & Print Setup ── */
+  @page {
+    size: letter;
+    margin: 0.9in 0.85in 1.1in 0.85in;
+  }
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .page-footer { position: fixed; bottom: 0; left: 0; right: 0; }
+  }
+
+  /* ── Base Typography ── */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Calibri, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    font-size: 11pt;
+    line-height: 1.6;
+    color: #1a1a1a;
+    background: #fff;
+    padding: 0;
+    margin: 0;
+  }
+
+  /* ── Document Header ── */
+  .doc-header {
+    margin-bottom: 24pt;
+    padding-bottom: 16pt;
+    border-bottom: 2.5pt solid #446472;
+  }
+  .doc-header .org-name {
+    font-size: 20pt;
+    font-weight: 700;
+    color: #446472;
+    margin: 0 0 2pt 0;
+    letter-spacing: 0.3pt;
+  }
+  .doc-header .doc-type {
+    font-size: 10.5pt;
+    color: #777;
+    text-transform: uppercase;
+    letter-spacing: 1.5pt;
+    font-weight: 400;
+    margin: 0 0 16pt 0;
+  }
+  .doc-header .doc-title {
+    font-size: 16pt;
+    font-weight: 700;
+    color: #111;
+    margin: 0 0 12pt 0;
+    line-height: 1.3;
+  }
+  .doc-meta-table {
+    font-size: 9.5pt;
+    color: #555;
+    line-height: 1.8;
+  }
+  .doc-meta-table td {
+    border: none;
+    padding: 1pt 0;
+    vertical-align: top;
+  }
+  .doc-meta-table .meta-label {
+    font-weight: 700;
+    color: #333;
+    padding-right: 12pt;
+    white-space: nowrap;
+  }
+
+  /* ── Section Headings ── */
+  h2 {
+    font-size: 13pt;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 26pt 0 10pt 0;
+    padding-bottom: 5pt;
+    border-bottom: 1pt solid #d0d0d0;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 11.5pt;
+    font-weight: 700;
+    color: #222;
+    margin: 18pt 0 6pt 0;
+    page-break-after: avoid;
+  }
+  h4 {
+    font-size: 11pt;
+    font-weight: 700;
+    color: #333;
+    margin: 14pt 0 4pt 0;
+    page-break-after: avoid;
+  }
+
+  /* ── Body Content ── */
+  p {
+    margin: 6pt 0;
+    line-height: 1.6;
+  }
+  ul, ol {
+    margin: 6pt 0 8pt 24pt;
+    line-height: 1.65;
+  }
+  li {
+    margin: 3pt 0;
+  }
+  ul ul, ol ol, ul ol, ol ul {
+    margin: 3pt 0 3pt 18pt;
+  }
+  strong, .step-label {
+    color: #111;
+    font-weight: 700;
+  }
+  em { font-style: italic; }
+
+  /* ── Tables ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10pt 0;
+    font-size: 10pt;
+    page-break-inside: avoid;
+  }
+  th {
+    background: #f2f2f2;
+    border: 1pt solid #c0c0c0;
+    padding: 7pt 9pt;
+    text-align: left;
+    font-weight: 700;
+    color: #111;
+  }
+  td {
+    border: 1pt solid #c0c0c0;
+    padding: 6pt 9pt;
+    color: #222;
+  }
+  tr:nth-child(even) td {
+    background: #fafafa;
+  }
+
+  /* ── Blockquotes ── */
+  blockquote {
+    border-left: 2.5pt solid #446472;
+    padding: 6pt 0 6pt 14pt;
+    margin: 10pt 0 10pt 4pt;
+    color: #444;
+    font-style: italic;
+    line-height: 1.55;
+  }
+
+  /* ── Code / Pre ── */
+  pre {
+    background: #f7f7f7;
+    border: 1pt solid #ddd;
+    border-radius: 3pt;
+    padding: 10pt 12pt;
+    font-size: 9.5pt;
+    font-family: "Courier New", Consolas, monospace;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    margin: 8pt 0;
+    page-break-inside: avoid;
+  }
+  code {
+    font-family: "Courier New", Consolas, monospace;
+    font-size: 9.5pt;
+  }
+
+  /* ── Callout Boxes (converted from info-box) ── */
+  .sop-callout {
+    margin: 12pt 0;
+    padding: 12pt 16pt;
+    border-radius: 3pt;
+    page-break-inside: avoid;
+  }
+  .callout-info {
+    background: #f0f7fa;
+    border-left: 3pt solid #446472;
+  }
+  .callout-success {
+    background: #f0f9f2;
+    border-left: 3pt solid #2e8b57;
+  }
+  .callout-caution {
+    background: #fefbf0;
+    border-left: 3pt solid #d4a017;
+  }
+  .sop-callout h4 {
+    margin: 0 0 6pt 0;
+    font-size: 10.5pt;
+    color: #111;
+  }
+  .sop-callout p {
+    margin: 4pt 0;
+    font-size: 10.5pt;
+  }
+  .sop-callout ul, .sop-callout ol {
+    font-size: 10.5pt;
+  }
+
+  /* ── Hidden / Removed UI Elements ── */
+  .badge, .pill, iframe, video, audio, button,
+  .video-tutorial-section, .video-tutorial-header, .video-tutorial-body,
+  .vt-embed, .video-placeholder, .vt-caption,
+  .export-btn, .export-bar, .mobile-nav-toggle,
+  .sidebar, .header-controls, .search-box {
+    display: none !important;
+  }
+  hr { display: none; }
+
+  /* ── Page Footer ── */
+  .page-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 8pt 0.85in;
+    font-size: 8pt;
+    color: #999;
+    border-top: 0.5pt solid #ccc;
+    display: flex;
+    justify-content: space-between;
+    background: #fff;
+  }
+  .page-footer .ft-left { font-weight: 600; color: #777; }
+  .page-footer .ft-right { color: #999; }
+</style>
+</head>
+<body>
+
+<!-- Fixed footer for every printed page -->
+<div class="page-footer">
+  <span class="ft-left">${footerLeft}</span>
+  <span class="ft-right">${footerRight}</span>
+</div>
+
+<!-- Document Header -->
+<div class="doc-header">
+  <div class="org-name">${propertyName}</div>
+  <div class="doc-type">Standard Operating Procedure</div>
+  <div class="doc-title">${docTitle}</div>
+  <table class="doc-meta-table">
+    <tr><td class="meta-label">Property:</td><td>${propertyName}</td></tr>
+    ${systemName ? '<tr><td class="meta-label">System:</td><td>' + systemName + '</td></tr>' : ''}
+    <tr><td class="meta-label">Department:</td><td>${departmentName}</td></tr>
+    <tr><td class="meta-label">Last Updated:</td><td>${dateStr}</td></tr>
+  </table>
+</div>
+
+<!-- Document Body -->
+${temp.innerHTML}
+
+</body>
+</html>`;
+    }
+
+    // Export current SOP as PDF using print dialog
     function exportToPDF() {
       const sop = sopContent[currentPageId];
       if (!sop || currentPageId === 'home') return;
 
-      const contentEl = document.getElementById('contentArea');
-      const filename = (sop.title || 'SOP').replace(/[^a-zA-Z0-9\s\-–]/g, '').replace(/\s+/g, '_') + '.pdf';
-
-      // Clone content for clean export
-      const clone = contentEl.cloneNode(true);
-      clone.style.padding = '20px';
-      clone.style.maxWidth = '800px';
-      clone.style.fontFamily = 'Arial, sans-serif';
-      clone.style.fontSize = '12px';
-      clone.style.lineHeight = '1.6';
-      clone.style.color = '#1e293b';
-
-      // Style step-number circles for PDF
-      clone.querySelectorAll('.step-number').forEach(el => {
-        el.style.display = 'inline-flex';
-        el.style.alignItems = 'center';
-        el.style.justifyContent = 'center';
-        el.style.width = '24px';
-        el.style.height = '24px';
-        el.style.background = '#52d5ff';
-        el.style.borderRadius = '50%';
-        el.style.fontWeight = '700';
-        el.style.fontSize = '12px';
-        el.style.marginRight = '6px';
-      });
-
-      // Style badges for PDF
-      clone.querySelectorAll('.badge').forEach(el => {
-        el.style.display = 'inline-block';
-        el.style.padding = '2px 10px';
-        el.style.borderRadius = '999px';
-        el.style.fontSize = '11px';
-        el.style.fontWeight = '600';
-        el.style.border = '1px solid #ccc';
-        el.style.margin = '2px';
-      });
-
-      // Style info-box for PDF
-      clone.querySelectorAll('.info-box').forEach(el => {
-        el.style.border = '1px solid #bae6fd';
-        el.style.borderRadius = '6px';
-        el.style.padding = '12px';
-        el.style.margin = '12px 0';
-        el.style.background = '#f0f9ff';
-      });
-      clone.querySelectorAll('.info-box.warning').forEach(el => {
-        el.style.background = '#fffbeb';
-        el.style.borderColor = '#fde68a';
-      });
-      clone.querySelectorAll('.info-box.success').forEach(el => {
-        el.style.background = '#f0fdf4';
-        el.style.borderColor = '#bbf7d0';
-      });
-
-      const opt = {
-        margin: [0.5, 0.6, 0.5, 0.6],
-        filename: filename,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      const html = buildExportHTML(sop);
+      const printWin = window.open('', '_blank', 'width=800,height=600');
+      if (!printWin) { alert('Please allow popups to export PDF.'); return; }
+      printWin.document.write(html);
+      printWin.document.close();
+      printWin.onload = function() {
+        setTimeout(function() { printWin.print(); }, 400);
       };
-
-      html2pdf().set(opt).from(clone).save();
     }
 
-    // Export current SOP as Word (.docx) using the docx library
+    // Export current SOP as Word (.doc) using HTML-to-Word Blob (zero dependencies)
     function exportToWord() {
       const sop = sopContent[currentPageId];
       if (!sop || currentPageId === 'home') return;
 
-      const filename = (sop.title || 'SOP').replace(/[^a-zA-Z0-9\s\-–]/g, '').replace(/\s+/g, '_') + '.docx';
+      const filename = (sop.title || 'SOP').replace(/[^a-zA-Z0-9\s\-]/g, '').replace(/\s+/g, '_') + '.doc';
+      const html = buildExportHTML(sop);
 
-      // Parse the HTML content into structured docx paragraphs
-      const contentEl = document.createElement('div');
-      contentEl.innerHTML = sop.content;
+      const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
 
-      const children = [];
-
-      // Title page elements
-      children.push(
-        new docx.Paragraph({ spacing: { after: 600 } }),
-        new docx.Paragraph({ spacing: { after: 600 } }),
-        new docx.Paragraph({
-          children: [new docx.TextRun({ text: sop.property || 'Capstone Management Partners', bold: true, size: 52, font: 'Calibri', color: '446472' })],
-          alignment: docx.AlignmentType.CENTER,
-          spacing: { after: 200 }
-        }),
-        new docx.Paragraph({
-          children: [new docx.TextRun({ text: 'Standard Operating Procedure', size: 36, font: 'Calibri', color: '64748b' })],
-          alignment: docx.AlignmentType.CENTER,
-          spacing: { after: 200 }
-        }),
-        new docx.Paragraph({
-          children: [new docx.TextRun({ text: sop.title || '', bold: true, size: 28, font: 'Calibri', color: '1e293b' })],
-          alignment: docx.AlignmentType.CENTER,
-          spacing: { after: 200 }
-        })
-      );
-
-      if (sop.system) {
-        children.push(
-          new docx.Paragraph({
-            children: [new docx.TextRun({ text: 'System: ' + sop.system, size: 24, font: 'Calibri', color: '64748b', italics: true })],
-            alignment: docx.AlignmentType.CENTER,
-            spacing: { after: 100 }
-          })
-        );
-      }
-      if (sop.department) {
-        children.push(
-          new docx.Paragraph({
-            children: [new docx.TextRun({ text: 'Department: ' + sop.department, size: 24, font: 'Calibri', color: '64748b', italics: true })],
-            alignment: docx.AlignmentType.CENTER,
-            spacing: { after: 100 }
-          })
-        );
-      }
-
-      children.push(
-        new docx.Paragraph({
-          children: [new docx.TextRun({ text: 'Date: ' + new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), size: 22, font: 'Calibri', color: '929497', italics: true })],
-          alignment: docx.AlignmentType.CENTER,
-          spacing: { after: 400 }
-        }),
-        new docx.Paragraph({
-          children: [new docx.TextRun({ text: '' })],
-          pageBreakBefore: true
-        })
-      );
-
-      // Walk through DOM nodes and convert to docx paragraphs
-      function walkNodes(parent) {
-        for (const node of parent.childNodes) {
-          if (node.nodeType === Node.TEXT_NODE) {
+    // Initialize
+    generateNav();
+    loadPage('home');
+  </script>
+</body>
+</html>
             const text = node.textContent.trim();
             if (text) {
               children.push(new docx.Paragraph({
