@@ -11,6 +11,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <meta name="description" content="Standard Operating Procedures library for Capstone Management Partners" />
+  <!-- Export libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
   <style>
 :root{
       --brand-primary:#446472;
@@ -119,6 +123,35 @@
     }
 
     .hidden{display:none}
+
+    /* Export Buttons */
+    .export-bar{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
+    .export-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;background:#fff;color:var(--text)}
+    .export-btn:hover{background:#f8fafc;border-color:#cbd5e1}
+    .export-btn.word{color:#2b579a;border-color:#2b579a}
+    .export-btn.word:hover{background:#eef3fb}
+    .export-btn.pdf{color:#d32f2f;border-color:#d32f2f}
+    .export-btn.pdf:hover{background:#fdeaea}
+    .export-label{font-size:12px;color:var(--subtext);font-weight:500}
+
+    /* Video Tutorial */
+    .video-tutorial-section{margin:28px 0;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:#fff}
+    .video-tutorial-header{display:flex;align-items:center;gap:10px;padding:14px 20px;background:linear-gradient(135deg,#446472 0%,#365260 100%);color:#fff;cursor:pointer;user-select:none}
+    .video-tutorial-header .vt-icon{font-size:20px}
+    .video-tutorial-header .vt-title{font-size:15px;font-weight:700;font-family:Roboto,Arial,sans-serif;flex:1}
+    .video-tutorial-header .vt-badge{background:rgba(255,183,50,0.9);color:#1e293b;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:0.3px}
+    .video-tutorial-header .vt-toggle{font-size:12px;transition:transform .2s}
+    .video-tutorial-header.collapsed .vt-toggle{transform:rotate(-90deg)}
+    .video-tutorial-body{padding:0;max-height:600px;overflow:hidden;transition:max-height .4s ease,padding .3s ease}
+    .video-tutorial-body.collapsed{max-height:0;padding:0}
+    .video-tutorial-body .vt-embed{position:relative;width:100%;padding-bottom:56.25%;height:0;overflow:hidden;background:#000}
+    .video-tutorial-body .vt-embed iframe,.video-tutorial-body .vt-embed video{position:absolute;top:0;left:0;width:100%;height:100%;border:none}
+    .video-tutorial-body .vt-caption{padding:12px 20px;font-size:13px;color:var(--subtext);background:#f8fafc;border-top:1px solid var(--border)}
+    .video-tutorial-body .vt-caption strong{color:var(--text)}
+    .video-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#1e293b 0%,#334155 100%);color:#94a3b8;text-align:center;padding:20px}
+    .video-placeholder .vp-icon{font-size:48px;margin-bottom:12px;opacity:.7}
+    .video-placeholder .vp-text{font-size:14px;font-weight:600;margin-bottom:4px;color:#cbd5e1}
+    .video-placeholder .vp-sub{font-size:12px;color:#64748b}
   </style>
 </head>
 <body>
@@ -147,6 +180,11 @@
     </aside>
 
     <main class="content-area">
+      <div id="exportBar" class="export-bar hidden" style="max-width:900px;margin:0 auto 16px auto">
+        <span class="export-label">Export this SOP:</span>
+        <button class="export-btn word" onclick="exportToWord()">📄 Word (.docx)</button>
+        <button class="export-btn pdf" onclick="exportToPDF()">📕 PDF</button>
+      </div>
       <div class="content-wrapper" id="contentArea">
         <!-- Content will be loaded here -->
       </div>
@@ -180,6 +218,7 @@
           </ul>
 
           <h2>🔄 Recently Updated</h2>
+          <p><span class="badge status">New</span> Ivory University House: Renewal Interview Invitation Email</p>
           <p><span class="badge status">Updated Jan 2024</span> Entrata: Remove Primary & Promote Co-Applicant</p>
           <p><span class="badge status">Updated Jan 2024</span> Social Media Posting Guidelines</p>
           <p><span class="badge status">Updated Dec 2023</span> Tour Script & Best Practices</p>
@@ -1054,6 +1093,93 @@ For Questions:
         `
       },
 
+      // RESIDENT SERVICES
+      'resident-renewal-interview-invitation': {
+        title: 'Ivory University House – SOP: Sending a Renewal Interview Invitation Email',
+        category: 'Resident Services',
+        department: 'Leasing Team',
+        property: 'Ivory University House',
+        system: 'Entrata',
+        videoTutorial: {
+          // Supports: YouTube, Loom, Vimeo URLs, or direct .mp4 links
+          // Replace the url below with your actual video tutorial link
+          url: 'https://drive.google.com/file/d/1PbRqyF59AD7ZUesfwh99o37fTrbk7CTf/view?usp=sharing',
+          caption: 'Watch the step-by-step walkthrough of sending a Renewal Interview Invitation email in Entrata.',
+          duration: '~3 min'
+        },
+        content: `
+          <h1>📧 Ivory University House – Sending a Renewal Interview Invitation Email</h1>
+          <p><span class="badge category">Resident Services</span> <span class="badge department">Leasing Team</span></p>
+          <p><strong>Property:</strong> Ivory University House &nbsp;|&nbsp; <strong>System:</strong> Entrata</p>
+
+          <h2>Section 1 – Purpose</h2>
+          <p>This Standard Operating Procedure outlines the process for sending a <strong>Renewal Interview Invitation</strong> email to residents who have renewed their lease at Ivory University House. It is intended as an internal training guide for leasing staff using the Entrata platform.</p>
+
+          <h2>Section 2 – When to Use This Process</h2>
+          <p>This process should be used <strong>after a resident renews their lease</strong> and needs to receive the Renewal Interview Invitation email. The email invites the resident to participate in a short renewal check-in conversation to ensure a smooth transition into their renewed lease term.</p>
+
+          <h2>Section 3 – Step-by-Step Instructions</h2>
+
+          <h3><span class="step-number">1</span> Log into Entrata</h3>
+          <p>Open your browser and navigate to the Entrata login page. Enter your credentials and log in to the system.</p>
+
+          <h3><span class="step-number">2</span> Search for the Resident by Name</h3>
+          <p>Use the <strong>Search bar</strong> at the top of the Entrata dashboard. Type the resident's name and select the correct profile from the search results.</p>
+
+          <h3><span class="step-number">3</span> Open the Resident Profile</h3>
+          <p>Click on the resident's name to open their full profile page. Verify you have the correct resident and unit.</p>
+
+          <h3><span class="step-number">4</span> Click the Email Button</h3>
+          <p>Locate the <strong>Email</strong> button near the resident's name at the top of their profile. Click it to open the email composition window.</p>
+
+          <h3><span class="step-number">5</span> Scroll to the Message Editor</h3>
+          <p>Scroll down within the email window until you reach the message editor area where you can compose or insert email content.</p>
+
+          <h3><span class="step-number">6</span> Locate the Responses Button</h3>
+          <p>In the message toolbar (next to the camera icon), find the <strong>Responses</strong> button. This button provides access to saved email templates.</p>
+
+          <h3><span class="step-number">7</span> Click Responses</h3>
+          <p>Click the <strong>Responses</strong> button to open the list of saved email templates available for your property.</p>
+
+          <h3><span class="step-number">8</span> Select "Renewal Interview Invitation"</h3>
+          <p>From the list of saved templates, locate and select <strong>"Renewal Interview Invitation"</strong>. The template content will automatically populate in the message editor.</p>
+
+          <h3><span class="step-number">9</span> Review the Email Content</h3>
+          <p>Carefully review the populated email to confirm:</p>
+          <ul>
+            <li>The resident's name is correct</li>
+            <li>All merge fields populated properly</li>
+            <li>The email content reads correctly and is free of errors</li>
+            <li>The tone and messaging are appropriate</li>
+          </ul>
+
+          <h3><span class="step-number">10</span> Click Send</h3>
+          <p>Once you have verified the email content, click the <strong>Send</strong> button to deliver the Renewal Interview Invitation email to the resident.</p>
+
+          <h2>Section 4 – Expected Result</h2>
+          <div class="info-box success">
+            <h4>✅ Expected Outcome</h4>
+            <p>The resident receives the <strong>Renewal Interview Invitation</strong> email in their inbox, inviting them to participate in a short renewal check-in conversation. This conversation helps ensure resident satisfaction and a smooth transition into their renewed lease term.</p>
+          </div>
+
+          <h2>Section 5 – Best Practices</h2>
+          <div class="info-box">
+            <h4>💡 Recommendations</h4>
+            <ul>
+              <li><strong>Always verify the resident has renewed their lease</strong> before sending the email. Sending the invitation prematurely may cause confusion.</li>
+              <li><strong>Use the Responses template</strong> instead of typing the email manually. This ensures consistency, accuracy, and saves time.</li>
+              <li><strong>Review the email before sending.</strong> Double-check all fields, the resident's name, and the overall content to avoid errors.</li>
+              <li>If the "Renewal Interview Invitation" template is missing from the Responses list, contact your Property Manager or system administrator.</li>
+              <li>Log the communication in the resident's file for record-keeping purposes.</li>
+            </ul>
+          </div>
+
+          <hr>
+          <p><em>Document: Ivory University House – SOP: Sending a Renewal Interview Invitation Email</em></p>
+          <p><em>System: Entrata &nbsp;|&nbsp; Department: Leasing Team &nbsp;|&nbsp; Last Updated: ${new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</em></p>
+        `
+      },
+
       // COMPLIANCE
       'compliance-fair-housing': {
         title: 'Fair Housing Compliance',
@@ -1308,6 +1434,13 @@ For Questions:
         ]
       },
       {
+        title: 'Resident Services',
+        id: 'resident-services',
+        items: [
+          { title: 'Ivory: Renewal Interview Invitation Email', id: 'resident-renewal-interview-invitation' }
+        ]
+      },
+      {
         title: 'Compliance',
         id: 'compliance',
         items: [
@@ -1365,14 +1498,26 @@ For Questions:
       navItems.classList.toggle('collapsed');
     }
 
+    // Track current page for export
+    let currentPageId = 'home';
+
     // Load page content
     function loadPage(pageId) {
       const content = sopContent[pageId];
       if (!content) return;
 
+      currentPageId = pageId;
       const contentArea = document.getElementById('contentArea');
       contentArea.innerHTML = content.content;
       contentArea.scrollTop = 0;
+
+      // Show/hide export bar (hide on home page)
+      const exportBar = document.getElementById('exportBar');
+      if (pageId === 'home') {
+        exportBar.classList.add('hidden');
+      } else {
+        exportBar.classList.remove('hidden');
+      }
 
       // Update active state
       document.querySelectorAll('.nav-item').forEach(item => {
@@ -1380,10 +1525,69 @@ For Questions:
       });
       document.querySelector(`[data-page="${pageId}"]`).classList.add('active');
 
+      // Inject video tutorial if SOP has one
+      if (content.videoTutorial) {
+        injectVideoTutorial(contentArea, content.videoTutorial);
+      }
+
       // Close mobile sidebar
       if (window.innerWidth <= 1024) {
         document.getElementById('sidebar').classList.remove('open');
       }
+    }
+
+    // ===== VIDEO TUTORIAL COMPONENT =====
+    function buildVideoEmbed(url) {
+      if (!url) {
+        return `<div class="video-placeholder">
+          <div class="vp-icon">🎬</div>
+          <div class="vp-text">Video Tutorial Coming Soon</div>
+          <div class="vp-sub">A screen recording walkthrough will be added here.<br>Contact your manager to upload the tutorial video.</div>
+        </div>`;
+      }
+      // YouTube
+      let match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+      if (match) return `<iframe src="https://www.youtube.com/embed/${match[1]}?rel=0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+      // Loom
+      match = url.match(/loom\.com\/(?:share|embed)\/([a-zA-Z0-9]+)/);
+      if (match) return `<iframe src="https://www.loom.com/embed/${match[1]}" allowfullscreen></iframe>`;
+      // Vimeo
+      match = url.match(/vimeo\.com\/(\d+)/);
+      if (match) return `<iframe src="https://player.vimeo.com/video/${match[1]}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
+      // Google Drive
+      match = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+      if (match) return `<iframe src="https://drive.google.com/file/d/${match[1]}/preview" allow="autoplay" allowfullscreen></iframe>`;
+      // Direct video file (.mp4, .webm, .mov)
+      if (/\.(mp4|webm|mov|ogg)(\?|$)/i.test(url)) return `<video controls preload="metadata"><source src="${url}">Your browser does not support video.</video>`;
+      // Fallback: try as iframe
+      return `<iframe src="${url}" allowfullscreen></iframe>`;
+    }
+
+    function injectVideoTutorial(container, vt) {
+      const firstH2 = container.querySelector('h2');
+      if (!firstH2) return;
+
+      const section = document.createElement('div');
+      section.className = 'video-tutorial-section';
+      section.innerHTML = `
+        <div class="video-tutorial-header" onclick="toggleVideoTutorial(this)">
+          <span class="vt-icon">🎥</span>
+          <span class="vt-title">Video Tutorial</span>
+          ${vt.duration ? '<span class="vt-badge">' + vt.duration + '</span>' : ''}
+          <span class="vt-toggle">▼</span>
+        </div>
+        <div class="video-tutorial-body">
+          <div class="vt-embed">${buildVideoEmbed(vt.url)}</div>
+          ${vt.caption ? '<div class="vt-caption">' + vt.caption + '</div>' : ''}
+        </div>
+      `;
+      firstH2.parentNode.insertBefore(section, firstH2);
+    }
+
+    function toggleVideoTutorial(header) {
+      header.classList.toggle('collapsed');
+      const body = header.nextElementSibling;
+      body.classList.toggle('collapsed');
     }
 
     // Search functionality
@@ -1417,6 +1621,377 @@ For Questions:
     // Mobile sidebar toggle
     function toggleSidebar() {
       document.getElementById('sidebar').classList.toggle('open');
+    }
+
+    // ===== EXPORT FUNCTIONS =====
+
+    // Export current SOP as PDF
+    function exportToPDF() {
+      const sop = sopContent[currentPageId];
+      if (!sop || currentPageId === 'home') return;
+
+      const contentEl = document.getElementById('contentArea');
+      const filename = (sop.title || 'SOP').replace(/[^a-zA-Z0-9\s\-–]/g, '').replace(/\s+/g, '_') + '.pdf';
+
+      // Clone content for clean export
+      const clone = contentEl.cloneNode(true);
+      clone.style.padding = '20px';
+      clone.style.maxWidth = '800px';
+      clone.style.fontFamily = 'Arial, sans-serif';
+      clone.style.fontSize = '12px';
+      clone.style.lineHeight = '1.6';
+      clone.style.color = '#1e293b';
+
+      // Style step-number circles for PDF
+      clone.querySelectorAll('.step-number').forEach(el => {
+        el.style.display = 'inline-flex';
+        el.style.alignItems = 'center';
+        el.style.justifyContent = 'center';
+        el.style.width = '24px';
+        el.style.height = '24px';
+        el.style.background = '#52d5ff';
+        el.style.borderRadius = '50%';
+        el.style.fontWeight = '700';
+        el.style.fontSize = '12px';
+        el.style.marginRight = '6px';
+      });
+
+      // Style badges for PDF
+      clone.querySelectorAll('.badge').forEach(el => {
+        el.style.display = 'inline-block';
+        el.style.padding = '2px 10px';
+        el.style.borderRadius = '999px';
+        el.style.fontSize = '11px';
+        el.style.fontWeight = '600';
+        el.style.border = '1px solid #ccc';
+        el.style.margin = '2px';
+      });
+
+      // Style info-box for PDF
+      clone.querySelectorAll('.info-box').forEach(el => {
+        el.style.border = '1px solid #bae6fd';
+        el.style.borderRadius = '6px';
+        el.style.padding = '12px';
+        el.style.margin = '12px 0';
+        el.style.background = '#f0f9ff';
+      });
+      clone.querySelectorAll('.info-box.warning').forEach(el => {
+        el.style.background = '#fffbeb';
+        el.style.borderColor = '#fde68a';
+      });
+      clone.querySelectorAll('.info-box.success').forEach(el => {
+        el.style.background = '#f0fdf4';
+        el.style.borderColor = '#bbf7d0';
+      });
+
+      const opt = {
+        margin: [0.5, 0.6, 0.5, 0.6],
+        filename: filename,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      };
+
+      html2pdf().set(opt).from(clone).save();
+    }
+
+    // Export current SOP as Word (.docx) using the docx library
+    function exportToWord() {
+      const sop = sopContent[currentPageId];
+      if (!sop || currentPageId === 'home') return;
+
+      const filename = (sop.title || 'SOP').replace(/[^a-zA-Z0-9\s\-–]/g, '').replace(/\s+/g, '_') + '.docx';
+
+      // Parse the HTML content into structured docx paragraphs
+      const contentEl = document.createElement('div');
+      contentEl.innerHTML = sop.content;
+
+      const children = [];
+
+      // Title page elements
+      children.push(
+        new docx.Paragraph({ spacing: { after: 600 } }),
+        new docx.Paragraph({ spacing: { after: 600 } }),
+        new docx.Paragraph({
+          children: [new docx.TextRun({ text: sop.property || 'Capstone Management Partners', bold: true, size: 52, font: 'Calibri', color: '446472' })],
+          alignment: docx.AlignmentType.CENTER,
+          spacing: { after: 200 }
+        }),
+        new docx.Paragraph({
+          children: [new docx.TextRun({ text: 'Standard Operating Procedure', size: 36, font: 'Calibri', color: '64748b' })],
+          alignment: docx.AlignmentType.CENTER,
+          spacing: { after: 200 }
+        }),
+        new docx.Paragraph({
+          children: [new docx.TextRun({ text: sop.title || '', bold: true, size: 28, font: 'Calibri', color: '1e293b' })],
+          alignment: docx.AlignmentType.CENTER,
+          spacing: { after: 200 }
+        })
+      );
+
+      if (sop.system) {
+        children.push(
+          new docx.Paragraph({
+            children: [new docx.TextRun({ text: 'System: ' + sop.system, size: 24, font: 'Calibri', color: '64748b', italics: true })],
+            alignment: docx.AlignmentType.CENTER,
+            spacing: { after: 100 }
+          })
+        );
+      }
+      if (sop.department) {
+        children.push(
+          new docx.Paragraph({
+            children: [new docx.TextRun({ text: 'Department: ' + sop.department, size: 24, font: 'Calibri', color: '64748b', italics: true })],
+            alignment: docx.AlignmentType.CENTER,
+            spacing: { after: 100 }
+          })
+        );
+      }
+
+      children.push(
+        new docx.Paragraph({
+          children: [new docx.TextRun({ text: 'Date: ' + new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), size: 22, font: 'Calibri', color: '929497', italics: true })],
+          alignment: docx.AlignmentType.CENTER,
+          spacing: { after: 400 }
+        }),
+        new docx.Paragraph({
+          children: [new docx.TextRun({ text: '' })],
+          pageBreakBefore: true
+        })
+      );
+
+      // Walk through DOM nodes and convert to docx paragraphs
+      function walkNodes(parent) {
+        for (const node of parent.childNodes) {
+          if (node.nodeType === Node.TEXT_NODE) {
+            const text = node.textContent.trim();
+            if (text) {
+              children.push(new docx.Paragraph({
+                children: [new docx.TextRun({ text: text, size: 22, font: 'Calibri' })],
+                spacing: { after: 120 }
+              }));
+            }
+            continue;
+          }
+          if (node.nodeType !== Node.ELEMENT_NODE) continue;
+
+          const tag = node.tagName.toLowerCase();
+
+          if (tag === 'h1') {
+            children.push(new docx.Paragraph({
+              children: [new docx.TextRun({ text: node.textContent.replace(/^[^\w]*/, ''), bold: true, size: 36, font: 'Calibri', color: '111827' })],
+              heading: docx.HeadingLevel.HEADING_1,
+              spacing: { before: 240, after: 120 }
+            }));
+          } else if (tag === 'h2') {
+            children.push(new docx.Paragraph({
+              children: [new docx.TextRun({ text: node.textContent, bold: true, size: 30, font: 'Calibri', color: '111827' })],
+              heading: docx.HeadingLevel.HEADING_2,
+              spacing: { before: 300, after: 120 },
+              border: { bottom: { color: 'e2e8f0', space: 4, style: docx.BorderStyle.SINGLE, size: 6 } }
+            }));
+          } else if (tag === 'h3') {
+            children.push(new docx.Paragraph({
+              children: [new docx.TextRun({ text: node.textContent, bold: true, size: 26, font: 'Calibri', color: '374151' })],
+              heading: docx.HeadingLevel.HEADING_3,
+              spacing: { before: 200, after: 100 }
+            }));
+          } else if (tag === 'h4') {
+            children.push(new docx.Paragraph({
+              children: [new docx.TextRun({ text: node.textContent, bold: true, size: 24, font: 'Calibri', color: '4b5563' })],
+              spacing: { before: 160, after: 80 }
+            }));
+          } else if (tag === 'p') {
+            const runs = parseInlineRuns(node);
+            children.push(new docx.Paragraph({
+              children: runs,
+              spacing: { after: 120 }
+            }));
+          } else if (tag === 'ul' || tag === 'ol') {
+            const items = node.querySelectorAll(':scope > li');
+            items.forEach((li, idx) => {
+              const runs = parseInlineRuns(li);
+              if (tag === 'ol') {
+                runs.unshift(new docx.TextRun({ text: (idx + 1) + '. ', bold: true, size: 22, font: 'Calibri' }));
+              } else {
+                runs.unshift(new docx.TextRun({ text: '• ', size: 22, font: 'Calibri' }));
+              }
+              children.push(new docx.Paragraph({
+                children: runs,
+                indent: { left: 720 },
+                spacing: { after: 60 }
+              }));
+
+              // Handle nested lists
+              const nestedLists = li.querySelectorAll(':scope > ul, :scope > ol');
+              nestedLists.forEach(nestedList => {
+                const nestedTag = nestedList.tagName.toLowerCase();
+                const nestedItems = nestedList.querySelectorAll(':scope > li');
+                nestedItems.forEach((nli, nidx) => {
+                  const nruns = parseInlineRuns(nli);
+                  if (nestedTag === 'ol') {
+                    nruns.unshift(new docx.TextRun({ text: (nidx + 1) + '. ', bold: true, size: 22, font: 'Calibri' }));
+                  } else {
+                    nruns.unshift(new docx.TextRun({ text: '  ◦ ', size: 22, font: 'Calibri' }));
+                  }
+                  children.push(new docx.Paragraph({
+                    children: nruns,
+                    indent: { left: 1440 },
+                    spacing: { after: 40 }
+                  }));
+                });
+              });
+            });
+          } else if (tag === 'blockquote') {
+            children.push(new docx.Paragraph({
+              children: [new docx.TextRun({ text: node.textContent.trim(), italics: true, size: 22, font: 'Calibri', color: '64748b' })],
+              indent: { left: 720 },
+              border: { left: { color: '52d5ff', space: 8, style: docx.BorderStyle.SINGLE, size: 12 } },
+              spacing: { before: 120, after: 120 }
+            }));
+          } else if (tag === 'pre') {
+            children.push(new docx.Paragraph({
+              children: [new docx.TextRun({ text: node.textContent.trim(), size: 20, font: 'Courier New', color: '111827' })],
+              shading: { type: docx.ShadingType.SOLID, color: 'f8fafc' },
+              border: {
+                top: { color: 'e2e8f0', space: 4, style: docx.BorderStyle.SINGLE, size: 4 },
+                bottom: { color: 'e2e8f0', space: 4, style: docx.BorderStyle.SINGLE, size: 4 },
+                left: { color: 'e2e8f0', space: 4, style: docx.BorderStyle.SINGLE, size: 4 },
+                right: { color: 'e2e8f0', space: 4, style: docx.BorderStyle.SINGLE, size: 4 }
+              },
+              spacing: { before: 120, after: 120 }
+            }));
+          } else if (tag === 'table') {
+            const rows = node.querySelectorAll('tr');
+            const tableRows = [];
+            rows.forEach((tr, rowIdx) => {
+              const cells = tr.querySelectorAll('th, td');
+              const tableCells = [];
+              cells.forEach(cell => {
+                const isHeader = cell.tagName.toLowerCase() === 'th';
+                tableCells.push(new docx.TableCell({
+                  children: [new docx.Paragraph({
+                    children: [new docx.TextRun({ text: cell.textContent.trim(), bold: isHeader, size: 20, font: 'Calibri', color: isHeader ? '111827' : '374151' })],
+                    spacing: { after: 40 }
+                  })],
+                  shading: isHeader ? { type: docx.ShadingType.SOLID, color: 'f1f5f9' } : (rowIdx % 2 === 0 ? {} : { type: docx.ShadingType.SOLID, color: 'fafbfc' }),
+                  margins: { top: 60, bottom: 60, left: 100, right: 100 }
+                }));
+              });
+              tableRows.push(new docx.TableRow({ children: tableCells }));
+            });
+            if (tableRows.length > 0) {
+              children.push(new docx.Table({
+                rows: tableRows,
+                width: { size: 100, type: docx.WidthType.PERCENTAGE }
+              }));
+              children.push(new docx.Paragraph({ spacing: { after: 120 } }));
+            }
+          } else if (tag === 'hr') {
+            children.push(new docx.Paragraph({
+              children: [new docx.TextRun({ text: '' })],
+              border: { bottom: { color: 'e2e8f0', space: 8, style: docx.BorderStyle.SINGLE, size: 6 } },
+              spacing: { before: 200, after: 200 }
+            }));
+          } else if (tag === 'div') {
+            // Handle info-box divs and other containers
+            walkNodes(node);
+          } else {
+            // Fallback: recurse into unknown elements
+            walkNodes(node);
+          }
+        }
+      }
+
+      // Parse inline elements (strong, em, code, a, text) into TextRuns
+      function parseInlineRuns(el) {
+        const runs = [];
+        for (const child of el.childNodes) {
+          if (child.nodeType === Node.TEXT_NODE) {
+            const text = child.textContent;
+            if (text.trim()) {
+              runs.push(new docx.TextRun({ text: text, size: 22, font: 'Calibri' }));
+            }
+          } else if (child.nodeType === Node.ELEMENT_NODE) {
+            const ctag = child.tagName.toLowerCase();
+            if (ctag === 'strong' || ctag === 'b') {
+              runs.push(new docx.TextRun({ text: child.textContent, bold: true, size: 22, font: 'Calibri', color: '111827' }));
+            } else if (ctag === 'em' || ctag === 'i') {
+              runs.push(new docx.TextRun({ text: child.textContent, italics: true, size: 22, font: 'Calibri' }));
+            } else if (ctag === 'code') {
+              runs.push(new docx.TextRun({ text: child.textContent, size: 20, font: 'Courier New', color: 'be123c' }));
+            } else if (ctag === 'a') {
+              runs.push(new docx.TextRun({ text: child.textContent, size: 22, font: 'Calibri', color: '2563eb', underline: { type: docx.UnderlineType.SINGLE } }));
+            } else if (ctag === 'span' && child.classList.contains('step-number')) {
+              runs.push(new docx.TextRun({ text: 'Step ' + child.textContent.trim() + ': ', bold: true, size: 22, font: 'Calibri', color: '0b5d7a' }));
+            } else if (ctag === 'span' && child.classList.contains('badge')) {
+              runs.push(new docx.TextRun({ text: '[' + child.textContent.trim() + '] ', size: 20, font: 'Calibri', color: '64748b', italics: true }));
+            } else if (ctag === 'ul' || ctag === 'ol') {
+              // Skip nested lists here - handled in parent
+            } else {
+              runs.push(new docx.TextRun({ text: child.textContent, size: 22, font: 'Calibri' }));
+            }
+          }
+        }
+        if (runs.length === 0) {
+          runs.push(new docx.TextRun({ text: '', size: 22, font: 'Calibri' }));
+        }
+        return runs;
+      }
+
+      walkNodes(contentEl);
+
+      // Build the document
+      const doc = new docx.Document({
+        creator: 'Capstone Management Partners',
+        title: sop.title || 'Standard Operating Procedure',
+        description: 'SOP Document - ' + (sop.title || ''),
+        styles: {
+          default: {
+            document: {
+              run: { size: 22, font: 'Calibri' }
+            }
+          }
+        },
+        sections: [{
+          properties: {
+            page: {
+              margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 }
+            }
+          },
+          headers: {
+            default: new docx.Header({
+              children: [new docx.Paragraph({
+                children: [new docx.TextRun({ text: 'Capstone Management Partners – SOP Library', size: 16, font: 'Calibri', color: '929497', italics: true })],
+                alignment: docx.AlignmentType.RIGHT
+              })]
+            })
+          },
+          footers: {
+            default: new docx.Footer({
+              children: [new docx.Paragraph({
+                children: [
+                  new docx.TextRun({ text: 'Confidential – Internal Use Only', size: 16, font: 'Calibri', color: '929497', italics: true }),
+                  new docx.TextRun({ text: '    |    Page ', size: 16, font: 'Calibri', color: '929497' }),
+                  new docx.TextRun({ children: [docx.PageNumber.CURRENT], size: 16, font: 'Calibri', color: '929497' }),
+                  new docx.TextRun({ text: ' of ', size: 16, font: 'Calibri', color: '929497' }),
+                  new docx.TextRun({ children: [docx.PageNumber.TOTAL_PAGES], size: 16, font: 'Calibri', color: '929497' })
+                ],
+                alignment: docx.AlignmentType.CENTER
+              })]
+            })
+          },
+          children: children
+        }]
+      });
+
+      docx.Packer.toBlob(doc).then(blob => {
+        saveAs(blob, filename);
+      }).catch(err => {
+        console.error('Word export error:', err);
+        alert('Export failed: ' + err.message);
+      });
     }
 
     // Initialize
