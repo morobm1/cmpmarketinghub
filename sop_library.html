@@ -684,9 +684,11 @@ function viewSop(id) {
       ${sop.category ? '<span class="badge category">' + escHtml(sop.category) + '</span>' : ''}
       ${sop.department ? '<span class="badge department">' + escHtml(sop.department) + '</span>' : ''}
       <span style="flex:1"></span>
-      <button class="btn-edit" onclick="openEditModal('${escHtml(sop.id)}')">✏️ Edit</button>
-      <button class="btn-delete" onclick="deleteSop('${escHtml(sop.id)}')">🗑️ Delete</button>
-      <button onclick="copySopLink('${escHtml(sop.id)}')" title="Copy shareable link">🔗 Copy Link</button>
+      <button class="btn-edit" onclick="openEditModal('${escHtml(sop.id)}')">Edit</button>
+      <button class="btn-delete" onclick="deleteSop('${escHtml(sop.id)}')">Delete</button>
+      <button onclick="copySopLink('${escHtml(sop.id)}')" title="Copy shareable link">Copy Link</button>
+      <button onclick="exportWord()">Export Word</button>
+      <button onclick="exportPDF()">Export PDF</button>
     `;
     toolbar.style.display = 'flex';
   } else {
@@ -699,7 +701,9 @@ function viewSop(id) {
       ${sop.category ? '<span class="badge category">' + escHtml(sop.category) + '</span>' : ''}
       ${sop.department ? '<span class="badge department">' + escHtml(sop.department) + '</span>' : ''}
       <span style="flex:1"></span>
-      <button onclick="copySopLink('${escHtml(sop.id)}')" title="Copy shareable link">🔗 Copy Link</button>
+      <button onclick="copySopLink('${escHtml(sop.id)}')" title="Copy shareable link">Copy Link</button>
+      <button onclick="exportWord()">Export Word</button>
+      <button onclick="exportPDF()">Export PDF</button>
     `;
     toolbar.style.display = 'flex';
   }
@@ -873,7 +877,7 @@ function buildTrainingEmbed(url) {
   // Direct video
   if (/\.(mp4|webm|mov|ogg)(\?|$)/i.test(url)) return `<div style="margin:20px 0"><video controls preload="metadata" style="width:100%;border-radius:8px"><source src="${escHtml(url)}">Your browser does not support video.</video></div>\n`;
   // Fallback: link
-  return `<div class="info-box"><h4>📹 Training Resource</h4><p><a href="${escHtml(url)}" target="_blank">${escHtml(url)}</a></p></div>\n`;
+  return `<div class="info-box"><h4>Training Resource</h4><p><a href="${escHtml(url)}" target="_blank">${escHtml(url)}</a></p></div>\n`;
 }
 
 // ===== GENERATE HTML CONTENT FROM FORM =====
@@ -1109,11 +1113,80 @@ function copySopLink(id) {
   navigator.clipboard.writeText(link).then(() => {
     const btn = event.target.closest ? event.target.closest('button') : event.target;
     const orig = btn.textContent;
-    btn.textContent = '✅ Copied!';
+    btn.textContent = 'Copied!';
     setTimeout(() => { btn.textContent = orig; }, 2000);
   }).catch(() => {
     prompt('Copy this link:', link);
   });
+}
+
+// ===== EXPORT FUNCTIONS =====
+function getExportHtml() {
+  const el = document.getElementById('contentDisplay');
+  if (!el) return '';
+  // Clone and strip iframes/video (not useful in exports)
+  const clone = el.cloneNode(true);
+  clone.querySelectorAll('iframe, video, .video-tutorial-section').forEach(function(n) { n.remove(); });
+  return clone.innerHTML;
+}
+
+function exportWord() {
+  const sop = selectedSopId ? allSops.find(function(s) { return s.id === selectedSopId; }) : null;
+  const title = sop ? sop.title : 'SOP Document';
+  const content = getExportHtml();
+  if (!content) { alert('No SOP selected to export.'); return; }
+
+  const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="utf-8"><title>${escHtml(title)}</title>
+<style>body{font-family:Calibri,Arial,sans-serif;font-size:11pt;line-height:1.5;color:#1a1a1a;margin:1in}
+h1{font-size:18pt;font-weight:bold;color:#111;margin:0 0 12pt}
+h2{font-size:14pt;font-weight:bold;color:#111;margin:20pt 0 8pt;border-bottom:1pt solid #ccc;padding-bottom:4pt}
+h3{font-size:12pt;font-weight:bold;color:#222;margin:14pt 0 6pt}
+h4{font-size:11pt;font-weight:bold;color:#333;margin:10pt 0 4pt}
+p{margin:6pt 0}ul,ol{margin:6pt 0 6pt 24pt}li{margin:3pt 0}
+table{border-collapse:collapse;width:100%;margin:10pt 0}th,td{border:1pt solid #ccc;padding:6pt;text-align:left}
+th{background:#f2f2f2;font-weight:bold}strong{font-weight:bold}em{font-style:italic}
+</style></head><body>${content}</body></html>`;
+
+  const blob = new Blob(['\ufeff' + html], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = (title.replace(/[^a-zA-Z0-9 _-]/g, '') || 'SOP') + '.doc';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function exportPDF() {
+  const sop = selectedSopId ? allSops.find(function(s) { return s.id === selectedSopId; }) : null;
+  const title = sop ? sop.title : 'SOP Document';
+  const content = getExportHtml();
+  if (!content) { alert('No SOP selected to export.'); return; }
+
+  const w = window.open('', '_blank');
+  if (!w) { alert('Please allow popups to export PDF.'); return; }
+  w.document.open();
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escHtml(title)}</title>
+<style>
+@page{size:letter;margin:0.75in}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+body{font-family:Calibri,"Segoe UI",Arial,sans-serif;font-size:11pt;line-height:1.5;color:#1a1a1a;padding:0;margin:0}
+h1{font-size:18pt;font-weight:bold;color:#111;margin:0 0 12pt}
+h2{font-size:14pt;font-weight:bold;color:#111;margin:20pt 0 8pt;border-bottom:1pt solid #ccc;padding-bottom:4pt}
+h3{font-size:12pt;font-weight:bold;color:#222;margin:14pt 0 6pt}
+h4{font-size:11pt;font-weight:bold;color:#333;margin:10pt 0 4pt}
+p{margin:6pt 0}ul,ol{margin:6pt 0 6pt 24pt}li{margin:3pt 0}
+table{border-collapse:collapse;width:100%;margin:10pt 0}th,td{border:1pt solid #ccc;padding:6pt;text-align:left}
+th{background:#f2f2f2;font-weight:bold}strong{font-weight:bold}em{font-style:italic}
+.badge,.step-number{display:none}
+.info-box{border-left:3pt solid #446472;padding:8pt 12pt;margin:10pt 0;background:#f7f7f7}
+hr{border:none;border-top:1pt solid #ccc;margin:20pt 0}
+</style></head><body>${content}
+<script>window.onload=function(){setTimeout(function(){window.print();},400);}<\/script>
+</body></html>`);
+  w.document.close();
 }
 
 // ===== SETUP ADMIN CONTROLS =====
