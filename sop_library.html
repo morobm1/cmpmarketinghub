@@ -1246,20 +1246,35 @@ function exportWord() {
   var dateStr = getExportDate();
   var bodyContent = buildExportBody(sop);
 
-  // Build Word-compatible HTML document
+  // Build Word-compatible HTML document with cover page, headers, and footers
   var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">\n';
   html += '<head>\n';
   html += '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">\n';
   html += '<title>' + escHtml(title) + '</title>\n';
-  html += '<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->\n';
+  html += '<!--[if gte mso 9]><xml>\n';
+  html += '<w:WordDocument>\n';
+  html += '<w:View>Print</w:View>\n';
+  html += '<w:Zoom>100</w:Zoom>\n';
+  html += '<w:DoNotOptimizeForBrowser/>\n';
+  html += '</w:WordDocument>\n';
+  html += '</xml><![endif]-->\n';
   html += '<style>\n';
+  // Page setup
   html += '@page { size: 8.5in 11in; margin: 1in 1in 1in 1in; }\n';
+  html += '@page Section1 { mso-header-margin: 0.5in; mso-footer-margin: 0.5in; mso-header: h1; mso-footer: f1; }\n';
+  html += 'div.Section1 { page: Section1; }\n';
+  // Body styles
   html += 'body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; line-height: 1.5; color: #000000; }\n';
-  html += '.doc-header { margin-bottom: 18pt; padding-bottom: 12pt; border-bottom: 2pt solid #446472; }\n';
-  html += '.org-name { font-size: 18pt; font-weight: bold; color: #446472; margin: 0 0 4pt 0; }\n';
-  html += '.doc-type { font-size: 11pt; color: #666666; margin: 0 0 12pt 0; }\n';
-  html += '.doc-title { font-size: 12pt; font-weight: bold; color: #000000; margin: 0 0 8pt 0; }\n';
-  html += '.meta-line { font-size: 10pt; color: #333333; margin: 2pt 0; }\n';
+  // Cover page styles
+  html += '.cover-page { page-break-after: always; height: 100%; display: flex; flex-direction: column; }\n';
+  html += '.cover-header { text-align: right; font-style: italic; color: #666666; font-size: 10pt; padding: 20pt 0; }\n';
+  html += '.cover-content { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 100pt 40pt; }\n';
+  html += '.cover-property { font-size: 28pt; font-weight: bold; color: #446472; margin: 0 0 16pt 0; }\n';
+  html += '.cover-type { font-size: 16pt; color: #666666; margin: 0 0 24pt 0; }\n';
+  html += '.cover-title { font-size: 14pt; font-weight: bold; color: #000000; margin: 0 0 30pt 0; }\n';
+  html += '.cover-meta { font-size: 11pt; font-style: italic; color: #666666; margin: 4pt 0; }\n';
+  html += '.cover-footer { text-align: center; font-size: 9pt; color: #888888; padding: 20pt 0; border-top: 1pt solid #cccccc; }\n';
+  // Content styles
   html += 'h1 { font-size: 14pt; font-weight: bold; color: #000000; margin: 16pt 0 8pt 0; }\n';
   html += 'h2 { font-size: 12pt; font-weight: bold; color: #000000; margin: 18pt 0 8pt 0; border-bottom: 1pt solid #cccccc; padding-bottom: 4pt; }\n';
   html += 'h3 { font-size: 11pt; font-weight: bold; color: #000000; margin: 12pt 0 6pt 0; }\n';
@@ -1270,22 +1285,36 @@ function exportWord() {
   html += 'hr { border: none; border-top: 1pt solid #cccccc; margin: 18pt 0; }\n';
   html += 'em { font-style: italic; color: #666666; }\n';
   html += 'b { font-weight: bold; }\n';
+  // Header and footer styles
+  html += '.page-header { text-align: right; font-style: italic; color: #666666; font-size: 10pt; border-bottom: 0.5pt solid #cccccc; padding-bottom: 6pt; margin-bottom: 12pt; }\n';
+  html += '.page-footer { text-align: center; font-size: 9pt; color: #888888; border-top: 0.5pt solid #cccccc; padding-top: 6pt; margin-top: 12pt; }\n';
   html += '</style>\n';
   html += '</head>\n';
   html += '<body>\n';
 
-  // Document header
-  html += '<div class="doc-header">\n';
-  html += '<p class="org-name">' + escHtml(property) + '</p>\n';
-  html += '<p class="doc-type">Standard Operating Procedure</p>\n';
-  html += '<p class="doc-title">' + escHtml(property) + ' - SOP: ' + escHtml(title) + '</p>\n';
-  if (system) html += '<p class="meta-line"><b>System:</b> ' + escHtml(system) + '</p>\n';
-  if (department) html += '<p class="meta-line"><b>Department:</b> ' + escHtml(department) + '</p>\n';
-  html += '<p class="meta-line"><b>Date:</b> ' + escHtml(dateStr) + '</p>\n';
+  // ===== COVER PAGE =====
+  html += '<div class="cover-page">\n';
+  html += '<div class="cover-header">Capstone Management Partners - SOP Library</div>\n';
+  html += '<div class="cover-content">\n';
+  html += '<p class="cover-property">' + escHtml(property) + '</p>\n';
+  html += '<p class="cover-type">Standard Operating Procedure</p>\n';
+  html += '<p class="cover-title">' + escHtml(property) + ' - SOP: ' + escHtml(title) + '</p>\n';
+  if (system) html += '<p class="cover-meta">System: ' + escHtml(system) + '</p>\n';
+  if (department) html += '<p class="cover-meta">Department: ' + escHtml(department) + '</p>\n';
+  html += '<p class="cover-meta">Date: ' + escHtml(dateStr) + '</p>\n';
+  html += '</div>\n';
+  html += '<div class="cover-footer">Confidential - Internal Use Only</div>\n';
   html += '</div>\n';
 
+  // ===== CONTENT PAGES =====
+  html += '<div class="Section1">\n';
+  // Page header (will repeat on each page in Word)
+  html += '<div class="page-header">Capstone Management Partners - SOP Library</div>\n';
   // Body content
   html += bodyContent;
+  // Page footer
+  html += '<div class="page-footer">Confidential - Internal Use Only</div>\n';
+  html += '</div>\n';
 
   html += '</body>\n</html>';
 
@@ -1314,56 +1343,72 @@ function exportPDF() {
   var updatedMonth = getExportMonth();
   var bodyContent = buildExportBody(sop);
 
-  // Footer text
-  var footerLeft = property + ' SOP';
-  var footerRight = (system ? 'System: ' + system + ' | ' : '') + (department || 'Team') + ' | ' + updatedMonth;
-
   var pdfHtml = '<!DOCTYPE html>\n<html>\n<head>\n';
   pdfHtml += '<meta charset="utf-8">\n';
   pdfHtml += '<title>' + escHtml(title) + '</title>\n';
   pdfHtml += '<style>\n';
-  pdfHtml += '@page { size: letter; margin: 0.9in 0.85in 1.1in 0.85in; }\n';
+  // Page setup
+  pdfHtml += '@page { size: letter; margin: 0.75in 0.75in 1in 0.75in; }\n';
   pdfHtml += '@media print {\n';
   pdfHtml += '  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }\n';
-  pdfHtml += '  .page-footer { position: fixed; bottom: 0; left: 0; right: 0; padding: 8pt 0.85in; font-size: 8pt; color: #888; border-top: 0.5pt solid #ccc; display: flex; justify-content: space-between; background: #fff; }\n';
+  pdfHtml += '  .cover-page { page-break-after: always; }\n';
+  pdfHtml += '  .page-header { position: running(header); }\n';
+  pdfHtml += '  .page-footer { position: fixed; bottom: 0; left: 0; right: 0; }\n';
   pdfHtml += '}\n';
-  pdfHtml += 'body { font-family: Calibri, "Segoe UI", Arial, sans-serif; font-size: 11pt; line-height: 1.6; color: #1a1a1a; background: #fff; margin: 0; padding: 40px; max-width: 800px; margin: 0 auto; }\n';
-  pdfHtml += '.doc-header { margin-bottom: 20pt; padding-bottom: 14pt; border-bottom: 2.5pt solid #446472; }\n';
-  pdfHtml += '.doc-header .org-name { font-size: 20pt; font-weight: bold; color: #446472; margin: 0 0 2pt 0; }\n';
-  pdfHtml += '.doc-header .doc-type { font-size: 10.5pt; color: #777; text-transform: uppercase; letter-spacing: 1.5pt; margin: 0 0 14pt 0; }\n';
-  pdfHtml += '.doc-header .doc-title { font-size: 15pt; font-weight: bold; color: #111; margin: 0 0 10pt 0; line-height: 1.3; }\n';
-  pdfHtml += '.doc-header .meta-line { font-size: 9.5pt; color: #555; margin: 2pt 0; }\n';
-  pdfHtml += '.doc-header .meta-line b { color: #333; }\n';
-  pdfHtml += 'h1 { font-size: 14pt; font-weight: bold; color: #111; margin: 16pt 0 8pt 0; }\n';
-  pdfHtml += 'h2 { font-size: 13pt; font-weight: bold; color: #1a1a1a; margin: 22pt 0 8pt 0; padding-bottom: 4pt; border-bottom: 1pt solid #d0d0d0; }\n';
-  pdfHtml += 'h3 { font-size: 11.5pt; font-weight: bold; color: #222; margin: 14pt 0 6pt 0; }\n';
+  // Base styles
+  pdfHtml += '* { box-sizing: border-box; margin: 0; padding: 0; }\n';
+  pdfHtml += 'body { font-family: Calibri, "Segoe UI", Arial, sans-serif; font-size: 11pt; line-height: 1.6; color: #1a1a1a; background: #fff; }\n';
+  // Cover page styles
+  pdfHtml += '.cover-page { height: 100vh; display: flex; flex-direction: column; padding: 0.75in; }\n';
+  pdfHtml += '.cover-page .cover-header { text-align: right; font-style: italic; color: #666666; font-size: 10pt; }\n';
+  pdfHtml += '.cover-page .cover-content { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }\n';
+  pdfHtml += '.cover-page .cover-property { font-size: 28pt; font-weight: bold; color: #446472; margin: 0 0 12pt 0; }\n';
+  pdfHtml += '.cover-page .cover-type { font-size: 16pt; color: #666666; margin: 0 0 20pt 0; }\n';
+  pdfHtml += '.cover-page .cover-title { font-size: 13pt; font-weight: bold; color: #000000; margin: 0 0 28pt 0; }\n';
+  pdfHtml += '.cover-page .cover-meta { font-size: 11pt; font-style: italic; color: #666666; margin: 3pt 0; }\n';
+  pdfHtml += '.cover-page .cover-footer { text-align: center; font-size: 9pt; color: #888888; padding-top: 12pt; border-top: 0.5pt solid #cccccc; }\n';
+  // Content page styles
+  pdfHtml += '.content-page { padding: 0.75in; padding-top: 0.5in; }\n';
+  pdfHtml += '.page-header { text-align: right; font-style: italic; color: #666666; font-size: 10pt; padding-bottom: 8pt; border-bottom: 0.5pt solid #cccccc; margin-bottom: 16pt; }\n';
+  pdfHtml += '.page-footer { text-align: center; font-size: 9pt; color: #888888; padding: 8pt 0.75in; border-top: 0.5pt solid #cccccc; background: #fff; }\n';
+  // Typography
+  pdfHtml += 'h1 { font-size: 14pt; font-weight: bold; color: #111; margin: 14pt 0 8pt 0; }\n';
+  pdfHtml += 'h2 { font-size: 12pt; font-weight: bold; color: #1a1a1a; margin: 18pt 0 8pt 0; padding-bottom: 4pt; border-bottom: 1pt solid #d0d0d0; }\n';
+  pdfHtml += 'h3 { font-size: 11pt; font-weight: bold; color: #222; margin: 12pt 0 6pt 0; }\n';
   pdfHtml += 'h4 { font-size: 11pt; font-weight: bold; color: #333; margin: 10pt 0 4pt 0; }\n';
   pdfHtml += 'p { margin: 6pt 0; line-height: 1.6; }\n';
-  pdfHtml += 'ul { margin: 6pt 0 8pt 24pt; line-height: 1.65; }\n';
+  pdfHtml += 'ul { margin: 6pt 0 8pt 24pt; line-height: 1.6; }\n';
   pdfHtml += 'li { margin: 3pt 0; }\n';
-  pdfHtml += 'hr { border: none; border-top: 1pt solid #ccc; margin: 20pt 0; }\n';
+  pdfHtml += 'hr { border: none; border-top: 1pt solid #ccc; margin: 16pt 0; }\n';
   pdfHtml += 'em { font-style: italic; color: #666; }\n';
   pdfHtml += 'b { font-weight: bold; }\n';
-  pdfHtml += '.page-footer { position: fixed; bottom: 0; left: 0; right: 0; padding: 8pt 40px; font-size: 8pt; color: #888; border-top: 0.5pt solid #ccc; display: flex; justify-content: space-between; }\n';
-  pdfHtml += '.page-footer .fl { font-weight: bold; color: #666; }\n';
   pdfHtml += '</style>\n';
   pdfHtml += '</head>\n<body>\n';
 
-  // Fixed footer for print
-  pdfHtml += '<div class="page-footer"><span class="fl">' + escHtml(footerLeft) + '</span><span>' + escHtml(footerRight) + '</span></div>\n';
-
-  // Document header
-  pdfHtml += '<div class="doc-header">\n';
-  pdfHtml += '<div class="org-name">' + escHtml(property) + '</div>\n';
-  pdfHtml += '<div class="doc-type">Standard Operating Procedure</div>\n';
-  pdfHtml += '<div class="doc-title">' + escHtml(property) + ' - SOP: ' + escHtml(title) + '</div>\n';
-  if (system) pdfHtml += '<div class="meta-line"><b>System:</b> ' + escHtml(system) + '</div>\n';
-  if (department) pdfHtml += '<div class="meta-line"><b>Department:</b> ' + escHtml(department) + '</div>\n';
-  pdfHtml += '<div class="meta-line"><b>Date:</b> ' + escHtml(dateStr) + '</div>\n';
+  // ===== COVER PAGE =====
+  pdfHtml += '<div class="cover-page">\n';
+  pdfHtml += '<div class="cover-header">Capstone Management Partners - SOP Library</div>\n';
+  pdfHtml += '<div class="cover-content">\n';
+  pdfHtml += '<div class="cover-property">' + escHtml(property) + '</div>\n';
+  pdfHtml += '<div class="cover-type">Standard Operating Procedure</div>\n';
+  pdfHtml += '<div class="cover-title">' + escHtml(property) + ' - SOP: ' + escHtml(title) + '</div>\n';
+  if (system) pdfHtml += '<div class="cover-meta">System: ' + escHtml(system) + '</div>\n';
+  if (department) pdfHtml += '<div class="cover-meta">Department: ' + escHtml(department) + '</div>\n';
+  pdfHtml += '<div class="cover-meta">Date: ' + escHtml(dateStr) + '</div>\n';
+  pdfHtml += '</div>\n';
+  pdfHtml += '<div class="cover-footer">Confidential - Internal Use Only</div>\n';
   pdfHtml += '</div>\n';
 
+  // ===== CONTENT PAGES =====
+  pdfHtml += '<div class="content-page">\n';
+  // Page header
+  pdfHtml += '<div class="page-header">Capstone Management Partners - SOP Library</div>\n';
   // Body content
   pdfHtml += bodyContent;
+  pdfHtml += '</div>\n';
+
+  // Fixed footer for all pages
+  pdfHtml += '<div class="page-footer">Confidential - Internal Use Only</div>\n';
 
   pdfHtml += '<script>window.onload=function(){setTimeout(function(){window.print();},500);};<\/script>\n';
   pdfHtml += '</body>\n</html>';
