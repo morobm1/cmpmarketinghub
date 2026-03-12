@@ -1122,152 +1122,180 @@ function copySopLink(id) {
 
 // ===== EXPORT FUNCTIONS =====
 
-// Dedicated export renderer: builds document HTML from structured SOP data, not from DOM
-function buildExportBody(sop) {
-  let h = '';
-  // Title
-  const titlePrefix = sop.property ? (sop.property + ' \u2013 ') : '';
-  h += '<h1>' + escHtml(titlePrefix) + escHtml(sop.title || '') + '</h1>\n';
-  // Tags
-  const tags = [];
-  if (sop.category) tags.push('[' + escHtml(sop.category) + ']');
-  if (sop.department) tags.push('[' + escHtml(sop.department) + ']');
-  if (tags.length) h += '<p>' + tags.join(' ') + '</p>\n';
-  // Meta
-  const meta = [];
-  if (sop.property) meta.push('<b>Property:</b> ' + escHtml(sop.property));
-  if (sop.system) meta.push('<b>System:</b> ' + escHtml(sop.system));
-  if (meta.length) h += '<p>' + meta.join('  |  ') + '</p>\n';
-  // Training image (no video)
-  if (sop.trainingUrl && /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(sop.trainingUrl)) {
-    h += '<p style="text-align:center"><img src="' + escHtml(sop.trainingUrl) + '" alt="Training" style="max-width:100%" /></p>\n';
-  }
-  // Section 1
-  if (sop.purpose) {
-    h += '<h2>Section 1 \u2013 Purpose</h2>\n';
-    h += '<p>' + escHtml(sop.purpose) + '</p>\n';
-  }
-  // Section 2
-  if (sop.whenToUse) {
-    h += '<h2>Section 2 \u2013 When to Use This Process</h2>\n';
-    h += '<p>' + escHtml(sop.whenToUse) + '</p>\n';
-  }
-  // Section 3
-  var steps = Array.isArray(sop.stepsData) ? sop.stepsData.filter(function(s){return s.title||s.description}) : [];
-  if (steps.length) {
-    h += '<h2>Section 3 \u2013 Step-by-Step Instructions</h2>\n';
-    steps.forEach(function(step, idx) {
-      h += '<h3><b>' + (idx+1) + '</b> ' + escHtml(step.title || '') + '</h3>\n';
-      if (step.description) {
-        var lines = step.description.split('\n');
-        var inUl = false;
-        lines.forEach(function(raw) {
-          var line = raw.trim();
-          if (!line) { if (inUl) { h += '</ul>\n'; inUl = false; } return; }
-          if (/^[\u2022\-\*]\s*/.test(line)) {
-            if (!inUl) { h += '<ul>\n'; inUl = true; }
-            h += '<li>' + escHtml(line.replace(/^[\u2022\-\*]\s*/, '')) + '</li>\n';
-          } else {
-            if (inUl) { h += '</ul>\n'; inUl = false; }
-            h += '<p>' + escHtml(line) + '</p>\n';
-          }
-        });
-        if (inUl) h += '</ul>\n';
-      }
-    });
-  }
-  // Section 4
-  if (sop.expectedResults) {
-    h += '<h2>Section 4 \u2013 Expected Result</h2>\n';
-    h += '<h4>Expected Outcome</h4>\n';
-    h += '<p>' + escHtml(sop.expectedResults) + '</p>\n';
-  }
-  // Section 5
-  if (sop.bestPractices) {
-    h += '<h2>Section 5 \u2013 Best Practices</h2>\n';
-    h += '<h4>Recommendations</h4>\n';
-    var bpLines = sop.bestPractices.split('\n');
-    var bpUl = false;
-    bpLines.forEach(function(raw) {
-      var line = raw.trim();
-      if (!line) { if (bpUl) { h += '</ul>\n'; bpUl = false; } return; }
-      if (/^[\u2022\-\*]\s*/.test(line)) {
-        if (!bpUl) { h += '<ul>\n'; bpUl = true; }
-        h += '<li>' + escHtml(line.replace(/^[\u2022\-\*]\s*/, '')) + '</li>\n';
-      } else {
-        if (bpUl) { h += '</ul>\n'; bpUl = false; }
-        h += '<p>' + escHtml(line) + '</p>\n';
-      }
-    });
-    if (bpUl) h += '</ul>\n';
-  }
-  // Footer
-  var updatedMonth = '';
-  if (sop.updatedAt) { var d = new Date(sop.updatedAt); updatedMonth = d.toLocaleDateString('en-US',{month:'long',year:'numeric'}); }
-  else if (sop.lastReviewed) { updatedMonth = sop.lastReviewed; }
-  else { updatedMonth = new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'}); }
-  h += '<hr>\n';
-  h += '<p><em>Document: ' + escHtml((sop.property ? sop.property + ' \u2013 ' : '') + 'SOP: ' + (sop.title||'')) + '</em></p>\n';
-  var footMeta = [];
-  if (sop.system) footMeta.push('System: ' + escHtml(sop.system));
-  if (sop.department) footMeta.push('Department: ' + escHtml(sop.department));
-  footMeta.push('Last Updated: ' + escHtml(updatedMonth));
-  h += '<p><em>' + footMeta.join('  |  ') + '</em></p>\n';
-  h += '<p style="font-size:9pt;color:#999"><em>Confidential \u2013 Internal Use Only</em></p>\n';
-  return h;
-}
-
 function getExportDate() {
   return new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 }
 
-function exportWord() {
-  var sop = selectedSopId ? allSops.find(function(s){return s.id===selectedSopId}) : null;
-  if (!sop) { alert('No SOP selected to export.'); return; }
-  var title = sop.title || 'SOP Document';
+function getExportMonth() {
+  return new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+}
+
+// Convert text with bullet markers to HTML list
+function textToHtmlList(text) {
+  if (!text) return '';
+  var lines = text.split('\n');
+  var h = '';
+  var inUl = false;
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i].trim();
+    if (!line) { if (inUl) { h += '</ul>\n'; inUl = false; } continue; }
+    var isBullet = /^[\u2022\-\*]\s*/.test(line);
+    if (isBullet) {
+      if (!inUl) { h += '<ul>\n'; inUl = true; }
+      h += '<li>' + escHtml(line.replace(/^[\u2022\-\*]\s*/, '')) + '</li>\n';
+    } else {
+      if (inUl) { h += '</ul>\n'; inUl = false; }
+      h += '<p>' + escHtml(line) + '</p>\n';
+    }
+  }
+  if (inUl) h += '</ul>\n';
+  return h;
+}
+
+// Build the document body content from SOP data
+function buildExportBody(sop) {
   var property = sop.property || 'Capstone Management Partners';
+  var title = sop.title || 'SOP Document';
+  var system = sop.system || '';
+  var department = sop.department || '';
+  var category = sop.category || '';
+  var updatedMonth = '';
+  if (sop.updatedAt) {
+    var d = new Date(sop.updatedAt);
+    updatedMonth = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  } else {
+    updatedMonth = getExportMonth();
+  }
+
+  var h = '';
+
+  // Document title with property prefix
+  h += '<h1>' + escHtml(property) + ' - ' + escHtml(title) + '</h1>\n';
+
+  // Tags line
+  var tags = [];
+  if (category) tags.push('[' + escHtml(category) + ']');
+  if (department) tags.push('[' + escHtml(department) + ']');
+  if (tags.length) h += '<p>' + tags.join(' ') + '</p>\n';
+
+  // Meta line
+  var meta = [];
+  if (property) meta.push('<b>Property:</b> ' + escHtml(property));
+  if (system) meta.push('<b>System:</b> ' + escHtml(system));
+  if (meta.length) h += '<p>' + meta.join('  |  ') + '</p>\n';
+
+  // Section 1 - Purpose
+  if (sop.purpose) {
+    h += '<h2>Section 1 - Purpose</h2>\n';
+    h += '<p>' + escHtml(sop.purpose) + '</p>\n';
+  }
+
+  // Section 2 - When to Use
+  if (sop.whenToUse) {
+    h += '<h2>Section 2 - When to Use This Process</h2>\n';
+    h += '<p>' + escHtml(sop.whenToUse) + '</p>\n';
+  }
+
+  // Section 3 - Steps
+  var steps = Array.isArray(sop.stepsData) ? sop.stepsData.filter(function(s) { return s.title || s.description; }) : [];
+  if (steps.length) {
+    h += '<h2>Section 3 - Step-by-Step Instructions</h2>\n';
+    for (var i = 0; i < steps.length; i++) {
+      var step = steps[i];
+      h += '<h3><b>' + (i + 1) + '</b> ' + escHtml(step.title || '') + '</h3>\n';
+      if (step.description) {
+        h += textToHtmlList(step.description);
+      }
+    }
+  }
+
+  // Section 4 - Expected Result
+  if (sop.expectedResults) {
+    h += '<h2>Section 4 - Expected Result</h2>\n';
+    h += '<h4>Expected Outcome</h4>\n';
+    h += '<p>' + escHtml(sop.expectedResults) + '</p>\n';
+  }
+
+  // Section 5 - Best Practices
+  if (sop.bestPractices) {
+    h += '<h2>Section 5 - Best Practices</h2>\n';
+    h += '<h4>Recommendations</h4>\n';
+    h += textToHtmlList(sop.bestPractices);
+  }
+
+  // Footer
+  h += '<hr>\n';
+  h += '<p><em>Document: ' + escHtml(property) + ' - SOP: ' + escHtml(title) + '</em></p>\n';
+  var footMeta = [];
+  if (system) footMeta.push('System: ' + escHtml(system));
+  if (department) footMeta.push('Department: ' + escHtml(department));
+  footMeta.push('Last Updated: ' + escHtml(updatedMonth));
+  h += '<p><em>' + footMeta.join('  |  ') + '</em></p>\n';
+
+  return h;
+}
+
+function exportWord() {
+  var sop = selectedSopId ? allSops.find(function(s) { return s.id === selectedSopId; }) : null;
+  if (!sop) { alert('No SOP selected to export.'); return; }
+
+  var property = sop.property || 'Capstone Management Partners';
+  var title = sop.title || 'SOP Document';
   var system = sop.system || '';
   var department = sop.department || '';
   var dateStr = getExportDate();
   var bodyContent = buildExportBody(sop);
 
-  var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">\n' +
-'<head><meta charset="utf-8"><title>' + escHtml(title) + '</title>\n' +
-'<style>\n' +
-'@page{size:letter;margin:0.9in 0.85in 1.1in 0.85in}\n' +
-'body{font-family:Calibri,"Segoe UI",Arial,sans-serif;font-size:11pt;line-height:1.6;color:#1a1a1a}\n' +
-'.doc-header{margin-bottom:18pt;padding-bottom:12pt;border-bottom:2.5pt solid #446472}\n' +
-'.doc-header .org-name{font-size:20pt;font-weight:bold;color:#446472;margin:0 0 2pt}\n' +
-'.doc-header .doc-type{font-size:10.5pt;color:#777;text-transform:uppercase;letter-spacing:1.5pt;margin:0 0 14pt}\n' +
-'.doc-header .doc-title{font-size:14pt;font-weight:bold;color:#111;margin:0 0 10pt;line-height:1.3}\n' +
-'.doc-header .meta{font-size:9.5pt;color:#555;line-height:1.8}\n' +
-'.doc-header .meta b{color:#333}\n' +
-'h1{font-size:16pt;font-weight:bold;color:#111;margin:0 0 10pt}\n' +
-'h2{font-size:13pt;font-weight:bold;color:#1a1a1a;margin:22pt 0 8pt;padding-bottom:4pt;border-bottom:1pt solid #d0d0d0}\n' +
-'h3{font-size:11.5pt;font-weight:bold;color:#222;margin:16pt 0 6pt}\n' +
-'h4{font-size:11pt;font-weight:bold;color:#333;margin:12pt 0 4pt}\n' +
-'p{margin:6pt 0;line-height:1.6}\n' +
-'ul,ol{margin:6pt 0 8pt 24pt;line-height:1.65;list-style-type:disc}li{margin:3pt 0}\n' +
-'strong{font-weight:bold}em{font-style:italic}\n' +
-'hr{border:none;border-top:1pt solid #ccc;margin:20pt 0}\n' +
-'</style></head><body>\n' +
-'<div class="doc-header">\n' +
-'<div class="org-name">' + escHtml(property) + '</div>\n' +
-'<div class="doc-type">Standard Operating Procedure</div>\n' +
-'<div class="doc-title">' + escHtml(property) + ' \u2013 SOP: ' + escHtml(title) + '</div>\n' +
-'<div class="meta">\n' +
-(system ? '<b>System:</b> ' + escHtml(system) + '<br>' : '') +
-(department ? '<b>Department:</b> ' + escHtml(department) + '<br>' : '') +
-'<b>Date:</b> ' + escHtml(dateStr) + '\n' +
-'</div>\n</div>\n' +
-bodyContent +
-'</body></html>';
+  // Build Word-compatible HTML document
+  var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">\n';
+  html += '<head>\n';
+  html += '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">\n';
+  html += '<title>' + escHtml(title) + '</title>\n';
+  html += '<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->\n';
+  html += '<style>\n';
+  html += '@page { size: 8.5in 11in; margin: 1in 1in 1in 1in; }\n';
+  html += 'body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; line-height: 1.5; color: #000000; }\n';
+  html += '.doc-header { margin-bottom: 18pt; padding-bottom: 12pt; border-bottom: 2pt solid #446472; }\n';
+  html += '.org-name { font-size: 18pt; font-weight: bold; color: #446472; margin: 0 0 4pt 0; }\n';
+  html += '.doc-type { font-size: 11pt; color: #666666; margin: 0 0 12pt 0; }\n';
+  html += '.doc-title { font-size: 12pt; font-weight: bold; color: #000000; margin: 0 0 8pt 0; }\n';
+  html += '.meta-line { font-size: 10pt; color: #333333; margin: 2pt 0; }\n';
+  html += 'h1 { font-size: 14pt; font-weight: bold; color: #000000; margin: 16pt 0 8pt 0; }\n';
+  html += 'h2 { font-size: 12pt; font-weight: bold; color: #000000; margin: 18pt 0 8pt 0; border-bottom: 1pt solid #cccccc; padding-bottom: 4pt; }\n';
+  html += 'h3 { font-size: 11pt; font-weight: bold; color: #000000; margin: 12pt 0 6pt 0; }\n';
+  html += 'h4 { font-size: 11pt; font-weight: bold; color: #333333; margin: 10pt 0 4pt 0; }\n';
+  html += 'p { margin: 6pt 0; line-height: 1.5; }\n';
+  html += 'ul { margin: 6pt 0 6pt 24pt; }\n';
+  html += 'li { margin: 3pt 0; }\n';
+  html += 'hr { border: none; border-top: 1pt solid #cccccc; margin: 18pt 0; }\n';
+  html += 'em { font-style: italic; color: #666666; }\n';
+  html += 'b { font-weight: bold; }\n';
+  html += '</style>\n';
+  html += '</head>\n';
+  html += '<body>\n';
 
-  var blob = new Blob(['\ufeff' + html], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+  // Document header
+  html += '<div class="doc-header">\n';
+  html += '<p class="org-name">' + escHtml(property) + '</p>\n';
+  html += '<p class="doc-type">Standard Operating Procedure</p>\n';
+  html += '<p class="doc-title">' + escHtml(property) + ' - SOP: ' + escHtml(title) + '</p>\n';
+  if (system) html += '<p class="meta-line"><b>System:</b> ' + escHtml(system) + '</p>\n';
+  if (department) html += '<p class="meta-line"><b>Department:</b> ' + escHtml(department) + '</p>\n';
+  html += '<p class="meta-line"><b>Date:</b> ' + escHtml(dateStr) + '</p>\n';
+  html += '</div>\n';
+
+  // Body content
+  html += bodyContent;
+
+  html += '</body>\n</html>';
+
+  // Create and download the file
+  var blob = new Blob([html], { type: 'application/msword' });
   var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
   a.href = url;
-  a.download = (title.replace(/[^a-zA-Z0-9 _-]/g, '') || 'SOP') + '.docx';
+  var filename = (title.replace(/[^a-zA-Z0-9 _-]/g, '').replace(/\s+/g, '_') || 'SOP') + '.doc';
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -1275,33 +1303,75 @@ bodyContent +
 }
 
 function exportPDF() {
-  var sop = selectedSopId ? allSops.find(function(s){return s.id===selectedSopId}) : null;
+  var sop = selectedSopId ? allSops.find(function(s) { return s.id === selectedSopId; }) : null;
   if (!sop) { alert('No SOP selected to export.'); return; }
+
+  var property = sop.property || 'Capstone Management Partners';
   var title = sop.title || 'SOP Document';
+  var system = sop.system || '';
+  var department = sop.department || '';
+  var dateStr = getExportDate();
+  var updatedMonth = getExportMonth();
   var bodyContent = buildExportBody(sop);
 
-  var w = window.open('', '_blank');
+  // Footer text
+  var footerLeft = property + ' SOP';
+  var footerRight = (system ? 'System: ' + system + ' | ' : '') + (department || 'Team') + ' | ' + updatedMonth;
+
+  var pdfHtml = '<!DOCTYPE html>\n<html>\n<head>\n';
+  pdfHtml += '<meta charset="utf-8">\n';
+  pdfHtml += '<title>' + escHtml(title) + '</title>\n';
+  pdfHtml += '<style>\n';
+  pdfHtml += '@page { size: letter; margin: 0.9in 0.85in 1.1in 0.85in; }\n';
+  pdfHtml += '@media print {\n';
+  pdfHtml += '  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }\n';
+  pdfHtml += '  .page-footer { position: fixed; bottom: 0; left: 0; right: 0; padding: 8pt 0.85in; font-size: 8pt; color: #888; border-top: 0.5pt solid #ccc; display: flex; justify-content: space-between; background: #fff; }\n';
+  pdfHtml += '}\n';
+  pdfHtml += 'body { font-family: Calibri, "Segoe UI", Arial, sans-serif; font-size: 11pt; line-height: 1.6; color: #1a1a1a; background: #fff; margin: 0; padding: 40px; max-width: 800px; margin: 0 auto; }\n';
+  pdfHtml += '.doc-header { margin-bottom: 20pt; padding-bottom: 14pt; border-bottom: 2.5pt solid #446472; }\n';
+  pdfHtml += '.doc-header .org-name { font-size: 20pt; font-weight: bold; color: #446472; margin: 0 0 2pt 0; }\n';
+  pdfHtml += '.doc-header .doc-type { font-size: 10.5pt; color: #777; text-transform: uppercase; letter-spacing: 1.5pt; margin: 0 0 14pt 0; }\n';
+  pdfHtml += '.doc-header .doc-title { font-size: 15pt; font-weight: bold; color: #111; margin: 0 0 10pt 0; line-height: 1.3; }\n';
+  pdfHtml += '.doc-header .meta-line { font-size: 9.5pt; color: #555; margin: 2pt 0; }\n';
+  pdfHtml += '.doc-header .meta-line b { color: #333; }\n';
+  pdfHtml += 'h1 { font-size: 14pt; font-weight: bold; color: #111; margin: 16pt 0 8pt 0; }\n';
+  pdfHtml += 'h2 { font-size: 13pt; font-weight: bold; color: #1a1a1a; margin: 22pt 0 8pt 0; padding-bottom: 4pt; border-bottom: 1pt solid #d0d0d0; }\n';
+  pdfHtml += 'h3 { font-size: 11.5pt; font-weight: bold; color: #222; margin: 14pt 0 6pt 0; }\n';
+  pdfHtml += 'h4 { font-size: 11pt; font-weight: bold; color: #333; margin: 10pt 0 4pt 0; }\n';
+  pdfHtml += 'p { margin: 6pt 0; line-height: 1.6; }\n';
+  pdfHtml += 'ul { margin: 6pt 0 8pt 24pt; line-height: 1.65; }\n';
+  pdfHtml += 'li { margin: 3pt 0; }\n';
+  pdfHtml += 'hr { border: none; border-top: 1pt solid #ccc; margin: 20pt 0; }\n';
+  pdfHtml += 'em { font-style: italic; color: #666; }\n';
+  pdfHtml += 'b { font-weight: bold; }\n';
+  pdfHtml += '.page-footer { position: fixed; bottom: 0; left: 0; right: 0; padding: 8pt 40px; font-size: 8pt; color: #888; border-top: 0.5pt solid #ccc; display: flex; justify-content: space-between; }\n';
+  pdfHtml += '.page-footer .fl { font-weight: bold; color: #666; }\n';
+  pdfHtml += '</style>\n';
+  pdfHtml += '</head>\n<body>\n';
+
+  // Fixed footer for print
+  pdfHtml += '<div class="page-footer"><span class="fl">' + escHtml(footerLeft) + '</span><span>' + escHtml(footerRight) + '</span></div>\n';
+
+  // Document header
+  pdfHtml += '<div class="doc-header">\n';
+  pdfHtml += '<div class="org-name">' + escHtml(property) + '</div>\n';
+  pdfHtml += '<div class="doc-type">Standard Operating Procedure</div>\n';
+  pdfHtml += '<div class="doc-title">' + escHtml(property) + ' - SOP: ' + escHtml(title) + '</div>\n';
+  if (system) pdfHtml += '<div class="meta-line"><b>System:</b> ' + escHtml(system) + '</div>\n';
+  if (department) pdfHtml += '<div class="meta-line"><b>Department:</b> ' + escHtml(department) + '</div>\n';
+  pdfHtml += '<div class="meta-line"><b>Date:</b> ' + escHtml(dateStr) + '</div>\n';
+  pdfHtml += '</div>\n';
+
+  // Body content
+  pdfHtml += bodyContent;
+
+  pdfHtml += '<script>window.onload=function(){setTimeout(function(){window.print();},500);};<\/script>\n';
+  pdfHtml += '</body>\n</html>';
+
+  var w = window.open('', '_blank', 'width=850,height=700');
   if (!w) { alert('Please allow popups to export PDF.'); return; }
   w.document.open();
-  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + escHtml(title) + '</title>\n' +
-'<style>\n' +
-'@page{size:letter;margin:0.75in}\n' +
-'@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}\n' +
-'*{box-sizing:border-box;margin:0;padding:0}\n' +
-'body{font-family:Calibri,"Segoe UI","Open Sans",Arial,sans-serif;font-size:11pt;line-height:1.6;color:#1a1a1a;padding:40px;max-width:800px;margin:0 auto}\n' +
-'h1{font-size:16pt;font-weight:bold;color:#111;margin:0 0 10pt}\n' +
-'h2{font-size:13pt;font-weight:bold;color:#1a1a1a;margin:22pt 0 8pt;padding-bottom:4pt;border-bottom:1pt solid #d0d0d0}\n' +
-'h3{font-size:11.5pt;font-weight:bold;color:#222;margin:16pt 0 6pt}\n' +
-'h4{font-size:11pt;font-weight:bold;color:#333;margin:12pt 0 4pt}\n' +
-'p{margin:6pt 0;line-height:1.6}\n' +
-'ul,ol{margin:6pt 0 8pt 24pt;line-height:1.65}li{margin:3pt 0}\n' +
-'strong{font-weight:bold}em{font-style:italic}\n' +
-'hr{border:none;border-top:1pt solid #ccc;margin:20pt 0}\n' +
-'img{max-width:100%}\n' +
-'</style></head><body>\n' +
-bodyContent +
-'<script>window.onload=function(){setTimeout(function(){window.print();},500);}<\/script>\n' +
-'</body></html>');
+  w.document.write(pdfHtml);
   w.document.close();
 }
 
