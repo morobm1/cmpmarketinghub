@@ -972,6 +972,71 @@
       'Lake City', 'Starke', 'Palatka', 'St. Augustine'
     ];
 
+    // Valid US state names and abbreviations
+    const US_STATE_NAMES = [
+      'alabama', 'alaska', 'arizona', 'arkansas', 'california', 'colorado', 'connecticut', 
+      'delaware', 'florida', 'georgia', 'hawaii', 'idaho', 'illinois', 'indiana', 'iowa', 
+      'kansas', 'kentucky', 'louisiana', 'maine', 'maryland', 'massachusetts', 'michigan', 
+      'minnesota', 'mississippi', 'missouri', 'montana', 'nebraska', 'nevada', 'new hampshire', 
+      'new jersey', 'new mexico', 'new york', 'north carolina', 'north dakota', 'ohio', 
+      'oklahoma', 'oregon', 'pennsylvania', 'rhode island', 'south carolina', 'south dakota', 
+      'tennessee', 'texas', 'utah', 'vermont', 'virginia', 'washington', 'west virginia', 
+      'wisconsin', 'wyoming'
+    ];
+
+    const US_STATE_ABBREV = [
+      'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 
+      'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 
+      'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 
+      'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
+    ];
+
+    // Country inference from city names
+    const CITY_TO_COUNTRY = {
+      // Canada
+      'toronto': 'Canada', 'vancouver': 'Canada', 'montreal': 'Canada', 'calgary': 'Canada',
+      'ottawa': 'Canada', 'edmonton': 'Canada', 'winnipeg': 'Canada', 'quebec': 'Canada',
+      'hamilton': 'Canada', 'kitchener': 'Canada', 'london': 'Canada', 'victoria': 'Canada',
+      
+      // UK
+      'london': 'United Kingdom', 'manchester': 'United Kingdom', 'birmingham': 'United Kingdom',
+      'liverpool': 'United Kingdom', 'leeds': 'United Kingdom', 'glasgow': 'United Kingdom',
+      'edinburgh': 'United Kingdom', 'bristol': 'United Kingdom', 'cardiff': 'United Kingdom',
+      
+      // India
+      'mumbai': 'India', 'delhi': 'India', 'bangalore': 'India', 'hyderabad': 'India',
+      'chennai': 'India', 'kolkata': 'India', 'pune': 'India', 'ahmedabad': 'India',
+      
+      // China
+      'beijing': 'China', 'shanghai': 'China', 'guangzhou': 'China', 'shenzhen': 'China',
+      'chengdu': 'China', 'hangzhou': 'China', 'wuhan': 'China', 'xian': 'China',
+      
+      // Mexico
+      'mexico city': 'Mexico', 'guadalajara': 'Mexico', 'monterrey': 'Mexico', 'puebla': 'Mexico',
+      'tijuana': 'Mexico', 'cancun': 'Mexico', 'merida': 'Mexico',
+      
+      // Brazil
+      'sao paulo': 'Brazil', 'rio de janeiro': 'Brazil', 'brasilia': 'Brazil', 'salvador': 'Brazil',
+      
+      // Other major cities
+      'paris': 'France', 'berlin': 'Germany', 'madrid': 'Spain', 'rome': 'Italy',
+      'tokyo': 'Japan', 'seoul': 'South Korea', 'sydney': 'Australia', 'melbourne': 'Australia',
+      'dubai': 'United Arab Emirates', 'singapore': 'Singapore', 'hong kong': 'Hong Kong'
+    };
+
+    function isValidUSState(state) {
+      if (!state) return false;
+      const normalized = state.trim().toLowerCase();
+      const upper = state.trim().toUpperCase();
+      return US_STATE_NAMES.includes(normalized) || US_STATE_ABBREV.includes(upper);
+    }
+
+    function inferCountryFromCity(city) {
+      if (!city) return null;
+      const normalized = city.trim().toLowerCase();
+      return CITY_TO_COUNTRY[normalized] || null;
+    }
+
     function analyzeNewAdmits(newAdmits) {
       const cityCounts = {};
       const stateCounts = {};
@@ -995,29 +1060,68 @@
         for (const field of stateFields) {
           const key = Object.keys(record).find(k => normalizeString(k) === field);
           if (key && record[key]) {
-            state = String(record[key]).trim().toUpperCase();
+            state = String(record[key]).trim();
             break;
           }
         }
 
-        // Get country
+        // Get zipcode
+        const zipcodeFields = ['zipcode', 'zip code', 'zip', 'postal code', 'postalcode', 'mailing zip', 'mailingzip'];
+        let zipcode = '';
+        for (const field of zipcodeFields) {
+          const key = Object.keys(record).find(k => normalizeString(k) === field);
+          if (key && record[key]) {
+            zipcode = String(record[key]).trim();
+            break;
+          }
+        }
+
+        // Get country field if exists
         const countryFields = ['country', 'mailing country', 'mailingcountry', 'active country', 'activecountry'];
-        let country = '';
+        let countryField = '';
         for (const field of countryFields) {
           const key = Object.keys(record).find(k => normalizeString(k) === field);
           if (key && record[key]) {
-            country = String(record[key]).trim();
+            countryField = String(record[key]).trim();
             break;
           }
         }
 
-        // Infer country from state if not provided
-        if (!country && state) {
-          // US states
-          const usStates = ['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY','DC'];
-          if (usStates.includes(state)) {
-            country = 'United States';
+        // Determine country using improved logic
+        let country = '';
+        
+        // First check if state is a valid US state
+        if (isValidUSState(state)) {
+          country = 'United States';
+        } 
+        // If no valid US state and zipcode is missing/blank, treat as international candidate
+        else if (!zipcode || zipcode === '') {
+          // Try to infer country from city
+          const inferredCountry = inferCountryFromCity(city);
+          if (inferredCountry) {
+            country = inferredCountry;
+          } else if (countryField) {
+            // Use country field if available
+            country = countryField;
+          } else {
+            // Cannot confidently determine country
+            country = 'Unknown International';
           }
+        }
+        // Has zipcode but state is not valid US state - could be international with postal code
+        else if (state && !isValidUSState(state)) {
+          const inferredCountry = inferCountryFromCity(city);
+          if (inferredCountry) {
+            country = inferredCountry;
+          } else if (countryField) {
+            country = countryField;
+          } else {
+            country = 'Unknown International';
+          }
+        }
+        // Has zipcode and no state - assume US
+        else if (zipcode && !state) {
+          country = 'United States';
         }
 
         // Count cities (only Gainesville nearby cities)
@@ -1029,9 +1133,12 @@
           }
         }
 
-        // Count states (exclude Florida)
-        if (state && state !== 'FL' && state !== 'FLORIDA') {
-          stateCounts[state] = (stateCounts[state] || 0) + 1;
+        // Count states (exclude Florida, only count valid US states)
+        if (state && isValidUSState(state)) {
+          const stateUpper = state.trim().toUpperCase();
+          if (stateUpper !== 'FL' && state.toLowerCase() !== 'florida') {
+            stateCounts[state.trim()] = (stateCounts[state.trim()] || 0) + 1;
+          }
         }
 
         // Count countries (exclude USA)
