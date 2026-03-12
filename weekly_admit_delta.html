@@ -394,30 +394,113 @@
       fileNameEl.textContent = '✓ ' + file.name;
       fileNameEl.classList.remove('hidden');
       
-      // Read file
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          // Check if XLSX library is loaded
-          if (typeof XLSX === 'undefined') {
-            throw new Error('XLSX library is not loaded yet. Please wait a moment and try again.');
+      // Read file based on type
+      if (fileExt === '.csv') {
+        // Parse CSV natively without XLSX
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const text = e.target.result;
+            const jsonData = parseCSV(text);
+            
+            if (jsonData.length === 0) {
+              throw new Error('CSV file is empty or could not be parsed');
+            }
+            
+            callback(jsonData, file.name);
+            checkFilesReady();
+          } catch (err) {
+            showError('Failed to read CSV file: ' + err.message);
+            zone.classList.remove('has-file');
+            fileNameEl.classList.add('hidden');
+            input.value = '';
           }
-          
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: 'array' });
-          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-          const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
-          
-          callback(jsonData, file.name);
-          checkFilesReady();
-        } catch (err) {
-          showError('Failed to read file: ' + err.message);
-          zone.classList.remove('has-file');
-          fileNameEl.classList.add('hidden');
-          input.value = '';
+        };
+        reader.readAsText(file);
+      } else {
+        // Parse Excel files with XLSX library
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            // Check if XLSX library is loaded for Excel files
+            if (typeof XLSX === 'undefined') {
+              throw new Error('XLSX library is not loaded. Excel files require the XLSX library. Please refresh the page and try again, or use CSV format instead.');
+            }
+            
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+            
+            callback(jsonData, file.name);
+            checkFilesReady();
+          } catch (err) {
+            showError('Failed to read Excel file: ' + err.message);
+            zone.classList.remove('has-file');
+            fileNameEl.classList.add('hidden');
+            input.value = '';
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      }
+    }
+
+    // Native CSV parser
+    function parseCSV(text) {
+      const lines = text.split(/\r?\n/).filter(line => line.trim());
+      if (lines.length === 0) return [];
+      
+      // Parse header row
+      const headers = parseCSVLine(lines[0]);
+      
+      // Parse data rows
+      const data = [];
+      for (let i = 1; i < lines.length; i++) {
+        const values = parseCSVLine(lines[i]);
+        if (values.length === 0) continue;
+        
+        const row = {};
+        headers.forEach((header, index) => {
+          row[header] = values[index] || '';
+        });
+        data.push(row);
+      }
+      
+      return data;
+    }
+
+    // Parse a single CSV line, handling quoted fields
+    function parseCSVLine(line) {
+      const result = [];
+      let current = '';
+      let inQuotes = false;
+      
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        const nextChar = line[i + 1];
+        
+        if (char === '"') {
+          if (inQuotes && nextChar === '"') {
+            // Escaped quote
+            current += '"';
+            i++;
+          } else {
+            // Toggle quote state
+            inQuotes = !inQuotes;
+          }
+        } else if (char === ',' && !inQuotes) {
+          // Field separator
+          result.push(current.trim());
+          current = '';
+        } else {
+          current += char;
         }
-      };
-      reader.readAsArrayBuffer(file);
+      }
+      
+      // Add last field
+      result.push(current.trim());
+      
+      return result;
     }
 
     function checkFilesReady() {
@@ -672,14 +755,26 @@
         return;
       }
       
-      const worksheet = XLSX.utils.json_to_sheet(comparisonResult.newAdmits);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'New This Week');
-      
       const date = new Date().toISOString().split('T')[0];
-      const fileName = `New_Admits_${date}.xlsx`;
       
-      XLSX.writeFile(workbook, fileName);
+      // Check if XLSX is available for Excel export
+      if (typeof XLSX !== 'undefined') {
+        try {
+          const worksheet = XLSX.utils.json_to_sheet(comparisonResult.newAdmits);
+          const workbook = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(workbook, worksheet, 'New This Week');
+          
+          const fileName = `New_Admits_${date}.xlsx`;
+          XLSX.writeFile(workbook, fileName);
+        } catch (err) {
+          alert('Excel export failed: ' + err.message + '\n\nFalling back to CSV export...');
+          downloadAsCSV(comparisonResult.newAdmits, `New_Admits_${date}.csv`);
+        }
+      } else {
+        // Fallback to CSV export
+        alert('Excel library not available. Downloading as CSV instead.');
+        downloadAsCSV(comparisonResult.newAdmits, `New_Admits_${date}.csv`);
+      }
     }
 
     function downloadRemovedAdmits() {
@@ -688,14 +783,60 @@
         return;
       }
       
-      const worksheet = XLSX.utils.json_to_sheet(comparisonResult.removedAdmits);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Removed from Current');
-      
       const date = new Date().toISOString().split('T')[0];
-      const fileName = `Removed_Admits_${date}.xlsx`;
       
-      XLSX.writeFile(workbook, fileName);
+      // Check if XLSX is available for Excel export
+      if (typeof XLSX !== 'undefined') {
+        try {
+          const worksheet = XLSX.utils.json_to_sheet(comparisonResult.removedAdmits);
+          const workbook = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(workbook, worksheet, 'Removed from Current');
+          
+          const fileName = `Removed_Admits_${date}.xlsx`;
+          XLSX.writeFile(workbook, fileName);
+        } catch (err) {
+          alert('Excel export failed: ' + err.message + '\n\nFalling back to CSV export...');
+          downloadAsCSV(comparisonResult.removedAdmits, `Removed_Admits_${date}.csv`);
+        }
+      } else {
+        // Fallback to CSV export
+        alert('Excel library not available. Downloading as CSV instead.');
+        downloadAsCSV(comparisonResult.removedAdmits, `Removed_Admits_${date}.csv`);
+      }
+    }
+
+    // CSV export fallback
+    function downloadAsCSV(data, filename) {
+      if (!data || data.length === 0) return;
+      
+      const columns = Object.keys(data[0]);
+      
+      // Build CSV content
+      let csv = columns.map(col => escapeCSVField(col)).join(',') + '\n';
+      
+      data.forEach(row => {
+        csv += columns.map(col => escapeCSVField(String(row[col] || ''))).join(',') + '\n';
+      });
+      
+      // Create download link
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', filename);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // Escape CSV field (add quotes if needed)
+    function escapeCSVField(field) {
+      if (field.includes(',') || field.includes('"') || field.includes('\n')) {
+        return '"' + field.replace(/"/g, '""') + '"';
+      }
+      return field;
     }
 
     function resetForm() {
