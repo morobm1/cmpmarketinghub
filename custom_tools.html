@@ -43,14 +43,91 @@
     .header-btn:hover{background:#f8fafc;border-color:#cbd5e1}
     .company-name{font-size:12px;color:var(--subtext);font-weight:500}
 
-    /* Navigation */
-    .nav-bar{background:#fff;border-bottom:1px solid var(--border)}
-    .nav-wrap{max-width:1400px;margin:0 auto;padding:0 24px;display:flex;gap:2px;overflow-x:auto}
-    .nav-tab{display:flex;align-items:center;gap:6px;padding:14px 16px;color:var(--subtext);text-decoration:none;font-size:13px;font-weight:600;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap}
-    .nav-tab:hover{color:var(--text);background:#f8fafc}
-    .nav-tab.active{color:var(--brand-primary);border-bottom-color:var(--brand-primary)}
+    /* Vertical Sidebar Navigation */
+    .sidebar-nav{
+      position:fixed;
+      left:0;
+      top:60px;
+      width:240px;
+      height:calc(100vh - 60px);
+      background:#1e293b;
+      overflow-y:auto;
+      z-index:30;
+      transition:transform .3s ease;
+    }
+    .sidebar-nav::-webkit-scrollbar{width:6px}
+    .sidebar-nav::-webkit-scrollbar-track{background:#0f172a}
+    .sidebar-nav::-webkit-scrollbar-thumb{background:#475569;border-radius:3px}
+    .sidebar-nav::-webkit-scrollbar-thumb:hover{background:#64748b}
+    
+    .nav-section{
+      padding:20px 0 8px 0;
+    }
+    .nav-section-title{
+      padding:0 16px 8px 16px;
+      font-size:11px;
+      font-weight:700;
+      color:rgba(255,255,255,0.5);
+      text-transform:uppercase;
+      letter-spacing:0.5px;
+    }
+    
+    .nav-item{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:10px 16px;
+      color:rgba(255,255,255,0.7);
+      text-decoration:none;
+      font-size:14px;
+      font-weight:500;
+      transition:all .15s;
+      border-left:3px solid transparent;
+      position:relative;
+    }
+    .nav-item:hover{
+      background:rgba(255,255,255,0.05);
+      color:#fff;
+      border-left-color:transparent;
+    }
+    .nav-item.active{
+      background:rgba(82,213,255,0.15);
+      color:#fff;
+      border-left-color:var(--brand-accent-2);
+      font-weight:600;
+    }
+    
+    .nav-toggle{
+      display:none;
+      position:fixed;
+      top:70px;
+      left:16px;
+      width:40px;
+      height:40px;
+      background:var(--brand-primary);
+      border:none;
+      border-radius:8px;
+      color:#fff;
+      font-size:20px;
+      cursor:pointer;
+      z-index:35;
+      box-shadow:0 2px 8px rgba(0,0,0,0.15);
+    }
+    
+    .main-content{
+      margin-left:240px;
+      min-height:calc(100vh - 60px);
+      transition:margin-left .3s ease;
+    }
 
     .container{padding:24px; max-width:1200px; margin:0 auto}
+    
+    @media(max-width: 1100px){ 
+      .sidebar-nav{transform:translateX(-100%)}
+      .sidebar-nav.open{transform:translateX(0)}
+      .main-content{margin-left:0}
+      .nav-toggle{display:flex;align-items:center;justify-content:center}
+    }
     .card{background:#ffffff; border:1px solid var(--border); border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,0.06); overflow:hidden; margin-bottom:20px}
     .card h2{margin:0; padding:20px 24px; font-size:18px; color:#111827; font-weight:700; border-bottom:1px solid var(--border)}
     .card .content{padding:24px}
@@ -130,21 +207,61 @@
     <span class="company-name">Capstone Management Partners</span>
   </header>
 
-  <nav class="nav-bar" id="mainNav" style="display:none">
-    <div class="nav-wrap">
-      <a href="mmp_calendar_app.html" class="nav-tab">Marketing Calendar</a>
-      <a href="marketing_plans.html" class="nav-tab">Marketing Plans</a>
-      <a href="marketing_contacts.html" class="nav-tab">Marketing Contacts</a>
-      <a href="promo_order_tracker.html" class="nav-tab">Promo Order Tracker</a>
-      <a href="renewal_campaign.html" class="nav-tab">Renewal Campaign</a>
-      <a href="velocity_tracker.html" class="nav-tab">Velocity Tracker</a>
-      <a href="uniform_shop.html" class="nav-tab">Uniform Shop</a>
-      <a href="creative_library.html" class="nav-tab">Creative Library</a>
-      <a href="custom_tools.html" class="nav-tab active">Custom Tools</a>
-    </div>
-  </nav>
+  <!-- Mobile Toggle -->
+  <button class="nav-toggle" id="navToggle" onclick="document.getElementById('sidebarNav').classList.toggle('open')">☰</button>
 
-  <div class="container" id="appContainer" style="display:none">
+  <!-- Vertical Sidebar Navigation -->
+  <aside class="sidebar-nav" id="sidebarNav" style="display:none">
+    <nav>
+      <div class="nav-section">
+        <div class="nav-section-title">MAIN</div>
+        <a href="mmp_calendar_app.html" class="nav-item">
+          <span>Marketing Calendar</span>
+        </a>
+        <a href="marketing_plans.html" class="nav-item">
+          <span>Marketing Plans</span>
+        </a>
+        <a href="velocity_tracker.html" class="nav-item">
+          <span>Velocity Tracker</span>
+        </a>
+        <a href="mplr.html" class="nav-item">
+          <span>MPLR</span>
+        </a>
+      </div>
+      
+      <div class="nav-section">
+        <div class="nav-section-title">TOOLS</div>
+        <a href="promo_order_tracker.html" class="nav-item">
+          <span>Promo Order Tracker</span>
+        </a>
+        <a href="uniform_shop.html" class="nav-item">
+          <span>Uniform Shop</span>
+        </a>
+        <a href="creative_library.html" class="nav-item">
+          <span>Creative Library</span>
+        </a>
+        <a href="marketing_contacts.html" class="nav-item">
+          <span>Marketing Contacts</span>
+        </a>
+        <a href="custom_tools.html" class="nav-item active">
+          <span>Custom Tools</span>
+        </a>
+      </div>
+      
+      <div class="nav-section">
+        <div class="nav-section-title">RESOURCES</div>
+        <a href="renewal_campaign.html" class="nav-item">
+          <span>Renewal Campaign</span>
+        </a>
+        <a href="sop_library.html" class="nav-item">
+          <span>SOP Library</span>
+        </a>
+      </div>
+    </nav>
+  </aside>
+
+  <div class="main-content">
+    <div class="container" id="appContainer" style="display:none">
     <div class="card">
       <h2>My Custom Tools</h2>
       <div class="content">
@@ -161,6 +278,7 @@
           <div class="tools-grid" id="toolsGrid" style="display:none"></div>
         </div>
       </div>
+    </div>
     </div>
   </div>
 
@@ -311,7 +429,7 @@
     function showApp() {
       els.bootLoader.style.display = 'none';
       els.appHeader.style.display = '';
-      els.mainNav.style.display = '';
+      document.getElementById('sidebarNav').style.display = '';
       els.appContainer.style.display = '';
     }
 
