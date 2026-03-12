@@ -1125,7 +1125,12 @@ function getExportHtml() {
   const el = document.getElementById('contentDisplay');
   if (!el) return '';
   const clone = el.cloneNode(true);
-  clone.querySelectorAll('iframe, video, .video-tutorial-section').forEach(function(n) { n.remove(); });
+  // Remove video embeds but keep images
+  clone.querySelectorAll('iframe, video, source, .video-tutorial-section').forEach(function(n) { n.remove(); });
+  // Remove empty wrapper divs left behind by removed iframes
+  clone.querySelectorAll('div').forEach(function(d) {
+    if (d.children.length === 0 && d.textContent.trim() === '' && !d.querySelector('img')) d.remove();
+  });
   return clone.innerHTML;
 }
 
@@ -1144,13 +1149,52 @@ function exportWord() {
 
   // Build clean Word content from the rendered SOP, stripping UI elements
   const clone = document.getElementById('contentDisplay').cloneNode(true);
-  clone.querySelectorAll('iframe, video, .video-tutorial-section, .badge, .step-number').forEach(function(n) { n.remove(); });
-  // Remove badge paragraphs (first few p tags with only badge spans)
-  const allP = clone.querySelectorAll('p');
-  for (let i = 0; i < Math.min(3, allP.length); i++) {
-    if (allP[i].children.length === 0 && allP[i].textContent.trim() === '') allP[i].remove();
+  // Remove video embeds but keep images
+  clone.querySelectorAll('iframe, video, source, .video-tutorial-section').forEach(function(n) { n.remove(); });
+  // Remove divs that only contained iframes (now empty)
+  clone.querySelectorAll('div').forEach(function(d) { if (d.children.length === 0 && d.textContent.trim() === '') d.remove(); });
+  // Convert step-number spans to bold number prefix
+  clone.querySelectorAll('.step-number').forEach(function(sn) {
+    var num = sn.textContent.trim();
+    var b = document.createElement('strong');
+    b.textContent = num + ' ';
+    sn.parentNode.replaceChild(b, sn);
+  });
+  // Remove badge spans but keep their text in brackets
+  clone.querySelectorAll('.badge').forEach(function(b) {
+    var txt = document.createTextNode('[' + b.textContent.trim() + '] ');
+    b.parentNode.replaceChild(txt, b);
+  });
+  // Remove the first h1 (we rebuild the header)
+  var firstH1 = clone.querySelector('h1');
+  if (firstH1) firstH1.remove();
+  // Remove badge/meta paragraphs near the top (badge lines, Property: lines, empty)
+  var topPs = clone.querySelectorAll('p');
+  for (var i = 0; i < Math.min(4, topPs.length); i++) {
+    var ptxt = topPs[i].textContent.trim();
+    if (ptxt.match(/^\[/) || ptxt.match(/^Property:/) || ptxt === '') topPs[i].remove();
   }
-  const bodyContent = clone.innerHTML;
+  // Fix info-box: remove duplicate h4 if the div already has the heading as a child
+  // Word renders the div AND the h4, so flatten info-box divs
+  clone.querySelectorAll('.info-box').forEach(function(box) {
+    // Remove the class so Word doesn't try to render it as a styled div
+    // Instead wrap content in a simple bordered paragraph
+    box.removeAttribute('class');
+    box.style.cssText = 'border-left:3pt solid #446472;padding:10pt 14pt;margin:10pt 0;background:#f7f7f7';
+    if (box.classList && box.classList.contains('success')) {
+      box.style.borderLeftColor = '#2e8b57';
+      box.style.background = '#f0f9f2';
+    }
+  });
+  // Strip inline styles from divs that had position:relative (video wrappers)
+  clone.querySelectorAll('div[style]').forEach(function(d) {
+    if (d.style.position === 'relative' && d.children.length === 0) d.remove();
+  });
+  // Ensure bullet lists use proper list markers
+  clone.querySelectorAll('ul').forEach(function(ul) {
+    ul.style.cssText = 'margin:6pt 0 8pt 24pt;list-style-type:disc';
+  });
+  var bodyContent = clone.innerHTML;
 
   const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
 <head><meta charset="utf-8"><title>${escHtml(title)}</title>
@@ -1192,11 +1236,11 @@ ${department ? '<b>Department:</b> ' + escHtml(department) + '<br>' : ''}
 ${bodyContent}
 </body></html>`;
 
-  const blob = new Blob(['\ufeff' + html], { type: 'application/msword' });
+  const blob = new Blob(['\ufeff' + html], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = (title.replace(/[^a-zA-Z0-9 _-]/g, '') || 'SOP') + '.doc';
+  a.download = (title.replace(/[^a-zA-Z0-9 _-]/g, '') || 'SOP') + '.docx';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
