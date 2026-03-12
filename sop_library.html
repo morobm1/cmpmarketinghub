@@ -678,10 +678,11 @@ function viewSop(id) {
       <span style="flex:1"></span>
       <button class="btn-edit" onclick="openEditModal('${escHtml(sop.id)}')">✏️ Edit</button>
       <button class="btn-delete" onclick="deleteSop('${escHtml(sop.id)}')">🗑️ Delete</button>
+      <button onclick="copySopLink('${escHtml(sop.id)}')" title="Copy shareable link">🔗 Copy Link</button>
     `;
     toolbar.style.display = 'flex';
   } else {
-    // Show badges for normal users too (read-only)
+    // Show badges for normal users too (read-only) + copy link
     const typeBadge = sop.sopType === 'company'
       ? '<span class="badge company-badge">Company-wide</span>'
       : `<span class="badge site-badge">Site: ${escHtml(sop.property || '')}</span>`;
@@ -689,6 +690,8 @@ function viewSop(id) {
       ${typeBadge}
       ${sop.category ? '<span class="badge category">' + escHtml(sop.category) + '</span>' : ''}
       ${sop.department ? '<span class="badge department">' + escHtml(sop.department) + '</span>' : ''}
+      <span style="flex:1"></span>
+      <button onclick="copySopLink('${escHtml(sop.id)}')" title="Copy shareable link">🔗 Copy Link</button>
     `;
     toolbar.style.display = 'flex';
   }
@@ -1090,6 +1093,21 @@ function escHtml(str) {
   return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+function copySopLink(id) {
+  const url = new URL(window.location);
+  url.searchParams.set('sop', id);
+  url.hash = '';
+  const link = url.toString();
+  navigator.clipboard.writeText(link).then(() => {
+    const btn = event.target.closest ? event.target.closest('button') : event.target;
+    const orig = btn.textContent;
+    btn.textContent = '✅ Copied!';
+    setTimeout(() => { btn.textContent = orig; }, 2000);
+  }).catch(() => {
+    prompt('Copy this link:', link);
+  });
+}
+
 // ===== SETUP ADMIN CONTROLS =====
 function setupAdminControls() {
   if (isAdmin()) {
@@ -1112,6 +1130,34 @@ function setupAdminControls() {
   }
 }
 
+// ===== DEEP LINK SUPPORT =====
+function getSopIdFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('sop') || '';
+}
+
+function updateUrlForSop(id) {
+  if (!id) {
+    if (window.location.search) history.replaceState(null, '', window.location.pathname);
+    return;
+  }
+  const url = new URL(window.location);
+  url.searchParams.set('sop', id);
+  history.replaceState(null, '', url);
+}
+
+// Override viewSop to also update URL
+const _origViewSop = viewSop;
+viewSop = function(id) {
+  _origViewSop(id);
+  updateUrlForSop(id);
+};
+const _origShowWelcome = showWelcome;
+showWelcome = function() {
+  _origShowWelcome();
+  updateUrlForSop('');
+};
+
 // ===== INIT =====
 async function initApp() {
   const ok = await checkSession();
@@ -1121,7 +1167,21 @@ async function initApp() {
   await loadProperties();
   await loadAllSops();
   setupAdminControls();
-  showWelcome();
+
+  // Check for deep link
+  const deepLinkId = getSopIdFromUrl();
+  if (deepLinkId && allSops.find(s => s.id === deepLinkId)) {
+    // For site SOPs, auto-set the admin site filter so it's visible
+    const sop = allSops.find(s => s.id === deepLinkId);
+    if (sop && sop.sopType === 'site' && sop.property && isAdmin()) {
+      adminSiteFilter = sop.property;
+      const siteSel = document.getElementById('siteSelect');
+      if (siteSel) siteSel.value = sop.property;
+    }
+    viewSop(deepLinkId);
+  } else {
+    showWelcome();
+  }
 }
 
 // ===== EVENT BINDINGS =====
