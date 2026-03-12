@@ -76,9 +76,25 @@
     .stats-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:24px}
     .stat-card{background:#f8fafc; border:1px solid var(--border); border-radius:12px; padding:20px; text-align:center}
     .stat-value{font-size:36px; font-weight:700; color:var(--text); margin-bottom:4px}
-    .stat-value.highlight{color:var(--brand-accent-2); font-size:48px}
-    .stat-value.removed{color:var(--bad); font-size:48px}
+    .stat-value.highlight{color:var(--brand-primary); font-size:48px}
+    .stat-value.removed{color:#94a3b8; font-size:48px}
     .stat-label{font-size:13px; color:var(--subtext); font-weight:600; text-transform:uppercase; letter-spacing:0.5px}
+
+    .analysis-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-top:24px}
+    .analysis-card{background:#fff; border:1px solid var(--border); border-radius:12px; padding:20px}
+    .analysis-card h4{margin:0 0 16px 0; font-size:15px; color:var(--text); font-weight:700}
+    .analysis-list{list-style:none; padding:0; margin:0}
+    .analysis-list li{display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border)}
+    .analysis-list li:last-child{border-bottom:none}
+    .analysis-location{font-size:14px; color:var(--text); font-weight:500}
+    .analysis-count{font-size:14px; color:var(--brand-primary); font-weight:700; background:#f1f5f9; padding:4px 12px; border-radius:999px}
+
+    .history-table{width:100%; border-collapse:collapse; margin-top:16px}
+    .history-table th{background:#f8fafc; padding:12px; text-align:left; font-size:13px; font-weight:700; color:var(--text); border-bottom:2px solid var(--border)}
+    .history-table td{padding:12px; border-bottom:1px solid var(--border); font-size:13px}
+    .history-table tr:hover{background:#f8fafc}
+    .history-table .actions{display:flex; gap:8px}
+    .history-table .actions button{padding:4px 12px; font-size:12px}
 
     .preview-table{width:100%; border-collapse:collapse; margin-top:16px}
     .preview-table th{background:#f8fafc; padding:12px; text-align:left; font-size:13px; font-weight:700; color:var(--text); border-bottom:2px solid var(--border)}
@@ -222,11 +238,30 @@
 
         <div class="button-group">
           <button class="primary" id="downloadNewBtn">
-            📥 Download New Admits (.xlsx)
+            Download New Admits
           </button>
           <button class="primary" id="downloadRemovedBtn">
-            📥 Download Removed Admits (.xlsx)
+            Download Removed Admits
           </button>
+        </div>
+
+        <!-- Analysis Section -->
+        <div class="preview-section" id="analysisSection" style="display:none">
+          <h3>New Admit Analysis - The Continuum, Gainesville FL</h3>
+          <div class="analysis-grid">
+            <div class="analysis-card">
+              <h4>Top 5 Cities Near Gainesville</h4>
+              <ul class="analysis-list" id="analysisCities"></ul>
+            </div>
+            <div class="analysis-card">
+              <h4>Top 5 States Outside Florida</h4>
+              <ul class="analysis-list" id="analysisStates"></ul>
+            </div>
+            <div class="analysis-card">
+              <h4>Top 5 Countries Outside USA</h4>
+              <ul class="analysis-list" id="analysisCountries"></ul>
+            </div>
+          </div>
         </div>
 
         <!-- Preview of New Rows -->
@@ -258,6 +293,42 @@
               </thead>
               <tbody id="removedPreviewTableBody"></tbody>
             </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Report History Section -->
+    <div class="card">
+      <h2>3. Report History</h2>
+      <div class="content">
+        <p style="color:var(--subtext); margin-bottom:16px">
+          View past comparison reports saved to your account.
+        </p>
+
+        <div id="historyEmpty" class="empty-state">
+          <h3>No History Yet</h3>
+          <p>Your comparison history will appear here after you run your first comparison.</p>
+        </div>
+
+        <div id="historyTableContainer" style="display:none">
+          <div style="overflow-x:auto">
+            <table class="history-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Previous File</th>
+                  <th>Current File</th>
+                  <th>New Admits</th>
+                  <th>Removed</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="historyTableBody"></tbody>
+            </table>
+          </div>
+          <div class="button-group">
+            <button id="clearHistoryBtn" class="danger">Clear All History</button>
           </div>
         </div>
       </div>
@@ -893,9 +964,318 @@
       }
     );
 
+    // Analysis Logic for Gainesville, FL
+    const GAINESVILLE_NEARBY_CITIES = [
+      'Alachua', 'Newberry', 'High Springs', 'Archer', 'Hawthorne',
+      'Micanopy', 'Waldo', 'Williston', 'Bronson', 'Chiefland',
+      'Ocala', 'Jacksonville', 'Orlando', 'Tampa', 'Tallahassee',
+      'Lake City', 'Starke', 'Palatka', 'St. Augustine'
+    ];
+
+    function analyzeNewAdmits(newAdmits) {
+      const cityCounts = {};
+      const stateCounts = {};
+      const countryCounts = {};
+
+      newAdmits.forEach(record => {
+        // Get city (prefer Mailing City, fallback to Active City)
+        const cityFields = ['mailing city', 'mailingcity', 'active city', 'activecity', 'city'];
+        let city = '';
+        for (const field of cityFields) {
+          const key = Object.keys(record).find(k => normalizeString(k) === field);
+          if (key && record[key]) {
+            city = String(record[key]).trim();
+            break;
+          }
+        }
+
+        // Get state (prefer Mailing State, fallback to Active State)
+        const stateFields = ['mailing state', 'mailingstate', 'active state', 'activestate', 'state'];
+        let state = '';
+        for (const field of stateFields) {
+          const key = Object.keys(record).find(k => normalizeString(k) === field);
+          if (key && record[key]) {
+            state = String(record[key]).trim().toUpperCase();
+            break;
+          }
+        }
+
+        // Get country
+        const countryFields = ['country', 'mailing country', 'mailingcountry', 'active country', 'activecountry'];
+        let country = '';
+        for (const field of countryFields) {
+          const key = Object.keys(record).find(k => normalizeString(k) === field);
+          if (key && record[key]) {
+            country = String(record[key]).trim();
+            break;
+          }
+        }
+
+        // Infer country from state if not provided
+        if (!country && state) {
+          // US states
+          const usStates = ['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY','DC'];
+          if (usStates.includes(state)) {
+            country = 'United States';
+          }
+        }
+
+        // Count cities (only Gainesville nearby cities)
+        if (city) {
+          const normalizedCity = city.toLowerCase();
+          const matchedCity = GAINESVILLE_NEARBY_CITIES.find(c => c.toLowerCase() === normalizedCity);
+          if (matchedCity) {
+            cityCounts[matchedCity] = (cityCounts[matchedCity] || 0) + 1;
+          }
+        }
+
+        // Count states (exclude Florida)
+        if (state && state !== 'FL' && state !== 'FLORIDA') {
+          stateCounts[state] = (stateCounts[state] || 0) + 1;
+        }
+
+        // Count countries (exclude USA)
+        if (country) {
+          const normalizedCountry = country.toLowerCase();
+          if (normalizedCountry !== 'united states' && normalizedCountry !== 'usa' && normalizedCountry !== 'us' && normalizedCountry !== 'united states of america') {
+            countryCounts[country] = (countryCounts[country] || 0) + 1;
+          }
+        }
+      });
+
+      // Get top 5 for each category
+      const topCities = Object.entries(cityCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5);
+
+      const topStates = Object.entries(stateCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5);
+
+      const topCountries = Object.entries(countryCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5);
+
+      return { topCities, topStates, topCountries };
+    }
+
+    function displayAnalysis(analysis) {
+      const analysisSection = document.getElementById('analysisSection');
+      const analysisCities = document.getElementById('analysisCities');
+      const analysisStates = document.getElementById('analysisStates');
+      const analysisCountries = document.getElementById('analysisCountries');
+
+      // Display cities
+      if (analysis.topCities.length > 0) {
+        analysisCities.innerHTML = analysis.topCities.map(([city, count]) => `
+          <li>
+            <span class="analysis-location">${escapeHtml(city)}</span>
+            <span class="analysis-count">${count}</span>
+          </li>
+        `).join('');
+      } else {
+        analysisCities.innerHTML = '<li style="border:none; color:var(--subtext); font-style:italic">No data available</li>';
+      }
+
+      // Display states
+      if (analysis.topStates.length > 0) {
+        analysisStates.innerHTML = analysis.topStates.map(([state, count]) => `
+          <li>
+            <span class="analysis-location">${escapeHtml(state)}</span>
+            <span class="analysis-count">${count}</span>
+          </li>
+        `).join('');
+      } else {
+        analysisStates.innerHTML = '<li style="border:none; color:var(--subtext); font-style:italic">No data available</li>';
+      }
+
+      // Display countries
+      if (analysis.topCountries.length > 0) {
+        analysisCountries.innerHTML = analysis.topCountries.map(([country, count]) => `
+          <li>
+            <span class="analysis-location">${escapeHtml(country)}</span>
+            <span class="analysis-count">${count}</span>
+          </li>
+        `).join('');
+      } else {
+        analysisCountries.innerHTML = '<li style="border:none; color:var(--subtext); font-style:italic">No data available</li>';
+      }
+
+      analysisSection.style.display = '';
+    }
+
+    // History Management
+    let reportHistory = [];
+
+    async function loadHistory() {
+      try {
+        const res = await fetch('/api/admit-comparison', {
+          method: 'GET',
+          credentials: 'include'
+        });
+
+        if (res.ok) {
+          reportHistory = await res.json();
+          renderHistory();
+        }
+      } catch (e) {
+        console.error('Failed to load history:', e);
+      }
+    }
+
+    async function saveToHistory() {
+      if (!comparisonResult) return;
+
+      // Analyze new admits
+      const analysis = analyzeNewAdmits(comparisonResult.newAdmits);
+
+      const reportData = {
+        weekProcessed: new Date().toLocaleDateString('en-US'),
+        prevFileDate: extractDateFromFilename(comparisonResult.prevFileName),
+        currFileDate: extractDateFromFilename(comparisonResult.currFileName),
+        prevFileName: comparisonResult.prevFileName,
+        currFileName: comparisonResult.currFileName,
+        prevTotal: comparisonResult.prevTotal,
+        currTotal: comparisonResult.currTotal,
+        newThisWeek: comparisonResult.newAdmits.length,
+        removedCount: comparisonResult.removedAdmits.length,
+        analysis: {
+          topCities: analysis.topCities,
+          topStates: analysis.topStates,
+          topCountries: analysis.topCountries
+        },
+        newAdmits: comparisonResult.newAdmits
+      };
+
+      try {
+        const res = await fetch('/api/admit-comparison', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(reportData)
+        });
+
+        if (res.ok) {
+          await loadHistory();
+        }
+      } catch (e) {
+        console.error('Failed to save history:', e);
+      }
+    }
+
+    function extractDateFromFilename(filename) {
+      const datePatterns = [
+        /(\d{4}-\d{2}-\d{2})/,
+        /(\d{2}-\d{2}-\d{4})/,
+        /(\d{1,2}\/\d{1,2}\/\d{4})/
+      ];
+
+      for (const pattern of datePatterns) {
+        const match = filename.match(pattern);
+        if (match) return match[1];
+      }
+
+      return filename;
+    }
+
+    function renderHistory() {
+      const historyEmpty = document.getElementById('historyEmpty');
+      const historyTableContainer = document.getElementById('historyTableContainer');
+      const historyTableBody = document.getElementById('historyTableBody');
+
+      if (reportHistory.length === 0) {
+        historyEmpty.style.display = '';
+        historyTableContainer.style.display = 'none';
+        return;
+      }
+
+      historyEmpty.style.display = 'none';
+      historyTableContainer.style.display = '';
+
+      historyTableBody.innerHTML = reportHistory.map(entry => {
+        const date = new Date(entry.timestamp || entry.createdAt).toLocaleDateString('en-US');
+        return `
+          <tr>
+            <td>${escapeHtml(date)}</td>
+            <td>${escapeHtml(entry.prevFileName || entry.prevFileDate)}</td>
+            <td>${escapeHtml(entry.currFileName || entry.currFileDate)}</td>
+            <td><strong style="color:var(--brand-primary)">${entry.newThisWeek}</strong></td>
+            <td><strong style="color:#94a3b8">${entry.removedCount || 0}</strong></td>
+            <td class="actions">
+              <button onclick="deleteHistoryEntry('${entry._id}')">Delete</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function deleteHistoryEntry(id) {
+      if (!confirm('Are you sure you want to delete this history entry?')) return;
+
+      try {
+        const res = await fetch('/api/admit-comparison', {
+          method: 'DELETE',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id })
+        });
+
+        if (res.ok) {
+          await loadHistory();
+        } else {
+          alert('Failed to delete history entry');
+        }
+      } catch (e) {
+        console.error('Failed to delete history:', e);
+        alert('Failed to delete history entry');
+      }
+    }
+
+    async function clearAllHistory() {
+      if (!confirm('Are you sure you want to clear all history? This cannot be undone.')) return;
+
+      try {
+        for (const entry of reportHistory) {
+          await fetch('/api/admit-comparison', {
+            method: 'DELETE',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: entry._id })
+          });
+        }
+
+        await loadHistory();
+      } catch (e) {
+        console.error('Failed to clear history:', e);
+        alert('Failed to clear history');
+      }
+    }
+
+    // Update displayResults to include analysis and save to history
+    const originalDisplayResults = displayResults;
+    displayResults = function() {
+      originalDisplayResults();
+
+      // Analyze and display
+      if (comparisonResult.newAdmits.length > 0) {
+        const analysis = analyzeNewAdmits(comparisonResult.newAdmits);
+        displayAnalysis(analysis);
+      }
+
+      // Save to history
+      saveToHistory();
+    };
+
+    // Add event listener for clear history button
+    document.getElementById('clearHistoryBtn').addEventListener('click', clearAllHistory);
+
+    // Make deleteHistoryEntry globally accessible
+    window.deleteHistoryEntry = deleteHistoryEntry;
+
     // Initialize
     (async () => {
       await initAuth();
+      await loadHistory();
     })();
   </script>
 </body>
