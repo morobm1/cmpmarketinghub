@@ -1124,29 +1124,73 @@ function copySopLink(id) {
 function getExportHtml() {
   const el = document.getElementById('contentDisplay');
   if (!el) return '';
-  // Clone and strip iframes/video (not useful in exports)
   const clone = el.cloneNode(true);
   clone.querySelectorAll('iframe, video, .video-tutorial-section').forEach(function(n) { n.remove(); });
   return clone.innerHTML;
 }
 
+function getExportDate() {
+  return new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+}
+
 function exportWord() {
   const sop = selectedSopId ? allSops.find(function(s) { return s.id === selectedSopId; }) : null;
-  const title = sop ? sop.title : 'SOP Document';
-  const content = getExportHtml();
-  if (!content) { alert('No SOP selected to export.'); return; }
+  if (!sop) { alert('No SOP selected to export.'); return; }
+  const title = sop.title || 'SOP Document';
+  const property = sop.property || 'Capstone Management Partners';
+  const system = sop.system || '';
+  const department = sop.department || '';
+  const dateStr = getExportDate();
+
+  // Build clean Word content from the rendered SOP, stripping UI elements
+  const clone = document.getElementById('contentDisplay').cloneNode(true);
+  clone.querySelectorAll('iframe, video, .video-tutorial-section, .badge, .step-number').forEach(function(n) { n.remove(); });
+  // Remove badge paragraphs (first few p tags with only badge spans)
+  const allP = clone.querySelectorAll('p');
+  for (let i = 0; i < Math.min(3, allP.length); i++) {
+    if (allP[i].children.length === 0 && allP[i].textContent.trim() === '') allP[i].remove();
+  }
+  const bodyContent = clone.innerHTML;
 
   const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
 <head><meta charset="utf-8"><title>${escHtml(title)}</title>
-<style>body{font-family:Calibri,Arial,sans-serif;font-size:11pt;line-height:1.5;color:#1a1a1a;margin:1in}
-h1{font-size:18pt;font-weight:bold;color:#111;margin:0 0 12pt}
-h2{font-size:14pt;font-weight:bold;color:#111;margin:20pt 0 8pt;border-bottom:1pt solid #ccc;padding-bottom:4pt}
-h3{font-size:12pt;font-weight:bold;color:#222;margin:14pt 0 6pt}
-h4{font-size:11pt;font-weight:bold;color:#333;margin:10pt 0 4pt}
-p{margin:6pt 0}ul,ol{margin:6pt 0 6pt 24pt}li{margin:3pt 0}
-table{border-collapse:collapse;width:100%;margin:10pt 0}th,td{border:1pt solid #ccc;padding:6pt;text-align:left}
-th{background:#f2f2f2;font-weight:bold}strong{font-weight:bold}em{font-style:italic}
-</style></head><body>${content}</body></html>`;
+<style>
+@page{size:letter;margin:0.9in 0.85in 1.1in 0.85in}
+body{font-family:Calibri,"Segoe UI",Arial,sans-serif;font-size:11pt;line-height:1.6;color:#1a1a1a}
+.doc-header{margin-bottom:18pt;padding-bottom:12pt;border-bottom:2.5pt solid #446472}
+.doc-header .org-name{font-size:20pt;font-weight:bold;color:#446472;margin:0 0 2pt}
+.doc-header .doc-type{font-size:10.5pt;color:#777;text-transform:uppercase;letter-spacing:1.5pt;margin:0 0 14pt}
+.doc-header .doc-title{font-size:14pt;font-weight:bold;color:#111;margin:0 0 10pt;line-height:1.3}
+.doc-header .meta{font-size:9.5pt;color:#555;line-height:1.8}
+.doc-header .meta b{color:#333}
+h1{font-size:16pt;font-weight:bold;color:#111;margin:0 0 10pt}
+h2{font-size:13pt;font-weight:bold;color:#1a1a1a;margin:22pt 0 8pt;padding-bottom:4pt;border-bottom:1pt solid #d0d0d0}
+h3{font-size:11.5pt;font-weight:bold;color:#222;margin:16pt 0 6pt}
+h4{font-size:11pt;font-weight:bold;color:#333;margin:12pt 0 4pt}
+p{margin:6pt 0;line-height:1.6}
+ul,ol{margin:6pt 0 8pt 24pt;line-height:1.65}li{margin:3pt 0}
+table{border-collapse:collapse;width:100%;margin:10pt 0;font-size:10pt}
+th{background:#f2f2f2;border:1pt solid #c0c0c0;padding:6pt;text-align:left;font-weight:bold}
+td{border:1pt solid #c0c0c0;padding:6pt}
+strong{font-weight:bold}em{font-style:italic}
+blockquote{border-left:2.5pt solid #446472;padding:6pt 0 6pt 14pt;margin:10pt 0;color:#444;font-style:italic}
+pre{background:#f7f7f7;border:1pt solid #ddd;padding:10pt;font-size:9.5pt;font-family:"Courier New",monospace;white-space:pre-wrap}
+hr{border:none;border-top:1pt solid #ccc;margin:20pt 0}
+.info-box{border-left:3pt solid #446472;padding:10pt 14pt;margin:10pt 0;background:#f7f7f7}
+.info-box.success{border-left-color:#2e8b57;background:#f0f9f2}
+</style></head><body>
+<div class="doc-header">
+<div class="org-name">${escHtml(property)}</div>
+<div class="doc-type">Standard Operating Procedure</div>
+<div class="doc-title">${escHtml(property)} - SOP: ${escHtml(title)}</div>
+<div class="meta">
+${system ? '<b>System:</b> ' + escHtml(system) + '<br>' : ''}
+${department ? '<b>Department:</b> ' + escHtml(department) + '<br>' : ''}
+<b>Date:</b> ${escHtml(dateStr)}
+</div>
+</div>
+${bodyContent}
+</body></html>`;
 
   const blob = new Blob(['\ufeff' + html], { type: 'application/msword' });
   const url = URL.createObjectURL(blob);
@@ -1161,9 +1205,9 @@ th{background:#f2f2f2;font-weight:bold}strong{font-weight:bold}em{font-style:ita
 
 function exportPDF() {
   const sop = selectedSopId ? allSops.find(function(s) { return s.id === selectedSopId; }) : null;
-  const title = sop ? sop.title : 'SOP Document';
+  if (!sop) { alert('No SOP selected to export.'); return; }
+  const title = sop.title || 'SOP Document';
   const content = getExportHtml();
-  if (!content) { alert('No SOP selected to export.'); return; }
 
   const w = window.open('', '_blank');
   if (!w) { alert('Please allow popups to export PDF.'); return; }
@@ -1172,19 +1216,36 @@ function exportPDF() {
 <style>
 @page{size:letter;margin:0.75in}
 @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-body{font-family:Calibri,"Segoe UI",Arial,sans-serif;font-size:11pt;line-height:1.5;color:#1a1a1a;padding:0;margin:0}
-h1{font-size:18pt;font-weight:bold;color:#111;margin:0 0 12pt}
-h2{font-size:14pt;font-weight:bold;color:#111;margin:20pt 0 8pt;border-bottom:1pt solid #ccc;padding-bottom:4pt}
-h3{font-size:12pt;font-weight:bold;color:#222;margin:14pt 0 6pt}
-h4{font-size:11pt;font-weight:bold;color:#333;margin:10pt 0 4pt}
-p{margin:6pt 0}ul,ol{margin:6pt 0 6pt 24pt}li{margin:3pt 0}
-table{border-collapse:collapse;width:100%;margin:10pt 0}th,td{border:1pt solid #ccc;padding:6pt;text-align:left}
-th{background:#f2f2f2;font-weight:bold}strong{font-weight:bold}em{font-style:italic}
-.badge,.step-number{display:none}
-.info-box{border-left:3pt solid #446472;padding:8pt 12pt;margin:10pt 0;background:#f7f7f7}
-hr{border:none;border-top:1pt solid #ccc;margin:20pt 0}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Open Sans',Calibri,"Segoe UI",Arial,sans-serif;font-size:14px;line-height:1.5;color:#1e293b;padding:40px;max-width:900px;margin:0 auto}
+h1{font-size:32px;color:#111827;margin:0 0 16px;font-weight:800;line-height:1.2}
+h2{font-size:24px;color:#111827;margin:32px 0 16px;font-weight:700;border-bottom:2px solid #e2e8f0;padding-bottom:12px}
+h3{font-size:18px;color:#374151;margin:24px 0 12px;font-weight:700}
+h4{font-size:16px;color:#4b5563;margin:20px 0 10px;font-weight:700}
+p{margin:12px 0;line-height:1.7;color:#374151}
+ul,ol{margin:12px 0 12px 28px;line-height:1.8;color:#374151}
+li{margin:8px 0}
+strong{color:#111827;font-weight:700}
+em{font-style:italic}
+table{width:100%;border-collapse:collapse;margin:20px 0;font-size:13px}
+th{background:#f8fafc;border:1px solid #e2e8f0;padding:12px;text-align:left;font-weight:700;color:#111827}
+td{border:1px solid #e2e8f0;padding:12px;color:#374151}
+tr:nth-child(even){background:#fafbfc}
+blockquote{border-left:4px solid #52d5ff;padding-left:20px;margin:20px 0;color:#64748b;font-style:italic}
+pre{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;overflow-x:auto;margin:16px 0}
+pre code{background:none;border:none;padding:0;color:#111827}
+code{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:4px;padding:2px 6px;font-size:13px;color:#be123c}
+hr{border:none;border-top:2px solid #e2e8f0;margin:32px 0}
+a{color:#52d5ff;text-decoration:none;font-weight:600}
+.badge{display:inline-block;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:600;margin:4px 4px 4px 0}
+.badge.category{background:rgba(82,213,255,.15);color:#0b5d7a;border:1px solid rgba(82,213,255,.35)}
+.badge.department{background:rgba(255,183,50,.15);color:#8a5800;border:1px solid rgba(255,183,50,.40)}
+.step-number{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:#52d5ff;color:#0b1b24;border-radius:50%;font-weight:700;font-size:14px;margin-right:8px}
+.info-box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:16px;margin:20px 0}
+.info-box.success{background:#f0fdf4;border-color:#bbf7d0}
+.info-box h4{margin:0 0 8px;color:#111827}
 </style></head><body>${content}
-<script>window.onload=function(){setTimeout(function(){window.print();},400);}<\/script>
+<script>window.onload=function(){setTimeout(function(){window.print();},500);}<\/script>
 </body></html>`);
   w.document.close();
 }
