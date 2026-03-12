@@ -1,0 +1,756 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Weekly Admit Delta Tool • Marketing Hub</title>
+  <link rel="preconnect" href="https://use.typekit.net" crossorigin>
+  <link rel="preconnect" href="https://p.typekit.net" crossorigin>
+  <link rel="stylesheet" href="https://use.typekit.net/hqv8hwr.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --brand-primary:#446472;
+      --brand-accent:#ffb732;
+      --brand-accent-2:#52d5ff;
+      --brand-gray:#929497;
+      --page-bg:#f8fafc;
+      --bg:#ffffff;
+      --text:#1e293b;
+      --subtext:#64748b;
+      --border:#e2e8f0;
+      --good:#22c55e;
+      --warn:#ffb732;
+      --bad:#ef4444;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{font-family:'Open Sans',system-ui,-apple-system,sans-serif; background:var(--page-bg); color:var(--text);font-size:14px;line-height:1.5}
+
+    /* Header */
+    header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:10px}
+    .brand .logo-img{height:28px;width:auto}
+    .brand .title{color:#ffb732;font-family:zooja-pro,Arial,sans-serif;font-size:clamp(32px,4vw,48px);line-height:1}
+    .header-controls{display:flex;align-items:center;gap:12px;margin-left:auto}
+    .header-btn{background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;transition:all .15s}
+    .header-btn:hover{background:#f8fafc;border-color:#cbd5e1}
+    .company-name{font-size:12px;color:var(--subtext);font-weight:500}
+
+    .container{padding:24px; max-width:1400px; margin:0 auto}
+    .card{background:#ffffff; border:1px solid var(--border); border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,0.06); overflow:hidden; margin-bottom:20px}
+    .card h2{margin:0; padding:20px 24px; font-size:18px; color:#111827; font-weight:700; border-bottom:1px solid var(--border)}
+    .card .content{padding:24px}
+
+    label{font-size:13px; color:var(--text); display:block; margin-bottom:6px; font-weight:600}
+    input[type="file"]{width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--text); font-size:14px; transition:border-color .15s, box-shadow .15s; font-family:'Open Sans',system-ui,sans-serif}
+    input[type="file"]:focus{outline:none; border-color:var(--brand-accent-2); box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
+    .form-group{margin-bottom:16px}
+    .form-row{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+    @media(max-width: 768px){.form-row{grid-template-columns:1fr}}
+
+    button{padding:10px 20px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--text); font-size:14px; font-weight:600; cursor:pointer; transition:all .15s; font-family: Roboto, Arial, sans-serif}
+    button:hover{background:#f8fafc}
+    button:disabled{opacity:0.5; cursor:not-allowed}
+    button.primary{background:var(--brand-primary); color:#fff; border-color:var(--brand-primary)}
+    button.primary:hover:not(:disabled){background:#3b5561}
+    button.good{background:#52d5ff; color:#0b1b24; border-color:#52d5ff}
+    button.good:hover:not(:disabled){background:#3ecbf5}
+    button.danger{background:#ef4444; color:#fff; border-color:#ef4444}
+    button.danger:hover:not(:disabled){background:#dc2626}
+
+    .button-group{display:flex; gap:12px; margin-top:24px; flex-wrap:wrap}
+
+    .upload-zone{border:2px dashed var(--border); border-radius:12px; padding:32px; text-align:center; background:#f8fafc; transition:all .2s; cursor:pointer}
+    .upload-zone:hover{border-color:var(--brand-accent-2); background:#f0f9ff}
+    .upload-zone.has-file{border-color:var(--good); background:#f0fdf4}
+    .upload-zone.error{border-color:var(--bad); background:#fef2f2}
+    .upload-icon{font-size:48px; margin-bottom:12px; color:var(--subtext)}
+    .upload-zone.has-file .upload-icon{color:var(--good)}
+    .upload-text{font-size:14px; color:var(--text); font-weight:600; margin-bottom:4px}
+    .upload-subtext{font-size:12px; color:var(--subtext)}
+    .file-name{font-size:13px; color:var(--good); font-weight:600; margin-top:8px}
+
+    .stats-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:24px}
+    .stat-card{background:#f8fafc; border:1px solid var(--border); border-radius:12px; padding:20px; text-align:center}
+    .stat-value{font-size:36px; font-weight:700; color:var(--text); margin-bottom:4px}
+    .stat-value.highlight{color:var(--brand-accent-2); font-size:48px}
+    .stat-value.removed{color:var(--bad); font-size:48px}
+    .stat-label{font-size:13px; color:var(--subtext); font-weight:600; text-transform:uppercase; letter-spacing:0.5px}
+
+    .preview-table{width:100%; border-collapse:collapse; margin-top:16px}
+    .preview-table th{background:#f8fafc; padding:12px; text-align:left; font-size:13px; font-weight:700; color:var(--text); border-bottom:2px solid var(--border)}
+    .preview-table td{padding:12px; border-bottom:1px solid var(--border); font-size:13px}
+    .preview-table tr:hover{background:#f8fafc}
+    .preview-table .badge{display:inline-block; padding:4px 10px; border-radius:999px; font-size:11px; font-weight:600}
+    .preview-table .badge.new{background:#d1fae5; color:#065f46}
+    .preview-table .badge.removed{background:#fee2e2; color:#991b1b}
+
+    .alert{padding:16px 20px; border-radius:8px; margin-bottom:20px; display:flex; align-items:center; gap:12px; font-size:13px; line-height:1.6}
+    .alert.info{background:#e0f2fe; border:1px solid #7dd3fc; color:#0c4a6e}
+    .alert.success{background:#dcfce7; border:1px solid #86efac; color:#14532d}
+    .alert.warning{background:#fef3c7; border:1px solid #fcd34d; color:#713f12}
+    .alert.error{background:#fee2e2; border:1px solid #fca5a5; color:#7f1d1d}
+    .alert-icon{font-size:20px}
+
+    .hidden{display:none}
+
+    .empty-state{text-align:center; padding:60px 20px; color:var(--subtext)}
+    .empty-state h3{font-size:20px; margin-bottom:12px; color:var(--text)}
+    .empty-state p{margin-bottom:24px}
+
+    .loading{display:inline-block; width:20px; height:20px; border:3px solid rgba(82,213,255,0.3); border-radius:50%; border-top-color:#52d5ff; animation:spin 1s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .preview-section{margin-top:24px; padding-top:24px; border-top:1px solid var(--border)}
+    .preview-section h3{margin:0 0 16px 0; font-size:16px; color:#111827; font-weight:700; display:flex; align-items:center; gap:8px}
+    .preview-section .count-badge{background:var(--brand-accent-2); color:#0b1b24; padding:4px 12px; border-radius:999px; font-size:13px; font-weight:700}
+    .preview-section .count-badge.removed{background:var(--bad); color:#fff}
+
+    .table-container{overflow-x:auto; max-height:400px; overflow-y:auto; border:1px solid var(--border); border-radius:8px}
+  </style>
+</head>
+<body>
+  <div id="bootLoader" style="position:fixed;inset:0;background:#ffffff;display:flex;align-items:center;justify-content:center;z-index:100;color:#111827;font-family:Roboto,Arial,sans-serif">
+    <div style="display:flex;flex-direction:column;gap:6px;align-items:center">
+      <div style="font-weight:800">Marketing Hub</div>
+      <div style="color:#6b7280; font-size:12px">Loading…</div>
+    </div>
+  </div>
+
+  <header id="appHeader" style="display:none">
+    <div class="brand">
+      <img src="logo-main.svg" class="logo-img" alt="Capstone" />
+      <div class="title">Marketing Hub</div>
+    </div>
+    <div class="header-controls">
+      <button class="header-btn" onclick="window.location.href='custom_tools.html'">← Back to Custom Tools</button>
+      <button class="header-btn" id="logoutBtn">Sign Out</button>
+    </div>
+    <span class="company-name">Capstone Management Partners</span>
+  </header>
+
+  <div class="container" id="appContainer" style="display:none">
+    <!-- Title Section -->
+    <div class="card">
+      <h2>Weekly Admit Delta Tool</h2>
+      <div class="content">
+        <p style="color:var(--subtext); margin-bottom:20px">
+          Compare two CSV files (Previous Week and Current Week) to identify new admits and removed records. 
+          Export results to Excel with all original columns plus a "Change Type" indicator.
+        </p>
+        
+        <div class="alert info">
+          <div>
+            <strong>Matching Logic:</strong><br>
+            • Primary: Portal Email (case-insensitive, trimmed)<br>
+            • Fallback: First Name + Last Name (case-insensitive, trimmed)<br>
+            <strong>Supported file types:</strong> .xlsx and .csv
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- File Upload Section -->
+    <div class="card">
+      <h2>1. Upload Files</h2>
+      <div class="content">
+        <div id="errorAlert" class="alert error hidden">
+          <div id="errorMessage"></div>
+        </div>
+
+        <div id="warningAlert" class="alert warning hidden">
+          <div id="warningMessage"></div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Previous Week CSV</label>
+            <div class="upload-zone" id="prevUploadZone">
+              <div class="upload-text">Click to upload or drag & drop</div>
+              <div class="upload-subtext">Excel (.xlsx) or CSV files only</div>
+              <div class="file-name hidden" id="prevFileName"></div>
+            </div>
+            <input type="file" id="prevFileInput" accept=".xlsx,.xls,.csv" style="display:none" />
+          </div>
+
+          <div class="form-group">
+            <label>Current Week CSV</label>
+            <div class="upload-zone" id="currUploadZone">
+              <div class="upload-text">Click to upload or drag & drop</div>
+              <div class="upload-subtext">Excel (.xlsx) or CSV files only</div>
+              <div class="file-name hidden" id="currFileName"></div>
+            </div>
+            <input type="file" id="currFileInput" accept=".xlsx,.xls,.csv" style="display:none" />
+          </div>
+        </div>
+
+        <div class="button-group">
+          <button class="good" id="compareBtn" disabled>
+            <span id="compareBtnText">Compare Files</span>
+            <span id="compareBtnLoader" class="loading hidden" style="margin-left:8px"></span>
+          </button>
+          <button id="resetBtn">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="card" id="resultsSection" style="display:none">
+      <h2>2. Comparison Results</h2>
+      <div class="content">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="statPrevTotal">0</div>
+            <div class="stat-label">Previous Week Total</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statCurrTotal">0</div>
+            <div class="stat-label">Current Week Total</div>
+          </div>
+          <div class="stat-card" style="background:#e0f2fe; border-color:#7dd3fc">
+            <div class="stat-value highlight" id="statNewAdmits">0</div>
+            <div class="stat-label" style="color:#0c4a6e">New This Week</div>
+          </div>
+          <div class="stat-card" style="background:#fee2e2; border-color:#fca5a5">
+            <div class="stat-value removed" id="statRemovedAdmits">0</div>
+            <div class="stat-label" style="color:#7f1d1d">Removed from Current</div>
+          </div>
+        </div>
+
+        <div class="button-group">
+          <button class="primary" id="downloadNewBtn">
+            📥 Download New Admits (.xlsx)
+          </button>
+          <button class="primary" id="downloadRemovedBtn">
+            📥 Download Removed Admits (.xlsx)
+          </button>
+        </div>
+
+        <!-- Preview of New Rows -->
+        <div class="preview-section" id="newPreviewSection" style="display:none">
+          <h3>
+            Preview: New This Week
+            <span class="count-badge" id="newPreviewCount">0</span>
+          </h3>
+          <div class="table-container">
+            <table class="preview-table" id="newPreviewTable">
+              <thead>
+                <tr id="newPreviewTableHeader"></tr>
+              </thead>
+              <tbody id="newPreviewTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Preview of Removed Rows -->
+        <div class="preview-section" id="removedPreviewSection" style="display:none">
+          <h3>
+            Preview: Removed from Current Week
+            <span class="count-badge removed" id="removedPreviewCount">0</span>
+          </h3>
+          <div class="table-container">
+            <table class="preview-table" id="removedPreviewTable">
+              <thead>
+                <tr id="removedPreviewTableHeader"></tr>
+              </thead>
+              <tbody id="removedPreviewTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <script>
+    let currentUser = null;
+    let prevFileData = null;
+    let currFileData = null;
+    let prevFileName = '';
+    let currFileName = '';
+    let comparisonResult = null;
+
+    const els = {
+      bootLoader: document.getElementById('bootLoader'),
+      appHeader: document.getElementById('appHeader'),
+      appContainer: document.getElementById('appContainer'),
+      logoutBtn: document.getElementById('logoutBtn'),
+      prevUploadZone: document.getElementById('prevUploadZone'),
+      currUploadZone: document.getElementById('currUploadZone'),
+      prevFileInput: document.getElementById('prevFileInput'),
+      currFileInput: document.getElementById('currFileInput'),
+      prevFileName: document.getElementById('prevFileName'),
+      currFileName: document.getElementById('currFileName'),
+      compareBtn: document.getElementById('compareBtn'),
+      compareBtnText: document.getElementById('compareBtnText'),
+      compareBtnLoader: document.getElementById('compareBtnLoader'),
+      resetBtn: document.getElementById('resetBtn'),
+      errorAlert: document.getElementById('errorAlert'),
+      errorMessage: document.getElementById('errorMessage'),
+      warningAlert: document.getElementById('warningAlert'),
+      warningMessage: document.getElementById('warningMessage'),
+      resultsSection: document.getElementById('resultsSection'),
+      statPrevTotal: document.getElementById('statPrevTotal'),
+      statCurrTotal: document.getElementById('statCurrTotal'),
+      statNewAdmits: document.getElementById('statNewAdmits'),
+      statRemovedAdmits: document.getElementById('statRemovedAdmits'),
+      downloadNewBtn: document.getElementById('downloadNewBtn'),
+      downloadRemovedBtn: document.getElementById('downloadRemovedBtn'),
+      newPreviewSection: document.getElementById('newPreviewSection'),
+      newPreviewCount: document.getElementById('newPreviewCount'),
+      newPreviewTable: document.getElementById('newPreviewTable'),
+      newPreviewTableHeader: document.getElementById('newPreviewTableHeader'),
+      newPreviewTableBody: document.getElementById('newPreviewTableBody'),
+      removedPreviewSection: document.getElementById('removedPreviewSection'),
+      removedPreviewCount: document.getElementById('removedPreviewCount'),
+      removedPreviewTable: document.getElementById('removedPreviewTable'),
+      removedPreviewTableHeader: document.getElementById('removedPreviewTableHeader'),
+      removedPreviewTableBody: document.getElementById('removedPreviewTableBody'),
+    };
+
+    async function initAuth() {
+      try {
+        const meRes = await fetch('/api/me', { credentials: 'include' });
+        if (meRes.ok) {
+          const me = await meRes.json();
+          currentUser = { username: me.username, role: me.role, properties: me.properties };
+          
+          showApp();
+          return true;
+        }
+      } catch (e) {
+        console.error('Auth error:', e);
+      }
+      window.location.href = 'index.html';
+      return false;
+    }
+
+    function showApp() {
+      els.bootLoader.style.display = 'none';
+      els.appHeader.style.display = '';
+      els.appContainer.style.display = '';
+    }
+
+    async function doLogout() {
+      try {
+        await fetch('/api/auth-logout', { method: 'POST', credentials: 'include' });
+      } catch (e) {}
+      window.location.href = 'index.html';
+    }
+
+    // File Upload Handlers
+    function setupUploadZone(zone, input, fileNameEl, callback) {
+      zone.addEventListener('click', () => input.click());
+      
+      zone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        zone.style.borderColor = 'var(--brand-accent-2)';
+        zone.style.background = '#f0f9ff';
+      });
+      
+      zone.addEventListener('dragleave', () => {
+        zone.style.borderColor = '';
+        zone.style.background = '';
+      });
+      
+      zone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        zone.style.borderColor = '';
+        zone.style.background = '';
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          input.files = files;
+          handleFileSelect(input, zone, fileNameEl, callback);
+        }
+      });
+      
+      input.addEventListener('change', () => {
+        handleFileSelect(input, zone, fileNameEl, callback);
+      });
+    }
+
+    function handleFileSelect(input, zone, fileNameEl, callback) {
+      const file = input.files[0];
+      if (!file) return;
+      
+      // Validate file type
+      const validTypes = ['.xlsx', '.xls', '.csv'];
+      const fileExt = '.' + file.name.split('.').pop().toLowerCase();
+      
+      if (!validTypes.includes(fileExt)) {
+        showError('Invalid file type. Please upload .xlsx or .csv files only.');
+        zone.classList.add('error');
+        setTimeout(() => zone.classList.remove('error'), 2000);
+        input.value = '';
+        return;
+      }
+      
+      // Update UI
+      zone.classList.add('has-file');
+      fileNameEl.textContent = '✓ ' + file.name;
+      fileNameEl.classList.remove('hidden');
+      
+      // Read file
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+          
+          callback(jsonData, file.name);
+          checkFilesReady();
+        } catch (err) {
+          showError('Failed to read file: ' + err.message);
+          zone.classList.remove('has-file');
+          fileNameEl.classList.add('hidden');
+          input.value = '';
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function checkFilesReady() {
+      if (prevFileData && currFileData) {
+        els.compareBtn.disabled = false;
+        hideError();
+      }
+    }
+
+    function showError(message) {
+      els.errorMessage.textContent = message;
+      els.errorAlert.classList.remove('hidden');
+    }
+
+    function hideError() {
+      els.errorAlert.classList.add('hidden');
+    }
+
+    function showWarning(message) {
+      els.warningMessage.innerHTML = message;
+      els.warningAlert.classList.remove('hidden');
+    }
+
+    function hideWarning() {
+      els.warningAlert.classList.add('hidden');
+    }
+
+    // Comparison Logic
+    function normalizeString(str) {
+      if (!str) return '';
+      return String(str).toLowerCase().trim();
+    }
+
+    function getIdentifier(record) {
+      // Try Portal Email first
+      const emailFields = ['portal email', 'portalemail', 'email', 'email address', 'e-mail', 'emailaddress'];
+      for (const field of emailFields) {
+        const key = Object.keys(record).find(k => normalizeString(k) === field);
+        if (key && record[key]) {
+          const email = normalizeString(record[key]);
+          if (email) return 'email:' + email;
+        }
+      }
+      
+      // Fallback to First Name + Last Name
+      const firstNameFields = ['name first', 'first name', 'firstname', 'first', 'fname'];
+      const lastNameFields = ['name last', 'last name', 'lastname', 'last', 'lname'];
+      
+      let firstName = '';
+      let lastName = '';
+      
+      for (const field of firstNameFields) {
+        const key = Object.keys(record).find(k => normalizeString(k) === field);
+        if (key && record[key]) {
+          firstName = normalizeString(record[key]);
+          break;
+        }
+      }
+      
+      for (const field of lastNameFields) {
+        const key = Object.keys(record).find(k => normalizeString(k) === field);
+        if (key && record[key]) {
+          lastName = normalizeString(record[key]);
+          break;
+        }
+      }
+      
+      if (firstName && lastName) {
+        return 'name:' + firstName + '|' + lastName;
+      }
+      
+      return null;
+    }
+
+    function compareFiles() {
+      hideError();
+      hideWarning();
+      
+      els.compareBtn.disabled = true;
+      els.compareBtnText.textContent = 'Processing...';
+      els.compareBtnLoader.classList.remove('hidden');
+      
+      setTimeout(() => {
+        try {
+          // Validate files are not empty
+          if (prevFileData.length === 0 || currFileData.length === 0) {
+            throw new Error('One or both files are empty');
+          }
+          
+          // Build maps with identifiers
+          const prevMap = new Map();
+          const currMap = new Map();
+          
+          let prevUnmatched = 0;
+          let currUnmatched = 0;
+          
+          prevFileData.forEach(record => {
+            const id = getIdentifier(record);
+            if (id) {
+              prevMap.set(id, record);
+            } else {
+              prevUnmatched++;
+            }
+          });
+          
+          currFileData.forEach(record => {
+            const id = getIdentifier(record);
+            if (id) {
+              currMap.set(id, record);
+            } else {
+              currUnmatched++;
+            }
+          });
+          
+          // Show warning if records couldn't be matched
+          if (prevUnmatched > 0 || currUnmatched > 0) {
+            const msg = `<strong>Warning:</strong> ${prevUnmatched} records in Previous Week and ${currUnmatched} records in Current Week could not be matched (missing email and name fields).`;
+            showWarning(msg);
+          }
+          
+          // Find new admits (in current but not in previous)
+          const newAdmits = [];
+          currMap.forEach((record, id) => {
+            if (!prevMap.has(id)) {
+              const newRecord = { ...record, 'Change Type': 'New This Week' };
+              newAdmits.push(newRecord);
+            }
+          });
+          
+          // Find removed admits (in previous but not in current)
+          const removedAdmits = [];
+          prevMap.forEach((record, id) => {
+            if (!currMap.has(id)) {
+              const removedRecord = { ...record, 'Change Type': 'Removed from Current Week' };
+              removedAdmits.push(removedRecord);
+            }
+          });
+          
+          // Store results
+          comparisonResult = {
+            prevTotal: prevMap.size,
+            currTotal: currMap.size,
+            newAdmits: newAdmits,
+            removedAdmits: removedAdmits,
+            prevFileName: prevFileName,
+            currFileName: currFileName,
+            timestamp: new Date().toISOString(),
+          };
+          
+          // Update UI
+          displayResults();
+          
+        } catch (err) {
+          showError('Comparison failed: ' + err.message);
+        } finally {
+          els.compareBtn.disabled = false;
+          els.compareBtnText.textContent = 'Compare Files';
+          els.compareBtnLoader.classList.add('hidden');
+        }
+      }, 500);
+    }
+
+    function displayResults() {
+      els.statPrevTotal.textContent = comparisonResult.prevTotal.toLocaleString();
+      els.statCurrTotal.textContent = comparisonResult.currTotal.toLocaleString();
+      els.statNewAdmits.textContent = comparisonResult.newAdmits.length.toLocaleString();
+      els.statRemovedAdmits.textContent = comparisonResult.removedAdmits.length.toLocaleString();
+      
+      els.resultsSection.style.display = '';
+      els.resultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      
+      // Show/hide download buttons based on data availability
+      els.downloadNewBtn.style.display = comparisonResult.newAdmits.length > 0 ? '' : 'none';
+      els.downloadRemovedBtn.style.display = comparisonResult.removedAdmits.length > 0 ? '' : 'none';
+      
+      // Populate new admits preview
+      if (comparisonResult.newAdmits.length > 0) {
+        els.newPreviewSection.style.display = '';
+        els.newPreviewCount.textContent = comparisonResult.newAdmits.length;
+        
+        const columns = Object.keys(comparisonResult.newAdmits[0]);
+        
+        els.newPreviewTableHeader.innerHTML = columns.map(col => 
+          `<th>${escapeHtml(col)}</th>`
+        ).join('');
+        
+        // Show first 10 rows
+        const previewRows = comparisonResult.newAdmits.slice(0, 10);
+        els.newPreviewTableBody.innerHTML = previewRows.map(record => 
+          '<tr>' + columns.map(col => {
+            const value = String(record[col] || '');
+            if (col === 'Change Type') {
+              return `<td><span class="badge new">${escapeHtml(value)}</span></td>`;
+            }
+            return `<td>${escapeHtml(value)}</td>`;
+          }).join('') + '</tr>'
+        ).join('');
+        
+        if (comparisonResult.newAdmits.length > 10) {
+          els.newPreviewTableBody.innerHTML += `
+            <tr>
+              <td colspan="${columns.length}" style="text-align:center; color:var(--subtext); font-style:italic">
+                ... and ${comparisonResult.newAdmits.length - 10} more rows (download to see all)
+              </td>
+            </tr>
+          `;
+        }
+      } else {
+        els.newPreviewSection.style.display = 'none';
+      }
+      
+      // Populate removed admits preview
+      if (comparisonResult.removedAdmits.length > 0) {
+        els.removedPreviewSection.style.display = '';
+        els.removedPreviewCount.textContent = comparisonResult.removedAdmits.length;
+        
+        const columns = Object.keys(comparisonResult.removedAdmits[0]);
+        
+        els.removedPreviewTableHeader.innerHTML = columns.map(col => 
+          `<th>${escapeHtml(col)}</th>`
+        ).join('');
+        
+        // Show first 10 rows
+        const previewRows = comparisonResult.removedAdmits.slice(0, 10);
+        els.removedPreviewTableBody.innerHTML = previewRows.map(record => 
+          '<tr>' + columns.map(col => {
+            const value = String(record[col] || '');
+            if (col === 'Change Type') {
+              return `<td><span class="badge removed">${escapeHtml(value)}</span></td>`;
+            }
+            return `<td>${escapeHtml(value)}</td>`;
+          }).join('') + '</tr>'
+        ).join('');
+        
+        if (comparisonResult.removedAdmits.length > 10) {
+          els.removedPreviewTableBody.innerHTML += `
+            <tr>
+              <td colspan="${columns.length}" style="text-align:center; color:var(--subtext); font-style:italic">
+                ... and ${comparisonResult.removedAdmits.length - 10} more rows (download to see all)
+              </td>
+            </tr>
+          `;
+        }
+      } else {
+        els.removedPreviewSection.style.display = 'none';
+      }
+    }
+
+    function downloadNewAdmits() {
+      if (!comparisonResult || comparisonResult.newAdmits.length === 0) {
+        alert('No new admits to download');
+        return;
+      }
+      
+      const worksheet = XLSX.utils.json_to_sheet(comparisonResult.newAdmits);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'New This Week');
+      
+      const date = new Date().toISOString().split('T')[0];
+      const fileName = `New_Admits_${date}.xlsx`;
+      
+      XLSX.writeFile(workbook, fileName);
+    }
+
+    function downloadRemovedAdmits() {
+      if (!comparisonResult || comparisonResult.removedAdmits.length === 0) {
+        alert('No removed admits to download');
+        return;
+      }
+      
+      const worksheet = XLSX.utils.json_to_sheet(comparisonResult.removedAdmits);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Removed from Current');
+      
+      const date = new Date().toISOString().split('T')[0];
+      const fileName = `Removed_Admits_${date}.xlsx`;
+      
+      XLSX.writeFile(workbook, fileName);
+    }
+
+    function resetForm() {
+      prevFileData = null;
+      currFileData = null;
+      prevFileName = '';
+      currFileName = '';
+      comparisonResult = null;
+      
+      els.prevFileInput.value = '';
+      els.currFileInput.value = '';
+      els.prevUploadZone.classList.remove('has-file');
+      els.currUploadZone.classList.remove('has-file');
+      els.prevFileName.classList.add('hidden');
+      els.currFileName.classList.add('hidden');
+      els.compareBtn.disabled = true;
+      els.resultsSection.style.display = 'none';
+      
+      hideError();
+      hideWarning();
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Event Listeners
+    els.logoutBtn.addEventListener('click', doLogout);
+    els.compareBtn.addEventListener('click', compareFiles);
+    els.resetBtn.addEventListener('click', resetForm);
+    els.downloadNewBtn.addEventListener('click', downloadNewAdmits);
+    els.downloadRemovedBtn.addEventListener('click', downloadRemovedAdmits);
+
+    // Setup upload zones
+    setupUploadZone(
+      els.prevUploadZone,
+      els.prevFileInput,
+      els.prevFileName,
+      (data, filename) => {
+        prevFileData = data;
+        prevFileName = filename;
+      }
+    );
+
+    setupUploadZone(
+      els.currUploadZone,
+      els.currFileInput,
+      els.currFileName,
+      (data, filename) => {
+        currFileData = data;
+        currFileName = filename;
+      }
+    );
+
+    // Initialize
+    (async () => {
+      await initAuth();
+    })();
+  </script>
+</body>
+</html>
