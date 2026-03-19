@@ -7,18 +7,23 @@ import { verifyReqAuth } from './_auth.js';
  * Stores and retrieves Ivory Housing Placement Planner project data
  * and color configuration in MongoDB, replacing localStorage.
  *
+ * SHARED DATA MODEL: All authenticated users read/write from the SAME
+ * document so that inventory, residents, bank, expected scholarships,
+ * and colors are visible to every user in real-time.
+ *
  * Collection: placement_planner
- * Document structure per user:
- *   { username, project: {...}, colors: {...}, updatedAt }
+ * Single shared document:
+ *   { _key: 'shared', project: {...}, colors: {...}, updatedAt, updatedBy }
  *
  * Endpoints (via /api/placement-planner):
- *   GET    /                  → Load project + colors for authenticated user
- *   POST   /                  → Save/update project data
- *   POST   /colors            → Save/update color configuration
- *   DELETE /                  → Clear all project data for user
+ *   GET    /                  → Load shared project + colors
+ *   POST   /                  → Save/update shared project data
+ *   POST   /colors            → Save/update shared color configuration
+ *   DELETE /                  → Clear all shared project data (admin only)
  */
 
 const COLLECTION = 'placement_planner';
+const SHARED_KEY = 'shared';
 const headers = {
   'Content-Type': 'application/json',
   'Access-Control-Allow-Origin': '*',
@@ -55,10 +60,10 @@ export async function handler(event) {
     const collection = db.collection(COLLECTION);
 
     // ──────────────────────────────────────────────
-    // GET / — Load full document (project + colors)
+    // GET / — Load shared document (project + colors)
     // ──────────────────────────────────────────────
     if (event.httpMethod === 'GET' && segments.length === 0) {
-      const doc = await collection.findOne({ username });
+      const doc = await collection.findOne({ _key: SHARED_KEY });
 
       if (!doc) {
         return {
@@ -79,7 +84,7 @@ export async function handler(event) {
     }
 
     // ──────────────────────────────────────────────
-    // POST / — Save project data
+    // POST / — Save shared project data
     // ──────────────────────────────────────────────
     if (event.httpMethod === 'POST' && segments.length === 0) {
       const body = JSON.parse(event.body || '{}');
@@ -93,12 +98,13 @@ export async function handler(event) {
       }
 
       await collection.updateOne(
-        { username },
+        { _key: SHARED_KEY },
         {
           $set: {
-            username,
+            _key: SHARED_KEY,
             project: body.project,
             updatedAt: new Date().toISOString(),
+            updatedBy: username,
           },
         },
         { upsert: true }
@@ -112,7 +118,7 @@ export async function handler(event) {
     }
 
     // ──────────────────────────────────────────────
-    // POST /colors — Save color configuration
+    // POST /colors — Save shared color configuration
     // ──────────────────────────────────────────────
     if (event.httpMethod === 'POST' && segments.length === 1 && segments[0] === 'colors') {
       const body = JSON.parse(event.body || '{}');
@@ -126,12 +132,13 @@ export async function handler(event) {
       }
 
       await collection.updateOne(
-        { username },
+        { _key: SHARED_KEY },
         {
           $set: {
-            username,
+            _key: SHARED_KEY,
             colors: body.colors,
             updatedAt: new Date().toISOString(),
+            updatedBy: username,
           },
         },
         { upsert: true }
@@ -145,10 +152,10 @@ export async function handler(event) {
     }
 
     // ──────────────────────────────────────────────
-    // DELETE / — Clear all data for user
+    // DELETE / — Clear all shared data (admin only)
     // ──────────────────────────────────────────────
     if (event.httpMethod === 'DELETE' && segments.length === 0) {
-      await collection.deleteOne({ username });
+      await collection.deleteOne({ _key: SHARED_KEY });
 
       return {
         statusCode: 200,
