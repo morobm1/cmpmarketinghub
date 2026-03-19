@@ -67,10 +67,16 @@ const AppState = {
 };
 
 /* ------------------------------------------------------------------
-   LOCAL STORAGE PERSISTENCE -- FULL PROJECT
+   API + LOCAL STORAGE PERSISTENCE -- FULL PROJECT
+   Uses the project API (/api/placement-planner) as the primary store.
+   localStorage is kept as a write-through cache for fast initial load.
    ------------------------------------------------------------------ */
 const STORAGE_KEY = 'propertySiteMap_project';
 const PROJECT_VERSION = 5;
+const API_BASE = '/api/placement-planner';
+
+/** Flag: true once initial API load has completed (success or fail) */
+var _apiLoadComplete = false;
 
 /**
  * Build a serializable project object from current AppState.
@@ -99,13 +105,44 @@ function buildProjectData() {
   };
 }
 
+/**
+ * Persist project to API (primary) and localStorage (cache).
+ * Uses debounce internally so rapid calls don't flood the server.
+ */
+var _persistTimer = null;
 function persistProject() {
+  // Always write to localStorage immediately (fast cache)
   try {
     var data = buildProjectData();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   } catch (e) {
     console.warn('Failed to persist project to localStorage:', e);
   }
+
+  // Debounce the API call (500ms)
+  if (_persistTimer) clearTimeout(_persistTimer);
+  _persistTimer = setTimeout(function () {
+    _persistProjectToApi();
+  }, 500);
+}
+
+/**
+ * Send current project data to the API.
+ */
+function _persistProjectToApi() {
+  var data = buildProjectData();
+  fetch(API_BASE, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ project: data }),
+  }).then(function (res) {
+    if (!res.ok) {
+      console.warn('API persist failed: HTTP ' + res.status);
+    }
+  }).catch(function (err) {
+    console.warn('API persist error (will retry on next save):', err);
+  });
 }
 
 function persistResidents() {
@@ -113,15 +150,51 @@ function persistResidents() {
 }
 
 /**
- * Load project from localStorage and restore into AppState.
- * @returns {boolean} true if a project was restored
+ * Load project from the API first, falling back to localStorage.
+ * @returns {Promise<boolean>} true if a project was restored
  */
-function loadPersistedProject() {
+async function loadPersistedProject() {
+  // Try API first
+  try {
+    var res = await fetch(API_BASE, { credentials: 'include' });
+    if (res.ok) {
+      var json = await res.json();
+      if (json.project && typeof json.project === 'object') {
+        var restored = restoreProjectData(json.project);
+        if (restored) {
+          // Update localStorage cache with API data
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(json.project));
+          } catch (e) { /* ignore cache write failure */ }
+          _apiLoadComplete = true;
+
+          // Also restore colors if present in the same response
+          if (json.colors && typeof json.colors === 'object') {
+            _restoreColorsFromData(json.colors);
+          }
+
+          return true;
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('API load failed, falling back to localStorage:', e);
+  }
+
+  // Fallback to localStorage
   try {
     var raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return false;
     var data = JSON.parse(raw);
-    return restoreProjectData(data);
+    var result = restoreProjectData(data);
+    _apiLoadComplete = true;
+
+    // If we loaded from localStorage, push to API to sync
+    if (result) {
+      _persistProjectToApi();
+    }
+
+    return result;
   } catch (e) {
     console.warn('Failed to load persisted project:', e);
     return false;
@@ -205,13 +278,27 @@ function loadPersistedState() {
   return loadPersistedProject();
 }
 
+/**
+ * Clear persisted state from both API and localStorage.
+ */
 function clearPersistedState() {
+  // Clear localStorage
   try {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(COLOR_STORAGE_KEY);
   } catch (e) {
     console.warn('Failed to clear persisted state:', e);
   }
+
+  // Clear API data
+  fetch(API_BASE, {
+    method: 'DELETE',
+    credentials: 'include',
+  }).then(function (res) {
+    if (!res.ok) console.warn('API clear failed: HTTP ' + res.status);
+  }).catch(function (err) {
+    console.warn('API clear error:', err);
+  });
 }
 
 function sanitizePersistedState(data) {
@@ -334,7 +421,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   populateBuildingSelector();
 
-  var restored = loadPersistedProject();
+  var restored = await loadPersistedProject();
 
   if (restored) {
     // Restore toggle states

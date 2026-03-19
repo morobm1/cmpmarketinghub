@@ -256,55 +256,103 @@ function unitBelongsToFloor(unitId, buildingKey, floor) {
 
 /* ------------------------------------------------------------------
    5. COLOR PERSISTENCE
-   Save/restore custom colors to localStorage so edits survive reload.
+   Save/restore custom colors via API (primary) with localStorage cache.
+   Colors are loaded from the API in loadPersistedProject() (app.js)
+   and restored via _restoreColorsFromData(). persistColors() saves
+   to both localStorage (fast) and API (durable).
    ------------------------------------------------------------------ */
 const COLOR_STORAGE_KEY = 'propertySiteMap_colors';
+const COLOR_API_BASE = '/api/placement-planner/colors';
 
-function persistColors() {
-  try {
-    const data = {
-      leaseStatus: { ...COLOR_CONFIG.leaseStatus },
-      scholarship: { ...COLOR_CONFIG.scholarship },
-      sharedUnit: { ...COLOR_CONFIG.sharedUnit },
-      blank: COLOR_CONFIG.blank,
-      stroke: COLOR_CONFIG.stroke,
-      strokeWidth: COLOR_CONFIG.strokeWidth,
-    };
-    localStorage.setItem(COLOR_STORAGE_KEY, JSON.stringify(data));
-  } catch (e) {
-    console.warn('Failed to persist colors:', e);
-  }
+/** Debounce timer for color API persist */
+var _colorPersistTimer = null;
+
+function _buildColorData() {
+  return {
+    leaseStatus: { ...COLOR_CONFIG.leaseStatus },
+    scholarship: { ...COLOR_CONFIG.scholarship },
+    sharedUnit: { ...COLOR_CONFIG.sharedUnit },
+    blank: COLOR_CONFIG.blank,
+    stroke: COLOR_CONFIG.stroke,
+    strokeWidth: COLOR_CONFIG.strokeWidth,
+  };
 }
 
+function persistColors() {
+  // Write to localStorage immediately (fast cache)
+  try {
+    const data = _buildColorData();
+    localStorage.setItem(COLOR_STORAGE_KEY, JSON.stringify(data));
+  } catch (e) {
+    console.warn('Failed to persist colors to localStorage:', e);
+  }
+
+  // Debounce the API call (500ms)
+  if (_colorPersistTimer) clearTimeout(_colorPersistTimer);
+  _colorPersistTimer = setTimeout(function () {
+    const data = _buildColorData();
+    fetch(COLOR_API_BASE, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ colors: data }),
+    }).then(function (res) {
+      if (!res.ok) console.warn('API color persist failed: HTTP ' + res.status);
+    }).catch(function (err) {
+      console.warn('API color persist error:', err);
+    });
+  }, 500);
+}
+
+/**
+ * Load persisted colors from localStorage cache.
+ * API-sourced colors are restored via _restoreColorsFromData() during
+ * loadPersistedProject() in app.js. This function handles the fast
+ * localStorage path for initial render.
+ */
 function loadPersistedColors() {
   try {
     const raw = localStorage.getItem(COLOR_STORAGE_KEY);
     if (!raw) return;
     const data = JSON.parse(raw);
-
-    if (data.leaseStatus) {
-      for (const key of Object.keys(data.leaseStatus)) {
-        COLOR_CONFIG.leaseStatus[key] = data.leaseStatus[key];
-      }
-    }
-    if (data.scholarship) {
-      for (const key of Object.keys(data.scholarship)) {
-        COLOR_CONFIG.scholarship[key] = data.scholarship[key];
-      }
-    }
-    if (data.sharedUnit) {
-      for (const key of Object.keys(data.sharedUnit)) {
-        COLOR_CONFIG.sharedUnit[key] = data.sharedUnit[key];
-      }
-    }
-    if (data.blank) COLOR_CONFIG.blank = data.blank;
-    if (data.stroke) COLOR_CONFIG.stroke = data.stroke;
-    if (data.strokeWidth != null) COLOR_CONFIG.strokeWidth = data.strokeWidth;
-
-    rebuildLegendItems();
+    _restoreColorsFromData(data);
   } catch (e) {
     console.warn('Failed to load persisted colors:', e);
   }
+}
+
+/**
+ * Restore color configuration from a data object (API or localStorage).
+ * Called by loadPersistedColors() and by app.js after API load.
+ */
+function _restoreColorsFromData(data) {
+  if (!data || typeof data !== 'object') return;
+
+  if (data.leaseStatus) {
+    for (const key of Object.keys(data.leaseStatus)) {
+      COLOR_CONFIG.leaseStatus[key] = data.leaseStatus[key];
+    }
+  }
+  if (data.scholarship) {
+    for (const key of Object.keys(data.scholarship)) {
+      COLOR_CONFIG.scholarship[key] = data.scholarship[key];
+    }
+  }
+  if (data.sharedUnit) {
+    for (const key of Object.keys(data.sharedUnit)) {
+      COLOR_CONFIG.sharedUnit[key] = data.sharedUnit[key];
+    }
+  }
+  if (data.blank) COLOR_CONFIG.blank = data.blank;
+  if (data.stroke) COLOR_CONFIG.stroke = data.stroke;
+  if (data.strokeWidth != null) COLOR_CONFIG.strokeWidth = data.strokeWidth;
+
+  // Also update localStorage cache
+  try {
+    localStorage.setItem(COLOR_STORAGE_KEY, JSON.stringify(data));
+  } catch (e) { /* ignore */ }
+
+  rebuildLegendItems();
 }
 
 function rebuildLegendItems() {
