@@ -2478,8 +2478,7 @@ function renderDebugPanel(state) {
         '<div class="debug-info-item"><span class="debug-info-label">Unassigned Scholarships:</span> <span class="debug-info-value">' + unassCount + ' entries</span></div>' +
         '<div class="debug-info-item"><span class="debug-info-label">Map Cache:</span> <span class="debug-info-value">' + mapCacheCount + ' maps loaded</span></div>' +
         '<div class="debug-info-item"><span class="debug-info-label">Selected:</span> <span class="debug-info-value">' + (state.selectedBuilding || 'none') + ' / ' + (state.selectedFloor != null ? state.selectedFloor : 'none') + '</span></div>' +
-        '<div class="debug-info-item"><span class="debug-info-label">Local Cache:</span> <span class="debug-info-value">' + lsUsage + '</span></div>' +
-        '<div class="debug-info-item"><span class="debug-info-label">Storage:</span> <span class="debug-info-value">API + localStorage cache</span></div>' +
+        '<div class="debug-info-item"><span class="debug-info-label">localStorage:</span> <span class="debug-info-value">' + lsUsage + '</span></div>' +
       '</div>';
 
     output.insertBefore(summary, output.firstChild);

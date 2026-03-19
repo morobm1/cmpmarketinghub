@@ -356,13 +356,9 @@ function applyRoleRestrictions() {
 
   // Hide/disable edit controls for viewers
   var editElements = [
-    // Import section
     '#import-section',
-    // Add resident button
     '#add-resident-btn',
-    // Clear session button
     '.sidebar-footer',
-    // Backup restore section (backup is ok, restore is edit)
     '#restore-section',
   ];
 
@@ -1844,7 +1840,6 @@ function refreshMasterList() {
     onDelete: handleResidentDelete,
     onRowClick: handleMasterListRowClick,
   });
-  reapplyViewerRestrictions();
 }
 
 function handleMasterListRowClick(resident, unitKey) {
@@ -2132,7 +2127,6 @@ function refreshBank() {
   renderWaitingBank(AppState.waitingBank, {
     onAssignClick: handleBankAssignClick,
   }, query);
-  reapplyViewerRestrictions();
 }
 
 function handleBankAssignClick(bankEntry) {
