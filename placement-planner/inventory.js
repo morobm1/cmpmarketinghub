@@ -1,0 +1,1317 @@
+/* ============================================================
+   inventory.js — Master Unit Inventory Module
+   Loads, manages, and provides utility functions for the
+   Ivory House unit inventory (623 units).
+
+   Inventory is now an array of objects:
+     { unitNumber: string, unitType: string }
+
+   - unitNumber = assignable unit ID (source of truth for assignments)
+   - unitType   = floorplan type (source of truth for floorplan matching)
+
+   All floorplan matching uses inventory.unitType.
+   Building/floor parsing uses config.js parseUnitId() for navigation only.
+   ============================================================ */
+
+/**
+ * Parse an inventory spreadsheet file (.xlsx or .csv).
+ * Expects columns: "Unit Number" and "Unit Type".
+ * Returns { units: Array<{unitNumber, unitType}>, warnings: string[] }
+ *
+ * @param {File} file - The uploaded inventory spreadsheet
+ * @returns {Promise<{units: Array<{unitNumber: string, unitType: string}>, warnings: string[]}>}
+ */
+function parseInventorySpreadsheet(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onerror = () => reject(new Error('Failed to read inventory file.'));
+
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+
+        const sheetName = workbook.SheetNames[0];
+        if (!sheetName) {
+          reject(new Error('Inventory spreadsheet contains no sheets.'));
+          return;
+        }
+
+        const sheet = workbook.Sheets[sheetName];
+        const jsonRows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+        if (jsonRows.length === 0) {
+          reject(new Error('Inventory spreadsheet is empty or has no data rows.'));
+          return;
+        }
+
+        // Find the "Unit Number" and "Unit Type" columns (case-insensitive)
+        const rawHeaders = Object.keys(jsonRows[0]);
+        let unitNumberHeader = null;
+        let unitTypeHeader = null;
+
+        for (const h of rawHeaders) {
+          const upper = h.trim().toUpperCase().replace(/_/g, ' ');
+          if (upper === 'UNIT NUMBER' || upper === 'UNITNUMBER') {
+            unitNumberHeader = h;
+          } else if (upper === 'UNIT TYPE' || upper === 'UNITTYPE') {
+            unitTypeHeader = h;
+          }
+        }
+
+        if (!unitNumberHeader) {
+          reject(new Error('Inventory spreadsheet missing required "Unit Number" column header.'));
+          return;
+        }
+
+        if (!unitTypeHeader) {
+          reject(new Error('Inventory spreadsheet missing required "Unit Type" column header.'));
+          return;
+        }
+
+        const units = [];
+        const seen = new Set();
+        const warnings = [];
+
+        for (let i = 0; i < jsonRows.length; i++) {
+          const rawNumber = jsonRows[i][unitNumberHeader];
+          const rawType = jsonRows[i][unitTypeHeader];
+          const rowNum = i + 2; // 1-based + header
+
+          let unitNumber = (rawNumber == null ? '' : String(rawNumber)).trim().replace(/\s+/g, ' ');
+          let unitType = (rawType == null ? '' : String(rawType)).trim().replace(/\s+/g, ' ');
+
+          // Skip blank rows (both empty)
+          if (!unitNumber && !unitType) continue;
+
+          // Missing Unit Number — skip and warn
+          if (!unitNumber) {
+            warnings.push(`Inventory row ${rowNum}: Missing Unit Number — skipped.`);
+            continue;
+          }
+
+          // Missing Unit Type — keep unit but warn
+          if (!unitType) {
+            warnings.push(`Inventory row ${rowNum}: Blank Unit Type for unit "${unitNumber}" — unit kept but type is empty.`);
+          }
+
+          // Deduplicate by Unit Number (normalize to uppercase for comparison)
+          const normalized = unitNumber.toUpperCase();
+          if (seen.has(normalized)) {
+            warnings.push(`Inventory row ${rowNum}: Duplicate unit "${unitNumber}" — skipped.`);
+            continue;
+          }
+
+          seen.add(normalized);
+          units.push({ unitNumber: unitNumber, unitType: unitType });
+        }
+
+        resolve({ units, warnings });
+      } catch (err) {
+        reject(new Error('Failed to parse inventory spreadsheet: ' + err.message));
+      }
+    };
+
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+/**
+ * Build the master inventory array from raw unit objects.
+ * Normalizes by trimming whitespace, removes blanks, deduplicates by unitNumber.
+ *
+ * @param {Array<{unitNumber: string, unitType: string}>} rawUnits
+ * @returns {Array<{unitNumber: string, unitType: string}>}
+ */
+function buildMasterInventory(rawUnits) {
+  const seen = new Set();
+  const inventory = [];
+
+  for (const raw of rawUnits) {
+    if (!raw || typeof raw === 'string') {
+      // Legacy: if raw is a string (old format), convert
+      const val = (typeof raw === 'string' ? raw : '').trim();
+      if (!val) continue;
+      const normalized = val.toUpperCase();
+      if (seen.has(normalized)) continue;
+      seen.add(normalized);
+      inventory.push({ unitNumber: val, unitType: '' });
+      continue;
+    }
+
+    const unitNumber = (raw.unitNumber == null ? '' : String(raw.unitNumber)).trim();
+    if (!unitNumber) continue;
+
+    const normalized = unitNumber.toUpperCase();
+    if (seen.has(normalized)) continue;
+
+    seen.add(normalized);
+    inventory.push({
+      unitNumber: unitNumber,
+      unitType: (raw.unitType == null ? '' : String(raw.unitType)).trim(),
+    });
+  }
+
+  return inventory;
+}
+
+/* ------------------------------------------------------------------
+   INVENTORY LOOKUP HELPERS
+   ------------------------------------------------------------------ */
+
+/**
+ * Extract just the unit number strings from inventory.
+ * @param {Array<{unitNumber: string, unitType: string}>} inventory
+ * @returns {string[]}
+ */
+function getInventoryUnitNumbers(inventory) {
+  if (!inventory) return [];
+  return inventory.map((item) => item.unitNumber);
+}
+
+/**
+ * Build a Map from uppercase unitNumber -> inventory item for fast lookups.
+ * @param {Array<{unitNumber: string, unitType: string}>} inventory
+ * @returns {Map<string, {unitNumber: string, unitType: string}>}
+ */
+function buildInventoryMap(inventory) {
+  const map = new Map();
+  if (!inventory) return map;
+  for (const item of inventory) {
+    map.set(item.unitNumber.toUpperCase(), item);
+  }
+  return map;
+}
+
+/**
+ * Look up the Unit Type for a given unit number from inventory.
+ * Returns the unitType string, or null if not found.
+ *
+ * @param {string} unitNumber
+ * @param {Array<{unitNumber: string, unitType: string}>} inventory
+ * @returns {string|null}
+ */
+function getInventoryUnitType(unitNumber, inventory) {
+  if (!unitNumber || !inventory) return null;
+  const key = unitNumber.trim().toUpperCase();
+  for (const item of inventory) {
+    if (item.unitNumber.toUpperCase() === key) {
+      return item.unitType || null;
+    }
+  }
+  return null;
+}
+
+/* ------------------------------------------------------------------
+   INVENTORY UTILITY FUNCTIONS
+   ------------------------------------------------------------------ */
+
+/**
+ * Get list of available (unoccupied) unit numbers from inventory.
+ *
+ * @param {Array<{unitNumber: string, unitType: string}>} inventory
+ * @param {Map<string, object>|null} residents
+ * @returns {string[]} - Unit numbers not currently assigned
+ */
+function getAvailableUnits(inventory, residents) {
+  if (!inventory || inventory.length === 0) return [];
+  if (!residents || residents.size === 0) return inventory.map((i) => i.unitNumber);
+
+  return inventory
+    .filter((item) => !residents.has(item.unitNumber.toUpperCase()))
+    .map((item) => item.unitNumber);
+}
+
+/**
+ * Get list of occupied unit numbers.
+ *
+ * @param {Array<{unitNumber: string, unitType: string}>} inventory
+ * @param {Map<string, object>|null} residents
+ * @returns {string[]}
+ */
+function getOccupiedUnits(inventory, residents) {
+  if (!inventory || inventory.length === 0) return [];
+  if (!residents || residents.size === 0) return [];
+
+  return inventory
+    .filter((item) => residents.has(item.unitNumber.toUpperCase()))
+    .map((item) => item.unitNumber);
+}
+
+/**
+ * Get occupancy statistics for a given set of inventory items.
+ *
+ * @param {Array<{unitNumber: string, unitType: string}>} inventory
+ * @param {Map<string, object>|null} residents
+ * @returns {{ totalUnits: number, occupiedUnits: number, availableUnits: number, occupancyPercent: number }}
+ */
+function getOccupancyStats(inventory, residents) {
+  const totalUnits = inventory ? inventory.length : 0;
+  const occupied = getOccupiedUnits(inventory, residents);
+  const occupiedUnits = occupied.length;
+  const availableUnits = totalUnits - occupiedUnits;
+  const occupancyPercent = totalUnits > 0
+    ? Math.round((occupiedUnits / totalUnits) * 1000) / 10
+    : 0;
+
+  return { totalUnits, occupiedUnits, availableUnits, occupancyPercent };
+}
+
+/**
+ * Filter inventory to items belonging to a specific building.
+ *
+ * @param {Array<{unitNumber: string, unitType: string}>} inventory
+ * @param {string} buildingKey
+ * @returns {Array<{unitNumber: string, unitType: string}>}
+ */
+function getInventoryForBuilding(inventory, buildingKey) {
+  if (!inventory || !buildingKey) return [];
+  return inventory.filter((item) => unitBelongsToBuilding(item.unitNumber, buildingKey));
+}
+
+/**
+ * Filter inventory to items belonging to a specific building + floor.
+ *
+ * @param {Array<{unitNumber: string, unitType: string}>} inventory
+ * @param {string} buildingKey
+ * @param {number} floor
+ * @returns {Array<{unitNumber: string, unitType: string}>}
+ */
+function getInventoryForFloor(inventory, buildingKey, floor) {
+  if (!inventory || !buildingKey || floor == null) return [];
+  return inventory.filter((item) => unitBelongsToFloor(item.unitNumber, buildingKey, floor));
+}
+
+/**
+ * Get occupancy stats scoped to a building.
+ */
+function getBuildingOccupancyStats(inventory, residents, buildingKey) {
+  const buildingInventory = getInventoryForBuilding(inventory, buildingKey);
+  return getOccupancyStats(buildingInventory, residents);
+}
+
+/**
+ * Get occupancy stats scoped to a building + floor.
+ */
+function getFloorOccupancyStats(inventory, residents, buildingKey, floor) {
+  const floorInventory = getInventoryForFloor(inventory, buildingKey, floor);
+  return getOccupancyStats(floorInventory, residents);
+}
+
+/**
+ * Get available units filtered by Unit Type from inventory.
+ * Uses inventory.unitType for matching — never infers from unit number.
+ *
+ * @param {Array<{unitNumber: string, unitType: string}>} inventory
+ * @param {Map<string, object>|null} residents
+ * @param {string} unitType - The unit type to match against
+ * @returns {string[]} - Available unit numbers matching the type
+ */
+function getAvailableUnitsForUnitType(inventory, residents, unitType) {
+  if (!inventory || inventory.length === 0) return [];
+
+  const availableItems = inventory.filter((item) => !residents || !residents.has(item.unitNumber.toUpperCase()));
+
+  if (!unitType) return availableItems.map((i) => i.unitNumber);
+
+  const normalizedType = unitType.trim().toUpperCase();
+
+  return availableItems
+    .filter((item) => {
+      const itemType = (item.unitType || '').trim().toUpperCase();
+      return itemType === normalizedType;
+    })
+    .map((item) => item.unitNumber);
+}
+
+/**
+ * Validate whether a unit can be assigned.
+ * Returns { valid: boolean, message: string }
+ *
+ * @param {string} unitValue - The unit being assigned
+ * @param {Array<{unitNumber: string, unitType: string}>} inventory
+ * @param {Map<string, object>|null} residents
+ * @param {string|null} originalUnitKey - If editing, the uppercase key of the original unit
+ * @returns {{ valid: boolean, message: string }}
+ */
+function validateUnitAssignment(unitValue, inventory, residents, originalUnitKey) {
+  if (!unitValue || !unitValue.trim()) {
+    return { valid: false, message: 'Unit is required.' };
+  }
+
+  const key = unitValue.trim().toUpperCase();
+
+  // Check if unit exists in inventory
+  if (inventory && inventory.length > 0) {
+    const inInventory = inventory.some((item) => item.unitNumber.toUpperCase() === key);
+    if (!inInventory) {
+      return { valid: false, message: `Unit "${unitValue}" is not in the master inventory.` };
+    }
+  }
+
+  // Check if unit is already occupied by a different resident
+  if (residents && residents.has(key)) {
+    const isSelf = originalUnitKey && originalUnitKey === key;
+    if (!isSelf) {
+      const existing = residents.get(key);
+      return {
+        valid: false,
+        message: `Unit "${unitValue}" is already assigned to "${existing.Resident_Name}".`,
+      };
+    }
+  }
+
+  return { valid: true, message: '' };
+}
+
+/**
+ * Validate that a bank resident's unit type matches the target unit's inventory type.
+ *
+ * @param {string} bankUnitType - The bank resident's unit type
+ * @param {string} targetUnit - The unit number being assigned
+ * @param {Array<{unitNumber: string, unitType: string}>} inventory
+ * @returns {{ valid: boolean, message: string }}
+ */
+function validateUnitTypeMatch(bankUnitType, targetUnit, inventory) {
+  if (!bankUnitType || !targetUnit || !inventory) {
+    return { valid: false, message: 'Missing unit type or target unit information.' };
+  }
+
+  const inventoryType = getInventoryUnitType(targetUnit, inventory);
+  if (!inventoryType) {
+    return { valid: false, message: `Unit "${targetUnit}" has no Unit Type in inventory.` };
+  }
+
+  if (inventoryType.trim().toUpperCase() !== bankUnitType.trim().toUpperCase()) {
+    return {
+      valid: false,
+      message: `Type mismatch: bank resident is "${bankUnitType}" but unit "${targetUnit}" is "${inventoryType}".`,
+    };
+  }
+
+  return { valid: true, message: '' };
+}
+
+/**
+ * Get the floorplan type for a placed resident by looking up their Unit_Assigned
+ * in the inventory. Returns the inventory unitType or null.
+ *
+ * @param {object} resident - Placed resident with Unit_Assigned
+ * @param {Array<{unitNumber: string, unitType: string}>} inventory
+ * @returns {string|null}
+ */
+function getResidentFloorplanType(resident, inventory) {
+  if (!resident || !resident.Unit_Assigned) return null;
+  return getInventoryUnitType(resident.Unit_Assigned, inventory);
+}
+
+/**
+ * Get inventory-related warnings for the debug panel.
+ *
+ * @param {Array<{unitNumber: string, unitType: string}>} inventory
+ * @param {Map<string, object>|null} residents
+ * @param {Set<string>|null} svgUnitIds
+ * @returns {string[]}
+ */
+function getInventoryWarnings(inventory, residents, svgUnitIds) {
+  const warnings = [];
+
+  if (!inventory || inventory.length === 0) return warnings;
+
+  const inventorySet = new Set(inventory.map((item) => item.unitNumber.toUpperCase()));
+
+  // 1. Assigned units not in inventory
+  if (residents && residents.size > 0) {
+    residents.forEach((resident, unitKey) => {
+      if (!inventorySet.has(unitKey)) {
+        warnings.push(
+          `Assigned unit "${resident.Unit_Assigned}" (resident: ${resident.Resident_Name}) is NOT in the master inventory.`
+        );
+      }
+    });
+  }
+
+  // 2. Units that parse ambiguously for building/floor
+  for (const item of inventory) {
+    const parsed = parseUnitId(item.unitNumber);
+    if (parsed.ambiguous) {
+      warnings.push(
+        `Inventory unit "${item.unitNumber}" could not be parsed into building/floor — ambiguous format.`
+      );
+    }
+  }
+
+  return warnings;
+}
+
+/**
+ * Get floor-specific inventory warnings for the debug panel.
+ *
+ * @param {Array<{unitNumber: string, unitType: string}>} inventory
+ * @param {Map<string, object>|null} residents
+ * @param {Set<string>|null} svgUnitIds
+ * @param {string} buildingKey
+ * @param {number} floor
+ * @returns {string[]}
+ */
+function getFloorMapWarnings(inventory, residents, svgUnitIds, buildingKey, floor) {
+  const warnings = [];
+
+  if (!inventory || inventory.length === 0) return warnings;
+
+  const floorInventory = getInventoryForFloor(inventory, buildingKey, floor);
+  const inventorySet = new Set(inventory.map((item) => item.unitNumber.toUpperCase()));
+
+  // Inventory units for this floor not found in SVG
+  if (svgUnitIds && svgUnitIds.size > 0) {
+    for (const item of floorInventory) {
+      const key = item.unitNumber.toUpperCase();
+      if (!svgUnitIds.has(key)) {
+        warnings.push(
+          `Inventory unit "${item.unitNumber}" (${getBuildingLabel(buildingKey)} ${getFloorLabel(floor)}) not found in current SVG map.`
+        );
+      }
+    }
+  }
+
+  // Assigned units on this floor not in inventory
+  if (residents && residents.size > 0) {
+    residents.forEach((resident, unitKey) => {
+      if (!inventorySet.has(unitKey)) {
+        const parsed = parseUnitId(unitKey);
+        if (!parsed.ambiguous && parsed.building === buildingKey && parsed.floor === floor) {
+          warnings.push(
+            `Assigned unit "${resident.Unit_Assigned}" (resident: ${resident.Resident_Name}) is NOT in the master inventory.`
+          );
+        }
+      }
+    });
+  }
+
+  // Duplicate resident assignments check
+  if (residents && residents.size > 0) {
+    const seen = new Map();
+    residents.forEach((resident, unitKey) => {
+      if (seen.has(unitKey)) {
+        warnings.push(
+          `Duplicate assignment: Unit "${unitKey}" assigned to both "${seen.get(unitKey)}" and "${resident.Resident_Name}".`
+        );
+      } else {
+        seen.set(unitKey, resident.Resident_Name);
+      }
+    });
+  }
+
+  return warnings;
+}
+
+/**
+ * Extract all unit IDs from the current SVG in the DOM.
+ * Returns a Set of UPPERCASE unit IDs.
+ *
+ * @returns {Set<string>}
+ */
+function getSVGUnitIds() {
+  const container = document.getElementById('map-container');
+  const svg = container ? container.querySelector('svg') : null;
+  const ids = new Set();
+
+  if (!svg) return ids;
+
+  const allWithId = svg.querySelectorAll('[id]');
+  allWithId.forEach((el) => {
+    const rawId = el.id.trim();
+    if (rawId) {
+      ids.add(rawId.toUpperCase());
+    }
+  });
+
+  return ids;
+}
+
+/**
+ * Get all unique Unit Types present in the inventory.
+ * @param {Array<{unitNumber: string, unitType: string}>} inventory
+ * @returns {string[]}
+ */
+function getInventoryUnitTypes(inventory) {
+  if (!inventory) return [];
+  const types = new Set();
+  for (const item of inventory) {
+    if (item.unitType) {
+      types.add(item.unitType);
+    }
+  }
+  return Array.from(types).sort();
+}
+
+/* ------------------------------------------------------------------
+   SHARED / MULTI-BED UNIT HELPERS
+   For units like D003 with beds D003-A, D003-B, D003-C.
+   Pattern: {ParentUnit}-{SingleLetter} is a bed assignment.
+   ------------------------------------------------------------------ */
+
+/**
+ * Check if a unit ID represents a bed-level assignment.
+ * Pattern: ends with "-" followed by a single letter (A-Z).
+ * Examples: D003-A -> true, D003 -> false, A101 -> false
+ *
+ * @param {string} unitId
+ * @returns {boolean}
+ */
+function isBedAssignment(unitId) {
+  if (!unitId || typeof unitId !== 'string') return false;
+  return /^.+-[A-Za-z]$/.test(unitId.trim());
+}
+
+/**
+ * Derive the parent unit ID from a bed-level assignment.
+ * Example: D003-A -> D003, D003-B -> D003
+ * Returns null if not a bed assignment.
+ *
+ * @param {string} unitId
+ * @returns {string|null}
+ */
+function getParentUnitFromBed(unitId) {
+  if (!isBedAssignment(unitId)) return null;
+  const trimmed = unitId.trim();
+  return trimmed.slice(0, trimmed.length - 2); // remove "-X"
+}
+
+/**
+ * Get all sibling bed unit numbers for a given parent unit from inventory.
+ * Scans inventory for items whose unitNumber matches the pattern {parent}-{letter}.
+ *
+ * @param {string} parentUnit - e.g. "D003"
+ * @param {Array<{unitNumber: string, unitType: string}>} inventory
+ * @returns {string[]} - e.g. ["D003-A", "D003-B", "D003-C"]
+ */
+function getBedSiblingsFromInventory(parentUnit, inventory) {
+  if (!parentUnit || !inventory) return [];
+  const prefix = parentUnit.toUpperCase() + '-';
+  return inventory
+    .filter((item) => {
+      const upper = item.unitNumber.toUpperCase();
+      return upper.startsWith(prefix) && upper.length === prefix.length + 1 && /[A-Z]$/.test(upper);
+    })
+    .map((item) => item.unitNumber);
+}
+
+/**
+ * Get all placed resident assignments for the beds of a parent unit.
+ *
+ * @param {string} parentUnit - e.g. "D003"
+ * @param {Map<string, object>} residents - Placed residents keyed by UPPERCASE Unit_Assigned
+ * @param {Array<{unitNumber: string, unitType: string}>} inventory
+ * @returns {Array<{bed: string, resident: object|null}>}
+ */
+function getBedAssignmentsForParent(parentUnit, residents, inventory) {
+  const siblings = getBedSiblingsFromInventory(parentUnit, inventory);
+  return siblings.map((bed) => {
+    const key = bed.toUpperCase();
+    const resident = residents ? residents.get(key) : null;
+    return { bed, resident };
+  });
+}
+
+/**
+ * Determine the shared-unit occupancy state for a parent unit.
+ *
+ * @param {string} parentUnit - e.g. "D003"
+ * @param {Map<string, object>} residents
+ * @param {Array<{unitNumber: string, unitType: string}>} inventory
+ * @returns {'blank'|'partial'|'full'} - Occupancy state
+ */
+function getSharedUnitOccupancyState(parentUnit, residents, inventory) {
+  const assignments = getBedAssignmentsForParent(parentUnit, residents, inventory);
+  if (assignments.length === 0) return 'blank';
+
+  const occupiedCount = assignments.filter((a) => a.resident !== null).length;
+  if (occupiedCount === 0) return 'blank';
+  if (occupiedCount >= assignments.length) return 'full';
+  return 'partial';
+}
+
+/**
+ * Discover all parent units from inventory by scanning for bed-level entries.
+ * Returns a Set of uppercase parent unit IDs.
+ *
+ * @param {Array<{unitNumber: string, unitType: string}>} inventory
+ * @returns {Set<string>}
+ */
+function discoverParentUnitsFromInventory(inventory) {
+  const parents = new Set();
+  if (!inventory) return parents;
+  for (const item of inventory) {
+    if (isBedAssignment(item.unitNumber)) {
+      const parent = getParentUnitFromBed(item.unitNumber);
+      if (parent) parents.add(parent.toUpperCase());
+    }
+  }
+  return parents;
+}
+
+/* ------------------------------------------------------------------
+   PRELEASE PROGRESS AGGREGATION HELPERS
+   Calculate prelease progress by floorplan using inventory + residents.
+   ------------------------------------------------------------------ */
+
+/**
+ * Build prelease progress data grouped by floorplan.
+ *
+ * For each floorplan (inventory Unit Type):
+ *   - totalUnits: count of inventory units with that type
+ *   - newLease: count of placed residents whose lease status is in PRELEASE_NEW_LEASE_STATUSES
+ *   - renewal: count of placed residents whose lease status is in PRELEASE_RENEWAL_STATUSES
+ *   - totalPreleased: newLease + renewal
+ *   - percent: totalPreleased / totalUnits * 100
+ *
+ * Renewal Pending - Started is counted under Renewal.
+ *
+ * @param {Array<{unitNumber: string, unitType: string}>} inventory
+ * @param {Map<string, object>|null} residents
+ * @returns {Array<{floorplan: string, totalUnits: number, newLease: number, renewal: number, totalPreleased: number, percent: number}>}
+ */
+function buildPreleaseProgressByFloorplan(inventory, residents) {
+  if (!inventory || inventory.length === 0) return [];
+
+  // Count total units per floorplan
+  const fpTotals = {};
+  for (const item of inventory) {
+    const fp = item.unitType || 'Unknown';
+    fpTotals[fp] = (fpTotals[fp] || 0) + 1;
+  }
+
+  // Count placed residents per floorplan by lease status group
+  const fpNewLease = {};
+  const fpRenewal = {};
+
+  if (residents && residents.size > 0) {
+    residents.forEach((resident) => {
+      const fp = getResidentFloorplanType(resident, inventory) || 'Unknown';
+      const ls = resident.Lease_Status || '';
+
+      if (isNewLeaseForProgress(ls)) {
+        fpNewLease[fp] = (fpNewLease[fp] || 0) + 1;
+      } else if (isRenewalForProgress(ls)) {
+        fpRenewal[fp] = (fpRenewal[fp] || 0) + 1;
+      }
+    });
+  }
+
+  // Build result array
+  const allFloorplans = Object.keys(fpTotals);
+  const sorted = sortFloorplansByDisplayOrder(allFloorplans);
+
+  return sorted.map((fp) => {
+    const totalUnits = fpTotals[fp] || 0;
+    const newLease = fpNewLease[fp] || 0;
+    const renewal = fpRenewal[fp] || 0;
+    const totalPreleased = newLease + renewal;
+    const percent = totalUnits > 0 ? Math.round((totalPreleased / totalUnits) * 1000) / 10 : 0;
+
+    return { floorplan: fp, totalUnits, newLease, renewal, totalPreleased, percent };
+  });
+}
+
+/**
+ * Build prelease progress filtered to a specific building.
+ * @param {Array<{unitNumber: string, unitType: string}>} inventory
+ * @param {Map<string, object>|null} residents
+ * @param {string} buildingKey
+ * @returns {Array<object>}
+ */
+function buildPreleaseProgressForBuilding(inventory, residents, buildingKey) {
+  if (!inventory || !buildingKey) return [];
+  const filteredInv = getInventoryForBuilding(inventory, buildingKey);
+  const filteredRes = filterResidentsByInventorySubset(residents, filteredInv);
+  return buildPreleaseProgressByFloorplan(filteredInv, filteredRes);
+}
+
+/**
+ * Build prelease progress filtered to a specific building + floor.
+ * @param {Array<{unitNumber: string, unitType: string}>} inventory
+ * @param {Map<string, object>|null} residents
+ * @param {string} buildingKey
+ * @param {number} floor
+ * @returns {Array<object>}
+ */
+function buildPreleaseProgressForFloor(inventory, residents, buildingKey, floor) {
+  if (!inventory || !buildingKey || floor == null) return [];
+  const filteredInv = getInventoryForFloor(inventory, buildingKey, floor);
+  const filteredRes = filterResidentsByInventorySubset(residents, filteredInv);
+  return buildPreleaseProgressByFloorplan(filteredInv, filteredRes);
+}
+
+/**
+ * Filter a residents Map to only include residents whose Unit_Assigned
+ * is in the given inventory subset.
+ * @param {Map<string, object>|null} residents
+ * @param {Array<{unitNumber: string, unitType: string}>} inventorySubset
+ * @returns {Map<string, object>}
+ */
+function filterResidentsByInventorySubset(residents, inventorySubset) {
+  const filtered = new Map();
+  if (!residents || !inventorySubset || inventorySubset.length === 0) return filtered;
+
+  const unitSet = new Set(inventorySubset.map((item) => item.unitNumber.toUpperCase()));
+  residents.forEach((resident, unitKey) => {
+    if (unitSet.has(unitKey)) {
+      filtered.set(unitKey, resident);
+    }
+  });
+
+  return filtered;
+}
+
+/**
+ * Calculate the property-wide prelease progress totals (summary row).
+ * @param {Array<object>} progressData - From buildPreleaseProgressByFloorplan
+ * @returns {{ totalUnits: number, newLease: number, renewal: number, totalPreleased: number, percent: number }}
+ */
+function getPreleaseProgressTotals(progressData) {
+  let totalUnits = 0, newLease = 0, renewal = 0;
+  for (const row of progressData) {
+    totalUnits += row.totalUnits;
+    newLease += row.newLease;
+    renewal += row.renewal;
+  }
+  const totalPreleased = newLease + renewal;
+  const percent = totalUnits > 0 ? Math.round((totalPreleased / totalUnits) * 1000) / 10 : 0;
+  return { totalUnits, newLease, renewal, totalPreleased, percent };
+}
+
+/* ------------------------------------------------------------------
+   SCHOLARSHIP AUDIT AGGREGATION HELPERS
+   ------------------------------------------------------------------ */
+
+/**
+ * Normalize a name for exact matching:
+ * trim, collapse repeated spaces, uppercase.
+ * @param {string} name
+ * @returns {string}
+ */
+function normalizeNameForMatch(name) {
+  if (!name) return '';
+  return name.trim().replace(/\s+/g, ' ').toUpperCase();
+}
+
+/**
+ * Exact-match a scholarship record name against placed residents.
+ * Returns the unitKey of the matching resident, or null if no exact match.
+ *
+ * Matching rule: normalized (trimmed, collapsed spaces, case-insensitive) exact comparison.
+ * No fuzzy, partial, contains, or similarity matching.
+ *
+ * @param {string} scholarshipName - Name from scholarship upload
+ * @param {Map<string, object>} residents - Placed residents keyed by UPPERCASE unit
+ * @returns {string|null} - The unitKey of the exact match, or null
+ */
+function getExactResidentMatchForScholarshipRecord(scholarshipName, residents) {
+  if (!scholarshipName || !residents || residents.size === 0) return null;
+
+  const normalizedQuery = normalizeNameForMatch(scholarshipName);
+  if (!normalizedQuery) return null;
+
+  let matchKey = null;
+  residents.forEach((resident, unitKey) => {
+    if (matchKey) return; // already found
+    const normalizedResident = normalizeNameForMatch(resident.Resident_Name);
+    if (normalizedResident === normalizedQuery) {
+      matchKey = unitKey;
+    }
+  });
+
+  return matchKey;
+}
+
+/**
+ * Build scholarship audit counts from placed residents.
+ * Excludes 'NONE' from totals.
+ *
+ * @param {Map<string, object>} residents
+ * @returns {Object<string, number>} - e.g. { 'BOYER': 3, 'HINKLEY': 1 }
+ */
+function getScholarshipCountsOverall(residents) {
+  const counts = {};
+  if (!residents) return counts;
+  residents.forEach((r) => {
+    const sch = (r.Scholarship || '').toUpperCase().trim();
+    if (!sch || sch === 'NONE') return;
+    counts[sch] = (counts[sch] || 0) + 1;
+  });
+  return counts;
+}
+
+/**
+ * Build scholarship counts grouped by floorplan type.
+ * Uses inventory to resolve resident's unit -> floorplan.
+ *
+ * @param {Map<string, object>} residents
+ * @param {Array<{unitNumber: string, unitType: string}>} inventory
+ * @returns {Object<string, Object<string, number>>} - { 'Studio - A1': { 'BOYER': 2 }, ... }
+ */
+function getScholarshipCountsByFloorplan(residents, inventory) {
+  const result = {};
+  if (!residents || !inventory) return result;
+  residents.forEach((r) => {
+    const sch = (r.Scholarship || '').toUpperCase().trim();
+    if (!sch || sch === 'NONE') return;
+    const fp = getInventoryUnitType(r.Unit_Assigned, inventory) || 'Unknown';
+    if (!result[fp]) result[fp] = {};
+    result[fp][sch] = (result[fp][sch] || 0) + 1;
+  });
+  return result;
+}
+
+/**
+ * Build scholarship counts grouped by building.
+ *
+ * @param {Map<string, object>} residents
+ * @returns {Object<string, Object<string, number>>} - { 'A': { 'BOYER': 2 }, ... }
+ */
+function getScholarshipCountsByBuilding(residents) {
+  const result = {};
+  if (!residents) return result;
+  residents.forEach((r) => {
+    const sch = (r.Scholarship || '').toUpperCase().trim();
+    if (!sch || sch === 'NONE') return;
+    const parsed = parseUnitId(r.Unit_Assigned);
+    const bld = parsed.ambiguous ? 'Unknown' : parsed.building;
+    if (!result[bld]) result[bld] = {};
+    result[bld][sch] = (result[bld][sch] || 0) + 1;
+  });
+  return result;
+}
+
+/**
+ * Build scholarship counts grouped by floor (building + floor).
+ *
+ * @param {Map<string, object>} residents
+ * @returns {Object<string, Object<string, number>>} - { 'A-1': { 'BOYER': 2 }, ... }
+ */
+function getScholarshipCountsByFloor(residents) {
+  const result = {};
+  if (!residents) return result;
+  residents.forEach((r) => {
+    const sch = (r.Scholarship || '').toUpperCase().trim();
+    if (!sch || sch === 'NONE') return;
+    const parsed = parseUnitId(r.Unit_Assigned);
+    const floorKey = parsed.ambiguous ? 'Unknown' : `${parsed.building}-${parsed.floor}`;
+    if (!result[floorKey]) result[floorKey] = {};
+    result[floorKey][sch] = (result[floorKey][sch] || 0) + 1;
+  });
+  return result;
+}
+
+/* ------------------------------------------------------------------
+   DEDUP HELPERS — Combined Placed + Bank Residents
+   Used by enhanced prelease progress, scholarship audit, and search.
+   ------------------------------------------------------------------ */
+
+/**
+ * Normalize a resident name for deduplication:
+ * uppercase, trim, collapse multiple spaces to single.
+ *
+ * @param {string} name
+ * @returns {string}
+ */
+function normalizeName(name) {
+  if (!name) return '';
+  return name.toUpperCase().trim().replace(/\s+/g, ' ');
+}
+
+/**
+ * Build a combined, deduplicated list of residents from placed (Map) and bank (Array).
+ *
+ * If the same person (by normalized name) exists in both placed and bank,
+ * only the placed version is kept.
+ *
+ * Each returned item is a unified object with:
+ *   { name, unit, building, floor, floorplan, leaseStatus, scholarship, source }
+ * where source is 'placed' or 'bank'.
+ *
+ * For placed residents, building/floor are derived via parseUnitId.
+ * For bank residents, building/floor are null (no unit assigned).
+ * Floorplan for placed residents uses inventory lookup; for bank it uses bankEntry.unitType.
+ *
+ * @param {Map<string, object>|null} residents - Placed residents keyed by UPPERCASE Unit_Assigned
+ * @param {Array<object>} bankList - Waiting bank array: { _id, unitType, name, leaseStatus }
+ * @param {Array<{unitNumber: string, unitType: string}>|null} inventory - For floorplan lookup
+ * @returns {Array<object>}
+ */
+function getCombinedResidents(residents, bankList, inventory) {
+  const combined = [];
+  const seenNames = new Set();
+
+  // Process placed residents first (they take priority)
+  if (residents && residents.size > 0) {
+    residents.forEach((r) => {
+      const normalizedKey = normalizeName(r.Resident_Name);
+      if (!normalizedKey) return;
+      seenNames.add(normalizedKey);
+
+      const parsed = parseUnitId(r.Unit_Assigned);
+      const floorplan = getResidentFloorplanType(r, inventory) || '';
+
+      combined.push({
+        name: r.Resident_Name,
+        unit: r.Unit_Assigned || '',
+        building: parsed.ambiguous ? null : parsed.building,
+        floor: parsed.ambiguous ? null : parsed.floor,
+        floorplan: floorplan,
+        leaseStatus: r.Lease_Status || '',
+        scholarship: r.Scholarship || '',
+        source: 'placed',
+      });
+    });
+  }
+
+  // Process bank residents (skip duplicates by name)
+  if (bankList && bankList.length > 0) {
+    for (const entry of bankList) {
+      const normalizedKey = normalizeName(entry.name);
+      if (!normalizedKey) continue;
+      if (seenNames.has(normalizedKey)) continue;
+      seenNames.add(normalizedKey);
+
+      combined.push({
+        name: entry.name,
+        unit: '',
+        building: null,
+        floor: null,
+        floorplan: entry.unitType || '',
+        leaseStatus: entry.leaseStatus || '',
+        scholarship: '',
+        source: 'bank',
+      });
+    }
+  }
+
+  return combined;
+}
+
+/* ------------------------------------------------------------------
+   ENHANCED PRELEASE PROGRESS — Counts Both Placed + Bank (Deduped)
+   ------------------------------------------------------------------ */
+
+/**
+ * Compute enhanced prelease progress that counts both placed and bank
+ * residents (deduplicated, placed wins). Supports scoping by property,
+ * building, or floor.
+ *
+ * For placed residents, floorplan is resolved from inventory via unit assignment.
+ * For bank residents, floorplan comes from their unitType field.
+ *
+ * Scope filtering:
+ *   - 'property': all residents counted
+ *   - 'building': only placed residents whose unit parses to the given building,
+ *                 plus bank residents (bank has no unit, so they are excluded from
+ *                 building/floor scoping since they have no location)
+ *   - 'floor': only placed residents on the given building+floor
+ *
+ * Capacity (totalUnits) always comes from inventory filtered by scope.
+ *
+ * @param {Array<{unitNumber: string, unitType: string}>} inventory
+ * @param {Map<string, object>|null} residents
+ * @param {Array<object>} bankList
+ * @param {object} scope - { type: 'property' } | { type: 'building', building: 'A' } | { type: 'floor', building: 'A', floor: 1 }
+ * @returns {{ rows: Array<{floorplan: string, capacity: number, preleased: number, percent: number}>, totals: {capacity: number, preleased: number, percent: number} }}
+ */
+function computeEnhancedPreleaseProgress(inventory, residents, bankList, scope) {
+  if (!inventory || inventory.length === 0) {
+    return { rows: [], totals: { capacity: 0, preleased: 0, percent: 0 } };
+  }
+
+  const scopeType = (scope && scope.type) || 'property';
+
+  // Filter inventory by scope for capacity counts
+  let scopedInventory;
+  if (scopeType === 'floor' && scope.building && scope.floor != null) {
+    scopedInventory = getInventoryForFloor(inventory, scope.building, scope.floor);
+  } else if (scopeType === 'building' && scope.building) {
+    scopedInventory = getInventoryForBuilding(inventory, scope.building);
+  } else {
+    scopedInventory = inventory;
+  }
+
+  // Build capacity per floorplan from scoped inventory
+  const fpCapacity = {};
+  for (const item of scopedInventory) {
+    const fp = item.unitType || 'Unknown';
+    fpCapacity[fp] = (fpCapacity[fp] || 0) + 1;
+  }
+
+  // Get combined deduplicated residents
+  const combined = getCombinedResidents(residents, bankList, inventory);
+
+  // Count preleased per floorplan, applying scope filter and lease status filter
+  const fpPreleased = {};
+
+  for (const person of combined) {
+    // Check lease status qualifies for prelease counting
+    if (!isNewLeaseForProgress(person.leaseStatus) && !isRenewalForProgress(person.leaseStatus)) {
+      continue;
+    }
+
+    // Apply scope filter
+    if (scopeType === 'building' && scope.building) {
+      // Bank residents have no building — exclude from building scope
+      if (person.source === 'bank') continue;
+      if (person.building !== scope.building) continue;
+    } else if (scopeType === 'floor' && scope.building && scope.floor != null) {
+      // Bank residents have no floor — exclude from floor scope
+      if (person.source === 'bank') continue;
+      if (person.building !== scope.building || person.floor !== scope.floor) continue;
+    }
+
+    const fp = person.floorplan || 'Unknown';
+    fpPreleased[fp] = (fpPreleased[fp] || 0) + 1;
+  }
+
+  // Build rows for all floorplans that appear in capacity
+  const allFloorplans = Object.keys(fpCapacity);
+  const sorted = sortFloorplansByDisplayOrder(allFloorplans);
+
+  const rows = sorted.map((fp) => {
+    const capacity = fpCapacity[fp] || 0;
+    const preleased = fpPreleased[fp] || 0;
+    const percent = capacity > 0 ? Math.round((preleased / capacity) * 1000) / 10 : 0;
+    return { floorplan: fp, capacity, preleased, percent };
+  });
+
+  // Compute totals
+  let totalCapacity = 0;
+  let totalPreleased = 0;
+  for (const row of rows) {
+    totalCapacity += row.capacity;
+    totalPreleased += row.preleased;
+  }
+  const totalPercent = totalCapacity > 0 ? Math.round((totalPreleased / totalCapacity) * 1000) / 10 : 0;
+
+  return {
+    rows,
+    totals: { capacity: totalCapacity, preleased: totalPreleased, percent: totalPercent },
+  };
+}
+
+/* ------------------------------------------------------------------
+   ENHANCED SCHOLARSHIP AUDIT — Combined Placed + Bank (Deduped)
+   ------------------------------------------------------------------ */
+
+/**
+ * Build a scholarship audit from combined placed + bank residents (deduplicated).
+ *
+ * For each person in the combined list who has a scholarship (not empty, not 'NONE'),
+ * produce an audit record.
+ *
+ * scholarshipData is an optional array of { name, scholarship } entries from an
+ * external scholarship upload. If provided, it is used to look up scholarship info
+ * for bank residents who may not have a scholarship field on their record.
+ *
+ * @param {Map<string, object>|null} residents
+ * @param {Array<object>} bankList
+ * @param {Array<{name: string, scholarship: string}>|null} scholarshipData - External scholarship records
+ * @param {Array<{unitNumber: string, unitType: string}>|null} inventory
+ * @returns {Array<{name: string, scholarship: string, floorplan: string, building: string|null, floor: number|null, unit: string, source: string}>}
+ */
+function computeScholarshipAudit(residents, bankList, scholarshipData, inventory) {
+  const combined = getCombinedResidents(residents, bankList, inventory);
+
+  // Build a lookup from normalized name -> scholarship from external data
+  const externalScholarshipMap = new Map();
+  if (scholarshipData && scholarshipData.length > 0) {
+    for (const entry of scholarshipData) {
+      const key = normalizeName(entry.name);
+      if (key && entry.scholarship) {
+        externalScholarshipMap.set(key, entry.scholarship);
+      }
+    }
+  }
+
+  const results = [];
+
+  for (const person of combined) {
+    // Determine scholarship: prefer the person's own, fall back to external data
+    let sch = (person.scholarship || '').trim();
+    if (!sch || sch.toUpperCase() === 'NONE') {
+      const externalSch = externalScholarshipMap.get(normalizeName(person.name));
+      if (externalSch) {
+        sch = externalSch;
+      }
+    }
+
+    // Skip if still no scholarship
+    if (!sch || sch.toUpperCase() === 'NONE') continue;
+
+    results.push({
+      name: person.name,
+      scholarship: sch,
+      floorplan: person.floorplan || '',
+      building: person.building,
+      floor: person.floor,
+      unit: person.unit || '',
+      source: person.source,
+    });
+  }
+
+  return results;
+}
+
+/* ------------------------------------------------------------------
+   SCHOLARSHIP VARIANCE ANALYSIS
+   Compares expected scholarship targets vs actual audit counts.
+   ------------------------------------------------------------------ */
+
+/**
+ * Compute scholarship variance: expected vs actual counts per scholarship+floorplan.
+ *
+ * @param {Array<{scholarshipName: string, expectedCount: number, floorplan: string}>} expectedData
+ * @param {Array<object>} actualAuditResults - Output of computeScholarshipAudit
+ * @returns {Array<{scholarshipName: string, floorplan: string, expected: number, actual: number, variance: number}>}
+ *   Includes a totals row at the end with scholarshipName 'TOTAL' and floorplan ''.
+ */
+function computeScholarshipVariance(expectedData, actualAuditResults) {
+  if (!expectedData || expectedData.length === 0) return [];
+
+  // Count actuals by scholarship+floorplan
+  const actualCounts = {};
+  if (actualAuditResults && actualAuditResults.length > 0) {
+    for (const record of actualAuditResults) {
+      const key = normalizeName(record.scholarship) + '||' + normalizeName(record.floorplan);
+      actualCounts[key] = (actualCounts[key] || 0) + 1;
+    }
+  }
+
+  const rows = [];
+  let totalExpected = 0;
+  let totalActual = 0;
+
+  for (const expected of expectedData) {
+    const key = normalizeName(expected.scholarshipName) + '||' + normalizeName(expected.floorplan);
+    const actual = actualCounts[key] || 0;
+    const variance = actual - expected.expectedCount;
+
+    rows.push({
+      scholarshipName: expected.scholarshipName,
+      floorplan: expected.floorplan,
+      expected: expected.expectedCount,
+      actual: actual,
+      variance: variance,
+    });
+
+    totalExpected += expected.expectedCount;
+    totalActual += actual;
+  }
+
+  // Add totals row
+  rows.push({
+    scholarshipName: 'TOTAL',
+    floorplan: '',
+    expected: totalExpected,
+    actual: totalActual,
+    variance: totalActual - totalExpected,
+  });
+
+  return rows;
+}
+
+/**
+ * Get resident records for scholarship+floorplan combinations where actual > expected.
+ *
+ * @param {Array<object>} actualAuditResults - Output of computeScholarshipAudit
+ * @param {Array<{scholarshipName: string, expectedCount: number, floorplan: string}>} expectedData
+ * @returns {Array<object>} Matching resident audit records from over-target combos
+ */
+function getOverTargetRecords(actualAuditResults, expectedData) {
+  if (!actualAuditResults || !expectedData || expectedData.length === 0) return [];
+
+  // Count actuals by scholarship+floorplan
+  const actualCounts = {};
+  for (const record of actualAuditResults) {
+    const key = normalizeName(record.scholarship) + '||' + normalizeName(record.floorplan);
+    actualCounts[key] = (actualCounts[key] || 0) + 1;
+  }
+
+  // Find over-target keys
+  const overTargetKeys = new Set();
+  for (const expected of expectedData) {
+    const key = normalizeName(expected.scholarshipName) + '||' + normalizeName(expected.floorplan);
+    const actual = actualCounts[key] || 0;
+    if (actual > expected.expectedCount) {
+      overTargetKeys.add(key);
+    }
+  }
+
+  if (overTargetKeys.size === 0) return [];
+
+  // Return matching records
+  return actualAuditResults.filter((record) => {
+    const key = normalizeName(record.scholarship) + '||' + normalizeName(record.floorplan);
+    return overTargetKeys.has(key);
+  });
+}
+
+/* ------------------------------------------------------------------
+   GLOBAL SEARCH — Combined Placed + Bank Residents
+   ------------------------------------------------------------------ */
+
+/**
+ * Search both placed residents and bank by name (case-insensitive partial match).
+ * Returns a unified result array limited to 20 items for quick preview.
+ *
+ * @param {Map<string, object>|null} residents
+ * @param {Array<object>} bankList
+ * @param {string} query - Search query string
+ * @param {Array<{unitNumber: string, unitType: string}>|null} inventory - For floorplan lookup
+ * @returns {Array<{name: string, unit: string, building: string|null, floor: number|null, floorplan: string, source: string, scholarship: string}>}
+ */
+function searchResidents(residents, bankList, query, inventory) {
+  if (!query || !query.trim()) return [];
+
+  const q = query.trim().toUpperCase();
+  const results = [];
+  const MAX_RESULTS = 20;
+
+  // Search placed residents
+  if (residents && residents.size > 0) {
+    residents.forEach((r) => {
+      if (results.length >= MAX_RESULTS) return;
+      const nameUpper = (r.Resident_Name || '').toUpperCase();
+      if (nameUpper.includes(q)) {
+        const parsed = parseUnitId(r.Unit_Assigned);
+        results.push({
+          name: r.Resident_Name,
+          unit: r.Unit_Assigned || '',
+          building: parsed.ambiguous ? null : parsed.building,
+          floor: parsed.ambiguous ? null : parsed.floor,
+          floorplan: getResidentFloorplanType(r, inventory) || '',
+          source: 'placed',
+          scholarship: r.Scholarship || '',
+        });
+      }
+    });
+  }
+
+  // Search bank residents
+  if (bankList && bankList.length > 0) {
+    for (const entry of bankList) {
+      if (results.length >= MAX_RESULTS) break;
+      const nameUpper = (entry.name || '').toUpperCase();
+      if (nameUpper.includes(q)) {
+        results.push({
+          name: entry.name,
+          unit: '',
+          building: null,
+          floor: null,
+          floorplan: entry.unitType || '',
+          source: 'bank',
+          scholarship: '',
+        });
+      }
+    }
+  }
+
+  return results;
+}

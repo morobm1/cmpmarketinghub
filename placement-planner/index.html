@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ivory University House - Placement Planner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+
+  <!-- ====== TOP HEADER BAR ====== -->
+  <header id="app-header">
+    <div id="header-brand">
+      <h1 id="app-title">Placement Planner</h1>
+      <span id="header-subtitle">Ivory University House</span>
+    </div>
+    <div id="global-search">
+      <input id="search-input" type="text" placeholder="Search residents..." />
+      <div id="search-results" class="search-dropdown"></div>
+    </div>
+    <div id="header-actions">
+      <button id="backup-btn" class="btn btn-header">💾 Backup</button>
+      <button id="restore-btn" class="btn btn-header">📂 Restore</button>
+    </div>
+  </header>
+
+  <!-- ====== WORKBENCH (3-column layout) ====== -->
+  <div id="workbench">
+
+    <!-- ====== LEFT SIDEBAR ====== -->
+    <aside id="left-sidebar">
+
+      <!-- Building & Floor Selectors -->
+      <div class="sidebar-section">
+        <div class="section-header">
+          <span class="section-title">Building &amp; Floor</span>
+        </div>
+        <div class="section-content">
+          <div id="map-selectors">
+            <div class="control-group">
+              <label for="building-selector">Building</label>
+              <select id="building-selector" class="select-input"></select>
+            </div>
+            <div class="control-group">
+              <label for="floor-selector">Floor</label>
+              <select id="floor-selector" class="select-input"></select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Display Options -->
+      <div class="sidebar-section collapsible" data-collapsed="false">
+        <div class="section-header">
+          <span class="section-title">Display Options</span>
+          <span class="collapse-icon">▼</span>
+        </div>
+        <div class="section-content">
+          <div id="display-options">
+            <label class="toggle-row">
+              <input type="checkbox" id="toggle-names" />
+              <span>Show Resident Names</span>
+            </label>
+            <label class="toggle-row">
+              <input type="checkbox" id="toggle-scholarship" />
+              <span>Highlight Scholarships Only</span>
+            </label>
+            <label class="toggle-row">
+              <input type="checkbox" id="toggle-unit-number" checked />
+              <span>Display Unit Number</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Import Data -->
+      <div class="sidebar-section collapsible" data-collapsed="true">
+        <div class="section-header">
+          <span class="section-title">Import Data</span>
+          <span class="collapse-icon">▼</span>
+        </div>
+        <div class="section-content">
+          <div id="import-section">
+            <div class="import-row" data-import-type="inventory">
+              <span class="import-icon"></span>
+              <span class="import-label">Inventory</span>
+              <span class="import-status"></span>
+              <button class="import-upload-btn btn btn-sm">Upload</button>
+            </div>
+            <div class="import-row" data-import-type="residents">
+              <span class="import-icon"></span>
+              <span class="import-label">Residents</span>
+              <span class="import-status"></span>
+              <button class="import-upload-btn btn btn-sm">Upload</button>
+            </div>
+            <div class="import-row" data-import-type="bank">
+              <span class="import-icon"></span>
+              <span class="import-label">Bank</span>
+              <span class="import-status"></span>
+              <button class="import-upload-btn btn btn-sm">Upload</button>
+            </div>
+            <div class="import-row" data-import-type="scholarships">
+              <span class="import-icon"></span>
+              <span class="import-label">Scholarships</span>
+              <span class="import-status"></span>
+              <button class="import-upload-btn btn btn-sm">Upload</button>
+            </div>
+            <div class="import-row" data-import-type="entrata">
+              <span class="import-icon"></span>
+              <span class="import-label">Entrata</span>
+              <span class="import-status"></span>
+              <button class="import-upload-btn btn btn-sm">Upload</button>
+            </div>
+            <div class="import-row" data-import-type="scholarship-expected">
+              <span class="import-icon"></span>
+              <span class="import-label">Expected Scholarships</span>
+              <span class="import-status"></span>
+              <button class="import-upload-btn btn btn-sm">Upload</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Prelease Summary -->
+      <div class="sidebar-section collapsible" data-collapsed="false">
+        <div class="section-header">
+          <span class="section-title">Prelease Summary</span>
+          <span class="collapse-icon">▼</span>
+        </div>
+        <div class="section-content">
+          <div id="prelease-summary-content">
+            <p class="placeholder-text">No prelease data loaded.</p>
+          </div>
+          <button class="btn btn-sm btn-outline" id="prelease-details-btn">View Details</button>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div class="sidebar-section collapsible" data-collapsed="false">
+        <div class="section-header">
+          <span class="section-title">Legend</span>
+          <span class="collapse-icon">▼</span>
+        </div>
+        <div class="section-content">
+          <div id="map-legend"></div>
+        </div>
+      </div>
+
+      <!-- Backup & Restore -->
+      <div class="sidebar-section collapsible" data-collapsed="true">
+        <div class="section-header">
+          <span class="section-title">Backup &amp; Restore</span>
+          <span class="collapse-icon">▼</span>
+        </div>
+        <div class="section-content">
+          <div class="sidebar-actions-stack">
+            <button id="backup-download-btn" class="btn btn-sm btn-primary">💾 Download Backup</button>
+            <button id="restore-upload-btn" class="btn btn-sm btn-outline">📂 Upload Backup File</button>
+            <input type="file" id="restore-file-input" accept=".json" style="display:none" />
+            <div id="backup-restore-status"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Clear Session -->
+      <div class="sidebar-footer">
+        <button id="clear-session-btn" class="btn btn-sm btn-danger-outline">Clear Session</button>
+      </div>
+
+    </aside>
+
+    <!-- ====== CENTER PANEL ====== -->
+    <main id="center-panel">
+
+      <!-- Occupancy Stats Bar -->
+      <div id="occupancy-stats"></div>
+
+      <!-- Map Container -->
+      <div id="map-container"></div>
+
+      <!-- Map Action Buttons -->
+      <div id="map-actions">
+        <button id="add-resident-btn" class="btn btn-primary">Add Resident</button>
+        <button id="print-map-btn" class="btn btn-secondary">Print Map</button>
+        <button id="export-map-btn" class="btn btn-secondary">Export Map</button>
+      </div>
+
+      <!-- Resident Master List (collapsible) -->
+      <div id="master-list-section" class="panel-section collapsible" data-collapsed="true">
+        <div class="section-header">
+          <span class="section-title">Resident Master List</span>
+          <span class="collapse-icon">▼</span>
+        </div>
+        <div class="section-content">
+          <div id="resident-master-list"></div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- ====== RIGHT PANEL ====== -->
+    <aside id="right-panel">
+
+      <!-- Unit Detail -->
+      <div class="panel-section">
+        <div class="section-header">
+          <span class="section-title">Unit Detail</span>
+        </div>
+        <div class="section-content">
+          <div id="unit-detail-panel">
+            <p class="placeholder-text">Click a unit on the map to view details</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Waiting Bank -->
+      <div class="panel-section">
+        <div class="section-header">
+          <span class="section-title">Waiting Bank</span>
+        </div>
+        <div class="section-content">
+          <div id="bank-section">
+            <input id="bank-search-input" type="text" class="input-sm" placeholder="Search bank..." />
+            <div id="bank-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scholarship Audit -->
+      <div class="panel-section collapsible" data-collapsed="true">
+        <div class="section-header">
+          <span class="section-title">Scholarship Audit</span>
+          <span class="collapse-icon">▼</span>
+        </div>
+        <div class="section-content">
+          <div id="scholarship-section">
+            <div id="scholarship-filter-bar" class="filter-bar-compact">
+              <div class="control-group">
+                <label for="scholarship-view-selector">View</label>
+                <select id="scholarship-view-selector" class="select-input">
+                  <option value="all">All</option>
+                  <option value="floorplan">Floorplan</option>
+                  <option value="building">Building</option>
+                  <option value="floor">Floor</option>
+                </select>
+              </div>
+              <div class="control-group">
+                <label for="scholarship-sub-filter">Filter</label>
+                <select id="scholarship-sub-filter" class="select-input"></select>
+              </div>
+            </div>
+            <div id="scholarship-audit-table"></div>
+            <div id="variance-analysis"></div>
+            <div id="scholarship-expected-upload">
+              <button id="scholarship-expected-upload-btn" class="btn btn-sm btn-outline">Upload Expected List</button>
+              <input type="file" id="scholarship-expected-file-input" accept=".xlsx,.xls,.csv" style="display:none" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Debug -->
+      <div class="panel-section collapsible" data-collapsed="true">
+        <div class="section-header">
+          <span class="section-title">Debug</span>
+          <span class="collapse-icon">▼</span>
+        </div>
+        <div class="section-content">
+          <div id="debug-section">
+            <div id="debug-output"></div>
+            <div id="debug-actions"></div>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+  </div>
+
+  <!-- ====== HIDDEN: Import Cards (for renderImportCards() compatibility) ====== -->
+  <div id="import-cards-container" style="display:none">
+    <div id="import-cards-grid" class="import-cards-grid">
+
+      <div class="import-card" data-import-type="inventory">
+        <h3>Inventory</h3>
+        <p class="import-description">Upload the unit inventory spreadsheet containing unit numbers, floorplans, buildings, and floors.</p>
+        <div class="import-actions">
+          <button class="btn btn-primary import-upload-btn">Upload File</button>
+          <button class="btn btn-secondary import-template-btn">Download Template</button>
+        </div>
+        <div class="import-info"></div>
+        <button class="btn btn-danger import-clear-btn">Clear Inventory Data</button>
+        <input type="file" class="import-file-input" accept=".xlsx,.xls,.csv" style="display:none" />
+      </div>
+
+      <div class="import-card" data-import-type="residents">
+        <h3>Residents</h3>
+        <p class="import-description">Upload the resident spreadsheet with names, unit assignments, lease status, and scholarship info.</p>
+        <div class="import-actions">
+          <button class="btn btn-primary import-upload-btn">Upload File</button>
+          <button class="btn btn-secondary import-template-btn">Download Template</button>
+        </div>
+        <div class="import-info"></div>
+        <button class="btn btn-danger import-clear-btn">Clear Resident Data</button>
+        <input type="file" class="import-file-input" accept=".xlsx,.xls,.csv" style="display:none" />
+      </div>
+
+      <div class="import-card" data-import-type="bank">
+        <h3>Bank</h3>
+        <p class="import-description">Upload the waiting bank list of residents not yet assigned to units.</p>
+        <div class="import-actions">
+          <button class="btn btn-primary import-upload-btn">Upload File</button>
+          <button class="btn btn-secondary import-template-btn">Download Template</button>
+        </div>
+        <div class="import-info"></div>
+        <button class="btn btn-danger import-clear-btn">Clear Bank Data</button>
+        <input type="file" class="import-file-input" accept=".xlsx,.xls,.csv" style="display:none" />
+      </div>
+
+      <div class="import-card" data-import-type="scholarships">
+        <h3>Scholarships</h3>
+        <p class="import-description">Upload the scholarship assignments spreadsheet.</p>
+        <div class="import-actions">
+          <button class="btn btn-primary import-upload-btn">Upload File</button>
+          <button class="btn btn-secondary import-template-btn">Download Template</button>
+        </div>
+        <div class="import-info"></div>
+        <button class="btn btn-danger import-clear-btn">Clear Scholarship Data</button>
+        <input type="file" class="import-file-input" accept=".xlsx,.xls,.csv" style="display:none" />
+      </div>
+
+      <div class="import-card" data-import-type="entrata">
+        <h3>Entrata</h3>
+        <p class="import-description">Upload the Entrata prelease report to auto-populate inventory and resident data.</p>
+        <div class="import-actions">
+          <button class="btn btn-primary import-upload-btn">Upload File</button>
+          <button class="btn btn-secondary import-template-btn">Download Template</button>
+        </div>
+        <div class="import-info"></div>
+        <button class="btn btn-danger import-clear-btn">Clear Entrata Data</button>
+        <input type="file" class="import-file-input" accept=".xlsx,.xls,.csv" style="display:none" />
+      </div>
+
+      <div class="import-card" data-import-type="scholarship-expected">
+        <h3>Scholarship Expected</h3>
+        <p class="import-description">Upload the expected scholarship recipients list for audit comparison.</p>
+        <div class="import-actions">
+          <button class="btn btn-primary import-upload-btn">Upload File</button>
+          <button class="btn btn-secondary import-template-btn">Download Template</button>
+        </div>
+        <div class="import-info"></div>
+        <button class="btn btn-danger import-clear-btn">Clear Expected Data</button>
+        <input type="file" class="import-file-input" accept=".xlsx,.xls,.csv" style="display:none" />
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ====== HIDDEN: Prelease Progress (for modal display) ====== -->
+  <div id="prelease-progress-container" style="display:none">
+    <div id="prelease-scope-bar" class="filter-bar">
+      <div class="control-group">
+        <label for="prelease-scope-selector">Scope</label>
+        <select id="prelease-scope-selector" class="select-input">
+          <option value="property">Property</option>
+          <option value="building">Building</option>
+          <option value="floor">Floor</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label for="prelease-building-selector">Building</label>
+        <select id="prelease-building-selector" class="select-input"></select>
+      </div>
+      <div class="control-group">
+        <label for="prelease-floor-selector">Floor</label>
+        <select id="prelease-floor-selector" class="select-input"></select>
+      </div>
+    </div>
+    <div id="prelease-table"></div>
+    <div id="prelease-chart"></div>
+  </div>
+
+  <!-- ====== MODAL OVERLAY ====== -->
+  <div id="modal-overlay" class="modal-overlay" style="display:none">
+    <div id="modal-content" class="modal-content">
+      <div id="modal-header" class="modal-header">
+        <h3 id="modal-title"></h3>
+        <button id="modal-close" class="modal-close-btn">&times;</button>
+      </div>
+      <div id="modal-body"></div>
+      <div id="modal-footer"></div>
+    </div>
+  </div>
+
+  <!-- ====== HIDDEN INPUTS ====== -->
+  <input type="file" id="restore-file-input-global" accept=".json" style="display:none" />
+
+  <!-- ====== SCRIPTS ====== -->
+  <script src="config.js"></script>
+  <script src="inventory.js"></script>
+  <script src="excel.js"></script>
+  <script src="map.js"></script>
+  <script src="ui.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
