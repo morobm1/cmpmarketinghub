@@ -48,6 +48,34 @@ An interactive admissions radius mapping dashboard for the University of Washing
 3. The script will use cached geocoding results for known locations and only query new ones
 4. Refresh the browser to see updated data
 
+## Export Features
+
+### Executive Map Report Export
+Generate polished, presentation-ready PNG or PDF reports from the current filtered map view.
+
+- **Access**: Click "Executive Map Report" in the Export Tools section of the left rail
+- **Options**:
+  - Custom report title and subtitle
+  - Preset title quick-select buttons
+  - PNG (high resolution) or PDF format
+  - Map view: auto-fit filtered records, current zoom, or full region
+  - Optional filter summary display
+- **Output includes**: Header with title/date, KPI summary bar, rendered map, distance legend, band breakdown percentages, methodology footer
+- **Privacy**: No personal names or sensitive details are included in the export
+- **Best for**: Executive presentations, client reports, PowerPoint/Google Slides, email attachments
+
+### Direct Mail Export Builder
+A dedicated workflow for generating vendor-ready mailing list files.
+
+- **Access**: Click "Direct Mail Export" in the Export Tools section of the left rail
+- **3-Step Workflow**:
+  1. **Define Audience** — Filter by state, distance band, status, application type, housing interest, city, zip code. Quick presets for common segments (Washington Only, Out of State, Within 50 Miles, Housing Interested Admits, Current App Filters)
+  2. **Preview & Validate** — See audience count, address completeness warnings, state abbreviation checks, zip format validation, preview table
+  3. **Export** — Choose CSV or Excel (.xlsx) format with options for PO Box exclusion, address deduplication, capitalization normalization, and optional name inclusion
+- **Excel output** includes two sheets: Mailing List (vendor-ready rows with frozen headers) and Export Summary (segment metadata, filter details, band breakdown)
+- **Privacy**: Names are excluded by default; can be opted in if needed
+- **Best for**: Direct mail campaigns, vendor mailing files, audience segmentation
+
 ## File Structure
 
 | File | Description |
@@ -67,7 +95,9 @@ An interactive admissions radius mapping dashboard for the University of Washing
 ### Browser (loaded via CDN)
 - **Leaflet.js** — Interactive mapping
 - **Leaflet.markercluster** — Marker clustering
-- **SheetJS** — Client-side Excel parsing (for file re-uploads)
+- **SheetJS** — Client-side Excel parsing (for file re-uploads and XLSX export)
+- **html2canvas** — Map and layout capture for PNG export
+- **jsPDF** — PDF document generation
 
 ## Assumptions & Fallback Logic
 

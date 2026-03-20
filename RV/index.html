@@ -190,6 +190,105 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;bac
 .origin-marker{background:var(--brand);width:16px;height:16px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(75,46,131,0.5)}
 .origin-pulse{width:40px;height:40px;border-radius:50%;background:rgba(75,46,131,0.15);position:absolute;top:-12px;left:-12px;animation:pulse 2s ease-out infinite}
 @keyframes pulse{0%{transform:scale(0.5);opacity:1}100%{transform:scale(2.5);opacity:0}}
+
+/* ── EXPORT BUTTONS SECTION ─────────────────────────── */
+.export-btns{display:flex;flex-direction:column;gap:8px}
+.btn-export{display:flex;align-items:center;gap:8px;padding:11px 14px;border-radius:var(--radius);border:1px solid var(--border);background:#fff;color:var(--text);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;width:100%;text-align:left}
+.btn-export:hover{background:var(--brand-light);border-color:var(--brand);color:var(--brand)}
+.btn-export svg{width:16px;height:16px;flex-shrink:0}
+.btn-export .btn-desc{font-size:10px;font-weight:400;color:var(--subtext);display:block;margin-top:1px}
+
+/* ── MODAL OVERLAY ──────────────────────────────────── */
+.modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(4px);z-index:2000;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.active{display:flex}
+.modal{background:#fff;border-radius:var(--radius-lg);box-shadow:0 25px 60px rgba(0,0,0,0.25);max-width:680px;width:100%;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;animation:modalIn .2s ease}
+.modal.wide{max-width:900px}
+@keyframes modalIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.modal-header{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.modal-header h2{font-size:18px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:10px}
+.modal-header h2 svg{width:22px;height:22px;color:var(--brand)}
+.modal-close{width:32px;height:32px;border-radius:8px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--subtext);transition:all .15s}
+.modal-close:hover{background:#f1f5f9;color:var(--text)}
+.modal-body{padding:20px 24px;overflow-y:auto;flex:1}
+.modal-footer{padding:14px 24px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-shrink:0;background:#f8fafc}
+
+/* ── EXECUTIVE MAP EXPORT MODAL ─────────────────────── */
+.exec-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.exec-form-group{display:flex;flex-direction:column;gap:4px}
+.exec-form-group.full{grid-column:1/-1}
+.exec-form-group label{font-size:12px;font-weight:600;color:var(--text)}
+.exec-form-group input,.exec-form-group select,.exec-form-group textarea{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--text);background:#fff;font-family:inherit;transition:border-color .15s}
+.exec-form-group input:focus,.exec-form-group select:focus,.exec-form-group textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(75,46,131,0.1)}
+.exec-preset-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.exec-preset-chip{padding:5px 12px;border-radius:999px;border:1px solid var(--border);background:#fff;font-size:11px;font-weight:600;cursor:pointer;color:var(--subtext);transition:all .15s}
+.exec-preset-chip:hover,.exec-preset-chip.active{background:var(--brand-light);border-color:var(--brand);color:var(--brand)}
+.exec-preview{margin-top:16px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:#f8fafc}
+.exec-preview-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--subtext);padding:10px 14px;border-bottom:1px solid var(--border)}
+.exec-filter-summary{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.exec-filter-tag{padding:3px 10px;border-radius:999px;background:var(--brand-light);font-size:11px;font-weight:600;color:var(--brand)}
+.exec-loading{display:none;align-items:center;justify-content:center;gap:10px;padding:30px;font-size:14px;font-weight:600;color:var(--brand)}
+.exec-loading.active{display:flex}
+.exec-loading .spinner{width:24px;height:24px;border-width:3px}
+
+/* ── DIRECT MAIL BUILDER MODAL ──────────────────────── */
+.dm-steps{display:flex;gap:4px;margin-bottom:20px}
+.dm-step{flex:1;padding:10px;border-radius:8px;background:#f1f5f9;text-align:center;font-size:12px;font-weight:700;color:var(--subtext);transition:all .15s;position:relative}
+.dm-step.active{background:var(--brand);color:#fff}
+.dm-step.done{background:var(--brand-light);color:var(--brand)}
+.dm-step-num{display:inline-block;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.08);font-size:11px;line-height:22px;margin-right:4px}
+.dm-step.active .dm-step-num{background:rgba(255,255,255,0.2)}
+.dm-step.done .dm-step-num{background:var(--brand);color:#fff}
+
+.dm-panel{display:none}
+.dm-panel.active{display:block}
+
+.dm-filter-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.dm-filter-group{display:flex;flex-direction:column;gap:4px}
+.dm-filter-group.full{grid-column:1/-1}
+.dm-filter-group label{font-size:12px;font-weight:600;color:var(--text)}
+.dm-filter-group select,.dm-filter-group input{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--text);background:#fff;font-family:inherit}
+.dm-filter-group select:focus,.dm-filter-group input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(75,46,131,0.1)}
+
+.dm-audience-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--brand-light);border-radius:var(--radius);margin:16px 0;border:1px solid rgba(75,46,131,0.15)}
+.dm-audience-count{font-size:26px;font-weight:800;color:var(--brand)}
+.dm-audience-label{font-size:12px;font-weight:600;color:var(--brand);opacity:0.7}
+.dm-audience-meta{text-align:right}
+.dm-audience-meta div{font-size:12px;color:var(--brand);font-weight:500}
+
+.dm-warnings{display:flex;flex-direction:column;gap:8px;margin:14px 0}
+.dm-warning{display:flex;align-items:flex-start;gap:8px;padding:10px 14px;border-radius:8px;font-size:12px;font-weight:500}
+.dm-warning.warn{background:#fffbeb;border:1px solid #fde68a;color:#92400e}
+.dm-warning.error{background:#fef2f2;border:1px solid #fecaca;color:#991b1b}
+.dm-warning.info{background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af}
+.dm-warning.success{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534}
+.dm-warning svg{width:16px;height:16px;flex-shrink:0;margin-top:1px}
+
+.dm-preview-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
+.dm-preview-table th{position:sticky;top:0;background:#f8fafc;padding:8px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--subtext);text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid var(--border);white-space:nowrap}
+.dm-preview-table td{padding:6px 10px;border-bottom:1px solid #f1f5f9;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis}
+.dm-preview-table tr:hover td{background:#f8fafc}
+.dm-preview-wrap{max-height:300px;overflow:auto;border:1px solid var(--border);border-radius:8px}
+
+.dm-field-toggles{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.dm-field-toggle{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;cursor:pointer}
+.dm-field-toggle input{accent-color:var(--brand)}
+
+.dm-segment-input{display:flex;gap:8px;align-items:center;margin-bottom:14px}
+.dm-segment-input input{flex:1}
+.dm-segment-presets{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.dm-segment-preset{padding:4px 12px;border-radius:999px;border:1px solid var(--border);background:#fff;font-size:11px;font-weight:600;cursor:pointer;color:var(--subtext);transition:all .15s}
+.dm-segment-preset:hover{background:var(--brand-light);border-color:var(--brand);color:var(--brand)}
+
+.dm-summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.dm-summary-card{padding:14px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg)}
+.dm-summary-card .card-val{font-size:20px;font-weight:800;color:var(--text)}
+.dm-summary-card .card-label{font-size:11px;font-weight:600;color:var(--subtext);text-transform:uppercase;margin-top:2px}
+
+.dm-checkbox-row{display:flex;align-items:center;gap:8px;padding:8px 0;font-size:13px;cursor:pointer}
+.dm-checkbox-row input{accent-color:var(--brand);width:16px;height:16px}
+
+/* ── EXEC EXPORT CANVAS (hidden, for rendering) ─────── */
+#execExportCanvas{position:fixed;left:-9999px;top:0;z-index:-1;pointer-events:none}
 </style>
 </head>
 <body>
@@ -331,6 +430,30 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;bac
         </div>
       </div>
 
+      <!-- Export Tools -->
+      <div class="section">
+        <div class="section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export Tools
+        </div>
+        <div class="export-btns">
+          <button class="btn-export" id="openExecExport">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+            <div>
+              <span>Executive Map Report</span>
+              <span class="btn-desc">Polished PNG/PDF for presentations</span>
+            </div>
+          </button>
+          <button class="btn-export" id="openMailBuilder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg>
+            <div>
+              <span>Direct Mail Export</span>
+              <span class="btn-desc">Vendor-ready mailing list builder</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
       <!-- Upload New File -->
       <div class="section">
         <div class="section-title">
@@ -399,10 +522,252 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;bac
   </div>
 </div>
 
+<!-- ═══ EXECUTIVE MAP EXPORT MODAL ═══════════════════════════════ -->
+<div class="modal-overlay" id="execExportModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        Executive Map Report
+      </h2>
+      <button class="modal-close" id="execClose">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="exec-form-grid">
+        <div class="exec-form-group full">
+          <label>Report Title</label>
+          <input type="text" id="execTitle" value="Autumn 2026 Admit Radius Analysis" placeholder="Enter report title...">
+        </div>
+        <div class="exec-form-group full">
+          <label>Subtitle (optional)</label>
+          <input type="text" id="execSubtitle" value="University of Washington Bothell — Residential Village" placeholder="Enter subtitle...">
+        </div>
+        <div class="exec-form-group full">
+          <label>Quick Title Presets</label>
+          <div class="exec-preset-chips">
+            <button class="exec-preset-chip" data-title="Autumn 2026 Admit Radius Analysis">Admit Radius</button>
+            <button class="exec-preset-chip" data-title="Filtered Admit Geography Overview">Geography Overview</button>
+            <button class="exec-preset-chip" data-title="Regional Applicant Distribution">Regional Distribution</button>
+            <button class="exec-preset-chip" data-title="Campus Housing Interest Map">Housing Interest</button>
+          </div>
+        </div>
+        <div class="exec-form-group">
+          <label>Export Format</label>
+          <select id="execFormat">
+            <option value="png">PNG (High Resolution)</option>
+            <option value="pdf">PDF Document</option>
+          </select>
+        </div>
+        <div class="exec-form-group">
+          <label>Map View</label>
+          <select id="execMapView">
+            <option value="autofit">Auto-fit Filtered Records</option>
+            <option value="current">Current Zoom/View</option>
+            <option value="full">Full Region (Default)</option>
+          </select>
+        </div>
+        <div class="exec-form-group full">
+          <label>Include Filter Summary</label>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+            <input type="checkbox" id="execShowFilters" checked style="accent-color:var(--brand);width:16px;height:16px">
+            <span style="font-size:13px">Show active filter criteria on export</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="exec-filter-summary" id="execFilterPreview"></div>
+
+      <div class="exec-loading" id="execLoading">
+        <div class="spinner"></div>
+        Generating export...
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" id="execCancel">Cancel</button>
+      <button class="btn primary" id="execGenerate">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Generate &amp; Download
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ DIRECT MAIL BUILDER MODAL ═══════════════════════════════ -->
+<div class="modal-overlay" id="mailBuilderModal">
+  <div class="modal wide">
+    <div class="modal-header">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg>
+        Direct Mail Export Builder
+      </h2>
+      <button class="modal-close" id="mailClose">&times;</button>
+    </div>
+    <div class="modal-body">
+      <!-- Steps indicator -->
+      <div class="dm-steps">
+        <div class="dm-step active" data-step="1"><span class="dm-step-num">1</span> Define Audience</div>
+        <div class="dm-step" data-step="2"><span class="dm-step-num">2</span> Preview &amp; Validate</div>
+        <div class="dm-step" data-step="3"><span class="dm-step-num">3</span> Export</div>
+      </div>
+
+      <!-- Step 1: Define Audience -->
+      <div class="dm-panel active" id="dmStep1">
+        <div class="dm-segment-input">
+          <label style="font-size:12px;font-weight:600;white-space:nowrap">Segment Name:</label>
+          <input type="text" id="dmSegmentName" value="" placeholder="e.g., WA Admits Spring Mailer" style="flex:1;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+        </div>
+        <div class="dm-segment-presets">
+          <button class="dm-segment-preset" data-preset="wa-only">Washington Only</button>
+          <button class="dm-segment-preset" data-preset="out-of-state">Out of State</button>
+          <button class="dm-segment-preset" data-preset="within-50">Within 50 Miles</button>
+          <button class="dm-segment-preset" data-preset="housing-admits">Housing Interested Admits</button>
+          <button class="dm-segment-preset" data-preset="use-current">Use Current App Filters</button>
+        </div>
+
+        <div class="dm-filter-grid">
+          <div class="dm-filter-group">
+            <label>State</label>
+            <select id="dmState" multiple size="4" style="min-height:80px"></select>
+          </div>
+          <div class="dm-filter-group">
+            <label>Distance Band</label>
+            <select id="dmBand" multiple size="4" style="min-height:80px">
+              <option value="0–10 mi" selected>0–10 mi</option>
+              <option value="10–50 mi" selected>10–50 mi</option>
+              <option value="50–100 mi" selected>50–100 mi</option>
+              <option value="100+ mi" selected>100+ mi</option>
+            </select>
+          </div>
+          <div class="dm-filter-group">
+            <label>Status</label>
+            <select id="dmStatus" multiple size="4" style="min-height:80px"></select>
+          </div>
+          <div class="dm-filter-group">
+            <label>Application Type</label>
+            <select id="dmAppType" multiple size="4" style="min-height:80px"></select>
+          </div>
+          <div class="dm-filter-group">
+            <label>Housing Interest</label>
+            <select id="dmHousing">
+              <option value="all">All</option>
+              <option value="Yes">Yes — Interested</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+          <div class="dm-filter-group">
+            <label>City (contains)</label>
+            <input type="text" id="dmCity" placeholder="e.g., Seattle">
+          </div>
+          <div class="dm-filter-group">
+            <label>Zip Code (comma-separated)</label>
+            <input type="text" id="dmZip" placeholder="e.g., 98101, 98102">
+          </div>
+        </div>
+
+        <div class="dm-audience-bar" id="dmAudienceBar">
+          <div>
+            <div class="dm-audience-count" id="dmAudienceCount">0</div>
+            <div class="dm-audience-label">Records Match</div>
+          </div>
+          <div class="dm-audience-meta">
+            <div id="dmAudienceMissing">0 missing address</div>
+            <div id="dmAudienceComplete">0 complete</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Preview & Validate -->
+      <div class="dm-panel" id="dmStep2">
+        <div class="dm-warnings" id="dmWarnings"></div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:13px;font-weight:700" id="dmPreviewCount">Showing 0 records</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <label class="dm-checkbox-row" style="padding:0">
+              <input type="checkbox" id="dmExcludeIncomplete" checked> Exclude incomplete addresses
+            </label>
+          </div>
+        </div>
+
+        <div class="dm-preview-wrap" id="dmPreviewWrap">
+          <table class="dm-preview-table">
+            <thead>
+              <tr id="dmPreviewHead"></tr>
+            </thead>
+            <tbody id="dmPreviewBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Step 3: Export -->
+      <div class="dm-panel" id="dmStep3">
+        <div class="dm-summary-grid">
+          <div class="dm-summary-card">
+            <div class="card-val" id="dmFinalTotal">0</div>
+            <div class="card-label">Total Records</div>
+          </div>
+          <div class="dm-summary-card">
+            <div class="card-val" id="dmFinalComplete">0</div>
+            <div class="card-label">Complete Addresses</div>
+          </div>
+          <div class="dm-summary-card">
+            <div class="card-val" id="dmFinalExcluded">0</div>
+            <div class="card-label">Excluded</div>
+          </div>
+          <div class="dm-summary-card">
+            <div class="card-val" id="dmFinalBands">—</div>
+            <div class="card-label">Band Breakdown</div>
+          </div>
+        </div>
+
+        <div style="margin-top:16px;padding:14px;background:#f8fafc;border-radius:var(--radius);border:1px solid var(--border)">
+          <div style="font-size:13px;font-weight:700;margin-bottom:10px">Export Options</div>
+          <label class="dm-checkbox-row">
+            <input type="checkbox" id="dmIncludeNames"> Include record names (off by default for privacy)
+          </label>
+          <label class="dm-checkbox-row">
+            <input type="checkbox" id="dmExcludePOBox"> Exclude PO Box addresses
+          </label>
+          <label class="dm-checkbox-row">
+            <input type="checkbox" id="dmDedupeAddr" checked> Deduplicate by full address
+          </label>
+          <label class="dm-checkbox-row">
+            <input type="checkbox" id="dmNormalize" checked> Normalize capitalization
+          </label>
+        </div>
+
+        <div style="margin-top:14px;font-size:12px;color:var(--subtext)">
+          <strong>Fields included in export:</strong> Record ID, Status, Application Type, Housing Interest, Street Address 1, Street Address 2, City, State, Zip, Full Mailing Address, Distance, Distance Band, Export Date, Segment Name
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" id="dmPrevBtn" style="display:none">Back</button>
+      <div style="flex:1"></div>
+      <button class="btn" id="dmCancelBtn">Cancel</button>
+      <button class="btn primary" id="dmNextBtn">Next: Preview Audience</button>
+      <button class="btn primary" id="dmExportCSVBtn" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export CSV
+      </button>
+      <button class="btn primary" id="dmExportXLSXBtn" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        Export Excel
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden export render container -->
+<div id="execExportCanvas"></div>
+
 <!-- Libraries -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 <script>
 (function() {
 'use strict';
@@ -1117,9 +1482,788 @@ function debounce(fn, ms) {
 }
 
 // ══════════════════════════════════════════════════════════════════
+//  EXECUTIVE MAP EXPORT
+// ══════════════════════════════════════════════════════════════════
+function initExecExport() {
+  const modal = document.getElementById('execExportModal');
+  const openBtn = document.getElementById('openExecExport');
+  const closeBtn = document.getElementById('execClose');
+  const cancelBtn = document.getElementById('execCancel');
+  const generateBtn = document.getElementById('execGenerate');
+
+  openBtn.addEventListener('click', () => {
+    modal.classList.add('active');
+    updateExecFilterPreview();
+  });
+  closeBtn.addEventListener('click', () => modal.classList.remove('active'));
+  cancelBtn.addEventListener('click', () => modal.classList.remove('active'));
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
+
+  // Preset chips
+  document.querySelectorAll('.exec-preset-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.getElementById('execTitle').value = chip.dataset.title;
+      document.querySelectorAll('.exec-preset-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+    });
+  });
+
+  generateBtn.addEventListener('click', generateExecExport);
+}
+
+function updateExecFilterPreview() {
+  const container = document.getElementById('execFilterPreview');
+  const tags = [];
+  
+  const allStatuses = [...new Set(allRecords.map(r => r.status).filter(Boolean))];
+  const allAppTypes = [...new Set(allRecords.map(r => r.appType).filter(Boolean))];
+  
+  if (selectedStatuses.size < allStatuses.length) {
+    tags.push(`Status: ${[...selectedStatuses].join(', ')}`);
+  }
+  if (selectedAppTypes.size < allAppTypes.length) {
+    tags.push(`App Type: ${[...selectedAppTypes].join(', ')}`);
+  }
+  if (housingFilter !== 'all') {
+    tags.push(`Housing: ${housingFilter}`);
+  }
+  if (citySearch) {
+    tags.push(`Search: "${citySearch}"`);
+  }
+  if (activeBands.size < BANDS.length) {
+    tags.push(`Bands: ${[...activeBands].join(', ')}`);
+  }
+  
+  if (tags.length === 0) {
+    tags.push('All records (no filters applied)');
+  }
+  
+  container.innerHTML = tags.map(t => `<span class="exec-filter-tag">${t}</span>`).join('');
+}
+
+function getFilterSummaryText() {
+  const parts = [];
+  const allStatuses = [...new Set(allRecords.map(r => r.status).filter(Boolean))];
+  const allAppTypes = [...new Set(allRecords.map(r => r.appType).filter(Boolean))];
+  
+  if (selectedStatuses.size < allStatuses.length) parts.push(`Status: ${[...selectedStatuses].join(', ')}`);
+  if (selectedAppTypes.size < allAppTypes.length) parts.push(`App Type: ${[...selectedAppTypes].join(', ')}`);
+  if (housingFilter !== 'all') parts.push(`Housing Interest: ${housingFilter}`);
+  if (citySearch) parts.push(`City/State Search: "${citySearch}"`);
+  if (activeBands.size < BANDS.length) parts.push(`Bands: ${[...activeBands].join(', ')}`);
+  return parts.length ? parts.join('  |  ') : 'No filters applied — showing all records';
+}
+
+async function generateExecExport() {
+  const loading = document.getElementById('execLoading');
+  const generateBtn = document.getElementById('execGenerate');
+  loading.classList.add('active');
+  generateBtn.disabled = true;
+
+  try {
+    const title = document.getElementById('execTitle').value || 'Admit Radius Analysis';
+    const subtitle = document.getElementById('execSubtitle').value || '';
+    const format = document.getElementById('execFormat').value;
+    const mapView = document.getElementById('execMapView').value;
+    const showFilters = document.getElementById('execShowFilters').checked;
+    const exportDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    // Get KPI data
+    const visible = filteredRecords.filter(r => r.band && activeBands.has(r.band));
+    const bandCounts = {};
+    BANDS.forEach(b => bandCounts[b.label] = 0);
+    visible.forEach(r => { if (bandCounts[r.band] !== undefined) bandCounts[r.band]++; });
+
+    // Capture the map as an image
+    const mapCanvas = await captureMap(mapView);
+
+    // Build the export layout
+    const container = document.getElementById('execExportCanvas');
+    container.style.width = '1600px';
+    container.innerHTML = buildExecExportHTML(title, subtitle, exportDate, bandCounts, visible.length, showFilters);
+
+    // Insert map image
+    const mapSlot = container.querySelector('#exec-map-slot');
+    if (mapCanvas) {
+      const mapImg = document.createElement('img');
+      mapImg.src = mapCanvas.toDataURL('image/png');
+      mapImg.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
+      mapSlot.appendChild(mapImg);
+    }
+
+    // Wait for render
+    await new Promise(r => setTimeout(r, 300));
+
+    // Use html2canvas on the container
+    const canvas = await html2canvas(container, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      width: 1600,
+      windowWidth: 1600
+    });
+
+    if (format === 'pdf') {
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ orientation: 'landscape', unit: 'px', format: [canvas.width, canvas.height] });
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, canvas.width, canvas.height);
+      pdf.save(`${slugify(title)}-${dateSlug()}.pdf`);
+    } else {
+      const link = document.createElement('a');
+      link.download = `${slugify(title)}-${dateSlug()}.png`;
+      link.href = canvas.toDataURL('image/png', 1.0);
+      link.click();
+    }
+
+    container.innerHTML = '';
+    document.getElementById('execExportModal').classList.remove('active');
+  } catch (err) {
+    console.error('Export error:', err);
+    alert('Export failed: ' + err.message);
+  } finally {
+    loading.classList.remove('active');
+    generateBtn.disabled = false;
+  }
+}
+
+async function captureMap(viewMode) {
+  return new Promise((resolve) => {
+    // Save current view
+    const origCenter = map.getCenter();
+    const origZoom = map.getZoom();
+
+    if (viewMode === 'autofit' && filteredRecords.length > 0) {
+      const lats = filteredRecords.filter(r => r.lat && r.lng).map(r => [r.lat, r.lng]);
+      if (lats.length > 0) {
+        map.fitBounds(L.latLngBounds(lats), { padding: [40, 40], animate: false });
+      }
+    } else if (viewMode === 'full') {
+      map.setView([ORIGIN.lat, ORIGIN.lng], 7, { animate: false });
+    }
+
+    // Wait for tiles to load
+    setTimeout(() => {
+      const mapEl = document.getElementById('map');
+      html2canvas(mapEl, {
+        useCORS: true,
+        allowTaint: true,
+        scale: 2,
+        logging: false,
+        backgroundColor: '#f8fafc'
+      }).then(canvas => {
+        // Restore view if changed
+        if (viewMode !== 'current') {
+          map.setView(origCenter, origZoom, { animate: false });
+        }
+        resolve(canvas);
+      }).catch(() => {
+        if (viewMode !== 'current') {
+          map.setView(origCenter, origZoom, { animate: false });
+        }
+        resolve(null);
+      });
+    }, 1200);
+  });
+}
+
+function buildExecExportHTML(title, subtitle, exportDate, bandCounts, totalVisible, showFilters) {
+  const filterText = showFilters ? getFilterSummaryText() : '';
+
+  return `
+  <div style="font-family:'Inter',system-ui,-apple-system,sans-serif;width:1600px;background:#fff;color:#0f172a;padding:0">
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#4b2e83 0%,#32174f 100%);color:#fff;padding:36px 48px 28px;display:flex;justify-content:space-between;align-items:flex-start">
+      <div>
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:2px;opacity:0.65;margin-bottom:6px">University of Washington Bothell</div>
+        <div style="font-size:32px;font-weight:800;letter-spacing:-0.5px;line-height:1.15">${escHtml(title)}</div>
+        ${subtitle ? `<div style="font-size:16px;opacity:0.8;margin-top:4px;font-weight:500">${escHtml(subtitle)}</div>` : ''}
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:13px;opacity:0.7;font-weight:500">${exportDate}</div>
+        <div style="font-size:12px;opacity:0.5;margin-top:2px">Residential Village at Bothell, WA</div>
+      </div>
+    </div>
+
+    <!-- KPI Bar -->
+    <div style="display:flex;gap:0;border-bottom:1px solid #e2e8f0">
+      <div style="flex:1;text-align:center;padding:20px 16px;border-right:1px solid #e2e8f0">
+        <div style="font-size:34px;font-weight:800;color:#4b2e83">${formatNum(totalVisible)}</div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-top:2px">Total Displayed</div>
+      </div>
+      <div style="flex:1;text-align:center;padding:20px 16px;border-right:1px solid #e2e8f0;border-left:3px solid #22c55e">
+        <div style="font-size:28px;font-weight:800;color:#22c55e">${formatNum(bandCounts['0–10 mi'])}</div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-top:2px">0–10 Miles</div>
+      </div>
+      <div style="flex:1;text-align:center;padding:20px 16px;border-right:1px solid #e2e8f0;border-left:3px solid #f97316">
+        <div style="font-size:28px;font-weight:800;color:#f97316">${formatNum(bandCounts['10–50 mi'])}</div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-top:2px">10–50 Miles</div>
+      </div>
+      <div style="flex:1;text-align:center;padding:20px 16px;border-right:1px solid #e2e8f0;border-left:3px solid #ef4444">
+        <div style="font-size:28px;font-weight:800;color:#ef4444">${formatNum(bandCounts['50–100 mi'])}</div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-top:2px">50–100 Miles</div>
+      </div>
+      <div style="flex:1;text-align:center;padding:20px 16px;border-left:3px solid #8b5cf6">
+        <div style="font-size:28px;font-weight:800;color:#8b5cf6">${formatNum(bandCounts['100+ mi'])}</div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-top:2px">100+ Miles</div>
+      </div>
+    </div>
+
+    <!-- Map + Legend -->
+    <div style="display:flex;min-height:700px">
+      <!-- Map -->
+      <div style="flex:1;position:relative;background:#f1f5f9">
+        <div id="exec-map-slot" style="width:100%;height:100%;min-height:700px"></div>
+      </div>
+      <!-- Legend sidebar -->
+      <div style="width:260px;border-left:1px solid #e2e8f0;padding:24px;display:flex;flex-direction:column;gap:20px;background:#fafbfc">
+        <div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:12px">Distance Legend</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:center;gap:10px"><div style="width:14px;height:14px;border-radius:50%;background:#22c55e;flex-shrink:0"></div><span style="font-size:13px;font-weight:600">0–10 miles</span></div>
+            <div style="display:flex;align-items:center;gap:10px"><div style="width:14px;height:14px;border-radius:50%;background:#f97316;flex-shrink:0"></div><span style="font-size:13px;font-weight:600">10–50 miles</span></div>
+            <div style="display:flex;align-items:center;gap:10px"><div style="width:14px;height:14px;border-radius:50%;background:#ef4444;flex-shrink:0"></div><span style="font-size:13px;font-weight:600">50–100 miles</span></div>
+            <div style="display:flex;align-items:center;gap:10px"><div style="width:14px;height:14px;border-radius:50%;background:#8b5cf6;flex-shrink:0"></div><span style="font-size:13px;font-weight:600">100+ miles</span></div>
+          </div>
+        </div>
+        <div style="border-top:1px solid #e2e8f0;padding-top:16px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:8px">Origin</div>
+          <div style="font-size:13px;font-weight:600;color:#0f172a">Residential Village at Bothell, WA</div>
+          <div style="font-size:11px;color:#64748b;margin-top:2px">17927 113th Ave NE, Bothell, WA 98011</div>
+        </div>
+        <div style="border-top:1px solid #e2e8f0;padding-top:16px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:8px">Band Summary</div>
+          ${BANDS.map(b => {
+            const count = bandCounts[b.label] || 0;
+            const pct = totalVisible ? Math.round(count / totalVisible * 100) : 0;
+            return `<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;font-size:12px">
+              <span style="color:#64748b">${b.label}</span>
+              <span style="font-weight:700">${formatNum(count)} <span style="color:#94a3b8;font-weight:400">(${pct}%)</span></span>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter summary -->
+    ${showFilters && filterText !== 'No filters applied — showing all records' ? `
+    <div style="padding:12px 48px;background:#f8fafc;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0">
+      <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-right:8px">Active Filters:</span>
+      <span style="font-size:12px;color:#4b2e83;font-weight:500">${escHtml(filterText)}</span>
+    </div>` : ''}
+
+    <!-- Footer -->
+    <div style="padding:16px 48px;background:#fafbfc;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:10px;color:#94a3b8;max-width:900px;line-height:1.5">
+        Distances are calculated from the Bothell reference point (47.7596, -122.1892) using geocoded record locations via Haversine formula.
+        Records shown reflect current filter criteria. No personal identifying information is included in this report.
+      </div>
+      <div style="font-size:10px;color:#94a3b8;text-align:right;white-space:nowrap">
+        Generated ${exportDate}
+      </div>
+    </div>
+  </div>`;
+}
+
+function escHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function slugify(str) {
+  return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+function dateSlug() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  DIRECT MAIL EXPORT BUILDER
+// ══════════════════════════════════════════════════════════════════
+let dmCurrentStep = 1;
+let dmFilteredRecords = [];
+let dmExportRecords = [];
+
+function initMailBuilder() {
+  const modal = document.getElementById('mailBuilderModal');
+  const openBtn = document.getElementById('openMailBuilder');
+  const closeBtn = document.getElementById('mailClose');
+  const cancelBtn = document.getElementById('dmCancelBtn');
+  const nextBtn = document.getElementById('dmNextBtn');
+  const prevBtn = document.getElementById('dmPrevBtn');
+  const exportCSVBtn = document.getElementById('dmExportCSVBtn');
+  const exportXLSXBtn = document.getElementById('dmExportXLSXBtn');
+
+  openBtn.addEventListener('click', () => {
+    dmCurrentStep = 1;
+    dmUpdateStepUI();
+    populateDmFilterOptions();
+    updateDmAudienceCount();
+    modal.classList.add('active');
+  });
+  closeBtn.addEventListener('click', () => modal.classList.remove('active'));
+  cancelBtn.addEventListener('click', () => modal.classList.remove('active'));
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
+
+  nextBtn.addEventListener('click', () => {
+    if (dmCurrentStep === 1) {
+      dmCurrentStep = 2;
+      buildDmPreview();
+    } else if (dmCurrentStep === 2) {
+      dmCurrentStep = 3;
+      buildDmExportSummary();
+    }
+    dmUpdateStepUI();
+  });
+
+  prevBtn.addEventListener('click', () => {
+    if (dmCurrentStep > 1) dmCurrentStep--;
+    dmUpdateStepUI();
+  });
+
+  exportCSVBtn.addEventListener('click', () => exportDirectMail('csv'));
+  exportXLSXBtn.addEventListener('click', () => exportDirectMail('xlsx'));
+
+  // Live count updates on filter change
+  ['dmState', 'dmBand', 'dmStatus', 'dmAppType'].forEach(id => {
+    document.getElementById(id).addEventListener('change', updateDmAudienceCount);
+  });
+  ['dmHousing', 'dmCity', 'dmZip'].forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', debounce(updateDmAudienceCount, 200));
+  });
+
+  // Exclude incomplete checkbox updates preview
+  document.getElementById('dmExcludeIncomplete').addEventListener('change', () => {
+    if (dmCurrentStep === 2) buildDmPreview();
+  });
+
+  // Preset buttons
+  document.querySelectorAll('.dm-segment-preset').forEach(btn => {
+    btn.addEventListener('click', () => {
+      applyDmPreset(btn.dataset.preset);
+      updateDmAudienceCount();
+    });
+  });
+}
+
+function populateDmFilterOptions() {
+  // States
+  const states = [...new Set(allRecords.map(r => r.state).filter(Boolean))].sort();
+  const stateEl = document.getElementById('dmState');
+  stateEl.innerHTML = states.map(s => `<option value="${s}" selected>${s}</option>`).join('');
+
+  // Statuses
+  const statuses = [...new Set(allRecords.map(r => r.status).filter(Boolean))].sort();
+  const statusEl = document.getElementById('dmStatus');
+  statusEl.innerHTML = statuses.map(s => `<option value="${s}" selected>${s}</option>`).join('');
+
+  // App Types
+  const appTypes = [...new Set(allRecords.map(r => r.appType).filter(Boolean))].sort();
+  const appTypeEl = document.getElementById('dmAppType');
+  appTypeEl.innerHTML = appTypes.map(s => `<option value="${s}" selected>${s}</option>`).join('');
+
+  // Bands - already set in HTML, ensure all selected
+  document.querySelectorAll('#dmBand option').forEach(opt => opt.selected = true);
+
+  // Reset other fields
+  document.getElementById('dmHousing').value = 'all';
+  document.getElementById('dmCity').value = '';
+  document.getElementById('dmZip').value = '';
+  document.getElementById('dmSegmentName').value = '';
+}
+
+function applyDmPreset(preset) {
+  // First reset all to selected
+  populateDmFilterOptions();
+  
+  const stateEl = document.getElementById('dmState');
+  const bandEl = document.getElementById('dmBand');
+  const statusEl = document.getElementById('dmStatus');
+  const housingEl = document.getElementById('dmHousing');
+  const segmentEl = document.getElementById('dmSegmentName');
+
+  switch (preset) {
+    case 'wa-only':
+      [...stateEl.options].forEach(opt => opt.selected = opt.value === 'WA');
+      segmentEl.value = 'Washington Only';
+      break;
+    case 'out-of-state':
+      [...stateEl.options].forEach(opt => opt.selected = opt.value !== 'WA');
+      segmentEl.value = 'Out of State';
+      break;
+    case 'within-50':
+      [...bandEl.options].forEach(opt => opt.selected = (opt.value === '0–10 mi' || opt.value === '10–50 mi'));
+      segmentEl.value = 'Within 50 Miles';
+      break;
+    case 'housing-admits':
+      housingEl.value = 'Yes';
+      [...statusEl.options].forEach(opt => opt.selected = opt.value === 'Admit');
+      segmentEl.value = 'Housing Interested Admits';
+      break;
+    case 'use-current':
+      // Mirror the current app filters
+      [...stateEl.options].forEach(opt => opt.selected = true);
+      [...statusEl.options].forEach(opt => opt.selected = selectedStatuses.has(opt.value));
+      const appTypeEl2 = document.getElementById('dmAppType');
+      [...appTypeEl2.options].forEach(opt => opt.selected = selectedAppTypes.has(opt.value));
+      housingEl.value = housingFilter;
+      document.getElementById('dmCity').value = citySearch;
+      segmentEl.value = 'Current Filter Set';
+      break;
+  }
+}
+
+function getSelectedValues(selectId) {
+  return [...document.getElementById(selectId).selectedOptions].map(o => o.value);
+}
+
+function updateDmAudienceCount() {
+  dmFilteredRecords = getDmFilteredRecords();
+  
+  const total = dmFilteredRecords.length;
+  const missing = dmFilteredRecords.filter(r => !isAddressComplete(r)).length;
+  const complete = total - missing;
+
+  document.getElementById('dmAudienceCount').textContent = formatNum(total);
+  document.getElementById('dmAudienceMissing').textContent = `${formatNum(missing)} missing address`;
+  document.getElementById('dmAudienceComplete').textContent = `${formatNum(complete)} complete`;
+}
+
+function getDmFilteredRecords() {
+  const selStates = new Set(getSelectedValues('dmState'));
+  const selBands = new Set(getSelectedValues('dmBand'));
+  const selStatuses = new Set(getSelectedValues('dmStatus'));
+  const selAppTypes = new Set(getSelectedValues('dmAppType'));
+  const housing = document.getElementById('dmHousing').value;
+  const cityQ = document.getElementById('dmCity').value.toLowerCase().trim();
+  const zipQ = document.getElementById('dmZip').value.trim();
+  const zipSet = zipQ ? new Set(zipQ.split(',').map(z => z.trim()).filter(Boolean)) : null;
+
+  return allRecords.filter(r => {
+    if (r.state && !selStates.has(r.state)) return false;
+    if (r.band && !selBands.has(r.band)) return false;
+    if (!r.band && !selBands.has('Unknown')) return false;
+    if (r.status && !selStatuses.has(r.status)) return false;
+    if (r.appType && !selAppTypes.has(r.appType)) return false;
+    if (housing !== 'all' && r.housing !== housing) return false;
+    if (cityQ && !(r.city || '').toLowerCase().includes(cityQ)) return false;
+    if (zipSet && !zipSet.has(r.zip)) return false;
+    return true;
+  });
+}
+
+function isAddressComplete(r) {
+  return !!(r.street && r.city && r.state && r.zip);
+}
+
+function isPOBox(street) {
+  if (!street) return false;
+  return /^p\.?o\.?\s*box/i.test(street.trim());
+}
+
+function normalizeCase(str) {
+  if (!str) return '';
+  return str.replace(/\w\S*/g, txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+}
+
+function buildDmPreview() {
+  dmFilteredRecords = getDmFilteredRecords();
+  const excludeIncomplete = document.getElementById('dmExcludeIncomplete').checked;
+  
+  let records = [...dmFilteredRecords];
+  let excludedCount = 0;
+  
+  if (excludeIncomplete) {
+    const before = records.length;
+    records = records.filter(r => isAddressComplete(r));
+    excludedCount = before - records.length;
+  }
+
+  // Warnings
+  const warnings = [];
+  const missingAddr = dmFilteredRecords.filter(r => !isAddressComplete(r)).length;
+  const missingPct = dmFilteredRecords.length ? Math.round(missingAddr / dmFilteredRecords.length * 100) : 0;
+
+  if (missingAddr > 0) {
+    const cls = missingPct > 30 ? 'error' : 'warn';
+    warnings.push({ cls, msg: `${formatNum(missingAddr)} records (${missingPct}%) have incomplete mailing addresses.${excludeIncomplete ? ' These will be excluded from export.' : ''}` });
+  }
+
+  // Check state abbreviation consistency
+  const stateVals = [...new Set(records.map(r => r.state).filter(Boolean))];
+  const longStates = stateVals.filter(s => s.length > 2);
+  if (longStates.length > 0) {
+    warnings.push({ cls: 'warn', msg: `Some state values may not be standard 2-letter abbreviations: ${longStates.join(', ')}` });
+  }
+
+  // Check zip formatting
+  const badZips = records.filter(r => r.zip && (!/^\d{5}(-\d{4})?$/.test(r.zip))).length;
+  if (badZips > 0) {
+    warnings.push({ cls: 'warn', msg: `${badZips} records have non-standard zip code formatting.` });
+  }
+
+  if (excludedCount > 0) {
+    warnings.push({ cls: 'info', msg: `${formatNum(excludedCount)} records excluded due to incomplete addresses.` });
+  }
+
+  if (warnings.length === 0) {
+    warnings.push({ cls: 'success', msg: 'All records pass validation checks.' });
+  }
+
+  const warningsEl = document.getElementById('dmWarnings');
+  warningsEl.innerHTML = warnings.map(w => `
+    <div class="dm-warning ${w.cls}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        ${w.cls === 'success' ? '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>' :
+          w.cls === 'info' ? '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>' :
+          '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>'}
+      </svg>
+      <span>${w.msg}</span>
+    </div>
+  `).join('');
+
+  // Preview table
+  const previewLimit = 100;
+  const displayRecords = records.slice(0, previewLimit);
+  
+  document.getElementById('dmPreviewCount').textContent = `Showing ${Math.min(records.length, previewLimit)} of ${formatNum(records.length)} records`;
+
+  const head = document.getElementById('dmPreviewHead');
+  head.innerHTML = '<th>ID</th><th>Status</th><th>App Type</th><th>City</th><th>State</th><th>Zip</th><th>Street</th><th>Housing</th><th>Band</th><th>Dist</th>';
+
+  const body = document.getElementById('dmPreviewBody');
+  body.innerHTML = displayRecords.map(r => `
+    <tr>
+      <td>${r.id}</td>
+      <td>${r.status}</td>
+      <td>${r.appType}</td>
+      <td>${r.city}</td>
+      <td>${r.state}</td>
+      <td>${r.zip}</td>
+      <td title="${escHtml(r.street || '')}">${r.street || '<span style="color:#ef4444">—</span>'}</td>
+      <td>${r.housing}</td>
+      <td>${r.band || '—'}</td>
+      <td>${r.distance != null ? r.distance.toFixed(1) : '—'}</td>
+    </tr>
+  `).join('');
+
+  dmExportRecords = records;
+}
+
+function buildDmExportSummary() {
+  const excludeIncomplete = document.getElementById('dmExcludeIncomplete').checked;
+  let records = [...dmFilteredRecords];
+  const totalBefore = records.length;
+  const incomplete = records.filter(r => !isAddressComplete(r)).length;
+
+  if (excludeIncomplete) {
+    records = records.filter(r => isAddressComplete(r));
+  }
+  dmExportRecords = records;
+
+  document.getElementById('dmFinalTotal').textContent = formatNum(records.length);
+  document.getElementById('dmFinalComplete').textContent = formatNum(records.filter(r => isAddressComplete(r)).length);
+  document.getElementById('dmFinalExcluded').textContent = formatNum(totalBefore - records.length);
+
+  // Band breakdown
+  const bandCounts = {};
+  BANDS.forEach(b => bandCounts[b.label] = 0);
+  records.forEach(r => { if (r.band && bandCounts[r.band] !== undefined) bandCounts[r.band]++; });
+  document.getElementById('dmFinalBands').innerHTML = BANDS.map(b =>
+    `<div style="font-size:12px">${b.label}: <strong>${formatNum(bandCounts[b.label])}</strong></div>`
+  ).join('');
+}
+
+function dmUpdateStepUI() {
+  // Update step indicators
+  document.querySelectorAll('.dm-step').forEach(s => {
+    const step = parseInt(s.dataset.step);
+    s.classList.remove('active', 'done');
+    if (step === dmCurrentStep) s.classList.add('active');
+    else if (step < dmCurrentStep) s.classList.add('done');
+  });
+
+  // Show/hide panels
+  document.querySelectorAll('.dm-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(`dmStep${dmCurrentStep}`).classList.add('active');
+
+  // Button visibility
+  const prevBtn = document.getElementById('dmPrevBtn');
+  const nextBtn = document.getElementById('dmNextBtn');
+  const csvBtn = document.getElementById('dmExportCSVBtn');
+  const xlsxBtn = document.getElementById('dmExportXLSXBtn');
+
+  prevBtn.style.display = dmCurrentStep > 1 ? '' : 'none';
+  nextBtn.style.display = dmCurrentStep < 3 ? '' : 'none';
+  csvBtn.style.display = dmCurrentStep === 3 ? '' : 'none';
+  xlsxBtn.style.display = dmCurrentStep === 3 ? '' : 'none';
+
+  // Update next button text
+  if (dmCurrentStep === 1) nextBtn.textContent = 'Next: Preview Audience';
+  else if (dmCurrentStep === 2) nextBtn.textContent = 'Next: Export Options';
+}
+
+function exportDirectMail(format) {
+  const segmentName = document.getElementById('dmSegmentName').value || 'Mail Segment';
+  const includeNames = document.getElementById('dmIncludeNames').checked;
+  const excludePO = document.getElementById('dmExcludePOBox').checked;
+  const dedupeAddr = document.getElementById('dmDedupeAddr').checked;
+  const normalize = document.getElementById('dmNormalize').checked;
+
+  let records = [...dmExportRecords];
+
+  // Exclude PO Boxes if requested
+  if (excludePO) {
+    records = records.filter(r => !isPOBox(r.street));
+  }
+
+  // Deduplicate by full address
+  if (dedupeAddr) {
+    const seen = new Set();
+    records = records.filter(r => {
+      const key = `${(r.street||'').toLowerCase()}|${(r.city||'').toLowerCase()}|${(r.state||'').toLowerCase()}|${r.zip||''}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  const exportDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  // Build export rows
+  const rows = records.map(r => {
+    const street1 = normalize ? normalizeCase(r.street || '') : (r.street || '');
+    const street2 = normalize ? normalizeCase(r.street2 || '') : (r.street2 || '');
+    const city = normalize ? normalizeCase(r.city || '') : (r.city || '');
+    const state = (r.state || '').toUpperCase();
+    const zip = r.zip || '';
+    const fullAddr = [street1, street2, city, state, zip].filter(Boolean).join(', ');
+
+    const row = {
+      'Record ID': r.id,
+      'Status': r.status || '',
+      'Application Type': r.appType || '',
+      'Housing Interest': r.housing || '',
+      'Street Address 1': street1,
+      'Street Address 2': street2,
+      'City': city,
+      'State': state,
+      'Zip': zip,
+      'Full Mailing Address': fullAddr,
+      'Distance (mi)': r.distance != null ? r.distance.toFixed(1) : '',
+      'Distance Band': r.band || '',
+      'Export Date': exportDate,
+      'Segment Name': segmentName
+    };
+
+    if (includeNames && r.name) {
+      row['Name'] = r.name;
+    }
+
+    return row;
+  });
+
+  if (format === 'csv') {
+    exportDmCSV(rows, segmentName);
+  } else {
+    exportDmXLSX(rows, segmentName, records, exportDate);
+  }
+
+  // Close modal after export
+  document.getElementById('mailBuilderModal').classList.remove('active');
+}
+
+function exportDmCSV(rows, segmentName) {
+  if (rows.length === 0) { alert('No records to export.'); return; }
+  const headers = Object.keys(rows[0]);
+  let csv = headers.join(',') + '\n';
+  rows.forEach(row => {
+    csv += headers.map(h => `"${String(row[h] || '').replace(/"/g, '""')}"`).join(',') + '\n';
+  });
+  downloadFile(csv, `${slugify(segmentName)}-mailer-${dateSlug()}.csv`, 'text/csv');
+}
+
+function exportDmXLSX(rows, segmentName, records, exportDate) {
+  if (rows.length === 0) { alert('No records to export.'); return; }
+
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1: Mailing List
+  const ws1 = XLSX.utils.json_to_sheet(rows);
+  // Freeze top row
+  ws1['!freeze'] = { xSplit: 0, ySplit: 1 };
+  // Column widths
+  const colWidths = Object.keys(rows[0]).map(h => {
+    const maxLen = Math.max(h.length, ...rows.slice(0, 100).map(r => String(r[h] || '').length));
+    return { wch: Math.min(maxLen + 2, 40) };
+  });
+  ws1['!cols'] = colWidths;
+  XLSX.utils.book_append_sheet(wb, ws1, 'Mailing List');
+
+  // Sheet 2: Export Summary
+  const bandCounts = {};
+  BANDS.forEach(b => bandCounts[b.label] = 0);
+  records.forEach(r => { if (r.band && bandCounts[r.band] !== undefined) bandCounts[r.band]++; });
+
+  const selStates = getSelectedValues('dmState');
+  const selStatuses = getSelectedValues('dmStatus');
+  const selAppTypes = getSelectedValues('dmAppType');
+  const selBands = getSelectedValues('dmBand');
+  const housing = document.getElementById('dmHousing').value;
+
+  const summaryData = [
+    { Field: 'Segment Name', Value: segmentName },
+    { Field: 'Export Timestamp', Value: new Date().toISOString() },
+    { Field: 'Export Date', Value: exportDate },
+    { Field: '', Value: '' },
+    { Field: 'Filters Applied', Value: '' },
+    { Field: 'States', Value: selStates.join(', ') },
+    { Field: 'Statuses', Value: selStatuses.join(', ') },
+    { Field: 'Application Types', Value: selAppTypes.join(', ') },
+    { Field: 'Distance Bands', Value: selBands.join(', ') },
+    { Field: 'Housing Interest', Value: housing },
+    { Field: '', Value: '' },
+    { Field: 'Totals', Value: '' },
+    { Field: 'Total Included', Value: rows.length },
+    { Field: 'Total Excluded (Incomplete)', Value: dmFilteredRecords.length - records.length },
+    { Field: 'Missing Address Count', Value: dmFilteredRecords.filter(r => !isAddressComplete(r)).length },
+    { Field: '', Value: '' },
+    { Field: 'Distance Band Breakdown', Value: '' },
+    ...BANDS.map(b => ({ Field: b.label, Value: bandCounts[b.label] })),
+    { Field: '', Value: '' },
+    { Field: 'Notes', Value: '' },
+    { Field: 'Origin', Value: '17927 113th Ave NE, Bothell, WA 98011' },
+    { Field: 'Distance Method', Value: 'Haversine formula from geocoded zip code centroids' },
+    { Field: 'Privacy', Value: 'No personal names included unless explicitly opted in' }
+  ];
+
+  const ws2 = XLSX.utils.json_to_sheet(summaryData);
+  ws2['!cols'] = [{ wch: 28 }, { wch: 60 }];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Export Summary');
+
+  // Generate and download
+  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${slugify(segmentName)}-mailer-${dateSlug()}.xlsx`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ══════════════════════════════════════════════════════════════════
 //  BOOT
 // ══════════════════════════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', async () => {
+  initExecExport();
+  initMailBuilder();
+  await init();
+});
 
 })();
 </script>
