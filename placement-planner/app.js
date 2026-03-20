@@ -68,8 +68,15 @@ const AppState = {
 
 /* ------------------------------------------------------------------
    API + LOCAL STORAGE PERSISTENCE -- FULL PROJECT
-   Uses the project API (/api/placement-planner) as the primary store.
-   localStorage is kept as a write-through cache for fast initial load.
+   ─────────────────────────────────────────────────────────────────
+   Source of Truth: MongoDB Atlas via /api/placement-planner
+   Cache: localStorage (write-through, never authoritative)
+
+   IMPORTANT: localStorage is a READ-ONLY fallback. If the API is
+   unreachable, stale localStorage data is shown but NEVER pushed
+   back to the API to avoid overwriting shared data.
+
+   See STORAGE_ARCHITECTURE.md for full documentation.
    ------------------------------------------------------------------ */
 const STORAGE_KEY = 'propertySiteMap_project';
 const PROJECT_VERSION = 5;
@@ -77,6 +84,19 @@ const API_BASE = '/api/placement-planner';
 
 /** Flag: true once initial API load has completed (success or fail) */
 var _apiLoadComplete = false;
+
+/** Flag: true if the last API operation succeeded (for connection status) */
+var _apiConnected = false;
+
+/** Timestamp from the shared document's last save */
+var _lastUpdatedAt = null;
+
+/** Username who last updated the shared document */
+var _lastUpdatedBy = null;
+
+/** Number of consecutive API persist failures (for retry logic) */
+var _persistFailCount = 0;
+var _MAX_PERSIST_RETRIES = 2;
 
 /**
  * Build a serializable project object from current AppState.
@@ -108,6 +128,10 @@ function buildProjectData() {
 /**
  * Persist project to API (primary) and localStorage (cache).
  * Uses debounce internally so rapid calls don't flood the server.
+ *
+ * Write order:
+ *   1. localStorage (synchronous, fast cache)
+ *   2. API POST (debounced 500ms, retries on failure)
  */
 var _persistTimer = null;
 function persistProject() {
@@ -128,6 +152,8 @@ function persistProject() {
 
 /**
  * Send current project data to the API.
+ * Shows a user-visible notification on failure and retries up to
+ * _MAX_PERSIST_RETRIES times before giving up.
  */
 function _persistProjectToApi() {
   var data = buildProjectData();
@@ -138,10 +164,31 @@ function _persistProjectToApi() {
     body: JSON.stringify({ project: data }),
   }).then(function (res) {
     if (!res.ok) {
-      console.warn('API persist failed: HTTP ' + res.status);
+      throw new Error('HTTP ' + res.status);
     }
+    _persistFailCount = 0;
+    _setApiConnected(true);
+    _lastUpdatedAt = new Date().toISOString();
+    _renderSyncStatus();
   }).catch(function (err) {
-    console.warn('API persist error (will retry on next save):', err);
+    console.warn('API persist error:', err);
+    _persistFailCount++;
+    _setApiConnected(false);
+
+    if (_persistFailCount <= _MAX_PERSIST_RETRIES) {
+      // Retry after a short delay
+      console.info('Retrying API persist (attempt ' + (_persistFailCount + 1) + ')...');
+      setTimeout(function () { _persistProjectToApi(); }, 1500 * _persistFailCount);
+    } else {
+      // Show user-visible error after retries exhausted
+      showNotification(
+        'Failed to save to shared database after ' + _MAX_PERSIST_RETRIES + ' retries. ' +
+        'Your changes are saved locally but may not be visible to other users. ' +
+        'Check your network connection and refresh.',
+        'error'
+      );
+      _persistFailCount = 0; // Reset for next save attempt
+    }
   });
 }
 
@@ -151,6 +198,11 @@ function persistResidents() {
 
 /**
  * Load project from the API first, falling back to localStorage.
+ *
+ * CRITICAL: If the API fails, localStorage is used as a READ-ONLY
+ * cache. We do NOT push stale localStorage data back to the API,
+ * because that would overwrite shared data with per-browser state.
+ *
  * @returns {Promise<boolean>} true if a project was restored
  */
 async function loadPersistedProject() {
@@ -167,6 +219,11 @@ async function loadPersistedProject() {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(json.project));
           } catch (e) { /* ignore cache write failure */ }
           _apiLoadComplete = true;
+          _setApiConnected(true);
+
+          // Track shared document metadata from API response
+          _lastUpdatedAt = json.updatedAt || json.project.savedAt || null;
+          _lastUpdatedBy = json.updatedBy || null;
 
           // Also restore colors if present in the same response
           if (json.colors && typeof json.colors === 'object') {
@@ -176,12 +233,19 @@ async function loadPersistedProject() {
           return true;
         }
       }
+      // API returned OK but no valid project — still connected
+      _apiLoadComplete = true;
+      _setApiConnected(true);
+      return false;
     }
   } catch (e) {
-    console.warn('API load failed, falling back to localStorage:', e);
+    console.warn('API load failed, falling back to localStorage (READ-ONLY):', e);
   }
 
-  // Fallback to localStorage
+  // Mark API as disconnected — show warning banner
+  _setApiConnected(false);
+
+  // Fallback to localStorage (READ-ONLY — never push back to API)
   try {
     var raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return false;
@@ -189,15 +253,80 @@ async function loadPersistedProject() {
     var result = restoreProjectData(data);
     _apiLoadComplete = true;
 
-    // If we loaded from localStorage, push to API to sync
-    if (result) {
-      _persistProjectToApi();
-    }
+    // DO NOT push localStorage data back to API.
+    // This was the root cause of the cross-computer data loss bug:
+    // Computer B had empty localStorage, API GET failed, empty data
+    // was pushed back to API, overwriting Computer A's real data.
 
     return result;
   } catch (e) {
     console.warn('Failed to load persisted project:', e);
     return false;
+  }
+}
+
+/**
+ * Update the API connection status and render the sync banner.
+ * When disconnected, a warning banner is shown and edit controls
+ * may be dimmed to discourage edits that can't be shared.
+ */
+function _setApiConnected(connected) {
+  var wasConnected = _apiConnected;
+  _apiConnected = connected;
+
+  // Only re-render banner if status changed
+  if (wasConnected !== connected) {
+    _renderSyncBanner();
+  }
+}
+
+/**
+ * Render/hide the API connection warning banner at the top of the page.
+ */
+function _renderSyncBanner() {
+  var existingBanner = document.getElementById('api-sync-banner');
+
+  if (_apiConnected) {
+    // Remove banner if present
+    if (existingBanner) existingBanner.remove();
+    return;
+  }
+
+  // Show disconnected banner
+  if (!existingBanner) {
+    existingBanner = document.createElement('div');
+    existingBanner.id = 'api-sync-banner';
+    existingBanner.style.cssText =
+      'position:fixed;top:0;left:0;right:0;z-index:10000;' +
+      'background:#fbbf24;color:#78350f;text-align:center;' +
+      'padding:6px 16px;font-size:0.82rem;font-weight:600;' +
+      'box-shadow:0 2px 8px rgba(0,0,0,0.15);';
+    document.body.appendChild(existingBanner);
+  }
+
+  existingBanner.textContent =
+    '⚠ Unable to reach shared database — showing cached data. ' +
+    'Changes may not sync to other users until connection is restored.';
+}
+
+/**
+ * Render the last-synced timestamp in the header (if element exists).
+ */
+function _renderSyncStatus() {
+  var el = document.getElementById('sync-status');
+  if (!el) return;
+
+  if (_lastUpdatedAt) {
+    try {
+      var d = new Date(_lastUpdatedAt);
+      el.textContent = 'Synced: ' + d.toLocaleTimeString();
+      el.title = 'Last saved to shared database: ' + d.toLocaleString() +
+        (_lastUpdatedBy ? ' by ' + _lastUpdatedBy : '');
+    } catch (e) {
+      el.textContent = '';
+    }
+  } else {
+    el.textContent = '';
   }
 }
 
@@ -280,6 +409,7 @@ function loadPersistedState() {
 
 /**
  * Clear persisted state from both API and localStorage.
+ * The API DELETE removes the shared document; localStorage is cleared locally.
  */
 function clearPersistedState() {
   // Clear localStorage
@@ -290,14 +420,24 @@ function clearPersistedState() {
     console.warn('Failed to clear persisted state:', e);
   }
 
-  // Clear API data
+  // Clear API data (shared document)
   fetch(API_BASE, {
     method: 'DELETE',
     credentials: 'include',
   }).then(function (res) {
-    if (!res.ok) console.warn('API clear failed: HTTP ' + res.status);
+    if (!res.ok) {
+      console.warn('API clear failed: HTTP ' + res.status);
+      showNotification('Warning: shared database clear may have failed. Other users may still see old data.', 'error');
+    } else {
+      _setApiConnected(true);
+      _lastUpdatedAt = null;
+      _lastUpdatedBy = null;
+      _renderSyncStatus();
+    }
   }).catch(function (err) {
     console.warn('API clear error:', err);
+    _setApiConnected(false);
+    showNotification('Warning: could not reach shared database to clear data.', 'error');
   });
 }
 
@@ -418,6 +558,10 @@ document.addEventListener('DOMContentLoaded', async function () {
   populateBuildingSelector();
 
   var restored = await loadPersistedProject();
+
+  // Render sync status after initial load
+  _renderSyncBanner();
+  _renderSyncStatus();
 
   if (restored) {
     // Restore toggle states

@@ -297,9 +297,17 @@ function persistColors() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ colors: data }),
     }).then(function (res) {
-      if (!res.ok) console.warn('API color persist failed: HTTP ' + res.status);
+      if (!res.ok) {
+        console.warn('API color persist failed: HTTP ' + res.status);
+        if (typeof showNotification === 'function') {
+          showNotification('Color changes may not be visible to other users (save failed).', 'error');
+        }
+      }
     }).catch(function (err) {
       console.warn('API color persist error:', err);
+      if (typeof showNotification === 'function') {
+        showNotification('Color changes may not be visible to other users (network error).', 'error');
+      }
     });
   }, 500);
 }

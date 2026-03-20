@@ -79,6 +79,8 @@ export async function handler(event) {
         body: JSON.stringify({
           project: doc.project || null,
           colors: doc.colors || null,
+          updatedAt: doc.updatedAt || null,
+          updatedBy: doc.updatedBy || null,
         }),
       };
     }
