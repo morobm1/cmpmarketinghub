@@ -12,7 +12,7 @@ export async function handler(event){
     const ok = await bcrypt.compare(password, user.passwordHash||'');
     if (!ok) return { statusCode: 401, body: 'Invalid' };
     const token = signToken(user);
-    const ttlSeconds = 8*60*60; // align with 8h default
+    const ttlSeconds = 12*60*60; // align with 12h default
     const host = (event.headers && (event.headers.host || event.headers.Host)) || '';
     const proto = (event.headers && (event.headers['x-forwarded-proto'] || event.headers['X-Forwarded-Proto'])) || '';
     const isLocal = /localhost|127\.0\.0\.1/.test(host) || /^http$/i.test(proto);

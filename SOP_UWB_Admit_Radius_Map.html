@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SOP: UW Bothell – Admit Radius Map</title>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    @page { size: letter; margin: 0.75in; }
+    @media print {
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .cover-page { page-break-after: always; }
+      .content-page { padding: 0; }
+      .no-print { display: none !important; }
+    }
+
+    :root {
+      --brand-primary: #446472;
+      --brand-accent: #ffb732;
+      --brand-accent-2: #52d5ff;
+      --border: #e2e8f0;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Open Sans', system-ui, -apple-system, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #1e293b;
+      background: #fff;
+    }
+
+    /* ===== COVER PAGE ===== */
+    .cover-page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 40px;
+    }
+    .cover-header {
+      text-align: right;
+      font-style: italic;
+      color: #666;
+      font-size: 12px;
+    }
+    .cover-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 80px 40px;
+    }
+    .cover-property {
+      font-size: 36px;
+      font-weight: 800;
+      color: #446472;
+      margin: 0 0 12px 0;
+      font-family: Roboto, Arial, sans-serif;
+    }
+    .cover-type {
+      font-size: 20px;
+      color: #666;
+      margin: 0 0 24px 0;
+    }
+    .cover-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #111827;
+      margin: 0 0 32px 0;
+    }
+    .cover-meta {
+      font-size: 13px;
+      font-style: italic;
+      color: #666;
+      margin: 4px 0;
+    }
+    .cover-footer {
+      text-align: center;
+      font-size: 11px;
+      color: #888;
+      padding-top: 16px;
+      border-top: 1px solid #ccc;
+    }
+
+    /* ===== CONTENT PAGE ===== */
+    .content-page {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px;
+    }
+
+    /* ===== PRINT BUTTON ===== */
+    .print-bar {
+      position: sticky;
+      top: 0;
+      background: #446472;
+      color: #fff;
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 10;
+    }
+    .print-bar button {
+      background: #ffb732;
+      color: #111;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 20px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .print-bar button:hover { background: #e6a52d; }
+    .print-bar span { font-size: 13px; }
+
+    /* ===== TYPOGRAPHY (matches sop_library.html) ===== */
+    h1 {
+      font-size: 32px;
+      color: #111827;
+      margin: 0 0 16px;
+      font-weight: 800;
+      font-family: Roboto, Arial, sans-serif;
+      line-height: 1.2;
+    }
+    h2 {
+      font-size: 24px;
+      color: #111827;
+      margin: 32px 0 16px;
+      font-weight: 700;
+      font-family: Roboto, Arial, sans-serif;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 12px;
+    }
+    h3 {
+      font-size: 18px;
+      color: #374151;
+      margin: 24px 0 12px;
+      font-weight: 700;
+      font-family: Roboto, Arial, sans-serif;
+    }
+    h4 {
+      font-size: 16px;
+      color: #4b5563;
+      margin: 20px 0 10px;
+      font-weight: 700;
+      font-family: Roboto, Arial, sans-serif;
+    }
+    p { margin: 12px 0; line-height: 1.7; color: #374151; }
+    ul, ol { margin: 12px 0 12px 28px; line-height: 1.8; color: #374151; }
+    li { margin: 8px 0; }
+    ul ul, ol ol { margin: 8px 0 8px 24px; }
+    strong { color: #111827; font-weight: 700; }
+    em { font-style: italic; }
+    code {
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 13px;
+      color: #be123c;
+      font-family: 'Courier New', monospace;
+    }
+    pre {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      overflow-x: auto;
+      margin: 16px 0;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    pre code { background: none; border: none; padding: 0; color: #111827; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 13px;
+    }
+    table th {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      padding: 12px;
+      text-align: left;
+      font-weight: 700;
+      color: #111827;
+    }
+    table td {
+      border: 1px solid var(--border);
+      padding: 12px;
+      color: #374151;
+    }
+    table tr:nth-child(even) { background: #fafbfc; }
+    hr { border: none; border-top: 2px solid var(--border); margin: 32px 0; }
+    a { color: var(--brand-accent-2); text-decoration: none; font-weight: 600; }
+    a:hover { text-decoration: underline; }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      margin: 4px 4px 4px 0;
+    }
+    .badge.category { background: rgba(82,213,255,.15); color: #0b5d7a; border: 1px solid rgba(82,213,255,.35); }
+    .badge.department { background: rgba(255,183,50,.15); color: #8a5800; border: 1px solid rgba(255,183,50,.40); }
+    .badge.site-badge { background: rgba(255,183,50,.12); color: #8a5800; border: 1px solid rgba(255,183,50,.35); }
+
+    /* Info Box */
+    .info-box {
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 20px 0;
+    }
+    .info-box.warning { background: #fffbeb; border-color: #fde68a; }
+    .info-box.success { background: #f0fdf4; border-color: #bbf7d0; }
+    .info-box h4 { margin: 0 0 8px; color: #111827; }
+
+    /* Step Numbers */
+    .step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: var(--brand-accent-2);
+      color: #0b1b24;
+      border-radius: 50%;
+      font-weight: 700;
+      font-size: 14px;
+      margin-right: 8px;
+    }
+
+    /* Band colors for inline */
+    .band-green { color: #22c55e; font-weight: 700; }
+    .band-orange { color: #f97316; font-weight: 700; }
+    .band-red { color: #ef4444; font-weight: 700; }
+    .band-purple { color: #8b5cf6; font-weight: 700; }
+  </style>
+</head>
+<body>
+
+<!-- Print Bar -->
+<div class="print-bar no-print">
+  <button onclick="window.print()">Save as PDF / Print</button>
+  <span>Open this file in your browser, then click the button or press Ctrl+P to save as PDF.</span>
+</div>
+
+<!-- ===== COVER PAGE ===== -->
+<div class="cover-page">
+  <div class="cover-header">Capstone Management Partners – SOP Library</div>
+  <div class="cover-content">
+    <div class="cover-property">UW Bothell Residential Village</div>
+    <div class="cover-type">Standard Operating Procedure</div>
+    <div class="cover-title">UW Bothell – Admit Radius Map Tool</div>
+    <div class="cover-meta">System: Marketing Hub – Custom Tools</div>
+    <div class="cover-meta">Department: Leasing Staff / Marketing</div>
+    <div class="cover-meta">Date: March 20, 2026</div>
+  </div>
+  <div class="cover-footer">Confidential – Internal Use Only</div>
+</div>
+
+<!-- ===== CONTENT ===== -->
+<div class="content-page">
+
+<h1>UW Bothell – Admit Radius Map</h1>
+
+<p>
+  <span class="badge site-badge">Site: UW Bothell Residential Village</span>
+  <span class="badge category">Custom Tool</span>
+  <span class="badge department">Leasing / Marketing</span>
+</p>
+
+<p><strong>Property:</strong> UW Bothell Residential Village &nbsp;|&nbsp; <strong>System:</strong> Marketing Hub – Custom Tools</p>
+
+<!-- ==================== SECTION 1 ==================== -->
+<h2>Section 1 – Purpose</h2>
+
+<p>The <strong>UW Bothell Admit Radius Map</strong> is an interactive admissions mapping dashboard that visualizes where admitted students and applicants are located relative to the UW Bothell campus. It helps leasing and marketing teams understand the geographic distribution of prospective residents, identify high-density markets, and make data-driven decisions for outreach campaigns and direct mail.</p>
+
+<p>The tool categorizes students into <strong>distance bands</strong> from campus, provides filterable data views, and supports exporting professional reports and vendor-ready mailing lists.</p>
+
+<!-- ==================== SECTION 2 ==================== -->
+<h2>Section 2 – When to Use This Process</h2>
+
+<p>Use this tool when you need to:</p>
+<ul>
+  <li><strong>Visualize where admitted students live</strong> – See a map with color-coded pins by distance from campus</li>
+  <li><strong>Analyze admissions data geographically</strong> – Understand which regions, cities, and states your prospective residents are coming from</li>
+  <li><strong>Prepare direct mail campaigns</strong> – Export filtered, vendor-ready mailing lists based on distance, status, or housing interest</li>
+  <li><strong>Generate executive reports</strong> – Create polished map reports (PNG or PDF) for presentations and stakeholder meetings</li>
+  <li><strong>Track weekly admit list changes</strong> – Upload updated Excel files to see new admits and shifts in geographic distribution</li>
+  <li><strong>Filter by specific criteria</strong> – Focus on admits who are interested in housing, specific application types, or within certain distance ranges</li>
+</ul>
+
+<!-- ==================== OVERVIEW ==================== -->
+<h2>Tool Overview – Layout &amp; Interface</h2>
+
+<p>The tool has three main areas:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Area</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Left Rail (Sidebar)</strong></td>
+      <td>Contains KPI summary cards, filters (Status, Application Type, Housing Interest, Distance Band), search, legend, breakdown charts, and export tools</td>
+    </tr>
+    <tr>
+      <td><strong>Map Area (Center)</strong></td>
+      <td>Interactive Leaflet.js map showing color-coded markers for each student, clustered for performance. Radius circles show 10, 50, and 100 mile boundaries from campus</td>
+    </tr>
+    <tr>
+      <td><strong>Data Table (Bottom)</strong></td>
+      <td>Toggleable table showing filtered student records. Sortable columns, exportable to CSV. No personal names shown for privacy</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Distance Bands</h3>
+<p>Students are categorized by straight-line distance from the UW Bothell campus (17927 113th Ave NE, Bothell, WA 98011):</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Band</th>
+      <th>Range</th>
+      <th>Color</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="band-green">●</span> Local</td>
+      <td>0–10 miles</td>
+      <td>Green</td>
+      <td>Local / campus area students</td>
+    </tr>
+    <tr>
+      <td><span class="band-orange">●</span> Regional</td>
+      <td>10–50 miles</td>
+      <td>Orange</td>
+      <td>Greater Seattle / Puget Sound region</td>
+    </tr>
+    <tr>
+      <td><span class="band-red">●</span> Extended</td>
+      <td>50–100 miles</td>
+      <td>Red</td>
+      <td>Extended Washington state</td>
+    </tr>
+    <tr>
+      <td><span class="band-purple">●</span> Out-of-State</td>
+      <td>100+ miles</td>
+      <td>Purple</td>
+      <td>Out-of-state and international</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>KPI Summary Cards</h3>
+<p>The top of the left rail shows live summary counts that update as you apply filters:</p>
+<ul>
+  <li><strong>Total Records</strong> – Total number of students matching current filters</li>
+  <li><strong>0–10 mi</strong> – Count in the local band (green)</li>
+  <li><strong>10–50 mi</strong> – Count in the regional band (orange)</li>
+  <li><strong>50–100 mi</strong> – Count in the extended band (red)</li>
+  <li><strong>100+ mi</strong> – Count in the out-of-state band (purple)</li>
+</ul>
+
+<!-- ==================== SECTION 3 ==================== -->
+<h2>Section 3 – Step-by-Step Instructions</h2>
+
+<h3>Accessing the Tool</h3>
+
+<h3><span class="step-number">1</span> Navigate to Custom Tools</h3>
+<p>Log into the Marketing Hub and click <strong>Custom Tools</strong> in the navigation sidebar.</p>
+
+<h3><span class="step-number">2</span> Add the Tool (First Time Only)</h3>
+<p>If the tool is not already in your toolbox:</p>
+<ul>
+  <li>Click <strong>"+ Add Tool"</strong></li>
+  <li>Find <strong>"UW Bothell - Admit Radius Map"</strong> in the library</li>
+  <li>Click to add it to your toolbox</li>
+</ul>
+
+<h3><span class="step-number">3</span> Open the Tool</h3>
+<p>Click the <strong>"UW Bothell - Admit Radius Map"</strong> card. It opens in a new tab at <code>RV/index.html</code>.</p>
+
+<hr>
+
+<h3>Using the Map</h3>
+
+<h3><span class="step-number">4</span> View the Map</h3>
+<p>When the tool loads, it displays all student records as color-coded markers on the map. Markers are clustered when zoomed out for performance. Click a cluster to zoom in, or click an individual marker to see details.</p>
+
+<h3><span class="step-number">5</span> Read Student Popups</h3>
+<p>Clicking a marker shows a popup with:</p>
+<ul>
+  <li>Student status (e.g., Confirmed, Admitted)</li>
+  <li>City, State, and Zip Code</li>
+  <li>Application type</li>
+  <li>Housing interest</li>
+  <li>Distance from campus in miles</li>
+</ul>
+<p><strong>Note:</strong> No personal names or email addresses are displayed to protect privacy.</p>
+
+<h3><span class="step-number">6</span> Use the Radius Circles</h3>
+<p>The map displays semi-transparent radius circles at <strong>10 miles</strong>, <strong>50 miles</strong>, and <strong>100 miles</strong> from campus. These help you visually assess which distance band students fall into.</p>
+
+<hr>
+
+<h3>Filtering Data</h3>
+
+<h3><span class="step-number">7</span> Filter by Status</h3>
+<p>Use the <strong>Status</strong> dropdown in the left rail to filter by student status (e.g., Confirmed, Admitted, Applied, etc.). The map and KPIs update in real time.</p>
+
+<h3><span class="step-number">8</span> Filter by Application Type</h3>
+<p>Use the <strong>Application Type</strong> multi-select dropdown to filter by application type (e.g., Freshman, Transfer). You can select multiple types.</p>
+
+<h3><span class="step-number">9</span> Filter by Housing Interest</h3>
+<p>Use the <strong>Housing Interest</strong> dropdown to show only students who indicated interest in campus housing.</p>
+
+<h3><span class="step-number">10</span> Filter by Distance Band</h3>
+<p>Click any <strong>legend item</strong> (color dot + label) in the Distance Bands section to toggle that band on/off. This lets you focus on specific distance ranges.</p>
+
+<h3><span class="step-number">11</span> Search by City or Zip</h3>
+<p>Use the <strong>search box</strong> in the left rail to search for specific cities, states, or zip codes. The map will filter to show matching records.</p>
+
+<hr>
+
+<h3>Using the Data Table</h3>
+
+<h3><span class="step-number">12</span> Open the Data Table</h3>
+<p>Click the <strong>toggle bar</strong> at the bottom of the map area (labeled "Show Data Table" or similar) to expand the data table panel.</p>
+
+<h3><span class="step-number">13</span> Sort and Review Data</h3>
+<p>Click any <strong>column header</strong> to sort the data by that column. The table shows all filtered records with columns for City, State, Zip, Status, Application Type, Housing Interest, Distance, and Band.</p>
+
+<h3><span class="step-number">14</span> Export Table Data</h3>
+<p>Click the <strong>export button</strong> in the table header to download the currently filtered data as a CSV file.</p>
+
+<hr>
+
+<h3>Executive Map Report Export</h3>
+
+<h3><span class="step-number">15</span> Open the Report Builder</h3>
+<p>In the <strong>Export Tools</strong> section of the left rail, click <strong>"Executive Map Report"</strong>.</p>
+
+<h3><span class="step-number">16</span> Configure the Report</h3>
+<ul>
+  <li><strong>Title</strong> – Enter a custom report title or use a preset quick-select button</li>
+  <li><strong>Subtitle</strong> – Optional subtitle for additional context</li>
+  <li><strong>Format</strong> – Choose PNG (high resolution image) or PDF</li>
+  <li><strong>Map View</strong> – Select auto-fit (shows all filtered records), current zoom, or full region</li>
+  <li><strong>Filter Summary</strong> – Toggle whether to include the current filter settings in the report</li>
+</ul>
+
+<h3><span class="step-number">17</span> Generate and Download</h3>
+<p>Click <strong>Generate Report</strong>. The system captures the current map view and generates a polished report with:</p>
+<ul>
+  <li>Header with title and date</li>
+  <li>KPI summary bar</li>
+  <li>Rendered map image</li>
+  <li>Distance band legend</li>
+  <li>Band breakdown percentages</li>
+  <li>Methodology footer</li>
+</ul>
+
+<div class="info-box">
+  <h4>Privacy Note</h4>
+  <p>No personal names or sensitive details are included in the executive report export. It only contains aggregated location data.</p>
+</div>
+
+<hr>
+
+<h3>Direct Mail Export</h3>
+
+<h3><span class="step-number">18</span> Open the Direct Mail Builder</h3>
+<p>In the <strong>Export Tools</strong> section, click <strong>"Direct Mail Export"</strong>. This opens a 3-step workflow.</p>
+
+<h3><span class="step-number">19</span> Step 1 – Define Audience</h3>
+<p>Set your filters to define the mailing audience:</p>
+<ul>
+  <li>Filter by <strong>state</strong>, <strong>distance band</strong>, <strong>status</strong>, <strong>application type</strong>, <strong>housing interest</strong>, <strong>city</strong>, or <strong>zip code</strong></li>
+  <li>Or use <strong>quick presets</strong>: Washington Only, Out of State, Within 50 Miles, Housing Interested Admits, Current App Filters</li>
+</ul>
+
+<h3><span class="step-number">20</span> Step 2 – Preview &amp; Validate</h3>
+<p>Review the audience before exporting:</p>
+<ul>
+  <li><strong>Audience count</strong> – Total records that will be included</li>
+  <li><strong>Address completeness warnings</strong> – Flags records with missing address data</li>
+  <li><strong>State abbreviation checks</strong> – Validates state formats</li>
+  <li><strong>Zip format validation</strong> – Checks zip code formatting</li>
+  <li><strong>Preview table</strong> – See a sample of the output data</li>
+</ul>
+
+<h3><span class="step-number">21</span> Step 3 – Export</h3>
+<p>Choose your export format and options:</p>
+<ul>
+  <li><strong>Format</strong> – CSV or Excel (.xlsx)</li>
+  <li><strong>PO Box exclusion</strong> – Option to exclude PO Box addresses</li>
+  <li><strong>Address deduplication</strong> – Remove duplicate addresses</li>
+  <li><strong>Capitalization normalization</strong> – Standardize name/address casing</li>
+  <li><strong>Name inclusion</strong> – Names are excluded by default for privacy; toggle on if needed</li>
+</ul>
+<p>The Excel export includes two sheets: <strong>Mailing List</strong> (vendor-ready rows with frozen headers) and <strong>Export Summary</strong> (segment metadata, filter details, band breakdown).</p>
+
+<hr>
+
+<h3>Refreshing the Dataset</h3>
+
+<h3><span class="step-number">22</span> Obtain Updated Excel File</h3>
+<p>Get the latest admit list Excel file from the university (e.g., <code>ALL Admits for Autumn 2026_as of 3_13_2026.xlsx</code>).</p>
+
+<h3><span class="step-number">23</span> Pre-process the Data (Admin / Developer)</h3>
+<p>The data must be geocoded before use. An administrator runs:</p>
+<pre><code>cd RV
+node geocode.js "New_File_Name.xlsx"</code></pre>
+<ul>
+  <li>The script reads the Excel file and geocodes student addresses</li>
+  <li><strong>Primary method:</strong> US zip code centroid lookup (instant, no API calls)</li>
+  <li><strong>Fallback:</strong> OpenStreetMap Nominatim API for international/unknown locations</li>
+  <li>Results are cached in <code>geocode-cache.json</code> — subsequent runs use cached results for known locations</li>
+  <li>Output is saved to <code>data.json</code></li>
+</ul>
+
+<h3><span class="step-number">24</span> Refresh the Browser</h3>
+<p>After the data is preprocessed, refresh the browser to see the updated map with new data.</p>
+
+<!-- ==================== SECTION 4 ==================== -->
+<h2>Section 4 – Expected Result</h2>
+
+<div class="info-box success">
+  <h4>Expected Outcome</h4>
+  <ul>
+    <li>An <strong>interactive map</strong> displaying all admitted students as color-coded markers by distance band</li>
+    <li><strong>Real-time KPI cards</strong> updating as filters are applied, showing counts per distance band</li>
+    <li><strong>Filterable views</strong> by status, application type, housing interest, distance band, and search</li>
+    <li><strong>Sortable data table</strong> with all filtered records for detailed review</li>
+    <li><strong>Polished executive reports</strong> (PNG or PDF) ready for presentations</li>
+    <li><strong>Vendor-ready mailing lists</strong> (CSV or Excel) for direct mail campaigns with address validation</li>
+  </ul>
+</div>
+
+<!-- ==================== SECTION 5 ==================== -->
+<h2>Section 5 – Best Practices</h2>
+
+<div class="info-box">
+  <h4>Recommendations</h4>
+  <ul>
+    <li><strong>Update data weekly</strong> – Re-run the geocoding script each time you receive an updated admit list to keep the map current</li>
+    <li><strong>Use the Housing Interest filter</strong> – Focus on students who have expressed interest in campus housing for the most relevant outreach targets</li>
+    <li><strong>Check the data quality indicator</strong> – The left rail shows a warning if records have missing/invalid addresses that couldn't be geocoded</li>
+    <li><strong>Use distance band filters for targeted campaigns</strong> – Filter to 100+ miles for out-of-state mailing campaigns, or 0–10 miles for local event invitations</li>
+    <li><strong>Use quick presets for Direct Mail</strong> – The preset buttons (Washington Only, Out of State, etc.) save time and reduce errors</li>
+    <li><strong>Always preview before exporting mailing lists</strong> – Check the address completeness and validation warnings in Step 2 before generating the final file</li>
+    <li><strong>Exclude names by default in exports</strong> – For privacy, keep name inclusion toggled off unless specifically required by the mail vendor</li>
+    <li><strong>Use Executive Map Reports for stakeholder presentations</strong> – The auto-generated report includes all the KPIs, legend, and methodology without any PII</li>
+    <li><strong>Zoom into specific areas on the map</strong> – Click clusters to drill down into high-density areas before generating a report for that region</li>
+    <li><strong>Export the data table for custom analysis</strong> – Download the CSV from the data table for further analysis in Excel or Google Sheets</li>
+  </ul>
+</div>
+
+<!-- ==================== DATA PRIVACY ==================== -->
+<h2>Data Privacy &amp; Security</h2>
+
+<div class="info-box warning">
+  <h4>Important Privacy Information</h4>
+  <ul>
+    <li><strong>No personal names or emails</strong> are displayed in the map interface or popups</li>
+    <li><strong>Only aggregated location data</strong> (city, state, zip) is shown on the map</li>
+    <li><strong>The data.json file strips all PII</strong> from the source Excel file</li>
+    <li><strong>Executive reports contain no PII</strong> – Only aggregated statistics and map views</li>
+    <li><strong>Direct mail exports exclude names by default</strong> – Names can be opted in if explicitly needed</li>
+    <li><strong>Authentication required</strong> – Users must be logged into the Marketing Hub to access the tool</li>
+  </ul>
+</div>
+
+<!-- ==================== TECHNICAL REFERENCE ==================== -->
+<h2>Technical Reference</h2>
+
+<h3>Geocoding &amp; Distance Calculation</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Aspect</th>
+      <th>Details</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Origin Point</td>
+      <td>17927 113th Ave NE, Bothell, WA 98011 (lat: 47.7596, lng: -122.1892)</td>
+    </tr>
+    <tr>
+      <td>Distance Method</td>
+      <td>Haversine formula (straight-line / great-circle distance)</td>
+    </tr>
+    <tr>
+      <td>Primary Geocoding</td>
+      <td>US zip code centroid lookup via <code>zipcodes</code> npm package (instant)</td>
+    </tr>
+    <tr>
+      <td>Fallback Geocoding</td>
+      <td>OpenStreetMap Nominatim API (rate-limited 1 req/sec)</td>
+    </tr>
+    <tr>
+      <td>Fallback Chain</td>
+      <td>Full address → City + State → Zip code alone → State alone</td>
+    </tr>
+    <tr>
+      <td>Caching</td>
+      <td><code>geocode-cache.json</code> (server) + <code>localStorage</code> (browser)</td>
+    </tr>
+    <tr>
+      <td>Deduplication</td>
+      <td>Records with identical Status + App Type + Street + City + State + Zip are flagged</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Key Fields from Excel</h3>
+<p>The tool reads and uses these columns from the source Excel file:</p>
+<ul>
+  <li><code>Status</code> – Student admission status</li>
+  <li><code>Application Type</code> – Type of application (Freshman, Transfer, etc.)</li>
+  <li><code>Street 1</code>, <code>Street 2</code> – Address lines</li>
+  <li><code>City</code>, <code>State</code>, <code>ZipCode</code> – Location data</li>
+  <li><code>Interested in Campus Housing?</code> – Housing interest flag</li>
+</ul>
+
+<h3>File Structure</h3>
+<table>
+  <thead>
+    <tr>
+      <th>File</th>
+      <th>Purpose</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><code>RV/index.html</code></td><td>Main interactive web application</td></tr>
+    <tr><td><code>RV/geocode.js</code></td><td>Node.js data preprocessor (geocoding script)</td></tr>
+    <tr><td><code>RV/data.json</code></td><td>Pre-processed geocoded data (generated by geocode.js)</td></tr>
+    <tr><td><code>RV/geocode-cache.json</code></td><td>Geocoding cache for instant re-runs</td></tr>
+    <tr><td><code>custom_tools.html</code></td><td>Custom Tools page where the tool is listed</td></tr>
+  </tbody>
+</table>
+
+<h3>Browser Dependencies (loaded via CDN)</h3>
+<ul>
+  <li><strong>Leaflet.js</strong> – Interactive mapping</li>
+  <li><strong>Leaflet.markercluster</strong> – Marker clustering for performance</li>
+  <li><strong>SheetJS</strong> – Client-side Excel parsing for file re-uploads and XLSX export</li>
+  <li><strong>html2canvas</strong> – Map/layout capture for PNG export</li>
+  <li><strong>jsPDF</strong> – PDF document generation</li>
+</ul>
+
+<!-- ==================== TROUBLESHOOTING ==================== -->
+<h2>Troubleshooting</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Issue</th>
+      <th>Solution</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Map shows no markers</td>
+      <td>Ensure <code>data.json</code> exists in the RV directory. Run <code>node geocode.js</code> if needed. Check that filters aren't excluding all records.</td>
+    </tr>
+    <tr>
+      <td>Some students missing from map</td>
+      <td>Check the data quality warning in the sidebar. Students with missing/invalid addresses that couldn't be geocoded won't appear on the map but are still counted in totals.</td>
+    </tr>
+    <tr>
+      <td>Tool won't load</td>
+      <td>Ensure you're logged into the Marketing Hub. Check browser console for errors. Try refreshing the page.</td>
+    </tr>
+    <tr>
+      <td>Executive report is blank</td>
+      <td>Ensure map tiles have fully loaded before generating. Wait a few seconds after the map renders.</td>
+    </tr>
+    <tr>
+      <td>Direct mail export has missing addresses</td>
+      <td>Check the validation warnings in Step 2 of the export builder. Some records may have incomplete address data in the source file.</td>
+    </tr>
+    <tr>
+      <td>Distance seems wrong</td>
+      <td>Distance is calculated as straight-line (great-circle), not driving distance. Zip code centroids represent the geographic center of the zip code area, not the exact address.</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr>
+
+<p><em>Document: UW Bothell Residential Village – SOP: Admit Radius Map Tool</em></p>
+<p><em>System: Marketing Hub – Custom Tools &nbsp;|&nbsp; Department: Leasing / Marketing &nbsp;|&nbsp; Last Updated: March 2026</em></p>
+
+</div>
+
+</body>
+</html>

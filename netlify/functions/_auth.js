@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { getDb } from './_db.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
-const JWT_EXPIRES = process.env.JWT_EXPIRES || '8h';
+const JWT_EXPIRES = process.env.JWT_EXPIRES || '12h';
 
 export async function findUser(username){
   const db = await getDb();

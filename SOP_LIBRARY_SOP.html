@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SOP: How the SOP Library Works</title>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    @page { size: letter; margin: 0.75in; }
+    @media print {
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .cover-page { page-break-after: always; }
+      .content-page { padding: 0; }
+      .no-print { display: none !important; }
+    }
+
+    :root {
+      --brand-primary: #446472;
+      --brand-accent: #ffb732;
+      --brand-accent-2: #52d5ff;
+      --border: #e2e8f0;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Open Sans', system-ui, -apple-system, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #1e293b;
+      background: #fff;
+    }
+
+    /* ===== COVER PAGE ===== */
+    .cover-page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 40px;
+    }
+    .cover-header {
+      text-align: right;
+      font-style: italic;
+      color: #666;
+      font-size: 12px;
+    }
+    .cover-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 80px 40px;
+    }
+    .cover-property {
+      font-size: 36px;
+      font-weight: 800;
+      color: #446472;
+      margin: 0 0 12px 0;
+      font-family: Roboto, Arial, sans-serif;
+    }
+    .cover-type {
+      font-size: 20px;
+      color: #666;
+      margin: 0 0 24px 0;
+    }
+    .cover-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #111827;
+      margin: 0 0 32px 0;
+    }
+    .cover-meta {
+      font-size: 13px;
+      font-style: italic;
+      color: #666;
+      margin: 4px 0;
+    }
+    .cover-footer {
+      text-align: center;
+      font-size: 11px;
+      color: #888;
+      padding-top: 16px;
+      border-top: 1px solid #ccc;
+    }
+
+    /* ===== CONTENT PAGE ===== */
+    .content-page {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px;
+    }
+
+    /* ===== PRINT BUTTON ===== */
+    .print-bar {
+      position: sticky;
+      top: 0;
+      background: #446472;
+      color: #fff;
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 10;
+    }
+    .print-bar button {
+      background: #ffb732;
+      color: #111;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 20px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .print-bar button:hover { background: #e6a52d; }
+    .print-bar span { font-size: 13px; }
+
+    /* ===== TYPOGRAPHY (matches sop_library.html content-wrapper) ===== */
+    h1 {
+      font-size: 32px;
+      color: #111827;
+      margin: 0 0 16px;
+      font-weight: 800;
+      font-family: Roboto, Arial, sans-serif;
+      line-height: 1.2;
+    }
+    h2 {
+      font-size: 24px;
+      color: #111827;
+      margin: 32px 0 16px;
+      font-weight: 700;
+      font-family: Roboto, Arial, sans-serif;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 12px;
+    }
+    h3 {
+      font-size: 18px;
+      color: #374151;
+      margin: 24px 0 12px;
+      font-weight: 700;
+      font-family: Roboto, Arial, sans-serif;
+    }
+    h4 {
+      font-size: 16px;
+      color: #4b5563;
+      margin: 20px 0 10px;
+      font-weight: 700;
+      font-family: Roboto, Arial, sans-serif;
+    }
+    p { margin: 12px 0; line-height: 1.7; color: #374151; }
+    ul, ol { margin: 12px 0 12px 28px; line-height: 1.8; color: #374151; }
+    li { margin: 8px 0; }
+    ul ul, ol ol { margin: 8px 0 8px 24px; }
+    strong { color: #111827; font-weight: 700; }
+    em { font-style: italic; }
+    code {
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 13px;
+      color: #be123c;
+      font-family: 'Courier New', monospace;
+    }
+    pre {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      overflow-x: auto;
+      margin: 16px 0;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    pre code { background: none; border: none; padding: 0; color: #111827; }
+    blockquote {
+      border-left: 4px solid var(--brand-accent-2);
+      padding-left: 20px;
+      margin: 20px 0;
+      color: #64748b;
+      font-style: italic;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 13px;
+    }
+    table th {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      padding: 12px;
+      text-align: left;
+      font-weight: 700;
+      color: #111827;
+    }
+    table td {
+      border: 1px solid var(--border);
+      padding: 12px;
+      color: #374151;
+    }
+    table tr:nth-child(even) { background: #fafbfc; }
+    hr { border: none; border-top: 2px solid var(--border); margin: 32px 0; }
+    a { color: var(--brand-accent-2); text-decoration: none; font-weight: 600; }
+    a:hover { text-decoration: underline; }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      margin: 4px 4px 4px 0;
+    }
+    .badge.category { background: rgba(82,213,255,.15); color: #0b5d7a; border: 1px solid rgba(82,213,255,.35); }
+    .badge.department { background: rgba(255,183,50,.15); color: #8a5800; border: 1px solid rgba(255,183,50,.40); }
+    .badge.company-badge { background: rgba(82,213,255,.12); color: #0b5d7a; border: 1px solid rgba(82,213,255,.30); }
+    .badge.site-badge { background: rgba(255,183,50,.12); color: #8a5800; border: 1px solid rgba(255,183,50,.35); }
+
+    /* Info Box */
+    .info-box {
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 20px 0;
+    }
+    .info-box.warning { background: #fffbeb; border-color: #fde68a; }
+    .info-box.success { background: #f0fdf4; border-color: #bbf7d0; }
+    .info-box h4 { margin: 0 0 8px; color: #111827; }
+
+    /* Step Numbers */
+    .step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: var(--brand-accent-2);
+      color: #0b1b24;
+      border-radius: 50%;
+      font-weight: 700;
+      font-size: 14px;
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Print Bar -->
+<div class="print-bar no-print">
+  <button onclick="window.print()">Save as PDF / Print</button>
+  <span>Open this file in your browser, then click the button or press Ctrl+P to save as PDF.</span>
+</div>
+
+<!-- ===== COVER PAGE ===== -->
+<div class="cover-page">
+  <div class="cover-header">Capstone Management Partners – SOP Library</div>
+  <div class="cover-content">
+    <div class="cover-property">Capstone Management Partners</div>
+    <div class="cover-type">Standard Operating Procedure</div>
+    <div class="cover-title">SOP Library – How It Works &amp; How to Add SOPs</div>
+    <div class="cover-meta">System: Marketing Hub Web Application</div>
+    <div class="cover-meta">Department: All Staff / Administration</div>
+    <div class="cover-meta">Date: March 20, 2026</div>
+  </div>
+  <div class="cover-footer">Confidential – Internal Use Only</div>
+</div>
+
+<!-- ===== CONTENT ===== -->
+<div class="content-page">
+
+<h1>SOP Library – How It Works &amp; How to Add SOPs</h1>
+
+<p>
+  <span class="badge category">Administration</span>
+  <span class="badge department">All Staff</span>
+</p>
+
+<p><strong>System:</strong> Marketing Hub Web Application &nbsp;|&nbsp; <strong>Location:</strong> sop_library.html</p>
+
+<!-- ==================== SECTION 1 ==================== -->
+<h2>Section 1 – Purpose</h2>
+
+<p>This Standard Operating Procedure documents how the <strong>SOP Library</strong> works within the Capstone Management Partners Marketing Hub. It covers the system architecture, how SOPs are organized and displayed, and provides step-by-step instructions for creating, editing, and managing SOPs.</p>
+
+<p>The SOP Library is a web-based document management system that stores Standard Operating Procedures in a MongoDB database and presents them through a clean, searchable interface.</p>
+
+<!-- ==================== SECTION 2 ==================== -->
+<h2>Section 2 – When to Use This Process</h2>
+
+<p>Refer to this document when you need to:</p>
+<ul>
+  <li><strong>Create a new SOP</strong> for a company-wide or site-specific procedure</li>
+  <li><strong>Edit an existing SOP</strong> to update steps, add training videos, or correct information</li>
+  <li><strong>Understand how SOPs are organized</strong> (types, categories, visibility)</li>
+  <li><strong>Share an SOP</strong> with a team member via a direct link</li>
+  <li><strong>Export an SOP</strong> to Word or PDF format</li>
+  <li><strong>Troubleshoot</strong> why an SOP isn't visible to certain users</li>
+</ul>
+
+<!-- ==================== SOP TYPES ==================== -->
+<h2>Understanding SOP Types</h2>
+
+<p>There are <strong>two types</strong> of SOPs in the system:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Who Can See It</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="badge company-badge">Company-wide</span></td>
+      <td>Capstone company-wide SOPs that apply across all properties</td>
+      <td><strong>All</strong> authenticated users</td>
+    </tr>
+    <tr>
+      <td><span class="badge site-badge">Site Specific</span></td>
+      <td>SOPs created for a specific property</td>
+      <td>Only users <strong>assigned to that property</strong> (admins see all)</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="info-box">
+  <h4>Sidebar Organization</h4>
+  <ul>
+    <li>Company-wide SOPs appear under a <strong style="color:#0b5d7a">blue dot</strong> section labeled "Capstone Company-wide SOP"</li>
+    <li>Site-specific SOPs appear under a <strong style="color:#8a5800">gold dot</strong> section labeled "Site Specific SOP"</li>
+    <li>Within each section, SOPs are grouped by <strong>Category</strong> (e.g., Leasing, Operations)</li>
+    <li>Categories are collapsible – click the section title to expand/collapse</li>
+  </ul>
+</div>
+
+<!-- ==================== ACCESS CONTROL ==================== -->
+<h2>Access Control</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Action</th>
+      <th>Admin</th>
+      <th>Regular User</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>View company-wide SOPs</td><td>&#10003;</td><td>&#10003;</td></tr>
+    <tr><td>View site SOPs (own properties)</td><td>&#10003;</td><td>&#10003;</td></tr>
+    <tr><td>View site SOPs (all properties)</td><td>&#10003;</td><td>&#10007;</td></tr>
+    <tr><td>Create SOPs</td><td>&#10003;</td><td>&#10007;</td></tr>
+    <tr><td>Edit SOPs</td><td>&#10003;</td><td>&#10007;</td></tr>
+    <tr><td>Delete SOPs</td><td>&#10003;</td><td>&#10007;</td></tr>
+    <tr><td>Copy shareable link</td><td>&#10003;</td><td>&#10003;</td></tr>
+    <tr><td>Export Word / PDF</td><td>&#10003;</td><td>&#10003;</td></tr>
+    <tr><td>Site selector filter</td><td>&#10003;</td><td>&#10007;</td></tr>
+  </tbody>
+</table>
+
+<!-- ==================== SECTION 3 ==================== -->
+<h2>Section 3 – Step-by-Step Instructions</h2>
+
+<h3>Creating a New SOP</h3>
+
+<h3><span class="step-number">1</span> Log In &amp; Navigate to the SOP Library</h3>
+<p>Open your browser and go to the SOP Library page. Log in with your admin credentials. You must have <strong>admin</strong> role to create SOPs.</p>
+
+<h3><span class="step-number">2</span> Click "+ Create New SOP"</h3>
+<p>At the bottom of the left sidebar, click the <strong>"+ Create New SOP"</strong> button. This opens the creation form modal.</p>
+
+<h3><span class="step-number">3</span> Fill Out the SOP Information Section</h3>
+<ul>
+  <li><strong>SOP Title</strong> (required) – A clear, descriptive name for the procedure</li>
+  <li><strong>SOP Type</strong> – Choose <code>Capstone Company-wide</code> or <code>Site Specific</code></li>
+  <li><strong>Property</strong> – Only appears if "Site Specific" is selected; choose the property from the dropdown</li>
+  <li><strong>System</strong> – Select from presets or choose "Other" to type a custom name</li>
+  <li><strong>Category</strong> – Select from presets or choose "Other" to type a custom name</li>
+  <li><strong>Department</strong> – Select from presets or choose "Third-Party Vendor" for custom</li>
+</ul>
+
+<div class="info-box">
+  <h4>Available Preset Options</h4>
+  <p><strong>Systems:</strong> Entrata, Gmail, EZOS, Microsoft, Teams, Canva, Instagram, Facebook, TikTok</p>
+  <p><strong>Categories:</strong> Leasing, Operations, Maintenance, Accounting</p>
+  <p><strong>Departments:</strong> Office Staff, Leasing Staff, Maintenance Team, University Partner</p>
+</div>
+
+<h3><span class="step-number">4</span> Add a Training Video or Image (Optional)</h3>
+<p>Paste a URL into the <strong>Training Video or Image</strong> field. The system automatically detects the URL type and embeds it appropriately.</p>
+<ul>
+  <li><strong>YouTube</strong> – Embeds as an iframe video player</li>
+  <li><strong>Loom</strong> – Embeds as an iframe video player</li>
+  <li><strong>Vimeo</strong> – Embeds as an iframe video player</li>
+  <li><strong>Google Drive</strong> – Embeds as a preview iframe</li>
+  <li><strong>Direct image URL</strong> (.jpg, .png, .gif, .webp) – Displays the image inline</li>
+  <li><strong>Direct video URL</strong> (.mp4, .webm, .mov) – Embeds a native video player</li>
+  <li><strong>Other URLs</strong> – Displayed as a clickable link in an info box</li>
+</ul>
+
+<h3><span class="step-number">5</span> Write Section 1 – Purpose</h3>
+<p>Describe <strong>why</strong> this SOP exists. This should explain the goal of the procedure in 1–3 sentences.</p>
+<p><em>Example: "This Standard Operating Procedure outlines the process for sending a Renewal Interview Invitation email to residents who have renewed their lease."</em></p>
+
+<h3><span class="step-number">6</span> Write Section 2 – When to Use This Process</h3>
+<p>Describe the <strong>trigger or scenario</strong> that requires this procedure to be followed.</p>
+<p><em>Example: "This process should be used after a resident renews their lease and needs to receive the Renewal Interview Invitation email."</em></p>
+
+<h3><span class="step-number">7</span> Add Section 3 – Step-by-Step Instructions</h3>
+<p>This is the core of the SOP. Click <strong>"+ Add Step"</strong> to add each step:</p>
+<ul>
+  <li><strong>Step Title</strong> – A short name (e.g., "Log into Entrata")</li>
+  <li><strong>Step Description</strong> – Detailed explanation of what to do</li>
+  <li>Start lines with <code>•</code> or <code>-</code> in the description for <strong>bullet points</strong></li>
+  <li>Steps are <strong>automatically numbered</strong> with styled step-number circles</li>
+  <li>Click the <strong>&times;</strong> button on any step card to remove it</li>
+  <li>Steps appear in the order you add them</li>
+</ul>
+
+<h3><span class="step-number">8</span> Write Section 4 – Expected Results (Optional)</h3>
+<p>Describe what should happen after all steps are completed. This is displayed in a <strong>green success info box</strong>.</p>
+<p><em>Example: "The resident receives the Renewal Interview Invitation email in their inbox."</em></p>
+
+<h3><span class="step-number">9</span> Write Section 5 – Best Practices (Optional)</h3>
+<p>List recommendations and tips. Use <code>•</code> or <code>-</code> at the start of each line for bullet points. This is displayed in a <strong>blue info box</strong>.</p>
+<p><em>Example:</em></p>
+<ul>
+  <li>Always verify the resident has renewed their lease before sending</li>
+  <li>Use the Responses template instead of typing manually</li>
+  <li>Review the email before sending</li>
+</ul>
+
+<h3><span class="step-number">10</span> Click "Save SOP"</h3>
+<p>Click the <strong>"Save SOP"</strong> button at the bottom of the modal. The system will:</p>
+<ul>
+  <li>Validate that a title is provided</li>
+  <li>Validate that a property is selected (if site-specific)</li>
+  <li>Auto-generate the HTML content from all form fields</li>
+  <li>Save the SOP to the database with a timestamp</li>
+  <li>Automatically display the new SOP in the content area</li>
+  <li>Update the sidebar navigation</li>
+</ul>
+
+<hr>
+
+<h3>Editing an Existing SOP</h3>
+
+<h3><span class="step-number">1</span> Navigate to the SOP</h3>
+<p>Use the sidebar to find and click on the SOP you want to edit. Use the search box or browse by category.</p>
+
+<h3><span class="step-number">2</span> Click "Edit" in the Admin Toolbar</h3>
+<p>As an admin, an <strong>admin toolbar</strong> appears above the SOP content showing badges and action buttons. Click <strong>"Edit"</strong>.</p>
+
+<h3><span class="step-number">3</span> Make Your Changes</h3>
+<p>The edit modal opens pre-populated with all existing data. Modify any fields as needed.</p>
+
+<h3><span class="step-number">4</span> Click "Save SOP"</h3>
+<p>The HTML content is regenerated from the updated fields. The <code>updatedAt</code> timestamp is automatically refreshed.</p>
+
+<hr>
+
+<h3>Deleting an SOP</h3>
+
+<h3><span class="step-number">1</span> Navigate to the SOP and Click "Delete"</h3>
+<p>In the admin toolbar, click the <strong>"Delete"</strong> button.</p>
+
+<h3><span class="step-number">2</span> Confirm Deletion</h3>
+<p>A confirmation dialog will appear. Click <strong>OK</strong> to permanently delete the SOP. <strong>This cannot be undone.</strong></p>
+
+<hr>
+
+<h3>Sharing an SOP via Deep Link</h3>
+
+<h3><span class="step-number">1</span> Open the SOP</h3>
+<p>Navigate to the SOP in the sidebar and click on it.</p>
+
+<h3><span class="step-number">2</span> Click "Copy Link"</h3>
+<p>Click the <strong>"Copy Link"</strong> button in the toolbar. A shareable URL is copied to your clipboard in the format:</p>
+<pre><code>https://yoursite.com/sop_library.html?sop=&lt;sop_id&gt;</code></pre>
+
+<h3><span class="step-number">3</span> Share the Link</h3>
+<p>Send the link to a team member. When they open it and log in, the SOP will automatically display.</p>
+
+<hr>
+
+<h3>Exporting an SOP</h3>
+
+<p>Two export options are available from the admin toolbar:</p>
+
+<ul>
+  <li><strong>Export Word</strong> – Downloads a <code>.doc</code> file with a cover page, headers, footers, and full SOP content formatted for Microsoft Word</li>
+  <li><strong>Export PDF</strong> – Opens a new browser window with print-optimized styling and automatically triggers the print dialog (choose "Save as PDF")</li>
+</ul>
+
+<!-- ==================== SECTION 4 ==================== -->
+<h2>Section 4 – Expected Result</h2>
+
+<div class="info-box success">
+  <h4>Expected Outcome</h4>
+  <p>After following this SOP, admins will be able to:</p>
+  <ul>
+    <li>Successfully create new company-wide or site-specific SOPs through the form interface</li>
+    <li>Edit and update existing SOPs with the changes reflected immediately</li>
+    <li>Understand why certain SOPs are visible or hidden for different users</li>
+    <li>Share SOPs via deep links and export them to Word/PDF for offline distribution</li>
+    <li>Regular users will be able to view, search, and export SOPs assigned to their properties</li>
+  </ul>
+</div>
+
+<!-- ==================== SECTION 5 ==================== -->
+<h2>Section 5 – Best Practices</h2>
+
+<div class="info-box">
+  <h4>Recommendations</h4>
+  <ul>
+    <li><strong>Use descriptive titles</strong> – Include the action and context (e.g., "Sending a Renewal Interview Invitation Email" not just "Email Process")</li>
+    <li><strong>Always select a category</strong> – This keeps the sidebar organized and helps users find SOPs quickly</li>
+    <li><strong>Add a training video when possible</strong> – Visual walkthroughs dramatically improve understanding. Loom is great for quick screen recordings.</li>
+    <li><strong>Use bullet points in step descriptions</strong> – Start lines with <code>•</code> or <code>-</code> for sub-items within a step to improve readability</li>
+    <li><strong>Keep steps granular</strong> – Each step should be a single action. If a step has more than 3–4 bullets, consider breaking it into multiple steps.</li>
+    <li><strong>Fill in Expected Results</strong> – This helps the reader confirm they completed the procedure correctly</li>
+    <li><strong>Use Best Practices for tips and warnings</strong> – Common mistakes, things to verify, and edge cases go here</li>
+    <li><strong>Use Site Specific type only when the process differs by property</strong> – If the process is the same across all properties, make it Company-wide</li>
+    <li><strong>Review SOPs periodically</strong> – When software updates or processes change, update the affected SOPs to keep information current</li>
+  </ul>
+</div>
+
+<!-- ==================== PROPERTY GROUPING ==================== -->
+<h2>Property Grouping Reference</h2>
+
+<p>The system groups certain properties together for simplified management. Users assigned to any property in a group will see SOPs for the grouped name.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Individual Property Names</th>
+      <th>Grouped Display Name</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Cerca Apartments, Prisma Apartments, Zuma Apartments</td>
+      <td><strong>Cerca/Prisma/Zuma</strong></td>
+    </tr>
+    <tr>
+      <td>Stateside Apartments, Monte Apartments</td>
+      <td><strong>Stateside/Monte</strong></td>
+    </tr>
+    <tr>
+      <td>Chorro SLO, Palomar SLO</td>
+      <td><strong>Chorro/Palomar</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ==================== SOP DATA STRUCTURE ==================== -->
+<h2>Technical Reference – SOP Data Structure</h2>
+
+<p>Each SOP in the database contains the following fields:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Field</th>
+      <th>Type</th>
+      <th>Required</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><code>sopType</code></td><td><code>'company'</code> | <code>'site'</code></td><td>Yes</td><td>Determines visibility scope</td></tr>
+    <tr><td><code>property</code></td><td>String or null</td><td>If site</td><td>Property name (null for company-wide)</td></tr>
+    <tr><td><code>title</code></td><td>String</td><td>Yes</td><td>SOP title displayed in navigation</td></tr>
+    <tr><td><code>category</code></td><td>String</td><td>No</td><td>Groups SOPs in sidebar</td></tr>
+    <tr><td><code>department</code></td><td>String</td><td>No</td><td>Target department</td></tr>
+    <tr><td><code>system</code></td><td>String</td><td>No</td><td>Software system used</td></tr>
+    <tr><td><code>content</code></td><td>String (HTML)</td><td>Auto</td><td>Auto-generated HTML from form fields</td></tr>
+    <tr><td><code>purpose</code></td><td>String</td><td>No</td><td>Section 1 content</td></tr>
+    <tr><td><code>whenToUse</code></td><td>String</td><td>No</td><td>Section 2 content</td></tr>
+    <tr><td><code>stepsData</code></td><td>Array of objects</td><td>No</td><td>Section 3 steps (title + description each)</td></tr>
+    <tr><td><code>expectedResults</code></td><td>String</td><td>No</td><td>Section 4 content</td></tr>
+    <tr><td><code>bestPractices</code></td><td>String</td><td>No</td><td>Section 5 content</td></tr>
+    <tr><td><code>trainingUrl</code></td><td>String</td><td>No</td><td>Video/image URL for training embed</td></tr>
+    <tr><td><code>createdAt</code></td><td>Date</td><td>Auto</td><td>Timestamp when created</td></tr>
+    <tr><td><code>updatedAt</code></td><td>Date</td><td>Auto</td><td>Timestamp when last updated</td></tr>
+  </tbody>
+</table>
+
+<!-- ==================== API REFERENCE ==================== -->
+<h2>Technical Reference – API Endpoints</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Method</th>
+      <th>Endpoint</th>
+      <th>Description</th>
+      <th>Auth</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><code>GET</code></td><td><code>/api/sops</code></td><td>List all accessible SOPs</td><td>Any user</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/sops?id=X</code></td><td>Get single SOP by ID</td><td>Any user</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/sops?sopType=company</code></td><td>List company-wide SOPs only</td><td>Any user</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/sops?sopType=site&amp;property=X</code></td><td>List site SOPs for property</td><td>Any user</td></tr>
+    <tr><td><code>POST</code></td><td><code>/api/sops</code></td><td>Create new SOP</td><td>Admin only</td></tr>
+    <tr><td><code>PUT</code></td><td><code>/api/sops</code></td><td>Update SOP (requires <code>id</code> in body)</td><td>Admin only</td></tr>
+    <tr><td><code>DELETE</code></td><td><code>/api/sops</code></td><td>Delete SOP (requires <code>id</code> in body)</td><td>Admin only</td></tr>
+  </tbody>
+</table>
+
+<!-- ==================== FILE LOCATIONS ==================== -->
+<h2>Technical Reference – File Locations</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>File</th>
+      <th>Purpose</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><code>sop_library.html</code></td><td>Main SOP Library page (UI + all client-side logic)</td></tr>
+    <tr><td><code>netlify/functions/sops.js</code></td><td>Backend API for CRUD operations on SOPs</td></tr>
+    <tr><td><code>netlify/functions/_auth.js</code></td><td>Authentication helper used by the API</td></tr>
+    <tr><td><code>netlify/functions/_db.js</code></td><td>MongoDB connection helper</td></tr>
+  </tbody>
+</table>
+
+<hr>
+
+<p><em>Document: Capstone Management Partners – SOP: SOP Library – How It Works &amp; How to Add SOPs</em></p>
+<p><em>System: Marketing Hub &nbsp;|&nbsp; Department: All Staff / Administration &nbsp;|&nbsp; Last Updated: March 2026</em></p>
+
+</div>
+
+</body>
+</html>

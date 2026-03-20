@@ -712,5 +712,9 @@
       await initAuth();
     })();
   </script>
+<script>
+/* Inactivity Auto-Logout (12h) */
+(function(){var T=12*60*60*1000,K='mmp_last_activity';function u(){try{localStorage.setItem(K,Date.now().toString())}catch(e){}}function c(){try{var l=parseInt(localStorage.getItem(K)||'0',10);if(l&&(Date.now()-l)>T){localStorage.removeItem(K);fetch('/api/auth-logout',{method:'POST',credentials:'include'}).catch(function(){});window.location.href='index.html';}}catch(e){}}u();['mousedown','keydown','scroll','touchstart'].forEach(function(e){document.addEventListener(e,u,{passive:true})});setInterval(c,60000);c()})();
+</script>
 </body>
 </html>

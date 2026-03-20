@@ -216,3 +216,45 @@
   // Run initialization
   init();
 })();
+
+/**
+ * Inactivity Auto-Logout (12 hours)
+ * Tracks user activity across all pages via localStorage.
+ * If no activity for 12 hours, redirects to login.
+ */
+(function() {
+  'use strict';
+  var INACTIVITY_MS = 12 * 60 * 60 * 1000; // 12 hours
+  var STORAGE_KEY = 'mmp_last_activity';
+  var CHECK_INTERVAL = 60 * 1000; // check every 60 seconds
+
+  function updateActivity() {
+    try { localStorage.setItem(STORAGE_KEY, Date.now().toString()); } catch(e) {}
+  }
+
+  function checkInactivity() {
+    try {
+      var last = parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10);
+      if (last && (Date.now() - last) > INACTIVITY_MS) {
+        localStorage.removeItem(STORAGE_KEY);
+        fetch('/api/auth-logout', { method: 'POST', credentials: 'include' }).catch(function(){});
+        window.location.href = (window.location.pathname.indexOf('/') > 0 ? '../' : '') + 'index.html';
+      }
+    } catch(e) {}
+  }
+
+  // Skip on login page
+  if (/index\.html$/.test(window.location.pathname) || window.location.pathname === '/') return;
+
+  // Record activity on user interactions
+  updateActivity();
+  ['mousedown', 'keydown', 'scroll', 'touchstart', 'mousemove'].forEach(function(evt) {
+    document.addEventListener(evt, updateActivity, { passive: true });
+  });
+
+  // Periodically check for inactivity
+  setInterval(checkInactivity, CHECK_INTERVAL);
+
+  // Also check immediately on page load (catches tabs left open)
+  checkInactivity();
+})();
