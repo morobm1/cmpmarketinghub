@@ -297,6 +297,36 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;bac
 
 /* ── EXEC EXPORT CANVAS (hidden, for rendering) ─────── */
 #execExportCanvas{position:fixed;left:-9999px;top:0;z-index:-1;pointer-events:none}
+
+/* ── DATASET DIFF ───────────────────────────────────── */
+.diff-badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px}
+.diff-badge.new{background:#dcfce7;color:#166534}
+.diff-badge.removed{background:#fee2e2;color:#991b1b}
+.diff-badge.unchanged{background:#f1f5f9;color:#64748b}
+.diff-summary{display:flex;gap:12px;margin:12px 0;flex-wrap:wrap}
+.diff-stat{padding:10px 16px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg);text-align:center;min-width:100px}
+.diff-stat .val{font-size:20px;font-weight:800}
+.diff-stat .lbl{font-size:10px;font-weight:600;color:var(--subtext);text-transform:uppercase;margin-top:2px}
+.diff-stat.new-stat .val{color:#22c55e}
+.diff-stat.removed-stat .val{color:#ef4444}
+
+/* ── MAILER HISTORY ─────────────────────────────────── */
+.mailer-card{padding:14px;border-radius:var(--radius);border:1px solid var(--border);background:#fff;margin-bottom:10px;transition:all .15s}
+.mailer-card:hover{border-color:#cbd5e1;box-shadow:var(--shadow-sm)}
+.mailer-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.mailer-card-title{font-size:14px;font-weight:700;color:var(--text)}
+.mailer-card-date{font-size:11px;color:var(--subtext)}
+.mailer-card-meta{display:flex;gap:8px;flex-wrap:wrap;font-size:11px}
+.mailer-card-meta span{padding:2px 8px;border-radius:6px;background:var(--bg);border:1px solid var(--border);font-weight:500}
+.mailer-status-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700}
+.mailer-status-badge.draft{background:#fef3c7;color:#92400e}
+.mailer-status-badge.scheduled{background:#dbeafe;color:#1e40af}
+.mailer-status-badge.sent{background:#dcfce7;color:#166534}
+.mailer-card-actions{display:flex;gap:6px;margin-top:10px}
+.mailer-card-actions button{padding:5px 12px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:11px;font-weight:600;cursor:pointer;color:var(--text);transition:all .15s}
+.mailer-card-actions button:hover{background:#f1f5f9;border-color:#cbd5e1}
+.mailer-overlap-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+.mailer-overlap-tag svg{width:12px;height:12px}
 </style>
 </head>
 <body>
@@ -467,6 +497,13 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;bac
             <div>
               <span>Direct Mail Export</span>
               <span class="btn-desc">Vendor-ready mailing list builder</span>
+            </div>
+          </button>
+          <button class="btn-export" id="openMailerHistory">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l2 2"/><circle cx="12" cy="12" r="10"/></svg>
+            <div>
+              <span>Mailer History &amp; Tracking</span>
+              <span class="btn-desc">View past mailers, send status, overlap</span>
             </div>
           </button>
         </div>
@@ -784,6 +821,92 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;bac
   </div>
 </div>
 
+<!-- ═══ DATASET DIFF MODAL ═══════════════════════════════════════ -->
+<div class="modal-overlay" id="diffModal">
+  <div class="modal wide">
+    <div class="modal-header">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M8 3H3v5M3 16v5h5M21 16v5h-5"/></svg>
+        Dataset Comparison
+      </h2>
+      <button class="modal-close" id="diffClose">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="diff-summary" id="diffSummary"></div>
+      <div id="diffContent" style="font-size:13px;color:var(--subtext)">Upload a new file to see how the dataset has changed.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" id="diffDismiss">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MAILER HISTORY MODAL ════════════════════════════════════ -->
+<div class="modal-overlay" id="mailerHistoryModal">
+  <div class="modal wide">
+    <div class="modal-header">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l2 2"/><circle cx="12" cy="12" r="10"/></svg>
+        Mailer History &amp; Tracking
+      </h2>
+      <button class="modal-close" id="mailerHistClose">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div style="font-size:13px;font-weight:700" id="mailerHistCount">0 mailers generated</div>
+        <div style="display:flex;gap:6px">
+          <input type="text" id="mailerHistSearch" placeholder="Search by segment or address..." style="padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;width:240px">
+          <button class="btn" id="mailerHistClearAll" style="width:auto;padding:7px 14px;font-size:12px;color:#ef4444;border-color:#fecaca">Clear All History</button>
+        </div>
+      </div>
+      <div id="mailerHistList" style="max-height:500px;overflow-y:auto"></div>
+      <div id="mailerHistEmpty" style="text-align:center;padding:40px;color:var(--subtext)">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:0.3;margin-bottom:8px"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg>
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px">No mailers generated yet</div>
+        <div style="font-size:12px">Use the Direct Mail Export Builder to create your first mailing list.</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" id="mailerHistDismiss">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MAILER DETAIL MODAL ═════════════════════════════════════ -->
+<div class="modal-overlay" id="mailerDetailModal">
+  <div class="modal wide">
+    <div class="modal-header">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg>
+        <span id="mailerDetailTitle">Mailer Details</span>
+      </h2>
+      <button class="modal-close" id="mailerDetailClose">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="mailerDetailMeta" style="margin-bottom:16px"></div>
+      <div style="display:flex;gap:10px;margin-bottom:14px;align-items:center">
+        <label style="font-size:12px;font-weight:600">Planned Send Date:</label>
+        <input type="date" id="mailerDetailSendDate" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px">
+        <button class="btn" id="mailerDetailSaveSendDate" style="width:auto;padding:6px 12px;font-size:11px">Save</button>
+        <div style="flex:1"></div>
+        <button class="btn" id="mailerDetailMarkSent" style="width:auto;padding:6px 14px;font-size:11px;background:#dcfce7;color:#166534;border-color:#bbf7d0">Mark as Sent</button>
+      </div>
+      <div style="font-size:12px;font-weight:700;margin-bottom:8px" id="mailerDetailRecordCount"></div>
+      <div class="dm-preview-wrap" style="max-height:350px">
+        <table class="dm-preview-table">
+          <thead><tr id="mailerDetailHead"></tr></thead>
+          <tbody id="mailerDetailBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" id="mailerDetailBack">Back to History</button>
+      <div style="flex:1"></div>
+      <button class="btn" id="mailerDetailReexport" style="width:auto">Re-export CSV</button>
+    </div>
+  </div>
+</div>
+
 <!-- Hidden export render container -->
 <div id="execExportCanvas"></div>
 
@@ -1013,6 +1136,15 @@ async function loadData() {
     const data = await resp.json();
     allRecords = data.records;
     console.log(`Loaded ${allRecords.length} records from data.json`);
+    // Save initial snapshot if none exists (async, non-blocking)
+    (async () => {
+      try {
+        const existing = await getLastSnapshot();
+        if (!existing) {
+          await saveDatasetSnapshot(allRecords, data.meta?.sourceFile || 'data.json');
+        }
+      } catch (e) { console.warn('Initial snapshot save error:', e); }
+    })();
   } catch (e) {
     console.warn('data.json not found, waiting for file upload');
     allRecords = [];
@@ -1077,6 +1209,18 @@ function processExcelFile(file) {
           initFilters();
           applyFilters();
           hideLoading();
+          
+          // Dataset diff tracking (async, non-blocking)
+          (async () => {
+            try {
+              const oldSnap = await getLastSnapshot();
+              const diff = compareDatasets(oldSnap, allRecords);
+              await saveDatasetSnapshot(allRecords, file.name);
+              if (oldSnap) {
+                setTimeout(() => showDiffModal(diff, oldSnap), 300);
+              }
+            } catch (e) { console.warn('Diff tracking error:', e); }
+          })();
         });
     } catch (err) {
       alert('Error reading Excel file: ' + err.message);
@@ -2097,7 +2241,7 @@ function normalizeCase(str) {
   return str.replace(/\w\S*/g, txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
 }
 
-function buildDmPreview() {
+async function buildDmPreview() {
   dmFilteredRecords = getDmFilteredRecords();
   const excludeIncomplete = document.getElementById('dmExcludeIncomplete').checked;
   
@@ -2137,6 +2281,16 @@ function buildDmPreview() {
     warnings.push({ cls: 'info', msg: `${formatNum(excludedCount)} records excluded due to incomplete addresses.` });
   }
 
+  // Check mailer overlap
+  const addressKeys = records.map(r => getRecordKey(r));
+  const overlap = await getMailerOverlap(addressKeys);
+  const overlapCount = Object.keys(overlap).length;
+  if (overlapCount > 0) {
+    const mailerNames = new Set();
+    Object.values(overlap).forEach(list => list.forEach(m => mailerNames.add(m.name)));
+    warnings.push({ cls: 'warn', msg: `${formatNum(overlapCount)} records were already included in previous mailer(s): ${[...mailerNames].join(', ')}. Consider excluding duplicates if you don't want to mail them again.` });
+  }
+
   if (warnings.length === 0) {
     warnings.push({ cls: 'success', msg: 'All records pass validation checks.' });
   }
@@ -2160,11 +2314,16 @@ function buildDmPreview() {
   document.getElementById('dmPreviewCount').textContent = `Showing ${Math.min(records.length, previewLimit)} of ${formatNum(records.length)} records`;
 
   const head = document.getElementById('dmPreviewHead');
-  head.innerHTML = '<th>ID</th><th>Status</th><th>App Type</th><th>City</th><th>State</th><th>Zip</th><th>Street</th><th>Housing</th><th>Band</th><th>Dist</th>';
+  head.innerHTML = '<th>ID</th><th>Status</th><th>App Type</th><th>City</th><th>State</th><th>Zip</th><th>Street</th><th>Housing</th><th>Band</th><th>Dist</th><th>Prior Mailers</th>';
 
   const body = document.getElementById('dmPreviewBody');
-  body.innerHTML = displayRecords.map(r => `
-    <tr>
+  body.innerHTML = displayRecords.map(r => {
+    const key = getRecordKey(r);
+    const priorMailers = overlap[key];
+    const priorHtml = priorMailers ? priorMailers.map(m =>
+      `<span class="mailer-overlap-tag" title="Included in '${escHtml(m.name)}' on ${new Date(m.date).toLocaleDateString()}">${escHtml(m.name)}</span>`
+    ).join(' ') : '<span style="color:#22c55e;font-size:10px;font-weight:600">NEW</span>';
+    return `<tr${priorMailers ? ' style="background:#fffbeb"' : ''}>
       <td>${r.id}</td>
       <td>${r.status}</td>
       <td>${r.appType}</td>
@@ -2175,8 +2334,9 @@ function buildDmPreview() {
       <td>${r.housing}</td>
       <td>${r.band || '—'}</td>
       <td>${r.distance != null ? r.distance.toFixed(1) : '—'}</td>
-    </tr>
-  `).join('');
+      <td>${priorHtml}</td>
+    </tr>`;
+  }).join('');
 
   dmExportRecords = records;
 }
@@ -2234,7 +2394,7 @@ function dmUpdateStepUI() {
   else if (dmCurrentStep === 2) nextBtn.textContent = 'Next: Export Options';
 }
 
-function exportDirectMail(format) {
+async function exportDirectMail(format) {
   const segmentName = document.getElementById('dmSegmentName').value || 'Mail Segment';
   const includeNames = document.getElementById('dmIncludeNames').checked;
   const excludePO = document.getElementById('dmExcludePOBox').checked;
@@ -2299,6 +2459,18 @@ function exportDirectMail(format) {
   } else {
     exportDmXLSX(rows, segmentName, records, exportDate);
   }
+
+  // Save mailer record for history tracking
+  const filterState = {
+    states: getSelectedValues('dmState'),
+    bands: getSelectedValues('dmBand'),
+    statuses: getSelectedValues('dmStatus'),
+    appTypes: getSelectedValues('dmAppType'),
+    housing: document.getElementById('dmHousing').value,
+    city: document.getElementById('dmCity').value,
+    zip: document.getElementById('dmZip').value
+  };
+  await saveMailerRecord(segmentName, filterState, records, format);
 
   // Close modal after export
   document.getElementById('mailBuilderModal').classList.remove('active');
@@ -2384,11 +2556,404 @@ function exportDmXLSX(rows, segmentName, records, exportDate) {
 }
 
 // ══════════════════════════════════════════════════════════════════
+//  API LAYER
+// ══════════════════════════════════════════════════════════════════
+const API_BASE = '/.netlify/functions/rv-data';
+
+async function apiGet(path) {
+  try {
+    const resp = await fetch(`${API_BASE}/${path}`);
+    if (!resp.ok) return null;
+    return await resp.json();
+  } catch (e) { console.warn('API GET error:', e); return null; }
+}
+
+async function apiPost(path, data) {
+  try {
+    const resp = await fetch(`${API_BASE}/${path}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+    });
+    return await resp.json();
+  } catch (e) { console.warn('API POST error:', e); return null; }
+}
+
+async function apiPut(path, data) {
+  try {
+    const resp = await fetch(`${API_BASE}/${path}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+    });
+    return await resp.json();
+  } catch (e) { console.warn('API PUT error:', e); return null; }
+}
+
+async function apiDelete(path) {
+  try {
+    const resp = await fetch(`${API_BASE}/${path}`, { method: 'DELETE' });
+    return await resp.json();
+  } catch (e) { console.warn('API DELETE error:', e); return null; }
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  DATASET DIFF TRACKING
+// ══════════════════════════════════════════════════════════════════
+
+function getRecordKey(r) {
+  return `${(r.street||'').toLowerCase().trim()}|${(r.city||'').toLowerCase().trim()}|${(r.state||'').toLowerCase().trim()}|${(r.zip||'').trim()}`;
+}
+
+function getRecordFingerprint(r) {
+  return { key: getRecordKey(r), status: r.status, appType: r.appType, city: r.city, state: r.state, zip: r.zip, band: r.band };
+}
+
+async function saveDatasetSnapshot(records, filename) {
+  const fingerprints = records.map(getRecordFingerprint);
+  const snapshot = {
+    date: new Date().toISOString(),
+    filename: filename || 'Unknown',
+    recordCount: records.length,
+    fingerprints: fingerprints
+  };
+  await apiPost('snapshots', snapshot);
+  return snapshot;
+}
+
+async function getLastSnapshot() {
+  return await apiGet('snapshots/latest');
+}
+
+async function getAllSnapshots() {
+  return (await apiGet('snapshots')) || [];
+}
+
+function compareDatasets(oldSnap, newRecords) {
+  if (!oldSnap) return { newRecords: newRecords.map(r => ({...r, _diff: 'new'})), removedKeys: [], unchangedCount: 0, newCount: newRecords.length, removedCount: 0 };
+
+  const oldKeys = new Set(oldSnap.fingerprints.map(f => f.key));
+  const newKeyMap = {};
+  newRecords.forEach(r => { newKeyMap[getRecordKey(r)] = r; });
+  const newKeys = new Set(Object.keys(newKeyMap));
+
+  const added = [];
+  const removed = [];
+  let unchanged = 0;
+
+  newKeys.forEach(k => {
+    if (!oldKeys.has(k)) added.push(k);
+    else unchanged++;
+  });
+  oldKeys.forEach(k => {
+    if (!newKeys.has(k)) removed.push(k);
+  });
+
+  // Tag records with diff status
+  newRecords.forEach(r => {
+    const k = getRecordKey(r);
+    r._diff = added.includes(k) ? 'new' : 'unchanged';
+  });
+
+  // Recover removed records info from old snapshot
+  const removedRecords = oldSnap.fingerprints.filter(f => removed.includes(f.key));
+
+  return { newRecords, removedRecords, removedKeys: removed, unchangedCount: unchanged, newCount: added.length, removedCount: removed.length };
+}
+
+function showDiffModal(diff, oldSnap) {
+  const modal = document.getElementById('diffModal');
+  const summary = document.getElementById('diffSummary');
+  const content = document.getElementById('diffContent');
+
+  summary.innerHTML = `
+    <div class="diff-stat"><div class="val">${formatNum(diff.newRecords.length)}</div><div class="lbl">Total Current</div></div>
+    <div class="diff-stat new-stat"><div class="val">+${formatNum(diff.newCount)}</div><div class="lbl">New Records</div></div>
+    <div class="diff-stat removed-stat"><div class="val">-${formatNum(diff.removedCount)}</div><div class="lbl">Removed</div></div>
+    <div class="diff-stat"><div class="val">${formatNum(diff.unchangedCount)}</div><div class="lbl">Unchanged</div></div>
+  `;
+
+  let html = '';
+  if (oldSnap) {
+    html += `<div style="font-size:12px;color:var(--subtext);margin-bottom:14px">Compared to: <strong>${oldSnap.filename}</strong> (${new Date(oldSnap.date).toLocaleDateString()}, ${formatNum(oldSnap.recordCount)} records)</div>`;
+  }
+
+  if (diff.newCount > 0) {
+    const newRecs = diff.newRecords.filter(r => r._diff === 'new').slice(0, 200);
+    html += `<div style="font-size:13px;font-weight:700;margin:12px 0 8px">New Records (${formatNum(diff.newCount)}${diff.newCount > 200 ? ', showing first 200' : ''})</div>`;
+    html += `<div class="dm-preview-wrap" style="max-height:200px"><table class="dm-preview-table"><thead><tr><th>Status</th><th>App Type</th><th>City</th><th>State</th><th>Zip</th><th>Band</th></tr></thead><tbody>`;
+    newRecs.forEach(r => {
+      html += `<tr><td>${r.status}</td><td>${r.appType}</td><td>${r.city}</td><td>${r.state}</td><td>${r.zip}</td><td>${r.band||'—'}</td></tr>`;
+    });
+    html += `</tbody></table></div>`;
+  }
+
+  if (diff.removedCount > 0) {
+    const remRecs = diff.removedRecords.slice(0, 200);
+    html += `<div style="font-size:13px;font-weight:700;margin:16px 0 8px;color:#ef4444">Removed Records (${formatNum(diff.removedCount)}${diff.removedCount > 200 ? ', showing first 200' : ''})</div>`;
+    html += `<div class="dm-preview-wrap" style="max-height:200px"><table class="dm-preview-table"><thead><tr><th>Status</th><th>App Type</th><th>City</th><th>State</th><th>Zip</th><th>Band</th></tr></thead><tbody>`;
+    remRecs.forEach(r => {
+      html += `<tr style="background:#fef2f2"><td>${r.status}</td><td>${r.appType}</td><td>${r.city}</td><td>${r.state}</td><td>${r.zip}</td><td>${r.band||'—'}</td></tr>`;
+    });
+    html += `</tbody></table></div>`;
+  }
+
+  if (diff.newCount === 0 && diff.removedCount === 0) {
+    html += `<div style="text-align:center;padding:20px;color:var(--subtext);font-size:14px;font-weight:600">No changes detected — dataset is identical to the previous upload.</div>`;
+  }
+
+  content.innerHTML = html;
+  modal.classList.add('active');
+}
+
+function initDiffModal() {
+  const modal = document.getElementById('diffModal');
+  document.getElementById('diffClose').addEventListener('click', () => modal.classList.remove('active'));
+  document.getElementById('diffDismiss').addEventListener('click', () => modal.classList.remove('active'));
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  MAILER HISTORY & TRACKING
+// ══════════════════════════════════════════════════════════════════
+// In-memory cache of mailer history (loaded from API)
+let _mailerCache = null;
+
+async function getMailerHistory() {
+  if (_mailerCache) return _mailerCache;
+  const data = await apiGet('mailers');
+  _mailerCache = data || [];
+  return _mailerCache;
+}
+
+function invalidateMailerCache() {
+  _mailerCache = null;
+}
+
+async function saveMailerRecord(segmentName, filters, records, exportFormat) {
+  const addressKeys = records.map(r => getRecordKey(r));
+  const entry = {
+    segmentName: segmentName,
+    createdDate: new Date().toISOString(),
+    plannedSendDate: null,
+    sentDate: null,
+    status: 'draft',
+    exportFormat: exportFormat,
+    recordCount: records.length,
+    addressKeys: addressKeys,
+    filters: filters,
+    records: records.map(r => ({
+      id: r.id, status: r.status, appType: r.appType, city: r.city,
+      state: r.state, zip: r.zip, street: r.street, street2: r.street2,
+      housing: r.housing, band: r.band, distance: r.distance
+    }))
+  };
+  await apiPost('mailers', entry);
+  invalidateMailerCache();
+  return entry;
+}
+
+async function updateMailerRecord(mailerId, updates) {
+  await apiPut(`mailers/${mailerId}`, updates);
+  invalidateMailerCache();
+}
+
+async function deleteMailerRecord(mailerId) {
+  await apiDelete(`mailers/${mailerId}`);
+  invalidateMailerCache();
+}
+
+async function clearAllMailers() {
+  await apiDelete('mailers');
+  invalidateMailerCache();
+}
+
+async function getMailerOverlap(addressKeys) {
+  const history = await getMailerHistory();
+  const overlap = {};
+  const keySet = new Set(addressKeys);
+
+  history.forEach(mailer => {
+    (mailer.addressKeys || []).forEach(k => {
+      if (keySet.has(k)) {
+        if (!overlap[k]) overlap[k] = [];
+        overlap[k].push({ id: mailer.id || mailer._id, name: mailer.segmentName, date: mailer.createdDate, status: mailer.status });
+      }
+    });
+  });
+  return overlap;
+}
+
+function initMailerHistory() {
+  const modal = document.getElementById('mailerHistoryModal');
+  const openBtn = document.getElementById('openMailerHistory');
+  const closeBtn = document.getElementById('mailerHistClose');
+  const dismissBtn = document.getElementById('mailerHistDismiss');
+  const clearBtn = document.getElementById('mailerHistClearAll');
+  const searchInput = document.getElementById('mailerHistSearch');
+
+  openBtn.addEventListener('click', () => { renderMailerHistoryList(); modal.classList.add('active'); });
+  closeBtn.addEventListener('click', () => modal.classList.remove('active'));
+  dismissBtn.addEventListener('click', () => modal.classList.remove('active'));
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
+
+  clearBtn.addEventListener('click', async () => {
+    if (confirm('Clear all mailer history? This cannot be undone.')) {
+      await clearAllMailers();
+      renderMailerHistoryList();
+    }
+  });
+
+  searchInput.addEventListener('input', debounce(() => renderMailerHistoryList(searchInput.value.toLowerCase().trim()), 200));
+
+  // Detail modal
+  const detailModal = document.getElementById('mailerDetailModal');
+  document.getElementById('mailerDetailClose').addEventListener('click', () => detailModal.classList.remove('active'));
+  document.getElementById('mailerDetailBack').addEventListener('click', () => { detailModal.classList.remove('active'); modal.classList.add('active'); });
+  detailModal.addEventListener('click', (e) => { if (e.target === detailModal) detailModal.classList.remove('active'); });
+}
+
+async function renderMailerHistoryList(searchQ) {
+  const history = await getMailerHistory();
+  const listEl = document.getElementById('mailerHistList');
+  const emptyEl = document.getElementById('mailerHistEmpty');
+  const countEl = document.getElementById('mailerHistCount');
+
+  let filtered = [...history].reverse();
+  if (searchQ) {
+    filtered = filtered.filter(m =>
+      m.segmentName.toLowerCase().includes(searchQ) ||
+      m.records.some(r => `${r.street} ${r.city} ${r.state} ${r.zip}`.toLowerCase().includes(searchQ))
+    );
+  }
+
+  countEl.textContent = `${filtered.length} mailer${filtered.length !== 1 ? 's' : ''} generated`;
+
+  if (filtered.length === 0) {
+    listEl.style.display = 'none';
+    emptyEl.style.display = searchQ ? 'none' : '';
+    if (searchQ) listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--subtext)">No results found.</div>';
+    return;
+  }
+
+  emptyEl.style.display = 'none';
+  listEl.style.display = '';
+
+  listEl.innerHTML = filtered.map(m => {
+    const statusCls = m.status === 'sent' ? 'sent' : m.plannedSendDate ? 'scheduled' : 'draft';
+    const statusLabel = m.status === 'sent' ? 'Sent' : m.plannedSendDate ? 'Scheduled' : 'Draft';
+    const dateStr = new Date(m.createdDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const sendStr = m.plannedSendDate ? new Date(m.plannedSendDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—';
+    const sentStr = m.sentDate ? new Date(m.sentDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+
+    const mid = m._id || m.id;
+    return `<div class="mailer-card" data-id="${mid}">
+      <div class="mailer-card-header">
+        <div>
+          <div class="mailer-card-title">${escHtml(m.segmentName)}</div>
+          <div class="mailer-card-date">Created ${dateStr}</div>
+        </div>
+        <span class="mailer-status-badge ${statusCls}">${statusLabel}</span>
+      </div>
+      <div class="mailer-card-meta">
+        <span>${formatNum(m.recordCount)} records</span>
+        <span>Format: ${(m.exportFormat||'csv').toUpperCase()}</span>
+        <span>Send: ${sendStr}</span>
+        ${sentStr ? `<span>Sent: ${sentStr}</span>` : ''}
+      </div>
+      <div class="mailer-card-actions">
+        <button onclick="openMailerDetail('${mid}')">View Details</button>
+        <button onclick="reexportMailer('${mid}')">Re-export</button>
+        <button onclick="deleteMailer('${mid}')" style="color:#ef4444">Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function openMailerDetail(mailerId) {
+  const history = await getMailerHistory();
+  const mailer = history.find(m => String(m._id || m.id) === String(mailerId));
+  if (!mailer) return;
+
+  document.getElementById('mailerHistoryModal').classList.remove('active');
+  const modal = document.getElementById('mailerDetailModal');
+  modal.classList.add('active');
+
+  document.getElementById('mailerDetailTitle').textContent = mailer.segmentName;
+  document.getElementById('mailerDetailSendDate').value = mailer.plannedSendDate || '';
+
+  const dateStr = new Date(mailer.createdDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  document.getElementById('mailerDetailMeta').innerHTML = `
+    <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--subtext)">
+      <span>Created: <strong>${dateStr}</strong></span>
+      <span>Records: <strong>${formatNum(mailer.recordCount)}</strong></span>
+      <span>Format: <strong>${mailer.exportFormat.toUpperCase()}</strong></span>
+      <span>Status: <span class="mailer-status-badge ${mailer.status === 'sent' ? 'sent' : mailer.plannedSendDate ? 'scheduled' : 'draft'}">${mailer.status === 'sent' ? 'Sent' : mailer.plannedSendDate ? 'Scheduled' : 'Draft'}</span></span>
+    </div>
+  `;
+
+  document.getElementById('mailerDetailRecordCount').textContent = `${formatNum(mailer.records.length)} records in this mailer`;
+
+  // Render table
+  const head = document.getElementById('mailerDetailHead');
+  head.innerHTML = '<th>ID</th><th>Status</th><th>App Type</th><th>Street</th><th>City</th><th>State</th><th>Zip</th><th>Band</th>';
+
+  const body = document.getElementById('mailerDetailBody');
+  const displayRecs = mailer.records.slice(0, 200);
+  body.innerHTML = displayRecs.map(r => `
+    <tr>
+      <td>${r.id}</td><td>${r.status}</td><td>${r.appType}</td>
+      <td>${r.street || '—'}</td><td>${r.city}</td><td>${r.state}</td><td>${r.zip}</td><td>${r.band || '—'}</td>
+    </tr>
+  `).join('');
+
+  // Save send date
+  document.getElementById('mailerDetailSaveSendDate').onclick = async () => {
+    const val = document.getElementById('mailerDetailSendDate').value;
+    const updates = { plannedSendDate: val || null };
+    if (val && mailer.status === 'draft') updates.status = 'scheduled';
+    await updateMailerRecord(mailerId, updates);
+    openMailerDetail(mailerId);
+  };
+
+  // Mark as sent
+  document.getElementById('mailerDetailMarkSent').onclick = async () => {
+    await updateMailerRecord(mailerId, { status: 'sent', sentDate: new Date().toISOString() });
+    openMailerDetail(mailerId);
+  };
+
+  // Re-export
+  document.getElementById('mailerDetailReexport').onclick = () => reexportMailer(mailerId);
+}
+
+async function reexportMailer(mailerId) {
+  const history = await getMailerHistory();
+  const mailer = history.find(m => String(m._id || m.id) === String(mailerId));
+  if (!mailer) return;
+
+  const headers = ['Record ID','Status','Application Type','Street','City','State','Zip','Housing','Band','Distance'];
+  let csv = headers.join(',') + '\n';
+  mailer.records.forEach(r => {
+    csv += [r.id, r.status, r.appType, r.street||'', r.city, r.state, r.zip, r.housing||'', r.band||'', r.distance!=null?r.distance.toFixed(1):''].map(v => `"${String(v).replace(/"/g,'""')}"`).join(',') + '\n';
+  });
+  downloadFile(csv, `${slugify(mailer.segmentName)}-reexport-${dateSlug()}.csv`, 'text/csv');
+}
+
+async function deleteMailer(mailerId) {
+  if (!confirm('Delete this mailer record?')) return;
+  await deleteMailerRecord(mailerId);
+  renderMailerHistoryList();
+}
+
+// Expose functions needed by inline onclick handlers
+window.openMailerDetail = openMailerDetail;
+window.reexportMailer = reexportMailer;
+window.deleteMailer = deleteMailer;
+
+// ══════════════════════════════════════════════════════════════════
 //  BOOT
 // ══════════════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', async () => {
   initExecExport();
   initMailBuilder();
+  initDiffModal();
+  initMailerHistory();
   await init();
 });
 
