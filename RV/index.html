@@ -524,7 +524,7 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;bac
 
 <!-- ═══ EXECUTIVE MAP EXPORT MODAL ═══════════════════════════════ -->
 <div class="modal-overlay" id="execExportModal">
-  <div class="modal">
+  <div class="modal" style="max-width:1060px">
     <div class="modal-header">
       <h2>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
@@ -532,54 +532,62 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;bac
       </h2>
       <button class="modal-close" id="execClose">&times;</button>
     </div>
-    <div class="modal-body">
-      <div class="exec-form-grid">
-        <div class="exec-form-group full">
-          <label>Report Title</label>
-          <input type="text" id="execTitle" value="Autumn 2026 Admit Radius Analysis" placeholder="Enter report title...">
-        </div>
-        <div class="exec-form-group full">
-          <label>Subtitle (optional)</label>
-          <input type="text" id="execSubtitle" value="University of Washington Bothell — Residential Village" placeholder="Enter subtitle...">
-        </div>
-        <div class="exec-form-group full">
-          <label>Quick Title Presets</label>
-          <div class="exec-preset-chips">
-            <button class="exec-preset-chip" data-title="Autumn 2026 Admit Radius Analysis">Admit Radius</button>
-            <button class="exec-preset-chip" data-title="Filtered Admit Geography Overview">Geography Overview</button>
-            <button class="exec-preset-chip" data-title="Regional Applicant Distribution">Regional Distribution</button>
-            <button class="exec-preset-chip" data-title="Campus Housing Interest Map">Housing Interest</button>
+    <div class="modal-body" style="padding:16px 24px">
+      <div style="display:flex;gap:20px">
+        <!-- Left: Settings -->
+        <div style="width:340px;flex-shrink:0">
+          <div class="exec-form-grid" style="grid-template-columns:1fr">
+            <div class="exec-form-group">
+              <label>Report Title</label>
+              <input type="text" id="execTitle" value="Autumn 2026 Admit Radius Analysis" placeholder="Enter report title...">
+            </div>
+            <div class="exec-form-group">
+              <label>Subtitle (optional)</label>
+              <input type="text" id="execSubtitle" value="University of Washington Bothell — Residential Village" placeholder="Enter subtitle...">
+            </div>
+            <div class="exec-form-group">
+              <label>Quick Title Presets</label>
+              <div class="exec-preset-chips">
+                <button class="exec-preset-chip" data-title="Autumn 2026 Admit Radius Analysis">Admit Radius</button>
+                <button class="exec-preset-chip" data-title="Filtered Admit Geography Overview">Geography Overview</button>
+                <button class="exec-preset-chip" data-title="Regional Applicant Distribution">Regional Distribution</button>
+                <button class="exec-preset-chip" data-title="Campus Housing Interest Map">Housing Interest</button>
+              </div>
+            </div>
+            <div class="exec-form-group">
+              <label>Export Format</label>
+              <select id="execFormat">
+                <option value="pdf" selected>PDF Document (Single Page)</option>
+                <option value="png">PNG (High Resolution)</option>
+              </select>
+            </div>
+            <div class="exec-form-group">
+              <label>Include Filter Summary</label>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+                <input type="checkbox" id="execShowFilters" checked style="accent-color:var(--brand);width:16px;height:16px">
+                <span style="font-size:13px">Show active filter criteria</span>
+              </div>
+            </div>
           </div>
+          <div class="exec-filter-summary" id="execFilterPreview" style="margin-top:10px"></div>
         </div>
-        <div class="exec-form-group">
-          <label>Export Format</label>
-          <select id="execFormat">
-            <option value="png">PNG (High Resolution)</option>
-            <option value="pdf">PDF Document</option>
-          </select>
-        </div>
-        <div class="exec-form-group">
-          <label>Map View</label>
-          <select id="execMapView">
-            <option value="autofit">Auto-fit Filtered Records</option>
-            <option value="current">Current Zoom/View</option>
-            <option value="full">Full Region (Default)</option>
-          </select>
-        </div>
-        <div class="exec-form-group full">
-          <label>Include Filter Summary</label>
-          <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
-            <input type="checkbox" id="execShowFilters" checked style="accent-color:var(--brand);width:16px;height:16px">
-            <span style="font-size:13px">Show active filter criteria on export</span>
+        <!-- Right: Map Preview -->
+        <div style="flex:1;display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--subtext);display:flex;align-items:center;justify-content:space-between">
+            <span>Map Frame Preview — pan &amp; zoom to set your view</span>
+            <div style="display:flex;gap:6px">
+              <button class="exec-preset-chip" id="execViewUS" style="margin:0;padding:3px 10px">US Overview</button>
+              <button class="exec-preset-chip" id="execViewWA" style="margin:0;padding:3px 10px">WA Region</button>
+              <button class="exec-preset-chip" id="execViewFit" style="margin:0;padding:3px 10px">Fit Records</button>
+            </div>
           </div>
+          <div id="execPreviewMap" style="flex:1;min-height:360px;border-radius:var(--radius);border:2px solid var(--border);overflow:hidden;background:#f1f5f9"></div>
         </div>
       </div>
 
-      <div class="exec-filter-summary" id="execFilterPreview"></div>
-
       <div class="exec-loading" id="execLoading">
         <div class="spinner"></div>
-        Generating export...
+        Generating single-page report...
       </div>
     </div>
     <div class="modal-footer">
@@ -1484,6 +1492,9 @@ function debounce(fn, ms) {
 // ══════════════════════════════════════════════════════════════════
 //  EXECUTIVE MAP EXPORT
 // ══════════════════════════════════════════════════════════════════
+let execPreviewMap = null;
+let execPreviewCluster = null;
+
 function initExecExport() {
   const modal = document.getElementById('execExportModal');
   const openBtn = document.getElementById('openExecExport');
@@ -1494,21 +1505,132 @@ function initExecExport() {
   openBtn.addEventListener('click', () => {
     modal.classList.add('active');
     updateExecFilterPreview();
+    // Init or refresh the preview map after modal is visible
+    setTimeout(() => initExecPreviewMap(), 100);
   });
-  closeBtn.addEventListener('click', () => modal.classList.remove('active'));
-  cancelBtn.addEventListener('click', () => modal.classList.remove('active'));
-  modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
 
-  // Preset chips
-  document.querySelectorAll('.exec-preset-chip').forEach(chip => {
+  const closeModal = () => {
+    modal.classList.remove('active');
+    if (execPreviewMap) {
+      execPreviewMap.remove();
+      execPreviewMap = null;
+      execPreviewCluster = null;
+    }
+  };
+  closeBtn.addEventListener('click', closeModal);
+  cancelBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+  // Title preset chips (only the ones with data-title)
+  document.querySelectorAll('.exec-preset-chip[data-title]').forEach(chip => {
     chip.addEventListener('click', () => {
       document.getElementById('execTitle').value = chip.dataset.title;
-      document.querySelectorAll('.exec-preset-chip').forEach(c => c.classList.remove('active'));
+      document.querySelectorAll('.exec-preset-chip[data-title]').forEach(c => c.classList.remove('active'));
       chip.classList.add('active');
     });
   });
 
+  // View preset buttons
+  document.getElementById('execViewUS').addEventListener('click', () => {
+    if (execPreviewMap) execPreviewMap.setView([39.5, -98.35], 4, { animate: true });
+  });
+  document.getElementById('execViewWA').addEventListener('click', () => {
+    if (execPreviewMap) execPreviewMap.setView([ORIGIN.lat, ORIGIN.lng], 8, { animate: true });
+  });
+  document.getElementById('execViewFit').addEventListener('click', () => {
+    if (execPreviewMap) {
+      const lats = filteredRecords.filter(r => r.lat && r.lng).map(r => [r.lat, r.lng]);
+      if (lats.length > 0) execPreviewMap.fitBounds(L.latLngBounds(lats), { padding: [30, 30], animate: true });
+    }
+  });
+
   generateBtn.addEventListener('click', generateExecExport);
+}
+
+function initExecPreviewMap() {
+  const container = document.getElementById('execPreviewMap');
+  if (execPreviewMap) {
+    execPreviewMap.remove();
+    execPreviewMap = null;
+    execPreviewCluster = null;
+  }
+
+  // Default to US-centered view
+  execPreviewMap = L.map(container, {
+    center: [39.5, -98.35],
+    zoom: 4,
+    zoomControl: true,
+    maxZoom: 18,
+    minZoom: 2
+  });
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '',
+    subdomains: 'abcd',
+    maxZoom: 19
+  }).addTo(execPreviewMap);
+
+  // Origin marker
+  const originIcon = L.divIcon({
+    className: '',
+    html: '<div style="position:relative"><div class="origin-marker"></div></div>',
+    iconSize: [16, 16],
+    iconAnchor: [8, 8]
+  });
+  L.marker([ORIGIN.lat, ORIGIN.lng], { icon: originIcon, zIndexOffset: 1000 }).addTo(execPreviewMap);
+
+  // Radius circles
+  RADIUS_MILES.forEach(miles => {
+    L.circle([ORIGIN.lat, ORIGIN.lng], {
+      radius: miles * MILES_TO_METERS,
+      color: 'rgba(75,46,131,0.25)',
+      weight: 1.5,
+      fillColor: 'rgba(75,46,131,0.03)',
+      fillOpacity: 1,
+      dashArray: '6,4',
+      interactive: false
+    }).addTo(execPreviewMap);
+  });
+
+  // Add filtered record markers (no popups, no names)
+  execPreviewCluster = L.markerClusterGroup({
+    maxClusterRadius: 50,
+    showCoverageOnHover: false,
+    zoomToBoundsOnClick: true,
+    iconCreateFunction: function(cluster) {
+      const count = cluster.getChildCount();
+      let dim = 36;
+      if (count > 100) dim = 50;
+      else if (count > 30) dim = 42;
+      const children = cluster.getAllChildMarkers();
+      const bc = {};
+      children.forEach(m => { const b = m.options.bandColor || '#8b5cf6'; bc[b] = (bc[b]||0)+1; });
+      const dominant = Object.entries(bc).sort((a,b) => b[1]-a[1])[0][0];
+      return L.divIcon({
+        html: `<div style="background:${dominant};color:#fff;width:${dim}px;height:${dim}px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:${count > 999 ? 11 : 13}px;font-family:Inter,sans-serif;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3)">${count > 999 ? Math.round(count/100)/10+'k' : count}</div>`,
+        className: '',
+        iconSize: [dim, dim],
+        iconAnchor: [dim/2, dim/2]
+      });
+    }
+  });
+
+  const markers = [];
+  filteredRecords.forEach(r => {
+    if (!r.lat || !r.lng) return;
+    if (!activeBands.has(r.band)) return;
+    const band = getBandForDistance(r.distance);
+    if (!band) return;
+    const marker = L.marker([r.lat, r.lng], {
+      icon: createMarkerIcon(band.color),
+      bandColor: band.color
+    });
+    markers.push(marker);
+  });
+  execPreviewCluster.addLayers(markers);
+  execPreviewMap.addLayer(execPreviewCluster);
+
+  execPreviewMap.invalidateSize();
 }
 
 function updateExecFilterPreview() {
@@ -1564,7 +1686,6 @@ async function generateExecExport() {
     const title = document.getElementById('execTitle').value || 'Admit Radius Analysis';
     const subtitle = document.getElementById('execSubtitle').value || '';
     const format = document.getElementById('execFormat').value;
-    const mapView = document.getElementById('execMapView').value;
     const showFilters = document.getElementById('execShowFilters').checked;
     const exportDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
@@ -1574,13 +1695,17 @@ async function generateExecExport() {
     BANDS.forEach(b => bandCounts[b.label] = 0);
     visible.forEach(r => { if (bandCounts[r.band] !== undefined) bandCounts[r.band]++; });
 
-    // Capture the map as an image
-    const mapCanvas = await captureMap(mapView);
+    // Capture the preview map (user has already framed it)
+    const mapCanvas = await capturePreviewMap();
+
+    // Single-page landscape: 11x8.5 inches at 192dpi = 2112x1632px
+    const PAGE_W = 2112;
+    const PAGE_H = 1632;
 
     // Build the export layout
     const container = document.getElementById('execExportCanvas');
-    container.style.width = '1600px';
-    container.innerHTML = buildExecExportHTML(title, subtitle, exportDate, bandCounts, visible.length, showFilters);
+    container.style.width = PAGE_W + 'px';
+    container.innerHTML = buildExecExportHTML(title, subtitle, exportDate, bandCounts, visible.length, showFilters, PAGE_W, PAGE_H);
 
     // Insert map image
     const mapSlot = container.querySelector('#exec-map-slot');
@@ -1592,22 +1717,25 @@ async function generateExecExport() {
     }
 
     // Wait for render
-    await new Promise(r => setTimeout(r, 300));
+    await new Promise(r => setTimeout(r, 400));
 
     // Use html2canvas on the container
     const canvas = await html2canvas(container, {
-      scale: 2,
+      scale: 1,
       useCORS: true,
       backgroundColor: '#ffffff',
       logging: false,
-      width: 1600,
-      windowWidth: 1600
+      width: PAGE_W,
+      height: PAGE_H,
+      windowWidth: PAGE_W
     });
 
     if (format === 'pdf') {
       const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF({ orientation: 'landscape', unit: 'px', format: [canvas.width, canvas.height] });
-      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, canvas.width, canvas.height);
+      // Landscape letter: 11 x 8.5 inches
+      const pdf = new jsPDF({ orientation: 'landscape', unit: 'in', format: 'letter' });
+      const imgData = canvas.toDataURL('image/png');
+      pdf.addImage(imgData, 'PNG', 0, 0, 11, 8.5);
       pdf.save(`${slugify(title)}-${dateSlug()}.pdf`);
     } else {
       const link = document.createElement('a');
@@ -1617,6 +1745,8 @@ async function generateExecExport() {
     }
 
     container.innerHTML = '';
+    // Close the modal and clean up preview map
+    if (execPreviewMap) { execPreviewMap.remove(); execPreviewMap = null; execPreviewCluster = null; }
     document.getElementById('execExportModal').classList.remove('active');
   } catch (err) {
     console.error('Export error:', err);
@@ -1627,116 +1757,96 @@ async function generateExecExport() {
   }
 }
 
-async function captureMap(viewMode) {
+async function capturePreviewMap() {
   return new Promise((resolve) => {
-    // Save current view
-    const origCenter = map.getCenter();
-    const origZoom = map.getZoom();
-
-    if (viewMode === 'autofit' && filteredRecords.length > 0) {
-      const lats = filteredRecords.filter(r => r.lat && r.lng).map(r => [r.lat, r.lng]);
-      if (lats.length > 0) {
-        map.fitBounds(L.latLngBounds(lats), { padding: [40, 40], animate: false });
-      }
-    } else if (viewMode === 'full') {
-      map.setView([ORIGIN.lat, ORIGIN.lng], 7, { animate: false });
-    }
-
-    // Wait for tiles to load
+    if (!execPreviewMap) { resolve(null); return; }
+    // Wait for tiles to finish loading
     setTimeout(() => {
-      const mapEl = document.getElementById('map');
+      const mapEl = document.getElementById('execPreviewMap');
       html2canvas(mapEl, {
         useCORS: true,
         allowTaint: true,
         scale: 2,
         logging: false,
-        backgroundColor: '#f8fafc'
-      }).then(canvas => {
-        // Restore view if changed
-        if (viewMode !== 'current') {
-          map.setView(origCenter, origZoom, { animate: false });
-        }
-        resolve(canvas);
-      }).catch(() => {
-        if (viewMode !== 'current') {
-          map.setView(origCenter, origZoom, { animate: false });
-        }
-        resolve(null);
-      });
-    }, 1200);
+        backgroundColor: '#f1f5f9'
+      }).then(canvas => resolve(canvas)).catch(() => resolve(null));
+    }, 800);
   });
 }
 
-function buildExecExportHTML(title, subtitle, exportDate, bandCounts, totalVisible, showFilters) {
+function buildExecExportHTML(title, subtitle, exportDate, bandCounts, totalVisible, showFilters, pageW, pageH) {
   const filterText = showFilters ? getFilterSummaryText() : '';
+  // Calculate map height: total page minus header(~90px) minus KPI bar(~80px) minus footer(~50px) minus filter row(~36px if shown)
+  const filterRowH = (showFilters && filterText !== 'No filters applied — showing all records') ? 36 : 0;
+  const mapH = pageH - 90 - 76 - 46 - filterRowH;
 
   return `
-  <div style="font-family:'Inter',system-ui,-apple-system,sans-serif;width:1600px;background:#fff;color:#0f172a;padding:0">
+  <div style="font-family:'Inter',system-ui,-apple-system,sans-serif;width:${pageW}px;height:${pageH}px;background:#fff;color:#0f172a;display:flex;flex-direction:column;overflow:hidden">
     <!-- Header -->
-    <div style="background:linear-gradient(135deg,#4b2e83 0%,#32174f 100%);color:#fff;padding:36px 48px 28px;display:flex;justify-content:space-between;align-items:flex-start">
+    <div style="background:linear-gradient(135deg,#4b2e83 0%,#32174f 100%);color:#fff;padding:22px 40px 18px;display:flex;justify-content:space-between;align-items:flex-start;flex-shrink:0">
       <div>
-        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:2px;opacity:0.65;margin-bottom:6px">University of Washington Bothell</div>
-        <div style="font-size:32px;font-weight:800;letter-spacing:-0.5px;line-height:1.15">${escHtml(title)}</div>
-        ${subtitle ? `<div style="font-size:16px;opacity:0.8;margin-top:4px;font-weight:500">${escHtml(subtitle)}</div>` : ''}
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;opacity:0.6;margin-bottom:4px">University of Washington Bothell</div>
+        <div style="font-size:26px;font-weight:800;letter-spacing:-0.5px;line-height:1.15">${escHtml(title)}</div>
+        ${subtitle ? `<div style="font-size:14px;opacity:0.75;margin-top:2px;font-weight:500">${escHtml(subtitle)}</div>` : ''}
       </div>
       <div style="text-align:right;flex-shrink:0">
-        <div style="font-size:13px;opacity:0.7;font-weight:500">${exportDate}</div>
-        <div style="font-size:12px;opacity:0.5;margin-top:2px">Residential Village at Bothell, WA</div>
+        <div style="font-size:12px;opacity:0.7;font-weight:500">${exportDate}</div>
+        <div style="font-size:11px;opacity:0.45;margin-top:2px">Residential Village at Bothell, WA</div>
       </div>
     </div>
 
     <!-- KPI Bar -->
-    <div style="display:flex;gap:0;border-bottom:1px solid #e2e8f0">
-      <div style="flex:1;text-align:center;padding:20px 16px;border-right:1px solid #e2e8f0">
-        <div style="font-size:34px;font-weight:800;color:#4b2e83">${formatNum(totalVisible)}</div>
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-top:2px">Total Displayed</div>
+    <div style="display:flex;gap:0;border-bottom:1px solid #e2e8f0;flex-shrink:0">
+      <div style="flex:1;text-align:center;padding:14px 12px;border-right:1px solid #e2e8f0">
+        <div style="font-size:28px;font-weight:800;color:#4b2e83">${formatNum(totalVisible)}</div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;margin-top:1px">Total Displayed</div>
       </div>
-      <div style="flex:1;text-align:center;padding:20px 16px;border-right:1px solid #e2e8f0;border-left:3px solid #22c55e">
-        <div style="font-size:28px;font-weight:800;color:#22c55e">${formatNum(bandCounts['0–10 mi'])}</div>
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-top:2px">0–10 Miles</div>
+      <div style="flex:1;text-align:center;padding:14px 12px;border-right:1px solid #e2e8f0;border-left:3px solid #22c55e">
+        <div style="font-size:24px;font-weight:800;color:#22c55e">${formatNum(bandCounts['0–10 mi'])}</div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-top:1px">0–10 mi</div>
       </div>
-      <div style="flex:1;text-align:center;padding:20px 16px;border-right:1px solid #e2e8f0;border-left:3px solid #f97316">
-        <div style="font-size:28px;font-weight:800;color:#f97316">${formatNum(bandCounts['10–50 mi'])}</div>
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-top:2px">10–50 Miles</div>
+      <div style="flex:1;text-align:center;padding:14px 12px;border-right:1px solid #e2e8f0;border-left:3px solid #f97316">
+        <div style="font-size:24px;font-weight:800;color:#f97316">${formatNum(bandCounts['10–50 mi'])}</div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-top:1px">10–50 mi</div>
       </div>
-      <div style="flex:1;text-align:center;padding:20px 16px;border-right:1px solid #e2e8f0;border-left:3px solid #ef4444">
-        <div style="font-size:28px;font-weight:800;color:#ef4444">${formatNum(bandCounts['50–100 mi'])}</div>
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-top:2px">50–100 Miles</div>
+      <div style="flex:1;text-align:center;padding:14px 12px;border-right:1px solid #e2e8f0;border-left:3px solid #ef4444">
+        <div style="font-size:24px;font-weight:800;color:#ef4444">${formatNum(bandCounts['50–100 mi'])}</div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-top:1px">50–100 mi</div>
       </div>
-      <div style="flex:1;text-align:center;padding:20px 16px;border-left:3px solid #8b5cf6">
-        <div style="font-size:28px;font-weight:800;color:#8b5cf6">${formatNum(bandCounts['100+ mi'])}</div>
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-top:2px">100+ Miles</div>
+      <div style="flex:1;text-align:center;padding:14px 12px;border-left:3px solid #8b5cf6">
+        <div style="font-size:24px;font-weight:800;color:#8b5cf6">${formatNum(bandCounts['100+ mi'])}</div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-top:1px">100+ mi</div>
       </div>
     </div>
 
-    <!-- Map + Legend -->
-    <div style="display:flex;min-height:700px">
+    <!-- Map + Legend (fills remaining space) -->
+    <div style="display:flex;flex:1;overflow:hidden">
       <!-- Map -->
       <div style="flex:1;position:relative;background:#f1f5f9">
-        <div id="exec-map-slot" style="width:100%;height:100%;min-height:700px"></div>
+        <div id="exec-map-slot" style="width:100%;height:100%"></div>
       </div>
       <!-- Legend sidebar -->
-      <div style="width:260px;border-left:1px solid #e2e8f0;padding:24px;display:flex;flex-direction:column;gap:20px;background:#fafbfc">
+      <div style="width:220px;border-left:1px solid #e2e8f0;padding:18px 16px;display:flex;flex-direction:column;gap:14px;background:#fafbfc;flex-shrink:0">
         <div>
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:12px">Distance Legend</div>
-          <div style="display:flex;flex-direction:column;gap:8px">
-            <div style="display:flex;align-items:center;gap:10px"><div style="width:14px;height:14px;border-radius:50%;background:#22c55e;flex-shrink:0"></div><span style="font-size:13px;font-weight:600">0–10 miles</span></div>
-            <div style="display:flex;align-items:center;gap:10px"><div style="width:14px;height:14px;border-radius:50%;background:#f97316;flex-shrink:0"></div><span style="font-size:13px;font-weight:600">10–50 miles</span></div>
-            <div style="display:flex;align-items:center;gap:10px"><div style="width:14px;height:14px;border-radius:50%;background:#ef4444;flex-shrink:0"></div><span style="font-size:13px;font-weight:600">50–100 miles</span></div>
-            <div style="display:flex;align-items:center;gap:10px"><div style="width:14px;height:14px;border-radius:50%;background:#8b5cf6;flex-shrink:0"></div><span style="font-size:13px;font-weight:600">100+ miles</span></div>
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:10px">Distance Legend</div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <div style="display:flex;align-items:center;gap:8px"><div style="width:12px;height:12px;border-radius:50%;background:#22c55e;flex-shrink:0"></div><span style="font-size:12px;font-weight:600">0–10 miles</span></div>
+            <div style="display:flex;align-items:center;gap:8px"><div style="width:12px;height:12px;border-radius:50%;background:#f97316;flex-shrink:0"></div><span style="font-size:12px;font-weight:600">10–50 miles</span></div>
+            <div style="display:flex;align-items:center;gap:8px"><div style="width:12px;height:12px;border-radius:50%;background:#ef4444;flex-shrink:0"></div><span style="font-size:12px;font-weight:600">50–100 miles</span></div>
+            <div style="display:flex;align-items:center;gap:8px"><div style="width:12px;height:12px;border-radius:50%;background:#8b5cf6;flex-shrink:0"></div><span style="font-size:12px;font-weight:600">100+ miles</span></div>
           </div>
         </div>
-        <div style="border-top:1px solid #e2e8f0;padding-top:16px">
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:8px">Origin</div>
-          <div style="font-size:13px;font-weight:600;color:#0f172a">Residential Village at Bothell, WA</div>
-          <div style="font-size:11px;color:#64748b;margin-top:2px">17927 113th Ave NE, Bothell, WA 98011</div>
+        <div style="border-top:1px solid #e2e8f0;padding-top:12px">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:6px">Origin</div>
+          <div style="font-size:12px;font-weight:600;color:#0f172a">Residential Village</div>
+          <div style="font-size:10px;color:#64748b;margin-top:1px">Bothell, WA 98011</div>
         </div>
-        <div style="border-top:1px solid #e2e8f0;padding-top:16px">
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:8px">Band Summary</div>
+        <div style="border-top:1px solid #e2e8f0;padding-top:12px">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:6px">Band Breakdown</div>
           ${BANDS.map(b => {
             const count = bandCounts[b.label] || 0;
             const pct = totalVisible ? Math.round(count / totalVisible * 100) : 0;
-            return `<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;font-size:12px">
+            return `<div style="display:flex;align-items:center;justify-content:space-between;padding:3px 0;font-size:11px">
               <span style="color:#64748b">${b.label}</span>
               <span style="font-weight:700">${formatNum(count)} <span style="color:#94a3b8;font-weight:400">(${pct}%)</span></span>
             </div>`;
@@ -1745,20 +1855,19 @@ function buildExecExportHTML(title, subtitle, exportDate, bandCounts, totalVisib
       </div>
     </div>
 
-    <!-- Filter summary -->
+    <!-- Filter summary (conditional) -->
     ${showFilters && filterText !== 'No filters applied — showing all records' ? `
-    <div style="padding:12px 48px;background:#f8fafc;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0">
-      <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-right:8px">Active Filters:</span>
-      <span style="font-size:12px;color:#4b2e83;font-weight:500">${escHtml(filterText)}</span>
+    <div style="padding:8px 40px;background:#f8fafc;border-top:1px solid #e2e8f0;flex-shrink:0">
+      <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-right:6px">Filters:</span>
+      <span style="font-size:11px;color:#4b2e83;font-weight:500">${escHtml(filterText)}</span>
     </div>` : ''}
 
     <!-- Footer -->
-    <div style="padding:16px 48px;background:#fafbfc;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center">
-      <div style="font-size:10px;color:#94a3b8;max-width:900px;line-height:1.5">
-        Distances are calculated from the Bothell reference point (47.7596, -122.1892) using geocoded record locations via Haversine formula.
-        Records shown reflect current filter criteria. No personal identifying information is included in this report.
+    <div style="padding:10px 40px;background:#fafbfc;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
+      <div style="font-size:9px;color:#94a3b8;max-width:80%;line-height:1.4">
+        Distances calculated from Bothell, WA (47.7596, -122.1892) via Haversine formula on geocoded locations. Records reflect current filter criteria. No PII included.
       </div>
-      <div style="font-size:10px;color:#94a3b8;text-align:right;white-space:nowrap">
+      <div style="font-size:9px;color:#94a3b8;text-align:right;white-space:nowrap">
         Generated ${exportDate}
       </div>
     </div>
