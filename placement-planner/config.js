@@ -131,6 +131,42 @@ const MAP_REGISTRY = [
     svgPath: 'map/Building-B-Floor-4.svg',
   },
   {
+    buildingKey: 'C',
+    floor: 0,
+    label: 'Building C — Ground Floor',
+    svgPath: 'map/Building-C-Floor-GROUND.svg',
+  },
+  {
+    buildingKey: 'C',
+    floor: 1,
+    label: 'Building C — Floor 1',
+    svgPath: 'map/Building-C-Floor-1.svg',
+  },
+  {
+    buildingKey: 'C',
+    floor: 2,
+    label: 'Building C — Floor 2',
+    svgPath: 'map/Building-C-Floor-2.svg',
+  },
+  {
+    buildingKey: 'C',
+    floor: 3,
+    label: 'Building C — Floor 3',
+    svgPath: 'map/Building-C-Floor-3.svg',
+  },
+  {
+    buildingKey: 'C',
+    floor: 4,
+    label: 'Building C — Floor 4',
+    svgPath: 'map/Building-C-Floor-4.svg',
+  },
+  {
+    buildingKey: 'C',
+    floor: 5,
+    label: 'Building C — Floor 5',
+    svgPath: 'map/Building-C-Floor-5.svg',
+  },
+  {
     buildingKey: 'D',
     floor: 0,
     label: 'Building D — Ground Floor',
