@@ -16,7 +16,8 @@
  * @returns {Promise<{name: string, svgElement: SVGSVGElement, svgText: string}>}
  */
 function fetchLocalSVG(svgPath, label) {
-  return fetch(svgPath)
+  var cacheBustPath = svgPath + '?v=' + (typeof APP_VERSION !== 'undefined' ? APP_VERSION : Date.now());
+  return fetch(cacheBustPath)
     .then((response) => {
       if (!response.ok) {
         throw new Error(`Failed to load SVG "${label}" from "${svgPath}": HTTP ${response.status}`);

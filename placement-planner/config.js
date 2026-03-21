@@ -1,6 +1,7 @@
 /* ============================================================
    config.js — Centralized Configuration
    Contains:
+     0. App version (cache-busting)
      1. Color configuration for lease status and scholarship
      2. Map registry for local SVG files
      3. Building/floor display labels
@@ -10,6 +11,15 @@
      7. Allowed lease statuses and scholarships
      8. Delete confirmation constants
    ============================================================ */
+
+/* ------------------------------------------------------------------
+   0. APP VERSION — CACHE BUSTING
+   Increment this value whenever you deploy updated JS, CSS, or SVG
+   files. This forces browsers to fetch the latest versions instead
+   of serving stale cached copies.
+   Format: YYYYMMDD.NN (date + optional revision number)
+   ------------------------------------------------------------------ */
+const APP_VERSION = '20260321.1';
 
 /* ------------------------------------------------------------------
    1. COLOR CONFIGURATION
