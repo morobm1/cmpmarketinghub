@@ -1810,8 +1810,12 @@ function openReserveUnitModal(inventory, residents, reservedUnitsMap, callbacks)
   var bodyHtml =
     '<form id="reserve-unit-form" class="modal-form">' +
       '<div class="form-group">' +
-        '<label for="reserve-unit-select">Unit</label>' +
-        '<select id="reserve-unit-select" class="select-input" required></select>' +
+        '<label for="reserve-unit-search">Unit</label>' +
+        '<div class="searchable-select-wrapper">' +
+          '<input type="text" id="reserve-unit-search" class="text-input" placeholder="Type to search units..." autocomplete="off" />' +
+          '<input type="hidden" id="reserve-unit-value" />' +
+          '<div id="reserve-unit-dropdown" class="searchable-dropdown"></div>' +
+        '</div>' +
       '</div>' +
       '<div class="form-group">' +
         '<label for="reserve-scholarship-select">Scholarship</label>' +
@@ -1825,9 +1829,7 @@ function openReserveUnitModal(inventory, residents, reservedUnitsMap, callbacks)
 
   showModal(title, bodyHtml, footerHtml);
 
-  var unitSelect = document.getElementById('reserve-unit-select');
-  unitSelect.innerHTML = '<option value="">-- Select Unit --</option>';
-
+  var unitItems = [];
   if (inventory && inventory.length > 0) {
     var sorted = inventory.slice().sort(function (a, b) {
       return a.unitNumber.localeCompare(b.unitNumber, undefined, { numeric: true, sensitivity: 'base' });
@@ -1835,23 +1837,89 @@ function openReserveUnitModal(inventory, residents, reservedUnitsMap, callbacks)
     for (var i = 0; i < sorted.length; i++) {
       var unitKey = sorted[i].unitNumber.toUpperCase();
       var alreadyReserved = reservedUnitsMap && reservedUnitsMap.has(unitKey);
-      var opt = document.createElement('option');
-      opt.value = sorted[i].unitNumber;
-      opt.textContent = sorted[i].unitNumber + (sorted[i].unitType ? ' (' + sorted[i].unitType + ')' : '') + (alreadyReserved ? ' [RESERVED]' : '');
-      if (alreadyReserved) opt.disabled = true;
-      unitSelect.appendChild(opt);
+      unitItems.push({
+        value: sorted[i].unitNumber,
+        label: sorted[i].unitNumber + (sorted[i].unitType ? ' (' + sorted[i].unitType + ')' : ''),
+        disabled: alreadyReserved,
+        tag: alreadyReserved ? 'RESERVED' : '',
+      });
     }
   }
+
+  var searchInput = document.getElementById('reserve-unit-search');
+  var hiddenInput = document.getElementById('reserve-unit-value');
+  var dropdown = document.getElementById('reserve-unit-dropdown');
+
+  function renderDropdown(query) {
+    dropdown.innerHTML = '';
+    var q = (query || '').trim().toUpperCase();
+    var matches = unitItems.filter(function (item) {
+      if (!q) return true;
+      return item.label.toUpperCase().includes(q);
+    });
+
+    if (matches.length === 0) {
+      dropdown.innerHTML = '<div class="searchable-dropdown-empty">No matching units</div>';
+      dropdown.style.display = 'block';
+      return;
+    }
+
+    var maxShow = 30;
+    var toShow = matches.slice(0, maxShow);
+    for (var i = 0; i < toShow.length; i++) {
+      (function (item) {
+        var el = document.createElement('div');
+        el.className = 'searchable-dropdown-item' + (item.disabled ? ' searchable-dropdown-disabled' : '');
+        el.textContent = item.label + (item.tag ? ' [' + item.tag + ']' : '');
+        if (!item.disabled) {
+          el.addEventListener('mousedown', function (e) {
+            e.preventDefault();
+            searchInput.value = item.label;
+            hiddenInput.value = item.value;
+            dropdown.style.display = 'none';
+          });
+        }
+        dropdown.appendChild(el);
+      })(toShow[i]);
+    }
+
+    if (matches.length > maxShow) {
+      var more = document.createElement('div');
+      more.className = 'searchable-dropdown-more';
+      more.textContent = '... ' + (matches.length - maxShow) + ' more — keep typing to narrow';
+      dropdown.appendChild(more);
+    }
+
+    dropdown.style.display = 'block';
+  }
+
+  searchInput.addEventListener('focus', function () {
+    renderDropdown(searchInput.value);
+  });
+
+  searchInput.addEventListener('input', function () {
+    hiddenInput.value = '';
+    renderDropdown(searchInput.value);
+  });
+
+  searchInput.addEventListener('blur', function () {
+    setTimeout(function () { dropdown.style.display = 'none'; }, 150);
+  });
 
   document.getElementById('reserve-cancel-btn').addEventListener('click', hideModal);
 
   document.getElementById('reserve-unit-form').addEventListener('submit', function (e) {
     e.preventDefault();
-    var selectedUnit = document.getElementById('reserve-unit-select').value;
+    var selectedUnit = hiddenInput.value;
     var selectedScholarship = document.getElementById('reserve-scholarship-select').value;
 
-    if (!selectedUnit || !selectedScholarship) {
-      alert('Both unit and scholarship are required.');
+    if (!selectedUnit) {
+      searchInput.focus();
+      renderDropdown(searchInput.value);
+      return;
+    }
+
+    if (!selectedScholarship) {
       return;
     }
 
