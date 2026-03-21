@@ -64,6 +64,9 @@ const AppState = {
 
   /** @type {object} Prelease scope state for enhanced prelease */
   preleaseScope: { type: 'property' },
+
+  /** @type {Map<string, string>} Scholarship-reserved units: uppercase unitKey -> scholarship name */
+  scholarshipReservedUnits: new Map(),
 };
 
 /* ------------------------------------------------------------------
@@ -115,6 +118,15 @@ function buildProjectData() {
     waitingBank: AppState.waitingBank || [],
     unassignedScholarships: AppState.unassignedScholarships || [],
     scholarshipExpectedData: AppState.scholarshipExpectedData || [],
+    scholarshipReservedUnits: (function () {
+      var arr = [];
+      if (AppState.scholarshipReservedUnits) {
+        AppState.scholarshipReservedUnits.forEach(function (scholarship, unitKey) {
+          arr.push({ unitKey: unitKey, scholarship: scholarship });
+        });
+      }
+      return arr;
+    })(),
     settings: {
       selectedBuilding: AppState.selectedBuilding,
       selectedFloor: AppState.selectedFloor,
@@ -381,6 +393,19 @@ function restoreProjectData(data) {
     AppState.scholarshipExpectedData = [];
   }
 
+  // Restore scholarship reserved units
+  if (Array.isArray(data.scholarshipReservedUnits) && data.scholarshipReservedUnits.length > 0) {
+    var reservedMap = new Map();
+    data.scholarshipReservedUnits.forEach(function (entry) {
+      if (entry.unitKey && entry.scholarship) {
+        reservedMap.set(entry.unitKey.toUpperCase(), entry.scholarship);
+      }
+    });
+    AppState.scholarshipReservedUnits = reservedMap;
+  } else {
+    AppState.scholarshipReservedUnits = new Map();
+  }
+
   // Restore settings
   if (data.settings) {
     AppState.selectedBuilding = data.settings.selectedBuilding || null;
@@ -635,6 +660,9 @@ document.addEventListener('DOMContentLoaded', async function () {
   refreshScholarshipAudit();
   refreshVarianceAnalysis();
 
+  // Refresh reserved units
+  refreshReservedUnits();
+
   // Apply role-based restrictions (hide edit controls for viewers)
   applyRoleRestrictions();
 });
@@ -654,6 +682,7 @@ function initEventListeners() {
   initBackupRestoreEvents();
   initModalEvents();
   initDebugViewEvents();
+  initReservedUnitsEvents();
 }
 
 /* ------------------------------------------------------------------
@@ -2038,6 +2067,23 @@ function handleResidentSave(formData, isEdit, originalUnitKey) {
     return;
   }
 
+  var reservedScholarship = AppState.scholarshipReservedUnits.get(newUnitKey);
+  if (reservedScholarship) {
+    closeResidentModal();
+    showConfirmModal(
+      'Scholarship Reserved Unit',
+      'Unit "' + formData.Unit_Assigned + '" is reserved for the "' + reservedScholarship + '" scholarship. Do you want to proceed with this placement?',
+      function () {
+        _completeResidentSave(formData, isEdit, originalUnitKey, newUnitKey);
+      }
+    );
+    return;
+  }
+
+  _completeResidentSave(formData, isEdit, originalUnitKey, newUnitKey);
+}
+
+function _completeResidentSave(formData, isEdit, originalUnitKey, newUnitKey) {
   if (isEdit && originalUnitKey && originalUnitKey !== newUnitKey) {
     AppState.residents.delete(originalUnitKey);
   }
@@ -2050,7 +2096,6 @@ function handleResidentSave(formData, isEdit, originalUnitKey) {
   });
 
   persistResidents();
-  closeResidentModal();
   refreshAllStats();
   refreshMasterList();
   renderCurrentMap();
@@ -2320,6 +2365,22 @@ function handleBankAssignment(bankEntry, selectedUnit) {
     }
   }
 
+  var reservedScholarship = AppState.scholarshipReservedUnits.get(unitKey);
+  if (reservedScholarship) {
+    showConfirmModal(
+      'Scholarship Reserved Unit',
+      'Unit "' + selectedUnit + '" is reserved for the "' + reservedScholarship + '" scholarship. Do you want to proceed with this placement?',
+      function () {
+        _completeBankAssignment(bankEntry, selectedUnit, unitKey);
+      }
+    );
+    return;
+  }
+
+  _completeBankAssignment(bankEntry, selectedUnit, unitKey);
+}
+
+function _completeBankAssignment(bankEntry, selectedUnit, unitKey) {
   AppState.residents.set(unitKey, {
     Resident_Name: bankEntry.name,
     Unit_Assigned: selectedUnit,
@@ -2483,6 +2544,7 @@ function handleClearSession() {
           AppState.waitingBank = [];
           AppState.unassignedScholarships = [];
           AppState.scholarshipExpectedData = [];
+          AppState.scholarshipReservedUnits = new Map();
           AppState.selectedBuilding = null;
           AppState.selectedFloor = null;
           AppState.showNames = false;
@@ -2519,6 +2581,7 @@ function handleClearSession() {
           refreshBank();
           refreshUnassignedScholarships();
           refreshScholarshipAudit();
+          refreshReservedUnits();
           renderImportCards(AppState);
           renderDebugPanel(AppState);
           renderBackupRestore(AppState);
@@ -2531,6 +2594,52 @@ function handleClearSession() {
       );
     }
   );
+}
+
+/* ------------------------------------------------------------------
+   SCHOLARSHIP RESERVED UNITS — MANAGEMENT
+   ------------------------------------------------------------------ */
+
+function refreshReservedUnits() {
+  renderReservedUnits(AppState.scholarshipReservedUnits, {
+    onRemove: handleRemoveReservedUnit,
+  });
+  renderReservedUnitsSummary(AppState.scholarshipReservedUnits);
+}
+
+function handleAddReservedUnit() {
+  openReserveUnitModal(AppState.inventory, AppState.residents, AppState.scholarshipReservedUnits, {
+    onReserve: function (unitNumber, scholarship) {
+      var unitKey = unitNumber.toUpperCase();
+      AppState.scholarshipReservedUnits.set(unitKey, scholarship);
+      persistProject();
+      refreshReservedUnits();
+      renderCurrentMap();
+      showNotification('Unit "' + unitNumber + '" reserved for "' + scholarship + '".', 'success');
+    },
+  });
+}
+
+function handleRemoveReservedUnit(unitKey) {
+  var scholarship = AppState.scholarshipReservedUnits.get(unitKey);
+  showConfirmModal(
+    'Remove Reservation',
+    'Remove the "' + (scholarship || '') + '" scholarship reservation from unit "' + unitKey + '"?',
+    function () {
+      AppState.scholarshipReservedUnits.delete(unitKey);
+      persistProject();
+      refreshReservedUnits();
+      renderCurrentMap();
+      showNotification('Reservation removed from unit "' + unitKey + '".', 'success');
+    }
+  );
+}
+
+function initReservedUnitsEvents() {
+  var addBtn = document.getElementById('add-reserved-unit-btn');
+  if (addBtn) {
+    addBtn.addEventListener('click', handleAddReservedUnit);
+  }
 }
 
 /* ------------------------------------------------------------------
@@ -2549,6 +2658,7 @@ function refreshAllAfterImport() {
   refreshPreleaseProgress();
   renderDebugPanel(AppState);
   renderBackupRestore(AppState);
+  refreshReservedUnits();
 
   // Update prelease summary in sidebar
   if (typeof renderPreleaseSummary === 'function') {

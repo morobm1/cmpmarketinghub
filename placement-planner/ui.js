@@ -1712,6 +1712,155 @@ function renderUnassignedScholarships(items, residents, callbacks) {
 }
 
 /* ------------------------------------------------------------------
+   SCHOLARSHIP RESERVED UNITS UI
+   Renders into #reserved-units-list and #reserved-units-summary.
+   ------------------------------------------------------------------ */
+
+function renderReservedUnits(reservedUnitsMap, callbacks) {
+  var listEl = document.getElementById('reserved-units-list');
+  if (!listEl) return;
+  listEl.innerHTML = '';
+
+  if (!reservedUnitsMap || reservedUnitsMap.size === 0) {
+    listEl.innerHTML = '<div class="section-empty">No units reserved.</div>';
+    return;
+  }
+
+  var entries = [];
+  reservedUnitsMap.forEach(function (scholarship, unitKey) {
+    entries.push({ unitKey: unitKey, scholarship: scholarship });
+  });
+
+  entries.sort(function (a, b) {
+    return a.unitKey.localeCompare(b.unitKey, undefined, { numeric: true, sensitivity: 'base' });
+  });
+
+  for (var i = 0; i < entries.length; i++) {
+    (function (entry) {
+      var row = document.createElement('div');
+      row.className = 'reserved-unit-row';
+
+      var unitSpan = document.createElement('span');
+      unitSpan.className = 'reserved-unit-id';
+      unitSpan.textContent = entry.unitKey;
+
+      var schSpan = document.createElement('span');
+      schSpan.className = 'reserved-unit-scholarship';
+      schSpan.textContent = entry.scholarship;
+
+      var removeBtn = document.createElement('button');
+      removeBtn.className = 'reserved-unit-remove-btn';
+      removeBtn.textContent = '×';
+      removeBtn.title = 'Remove reservation';
+      removeBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (callbacks.onRemove) callbacks.onRemove(entry.unitKey);
+      });
+
+      row.appendChild(unitSpan);
+      row.appendChild(schSpan);
+      row.appendChild(removeBtn);
+      listEl.appendChild(row);
+    })(entries[i]);
+  }
+}
+
+function renderReservedUnitsSummary(reservedUnitsMap) {
+  var summaryEl = document.getElementById('reserved-units-summary');
+  if (!summaryEl) return;
+  summaryEl.innerHTML = '';
+
+  if (!reservedUnitsMap || reservedUnitsMap.size === 0) return;
+
+  var counts = {};
+  reservedUnitsMap.forEach(function (scholarship) {
+    var key = scholarship.toUpperCase();
+    counts[key] = (counts[key] || 0) + 1;
+  });
+
+  var total = 0;
+  var sorted = Object.entries(counts).sort(function (a, b) { return b[1] - a[1]; });
+
+  var html = '<div class="reserved-summary-grid">';
+  for (var i = 0; i < sorted.length; i++) {
+    html += '<div class="reserved-summary-row">' +
+      '<span class="reserved-summary-label">' + escapeHtml(sorted[i][0]) + '</span>' +
+      '<span class="reserved-summary-count">' + sorted[i][1] + '</span>' +
+      '</div>';
+    total += sorted[i][1];
+  }
+  html += '<div class="reserved-summary-row reserved-summary-total">' +
+    '<span class="reserved-summary-label">Total Reserved</span>' +
+    '<span class="reserved-summary-count">' + total + '</span>' +
+    '</div>';
+  html += '</div>';
+
+  summaryEl.innerHTML = html;
+}
+
+function openReserveUnitModal(inventory, residents, reservedUnitsMap, callbacks) {
+  var title = 'Reserve Unit for Scholarship';
+
+  var scholarshipOptions = '<option value="">-- Select Scholarship --</option>';
+  for (var i = 0; i < ALLOWED_SCHOLARSHIPS.length; i++) {
+    if (ALLOWED_SCHOLARSHIPS[i] === 'NONE') continue;
+    scholarshipOptions += '<option value="' + escapeHtml(ALLOWED_SCHOLARSHIPS[i]) + '">' + escapeHtml(ALLOWED_SCHOLARSHIPS[i]) + '</option>';
+  }
+
+  var bodyHtml =
+    '<form id="reserve-unit-form" class="modal-form">' +
+      '<div class="form-group">' +
+        '<label for="reserve-unit-select">Unit</label>' +
+        '<select id="reserve-unit-select" class="select-input" required></select>' +
+      '</div>' +
+      '<div class="form-group">' +
+        '<label for="reserve-scholarship-select">Scholarship</label>' +
+        '<select id="reserve-scholarship-select" class="select-input" required>' + scholarshipOptions + '</select>' +
+      '</div>' +
+    '</form>';
+
+  var footerHtml =
+    '<button type="button" class="btn btn-secondary" id="reserve-cancel-btn">Cancel</button>' +
+    '<button type="submit" form="reserve-unit-form" class="btn btn-primary" id="reserve-confirm-btn">Reserve</button>';
+
+  showModal(title, bodyHtml, footerHtml);
+
+  var unitSelect = document.getElementById('reserve-unit-select');
+  unitSelect.innerHTML = '<option value="">-- Select Unit --</option>';
+
+  if (inventory && inventory.length > 0) {
+    var sorted = inventory.slice().sort(function (a, b) {
+      return a.unitNumber.localeCompare(b.unitNumber, undefined, { numeric: true, sensitivity: 'base' });
+    });
+    for (var i = 0; i < sorted.length; i++) {
+      var unitKey = sorted[i].unitNumber.toUpperCase();
+      var alreadyReserved = reservedUnitsMap && reservedUnitsMap.has(unitKey);
+      var opt = document.createElement('option');
+      opt.value = sorted[i].unitNumber;
+      opt.textContent = sorted[i].unitNumber + (sorted[i].unitType ? ' (' + sorted[i].unitType + ')' : '') + (alreadyReserved ? ' [RESERVED]' : '');
+      if (alreadyReserved) opt.disabled = true;
+      unitSelect.appendChild(opt);
+    }
+  }
+
+  document.getElementById('reserve-cancel-btn').addEventListener('click', hideModal);
+
+  document.getElementById('reserve-unit-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var selectedUnit = document.getElementById('reserve-unit-select').value;
+    var selectedScholarship = document.getElementById('reserve-scholarship-select').value;
+
+    if (!selectedUnit || !selectedScholarship) {
+      alert('Both unit and scholarship are required.');
+      return;
+    }
+
+    hideModal();
+    if (callbacks.onReserve) callbacks.onReserve(selectedUnit, selectedScholarship);
+  });
+}
+
+/* ------------------------------------------------------------------
    SCHOLARSHIP AUDIT UI
    Renders into #scholarship-audit-table.
    ------------------------------------------------------------------ */
