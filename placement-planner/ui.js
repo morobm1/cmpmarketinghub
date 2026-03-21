@@ -1739,6 +1739,8 @@ function renderReservedUnits(reservedUnitsMap, callbacks) {
     (function (entry) {
       var row = document.createElement('div');
       row.className = 'reserved-unit-row';
+      row.title = 'Click to edit';
+      row.style.cursor = 'pointer';
 
       var unitSpan = document.createElement('span');
       unitSpan.className = 'reserved-unit-id';
@@ -1755,6 +1757,10 @@ function renderReservedUnits(reservedUnitsMap, callbacks) {
       removeBtn.addEventListener('click', function (e) {
         e.stopPropagation();
         if (callbacks.onRemove) callbacks.onRemove(entry.unitKey);
+      });
+
+      row.addEventListener('click', function () {
+        if (callbacks.onEdit) callbacks.onEdit(entry.unitKey, entry.scholarship);
       });
 
       row.appendChild(unitSpan);
@@ -1925,6 +1931,55 @@ function openReserveUnitModal(inventory, residents, reservedUnitsMap, callbacks)
 
     hideModal();
     if (callbacks.onReserve) callbacks.onReserve(selectedUnit, selectedScholarship);
+  });
+}
+
+function openEditReserveUnitModal(unitKey, currentScholarship, inventory, reservedUnitsMap, callbacks) {
+  var title = 'Edit Reserved Unit';
+
+  var unitLabel = unitKey;
+  if (inventory && inventory.length > 0) {
+    for (var i = 0; i < inventory.length; i++) {
+      if (inventory[i].unitNumber.toUpperCase() === unitKey) {
+        unitLabel = inventory[i].unitNumber + (inventory[i].unitType ? ' (' + inventory[i].unitType + ')' : '');
+        break;
+      }
+    }
+  }
+
+  var scholarshipOptions = '';
+  for (var i = 0; i < ALLOWED_SCHOLARSHIPS.length; i++) {
+    if (ALLOWED_SCHOLARSHIPS[i] === 'NONE') continue;
+    var sel = ALLOWED_SCHOLARSHIPS[i].toUpperCase() === currentScholarship.toUpperCase() ? ' selected' : '';
+    scholarshipOptions += '<option value="' + escapeHtml(ALLOWED_SCHOLARSHIPS[i]) + '"' + sel + '>' + escapeHtml(ALLOWED_SCHOLARSHIPS[i]) + '</option>';
+  }
+
+  var bodyHtml =
+    '<form id="edit-reserve-form" class="modal-form">' +
+      '<div class="form-group">' +
+        '<label>Unit</label>' +
+        '<div class="edit-reserve-unit-display">' + escapeHtml(unitLabel) + '</div>' +
+      '</div>' +
+      '<div class="form-group">' +
+        '<label for="edit-reserve-scholarship">Scholarship</label>' +
+        '<select id="edit-reserve-scholarship" class="select-input" required>' + scholarshipOptions + '</select>' +
+      '</div>' +
+    '</form>';
+
+  var footerHtml =
+    '<button type="button" class="btn btn-secondary" id="edit-reserve-cancel-btn">Cancel</button>' +
+    '<button type="submit" form="edit-reserve-form" class="btn btn-primary" id="edit-reserve-save-btn">Save</button>';
+
+  showModal(title, bodyHtml, footerHtml);
+
+  document.getElementById('edit-reserve-cancel-btn').addEventListener('click', hideModal);
+
+  document.getElementById('edit-reserve-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var newScholarship = document.getElementById('edit-reserve-scholarship').value;
+    if (!newScholarship) return;
+    hideModal();
+    if (callbacks.onSave) callbacks.onSave(unitKey, newScholarship);
   });
 }
 

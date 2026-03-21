@@ -2603,6 +2603,7 @@ function handleClearSession() {
 function refreshReservedUnits() {
   renderReservedUnits(AppState.scholarshipReservedUnits, {
     onRemove: handleRemoveReservedUnit,
+    onEdit: handleEditReservedUnit,
   });
   renderReservedUnitsSummary(AppState.scholarshipReservedUnits);
 }
@@ -2616,6 +2617,18 @@ function handleAddReservedUnit() {
       refreshReservedUnits();
       renderCurrentMap();
       showNotification('Unit "' + unitNumber + '" reserved for "' + scholarship + '".', 'success');
+    },
+  });
+}
+
+function handleEditReservedUnit(unitKey, currentScholarship) {
+  openEditReserveUnitModal(unitKey, currentScholarship, AppState.inventory, AppState.scholarshipReservedUnits, {
+    onSave: function (unitKey, newScholarship) {
+      AppState.scholarshipReservedUnits.set(unitKey, newScholarship);
+      persistProject();
+      refreshReservedUnits();
+      renderCurrentMap();
+      showNotification('Reservation updated: "' + unitKey + '" now reserved for "' + newScholarship + '".', 'success');
     },
   });
 }
