@@ -131,6 +131,9 @@ function renderMap(svgElement, residents, options = {}) {
   // Clone SVG to avoid mutating the stored original
   const svg = svgElement.cloneNode(true);
 
+  // Inject SVG pattern definitions for hatched/patterned lease statuses
+  _injectPatternDefs(svg);
+
   // Ensure SVG is responsive
   svg.removeAttribute('width');
   svg.removeAttribute('height');
@@ -160,7 +163,20 @@ function renderMap(svgElement, residents, options = {}) {
     if (resident) {
       matchedUnits.add(normalizedId);
       const fillColor = getUnitColor(resident, scholarshipOnly);
-      el.style.fill = fillColor;
+      const leaseUpper = (resident.Lease_Status || '').toUpperCase().trim();
+      const scholarship = (resident.Scholarship || '').toUpperCase().trim();
+      const hasScholarshipOverride = scholarship && scholarship !== 'NONE' && COLOR_CONFIG.scholarship[scholarship];
+
+      if (!hasScholarshipOverride && !scholarshipOnly && isPatternFillStatus(resident.Lease_Status)) {
+        var patternId = _getPatternIdForStatus(leaseUpper);
+        if (patternId) {
+          el.style.fill = 'url(#' + patternId + ')';
+        } else {
+          el.style.fill = fillColor;
+        }
+      } else {
+        el.style.fill = fillColor;
+      }
       el.style.stroke = COLOR_CONFIG.stroke;
       el.style.strokeWidth = COLOR_CONFIG.strokeWidth;
 
@@ -507,4 +523,59 @@ function getClickableUnitIdFromSvgEvent(event, svgRoot) {
   }
 
   return null;
+}
+
+/* ------------------------------------------------------------------
+   SVG PATTERN FILLS — Diagonal lines for pending/incomplete statuses
+   ------------------------------------------------------------------ */
+
+function _sanitizePatternId(statusKey) {
+  return 'pattern-' + statusKey.replace(/[^A-Z0-9]/g, '-').toLowerCase();
+}
+
+function _getPatternIdForStatus(leaseStatusUpper) {
+  if (!leaseStatusUpper) return null;
+  if (PATTERN_FILL_STATUSES.indexOf(leaseStatusUpper) === -1) return null;
+  return _sanitizePatternId(leaseStatusUpper);
+}
+
+function _injectPatternDefs(svg) {
+  var existingDefs = svg.querySelector('defs');
+  if (!existingDefs) {
+    existingDefs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+    svg.insertBefore(existingDefs, svg.firstChild);
+  }
+
+  for (var i = 0; i < PATTERN_FILL_STATUSES.length; i++) {
+    var statusKey = PATTERN_FILL_STATUSES[i];
+    var color = COLOR_CONFIG.leaseStatus[statusKey] || '#999999';
+    var patternId = _sanitizePatternId(statusKey);
+
+    if (existingDefs.querySelector('#' + patternId)) continue;
+
+    var pattern = document.createElementNS('http://www.w3.org/2000/svg', 'pattern');
+    pattern.setAttribute('id', patternId);
+    pattern.setAttribute('patternUnits', 'userSpaceOnUse');
+    pattern.setAttribute('width', '6');
+    pattern.setAttribute('height', '6');
+    pattern.setAttribute('patternTransform', 'rotate(45)');
+
+    var bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    bg.setAttribute('width', '6');
+    bg.setAttribute('height', '6');
+    bg.setAttribute('fill', color);
+
+    var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', '0');
+    line.setAttribute('y1', '0');
+    line.setAttribute('x2', '0');
+    line.setAttribute('y2', '6');
+    line.setAttribute('stroke', '#ffffff');
+    line.setAttribute('stroke-width', '2');
+    line.setAttribute('stroke-opacity', '0.5');
+
+    pattern.appendChild(bg);
+    pattern.appendChild(line);
+    existingDefs.appendChild(pattern);
+  }
 }

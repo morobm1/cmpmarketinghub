@@ -33,6 +33,9 @@ const COLOR_CONFIG = {
     'NEW LEASE':                     '#3b82f6',  // blue
     'RENEWAL TRANSFER':              '#eab308',  // yellow
     'NEW LEASE - MOMI':              '#3b82f6',  // blue (same as New Lease)
+    'NEW LEASE - PARTIALLY COMPLETE':'#60a5fa',  // light blue
+    'NEW LEASE - COMPLETE':          '#2563eb',  // dark blue
+    'NEW LEASE - STARTED':           '#93c5fd',  // pale blue
     'RENEWAL PENDING - STARTED':     '#ef4444',  // red
     'RENEWAL PENDING - NOT STARTED': '#ef4444',  // red
     'BLANK':                         '#d1d5db',  // medium gray
@@ -69,11 +72,29 @@ const COLOR_CONFIG = {
 /* ------------------------------------------------------------------
    Legend definitions used by UI module
    ------------------------------------------------------------------ */
+const PATTERN_FILL_STATUSES = [
+  'RENEWAL PENDING - STARTED',
+  'RENEWAL PENDING - NOT STARTED',
+  'NEW LEASE - PARTIALLY COMPLETE',
+  'NEW LEASE - COMPLETE',
+  'NEW LEASE - STARTED',
+];
+
+function isPatternFillStatus(leaseStatus) {
+  if (!leaseStatus) return false;
+  return PATTERN_FILL_STATUSES.indexOf(leaseStatus.toUpperCase().trim()) !== -1;
+}
+
 const LEGEND_ITEMS = [
-  { label: 'Renewal',            color: COLOR_CONFIG.leaseStatus['RENEWAL'] },
-  { label: 'New Lease',          color: COLOR_CONFIG.leaseStatus['NEW LEASE'] },
-  { label: 'Renewal Transfer',   color: COLOR_CONFIG.leaseStatus['RENEWAL TRANSFER'] },
-  { label: 'Renewal Pending',    color: COLOR_CONFIG.leaseStatus['RENEWAL PENDING - STARTED'] },
+  { label: 'Renewal',                    color: COLOR_CONFIG.leaseStatus['RENEWAL'] },
+  { label: 'New Lease',                  color: COLOR_CONFIG.leaseStatus['NEW LEASE'] },
+  { label: 'Renewal Transfer',           color: COLOR_CONFIG.leaseStatus['RENEWAL TRANSFER'] },
+  { label: 'New Lease - MOMI',           color: COLOR_CONFIG.leaseStatus['NEW LEASE - MOMI'] },
+  { label: 'New Lease - Part. Complete',  color: COLOR_CONFIG.leaseStatus['NEW LEASE - PARTIALLY COMPLETE'], pattern: true },
+  { label: 'New Lease - Complete',        color: COLOR_CONFIG.leaseStatus['NEW LEASE - COMPLETE'], pattern: true },
+  { label: 'New Lease - Started',         color: COLOR_CONFIG.leaseStatus['NEW LEASE - STARTED'], pattern: true },
+  { label: 'Renewal Pending - Started',   color: COLOR_CONFIG.leaseStatus['RENEWAL PENDING - STARTED'], pattern: true },
+  { label: 'Renewal Pending - Not Start', color: COLOR_CONFIG.leaseStatus['RENEWAL PENDING - NOT STARTED'], pattern: true },
   { label: 'First Ascent',       color: COLOR_CONFIG.scholarship['FIRST ASCENT'] },
   { label: 'Hinkley',            color: COLOR_CONFIG.scholarship['HINKLEY'] },
   { label: 'RBL',                color: COLOR_CONFIG.scholarship['RBL'] },
@@ -412,10 +433,15 @@ function _restoreColorsFromData(data) {
 function rebuildLegendItems() {
   LEGEND_ITEMS.length = 0;
   LEGEND_ITEMS.push(
-    { label: 'Renewal',            color: COLOR_CONFIG.leaseStatus['RENEWAL'] },
-    { label: 'New Lease',          color: COLOR_CONFIG.leaseStatus['NEW LEASE'] },
-    { label: 'Renewal Transfer',   color: COLOR_CONFIG.leaseStatus['RENEWAL TRANSFER'] },
-    { label: 'Renewal Pending',    color: COLOR_CONFIG.leaseStatus['RENEWAL PENDING - STARTED'] },
+    { label: 'Renewal',                    color: COLOR_CONFIG.leaseStatus['RENEWAL'] },
+    { label: 'New Lease',                  color: COLOR_CONFIG.leaseStatus['NEW LEASE'] },
+    { label: 'Renewal Transfer',           color: COLOR_CONFIG.leaseStatus['RENEWAL TRANSFER'] },
+    { label: 'New Lease - MOMI',           color: COLOR_CONFIG.leaseStatus['NEW LEASE - MOMI'] },
+    { label: 'New Lease - Part. Complete',  color: COLOR_CONFIG.leaseStatus['NEW LEASE - PARTIALLY COMPLETE'], pattern: true },
+    { label: 'New Lease - Complete',        color: COLOR_CONFIG.leaseStatus['NEW LEASE - COMPLETE'], pattern: true },
+    { label: 'New Lease - Started',         color: COLOR_CONFIG.leaseStatus['NEW LEASE - STARTED'], pattern: true },
+    { label: 'Renewal Pending - Started',   color: COLOR_CONFIG.leaseStatus['RENEWAL PENDING - STARTED'], pattern: true },
+    { label: 'Renewal Pending - Not Start', color: COLOR_CONFIG.leaseStatus['RENEWAL PENDING - NOT STARTED'], pattern: true },
     { label: 'First Ascent',       color: COLOR_CONFIG.scholarship['FIRST ASCENT'] },
     { label: 'Hinkley',            color: COLOR_CONFIG.scholarship['HINKLEY'] },
     { label: 'RBL',                color: COLOR_CONFIG.scholarship['RBL'] },
@@ -457,6 +483,9 @@ const ALLOWED_LEASE_STATUSES = [
   'Renewal',
   'Renewal Transfer',
   'New Lease',
+  'New Lease - Partially Complete',
+  'New Lease - Complete',
+  'New Lease - Started',
   'Renewal Pending - Started',
   'Renewal Pending - Not Started',
   'New Lease - MOMI',
@@ -511,6 +540,9 @@ const FLOORPLAN_DISPLAY_ORDER = [
 const PRELEASE_NEW_LEASE_STATUSES = [
   'New Lease',
   'New Lease - MOMI',
+  'New Lease - Partially Complete',
+  'New Lease - Complete',
+  'New Lease - Started',
 ];
 
 /**

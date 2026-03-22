@@ -26,6 +26,9 @@ const DEFAULT_COLORS = {
     'NEW LEASE':                     '#3b82f6',
     'RENEWAL TRANSFER':              '#eab308',
     'NEW LEASE - MOMI':              '#3b82f6',
+    'NEW LEASE - PARTIALLY COMPLETE':'#60a5fa',
+    'NEW LEASE - COMPLETE':          '#2563eb',
+    'NEW LEASE - STARTED':           '#93c5fd',
     'RENEWAL PENDING - STARTED':     '#ef4444',
     'RENEWAL PENDING - NOT STARTED': '#ef4444',
   },
@@ -273,7 +276,11 @@ function renderLegend() {
 
     var swatch = document.createElement('span');
     swatch.className = 'legend-swatch';
-    swatch.style.backgroundColor = item.color;
+    if (item.pattern) {
+      swatch.style.background = 'repeating-linear-gradient(45deg,' + item.color + ',' + item.color + ' 2px,#fff 2px,#fff 4px)';
+    } else {
+      swatch.style.backgroundColor = item.color;
+    }
 
     var label = document.createElement('span');
     label.textContent = item.label;
@@ -282,6 +289,19 @@ function renderLegend() {
     el.appendChild(label);
     container.appendChild(el);
   });
+
+  var editorBtn = document.createElement('button');
+  editorBtn.className = 'btn btn-sm btn-outline legend-color-editor-btn';
+  editorBtn.textContent = 'Edit Colors';
+  editorBtn.addEventListener('click', function () {
+    openColorEditor({
+      onSave: function () {
+        renderLegend();
+        if (typeof renderCurrentMap === 'function') renderCurrentMap();
+      },
+    });
+  });
+  container.appendChild(editorBtn);
 }
 
 /* ------------------------------------------------------------------
