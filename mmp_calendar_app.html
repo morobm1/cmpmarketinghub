@@ -191,6 +191,13 @@
     .modal h3{margin:0 0 16px 0;color:var(--text);font-size:16px;font-weight:700}
     .modal .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
     .modal .actions button{width:auto;padding:10px 20px}
+    .iuh-modal{max-width:700px;padding:24px}
+    .iuh-section-title{font-weight:700;font-size:14px;color:var(--brand-primary);border-bottom:2px solid var(--brand-accent);padding-bottom:4px;margin:18px 0 10px 0}
+    .iuh-modal .row{margin-bottom:8px}
+    #glBreakdownContainer table{width:100%;border-collapse:collapse;font-size:13px}
+    #glBreakdownContainer th,#glBreakdownContainer td{text-align:left;padding:6px 10px;border-bottom:1px solid var(--border)}
+    #glBreakdownContainer th{font-weight:600;color:var(--subtext);font-size:12px;text-transform:uppercase}
+    #glBreakdownContainer tr.gl-total td{font-weight:700;border-top:2px solid var(--text)}
 
     /* Filters */
     #filtersRow{margin:8px 0}
@@ -377,6 +384,18 @@
             <label for="actualSpend">Actual Spend</label>
             <input id="actualSpend" type="number" step="0.01" placeholder="0.00" />
           </div>
+          <div>
+            <label for="glCode">GL Code</label>
+            <select id="glCode">
+              <option value="">-- Select --</option>
+              <option>Design work</option>
+              <option>Advertisement (Boost)</option>
+              <option>Leasing Incentive</option>
+              <option>Resident Life</option>
+              <option>Model/ leasing experience</option>
+              <option>collateral promotion</option>
+            </select>
+          </div>
         </div>
         <div class="row">
           <div>
@@ -468,6 +487,7 @@
         <div class="content">
           <div class="row" style="margin-bottom:8px; gap:8px">
             <button id="openAddEventModalBtn" class="good">Add Event</button>
+            <button id="openIUHEventModalBtn" class="good" style="display:none">Add IUH Event</button>
             <button id="openRenewalCampaignBtn" class="secondary">Renewal Campaign</button>
           </div>
           <div id="filtersRow" class="row" style="gap:8px; align-items:center"></div>
@@ -527,6 +547,7 @@
           <div style="margin-top:12px">
             <canvas id="trendChart" height="140"></canvas>
           </div>
+          <div id="glBreakdownContainer" style="margin-top:16px"></div>
         </div>
       </section>
 
@@ -587,6 +608,18 @@
           <label for="m_spend">Actual Spend (optional)</label>
           <input id="m_spend" type="number" step="0.01" placeholder="0.00" />
         </div>
+        <div>
+          <label for="m_glCode">GL Code</label>
+          <select id="m_glCode">
+            <option value="">-- Select --</option>
+            <option>Design work</option>
+            <option>Advertisement (Boost)</option>
+            <option>Leasing Incentive</option>
+            <option>Resident Life</option>
+            <option>Model/ leasing experience</option>
+            <option>collateral promotion</option>
+          </select>
+        </div>
       </div>
       <div class="row">
         <div>
@@ -599,6 +632,185 @@
       <div class="actions">
         <button id="m_cancel" class="secondary">Cancel</button>
         <button id="m_save" class="good">Save Event</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="iuhEventModal" class="modal-backdrop">
+    <div class="modal iuh-modal">
+      <h3 id="iuhModalTitle">Add IUH Event</h3>
+      <input type="hidden" id="iuh_editId" value="" />
+
+      <div class="iuh-section-title">Event Overview</div>
+      <div class="row">
+        <div style="flex:2">
+          <label for="iuh_eventName">Event Name</label>
+          <input id="iuh_eventName" type="text" placeholder="Event name" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="iuh_eventDate">Event Date</label>
+          <input id="iuh_eventDate" type="date" />
+        </div>
+        <div>
+          <label for="iuh_eventTime">Event Time</label>
+          <input id="iuh_eventTime" type="time" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="iuh_eventLocation">Event Location</label>
+          <input id="iuh_eventLocation" type="text" placeholder="Location" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="iuh_eventType">Event Type</label>
+          <select id="iuh_eventType">
+            <option value="">-- Select --</option>
+            <option>Social</option>
+            <option>Education</option>
+            <option>Wellness</option>
+            <option>Giveaway</option>
+            <option>Lobby Events</option>
+            <option>Social Media</option>
+          </select>
+        </div>
+        <div>
+          <label for="iuh_pillar">Pillar</label>
+          <select id="iuh_pillar">
+            <option value="">-- Select --</option>
+            <option>Social</option>
+            <option>Intellectual</option>
+            <option>Spiritual</option>
+            <option>Physical</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="iuh-section-title">Event Details</div>
+      <div class="row">
+        <div>
+          <label for="iuh_eventDescription">Event Description</label>
+          <textarea id="iuh_eventDescription" placeholder="Describe the event"></textarea>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="iuh_specialGuests">Special Guests / Entertainment</label>
+          <input id="iuh_specialGuests" type="text" placeholder="Guest names or acts" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="iuh_foodBeverage">Food &amp; Beverage</label>
+          <textarea id="iuh_foodBeverage" placeholder="Menu details"></textarea>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="iuh_suppliesDecorations">Supplies / Decorations Needed</label>
+          <textarea id="iuh_suppliesDecorations" placeholder="Supplies list"></textarea>
+        </div>
+      </div>
+
+      <div class="iuh-section-title">Logistics</div>
+      <div class="row">
+        <div>
+          <label for="iuh_setupTime">Set-up Time</label>
+          <input id="iuh_setupTime" type="time" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="iuh_cleanupPlan">Clean-up Plan</label>
+          <textarea id="iuh_cleanupPlan" placeholder="Clean-up plan details"></textarea>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="iuh_staffVolunteers">Staff / Volunteers</label>
+          <textarea id="iuh_staffVolunteers" placeholder="Names or roles"></textarea>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="iuh_vendorsContact">Vendors Contact Info</label>
+          <textarea id="iuh_vendorsContact" placeholder="Vendor names and contacts"></textarea>
+        </div>
+      </div>
+
+      <div class="iuh-section-title">Marketing</div>
+      <div class="row">
+        <div>
+          <label for="iuh_flyerSubmitted">Flyer Submitted</label>
+          <select id="iuh_flyerSubmitted">
+            <option value="">-- Select --</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </div>
+        <div>
+          <label for="iuh_flyerApproved">Flyer Approved</label>
+          <select id="iuh_flyerApproved">
+            <option value="">-- Select --</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="iuh_socialMediaPostMade">Social Media Post Made</label>
+          <select id="iuh_socialMediaPostMade">
+            <option value="">-- Select --</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </div>
+        <div>
+          <label for="iuh_approvedBudget">Approved Budget</label>
+          <input id="iuh_approvedBudget" type="number" step="0.01" placeholder="0.00" />
+        </div>
+      </div>
+
+      <div class="iuh-section-title">Budget / Costs</div>
+      <div class="row">
+        <div>
+          <label for="iuh_glCode">GL Code Category</label>
+          <select id="iuh_glCode">
+            <option value="">-- Select --</option>
+            <option>Design work</option>
+            <option>Advertisement (Boost)</option>
+            <option>Leasing Incentive</option>
+            <option>Resident Life</option>
+            <option>Model/ leasing experience</option>
+            <option>collateral promotion</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="iuh_proposedSpend">Proposed Spend</label>
+          <input id="iuh_proposedSpend" type="number" step="0.01" placeholder="0.00" />
+        </div>
+        <div>
+          <label for="iuh_actualSpend">Actual Spend</label>
+          <input id="iuh_actualSpend" type="number" step="0.01" placeholder="0.00" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="iuh_costNotes">Cost Notes</label>
+          <textarea id="iuh_costNotes" placeholder="Notes about costs"></textarea>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="iuh_delete" class="warn" style="display:none">Delete</button>
+        <button id="iuh_cancel" class="secondary">Cancel</button>
+        <button id="iuh_save" class="good">Save IUH Event</button>
       </div>
     </div>
   </div>
@@ -783,6 +995,39 @@
       reqUseEventBtn: document.getElementById('reqUseEventBtn'),
       reqCopyBtn: document.getElementById('reqCopyBtn'),
       reqEmailBtn: document.getElementById('reqEmailBtn'),
+
+      glCode: document.getElementById('glCode'),
+      m_glCode: document.getElementById('m_glCode'),
+      glBreakdownContainer: document.getElementById('glBreakdownContainer'),
+      openIUHEventModalBtn: document.getElementById('openIUHEventModalBtn'),
+      iuhEventModal: document.getElementById('iuhEventModal'),
+      iuhModalTitle: document.getElementById('iuhModalTitle'),
+      iuh_editId: document.getElementById('iuh_editId'),
+      iuh_eventName: document.getElementById('iuh_eventName'),
+      iuh_eventDate: document.getElementById('iuh_eventDate'),
+      iuh_eventTime: document.getElementById('iuh_eventTime'),
+      iuh_eventLocation: document.getElementById('iuh_eventLocation'),
+      iuh_eventType: document.getElementById('iuh_eventType'),
+      iuh_pillar: document.getElementById('iuh_pillar'),
+      iuh_eventDescription: document.getElementById('iuh_eventDescription'),
+      iuh_specialGuests: document.getElementById('iuh_specialGuests'),
+      iuh_foodBeverage: document.getElementById('iuh_foodBeverage'),
+      iuh_suppliesDecorations: document.getElementById('iuh_suppliesDecorations'),
+      iuh_setupTime: document.getElementById('iuh_setupTime'),
+      iuh_cleanupPlan: document.getElementById('iuh_cleanupPlan'),
+      iuh_staffVolunteers: document.getElementById('iuh_staffVolunteers'),
+      iuh_vendorsContact: document.getElementById('iuh_vendorsContact'),
+      iuh_flyerSubmitted: document.getElementById('iuh_flyerSubmitted'),
+      iuh_flyerApproved: document.getElementById('iuh_flyerApproved'),
+      iuh_socialMediaPostMade: document.getElementById('iuh_socialMediaPostMade'),
+      iuh_approvedBudget: document.getElementById('iuh_approvedBudget'),
+      iuh_glCode: document.getElementById('iuh_glCode'),
+      iuh_proposedSpend: document.getElementById('iuh_proposedSpend'),
+      iuh_actualSpend: document.getElementById('iuh_actualSpend'),
+      iuh_costNotes: document.getElementById('iuh_costNotes'),
+      iuh_save: document.getElementById('iuh_save'),
+      iuh_cancel: document.getElementById('iuh_cancel'),
+      iuh_delete: document.getElementById('iuh_delete'),
     };
 
     // Activate current nav tab
@@ -878,11 +1123,14 @@
             return;
           }
           selectedEventId = ev.id;
-          // Load into form for editing
-          els.title.value = ev.title || '';
-          const s = toISO(ev.start); const e = ev.end ? toISO(new Date(ev.end.getTime()-86400000)) : s; // end displayed exclusive
-          els.start.value = s; els.end.value = e;
           const xp = ev.extendedProps || {};
+          if (xp.eventFormType === 'iuh') {
+            openIUHModalForEdit(ev);
+            return;
+          }
+          els.title.value = ev.title || '';
+          const s = toISO(ev.start); const e = ev.end ? toISO(new Date(ev.end.getTime()-86400000)) : s;
+          els.start.value = s; els.end.value = e;
           els.channel.value = xp.channel || '';
           els.platform.value = xp.platform || '';
           els.campaign.value = xp.campaign || '';
@@ -908,6 +1156,7 @@
           }
           if (els.flyerUrl) els.flyerUrl.value = xp.flyerUrl || '';
           if (els.flyerPreview) els.flyerPreview.innerHTML = buildFlyerPreviewHtml(xp.flyerUrl || '');
+          if (els.glCode) els.glCode.value = xp.glCode || '';
           if (els.eventDetailsHeader) els.eventDetailsHeader.style.display = '';
           if (els.eventDetailsContent) els.eventDetailsContent.style.display = '';
           els.saveBtn.textContent = 'Update Event';
@@ -943,7 +1192,16 @@
           channel: ev.channel, platform: ev.platform, campaign: ev.campaign,
           budget: ev.budget, spend: ev.spend, time: ev.time, audience: ev.audience, desired: ev.desired, goal: ev.goal, notes: ev.notes,
           postedSocialAt: ev.postedSocialAt, flyerPostedAt: ev.flyerPostedAt, eblastSentAt: ev.eblastSentAt,
-          graphicRequestedAt: ev.graphicRequestedAt, flyerUrl: ev.flyerUrl
+          graphicRequestedAt: ev.graphicRequestedAt, flyerUrl: ev.flyerUrl, glCode: ev.glCode || '',
+          eventFormType: ev.eventFormType || '',
+          eventLocation: ev.eventLocation, eventType: ev.eventType, pillar: ev.pillar,
+          eventDescription: ev.eventDescription, specialGuests: ev.specialGuests,
+          foodBeverage: ev.foodBeverage, suppliesDecorations: ev.suppliesDecorations,
+          setupTime: ev.setupTime, cleanupPlan: ev.cleanupPlan,
+          staffVolunteers: ev.staffVolunteers, vendorsContact: ev.vendorsContact,
+          flyerSubmitted: ev.flyerSubmitted, flyerApproved: ev.flyerApproved,
+          socialMediaPostMade: ev.socialMediaPostMade, approvedBudget: ev.approvedBudget,
+          costNotes: ev.costNotes
         }
       }
     }
@@ -1008,10 +1266,11 @@
         flyerPostedAt: els.flyerPostedAt?.value || '',
         eblastSentAt: els.eblastSentAt?.value || '',
         flyerUrl: (els.flyerUrl?.value || '').trim(),
+        glCode: (els.glCode?.value || ''),
       };
     }
 
-    function clearForm(){ els.title.value=''; els.start.value=''; els.end.value=''; els.channel.value=''; els.platform.value=''; els.campaign.value=''; els.budget.value=''; if(els.actualSpend) els.actualSpend.value=''; els.time.value=''; els.audience.value=''; els.desired.value=''; els.goal.value=''; els.notes.value=''; if(els.flyerUrl) els.flyerUrl.value=''; if(els.postedSocialAt) els.postedSocialAt.value=''; if(els.flyerPostedAt) els.flyerPostedAt.value=''; if(els.eblastSentAt) els.eblastSentAt.value=''; }
+    function clearForm(){ els.title.value=''; els.start.value=''; els.end.value=''; els.channel.value=''; els.platform.value=''; els.campaign.value=''; els.budget.value=''; if(els.actualSpend) els.actualSpend.value=''; els.time.value=''; els.audience.value=''; els.desired.value=''; els.goal.value=''; els.notes.value=''; if(els.flyerUrl) els.flyerUrl.value=''; if(els.postedSocialAt) els.postedSocialAt.value=''; if(els.flyerPostedAt) els.flyerPostedAt.value=''; if(els.eblastSentAt) els.eblastSentAt.value=''; if(els.glCode) els.glCode.value=''; }
 
     // Summary & Trends
     function updateSummary(){
@@ -1278,6 +1537,7 @@
           showApp();
           bindHeaderHandlers();
           await initializeAppForUser();
+          if (typeof showIUHButtonIfAllowed === 'function') showIUHButtonIfAllowed();
           scheduleAutoLogout();
           return true;
         }
@@ -1645,6 +1905,7 @@
           goal: '',
           notes: '',
           flyerUrl: (els.m_flyer?.value || '').trim(),
+          glCode: (els.m_glCode?.value || ''),
           postedSocial: false,
           flyerPosted: false,
           eblastSent: false,
@@ -1804,6 +2065,218 @@
         }catch(err){ alert('Upload failed: '+err.message); }
       });
     }
+
+    function isIUHUser(){
+      var list = (typeof getAccessibleProperties==='function') ? getAccessibleProperties() : [];
+      return list.some(function(p){ return p === 'Ivory University House'; });
+    }
+
+    function showIUHButtonIfAllowed(){
+      if (els.openIUHEventModalBtn){
+        els.openIUHEventModalBtn.style.display = isIUHUser() ? '' : 'none';
+      }
+    }
+
+    function clearIUHModal(){
+      if (els.iuh_editId) els.iuh_editId.value = '';
+      if (els.iuhModalTitle) els.iuhModalTitle.textContent = 'Add IUH Event';
+      if (els.iuh_eventName) els.iuh_eventName.value = '';
+      if (els.iuh_eventDate) els.iuh_eventDate.value = '';
+      if (els.iuh_eventTime) els.iuh_eventTime.value = '';
+      if (els.iuh_eventLocation) els.iuh_eventLocation.value = '';
+      if (els.iuh_eventType) els.iuh_eventType.value = '';
+      if (els.iuh_pillar) els.iuh_pillar.value = '';
+      if (els.iuh_eventDescription) els.iuh_eventDescription.value = '';
+      if (els.iuh_specialGuests) els.iuh_specialGuests.value = '';
+      if (els.iuh_foodBeverage) els.iuh_foodBeverage.value = '';
+      if (els.iuh_suppliesDecorations) els.iuh_suppliesDecorations.value = '';
+      if (els.iuh_setupTime) els.iuh_setupTime.value = '';
+      if (els.iuh_cleanupPlan) els.iuh_cleanupPlan.value = '';
+      if (els.iuh_staffVolunteers) els.iuh_staffVolunteers.value = '';
+      if (els.iuh_vendorsContact) els.iuh_vendorsContact.value = '';
+      if (els.iuh_flyerSubmitted) els.iuh_flyerSubmitted.value = '';
+      if (els.iuh_flyerApproved) els.iuh_flyerApproved.value = '';
+      if (els.iuh_socialMediaPostMade) els.iuh_socialMediaPostMade.value = '';
+      if (els.iuh_approvedBudget) els.iuh_approvedBudget.value = '';
+      if (els.iuh_glCode) els.iuh_glCode.value = '';
+      if (els.iuh_proposedSpend) els.iuh_proposedSpend.value = '';
+      if (els.iuh_actualSpend) els.iuh_actualSpend.value = '';
+      if (els.iuh_costNotes) els.iuh_costNotes.value = '';
+      if (els.iuh_delete) els.iuh_delete.style.display = 'none';
+      if (els.iuh_save) els.iuh_save.textContent = 'Save IUH Event';
+    }
+
+    function openIUHModal(){
+      clearIUHModal();
+      var today = toISO(new Date());
+      if (els.iuh_eventDate) els.iuh_eventDate.value = today;
+      if (els.iuhEventModal) els.iuhEventModal.style.display = 'flex';
+    }
+
+    function closeIUHModal(){
+      if (els.iuhEventModal) els.iuhEventModal.style.display = 'none';
+    }
+
+    function openIUHModalForEdit(ev){
+      clearIUHModal();
+      var xp = ev.extendedProps || {};
+      if (els.iuh_editId) els.iuh_editId.value = ev.id;
+      if (els.iuhModalTitle) els.iuhModalTitle.textContent = 'Edit IUH Event';
+      if (els.iuh_eventName) els.iuh_eventName.value = ev.title || '';
+      if (els.iuh_eventDate) els.iuh_eventDate.value = ev.start ? toISO(ev.start) : '';
+      if (els.iuh_eventTime) els.iuh_eventTime.value = xp.time || '';
+      if (els.iuh_eventLocation) els.iuh_eventLocation.value = xp.eventLocation || '';
+      if (els.iuh_eventType) els.iuh_eventType.value = xp.eventType || '';
+      if (els.iuh_pillar) els.iuh_pillar.value = xp.pillar || '';
+      if (els.iuh_eventDescription) els.iuh_eventDescription.value = xp.eventDescription || '';
+      if (els.iuh_specialGuests) els.iuh_specialGuests.value = xp.specialGuests || '';
+      if (els.iuh_foodBeverage) els.iuh_foodBeverage.value = xp.foodBeverage || '';
+      if (els.iuh_suppliesDecorations) els.iuh_suppliesDecorations.value = xp.suppliesDecorations || '';
+      if (els.iuh_setupTime) els.iuh_setupTime.value = xp.setupTime || '';
+      if (els.iuh_cleanupPlan) els.iuh_cleanupPlan.value = xp.cleanupPlan || '';
+      if (els.iuh_staffVolunteers) els.iuh_staffVolunteers.value = xp.staffVolunteers || '';
+      if (els.iuh_vendorsContact) els.iuh_vendorsContact.value = xp.vendorsContact || '';
+      if (els.iuh_flyerSubmitted) els.iuh_flyerSubmitted.value = xp.flyerSubmitted || '';
+      if (els.iuh_flyerApproved) els.iuh_flyerApproved.value = xp.flyerApproved || '';
+      if (els.iuh_socialMediaPostMade) els.iuh_socialMediaPostMade.value = xp.socialMediaPostMade || '';
+      if (els.iuh_approvedBudget) els.iuh_approvedBudget.value = isFinite(xp.approvedBudget) ? xp.approvedBudget : '';
+      if (els.iuh_glCode) els.iuh_glCode.value = xp.glCode || '';
+      if (els.iuh_proposedSpend) els.iuh_proposedSpend.value = isFinite(xp.budget) ? xp.budget : '';
+      if (els.iuh_actualSpend) els.iuh_actualSpend.value = isFinite(xp.spend) ? xp.spend : '';
+      if (els.iuh_costNotes) els.iuh_costNotes.value = xp.costNotes || '';
+      if (els.iuh_delete) els.iuh_delete.style.display = '';
+      if (els.iuh_save) els.iuh_save.textContent = 'Update IUH Event';
+      if (els.iuhEventModal) els.iuhEventModal.style.display = 'flex';
+    }
+
+    function readIUHForm(){
+      var name = (els.iuh_eventName?.value || '').trim();
+      var date = els.iuh_eventDate?.value || '';
+      if (!name || !date){ alert('Event Name and Date are required.'); return null; }
+      var proposed = parseFloat(els.iuh_proposedSpend?.value);
+      var actual = parseFloat(els.iuh_actualSpend?.value);
+      var approved = parseFloat(els.iuh_approvedBudget?.value);
+      return {
+        title: name,
+        start: date,
+        end: date,
+        time: els.iuh_eventTime?.value || '',
+        eventFormType: 'iuh',
+        eventLocation: (els.iuh_eventLocation?.value || '').trim(),
+        eventType: els.iuh_eventType?.value || '',
+        pillar: els.iuh_pillar?.value || '',
+        eventDescription: (els.iuh_eventDescription?.value || '').trim(),
+        specialGuests: (els.iuh_specialGuests?.value || '').trim(),
+        foodBeverage: (els.iuh_foodBeverage?.value || '').trim(),
+        suppliesDecorations: (els.iuh_suppliesDecorations?.value || '').trim(),
+        setupTime: els.iuh_setupTime?.value || '',
+        cleanupPlan: (els.iuh_cleanupPlan?.value || '').trim(),
+        staffVolunteers: (els.iuh_staffVolunteers?.value || '').trim(),
+        vendorsContact: (els.iuh_vendorsContact?.value || '').trim(),
+        flyerSubmitted: els.iuh_flyerSubmitted?.value || '',
+        flyerApproved: els.iuh_flyerApproved?.value || '',
+        socialMediaPostMade: els.iuh_socialMediaPostMade?.value || '',
+        approvedBudget: isFinite(approved) ? Math.round(approved*100)/100 : 0,
+        glCode: els.iuh_glCode?.value || '',
+        budget: isFinite(proposed) ? Math.round(proposed*100)/100 : 0,
+        spend: isFinite(actual) ? Math.round(actual*100)/100 : 0,
+        costNotes: (els.iuh_costNotes?.value || '').trim(),
+        campaign: els.iuh_eventType?.value || '',
+        channel: '',
+        platform: '',
+        audience: '',
+        desired: '',
+        goal: '',
+        notes: (els.iuh_eventDescription?.value || '').trim(),
+      };
+    }
+
+    if (els.openIUHEventModalBtn){
+      els.openIUHEventModalBtn.addEventListener('click', openIUHModal);
+    }
+    if (els.iuh_cancel){
+      els.iuh_cancel.addEventListener('click', function(e){ e.preventDefault(); closeIUHModal(); });
+    }
+    if (els.iuh_save){
+      els.iuh_save.addEventListener('click', async function(e){
+        e.preventDefault();
+        var payload = readIUHForm();
+        if (!payload) return;
+        var prop = 'Ivory University House';
+        var editId = (els.iuh_editId?.value || '').trim();
+        try {
+          if (!SESSION_ACTIVE){ showLogin(); return; }
+          if (editId){
+            await apiFetch('/events', { method:'PUT', body: JSON.stringify({ id: editId, property: prop, ...payload }) });
+          } else {
+            await apiFetch('/events', { method:'POST', body: JSON.stringify({ property: prop, ...payload }) });
+          }
+          if (currentProperty === prop){
+            var res = await apiFetch('/events?property=' + encodeURIComponent(prop));
+            events = await res.json();
+          }
+        } catch(err){ alert('Save failed: ' + err.message); }
+        closeIUHModal();
+        if (calendar) refreshCalendar();
+      });
+    }
+    if (els.iuh_delete){
+      els.iuh_delete.addEventListener('click', async function(e){
+        e.preventDefault();
+        var editId = (els.iuh_editId?.value || '').trim();
+        if (!editId) return;
+        if (!confirm('Delete this IUH event?')) return;
+        var prop = 'Ivory University House';
+        try {
+          if (!SESSION_ACTIVE){ showLogin(); return; }
+          await apiFetch('/events', { method:'DELETE', body: JSON.stringify({ id: editId, property: prop }) });
+          if (currentProperty === prop){
+            var res = await apiFetch('/events?property=' + encodeURIComponent(prop));
+            events = await res.json();
+          }
+        } catch(err){ alert('Delete failed: ' + err.message); }
+        closeIUHModal();
+        selectedEventId = null;
+        if (calendar) refreshCalendar();
+      });
+    }
+
+    function renderGLBreakdown(){
+      if (!els.glBreakdownContainer) return;
+      if (!calendar){ els.glBreakdownContainer.innerHTML = ''; return; }
+      var view = calendar.view;
+      var monthKey = ymKey(view.currentStart);
+      var groups = {};
+      for (var i = 0; i < events.length; i++){
+        var ev = events[i];
+        if (!ev.start) continue;
+        if (ev.start.slice(0,7) !== monthKey) continue;
+        var gl = ev.glCode || 'Uncategorized';
+        if (!groups[gl]) groups[gl] = { proposed: 0, actual: 0 };
+        groups[gl].proposed += (ev.budget || 0);
+        groups[gl].actual += (ev.spend || 0);
+      }
+      var keys = Object.keys(groups).sort();
+      if (!keys.length){ els.glBreakdownContainer.innerHTML = ''; return; }
+      var totalP = 0, totalA = 0;
+      var rows = '';
+      for (var k = 0; k < keys.length; k++){
+        var g = groups[keys[k]];
+        totalP += g.proposed;
+        totalA += g.actual;
+        rows += '<tr><td>' + keys[k] + '</td><td>' + currency(g.proposed) + '</td><td>' + currency(g.actual) + '</td></tr>';
+      }
+      rows += '<tr class="gl-total"><td>Total</td><td>' + currency(totalP) + '</td><td>' + currency(totalA) + '</td></tr>';
+      els.glBreakdownContainer.innerHTML = '<h4 style="margin:0 0 8px 0;font-size:14px;font-weight:700">GL Code Breakdown</h4><table><thead><tr><th>GL Category</th><th>Proposed</th><th>Actual</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    }
+
+    var _origUpdateSummary = updateSummary;
+    updateSummary = function(){
+      _origUpdateSummary();
+      renderGLBreakdown();
+    };
+
+    showIUHButtonIfAllowed();
 
     if (calendar) refreshCalendar();
 
