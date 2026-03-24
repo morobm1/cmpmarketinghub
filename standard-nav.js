@@ -19,7 +19,8 @@
       { href: 'promo_order_tracker.html', label: 'Promo Order Tracker' },
       { href: 'uniform_shop.html', label: 'Uniform Shop' },
       { href: 'creative_library.html', label: 'Creative Library' },
-      { href: 'marketing_contacts.html', label: 'Marketing Contacts' }
+      { href: 'marketing_contacts.html', label: 'Marketing Contacts' },
+      { href: 'leasing_staff_list.html', label: 'Leasing Staff List' }
     ],
     resources: [
       { href: 'renewal_campaign.html', label: 'Renewal Campaign' },

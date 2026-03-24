@@ -1,0 +1,743 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Leasing Team Staff List &bull; Marketing Hub</title>
+  <link rel="preconnect" href="https://use.typekit.net" crossorigin>
+  <link rel="preconnect" href="https://p.typekit.net" crossorigin>
+  <link rel="stylesheet" href="https://use.typekit.net/hqv8hwr.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <style>
+    :root{
+      --brand-primary:#446472;
+      --brand-accent:#ffb732;
+      --brand-accent-2:#52d5ff;
+      --brand-gray:#929497;
+      --page-bg:#f8fafc;
+      --bg:#ffffff;
+      --text:#1e293b;
+      --subtext:#64748b;
+      --border:#e2e8f0;
+      --good:#22c55e;
+      --warn:#ffb732;
+      --bad:#ef4444;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{font-family:'Open Sans',system-ui,-apple-system,sans-serif;background:var(--page-bg);color:var(--text);font-size:14px;line-height:1.5}
+
+    /* Header */
+    header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:10px}
+    .brand .logo-img{height:28px;width:auto}
+    .brand .title{color:#ffb732;font-family:zooja-pro,Arial,sans-serif;font-size:clamp(32px,4vw,48px);line-height:1}
+    .header-controls{display:flex;align-items:center;gap:12px;margin-left:auto}
+    .header-btn{background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;transition:all .15s}
+    .header-btn:hover{background:#f8fafc;border-color:#cbd5e1}
+    .company-name{font-size:12px;color:var(--subtext);font-weight:500}
+
+    .container{padding:24px;max-width:1400px;margin:0 auto}
+    .card{background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,0.06);overflow:hidden;margin-bottom:20px}
+    .card h2{margin:0;padding:20px 24px;font-size:18px;color:#111827;font-weight:700;border-bottom:1px solid var(--border)}
+    .card .content{padding:24px}
+
+    /* Toolbar */
+    .toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:24px}
+    .toolbar select{padding:10px 14px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--text);font-size:14px;font-family:'Open Sans',system-ui,sans-serif;min-width:220px;cursor:pointer}
+    .toolbar select:focus{outline:none;border-color:var(--brand-accent-2);box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
+    .toolbar-spacer{flex:1}
+
+    button{padding:10px 20px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--text);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;font-family:Roboto,Arial,sans-serif}
+    button:hover{background:#f8fafc}
+    button.primary{background:var(--brand-primary);color:#fff;border-color:var(--brand-primary)}
+    button.primary:hover{background:#3b5561}
+    button.good{background:#52d5ff;color:#0b1b24;border-color:#52d5ff}
+    button.good:hover{background:#3ecbf5}
+    button.warn{background:#ffb732;color:#1f1300;border-color:#ffb732}
+    button.warn:hover{background:#f5a623}
+    button.danger{background:#ef4444;color:#fff;border-color:#ef4444}
+    button.danger:hover{background:#dc2626}
+    button.sm{padding:6px 14px;font-size:12px;border-radius:6px}
+
+    /* Staff cards */
+    .staff-grid{display:flex;flex-direction:column;gap:20px}
+    .staff-card{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+    .staff-card-header{display:flex;align-items:center;gap:16px;padding:16px 20px;background:linear-gradient(135deg,#446472 0%,#3b5561 100%);color:#fff}
+    .staff-avatar{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0}
+    .staff-info{flex:1}
+    .staff-name{font-size:16px;font-weight:700;margin-bottom:2px}
+    .staff-role{font-size:12px;opacity:0.85}
+    .staff-card-actions{display:flex;gap:6px}
+    .staff-card-actions button{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:5px 12px;font-size:11px;border-radius:6px}
+    .staff-card-actions button:hover{background:rgba(255,255,255,0.3)}
+
+    .staff-card-body{padding:16px 20px}
+    .category-group{margin-bottom:14px}
+    .category-group:last-child{margin-bottom:0}
+    .category-label{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.3px}
+    .cat-opening{background:#dbeafe;color:#1e40af}
+    .cat-lead{background:#fef3c7;color:#92400e}
+    .cat-social{background:#ede9fe;color:#5b21b6}
+    .cat-event{background:#fce7f3;color:#9d174d}
+    .cat-marketing{background:#d1fae5;color:#065f46}
+    .cat-misc{background:#f3f4f6;color:#374151}
+    .cat-closing{background:#fee2e2;color:#991b1b}
+
+    .task-list{list-style:none;padding:0;margin:0}
+    .task-item{display:flex;align-items:flex-start;gap:10px;padding:6px 0;border-bottom:1px solid #f1f5f9;font-size:13px}
+    .task-item:last-child{border-bottom:none}
+    .task-check{width:18px;height:18px;border-radius:4px;border:2px solid var(--border);cursor:pointer;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .15s;background:#fff}
+    .task-check.done{background:var(--good);border-color:var(--good);color:#fff}
+    .task-check.done::after{content:'✓';font-size:11px;font-weight:700}
+    .task-text{flex:1;line-height:1.4}
+    .task-text.done{text-decoration:line-through;color:var(--subtext)}
+    .task-note{font-size:11px;color:var(--subtext);font-style:italic}
+    .task-actions{display:flex;gap:4px;flex-shrink:0}
+    .task-actions button{padding:2px 8px;font-size:11px;border-radius:4px}
+    .add-task-row{display:flex;gap:8px;margin-top:12px;align-items:center}
+    .add-task-row select,.add-task-row input{padding:8px 10px;border-radius:6px;border:1px solid var(--border);font-size:13px;font-family:'Open Sans',system-ui,sans-serif}
+    .add-task-row input{flex:1}
+    .add-task-row select{min-width:140px}
+
+    /* Modal */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+    .modal-backdrop.show{display:flex}
+    .modal{background:#fff;border:1px solid var(--border);border-radius:14px;max-width:560px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 20px 40px rgba(0,0,0,0.15)}
+    .modal-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+    .modal-header h3{margin:0;font-size:18px;color:var(--text);font-weight:700}
+    .modal-body{padding:24px}
+    .close-btn{background:transparent;border:none;font-size:24px;color:var(--subtext);cursor:pointer;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px}
+    .close-btn:hover{background:var(--border);color:var(--text)}
+
+    label{font-size:13px;color:var(--text);display:block;margin-bottom:6px;font-weight:600}
+    input,select,textarea{width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--text);font-size:14px;transition:border-color .15s,box-shadow .15s;font-family:'Open Sans',system-ui,sans-serif}
+    input:focus,select:focus,textarea:focus{outline:none;border-color:var(--brand-accent-2);box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
+    textarea{min-height:60px;resize:vertical}
+    .form-group{margin-bottom:16px}
+    .form-actions{display:flex;gap:12px;justify-content:flex-end;margin-top:24px}
+
+    .empty-state{text-align:center;padding:60px 20px;color:var(--subtext)}
+    .empty-state h3{font-size:20px;margin-bottom:12px;color:var(--text)}
+
+    .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;background:#e2e8f0;color:#475569}
+    .badge.admin{background:#dbeafe;color:#1e40af}
+
+    .date-picker{display:flex;align-items:center;gap:8px}
+    .date-picker input[type=date]{min-width:160px;width:auto}
+
+    .hidden{display:none}
+
+    /* Print styles */
+    @media print{
+      header,.sidebar-nav,.nav-toggle,.toolbar button,.staff-card-actions,.add-task-row,.task-actions,.header-controls{display:none!important}
+      .main-content{margin-left:0!important}
+      .staff-card{break-inside:avoid;page-break-inside:avoid;box-shadow:none;border:1px solid #ccc}
+      .staff-card-header{background:#446472!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      body{background:#fff}
+    }
+  </style>
+</head>
+<body>
+  <div id="bootLoader" style="position:fixed;inset:0;background:#ffffff;display:flex;align-items:center;justify-content:center;z-index:100;color:#111827;font-family:Roboto,Arial,sans-serif">
+    <div style="display:flex;flex-direction:column;gap:6px;align-items:center">
+      <div style="font-weight:800">Marketing Hub</div>
+      <div style="color:#6b7280;font-size:12px">Loading&hellip;</div>
+    </div>
+  </div>
+
+  <header id="appHeader" style="display:none">
+    <div class="brand">
+      <img src="logo-main.svg" class="logo-img" alt="Capstone" />
+      <div class="title">Marketing Hub</div>
+    </div>
+    <div class="header-controls">
+      <span id="userBadge" class="badge" style="margin-right:8px"></span>
+      <button class="header-btn" id="logoutBtn">Sign Out</button>
+    </div>
+    <span class="company-name">Capstone Management Partners</span>
+  </header>
+
+  <div class="container" id="appContainer" style="display:none">
+
+    <!-- Toolbar -->
+    <div class="card">
+      <h2>Leasing Team Staff List</h2>
+      <div class="content">
+        <div class="toolbar">
+          <div id="propertySelectWrap">
+            <label style="margin-bottom:4px">Property</label>
+            <select id="propertySelect"><option value="">— Select Property —</option></select>
+          </div>
+          <div class="date-picker">
+            <label style="margin-bottom:4px">Shift Date</label>
+            <input type="date" id="shiftDate" />
+          </div>
+          <div class="toolbar-spacer"></div>
+          <button class="good" id="addStaffBtn" style="display:none">+ Add Staff Member</button>
+          <button id="exportCsvBtn">Export CSV</button>
+          <button id="exportXlsxBtn">Export Excel</button>
+          <button id="printBtn">Print</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Staff List -->
+    <div id="staffListArea">
+      <div class="empty-state" id="emptyState">
+        <h3>Select a Property</h3>
+        <p>Choose a property above to view or manage the leasing team staff list.</p>
+      </div>
+      <div class="staff-grid" id="staffGrid" style="display:none"></div>
+    </div>
+
+  </div>
+
+  <!-- Add/Edit Staff Modal -->
+  <div class="modal-backdrop" id="staffModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="staffModalTitle">Add Staff Member</h3>
+        <button class="close-btn" id="closeStaffModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="staffForm">
+          <input type="hidden" id="staffId" />
+          <div class="form-group">
+            <label for="staffName">Employee Name *</label>
+            <input type="text" id="staffName" placeholder="e.g., Jane Smith" required />
+          </div>
+          <div class="form-group">
+            <label for="staffRole">Role *</label>
+            <input type="text" id="staffRole" list="rolesList" placeholder="e.g., Leasing Agent" required />
+            <datalist id="rolesList"></datalist>
+          </div>
+          <div class="form-group">
+            <label for="staffProperty">Property</label>
+            <select id="staffProperty" required></select>
+          </div>
+          <div class="form-actions">
+            <button type="button" id="cancelStaffBtn">Cancel</button>
+            <button type="submit" class="primary" id="saveStaffBtn">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Task Modal -->
+  <div class="modal-backdrop" id="taskModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="taskModalTitle">Add Task</h3>
+        <button class="close-btn" id="closeTaskModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="taskForm">
+          <input type="hidden" id="taskId" />
+          <input type="hidden" id="taskStaffId" />
+          <input type="hidden" id="taskStaffName" />
+          <div class="form-group">
+            <label>Employee</label>
+            <input type="text" id="taskEmployee" readonly style="background:#f8fafc;cursor:not-allowed" />
+          </div>
+          <div class="form-group">
+            <label for="taskCategory">Category *</label>
+            <select id="taskCategory" required>
+              <option value="">— Select —</option>
+              <option value="Opening Task">Opening Task</option>
+              <option value="Lead Follow Up">Lead Follow Up</option>
+              <option value="Social Media">Social Media</option>
+              <option value="Event">Event</option>
+              <option value="Marketing">Marketing</option>
+              <option value="Misc Task">Misc Task</option>
+              <option value="Closing Task">Closing Task</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="taskText">Task *</label>
+            <input type="text" id="taskText" placeholder="Describe the task..." required />
+          </div>
+          <div class="form-group">
+            <label for="taskNotes">Notes</label>
+            <textarea id="taskNotes" placeholder="Optional notes..."></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="button" id="cancelTaskBtn">Cancel</button>
+            <button type="submit" class="primary">Save Task</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ───── State ───── */
+    let currentUser = null;
+    let isAdmin = false;
+    let properties = [];
+    let staffMembers = [];
+    let tasks = [];
+    let roles = [];
+    let selectedPropertyId = '';
+
+    const CATEGORIES = [
+      'Opening Task','Lead Follow Up','Social Media','Event','Marketing','Misc Task','Closing Task'
+    ];
+    const CAT_CLASS = {
+      'Opening Task':'cat-opening','Lead Follow Up':'cat-lead','Social Media':'cat-social',
+      'Event':'cat-event','Marketing':'cat-marketing','Misc Task':'cat-misc','Closing Task':'cat-closing'
+    };
+
+    /* ───── DOM refs ───── */
+    const $ = id => document.getElementById(id);
+    const els = {
+      bootLoader: $('bootLoader'), appHeader: $('appHeader'), appContainer: $('appContainer'),
+      logoutBtn: $('logoutBtn'), userBadge: $('userBadge'),
+      propertySelect: $('propertySelect'), propertySelectWrap: $('propertySelectWrap'),
+      shiftDate: $('shiftDate'),
+      addStaffBtn: $('addStaffBtn'),
+      exportCsvBtn: $('exportCsvBtn'), exportXlsxBtn: $('exportXlsxBtn'), printBtn: $('printBtn'),
+      emptyState: $('emptyState'), staffGrid: $('staffGrid'),
+      // Staff modal
+      staffModal: $('staffModal'), staffModalTitle: $('staffModalTitle'),
+      closeStaffModal: $('closeStaffModal'), staffForm: $('staffForm'),
+      staffId: $('staffId'), staffName: $('staffName'), staffRole: $('staffRole'),
+      staffProperty: $('staffProperty'), cancelStaffBtn: $('cancelStaffBtn'),
+      // Task modal
+      taskModal: $('taskModal'), taskModalTitle: $('taskModalTitle'),
+      closeTaskModal: $('closeTaskModal'), taskForm: $('taskForm'),
+      taskId: $('taskId'), taskStaffId: $('taskStaffId'), taskStaffName: $('taskStaffName'),
+      taskEmployee: $('taskEmployee'), taskCategory: $('taskCategory'),
+      taskText: $('taskText'), taskNotes: $('taskNotes'), cancelTaskBtn: $('cancelTaskBtn'),
+    };
+
+    /* ───── Helpers ───── */
+    function escapeHtml(t){ const d=document.createElement('div'); d.textContent=t; return d.innerHTML; }
+
+    async function apiFetch(path, opts={}){
+      const headers = Object.assign({'Content-Type':'application/json'}, opts.headers||{});
+      const res = await fetch('/api'+path, Object.assign({}, opts, {headers, credentials:'include'}));
+      if (!res.ok){ const t = await res.text(); throw new Error(t||('HTTP '+res.status)); }
+      return res;
+    }
+
+    function todayStr(){ return new Date().toISOString().slice(0,10); }
+
+    /* ───── Auth ───── */
+    async function initAuth(){
+      try{
+        const meRes = await fetch('/api/me',{credentials:'include'});
+        if(meRes.ok){
+          const me = await meRes.json();
+          currentUser = me;
+          isAdmin = me.role === 'admin';
+          showApp();
+          return true;
+        }
+      }catch(e){ console.error('Auth error:',e); }
+      window.location.href='index.html';
+      return false;
+    }
+
+    function showApp(){
+      els.bootLoader.style.display='none';
+      els.appHeader.style.display='';
+      els.appContainer.style.display='';
+      els.userBadge.textContent = currentUser.username + (isAdmin?' (Admin)':'');
+      if(isAdmin) els.userBadge.classList.add('admin');
+      els.shiftDate.value = todayStr();
+
+      if(isAdmin){
+        els.addStaffBtn.style.display='';
+      } else {
+        els.addStaffBtn.style.display='none';
+      }
+    }
+
+    async function doLogout(){
+      try{ await fetch('/api/auth-logout',{method:'POST',credentials:'include'}); }catch(e){}
+      window.location.href='index.html';
+    }
+
+    /* ───── Properties ───── */
+    async function loadProperties(){
+      try{
+        const res = await apiFetch('/properties');
+        properties = await res.json();
+        renderPropertySelects();
+      }catch(e){ console.error('Failed to load properties:',e); }
+    }
+
+    function renderPropertySelects(){
+      // Main toolbar select
+      let opts = '<option value="">— Select Property —</option>';
+      let staffOpts = '<option value="">— Select —</option>';
+
+      const allowed = isAdmin ? properties : properties.filter(p => {
+        if(currentUser.properties === '*') return true;
+        if(Array.isArray(currentUser.properties)) return currentUser.properties.includes(p.id) || currentUser.properties.includes(p.name);
+        return currentUser.properties === p.id || currentUser.properties === p.name;
+      });
+
+      allowed.forEach(p => {
+        opts += `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`;
+        staffOpts += `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`;
+      });
+
+      els.propertySelect.innerHTML = opts;
+      els.staffProperty.innerHTML = staffOpts;
+
+      // If normal user has exactly one property, auto-select and hide selector
+      if(!isAdmin && allowed.length === 1){
+        els.propertySelect.value = allowed[0].id;
+        selectedPropertyId = allowed[0].id;
+        els.propertySelectWrap.querySelector('select').disabled = true;
+        loadStaffAndTasks();
+      }
+    }
+
+    /* ───── Roles ───── */
+    async function loadRoles(){
+      try{
+        const res = await apiFetch('/leasing-staff?action=roles');
+        roles = await res.json();
+        renderRolesDatalist();
+      }catch(e){ console.error('Failed to load roles:',e); }
+    }
+
+    function renderRolesDatalist(){
+      const dl = $('rolesList');
+      dl.innerHTML = roles.map(r => `<option value="${escapeHtml(r.roleName)}">`).join('');
+    }
+
+    /* ───── Staff & Tasks ───── */
+    async function loadStaffAndTasks(){
+      if(!selectedPropertyId){ showEmpty('Select a Property','Choose a property above to view or manage the leasing team staff list.'); return; }
+      const date = els.shiftDate.value || todayStr();
+      try{
+        const [staffRes, taskRes] = await Promise.all([
+          apiFetch('/leasing-staff?action=staff&propertyId='+encodeURIComponent(selectedPropertyId)),
+          apiFetch('/leasing-staff?action=tasks&propertyId='+encodeURIComponent(selectedPropertyId)+'&date='+encodeURIComponent(date)),
+        ]);
+        staffMembers = await staffRes.json();
+        tasks = await taskRes.json();
+        renderStaffList();
+      }catch(e){
+        console.error('Load error:',e);
+        showEmpty('Error Loading','Failed to load staff data: '+e.message);
+      }
+    }
+
+    function showEmpty(title, msg){
+      els.emptyState.innerHTML = `<h3>${escapeHtml(title)}</h3><p>${escapeHtml(msg)}</p>`;
+      els.emptyState.style.display='';
+      els.staffGrid.style.display='none';
+    }
+
+    function renderStaffList(){
+      if(staffMembers.length === 0){
+        if(isAdmin){
+          showEmpty('No Staff Members','Add staff members using the "+ Add Staff Member" button above.');
+        } else {
+          showEmpty('No Staff Members','No staff members found for this property.');
+        }
+        return;
+      }
+
+      els.emptyState.style.display='none';
+      els.staffGrid.style.display='';
+
+      const propertyName = (properties.find(p=>p.id===selectedPropertyId)||{}).name||'';
+      const date = els.shiftDate.value || todayStr();
+
+      els.staffGrid.innerHTML = staffMembers.map(staff => {
+        const staffTasks = tasks.filter(t => t.staffMemberId === (staff._id||'').toString());
+        // Group by category, only show categories with tasks
+        const grouped = {};
+        staffTasks.forEach(t => {
+          if(!grouped[t.category]) grouped[t.category]=[];
+          grouped[t.category].push(t);
+        });
+
+        const initials = (staff.employeeName||'').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+
+        let categoryHTML = '';
+        CATEGORIES.forEach(cat => {
+          if(!grouped[cat] || grouped[cat].length === 0) return;
+          const catClass = CAT_CLASS[cat]||'cat-misc';
+          const taskItems = grouped[cat].map(t => {
+            const doneClass = t.isCompleted ? 'done' : '';
+            const noteHTML = t.notes ? `<div class="task-note">${escapeHtml(t.notes)}</div>` : '';
+            return `
+              <li class="task-item">
+                <div class="task-check ${doneClass}" data-task-id="${t._id}" title="Toggle complete"></div>
+                <div style="flex:1">
+                  <div class="task-text ${doneClass}">${escapeHtml(t.taskText)}</div>
+                  ${noteHTML}
+                </div>
+                <div class="task-actions">
+                  <button class="sm" onclick="editTask('${t._id}')">Edit</button>
+                  <button class="sm danger" onclick="deleteTask('${t._id}')">Del</button>
+                </div>
+              </li>`;
+          }).join('');
+
+          categoryHTML += `
+            <div class="category-group">
+              <span class="category-label ${catClass}">${escapeHtml(cat)}</span>
+              <ul class="task-list">${taskItems}</ul>
+            </div>`;
+        });
+
+        if(!categoryHTML){
+          categoryHTML = '<p style="color:var(--subtext);font-size:13px;padding:8px 0">No tasks assigned for this date.</p>';
+        }
+
+        const adminBtns = isAdmin ? `
+          <div class="staff-card-actions">
+            <button onclick="openAddTask('${staff._id}','${escapeHtml(staff.employeeName)}')">+ Task</button>
+            <button onclick="openEditStaff('${staff._id}')">Edit</button>
+            <button onclick="deactivateStaff('${staff._id}','${escapeHtml(staff.employeeName)}')">Remove</button>
+          </div>` : `
+          <div class="staff-card-actions">
+            <button onclick="openAddTask('${staff._id}','${escapeHtml(staff.employeeName)}')">+ Task</button>
+          </div>`;
+
+        return `
+          <div class="staff-card" data-staff-id="${staff._id}">
+            <div class="staff-card-header">
+              <div class="staff-avatar">${initials}</div>
+              <div class="staff-info">
+                <div class="staff-name">${escapeHtml(staff.employeeName)}</div>
+                <div class="staff-role">${escapeHtml(staff.role||'No Role')}</div>
+              </div>
+              ${adminBtns}
+            </div>
+            <div class="staff-card-body">
+              ${categoryHTML}
+            </div>
+          </div>`;
+      }).join('');
+
+      // Attach toggle-complete handlers
+      els.staffGrid.querySelectorAll('.task-check').forEach(el => {
+        el.addEventListener('click', async () => {
+          const taskId = el.dataset.taskId;
+          const task = tasks.find(t => (t._id||'').toString() === taskId);
+          if(!task) return;
+          try{
+            await apiFetch('/leasing-staff?action=task',{
+              method:'POST',
+              body: JSON.stringify({ id: taskId, propertyId: task.propertyId, staffMemberId: task.staffMemberId, isCompleted: !task.isCompleted, category: task.category, taskText: task.taskText })
+            });
+            await loadStaffAndTasks();
+          }catch(e){ alert('Failed to toggle task: '+e.message); }
+        });
+      });
+    }
+
+    /* ───── Staff CRUD ───── */
+    function openAddStaff(){
+      els.staffId.value = '';
+      els.staffName.value = '';
+      els.staffRole.value = '';
+      els.staffProperty.value = selectedPropertyId || '';
+      els.staffModalTitle.textContent = 'Add Staff Member';
+      els.staffModal.classList.add('show');
+    }
+
+    function openEditStaff(id){
+      const staff = staffMembers.find(s => (s._id||'').toString() === id);
+      if(!staff) return;
+      els.staffId.value = staff._id;
+      els.staffName.value = staff.employeeName;
+      els.staffRole.value = staff.role || '';
+      els.staffProperty.value = staff.propertyId;
+      els.staffModalTitle.textContent = 'Edit Staff Member';
+      els.staffModal.classList.add('show');
+    }
+    window.openEditStaff = openEditStaff;
+
+    async function saveStaff(e){
+      e.preventDefault();
+      const id = els.staffId.value;
+      const employeeName = els.staffName.value.trim();
+      const role = els.staffRole.value.trim();
+      const propertyId = els.staffProperty.value;
+      if(!employeeName || !propertyId){ alert('Name and property are required'); return; }
+
+      try{
+        await apiFetch('/leasing-staff?action=staff',{
+          method:'POST',
+          body: JSON.stringify({ id: id||undefined, propertyId, employeeName, role })
+        });
+        // Also save role to roles collection if new
+        if(role && !roles.find(r=>r.roleName===role)){
+          try{ await apiFetch('/leasing-staff?action=role',{ method:'POST', body: JSON.stringify({ roleName: role }) }); }catch(e){}
+          await loadRoles();
+        }
+        closeStaffModal();
+        await loadStaffAndTasks();
+      }catch(e){ alert('Failed to save staff: '+e.message); }
+    }
+
+    async function deactivateStaff(id, name){
+      if(!confirm(`Remove "${name}" from this property's staff list?`)) return;
+      try{
+        await apiFetch('/leasing-staff?action=staff',{
+          method:'DELETE',
+          body: JSON.stringify({ id })
+        });
+        await loadStaffAndTasks();
+      }catch(e){ alert('Failed to remove staff: '+e.message); }
+    }
+    window.deactivateStaff = deactivateStaff;
+
+    function closeStaffModal(){ els.staffModal.classList.remove('show'); }
+
+    /* ───── Task CRUD ───── */
+    function openAddTask(staffId, staffName){
+      els.taskId.value = '';
+      els.taskStaffId.value = staffId;
+      els.taskStaffName.value = staffName;
+      els.taskEmployee.value = staffName;
+      els.taskCategory.value = '';
+      els.taskText.value = '';
+      els.taskNotes.value = '';
+      els.taskModalTitle.textContent = 'Add Task';
+      els.taskModal.classList.add('show');
+    }
+    window.openAddTask = openAddTask;
+
+    function editTask(taskId){
+      const task = tasks.find(t => (t._id||'').toString() === taskId);
+      if(!task) return;
+      const staff = staffMembers.find(s => (s._id||'').toString() === task.staffMemberId);
+      els.taskId.value = task._id;
+      els.taskStaffId.value = task.staffMemberId;
+      els.taskStaffName.value = task.employeeName || (staff?staff.employeeName:'');
+      els.taskEmployee.value = task.employeeName || (staff?staff.employeeName:'');
+      els.taskCategory.value = task.category;
+      els.taskText.value = task.taskText;
+      els.taskNotes.value = task.notes || '';
+      els.taskModalTitle.textContent = 'Edit Task';
+      els.taskModal.classList.add('show');
+    }
+    window.editTask = editTask;
+
+    async function deleteTask(taskId){
+      if(!confirm('Delete this task?')) return;
+      try{
+        await apiFetch('/leasing-staff?action=task',{
+          method:'DELETE',
+          body: JSON.stringify({ id: taskId })
+        });
+        await loadStaffAndTasks();
+      }catch(e){ alert('Failed to delete task: '+e.message); }
+    }
+    window.deleteTask = deleteTask;
+
+    async function saveTask(e){
+      e.preventDefault();
+      const id = els.taskId.value;
+      const staffMemberId = els.taskStaffId.value;
+      const employeeName = els.taskStaffName.value;
+      const category = els.taskCategory.value;
+      const taskText = els.taskText.value.trim();
+      const notes = els.taskNotes.value.trim();
+      const shiftDate = els.shiftDate.value || todayStr();
+      if(!category || !taskText){ alert('Category and task text are required'); return; }
+
+      try{
+        await apiFetch('/leasing-staff?action=task',{
+          method:'POST',
+          body: JSON.stringify({ id: id||undefined, propertyId: selectedPropertyId, staffMemberId, employeeName, category, taskText, notes, shiftDate })
+        });
+        closeTaskModal();
+        await loadStaffAndTasks();
+      }catch(e){ alert('Failed to save task: '+e.message); }
+    }
+
+    function closeTaskModal(){ els.taskModal.classList.remove('show'); }
+
+    /* ───── Export ───── */
+    function buildExportData(){
+      const propName = (properties.find(p=>p.id===selectedPropertyId)||{}).name||'Unknown';
+      const date = els.shiftDate.value || todayStr();
+      const rows = [];
+      staffMembers.forEach(staff => {
+        const staffTasks = tasks.filter(t => t.staffMemberId === (staff._id||'').toString());
+        if(staffTasks.length === 0){
+          rows.push({ Property: propName, Date: date, Employee: staff.employeeName, Role: staff.role||'', Category:'', Task:'', Notes:'', Completed:'' });
+        } else {
+          staffTasks.forEach(t => {
+            rows.push({ Property: propName, Date: date, Employee: staff.employeeName, Role: staff.role||'', Category: t.category, Task: t.taskText, Notes: t.notes||'', Completed: t.isCompleted?'Yes':'No' });
+          });
+        }
+      });
+      return rows;
+    }
+
+    function exportCSV(){
+      if(!selectedPropertyId){ alert('Select a property first'); return; }
+      const rows = buildExportData();
+      if(rows.length === 0){ alert('No data to export'); return; }
+      const headers = Object.keys(rows[0]);
+      const csvContent = [headers.join(','), ...rows.map(r => headers.map(h => `"${(r[h]||'').replace(/"/g,'""')}"`).join(','))].join('\n');
+      const blob = new Blob([csvContent],{type:'text/csv;charset=utf-8;'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      const propName = (properties.find(p=>p.id===selectedPropertyId)||{}).name||'staff';
+      a.download = `leasing_staff_${propName.replace(/\s+/g,'_')}_${els.shiftDate.value||todayStr()}.csv`;
+      a.click();
+    }
+
+    function exportXLSX(){
+      if(!selectedPropertyId){ alert('Select a property first'); return; }
+      if(typeof XLSX === 'undefined'){ alert('Excel library not loaded'); return; }
+      const rows = buildExportData();
+      if(rows.length === 0){ alert('No data to export'); return; }
+      const ws = XLSX.utils.json_to_sheet(rows);
+      // Auto-width
+      const colWidths = Object.keys(rows[0]).map(k => ({wch: Math.max(k.length, ...rows.map(r=>(r[k]||'').length))+2}));
+      ws['!cols'] = colWidths;
+      const wb = XLSX.utils.book_new();
+      const propName = (properties.find(p=>p.id===selectedPropertyId)||{}).name||'Staff';
+      XLSX.utils.book_append_sheet(wb, ws, 'Staff List');
+      XLSX.writeFile(wb, `leasing_staff_${propName.replace(/\s+/g,'_')}_${els.shiftDate.value||todayStr()}.xlsx`);
+    }
+
+    /* ───── Event Listeners ───── */
+    els.logoutBtn.addEventListener('click', doLogout);
+    els.propertySelect.addEventListener('change', e => {
+      selectedPropertyId = e.target.value;
+      loadStaffAndTasks();
+    });
+    els.shiftDate.addEventListener('change', () => { if(selectedPropertyId) loadStaffAndTasks(); });
+    els.addStaffBtn.addEventListener('click', openAddStaff);
+    els.staffForm.addEventListener('submit', saveStaff);
+    els.closeStaffModal.addEventListener('click', closeStaffModal);
+    els.cancelStaffBtn.addEventListener('click', closeStaffModal);
+    els.staffModal.addEventListener('click', e => { if(e.target === els.staffModal) closeStaffModal(); });
+    els.taskForm.addEventListener('submit', saveTask);
+    els.closeTaskModal.addEventListener('click', closeTaskModal);
+    els.cancelTaskBtn.addEventListener('click', closeTaskModal);
+    els.taskModal.addEventListener('click', e => { if(e.target === els.taskModal) closeTaskModal(); });
+    els.exportCsvBtn.addEventListener('click', exportCSV);
+    els.exportXlsxBtn.addEventListener('click', exportXLSX);
+    els.printBtn.addEventListener('click', () => window.print());
+
+    /* ───── Init ───── */
+    (async () => {
+      const ok = await initAuth();
+      if(!ok) return;
+      await Promise.all([loadProperties(), loadRoles()]);
+    })();
+  </script>
+  <script src="standard-nav.js"></script>
+</body>
+</html>
