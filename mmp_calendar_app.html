@@ -198,6 +198,24 @@
     #glBreakdownContainer th,#glBreakdownContainer td{text-align:left;padding:6px 10px;border-bottom:1px solid var(--border)}
     #glBreakdownContainer th{font-weight:600;color:var(--subtext);font-size:12px;text-transform:uppercase}
     #glBreakdownContainer tr.gl-total td{font-weight:700;border-top:2px solid var(--text)}
+    #glBreakdownContainer .gl-variance-pos{color:var(--good)}
+    #glBreakdownContainer .gl-variance-neg{color:var(--bad)}
+
+    /* Budget month cards */
+    .budget-months-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+    .budget-month-card{background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:14px;transition:box-shadow .15s}
+    .budget-month-card:hover{box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+    .budget-month-card .month-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;cursor:pointer;user-select:none}
+    .budget-month-card .month-title{font-weight:700;font-size:14px;color:var(--text)}
+    .budget-month-card .month-total{font-size:13px;font-weight:600;color:var(--brand-primary);background:rgba(68,100,114,0.08);padding:3px 10px;border-radius:6px}
+    .budget-month-card .gl-inputs{display:flex;flex-direction:column;gap:6px}
+    .budget-month-card .gl-row{display:flex;align-items:center;gap:8px}
+    .budget-month-card .gl-row label{flex:1;font-size:12px;color:var(--subtext);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+    .budget-month-card .gl-row input{width:110px;flex:0 0 110px;text-align:right;font-size:13px;padding:5px 8px}
+    .budget-month-card .gl-inputs.collapsed{display:none}
+    .budget-month-card .toggle-icon{font-size:11px;color:var(--subtext);transition:transform .2s}
+    .budget-month-card .toggle-icon.open{transform:rotate(90deg)}
+    .budget-month-card .legacy-note{font-size:11px;color:var(--warn);margin-bottom:6px;font-style:italic}
 
     /* Filters */
     #filtersRow{margin:8px 0}
@@ -542,7 +560,7 @@
             </div>
           </div>
 
-          <div id="budgetsContainer" class="grid" style="padding:8px; margin-top:8px"></div>
+          <div id="budgetsContainer" style="padding:8px; margin-top:8px"></div>
 
           <div style="margin-top:12px">
             <canvas id="trendChart" height="140"></canvas>
@@ -1278,7 +1296,7 @@
       const start = view.currentStart; const monthKey = ymKey(start);
       const monthLabel = start.toLocaleString(undefined, { month: 'long', year: 'numeric' });
       els.kpiMonth.textContent = monthLabel;
-      const budget = monthlyBudgets[monthKey] || 0;
+      const budget = getTotalBudgetForMonth(monthKey);
       const proposed = sumProposedForMonth(monthKey);
       const actual = sumActualForMonth(monthKey);
       els.kpiBudget.textContent = currency(budget);
@@ -1301,7 +1319,11 @@
     }
 
     function monthsRange(){
-      const keysSet = new Set(Object.keys(monthlyBudgets||{}));
+      const keysSet = new Set();
+      // monthlyBudgets keys are still ym strings even with nested GL structure
+      if (monthlyBudgets && typeof monthlyBudgets === 'object'){
+        for (const k of Object.keys(monthlyBudgets)) keysSet.add(k);
+      }
       for (let e of events){ if (e.start) keysSet.add(e.start.slice(0,7)); }
       const keys = Array.from(keysSet).filter(Boolean).sort();
       if (keys.length) return keys;
@@ -1331,16 +1353,18 @@
 
     function renderTrendChart(){
       const labels = monthsRange();
-      const budgetData = labels.map(ym => (monthlyBudgets[ym] || 0));
+      const budgetData = labels.map(ym => getTotalBudgetForMonth(ym));
       const proposedData = labels.map(ym => sumProposedForMonth(ym));
+      const actualData = labels.map(ym => sumActualForMonth(ym));
       if (chart) chart.destroy();
       chart = new Chart(document.getElementById('trendChart').getContext('2d'), {
         type: 'line',
         data: {
           labels,
           datasets: [
-            { label: 'Budget', data: budgetData, borderColor: '#a78bfa', backgroundColor: 'rgba(167,139,250,0.25)', tension: 0.25 },
-            { label: 'Proposed', data: proposedData, borderColor: '#22d3ee', backgroundColor: 'rgba(34,211,238,0.25)', tension: 0.25 }
+            { label: 'Budget', data: budgetData, borderColor: '#a78bfa', backgroundColor: 'rgba(167,139,250,0.15)', tension: 0.25, borderWidth: 2 },
+            { label: 'Proposed', data: proposedData, borderColor: '#22d3ee', backgroundColor: 'rgba(34,211,238,0.15)', tension: 0.25, borderWidth: 2 },
+            { label: 'Actual', data: actualData, borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.15)', tension: 0.25, borderWidth: 2, borderDash: [5, 3] }
           ]
         },
         options: {
@@ -1577,9 +1601,53 @@
       if (!SESSION_ACTIVE && calendar) refreshCalendar();
     }
 
+    // GL Code categories
+    const GL_CODES = [
+      'Design work',
+      'Advertisement (Boost)',
+      'Leasing Incentive',
+      'Resident Life',
+      'Model/ leasing experience',
+      'collateral promotion'
+    ];
+
     // Monthly budgets management
+    // New structure: monthlyBudgets[ym] = { "Design work": 500, "Advertisement (Boost)": 200, ... }
+    // Legacy structure (backward compat): monthlyBudgets[ym] = number (flat)
     let monthlyBudgets = {};
     const STORE_BUDGETS_KEY = 'mmp_monthly_budgets_v1';
+
+    // Migrate flat monthly budget values to GL-code structure
+    function migrateBudgetDataIfNeeded(){
+      if (!monthlyBudgets || typeof monthlyBudgets !== 'object') { monthlyBudgets = {}; return; }
+      for (const ym of Object.keys(monthlyBudgets)){
+        const val = monthlyBudgets[ym];
+        if (typeof val === 'number'){
+          // Old flat format → store as _legacy so it's visible but not lost
+          monthlyBudgets[ym] = { _legacy: val };
+        }
+      }
+    }
+
+    // Get total budget for a month (sum of all GL codes)
+    function getTotalBudgetForMonth(ym){
+      const entry = monthlyBudgets[ym];
+      if (!entry || typeof entry !== 'object') return 0;
+      let total = 0;
+      for (const k of Object.keys(entry)){
+        const v = entry[k];
+        if (isFinite(v)) total += v;
+      }
+      return Math.round(total * 100) / 100;
+    }
+
+    // Get budget for a specific GL code in a month
+    function getGLBudgetForMonth(ym, glCode){
+      const entry = monthlyBudgets[ym];
+      if (!entry || typeof entry !== 'object') return 0;
+      return entry[glCode] || 0;
+    }
+
     async function saveBudgetStore(){
       budgetsByProperty[currentProperty] = monthlyBudgets;
       if (SESSION_ACTIVE){
@@ -1591,13 +1659,18 @@
     function loadBudgetStore(){
       try{ budgetsByProperty = JSON.parse(localStorage.getItem(STORE_BUDGETS_BY_PROP_KEY)||'{}'); }catch(e){ budgetsByProperty = {}; }
       monthlyBudgets = budgetsByProperty[currentProperty] || {};
+      migrateBudgetDataIfNeeded();
     }
+
+    // Track which month cards are expanded
+    let expandedMonths = {};
 
     function initBudgetUI(){
       initBudgetYearOptions();
       renderBudgetInputs(parseInt(els.budgetYear.value, 10));
       els.saveBudgetsBtn.addEventListener('click', () => { saveBudgetStore(); updateSummary(); renderTrendChart(); });
       els.clearBudgetsBtn.addEventListener('click', () => {
+        if (!confirm('Clear all budget entries for this year?')) return;
         const y = parseInt(els.budgetYear.value, 10);
         clearYear(y);
         renderBudgetInputs(y);
@@ -1618,31 +1691,84 @@
     }
 
     function renderBudgetInputs(year){
-      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      let html = '<div class="months-inline" style="display:flex; gap:10px; flex-wrap:wrap">';
-      for (let i=1;i<=12;i++){
+      const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      let html = '<div class="budget-months-grid">';
+      for (let i = 1; i <= 12; i++){
         const ym = `${year}-${String(i).padStart(2,'0')}`;
-        const val = monthlyBudgets[ym] ?? '';
-        html += `<div style="display:flex; flex-direction:column; gap:4px; min-width:110px; flex:0 0 auto">`+
-                `<div class="mini" style="text-align:center">${months[i-1]} ${year}</div>`+
-                `<input data-ym="${ym}" type="number" step="0.01" value="${val}" style="width:100%" />`+
-                `</div>`;
+        const entry = monthlyBudgets[ym] || {};
+        const isObj = typeof entry === 'object';
+        const hasLegacy = isObj && typeof entry._legacy === 'number';
+        const total = getTotalBudgetForMonth(ym);
+        const isOpen = expandedMonths[ym] !== false; // default open
+
+        html += `<div class="budget-month-card" data-ym="${ym}">`;
+        html += `<div class="month-header" data-toggle-ym="${ym}">`;
+        html += `<span class="month-title">${monthNames[i-1]} ${year}</span>`;
+        html += `<span class="month-total" data-total-ym="${ym}">$${total.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>`;
+        html += `</div>`;
+        html += `<div class="gl-inputs${isOpen ? '' : ' collapsed'}" data-gl-ym="${ym}">`;
+
+        if (hasLegacy){
+          html += `<div class="legacy-note">⚠ Legacy flat budget: $${entry._legacy.toLocaleString('en-US',{minimumFractionDigits:2})} — assign to GL categories below</div>`;
+          html += `<div class="gl-row">`;
+          html += `<label>Legacy (unassigned)</label>`;
+          html += `<input data-ym="${ym}" data-gl="_legacy" type="number" step="0.01" value="${entry._legacy}" />`;
+          html += `</div>`;
+        }
+
+        for (const gl of GL_CODES){
+          const val = (isObj && isFinite(entry[gl])) ? entry[gl] : '';
+          html += `<div class="gl-row">`;
+          html += `<label title="${gl}">${gl}</label>`;
+          html += `<input data-ym="${ym}" data-gl="${gl}" type="number" step="0.01" value="${val}" placeholder="0.00" />`;
+          html += `</div>`;
+        }
+
+        html += `</div>`; // .gl-inputs
+        html += `</div>`; // .budget-month-card
       }
       html += '</div>';
       els.budgetsContainer.innerHTML = html;
-      els.budgetsContainer.querySelectorAll('input[data-ym]').forEach(inp => {
+
+      // Event listeners for GL budget inputs
+      els.budgetsContainer.querySelectorAll('input[data-ym][data-gl]').forEach(inp => {
         inp.addEventListener('input', (e) => {
           const ym = e.target.dataset.ym;
+          const gl = e.target.dataset.gl;
           const v = parseFloat(e.target.value);
-          if (isFinite(v)) monthlyBudgets[ym] = Math.round(v*100)/100; else delete monthlyBudgets[ym];
-          saveBudgetStore();
-          updateSummary();
-          renderTrendChart();
+          if (!monthlyBudgets[ym] || typeof monthlyBudgets[ym] !== 'object') monthlyBudgets[ym] = {};
+          if (isFinite(v)) monthlyBudgets[ym][gl] = Math.round(v * 100) / 100;
+          else delete monthlyBudgets[ym][gl];
+          // Update month total display
+          const totalEl = els.budgetsContainer.querySelector(`[data-total-ym="${ym}"]`);
+          if (totalEl){
+            const t = getTotalBudgetForMonth(ym);
+            totalEl.textContent = '$' + t.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+          }
+        });
+      });
+
+      // Toggle expand/collapse month cards
+      els.budgetsContainer.querySelectorAll('[data-toggle-ym]').forEach(hdr => {
+        hdr.addEventListener('click', (e) => {
+          const ym = e.currentTarget.dataset.toggleYm;
+          const glDiv = els.budgetsContainer.querySelector(`[data-gl-ym="${ym}"]`);
+          if (glDiv){
+            const isCollapsed = glDiv.classList.contains('collapsed');
+            glDiv.classList.toggle('collapsed');
+            expandedMonths[ym] = isCollapsed; // toggled
+          }
         });
       });
     }
 
-    function clearYear(year){ for (let i=1;i<=12;i++){ const ym = `${year}-${String(i).padStart(2,'0')}`; delete monthlyBudgets[ym]; } saveBudgetStore(); }
+    function clearYear(year){
+      for (let i = 1; i <= 12; i++){
+        const ym = `${year}-${String(i).padStart(2,'0')}`;
+        delete monthlyBudgets[ym];
+      }
+      saveBudgetStore();
+    }
 
     // Properties helpers
     // Grouped property mapping to combine certain properties
@@ -1682,7 +1808,7 @@
         }
       }catch(e){}
       try{
-        // Migrate budgets (sum by month)
+        // Migrate budgets (merge by month, handle both flat and nested GL structures)
         if (budgetsByProperty && typeof budgetsByProperty === 'object'){
           for (const oldName of OLD_NAMES){
             const newName = OLD_TO_GROUP[oldName];
@@ -1690,8 +1816,18 @@
             if (oldMap && typeof oldMap === 'object'){
               const target = budgetsByProperty[newName] || {};
               for (const ym of Object.keys(oldMap)){
-                const v = parseFloat(oldMap[ym]) || 0;
-                target[ym] = (parseFloat(target[ym]) || 0) + v;
+                const oldVal = oldMap[ym];
+                if (typeof oldVal === 'number'){
+                  // Old flat value → merge into _legacy
+                  if (!target[ym] || typeof target[ym] !== 'object') target[ym] = {};
+                  target[ym]._legacy = (target[ym]._legacy || 0) + oldVal;
+                } else if (typeof oldVal === 'object'){
+                  // New GL-level structure → merge each GL code
+                  if (!target[ym] || typeof target[ym] !== 'object') target[ym] = {};
+                  for (const gl of Object.keys(oldVal)){
+                    target[ym][gl] = (target[ym][gl] || 0) + (oldVal[gl] || 0);
+                  }
+                }
               }
               budgetsByProperty[newName] = target;
               delete budgetsByProperty[oldName];
@@ -1768,7 +1904,7 @@
       try{ localStorage.setItem(STORE_CURRENT_PROPERTY_KEY, currentProperty); }catch(e){}
       if (SESSION_ACTIVE){
         (async () => {
-          try{ const bres = await apiFetch(`/budgets?property=${encodeURIComponent(currentProperty)}`); monthlyBudgets = await bres.json(); }catch(e){ /* leave existing monthlyBudgets */ }
+          try{ const bres = await apiFetch(`/budgets?property=${encodeURIComponent(currentProperty)}`); monthlyBudgets = await bres.json(); migrateBudgetDataIfNeeded(); }catch(e){ /* leave existing monthlyBudgets */ }
           try{ const eres = await apiFetch(`/events?property=${encodeURIComponent(currentProperty)}`); events = await eres.json(); }catch(e){ /* leave existing events */ }
           if (els.budgetYear) { renderBudgetInputs(parseInt(els.budgetYear.value, 10)); }
           if (calendar) refreshCalendar();
@@ -1948,15 +2084,26 @@
       els.adjustBudgetBtn.addEventListener('click', () => {
         const view = calendar.view;
         const monthKey = ymKey(view.currentStart);
-        const proposed = sumProposedForMonth(monthKey);
-        monthlyBudgets[monthKey] = proposed;
+        // Build proposed spend by GL code from events
+        const glProposed = {};
+        for (const ev of events){
+          if (!ev.start || ev.start.slice(0,7) !== monthKey) continue;
+          const gl = ev.glCode && GL_CODES.indexOf(ev.glCode) !== -1 ? ev.glCode : '';
+          if (gl){
+            glProposed[gl] = (glProposed[gl] || 0) + (ev.budget || 0);
+          }
+        }
+        // Set budget = proposed for each GL code
+        if (!monthlyBudgets[monthKey] || typeof monthlyBudgets[monthKey] !== 'object') monthlyBudgets[monthKey] = {};
+        for (const gl of GL_CODES){
+          if (glProposed[gl]) monthlyBudgets[monthKey][gl] = Math.round(glProposed[gl] * 100) / 100;
+        }
         saveBudgetStore();
         // reflect change in budgets UI if same year
         const yearOfMonth = parseInt(monthKey.slice(0,4),10);
         const selectedYear = parseInt(els.budgetYear.value, 10);
         if (yearOfMonth === selectedYear){
-          const inp = els.budgetsContainer.querySelector(`input[data-ym="${monthKey}"]`);
-          if (inp) inp.value = proposed;
+          renderBudgetInputs(selectedYear);
         }
         updateSummary();
         renderTrendChart();
@@ -2246,28 +2393,62 @@
       if (!calendar){ els.glBreakdownContainer.innerHTML = ''; return; }
       var view = calendar.view;
       var monthKey = ymKey(view.currentStart);
-      var groups = {};
+
+      // Gather event spend by GL code for this month
+      var spendGroups = {};
+      var hasUncategorized = false;
       for (var i = 0; i < events.length; i++){
         var ev = events[i];
         if (!ev.start) continue;
         if (ev.start.slice(0,7) !== monthKey) continue;
-        var gl = ev.glCode || 'Uncategorized';
-        if (!groups[gl]) groups[gl] = { proposed: 0, actual: 0 };
-        groups[gl].proposed += (ev.budget || 0);
-        groups[gl].actual += (ev.spend || 0);
+        var gl = ev.glCode || '';
+        var isValid = GL_CODES.indexOf(gl) !== -1;
+        var key = isValid ? gl : 'Uncategorized';
+        if (!isValid) hasUncategorized = true;
+        if (!spendGroups[key]) spendGroups[key] = { proposed: 0, actual: 0 };
+        spendGroups[key].proposed += (ev.budget || 0);
+        spendGroups[key].actual += (ev.spend || 0);
       }
-      var keys = Object.keys(groups).sort();
-      if (!keys.length){ els.glBreakdownContainer.innerHTML = ''; return; }
-      var totalP = 0, totalA = 0;
+
+      // Build rows: always show all GL codes
+      var totalB = 0, totalP = 0, totalA = 0;
       var rows = '';
-      for (var k = 0; k < keys.length; k++){
-        var g = groups[keys[k]];
-        totalP += g.proposed;
-        totalA += g.actual;
-        rows += '<tr><td>' + keys[k] + '</td><td>' + currency(g.proposed) + '</td><td>' + currency(g.actual) + '</td></tr>';
+      for (var g = 0; g < GL_CODES.length; g++){
+        var glName = GL_CODES[g];
+        var budgetAmt = getGLBudgetForMonth(monthKey, glName);
+        var proposedAmt = spendGroups[glName] ? spendGroups[glName].proposed : 0;
+        var actualAmt = spendGroups[glName] ? spendGroups[glName].actual : 0;
+        var variance = budgetAmt - actualAmt;
+        totalB += budgetAmt;
+        totalP += proposedAmt;
+        totalA += actualAmt;
+        var varClass = variance < 0 ? 'gl-variance-neg' : (variance > 0 ? 'gl-variance-pos' : '');
+        rows += '<tr><td>' + glName + '</td><td>' + currency(budgetAmt) + '</td><td>' + currency(proposedAmt) + '</td><td>' + currency(actualAmt) + '</td><td class="' + varClass + '">' + currency(variance) + '</td></tr>';
       }
-      rows += '<tr class="gl-total"><td>Total</td><td>' + currency(totalP) + '</td><td>' + currency(totalA) + '</td></tr>';
-      els.glBreakdownContainer.innerHTML = '<h4 style="margin:0 0 8px 0;font-size:14px;font-weight:700">GL Code Breakdown</h4><table><thead><tr><th>GL Category</th><th>Proposed</th><th>Actual</th></tr></thead><tbody>' + rows + '</tbody></table>';
+
+      // Legacy budget row (if exists)
+      var legacyBudget = getGLBudgetForMonth(monthKey, '_legacy');
+      if (legacyBudget > 0){
+        totalB += legacyBudget;
+        var legVar = legacyBudget;
+        rows += '<tr style="color:var(--warn)"><td>Legacy (unassigned)</td><td>' + currency(legacyBudget) + '</td><td>$0.00</td><td>$0.00</td><td>' + currency(legVar) + '</td></tr>';
+      }
+
+      // Uncategorized row (only if events have missing/invalid GL)
+      if (hasUncategorized && spendGroups['Uncategorized']){
+        var ug = spendGroups['Uncategorized'];
+        totalP += ug.proposed;
+        totalA += ug.actual;
+        rows += '<tr style="color:var(--subtext)"><td>Uncategorized</td><td>$0.00</td><td>' + currency(ug.proposed) + '</td><td>' + currency(ug.actual) + '</td><td class="gl-variance-neg">' + currency(0 - ug.actual) + '</td></tr>';
+      }
+
+      // Total row
+      var totalVar = totalB - totalA;
+      var totalVarClass = totalVar < 0 ? 'gl-variance-neg' : (totalVar > 0 ? 'gl-variance-pos' : '');
+      rows += '<tr class="gl-total"><td>Total</td><td>' + currency(totalB) + '</td><td>' + currency(totalP) + '</td><td>' + currency(totalA) + '</td><td class="' + totalVarClass + '">' + currency(totalVar) + '</td></tr>';
+
+      els.glBreakdownContainer.innerHTML = '<h4 style="margin:0 0 8px 0;font-size:14px;font-weight:700">GL Code Breakdown</h4>' +
+        '<table><thead><tr><th>GL Category</th><th>Budget</th><th>Proposed</th><th>Actual</th><th>Variance</th></tr></thead><tbody>' + rows + '</tbody></table>';
     }
 
     var _origUpdateSummary = updateSummary;
