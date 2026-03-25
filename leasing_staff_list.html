@@ -13,24 +13,14 @@
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
   <style>
     :root{
-      --brand-primary:#446472;
-      --brand-accent:#ffb732;
-      --brand-accent-2:#52d5ff;
-      --brand-gray:#929497;
-      --page-bg:#f8fafc;
-      --bg:#ffffff;
-      --text:#1e293b;
-      --subtext:#64748b;
-      --border:#e2e8f0;
-      --good:#22c55e;
-      --warn:#ffb732;
-      --bad:#ef4444;
+      --brand-primary:#446472;--brand-accent:#ffb732;--brand-accent-2:#52d5ff;
+      --brand-gray:#929497;--page-bg:#f8fafc;--bg:#fff;--text:#1e293b;
+      --subtext:#64748b;--border:#e2e8f0;--good:#22c55e;--warn:#ffb732;--bad:#ef4444;
     }
     *{box-sizing:border-box;margin:0;padding:0}
     html,body{height:100%}
     body{font-family:'Open Sans',system-ui,-apple-system,sans-serif;background:var(--page-bg);color:var(--text);font-size:14px;line-height:1.5}
 
-    /* Header */
     header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
     .brand{display:flex;align-items:center;gap:10px}
     .brand .logo-img{height:28px;width:auto}
@@ -41,14 +31,22 @@
     .company-name{font-size:12px;color:var(--subtext);font-weight:500}
 
     .container{padding:24px;max-width:1400px;margin:0 auto}
-    .card{background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,0.06);overflow:hidden;margin-bottom:20px}
+    .card{background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.06);overflow:hidden;margin-bottom:20px}
     .card h2{margin:0;padding:20px 24px;font-size:18px;color:#111827;font-weight:700;border-bottom:1px solid var(--border)}
     .card .content{padding:24px}
 
+    /* Tabs */
+    .tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:24px;overflow-x:auto}
+    .tab{padding:12px 24px;font-size:14px;font-weight:600;color:var(--subtext);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:all .15s;background:none;border-top:none;border-left:none;border-right:none}
+    .tab:hover{color:var(--text)}
+    .tab.active{color:var(--brand-primary);border-bottom-color:var(--brand-accent-2)}
+    .tab-panel{display:none}
+    .tab-panel.active{display:block}
+
     /* Toolbar */
-    .toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:24px}
-    .toolbar select{padding:10px 14px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--text);font-size:14px;font-family:'Open Sans',system-ui,sans-serif;min-width:220px;cursor:pointer}
-    .toolbar select:focus{outline:none;border-color:var(--brand-accent-2);box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
+    .toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+    .toolbar select,.toolbar input[type=date]{padding:9px 14px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--text);font-size:14px;font-family:'Open Sans',system-ui,sans-serif;cursor:pointer}
+    .toolbar select:focus,.toolbar input:focus{outline:none;border-color:var(--brand-accent-2);box-shadow:0 0 0 3px rgba(82,213,255,.15)}
     .toolbar-spacer{flex:1}
 
     button{padding:10px 20px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--text);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;font-family:Roboto,Arial,sans-serif}
@@ -62,29 +60,34 @@
     button.danger{background:#ef4444;color:#fff;border-color:#ef4444}
     button.danger:hover{background:#dc2626}
     button.sm{padding:6px 14px;font-size:12px;border-radius:6px}
+    button.xs{padding:4px 10px;font-size:11px;border-radius:5px}
+
+    /* Progress */
+    .progress-bar{height:8px;background:#e2e8f0;border-radius:99px;overflow:hidden;flex:1;min-width:80px}
+    .progress-fill{height:100%;background:var(--good);border-radius:99px;transition:width .3s}
+    .progress-row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+    .progress-label{font-size:13px;font-weight:600;min-width:140px}
+    .progress-pct{font-size:12px;font-weight:700;color:var(--subtext);min-width:40px;text-align:right}
 
     /* Staff cards */
     .staff-grid{display:flex;flex-direction:column;gap:20px}
-    .staff-card{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+    .staff-card{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04)}
     .staff-card-header{display:flex;align-items:center;gap:16px;padding:16px 20px;background:linear-gradient(135deg,#446472 0%,#3b5561 100%);color:#fff}
-    .staff-avatar{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0}
+    .staff-avatar{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0}
     .staff-info{flex:1}
     .staff-name{font-size:16px;font-weight:700;margin-bottom:2px}
-    .staff-role{font-size:12px;opacity:0.85}
-    .staff-card-actions{display:flex;gap:6px}
-    .staff-card-actions button{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:5px 12px;font-size:11px;border-radius:6px}
-    .staff-card-actions button:hover{background:rgba(255,255,255,0.3)}
-
+    .staff-role{font-size:12px;opacity:.85}
+    .staff-card-actions{display:flex;gap:6px;flex-wrap:wrap}
+    .staff-card-actions button{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 12px;font-size:11px;border-radius:6px}
+    .staff-card-actions button:hover{background:rgba(255,255,255,.3)}
     .staff-card-body{padding:16px 20px}
+
     .category-group{margin-bottom:14px}
     .category-group:last-child{margin-bottom:0}
-    .category-label{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.3px}
-    .cat-opening{background:#dbeafe;color:#1e40af}
-    .cat-lead{background:#fef3c7;color:#92400e}
-    .cat-social{background:#ede9fe;color:#5b21b6}
-    .cat-event{background:#fce7f3;color:#9d174d}
-    .cat-marketing{background:#d1fae5;color:#065f46}
-    .cat-misc{background:#f3f4f6;color:#374151}
+    .category-label{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;margin-bottom:8px;text-transform:uppercase;letter-spacing:.3px}
+    .cat-opening{background:#dbeafe;color:#1e40af}.cat-lead{background:#fef3c7;color:#92400e}
+    .cat-social{background:#ede9fe;color:#5b21b6}.cat-event{background:#fce7f3;color:#9d174d}
+    .cat-marketing{background:#d1fae5;color:#065f46}.cat-misc{background:#f3f4f6;color:#374151}
     .cat-closing{background:#fee2e2;color:#991b1b}
 
     .task-list{list-style:none;padding:0;margin:0}
@@ -92,48 +95,77 @@
     .task-item:last-child{border-bottom:none}
     .task-check{width:18px;height:18px;border-radius:4px;border:2px solid var(--border);cursor:pointer;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .15s;background:#fff}
     .task-check.done{background:var(--good);border-color:var(--good);color:#fff}
-    .task-check.done::after{content:'✓';font-size:11px;font-weight:700}
+    .task-check.done::after{content:'\2713';font-size:11px;font-weight:700}
     .task-text{flex:1;line-height:1.4}
     .task-text.done{text-decoration:line-through;color:var(--subtext)}
-    .task-note{font-size:11px;color:var(--subtext);font-style:italic}
+    .task-meta{font-size:10px;color:var(--subtext)}
     .task-actions{display:flex;gap:4px;flex-shrink:0}
-    .task-actions button{padding:2px 8px;font-size:11px;border-radius:4px}
-    .add-task-row{display:flex;gap:8px;margin-top:12px;align-items:center}
-    .add-task-row select,.add-task-row input{padding:8px 10px;border-radius:6px;border:1px solid var(--border);font-size:13px;font-family:'Open Sans',system-ui,sans-serif}
-    .add-task-row input{flex:1}
-    .add-task-row select{min-width:140px}
+
+    /* Template cards */
+    .tpl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+    .tpl-card{border:1px solid var(--border);border-radius:12px;padding:20px;background:#fff;transition:all .2s;position:relative}
+    .tpl-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.08)}
+    .tpl-card h4{margin:0 0 6px;font-size:15px}
+    .tpl-card .tpl-meta{font-size:12px;color:var(--subtext);margin-bottom:12px}
+    .tpl-tasks-preview{font-size:12px;color:var(--subtext);line-height:1.6;max-height:120px;overflow:hidden}
+    .tpl-badge{position:absolute;top:12px;right:12px;padding:3px 10px;border-radius:999px;font-size:10px;font-weight:700;background:#dbeafe;color:#1e40af}
+    .tpl-badge.property{background:#fef3c7;color:#92400e}
+
+    /* Staff mgmt table */
+    .staff-table{width:100%;border-collapse:collapse;font-size:13px}
+    .staff-table th{text-align:left;padding:10px 12px;background:#f8fafc;border-bottom:2px solid var(--border);font-weight:700;font-size:12px;color:var(--subtext);text-transform:uppercase}
+    .staff-table td{padding:10px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+    .staff-table tr:hover td{background:#f8fafc}
+    .status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+    .status-dot.active{background:var(--good)}
+    .status-dot.inactive{background:var(--bad)}
+
+    /* Link box */
+    .link-box{display:flex;align-items:center;gap:8px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:12px;font-family:monospace;word-break:break-all}
+    .link-box button{flex-shrink:0}
 
     /* Modal */
     .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
     .modal-backdrop.show{display:flex}
-    .modal{background:#fff;border:1px solid var(--border);border-radius:14px;max-width:560px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 20px 40px rgba(0,0,0,0.15)}
+    .modal{background:#fff;border:1px solid var(--border);border-radius:14px;max-width:640px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 20px 40px rgba(0,0,0,.15)}
     .modal-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
     .modal-header h3{margin:0;font-size:18px;color:var(--text);font-weight:700}
-    .modal-body{padding:24px}
     .close-btn{background:transparent;border:none;font-size:24px;color:var(--subtext);cursor:pointer;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px}
     .close-btn:hover{background:var(--border);color:var(--text)}
-
+    .modal-body{padding:24px}
     label{font-size:13px;color:var(--text);display:block;margin-bottom:6px;font-weight:600}
     input,select,textarea{width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--text);font-size:14px;transition:border-color .15s,box-shadow .15s;font-family:'Open Sans',system-ui,sans-serif}
-    input:focus,select:focus,textarea:focus{outline:none;border-color:var(--brand-accent-2);box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
+    input:focus,select:focus,textarea:focus{outline:none;border-color:var(--brand-accent-2);box-shadow:0 0 0 3px rgba(82,213,255,.15)}
     textarea{min-height:60px;resize:vertical}
     .form-group{margin-bottom:16px}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
     .form-actions{display:flex;gap:12px;justify-content:flex-end;margin-top:24px}
 
     .empty-state{text-align:center;padding:60px 20px;color:var(--subtext)}
     .empty-state h3{font-size:20px;margin-bottom:12px;color:var(--text)}
-
     .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;background:#e2e8f0;color:#475569}
     .badge.admin{background:#dbeafe;color:#1e40af}
-
-    .date-picker{display:flex;align-items:center;gap:8px}
-    .date-picker input[type=date]{min-width:160px;width:auto}
-
     .hidden{display:none}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:600;background:#f1f5f9;color:#475569;margin:3px 4px 3px 0}
+    .chip .chip-x{cursor:pointer;font-weight:700;color:#94a3b8}
+    .chip .chip-x:hover{color:var(--bad)}
 
-    /* Print styles */
+    /* Assign panel */
+    .assign-panel{border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;background:#fafbfc}
+    .assign-panel h4{margin:0 0 12px;font-size:14px}
+    .task-input-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+    .task-input-row input{flex:1}
+    .task-input-row select{width:160px;flex-shrink:0}
+    .sortable-task{display:flex;align-items:center;gap:8px;padding:6px 10px;background:#fff;border:1px solid var(--border);border-radius:6px;margin-bottom:4px;font-size:13px;cursor:grab}
+    .sortable-task .drag-handle{color:#94a3b8;cursor:grab}
+    .sortable-task .task-label{flex:1}
+    .sortable-task .task-cat{font-size:11px;color:var(--subtext)}
+
+    @media(max-width:768px){.form-row{grid-template-columns:1fr}.tpl-grid{grid-template-columns:1fr}}
+
+    /* Print */
     @media print{
-      header,.sidebar-nav,.nav-toggle,.toolbar button,.staff-card-actions,.add-task-row,.task-actions,.header-controls{display:none!important}
+      header,.sidebar-nav,.nav-toggle,.tabs,.toolbar button,.staff-card-actions,.task-actions,.header-controls,.form-actions{display:none!important}
       .main-content{margin-left:0!important}
       .staff-card{break-inside:avoid;page-break-inside:avoid;box-shadow:none;border:1px solid #ccc}
       .staff-card-header{background:#446472!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -142,7 +174,7 @@
   </style>
 </head>
 <body>
-  <div id="bootLoader" style="position:fixed;inset:0;background:#ffffff;display:flex;align-items:center;justify-content:center;z-index:100;color:#111827;font-family:Roboto,Arial,sans-serif">
+  <div id="bootLoader" style="position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;z-index:100;color:#111827;font-family:Roboto,Arial,sans-serif">
     <div style="display:flex;flex-direction:column;gap:6px;align-items:center">
       <div style="font-weight:800">Marketing Hub</div>
       <div style="color:#6b7280;font-size:12px">Loading&hellip;</div>
@@ -163,646 +195,958 @@
 
   <div class="container" id="appContainer" style="display:none">
 
-    <!-- Toolbar -->
-    <div class="card">
-      <h2>Leasing Team Staff List</h2>
-      <div class="content">
-        <div class="toolbar">
-          <div id="propertySelectWrap">
-            <label style="margin-bottom:4px">Property</label>
-            <select id="propertySelect"><option value="">— Select Property —</option></select>
-          </div>
-          <div class="date-picker">
-            <label style="margin-bottom:4px">Shift Date</label>
-            <input type="date" id="shiftDate" />
-          </div>
-          <div class="toolbar-spacer"></div>
-          <button class="good" id="addStaffBtn" style="display:none">+ Add Staff Member</button>
-          <button id="exportCsvBtn">Export CSV</button>
-          <button id="exportXlsxBtn">Export Excel</button>
-          <button id="printBtn">Print</button>
+    <!-- Page Title + Tabs -->
+    <div class="card" style="margin-bottom:0;border-radius:14px 14px 0 0;border-bottom:none">
+      <div style="padding:20px 24px 0">
+        <h2 style="border:none;padding:0 0 16px;font-size:22px">Leasing Team Staff List</h2>
+        <div class="tabs" id="mainTabs">
+          <button class="tab active" data-tab="dashboard">Dashboard</button>
+          <button class="tab" data-tab="tasks">Task Lists</button>
+          <button class="tab" data-tab="templates">Templates</button>
+          <button class="tab" data-tab="staff" id="staffMgmtTab">Staff Management</button>
         </div>
       </div>
     </div>
+    <div class="card" style="border-radius:0 0 14px 14px;border-top:none">
+      <div class="content">
 
-    <!-- Staff List -->
-    <div id="staffListArea">
-      <div class="empty-state" id="emptyState">
-        <h3>Select a Property</h3>
-        <p>Choose a property above to view or manage the leasing team staff list.</p>
+        <!-- ═══ DASHBOARD TAB ═══ -->
+        <div class="tab-panel active" id="panel-dashboard">
+          <div class="toolbar">
+            <div>
+              <label style="margin-bottom:4px;font-size:12px">Property</label>
+              <select id="dashProperty" style="min-width:220px"><option value="">— Select —</option></select>
+            </div>
+            <div>
+              <label style="margin-bottom:4px;font-size:12px">Date</label>
+              <input type="date" id="dashDate" />
+            </div>
+            <div class="toolbar-spacer"></div>
+            <button class="primary sm" id="seedBtn" style="display:none" title="Load default templates">Seed Templates</button>
+          </div>
+          <div id="dashContent">
+            <div class="empty-state"><h3>Select a Property</h3><p>Choose a property and date to view daily progress.</p></div>
+          </div>
+        </div>
+
+        <!-- ═══ TASK LISTS TAB ═══ -->
+        <div class="tab-panel" id="panel-tasks">
+          <div class="toolbar">
+            <div>
+              <label style="margin-bottom:4px;font-size:12px">Property</label>
+              <select id="taskProperty" style="min-width:220px"><option value="">— Select —</option></select>
+            </div>
+            <div>
+              <label style="margin-bottom:4px;font-size:12px">Date</label>
+              <input type="date" id="taskDate" />
+            </div>
+            <div class="toolbar-spacer"></div>
+            <button class="good" id="assignTasksBtn">+ Create / Assign Tasks</button>
+            <button id="exportCsvBtn">CSV</button>
+            <button id="exportXlsxBtn">Excel</button>
+            <button id="printAllBtn">Print All</button>
+          </div>
+          <div id="taskListArea">
+            <div class="empty-state" id="taskEmpty"><h3>No Tasks Yet</h3><p>Select a property and date, then create task assignments.</p></div>
+            <div class="staff-grid" id="staffGrid" style="display:none"></div>
+          </div>
+        </div>
+
+        <!-- ═══ TEMPLATES TAB ═══ -->
+        <div class="tab-panel" id="panel-templates">
+          <div class="toolbar">
+            <div>
+              <label style="margin-bottom:4px;font-size:12px">Filter</label>
+              <select id="tplFilter" style="min-width:180px">
+                <option value="all">All Templates</option>
+                <option value="global">Global Only</option>
+                <option value="property">Property-Specific</option>
+              </select>
+            </div>
+            <div class="toolbar-spacer"></div>
+            <button class="good" id="newTplBtn">+ New Template</button>
+          </div>
+          <div class="tpl-grid" id="tplGrid"></div>
+          <div class="empty-state" id="tplEmpty" style="display:none"><h3>No Templates</h3><p>Create your first template or seed default templates from the Dashboard.</p></div>
+        </div>
+
+        <!-- ═══ STAFF MANAGEMENT TAB ═══ -->
+        <div class="tab-panel" id="panel-staff">
+          <div class="toolbar">
+            <div>
+              <label style="margin-bottom:4px;font-size:12px">Property</label>
+              <select id="staffMgmtProperty" style="min-width:220px"><option value="">— All Properties —</option></select>
+            </div>
+            <div class="toolbar-spacer"></div>
+            <button class="good" id="addStaffBtn">+ Add Staff Member</button>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="staff-table" id="staffTable">
+              <thead><tr><th>Name</th><th>Role</th><th>Property</th><th>Username</th><th>Status</th><th>Direct Link</th><th>Actions</th></tr></thead>
+              <tbody id="staffTableBody"></tbody>
+            </table>
+          </div>
+          <div class="empty-state" id="staffEmpty" style="display:none"><h3>No Staff Members</h3><p>Add your first staff member to get started.</p></div>
+        </div>
+
       </div>
-      <div class="staff-grid" id="staffGrid" style="display:none"></div>
     </div>
-
   </div>
 
-  <!-- Add/Edit Staff Modal -->
+  <!-- ═══ STAFF MODAL ═══ -->
   <div class="modal-backdrop" id="staffModal">
     <div class="modal">
       <div class="modal-header">
         <h3 id="staffModalTitle">Add Staff Member</h3>
-        <button class="close-btn" id="closeStaffModal">&times;</button>
+        <button class="close-btn" onclick="closeModal('staffModal')">&times;</button>
       </div>
       <div class="modal-body">
         <form id="staffForm">
-          <input type="hidden" id="staffId" />
-          <div class="form-group">
-            <label for="staffName">Employee Name *</label>
-            <input type="text" id="staffName" placeholder="e.g., Jane Smith" required />
+          <input type="hidden" id="sfId" />
+          <div class="form-row">
+            <div class="form-group"><label>Employee Name *</label><input type="text" id="sfName" required /></div>
+            <div class="form-group"><label>Role</label><input type="text" id="sfRole" list="rolesDL" /><datalist id="rolesDL"></datalist></div>
           </div>
-          <div class="form-group">
-            <label for="staffRole">Role *</label>
-            <input type="text" id="staffRole" list="rolesList" placeholder="e.g., Leasing Agent" required />
-            <datalist id="rolesList"></datalist>
+          <div class="form-row">
+            <div class="form-group"><label>Property *</label><select id="sfProperty" required></select></div>
+            <div class="form-group"><label>Username (login)</label><input type="text" id="sfUsername" placeholder="Optional - links to auth" /></div>
           </div>
-          <div class="form-group">
-            <label for="staffProperty">Property</label>
-            <select id="staffProperty" required></select>
+          <div class="form-row">
+            <div class="form-group"><label>Email</label><input type="email" id="sfEmail" /></div>
+            <div class="form-group"><label>Title</label><input type="text" id="sfTitle" placeholder="e.g. Leasing Agent" /></div>
           </div>
           <div class="form-actions">
-            <button type="button" id="cancelStaffBtn">Cancel</button>
-            <button type="submit" class="primary" id="saveStaffBtn">Save</button>
+            <button type="button" onclick="closeModal('staffModal')">Cancel</button>
+            <button type="submit" class="primary">Save</button>
           </div>
         </form>
       </div>
     </div>
   </div>
 
-  <!-- Add Task Modal -->
-  <div class="modal-backdrop" id="taskModal">
-    <div class="modal">
+  <!-- ═══ TEMPLATE MODAL ═══ -->
+  <div class="modal-backdrop" id="tplModal">
+    <div class="modal" style="max-width:700px">
       <div class="modal-header">
-        <h3 id="taskModalTitle">Add Task</h3>
-        <button class="close-btn" id="closeTaskModal">&times;</button>
+        <h3 id="tplModalTitle">New Template</h3>
+        <button class="close-btn" onclick="closeModal('tplModal')">&times;</button>
       </div>
       <div class="modal-body">
-        <form id="taskForm">
-          <input type="hidden" id="taskId" />
-          <input type="hidden" id="taskStaffId" />
-          <input type="hidden" id="taskStaffName" />
-          <div class="form-group">
-            <label>Employee</label>
-            <input type="text" id="taskEmployee" readonly style="background:#f8fafc;cursor:not-allowed" />
+        <form id="tplForm">
+          <input type="hidden" id="tplId" />
+          <div class="form-row">
+            <div class="form-group"><label>Template Name *</label><input type="text" id="tplName" required /></div>
+            <div class="form-group"><label>Category</label>
+              <select id="tplCategory">
+                <option value="Opening Task">Opening Task</option>
+                <option value="Lead Follow Up">Lead Follow Up</option>
+                <option value="Social Media">Social Media</option>
+                <option value="Event">Event</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Misc Task" selected>Misc Task</option>
+                <option value="Closing Task">Closing Task</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Scope</label>
+              <select id="tplScope">
+                <option value="global">Global (all properties)</option>
+                <option value="property">Property-Specific</option>
+              </select>
+            </div>
+            <div class="form-group" id="tplPropertyWrap" style="display:none">
+              <label>Property</label>
+              <select id="tplPropertySelect"></select>
+            </div>
           </div>
           <div class="form-group">
-            <label for="taskCategory">Category *</label>
-            <select id="taskCategory" required>
-              <option value="">— Select —</option>
+            <label>Tasks (one per line) *</label>
+            <textarea id="tplTasksText" rows="10" placeholder="Open leasing office&#10;Turn on lights and music&#10;Clean and organize front desk"></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="button" onclick="closeModal('tplModal')">Cancel</button>
+            <button type="submit" class="primary">Save Template</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ASSIGN TASKS MODAL ═══ -->
+  <div class="modal-backdrop" id="assignModal">
+    <div class="modal" style="max-width:760px">
+      <div class="modal-header">
+        <h3>Create / Assign Tasks</h3>
+        <button class="close-btn" onclick="closeModal('assignModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Staff Member *</label>
+            <select id="assignStaff"><option value="">— Select —</option></select>
+          </div>
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="assignDate" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Load from Template</label>
+          <div style="display:flex;gap:8px">
+            <select id="assignTemplate" style="flex:1"><option value="">— None —</option></select>
+            <button type="button" class="sm good" id="loadTplBtn">Load</button>
+          </div>
+        </div>
+        <hr style="margin:16px 0;border:none;border-top:1px solid var(--border)" />
+        <div class="form-group">
+          <label>Tasks to Assign</label>
+          <div id="assignTasksList"></div>
+          <div class="task-input-row" style="margin-top:8px">
+            <select id="addTaskCat" style="width:160px">
               <option value="Opening Task">Opening Task</option>
               <option value="Lead Follow Up">Lead Follow Up</option>
               <option value="Social Media">Social Media</option>
               <option value="Event">Event</option>
               <option value="Marketing">Marketing</option>
-              <option value="Misc Task">Misc Task</option>
+              <option value="Misc Task" selected>Misc Task</option>
               <option value="Closing Task">Closing Task</option>
             </select>
+            <input type="text" id="addTaskText" placeholder="Add a task..." />
+            <button type="button" class="sm good" id="addTaskItemBtn">Add</button>
           </div>
-          <div class="form-group">
-            <label for="taskText">Task *</label>
-            <input type="text" id="taskText" placeholder="Describe the task..." required />
-          </div>
-          <div class="form-group">
-            <label for="taskNotes">Notes</label>
-            <textarea id="taskNotes" placeholder="Optional notes..."></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="button" onclick="closeModal('assignModal')">Cancel</button>
+          <button type="button" class="warn" id="saveAsTemplateBtn">Save as Template</button>
+          <button type="button" class="primary" id="submitAssignBtn">Assign Tasks</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TASK EDIT MODAL ═══ -->
+  <div class="modal-backdrop" id="taskEditModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="taskEditTitle">Edit Task</h3>
+        <button class="close-btn" onclick="closeModal('taskEditModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="taskEditForm">
+          <input type="hidden" id="teId" />
+          <div class="form-group"><label>Task *</label><input type="text" id="teText" required /></div>
+          <div class="form-row">
+            <div class="form-group"><label>Category</label>
+              <select id="teCat">
+                <option value="Opening Task">Opening Task</option>
+                <option value="Lead Follow Up">Lead Follow Up</option>
+                <option value="Social Media">Social Media</option>
+                <option value="Event">Event</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Misc Task">Misc Task</option>
+                <option value="Closing Task">Closing Task</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Notes</label><input type="text" id="teNotes" /></div>
           </div>
           <div class="form-actions">
-            <button type="button" id="cancelTaskBtn">Cancel</button>
-            <button type="submit" class="primary">Save Task</button>
+            <button type="button" onclick="closeModal('taskEditModal')">Cancel</button>
+            <button type="submit" class="primary">Save</button>
           </div>
         </form>
       </div>
     </div>
   </div>
 
-  <script>
-    /* ───── State ───── */
-    let currentUser = null;
-    let isAdmin = false;
-    let properties = [];
-    let staffMembers = [];
-    let tasks = [];
-    let roles = [];
-    let selectedPropertyId = '';
+<script>
+/* ══════════════════════════════════════════
+   STATE
+   ══════════════════════════════════════════ */
+let currentUser=null, isAdmin=false;
+let properties=[], staffMembers=[], allStaff=[], tasks=[], templates=[], roles=[];
+let selectedPropertyId='', pendingAssignTasks=[];
 
-    const CATEGORIES = [
-      'Opening Task','Lead Follow Up','Social Media','Event','Marketing','Misc Task','Closing Task'
-    ];
-    const CAT_CLASS = {
-      'Opening Task':'cat-opening','Lead Follow Up':'cat-lead','Social Media':'cat-social',
-      'Event':'cat-event','Marketing':'cat-marketing','Misc Task':'cat-misc','Closing Task':'cat-closing'
-    };
+const CATEGORIES=['Opening Task','Lead Follow Up','Social Media','Event','Marketing','Misc Task','Closing Task'];
+const CAT_CLASS={'Opening Task':'cat-opening','Lead Follow Up':'cat-lead','Social Media':'cat-social','Event':'cat-event','Marketing':'cat-marketing','Misc Task':'cat-misc','Closing Task':'cat-closing'};
 
-    /* ───── DOM refs ───── */
-    const $ = id => document.getElementById(id);
-    const els = {
-      bootLoader: $('bootLoader'), appHeader: $('appHeader'), appContainer: $('appContainer'),
-      logoutBtn: $('logoutBtn'), userBadge: $('userBadge'),
-      propertySelect: $('propertySelect'), propertySelectWrap: $('propertySelectWrap'),
-      shiftDate: $('shiftDate'),
-      addStaffBtn: $('addStaffBtn'),
-      exportCsvBtn: $('exportCsvBtn'), exportXlsxBtn: $('exportXlsxBtn'), printBtn: $('printBtn'),
-      emptyState: $('emptyState'), staffGrid: $('staffGrid'),
-      // Staff modal
-      staffModal: $('staffModal'), staffModalTitle: $('staffModalTitle'),
-      closeStaffModal: $('closeStaffModal'), staffForm: $('staffForm'),
-      staffId: $('staffId'), staffName: $('staffName'), staffRole: $('staffRole'),
-      staffProperty: $('staffProperty'), cancelStaffBtn: $('cancelStaffBtn'),
-      // Task modal
-      taskModal: $('taskModal'), taskModalTitle: $('taskModalTitle'),
-      closeTaskModal: $('closeTaskModal'), taskForm: $('taskForm'),
-      taskId: $('taskId'), taskStaffId: $('taskStaffId'), taskStaffName: $('taskStaffName'),
-      taskEmployee: $('taskEmployee'), taskCategory: $('taskCategory'),
-      taskText: $('taskText'), taskNotes: $('taskNotes'), cancelTaskBtn: $('cancelTaskBtn'),
-    };
+/* ── Helpers ── */
+const $=id=>document.getElementById(id);
+function esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML;}
+function todayStr(){return new Date().toISOString().slice(0,10);}
+function closeModal(id){$(id).classList.remove('show');}
+function openModal(id){$(id).classList.add('show');}
 
-    /* ───── Helpers ───── */
-    function escapeHtml(t){ const d=document.createElement('div'); d.textContent=t; return d.innerHTML; }
+async function api(path,opts={}){
+  const headers=Object.assign({'Content-Type':'application/json'},opts.headers||{});
+  const res=await fetch('/api'+path,Object.assign({},opts,{headers,credentials:'include'}));
+  if(!res.ok){const t=await res.text();throw new Error(t||'HTTP '+res.status);}
+  return res;
+}
 
-    async function apiFetch(path, opts={}){
-      const headers = Object.assign({'Content-Type':'application/json'}, opts.headers||{});
-      const res = await fetch('/api'+path, Object.assign({}, opts, {headers, credentials:'include'}));
-      if (!res.ok){ const t = await res.text(); throw new Error(t||('HTTP '+res.status)); }
-      return res;
+/* ══════════════════════════════════════════
+   AUTH
+   ══════════════════════════════════════════ */
+async function initAuth(){
+  try{
+    const r=await fetch('/api/me',{credentials:'include'});
+    if(r.ok){
+      currentUser=await r.json();
+      isAdmin=currentUser.role==='admin';
+      showApp(); return true;
     }
+  }catch(e){console.error(e);}
+  location.href='index.html'; return false;
+}
 
-    function todayStr(){ return new Date().toISOString().slice(0,10); }
+function showApp(){
+  $('bootLoader').style.display='none';
+  $('appHeader').style.display='';
+  $('appContainer').style.display='';
+  $('userBadge').textContent=currentUser.username+(isAdmin?' (Admin)':'');
+  if(isAdmin) $('userBadge').classList.add('admin');
+  $('dashDate').value=todayStr();
+  $('taskDate').value=todayStr();
+  if(!isAdmin){
+    $('staffMgmtTab').style.display='none';
+    $('addStaffBtn').style.display='none';
+    $('seedBtn').style.display='none';
+  } else {
+    $('seedBtn').style.display='';
+  }
+}
 
-    /* ───── Auth ───── */
-    async function initAuth(){
-      try{
-        const meRes = await fetch('/api/me',{credentials:'include'});
-        if(meRes.ok){
-          const me = await meRes.json();
-          currentUser = me;
-          isAdmin = me.role === 'admin';
-          showApp();
-          return true;
-        }
-      }catch(e){ console.error('Auth error:',e); }
-      window.location.href='index.html';
-      return false;
-    }
+/* ══════════════════════════════════════════
+   TABS
+   ══════════════════════════════════════════ */
+$('mainTabs').addEventListener('click',e=>{
+  const tab=e.target.closest('.tab');
+  if(!tab) return;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  tab.classList.add('active');
+  $('panel-'+tab.dataset.tab).classList.add('active');
+});
 
-    function showApp(){
-      els.bootLoader.style.display='none';
-      els.appHeader.style.display='';
-      els.appContainer.style.display='';
-      els.userBadge.textContent = currentUser.username + (isAdmin?' (Admin)':'');
-      if(isAdmin) els.userBadge.classList.add('admin');
-      els.shiftDate.value = todayStr();
+/* ══════════════════════════════════════════
+   PROPERTIES
+   ══════════════════════════════════════════ */
+async function loadProperties(){
+  const r=await api('/properties');
+  properties=await r.json();
+  const allowed=isAdmin?properties:properties.filter(p=>{
+    if(currentUser.properties==='*') return true;
+    if(Array.isArray(currentUser.properties)) return currentUser.properties.includes(p.id)||currentUser.properties.includes(p.name);
+    return currentUser.properties===p.id||currentUser.properties===p.name;
+  });
+  const opts=allowed.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('');
+  ['dashProperty','taskProperty','staffMgmtProperty','sfProperty','tplPropertySelect'].forEach(id=>{
+    const el=$(id);
+    const first=el.querySelector('option');
+    el.innerHTML=(first?first.outerHTML:'')+opts;
+  });
+  if(!isAdmin&&allowed.length===1){
+    ['dashProperty','taskProperty'].forEach(id=>{$(id).value=allowed[0].id;});
+    selectedPropertyId=allowed[0].id;
+  }
+}
 
-      if(isAdmin){
-        els.addStaffBtn.style.display='';
-      } else {
-        els.addStaffBtn.style.display='none';
-      }
-    }
+/* ══════════════════════════════════════════
+   ROLES
+   ══════════════════════════════════════════ */
+async function loadRoles(){
+  const r=await api('/leasing-staff?action=roles');
+  roles=await r.json();
+  $('rolesDL').innerHTML=roles.map(r=>`<option value="${esc(r.roleName)}">`).join('');
+}
 
-    async function doLogout(){
-      try{ await fetch('/api/auth-logout',{method:'POST',credentials:'include'}); }catch(e){}
-      window.location.href='index.html';
-    }
+/* ══════════════════════════════════════════
+   DASHBOARD
+   ══════════════════════════════════════════ */
+async function loadDashboard(){
+  const pid=$('dashProperty').value;
+  const date=$('dashDate').value||todayStr();
+  if(!pid){$('dashContent').innerHTML='<div class="empty-state"><h3>Select a Property</h3><p>Choose a property and date to view daily progress.</p></div>';return;}
+  try{
+    const [progRes,staffRes]=await Promise.all([
+      api('/leasing-staff?action=progress&propertyId='+pid+'&date='+date),
+      api('/leasing-staff?action=staff&propertyId='+pid),
+    ]);
+    const prog=await progRes.json();
+    const staff=await staffRes.json();
+    const propName=(properties.find(p=>p.id===pid)||{}).name||'';
+    const pct=prog.totalTasks?Math.round(prog.completedTasks/prog.totalTasks*100):0;
 
-    /* ───── Properties ───── */
-    async function loadProperties(){
-      try{
-        const res = await apiFetch('/properties');
-        properties = await res.json();
-        renderPropertySelects();
-      }catch(e){ console.error('Failed to load properties:',e); }
-    }
+    let html=`
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px">
+        <div style="flex:1">
+          <h3 style="font-size:16px;margin-bottom:4px">${esc(propName)} — ${esc(date)}</h3>
+          <span style="font-size:13px;color:var(--subtext)">${prog.totalTasks} total tasks &middot; ${prog.completedTasks} completed</span>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:32px;font-weight:800;color:${pct===100?'var(--good)':'var(--brand-primary)'}">${pct}%</div>
+          <div style="font-size:11px;color:var(--subtext)">Complete</div>
+        </div>
+      </div>`;
 
-    function renderPropertySelects(){
-      // Main toolbar select
-      let opts = '<option value="">— Select Property —</option>';
-      let staffOpts = '<option value="">— Select —</option>';
-
-      const allowed = isAdmin ? properties : properties.filter(p => {
-        if(currentUser.properties === '*') return true;
-        if(Array.isArray(currentUser.properties)) return currentUser.properties.includes(p.id) || currentUser.properties.includes(p.name);
-        return currentUser.properties === p.id || currentUser.properties === p.name;
-      });
-
-      allowed.forEach(p => {
-        opts += `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`;
-        staffOpts += `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`;
-      });
-
-      els.propertySelect.innerHTML = opts;
-      els.staffProperty.innerHTML = staffOpts;
-
-      // If normal user has exactly one property, auto-select and hide selector
-      if(!isAdmin && allowed.length === 1){
-        els.propertySelect.value = allowed[0].id;
-        selectedPropertyId = allowed[0].id;
-        els.propertySelectWrap.querySelector('select').disabled = true;
-        loadStaffAndTasks();
-      }
-    }
-
-    /* ───── Roles ───── */
-    async function loadRoles(){
-      try{
-        const res = await apiFetch('/leasing-staff?action=roles');
-        roles = await res.json();
-        renderRolesDatalist();
-      }catch(e){ console.error('Failed to load roles:',e); }
-    }
-
-    function renderRolesDatalist(){
-      const dl = $('rolesList');
-      dl.innerHTML = roles.map(r => `<option value="${escapeHtml(r.roleName)}">`).join('');
-    }
-
-    /* ───── Staff & Tasks ───── */
-    async function loadStaffAndTasks(){
-      if(!selectedPropertyId){ showEmpty('Select a Property','Choose a property above to view or manage the leasing team staff list.'); return; }
-      const date = els.shiftDate.value || todayStr();
-      try{
-        const [staffRes, taskRes] = await Promise.all([
-          apiFetch('/leasing-staff?action=staff&propertyId='+encodeURIComponent(selectedPropertyId)),
-          apiFetch('/leasing-staff?action=tasks&propertyId='+encodeURIComponent(selectedPropertyId)+'&date='+encodeURIComponent(date)),
-        ]);
-        staffMembers = await staffRes.json();
-        tasks = await taskRes.json();
-        renderStaffList();
-      }catch(e){
-        console.error('Load error:',e);
-        showEmpty('Error Loading','Failed to load staff data: '+e.message);
-      }
-    }
-
-    function showEmpty(title, msg){
-      els.emptyState.innerHTML = `<h3>${escapeHtml(title)}</h3><p>${escapeHtml(msg)}</p>`;
-      els.emptyState.style.display='';
-      els.staffGrid.style.display='none';
-    }
-
-    function renderStaffList(){
-      if(staffMembers.length === 0){
-        if(isAdmin){
-          showEmpty('No Staff Members','Add staff members using the "+ Add Staff Member" button above.');
-        } else {
-          showEmpty('No Staff Members','No staff members found for this property.');
-        }
-        return;
-      }
-
-      els.emptyState.style.display='none';
-      els.staffGrid.style.display='';
-
-      const propertyName = (properties.find(p=>p.id===selectedPropertyId)||{}).name||'';
-      const date = els.shiftDate.value || todayStr();
-
-      els.staffGrid.innerHTML = staffMembers.map(staff => {
-        const staffTasks = tasks.filter(t => t.staffMemberId === (staff._id||'').toString());
-        // Group by category, only show categories with tasks
-        const grouped = {};
-        staffTasks.forEach(t => {
-          if(!grouped[t.category]) grouped[t.category]=[];
-          grouped[t.category].push(t);
-        });
-
-        const initials = (staff.employeeName||'').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-
-        let categoryHTML = '';
-        CATEGORIES.forEach(cat => {
-          if(!grouped[cat] || grouped[cat].length === 0) return;
-          const catClass = CAT_CLASS[cat]||'cat-misc';
-          const taskItems = grouped[cat].map(t => {
-            const doneClass = t.isCompleted ? 'done' : '';
-            const noteHTML = t.notes ? `<div class="task-note">${escapeHtml(t.notes)}</div>` : '';
-            return `
-              <li class="task-item">
-                <div class="task-check ${doneClass}" data-task-id="${t._id}" title="Toggle complete"></div>
-                <div style="flex:1">
-                  <div class="task-text ${doneClass}">${escapeHtml(t.taskText)}</div>
-                  ${noteHTML}
-                </div>
-                <div class="task-actions">
-                  <button class="sm" onclick="editTask('${t._id}')">Edit</button>
-                  <button class="sm danger" onclick="deleteTask('${t._id}')">Del</button>
-                </div>
-              </li>`;
-          }).join('');
-
-          categoryHTML += `
-            <div class="category-group">
-              <span class="category-label ${catClass}">${escapeHtml(cat)}</span>
-              <ul class="task-list">${taskItems}</ul>
-            </div>`;
-        });
-
-        if(!categoryHTML){
-          categoryHTML = '<p style="color:var(--subtext);font-size:13px;padding:8px 0">No tasks assigned for this date.</p>';
-        }
-
-        const adminBtns = isAdmin ? `
-          <div class="staff-card-actions">
-            <button onclick="openAddTask('${staff._id}','${escapeHtml(staff.employeeName)}')">+ Task</button>
-            <button onclick="printOnePager('${staff._id}')">One Pager</button>
-            <button onclick="openEditStaff('${staff._id}')">Edit</button>
-            <button onclick="deactivateStaff('${staff._id}','${escapeHtml(staff.employeeName)}')">Remove</button>
-          </div>` : `
-          <div class="staff-card-actions">
-            <button onclick="openAddTask('${staff._id}','${escapeHtml(staff.employeeName)}')">+ Task</button>
-            <button onclick="printOnePager('${staff._id}')">One Pager</button>
+    if(staff.length===0){
+      html+='<div class="empty-state"><h3>No Staff</h3><p>Add staff members in the Staff Management tab.</p></div>';
+    } else {
+      staff.forEach(s=>{
+        const sp=prog.progress[s._id]||{total:0,completed:0};
+        const spPct=sp.total?Math.round(sp.completed/sp.total*100):0;
+        const link=location.origin+'/my_tasks.html?staff='+s._id+'&date='+date;
+        html+=`
+          <div class="progress-row">
+            <span class="progress-label">${esc(s.employeeName)}</span>
+            <div class="progress-bar"><div class="progress-fill" style="width:${spPct}%"></div></div>
+            <span class="progress-pct">${sp.completed}/${sp.total}</span>
+            <button class="xs" onclick="copyLink('${esc(link)}')" title="Copy staff direct link">Link</button>
           </div>`;
+      });
+    }
+    $('dashContent').innerHTML=html;
+  }catch(e){$('dashContent').innerHTML='<div class="empty-state"><h3>Error</h3><p>'+esc(e.message)+'</p></div>';}
+}
 
-        return `
-          <div class="staff-card" data-staff-id="${staff._id}">
-            <div class="staff-card-header">
-              <div class="staff-avatar">${initials}</div>
-              <div class="staff-info">
-                <div class="staff-name">${escapeHtml(staff.employeeName)}</div>
-                <div class="staff-role">${escapeHtml(staff.role||'No Role')}</div>
-              </div>
-              ${adminBtns}
-            </div>
-            <div class="staff-card-body">
-              ${categoryHTML}
-            </div>
-          </div>`;
+function copyLink(url){
+  navigator.clipboard.writeText(url).then(()=>alert('Link copied!')).catch(()=>{
+    prompt('Copy this link:',url);
+  });
+}
+window.copyLink=copyLink;
+
+/* ══════════════════════════════════════════
+   TASK LISTS
+   ══════════════════════════════════════════ */
+async function loadTasks(){
+  const pid=$('taskProperty').value;
+  const date=$('taskDate').value||todayStr();
+  selectedPropertyId=pid;
+  if(!pid){$('taskEmpty').style.display='';$('staffGrid').style.display='none';return;}
+  try{
+    const [sRes,tRes]=await Promise.all([
+      api('/leasing-staff?action=staff&propertyId='+pid),
+      api('/leasing-staff?action=tasks&propertyId='+pid+'&date='+date),
+    ]);
+    staffMembers=await sRes.json();
+    tasks=await tRes.json();
+    renderTaskList();
+  }catch(e){console.error(e);$('taskEmpty').innerHTML='<h3>Error</h3><p>'+esc(e.message)+'</p>';$('taskEmpty').style.display='';$('staffGrid').style.display='none';}
+}
+
+function renderTaskList(){
+  if(staffMembers.length===0){$('taskEmpty').innerHTML='<h3>No Staff</h3><p>Add staff in the Staff Management tab first.</p>';$('taskEmpty').style.display='';$('staffGrid').style.display='none';return;}
+  const hasAnyTasks=tasks.length>0;
+  if(!hasAnyTasks&&!isAdmin){$('taskEmpty').innerHTML='<h3>No Tasks</h3><p>No tasks assigned for this date.</p>';$('taskEmpty').style.display='';$('staffGrid').style.display='none';return;}
+  $('taskEmpty').style.display='none';
+  $('staffGrid').style.display='';
+
+  $('staffGrid').innerHTML=staffMembers.map(staff=>{
+    const myTasks=tasks.filter(t=>t.staffMemberId===(staff._id||'').toString());
+    const grouped={};
+    myTasks.forEach(t=>{if(!grouped[t.category])grouped[t.category]=[];grouped[t.category].push(t);});
+    const initials=(staff.employeeName||'').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    const completed=myTasks.filter(t=>t.isCompleted).length;
+    const pct=myTasks.length?Math.round(completed/myTasks.length*100):0;
+
+    let catHTML='';
+    CATEGORIES.forEach(cat=>{
+      if(!grouped[cat]||grouped[cat].length===0) return;
+      const items=grouped[cat].map(t=>{
+        const dc=t.isCompleted?'done':'';
+        const meta=t.isCompleted?`<div class="task-meta">Completed${t.completedBy?' by '+esc(t.completedBy):''}${t.completedAt?' at '+new Date(t.completedAt).toLocaleTimeString():''}</div>`:'';
+        return `<li class="task-item">
+          <div class="task-check ${dc}" data-tid="${t._id}"></div>
+          <div style="flex:1"><div class="task-text ${dc}">${esc(t.taskText)}</div>${t.notes?'<div class="task-meta">'+esc(t.notes)+'</div>':''}${meta}</div>
+          <div class="task-actions">
+            <button class="xs" onclick="openEditTask('${t._id}')">Edit</button>
+            <button class="xs danger" onclick="delTask('${t._id}')">Del</button>
+          </div>
+        </li>`;
       }).join('');
-
-      // Attach toggle-complete handlers
-      els.staffGrid.querySelectorAll('.task-check').forEach(el => {
-        el.addEventListener('click', async () => {
-          const taskId = el.dataset.taskId;
-          const task = tasks.find(t => (t._id||'').toString() === taskId);
-          if(!task) return;
-          try{
-            await apiFetch('/leasing-staff?action=task',{
-              method:'POST',
-              body: JSON.stringify({ id: taskId, propertyId: task.propertyId, staffMemberId: task.staffMemberId, isCompleted: !task.isCompleted, category: task.category, taskText: task.taskText })
-            });
-            await loadStaffAndTasks();
-          }catch(e){ alert('Failed to toggle task: '+e.message); }
-        });
-      });
-    }
-
-    /* ───── Staff CRUD ───── */
-    function openAddStaff(){
-      els.staffId.value = '';
-      els.staffName.value = '';
-      els.staffRole.value = '';
-      els.staffProperty.value = selectedPropertyId || '';
-      els.staffModalTitle.textContent = 'Add Staff Member';
-      els.staffModal.classList.add('show');
-    }
-
-    function openEditStaff(id){
-      const staff = staffMembers.find(s => (s._id||'').toString() === id);
-      if(!staff) return;
-      els.staffId.value = staff._id;
-      els.staffName.value = staff.employeeName;
-      els.staffRole.value = staff.role || '';
-      els.staffProperty.value = staff.propertyId;
-      els.staffModalTitle.textContent = 'Edit Staff Member';
-      els.staffModal.classList.add('show');
-    }
-    window.openEditStaff = openEditStaff;
-
-    async function saveStaff(e){
-      e.preventDefault();
-      const id = els.staffId.value;
-      const employeeName = els.staffName.value.trim();
-      const role = els.staffRole.value.trim();
-      const propertyId = els.staffProperty.value;
-      if(!employeeName || !propertyId){ alert('Name and property are required'); return; }
-
-      try{
-        await apiFetch('/leasing-staff?action=staff',{
-          method:'POST',
-          body: JSON.stringify({ id: id||undefined, propertyId, employeeName, role })
-        });
-        // Also save role to roles collection if new
-        if(role && !roles.find(r=>r.roleName===role)){
-          try{ await apiFetch('/leasing-staff?action=role',{ method:'POST', body: JSON.stringify({ roleName: role }) }); }catch(e){}
-          await loadRoles();
-        }
-        closeStaffModal();
-        await loadStaffAndTasks();
-      }catch(e){ alert('Failed to save staff: '+e.message); }
-    }
-
-    async function deactivateStaff(id, name){
-      if(!confirm(`Remove "${name}" from this property's staff list?`)) return;
-      try{
-        await apiFetch('/leasing-staff?action=staff',{
-          method:'DELETE',
-          body: JSON.stringify({ id })
-        });
-        await loadStaffAndTasks();
-      }catch(e){ alert('Failed to remove staff: '+e.message); }
-    }
-    window.deactivateStaff = deactivateStaff;
-
-    function closeStaffModal(){ els.staffModal.classList.remove('show'); }
-
-    /* ───── Task CRUD ───── */
-    function openAddTask(staffId, staffName){
-      els.taskId.value = '';
-      els.taskStaffId.value = staffId;
-      els.taskStaffName.value = staffName;
-      els.taskEmployee.value = staffName;
-      els.taskCategory.value = '';
-      els.taskText.value = '';
-      els.taskNotes.value = '';
-      els.taskModalTitle.textContent = 'Add Task';
-      els.taskModal.classList.add('show');
-    }
-    window.openAddTask = openAddTask;
-
-    function editTask(taskId){
-      const task = tasks.find(t => (t._id||'').toString() === taskId);
-      if(!task) return;
-      const staff = staffMembers.find(s => (s._id||'').toString() === task.staffMemberId);
-      els.taskId.value = task._id;
-      els.taskStaffId.value = task.staffMemberId;
-      els.taskStaffName.value = task.employeeName || (staff?staff.employeeName:'');
-      els.taskEmployee.value = task.employeeName || (staff?staff.employeeName:'');
-      els.taskCategory.value = task.category;
-      els.taskText.value = task.taskText;
-      els.taskNotes.value = task.notes || '';
-      els.taskModalTitle.textContent = 'Edit Task';
-      els.taskModal.classList.add('show');
-    }
-    window.editTask = editTask;
-
-    async function deleteTask(taskId){
-      if(!confirm('Delete this task?')) return;
-      try{
-        await apiFetch('/leasing-staff?action=task',{
-          method:'DELETE',
-          body: JSON.stringify({ id: taskId })
-        });
-        await loadStaffAndTasks();
-      }catch(e){ alert('Failed to delete task: '+e.message); }
-    }
-    window.deleteTask = deleteTask;
-
-    async function saveTask(e){
-      e.preventDefault();
-      const id = els.taskId.value;
-      const staffMemberId = els.taskStaffId.value;
-      const employeeName = els.taskStaffName.value;
-      const category = els.taskCategory.value;
-      const taskText = els.taskText.value.trim();
-      const notes = els.taskNotes.value.trim();
-      const shiftDate = els.shiftDate.value || todayStr();
-      if(!category || !taskText){ alert('Category and task text are required'); return; }
-
-      try{
-        await apiFetch('/leasing-staff?action=task',{
-          method:'POST',
-          body: JSON.stringify({ id: id||undefined, propertyId: selectedPropertyId, staffMemberId, employeeName, category, taskText, notes, shiftDate })
-        });
-        closeTaskModal();
-        await loadStaffAndTasks();
-      }catch(e){ alert('Failed to save task: '+e.message); }
-    }
-
-    function closeTaskModal(){ els.taskModal.classList.remove('show'); }
-
-    /* ───── One Pager ───── */
-    function printOnePager(staffId){
-      const staff = staffMembers.find(s => (s._id||'').toString() === staffId);
-      if(!staff) return;
-      const propName = (properties.find(p=>p.id===selectedPropertyId)||{}).name||'';
-      const date = els.shiftDate.value || todayStr();
-      const staffTasks = tasks.filter(t => t.staffMemberId === staffId);
-      const grouped = {};
-      staffTasks.forEach(t => { if(!grouped[t.category]) grouped[t.category]=[]; grouped[t.category].push(t); });
-
-      let catHTML = '';
-      CATEGORIES.forEach(cat => {
-        if(!grouped[cat] || grouped[cat].length===0) return;
-        const rows = grouped[cat].map(t =>
-          `<tr><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;font-size:13px">${esc(t.taskText)}${t.notes?'<br><span style="color:#64748b;font-size:11px;font-style:italic">'+esc(t.notes)+'</span>':''}</td><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;text-align:center;width:80px;font-size:13px">${t.isCompleted?'&#10003;':'&#9744;'}</td></tr>`
-        ).join('');
-        catHTML += `<table style="width:100%;border-collapse:collapse;margin-bottom:14px">
-          <thead><tr><th style="background:#446472;color:#fff;padding:8px 10px;text-align:left;font-size:13px;border-radius:6px 0 0 0">${esc(cat)}</th><th style="background:#446472;color:#fff;padding:8px 10px;text-align:center;width:80px;font-size:13px;border-radius:0 6px 0 0">Done</th></tr></thead>
-          <tbody>${rows}</tbody></table>`;
-      });
-
-      if(!catHTML) catHTML = '<p style="color:#64748b;text-align:center;padding:30px">No tasks assigned for this date.</p>';
-
-      function esc(t){ return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Daily Task Sheet - ${esc(staff.employeeName)}</title>
-        <style>
-          @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap');
-          *{box-sizing:border-box;margin:0;padding:0}
-          body{font-family:'Open Sans',system-ui,sans-serif;padding:32px 40px;color:#1e293b;max-width:800px;margin:0 auto}
-          @media print{body{padding:20px 24px}@page{margin:0.5in}}
-        </style></head><body>
-        <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #446472;padding-bottom:16px;margin-bottom:24px">
-          <div>
-            <h1 style="font-size:22px;color:#446472;margin-bottom:4px">Daily Task Sheet</h1>
-            <div style="font-size:14px;color:#64748b">${esc(propName)}</div>
-          </div>
-          <div style="text-align:right">
-            <div style="font-size:13px;color:#64748b">Date</div>
-            <div style="font-size:18px;font-weight:700">${esc(date)}</div>
-          </div>
-        </div>
-        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:16px">
-          <div style="width:50px;height:50px;border-radius:50%;background:#446472;color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700">${(staff.employeeName||'').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}</div>
-          <div>
-            <div style="font-size:18px;font-weight:700">${esc(staff.employeeName)}</div>
-            <div style="font-size:13px;color:#64748b">${esc(staff.role||'Team Member')}</div>
-          </div>
-        </div>
-        ${catHTML}
-        <div style="margin-top:30px;padding-top:16px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;font-size:11px;color:#94a3b8">
-          <span>Capstone Management Partners</span>
-          <span>Printed ${new Date().toLocaleString()}</span>
-        </div>
-      </body></html>`;
-
-      const win = window.open('','_blank','width=850,height=1100');
-      win.document.write(html);
-      win.document.close();
-      setTimeout(() => { win.print(); }, 400);
-    }
-    window.printOnePager = printOnePager;
-
-    /* ───── Export ───── */
-    function buildExportData(){
-      const propName = (properties.find(p=>p.id===selectedPropertyId)||{}).name||'Unknown';
-      const date = els.shiftDate.value || todayStr();
-      const rows = [];
-      staffMembers.forEach(staff => {
-        const staffTasks = tasks.filter(t => t.staffMemberId === (staff._id||'').toString());
-        if(staffTasks.length === 0){
-          rows.push({ Property: propName, Date: date, Employee: staff.employeeName, Role: staff.role||'', Category:'', Task:'', Notes:'', Completed:'' });
-        } else {
-          staffTasks.forEach(t => {
-            rows.push({ Property: propName, Date: date, Employee: staff.employeeName, Role: staff.role||'', Category: t.category, Task: t.taskText, Notes: t.notes||'', Completed: t.isCompleted?'Yes':'No' });
-          });
-        }
-      });
-      return rows;
-    }
-
-    function exportCSV(){
-      if(!selectedPropertyId){ alert('Select a property first'); return; }
-      const rows = buildExportData();
-      if(rows.length === 0){ alert('No data to export'); return; }
-      const headers = Object.keys(rows[0]);
-      const csvContent = [headers.join(','), ...rows.map(r => headers.map(h => `"${(r[h]||'').replace(/"/g,'""')}"`).join(','))].join('\n');
-      const blob = new Blob([csvContent],{type:'text/csv;charset=utf-8;'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      const propName = (properties.find(p=>p.id===selectedPropertyId)||{}).name||'staff';
-      a.download = `leasing_staff_${propName.replace(/\s+/g,'_')}_${els.shiftDate.value||todayStr()}.csv`;
-      a.click();
-    }
-
-    function exportXLSX(){
-      if(!selectedPropertyId){ alert('Select a property first'); return; }
-      if(typeof XLSX === 'undefined'){ alert('Excel library not loaded'); return; }
-      const rows = buildExportData();
-      if(rows.length === 0){ alert('No data to export'); return; }
-      const ws = XLSX.utils.json_to_sheet(rows);
-      // Auto-width
-      const colWidths = Object.keys(rows[0]).map(k => ({wch: Math.max(k.length, ...rows.map(r=>(r[k]||'').length))+2}));
-      ws['!cols'] = colWidths;
-      const wb = XLSX.utils.book_new();
-      const propName = (properties.find(p=>p.id===selectedPropertyId)||{}).name||'Staff';
-      XLSX.utils.book_append_sheet(wb, ws, 'Staff List');
-      XLSX.writeFile(wb, `leasing_staff_${propName.replace(/\s+/g,'_')}_${els.shiftDate.value||todayStr()}.xlsx`);
-    }
-
-    /* ───── Event Listeners ───── */
-    els.logoutBtn.addEventListener('click', doLogout);
-    els.propertySelect.addEventListener('change', e => {
-      selectedPropertyId = e.target.value;
-      loadStaffAndTasks();
+      catHTML+=`<div class="category-group"><span class="category-label ${CAT_CLASS[cat]||'cat-misc'}">${esc(cat)}</span><ul class="task-list">${items}</ul></div>`;
     });
-    els.shiftDate.addEventListener('change', () => { if(selectedPropertyId) loadStaffAndTasks(); });
-    els.addStaffBtn.addEventListener('click', openAddStaff);
-    els.staffForm.addEventListener('submit', saveStaff);
-    els.closeStaffModal.addEventListener('click', closeStaffModal);
-    els.cancelStaffBtn.addEventListener('click', closeStaffModal);
-    els.staffModal.addEventListener('click', e => { if(e.target === els.staffModal) closeStaffModal(); });
-    els.taskForm.addEventListener('submit', saveTask);
-    els.closeTaskModal.addEventListener('click', closeTaskModal);
-    els.cancelTaskBtn.addEventListener('click', closeTaskModal);
-    els.taskModal.addEventListener('click', e => { if(e.target === els.taskModal) closeTaskModal(); });
-    els.exportCsvBtn.addEventListener('click', exportCSV);
-    els.exportXlsxBtn.addEventListener('click', exportXLSX);
-    els.printBtn.addEventListener('click', () => window.print());
+    if(!catHTML) catHTML='<p style="color:var(--subtext);font-size:13px;padding:8px 0">No tasks assigned.</p>';
 
-    /* ───── Init ───── */
-    (async () => {
-      const ok = await initAuth();
-      if(!ok) return;
-      await Promise.all([loadProperties(), loadRoles()]);
-    })();
-  </script>
-  <script src="standard-nav.js"></script>
+    const staffLink=location.origin+'/my_tasks.html?staff='+staff._id;
+    const btns=`<div class="staff-card-actions">
+      <button onclick="openAssignForStaff('${staff._id}')">+ Task</button>
+      <button onclick="printOnePager('${staff._id}')">Print</button>
+      <button onclick="copyLink('${esc(staffLink)}')" title="Copy direct link">Link</button>
+      ${isAdmin?`<button onclick="openEditStaff('${staff._id}')">Edit</button>`:''}
+    </div>`;
+
+    return `<div class="staff-card" data-sid="${staff._id}">
+      <div class="staff-card-header">
+        <div class="staff-avatar">${initials}</div>
+        <div class="staff-info">
+          <div class="staff-name">${esc(staff.employeeName)}<span style="font-size:12px;opacity:.7;margin-left:8px">${pct}% (${completed}/${myTasks.length})</span></div>
+          <div class="staff-role">${esc(staff.role||'Team Member')}</div>
+        </div>
+        ${btns}
+      </div>
+      <div class="staff-card-body">${catHTML}</div>
+    </div>`;
+  }).join('');
+
+  // Toggle complete
+  $('staffGrid').querySelectorAll('.task-check').forEach(el=>{
+    el.addEventListener('click',async()=>{
+      const tid=el.dataset.tid;
+      const t=tasks.find(x=>(x._id||'').toString()===tid);
+      if(!t) return;
+      try{
+        await api('/leasing-staff?action=completeTask',{method:'POST',body:JSON.stringify({id:tid,isCompleted:!t.isCompleted})});
+        await loadTasks();
+      }catch(e){alert('Error: '+e.message);}
+    });
+  });
+}
+
+/* ── One Pager Print ── */
+function printOnePager(staffId){
+  const staff=staffMembers.find(s=>(s._id||'').toString()===staffId);
+  if(!staff) return;
+  const propName=(properties.find(p=>p.id===selectedPropertyId)||{}).name||'';
+  const date=$('taskDate').value||todayStr();
+  const myTasks=tasks.filter(t=>t.staffMemberId===staffId);
+  const grouped={};
+  myTasks.forEach(t=>{if(!grouped[t.category])grouped[t.category]=[];grouped[t.category].push(t);});
+  function e(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  let catHTML='';
+  CATEGORIES.forEach(cat=>{
+    if(!grouped[cat]||grouped[cat].length===0) return;
+    const rows=grouped[cat].map(t=>`<tr><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-size:13px">${e(t.taskText)}${t.notes?'<br><span style="color:#64748b;font-size:11px;font-style:italic">'+e(t.notes)+'</span>':''}</td><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:center;width:70px;font-size:16px">${t.isCompleted?'&#10003;':'&#9744;'}</td></tr>`).join('');
+    catHTML+=`<table style="width:100%;border-collapse:collapse;margin-bottom:16px"><thead><tr><th style="background:#446472;color:#fff;padding:8px 12px;text-align:left;font-size:13px">${e(cat)}</th><th style="background:#446472;color:#fff;padding:8px 12px;text-align:center;width:70px;font-size:12px">Done</th></tr></thead><tbody>${rows}</tbody></table>`;
+  });
+  if(!catHTML) catHTML='<p style="color:#64748b;text-align:center;padding:30px">No tasks assigned for this date.</p>';
+  const initials=(staff.employeeName||'').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Task Sheet - ${e(staff.employeeName)}</title>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap');*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Open Sans',sans-serif;padding:32px 40px;color:#1e293b;max-width:800px;margin:0 auto}@media print{body{padding:20px}@page{margin:.5in}}</style></head><body>
+    <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #446472;padding-bottom:16px;margin-bottom:24px">
+      <div><h1 style="font-size:22px;color:#446472;margin-bottom:4px">Daily Task Sheet</h1><div style="font-size:14px;color:#64748b">${e(propName)}</div></div>
+      <div style="text-align:right"><div style="font-size:13px;color:#64748b">Date</div><div style="font-size:18px;font-weight:700">${e(date)}</div></div>
+    </div>
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:16px">
+      <div style="width:50px;height:50px;border-radius:50%;background:#446472;color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700">${initials}</div>
+      <div><div style="font-size:18px;font-weight:700">${e(staff.employeeName)}</div><div style="font-size:13px;color:#64748b">${e(staff.role||'Team Member')}</div></div>
+    </div>
+    ${catHTML}
+    <div style="margin-top:30px;padding-top:16px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;font-size:11px;color:#94a3b8"><span>Capstone Management Partners</span><span>Printed ${new Date().toLocaleString()}</span></div>
+  </body></html>`;
+  const w=window.open('','_blank','width=850,height=1100');
+  w.document.write(html);w.document.close();
+  setTimeout(()=>w.print(),400);
+}
+window.printOnePager=printOnePager;
+
+/* ── Task Edit ── */
+function openEditTask(tid){
+  const t=tasks.find(x=>(x._id||'').toString()===tid);
+  if(!t) return;
+  $('teId').value=t._id;
+  $('teText').value=t.taskText;
+  $('teCat').value=t.category;
+  $('teNotes').value=t.notes||'';
+  $('taskEditTitle').textContent='Edit Task';
+  openModal('taskEditModal');
+}
+window.openEditTask=openEditTask;
+
+$('taskEditForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const id=$('teId').value;
+  const t=tasks.find(x=>(x._id||'').toString()===id);
+  if(!t) return;
+  try{
+    await api('/leasing-staff?action=task',{method:'POST',body:JSON.stringify({
+      id, propertyId:t.propertyId, staffMemberId:t.staffMemberId,
+      category:$('teCat').value, taskText:$('teText').value.trim(), notes:$('teNotes').value.trim()
+    })});
+    closeModal('taskEditModal');
+    await loadTasks();
+  }catch(e){alert('Error: '+e.message);}
+});
+
+async function delTask(tid){
+  if(!confirm('Delete this task?')) return;
+  try{await api('/leasing-staff?action=task',{method:'DELETE',body:JSON.stringify({id:tid})});await loadTasks();}catch(e){alert(e.message);}
+}
+window.delTask=delTask;
+
+/* ══════════════════════════════════════════
+   ASSIGN TASKS
+   ══════════════════════════════════════════ */
+function openAssignModal(){
+  pendingAssignTasks=[];
+  $('assignStaff').innerHTML='<option value="">— Select —</option>'+staffMembers.map(s=>`<option value="${s._id}">${esc(s.employeeName)}</option>`).join('');
+  $('assignDate').value=$('taskDate').value||todayStr();
+  $('assignTemplate').innerHTML='<option value="">— None —</option>'+templates.map(t=>`<option value="${t._id}">${esc(t.name)}${t.isGlobal?' (Global)':''}</option>`).join('');
+  renderPendingTasks();
+  openModal('assignModal');
+}
+
+function openAssignForStaff(staffId){
+  openAssignModal();
+  $('assignStaff').value=staffId;
+}
+window.openAssignForStaff=openAssignForStaff;
+
+function renderPendingTasks(){
+  $('assignTasksList').innerHTML=pendingAssignTasks.length===0?'<p style="color:var(--subtext);font-size:13px;padding:8px 0">No tasks added yet. Load a template or add tasks manually below.</p>':
+    pendingAssignTasks.map((t,i)=>`<div class="sortable-task">
+      <span class="drag-handle">&#9776;</span>
+      <span class="task-cat" style="min-width:100px">${esc(t.category)}</span>
+      <span class="task-label">${esc(t.taskText)}</span>
+      <button class="xs danger" onclick="removePendingTask(${i})">&#10005;</button>
+    </div>`).join('');
+}
+
+function removePendingTask(i){pendingAssignTasks.splice(i,1);renderPendingTasks();}
+window.removePendingTask=removePendingTask;
+
+$('loadTplBtn').addEventListener('click',()=>{
+  const tplId=$('assignTemplate').value;
+  if(!tplId) return;
+  const tpl=templates.find(t=>(t._id||'').toString()===tplId);
+  if(!tpl) return;
+  const newTasks=(tpl.tasks||[]).map((t,i)=>({
+    category:tpl.category||'Misc Task',
+    taskText:typeof t==='string'?t:(t.label||t.taskText||''),
+    notes:'',
+    sortOrder:pendingAssignTasks.length+i,
+  }));
+  pendingAssignTasks=pendingAssignTasks.concat(newTasks);
+  renderPendingTasks();
+});
+
+$('addTaskItemBtn').addEventListener('click',()=>{
+  const text=$('addTaskText').value.trim();
+  if(!text) return;
+  pendingAssignTasks.push({category:$('addTaskCat').value,taskText:text,notes:'',sortOrder:pendingAssignTasks.length});
+  $('addTaskText').value='';
+  renderPendingTasks();
+});
+$('addTaskText').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('addTaskItemBtn').click();}});
+
+$('submitAssignBtn').addEventListener('click',async()=>{
+  const staffId=$('assignStaff').value;
+  const date=$('assignDate').value;
+  if(!staffId){alert('Select a staff member');return;}
+  if(pendingAssignTasks.length===0){alert('Add at least one task');return;}
+  const staff=staffMembers.find(s=>(s._id||'').toString()===staffId);
+  try{
+    await api('/leasing-staff?action=taskBatch',{method:'POST',body:JSON.stringify({
+      propertyId:selectedPropertyId,
+      staffMemberId:staffId,
+      employeeName:staff?staff.employeeName:'',
+      shiftDate:date,
+      tasks:pendingAssignTasks,
+    })});
+    closeModal('assignModal');
+    await loadTasks();
+  }catch(e){alert('Error: '+e.message);}
+});
+
+$('saveAsTemplateBtn').addEventListener('click',()=>{
+  if(pendingAssignTasks.length===0){alert('Add tasks first');return;}
+  const name=prompt('Template name:');
+  if(!name) return;
+  // Detect predominant category
+  const cats={};pendingAssignTasks.forEach(t=>{cats[t.category]=(cats[t.category]||0)+1;});
+  const topCat=Object.entries(cats).sort((a,b)=>b[1]-a[1])[0][0];
+  api('/leasing-staff?action=template',{method:'POST',body:JSON.stringify({
+    name,
+    isGlobal:isAdmin,
+    propertyId:isAdmin?null:selectedPropertyId,
+    category:topCat,
+    tasks:pendingAssignTasks.map(t=>t.taskText),
+  })}).then(()=>{alert('Template saved!');loadTemplates();}).catch(e=>alert('Error: '+e.message));
+});
+
+/* ══════════════════════════════════════════
+   TEMPLATES
+   ══════════════════════════════════════════ */
+async function loadTemplates(){
+  const pid=selectedPropertyId||$('taskProperty').value||'';
+  const r=await api('/leasing-staff?action=templates'+(pid?'&propertyId='+pid:''));
+  templates=await r.json();
+  renderTemplates();
+}
+
+function renderTemplates(){
+  const filter=$('tplFilter').value;
+  let filtered=templates;
+  if(filter==='global') filtered=templates.filter(t=>t.isGlobal);
+  if(filter==='property') filtered=templates.filter(t=>!t.isGlobal);
+  if(filtered.length===0){$('tplGrid').innerHTML='';$('tplEmpty').style.display='';return;}
+  $('tplEmpty').style.display='none';
+  $('tplGrid').innerHTML=filtered.map(t=>{
+    const taskList=(t.tasks||[]).slice(0,8).map(x=>typeof x==='string'?x:(x.label||x.taskText||'')).map(x=>'&bull; '+esc(x)).join('<br>');
+    const more=(t.tasks||[]).length>8?`<br><span style="color:var(--brand-accent-2)">+${t.tasks.length-8} more...</span>`:'';
+    return `<div class="tpl-card">
+      <span class="tpl-badge ${t.isGlobal?'':'property'}">${t.isGlobal?'Global':'Property'}</span>
+      <h4>${esc(t.name)}</h4>
+      <div class="tpl-meta">${esc(t.category||'Mixed')} &middot; ${(t.tasks||[]).length} tasks</div>
+      <div class="tpl-tasks-preview">${taskList}${more}</div>
+      <div style="margin-top:12px;display:flex;gap:6px">
+        <button class="xs" onclick="editTemplate('${t._id}')">Edit</button>
+        <button class="xs" onclick="dupeTemplate('${t._id}')">Duplicate</button>
+        <button class="xs danger" onclick="delTemplate('${t._id}')">Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openNewTemplate(){
+  $('tplId').value='';
+  $('tplName').value='';
+  $('tplCategory').value='Misc Task';
+  $('tplScope').value=isAdmin?'global':'property';
+  $('tplTasksText').value='';
+  $('tplPropertyWrap').style.display=$('tplScope').value==='property'?'':'none';
+  $('tplModalTitle').textContent='New Template';
+  openModal('tplModal');
+}
+
+function editTemplate(id){
+  const t=templates.find(x=>(x._id||'').toString()===id);
+  if(!t) return;
+  $('tplId').value=t._id;
+  $('tplName').value=t.name;
+  $('tplCategory').value=t.category||'Misc Task';
+  $('tplScope').value=t.isGlobal?'global':'property';
+  $('tplPropertySelect').value=t.propertyId||'';
+  $('tplPropertyWrap').style.display=t.isGlobal?'none':'';
+  $('tplTasksText').value=(t.tasks||[]).map(x=>typeof x==='string'?x:(x.label||x.taskText||'')).join('\n');
+  $('tplModalTitle').textContent='Edit Template';
+  openModal('tplModal');
+}
+window.editTemplate=editTemplate;
+
+async function dupeTemplate(id){
+  const t=templates.find(x=>(x._id||'').toString()===id);
+  if(!t) return;
+  const name=prompt('Name for duplicate:',t.name+' (Copy)');
+  if(!name) return;
+  try{
+    await api('/leasing-staff?action=template',{method:'POST',body:JSON.stringify({
+      name, isGlobal:t.isGlobal, propertyId:t.propertyId, category:t.category, tasks:t.tasks
+    })});
+    await loadTemplates();
+  }catch(e){alert(e.message);}
+}
+window.dupeTemplate=dupeTemplate;
+
+async function delTemplate(id){
+  if(!confirm('Delete this template?')) return;
+  try{await api('/leasing-staff?action=template',{method:'DELETE',body:JSON.stringify({id})});await loadTemplates();}catch(e){alert(e.message);}
+}
+window.delTemplate=delTemplate;
+
+$('tplScope').addEventListener('change',()=>{$('tplPropertyWrap').style.display=$('tplScope').value==='property'?'':'none';});
+
+$('tplForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const id=$('tplId').value;
+  const name=$('tplName').value.trim();
+  const category=$('tplCategory').value;
+  const isGlobal=$('tplScope').value==='global';
+  const propertyId=isGlobal?null:$('tplPropertySelect').value;
+  const tasks=$('tplTasksText').value.split('\n').map(l=>l.trim()).filter(Boolean);
+  if(!name||tasks.length===0){alert('Name and at least one task required');return;}
+  try{
+    await api('/leasing-staff?action=template',{method:'POST',body:JSON.stringify({id:id||undefined,name,isGlobal,propertyId,category,tasks})});
+    closeModal('tplModal');
+    await loadTemplates();
+  }catch(e){alert(e.message);}
+});
+
+/* ══════════════════════════════════════════
+   STAFF MANAGEMENT
+   ══════════════════════════════════════════ */
+async function loadAllStaff(){
+  // Load from all properties
+  const pid=$('staffMgmtProperty').value;
+  if(pid){
+    const r=await api('/leasing-staff?action=staff&propertyId='+pid+'&activeOnly=false');
+    allStaff=await r.json();
+  } else if(isAdmin){
+    // Load all properties staff
+    const all=[];
+    for(const p of properties){
+      try{const r=await api('/leasing-staff?action=staff&propertyId='+p.id+'&activeOnly=false');const s=await r.json();all.push(...s);}catch(e){}
+    }
+    allStaff=all;
+  }
+  renderStaffTable();
+}
+
+function renderStaffTable(){
+  if(allStaff.length===0){$('staffEmpty').style.display='';$('staffTable').style.display='none';return;}
+  $('staffEmpty').style.display='none';$('staffTable').style.display='';
+  $('staffTableBody').innerHTML=allStaff.map(s=>{
+    const prop=properties.find(p=>p.id===s.propertyId);
+    const link=location.origin+'/my_tasks.html?staff='+s._id;
+    const active=s.isActive!==false;
+    return `<tr>
+      <td><strong>${esc(s.employeeName)}</strong>${s.title?'<br><span style="font-size:11px;color:var(--subtext)">'+esc(s.title)+'</span>':''}</td>
+      <td>${esc(s.role||'—')}</td>
+      <td>${prop?esc(prop.name):'—'}</td>
+      <td>${esc(s.username||'—')}</td>
+      <td><span class="status-dot ${active?'active':'inactive'}"></span>${active?'Active':'Inactive'}</td>
+      <td><div class="link-box"><span>${esc(link)}</span><button class="xs" onclick="copyLink('${esc(link)}')">Copy</button></div></td>
+      <td>
+        <button class="xs" onclick="openEditStaff('${s._id}')">Edit</button>
+        ${active?`<button class="xs danger" onclick="deactivateStaff('${s._id}','${esc(s.employeeName)}')">Deactivate</button>`:`<button class="xs good" onclick="reactivateStaff('${s._id}')">Activate</button>`}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openAddStaff(){
+  $('sfId').value='';$('sfName').value='';$('sfRole').value='';
+  $('sfProperty').value=selectedPropertyId||'';$('sfUsername').value='';$('sfEmail').value='';$('sfTitle').value='';
+  $('staffModalTitle').textContent='Add Staff Member';
+  openModal('staffModal');
+}
+
+function openEditStaff(id){
+  const s=allStaff.find(x=>(x._id||'').toString()===id)||staffMembers.find(x=>(x._id||'').toString()===id);
+  if(!s) return;
+  $('sfId').value=s._id;$('sfName').value=s.employeeName;$('sfRole').value=s.role||'';
+  $('sfProperty').value=s.propertyId;$('sfUsername').value=s.username||'';$('sfEmail').value=s.email||'';$('sfTitle').value=s.title||'';
+  $('staffModalTitle').textContent='Edit Staff Member';
+  openModal('staffModal');
+}
+window.openEditStaff=openEditStaff;
+
+$('staffForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const id=$('sfId').value;
+  const data={
+    id:id||undefined,
+    propertyId:$('sfProperty').value,
+    employeeName:$('sfName').value.trim(),
+    role:$('sfRole').value.trim(),
+    username:$('sfUsername').value.trim(),
+    email:$('sfEmail').value.trim(),
+    title:$('sfTitle').value.trim(),
+  };
+  if(!data.propertyId||!data.employeeName){alert('Name and property required');return;}
+  try{
+    await api('/leasing-staff?action=staff',{method:'POST',body:JSON.stringify(data)});
+    if(data.role&&!roles.find(r=>r.roleName===data.role)){
+      try{await api('/leasing-staff?action=role',{method:'POST',body:JSON.stringify({roleName:data.role})});}catch(e){}
+      await loadRoles();
+    }
+    closeModal('staffModal');
+    await loadAllStaff();
+    await loadTasks();
+  }catch(e){alert(e.message);}
+});
+
+async function deactivateStaff(id,name){
+  if(!confirm('Deactivate '+name+'?')) return;
+  try{await api('/leasing-staff?action=staff',{method:'DELETE',body:JSON.stringify({id})});await loadAllStaff();}catch(e){alert(e.message);}
+}
+window.deactivateStaff=deactivateStaff;
+
+async function reactivateStaff(id){
+  try{await api('/leasing-staff?action=staff',{method:'POST',body:JSON.stringify({id,propertyId:'_',employeeName:'_',isActive:true})});await loadAllStaff();}catch(e){alert(e.message);}
+}
+window.reactivateStaff=reactivateStaff;
+
+/* ══════════════════════════════════════════
+   EXPORT
+   ══════════════════════════════════════════ */
+function buildExportData(){
+  const propName=(properties.find(p=>p.id===selectedPropertyId)||{}).name||'';
+  const date=$('taskDate').value||todayStr();
+  const rows=[];
+  staffMembers.forEach(s=>{
+    const myT=tasks.filter(t=>t.staffMemberId===(s._id||'').toString());
+    if(myT.length===0) rows.push({Property:propName,Date:date,Employee:s.employeeName,Role:s.role||'',Category:'',Task:'',Notes:'',Completed:'',CompletedBy:'',CompletedAt:''});
+    else myT.forEach(t=>rows.push({Property:propName,Date:date,Employee:s.employeeName,Role:s.role||'',Category:t.category,Task:t.taskText,Notes:t.notes||'',Completed:t.isCompleted?'Yes':'No',CompletedBy:t.completedBy||'',CompletedAt:t.completedAt||''}));
+  });
+  return rows;
+}
+
+$('exportCsvBtn').addEventListener('click',()=>{
+  if(!selectedPropertyId){alert('Select a property');return;}
+  const rows=buildExportData();if(!rows.length){alert('No data');return;}
+  const h=Object.keys(rows[0]);
+  const csv=[h.join(','),...rows.map(r=>h.map(k=>`"${(r[k]||'').replace(/"/g,'""')}"`).join(','))].join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  const pn=(properties.find(p=>p.id===selectedPropertyId)||{}).name||'staff';
+  a.download=`leasing_staff_${pn.replace(/\s+/g,'_')}_${$('taskDate').value||todayStr()}.csv`;a.click();
+});
+
+$('exportXlsxBtn').addEventListener('click',()=>{
+  if(!selectedPropertyId){alert('Select a property');return;}
+  if(typeof XLSX==='undefined'){alert('Excel library not loaded');return;}
+  const rows=buildExportData();if(!rows.length){alert('No data');return;}
+  const ws=XLSX.utils.json_to_sheet(rows);
+  ws['!cols']=Object.keys(rows[0]).map(k=>({wch:Math.max(k.length,...rows.map(r=>(r[k]||'').length))+2}));
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Staff List');
+  const pn=(properties.find(p=>p.id===selectedPropertyId)||{}).name||'Staff';
+  XLSX.writeFile(wb,`leasing_staff_${pn.replace(/\s+/g,'_')}_${$('taskDate').value||todayStr()}.xlsx`);
+});
+
+$('printAllBtn').addEventListener('click',()=>window.print());
+
+/* ══════════════════════════════════════════
+   SEED TEMPLATES
+   ══════════════════════════════════════════ */
+$('seedBtn').addEventListener('click',async()=>{
+  try{
+    const r=await api('/leasing-staff?action=seedTemplates',{method:'POST',body:'{}'});
+    const d=await r.json();
+    alert('Seeded '+d.seeded+' template(s)');
+    await loadTemplates();
+  }catch(e){alert(e.message);}
+});
+
+/* ══════════════════════════════════════════
+   EVENT WIRING
+   ══════════════════════════════════════════ */
+$('logoutBtn').addEventListener('click',async()=>{
+  try{await fetch('/api/auth-logout',{method:'POST',credentials:'include'});}catch(e){}
+  location.href='index.html';
+});
+$('dashProperty').addEventListener('change',loadDashboard);
+$('dashDate').addEventListener('change',loadDashboard);
+$('taskProperty').addEventListener('change',()=>{selectedPropertyId=$('taskProperty').value;loadTasks();loadTemplates();});
+$('taskDate').addEventListener('change',loadTasks);
+$('assignTasksBtn').addEventListener('click',openAssignModal);
+$('newTplBtn').addEventListener('click',openNewTemplate);
+$('tplFilter').addEventListener('change',renderTemplates);
+$('addStaffBtn').addEventListener('click',openAddStaff);
+$('staffMgmtProperty').addEventListener('change',loadAllStaff);
+
+// Close modals on backdrop click
+['staffModal','tplModal','assignModal','taskEditModal'].forEach(id=>{
+  $(id).addEventListener('click',e=>{if(e.target===$(id))closeModal(id);});
+});
+
+/* ══════════════════════════════════════════
+   INIT
+   ══════════════════════════════════════════ */
+(async()=>{
+  const ok=await initAuth();
+  if(!ok) return;
+  await Promise.all([loadProperties(),loadRoles()]);
+  await loadTemplates();
+  // Auto-load if property pre-selected
+  if(selectedPropertyId){
+    loadDashboard();
+    loadTasks();
+  }
+  if(isAdmin) loadAllStaff();
+})();
+</script>
+<script src="standard-nav.js"></script>
 </body>
 </html>
