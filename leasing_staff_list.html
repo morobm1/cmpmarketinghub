@@ -222,7 +222,7 @@
               <input type="date" id="dashDate" />
             </div>
             <div class="toolbar-spacer"></div>
-            <button class="primary sm" id="seedBtn" style="display:none" title="Load default templates">Seed Templates</button>
+            <button class="primary sm" id="seedBtn" style="display:none" title="Re-seed default system templates">Re-seed Defaults</button>
           </div>
           <div id="dashContent">
             <div class="empty-state"><h3>Select a Property</h3><p>Choose a property and date to view daily progress.</p></div>
@@ -259,8 +259,10 @@
               <label style="margin-bottom:4px;font-size:12px">Filter</label>
               <select id="tplFilter" style="min-width:180px">
                 <option value="all">All Templates</option>
-                <option value="global">Global Only</option>
+                <option value="system">System Defaults</option>
+                <option value="global">Global (Custom)</option>
                 <option value="property">Property-Specific</option>
+                <option value="mine">My Saved Templates</option>
               </select>
             </div>
             <div class="toolbar-spacer"></div>
@@ -392,11 +394,12 @@
             <input type="date" id="assignDate" />
           </div>
         </div>
-        <div class="form-group">
-          <label>Load from Template</label>
+        <div class="assign-panel">
+          <h4 style="margin:0 0 8px;color:var(--brand-primary)">Add from Template</h4>
+          <p style="font-size:12px;color:var(--subtext);margin-bottom:10px">Select a starter template to populate this task sheet. You can add multiple templates and also add custom tasks below.</p>
           <div style="display:flex;gap:8px">
-            <select id="assignTemplate" style="flex:1"><option value="">— None —</option></select>
-            <button type="button" class="sm good" id="loadTplBtn">Load</button>
+            <select id="assignTemplate" style="flex:1"><option value="">— Choose a Template —</option></select>
+            <button type="button" class="sm good" id="loadTplBtn">Load Tasks</button>
           </div>
         </div>
         <hr style="margin:16px 0;border:none;border-top:1px solid var(--border)" />
@@ -783,7 +786,15 @@ function openAssignModal(){
   pendingAssignTasks=[];
   $('assignStaff').innerHTML='<option value="">— Select —</option>'+staffMembers.map(s=>`<option value="${s._id}">${esc(s.employeeName)}</option>`).join('');
   $('assignDate').value=$('taskDate').value||todayStr();
-  $('assignTemplate').innerHTML='<option value="">— None —</option>'+templates.map(t=>`<option value="${t._id}">${esc(t.name)}${t.isGlobal?' (Global)':''}</option>`).join('');
+  // Build grouped template picker
+  const sysTpls=templates.filter(t=>t.isSystem);
+  const globTpls=templates.filter(t=>t.isGlobal&&!t.isSystem);
+  const propTpls=templates.filter(t=>!t.isGlobal&&!t.isSystem);
+  let tplOpts='<option value="">— Choose a Template —</option>';
+  if(sysTpls.length) tplOpts+=`<optgroup label="System Defaults">${sysTpls.map(t=>`<option value="${t._id}">${esc(t.name)} (${(t.tasks||[]).length} tasks)</option>`).join('')}</optgroup>`;
+  if(globTpls.length) tplOpts+=`<optgroup label="Global Templates">${globTpls.map(t=>`<option value="${t._id}">${esc(t.name)} (${(t.tasks||[]).length} tasks)</option>`).join('')}</optgroup>`;
+  if(propTpls.length) tplOpts+=`<optgroup label="Property Templates">${propTpls.map(t=>`<option value="${t._id}">${esc(t.name)} (${(t.tasks||[]).length} tasks)</option>`).join('')}</optgroup>`;
+  $('assignTemplate').innerHTML=tplOpts;
   renderPendingTasks();
   openModal('assignModal');
 }
@@ -879,25 +890,74 @@ async function loadTemplates(){
 function renderTemplates(){
   const filter=$('tplFilter').value;
   let filtered=templates;
-  if(filter==='global') filtered=templates.filter(t=>t.isGlobal);
-  if(filter==='property') filtered=templates.filter(t=>!t.isGlobal);
-  if(filtered.length===0){$('tplGrid').innerHTML='';$('tplEmpty').style.display='';return;}
+  if(filter==='system') filtered=templates.filter(t=>t.isSystem);
+  else if(filter==='global') filtered=templates.filter(t=>t.isGlobal&&!t.isSystem);
+  else if(filter==='property') filtered=templates.filter(t=>!t.isGlobal&&!t.isSystem);
+  else if(filter==='mine') filtered=templates.filter(t=>t.createdBy===currentUser.username);
+
+  if(filtered.length===0&&filter!=='all'){$('tplGrid').innerHTML='';$('tplEmpty').style.display='';return;}
   $('tplEmpty').style.display='none';
-  $('tplGrid').innerHTML=filtered.map(t=>{
-    const taskList=(t.tasks||[]).slice(0,8).map(x=>typeof x==='string'?x:(x.label||x.taskText||'')).map(x=>'&bull; '+esc(x)).join('<br>');
-    const more=(t.tasks||[]).length>8?`<br><span style="color:var(--brand-accent-2)">+${t.tasks.length-8} more...</span>`:'';
-    return `<div class="tpl-card">
-      <span class="tpl-badge ${t.isGlobal?'':'property'}">${t.isGlobal?'Global':'Property'}</span>
-      <h4>${esc(t.name)}</h4>
-      <div class="tpl-meta">${esc(t.category||'Mixed')} &middot; ${(t.tasks||[]).length} tasks</div>
-      <div class="tpl-tasks-preview">${taskList}${more}</div>
-      <div style="margin-top:12px;display:flex;gap:6px">
-        <button class="xs" onclick="editTemplate('${t._id}')">Edit</button>
-        <button class="xs" onclick="dupeTemplate('${t._id}')">Duplicate</button>
-        <button class="xs danger" onclick="delTemplate('${t._id}')">Delete</button>
-      </div>
+
+  // Group into sections
+  const system=filtered.filter(t=>t.isSystem);
+  const global=filtered.filter(t=>t.isGlobal&&!t.isSystem);
+  const property=filtered.filter(t=>!t.isGlobal&&!t.isSystem);
+
+  function renderSection(title,badge,items){
+    if(items.length===0) return '';
+    const cards=items.map(t=>{
+      const taskList=(t.tasks||[]).slice(0,8).map(x=>typeof x==='string'?x:(x.label||x.taskText||'')).map(x=>'&bull; '+esc(x)).join('<br>');
+      const more=(t.tasks||[]).length>8?`<br><span style="color:var(--brand-accent-2)">+${t.tasks.length-8} more...</span>`:'';
+      const isSystemTpl=!!t.isSystem;
+      const badgeClass=t.isSystem?'':t.isGlobal?'':'property';
+      const badgeText=t.isSystem?'System Default':t.isGlobal?'Global':'Property';
+      const actions=isSystemTpl
+        ?`<button class="xs" onclick="dupeTemplate('${t._id}')">Duplicate &amp; Customize</button>`
+        :`<button class="xs" onclick="editTemplate('${t._id}')">Edit</button>
+          <button class="xs" onclick="dupeTemplate('${t._id}')">Duplicate</button>
+          <button class="xs danger" onclick="delTemplate('${t._id}')">Delete</button>`;
+      return `<div class="tpl-card">
+        <span class="tpl-badge ${badgeClass}">${badgeText}</span>
+        <h4>${esc(t.name)}</h4>
+        <div class="tpl-meta">${esc(t.category||'Mixed')} &middot; ${(t.tasks||[]).length} tasks</div>
+        <div class="tpl-tasks-preview">${taskList}${more}</div>
+        <div style="margin-top:12px;display:flex;gap:6px">${actions}</div>
+      </div>`;
+    }).join('');
+    return `<div style="margin-bottom:24px">
+      <h3 style="font-size:15px;color:var(--brand-primary);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--border)">${title} <span class="badge">${items.length}</span></h3>
+      <div class="tpl-grid">${cards}</div>
     </div>`;
-  }).join('');
+  }
+
+  let html='';
+  if(filter==='all'){
+    html+=renderSection('System Templates','system',system);
+    html+=renderSection('Global Templates','global',global);
+    html+=renderSection('Property Templates','property',property);
+  } else {
+    html+=`<div class="tpl-grid">${filtered.map(t=>{
+      const taskList=(t.tasks||[]).slice(0,8).map(x=>typeof x==='string'?x:(x.label||x.taskText||'')).map(x=>'&bull; '+esc(x)).join('<br>');
+      const more=(t.tasks||[]).length>8?`<br><span style="color:var(--brand-accent-2)">+${t.tasks.length-8} more...</span>`:'';
+      const isSystemTpl=!!t.isSystem;
+      const badgeText=t.isSystem?'System Default':t.isGlobal?'Global':'Property';
+      const actions=isSystemTpl
+        ?`<button class="xs" onclick="dupeTemplate('${t._id}')">Duplicate &amp; Customize</button>`
+        :`<button class="xs" onclick="editTemplate('${t._id}')">Edit</button>
+          <button class="xs" onclick="dupeTemplate('${t._id}')">Duplicate</button>
+          <button class="xs danger" onclick="delTemplate('${t._id}')">Delete</button>`;
+      return `<div class="tpl-card">
+        <span class="tpl-badge ${t.isSystem?'':t.isGlobal?'':'property'}">${badgeText}</span>
+        <h4>${esc(t.name)}</h4>
+        <div class="tpl-meta">${esc(t.category||'Mixed')} &middot; ${(t.tasks||[]).length} tasks</div>
+        <div class="tpl-tasks-preview">${taskList}${more}</div>
+        <div style="margin-top:12px;display:flex;gap:6px">${actions}</div>
+      </div>`;
+    }).join('')}</div>`;
+  }
+
+  if(!html.trim()){$('tplGrid').innerHTML='';$('tplEmpty').style.display='';return;}
+  $('tplGrid').innerHTML=html;
 }
 
 function openNewTemplate(){

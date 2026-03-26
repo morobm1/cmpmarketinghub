@@ -51,11 +51,12 @@ function cors(body, statusCode = 200) {
   };
 }
 
-const DEFAULT_TEMPLATES = [
+const SYSTEM_TEMPLATES = [
   {
-    name: 'Simple Daily Checklist',
+    name: 'Simple Daily Checklist Version',
     category: 'Opening Task',
     isGlobal: true,
+    isSystem: true,
     propertyId: null,
     tasks: [
       'Open leasing office',
@@ -77,6 +78,7 @@ const DEFAULT_TEMPLATES = [
     name: 'Simple Daily Closing Checklist',
     category: 'Closing Task',
     isGlobal: true,
+    isSystem: true,
     propertyId: null,
     tasks: [
       'Clean and organize front desk',
@@ -94,6 +96,23 @@ const DEFAULT_TEMPLATES = [
     ],
   },
 ];
+
+// Auto-seed system templates if they don't exist
+async function ensureSystemTemplates(db) {
+  const col = db.collection('leasingTemplates');
+  for (const tpl of SYSTEM_TEMPLATES) {
+    const exists = await col.findOne({ name: tpl.name, isSystem: true });
+    if (!exists) {
+      await col.insertOne({
+        ...tpl,
+        createdAt: new Date().toISOString(),
+        createdBy: 'system',
+        updatedAt: new Date().toISOString(),
+        updatedBy: 'system',
+      });
+    }
+  }
+}
 
 export async function handler(event) {
   if (event.httpMethod === 'OPTIONS') {
@@ -163,11 +182,15 @@ export async function handler(event) {
       }
 
       if (action === 'templates') {
-        const filter = { $or: [{ isGlobal: true }] };
+        // Auto-seed system templates on first access
+        await ensureSystemTemplates(db);
+        const filter = { $or: [{ isGlobal: true }, { isSystem: true }] };
         if (qs.propertyId) {
           filter.$or.push({ propertyId: qs.propertyId });
         }
-        const templates = await templateCol.find(filter).sort({ name: 1 }).toArray();
+        // Also include templates created by this user
+        filter.$or.push({ createdBy: user.sub });
+        const templates = await templateCol.find(filter).sort({ isSystem: -1, name: 1 }).toArray();
         return cors(templates);
       }
 
@@ -392,24 +415,11 @@ export async function handler(event) {
         return cors(doc, 201);
       }
 
-      // Seed default templates
+      // Seed system templates (manual trigger, also auto-seeds on template GET)
       if (action === 'seedTemplates') {
         if (user.role !== 'admin') return cors('Forbidden', 403);
-        let seeded = 0;
-        for (const tpl of DEFAULT_TEMPLATES) {
-          const exists = await templateCol.findOne({ name: tpl.name, isGlobal: true });
-          if (!exists) {
-            await templateCol.insertOne({
-              ...tpl,
-              createdAt: new Date().toISOString(),
-              createdBy: user.sub,
-              updatedAt: new Date().toISOString(),
-              updatedBy: user.sub,
-            });
-            seeded++;
-          }
-        }
-        return cors({ success: true, seeded });
+        await ensureSystemTemplates(db);
+        return cors({ success: true });
       }
 
       return cors('Unknown POST action: ' + action, 400);
@@ -442,6 +452,7 @@ export async function handler(event) {
         if (!id) return cors('Missing id', 400);
         const tpl = await templateCol.findOne({ _id: new ObjectId(id) });
         if (!tpl) return cors('Not found', 404);
+        if (tpl.isSystem) return cors('System templates cannot be deleted. Duplicate it to create your own version.', 403);
         if (tpl.isGlobal && user.role !== 'admin') return cors('Forbidden', 403);
         await templateCol.deleteOne({ _id: new ObjectId(id) });
         return cors({ success: true });
