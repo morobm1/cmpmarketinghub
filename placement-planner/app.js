@@ -1045,6 +1045,7 @@ function initMapViewerEvents() {
         onSave: handleResidentSave,
         inventory: AppState.inventory,
         residents: AppState.residents,
+        reservedUnitsMap: AppState.scholarshipReservedUnits,
       });
     });
   }
@@ -2029,6 +2030,7 @@ function handleResidentEdit(resident, unitKey) {
     onSave: handleResidentSave,
     inventory: AppState.inventory,
     residents: AppState.residents,
+    reservedUnitsMap: AppState.scholarshipReservedUnits,
   });
 }
 
@@ -2043,6 +2045,20 @@ function handleResidentDelete(resident, unitKey) {
         refreshAllStats();
         refreshMasterList();
         renderCurrentMap();
+        refreshScholarshipAudit();
+        refreshPreleaseProgress();
+
+        // Update prelease summary in sidebar
+        if (typeof renderPreleaseSummary === 'function') {
+          var inventory = AppState.inventory || [];
+          var residents = AppState.residents || new Map();
+          var bankList = AppState.waitingBank || [];
+          var scope = AppState.preleaseScope || { type: 'property' };
+          var progressResult = computeEnhancedPreleaseProgress(inventory, residents, bankList, scope);
+          renderPreleaseSummary(progressResult);
+        }
+
+        showNotification('Deleted resident "' + resident.Resident_Name + '" from unit ' + resident.Unit_Assigned, 'success');
       }
     }
   );
@@ -2096,9 +2112,29 @@ function _completeResidentSave(formData, isEdit, originalUnitKey, newUnitKey) {
   });
 
   persistResidents();
+  closeResidentModal();
+
+  // Refresh all downstream systems
   refreshAllStats();
   refreshMasterList();
   renderCurrentMap();
+  refreshScholarshipAudit();
+  refreshPreleaseProgress();
+  refreshVarianceAnalysis();
+  renderImportCards(AppState);
+
+  // Update prelease summary in sidebar
+  if (typeof renderPreleaseSummary === 'function') {
+    var inventory = AppState.inventory || [];
+    var residents = AppState.residents || new Map();
+    var bankList = AppState.waitingBank || [];
+    var scope = AppState.preleaseScope || { type: 'property' };
+    var progressResult = computeEnhancedPreleaseProgress(inventory, residents, bankList, scope);
+    renderPreleaseSummary(progressResult);
+  }
+
+  var action = isEdit ? 'updated' : 'added';
+  showNotification('Resident ' + action + ': ' + formData.Resident_Name + ' → ' + formData.Unit_Assigned, 'success');
 }
 
 /* ------------------------------------------------------------------
@@ -2315,7 +2351,70 @@ function refreshBank() {
   var query = bankSearchInput ? bankSearchInput.value : '';
   renderWaitingBank(AppState.waitingBank, {
     onAssignClick: handleBankAssignClick,
+    onEditClick: handleBankEditClick,
   }, query);
+}
+
+function handleBankEditClick(bankEntry) {
+  openBankEditModal(bankEntry, {
+    onSave: handleBankEditSave,
+    onDelete: handleBankEditDelete,
+  });
+}
+
+function handleBankEditSave(originalEntry, updatedData) {
+  var idx = AppState.waitingBank.findIndex(function (e) { return e._id === originalEntry._id; });
+  if (idx === -1) {
+    showNotification('Bank entry not found. It may have been assigned or removed.', 'error');
+    return;
+  }
+
+  AppState.waitingBank[idx].name = updatedData.name;
+  AppState.waitingBank[idx].unitType = updatedData.unitType;
+  AppState.waitingBank[idx].leaseStatus = updatedData.leaseStatus;
+
+  persistProject();
+  refreshBank();
+  refreshPreleaseProgress();
+  renderImportCards(AppState);
+
+  // Update prelease summary in sidebar
+  if (typeof renderPreleaseSummary === 'function') {
+    var inventory = AppState.inventory || [];
+    var residents = AppState.residents || new Map();
+    var bankList = AppState.waitingBank || [];
+    var scope = AppState.preleaseScope || { type: 'property' };
+    var progressResult = computeEnhancedPreleaseProgress(inventory, residents, bankList, scope);
+    renderPreleaseSummary(progressResult);
+  }
+
+  showNotification('Bank resident "' + updatedData.name + '" updated.', 'success');
+}
+
+function handleBankEditDelete(bankEntry) {
+  showConfirmModal(
+    'Delete Bank Resident',
+    'Remove "' + bankEntry.name + '" from the waiting bank?',
+    function () {
+      AppState.waitingBank = AppState.waitingBank.filter(function (e) { return e._id !== bankEntry._id; });
+      persistProject();
+      refreshBank();
+      refreshPreleaseProgress();
+      renderImportCards(AppState);
+
+      // Update prelease summary in sidebar
+      if (typeof renderPreleaseSummary === 'function') {
+        var inventory = AppState.inventory || [];
+        var residents = AppState.residents || new Map();
+        var bankList = AppState.waitingBank || [];
+        var scope = AppState.preleaseScope || { type: 'property' };
+        var progressResult = computeEnhancedPreleaseProgress(inventory, residents, bankList, scope);
+        renderPreleaseSummary(progressResult);
+      }
+
+      showNotification('Bank resident "' + bankEntry.name + '" removed.', 'success');
+    }
+  );
 }
 
 function handleBankAssignClick(bankEntry) {
@@ -2333,6 +2432,7 @@ function handleBankAssignClick(bankEntry) {
 
   openBankAssignmentModal(bankEntry, availableUnits, {
     onAssign: handleBankAssignment,
+    reservedUnitsMap: AppState.scholarshipReservedUnits,
   });
 }
 
@@ -2396,6 +2496,20 @@ function _completeBankAssignment(bankEntry, selectedUnit, unitKey) {
   refreshMasterList();
   renderCurrentMap();
   renderImportCards(AppState);
+  refreshScholarshipAudit();
+  refreshPreleaseProgress();
+
+  // Update prelease summary in sidebar
+  if (typeof renderPreleaseSummary === 'function') {
+    var inventory = AppState.inventory || [];
+    var residents = AppState.residents || new Map();
+    var bankList = AppState.waitingBank || [];
+    var scope = AppState.preleaseScope || { type: 'property' };
+    var progressResult = computeEnhancedPreleaseProgress(inventory, residents, bankList, scope);
+    renderPreleaseSummary(progressResult);
+  }
+
+  showNotification('Assigned "' + bankEntry.name + '" to unit ' + selectedUnit, 'success');
 }
 
 /* ------------------------------------------------------------------

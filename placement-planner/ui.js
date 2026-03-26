@@ -748,7 +748,7 @@ function highlightMasterListRow(unitKey) {
    Uses generic modal overlay.
    ------------------------------------------------------------------ */
 
-function populateUnitDropdown(selectEl, inventory, residents, currentUnitValue) {
+function populateUnitDropdown(selectEl, inventory, residents, currentUnitValue, reservedUnitsMap) {
   selectEl.innerHTML = '<option value="">-- Select Unit --</option>';
 
   if (!inventory || inventory.length === 0) {
@@ -778,10 +778,17 @@ function populateUnitDropdown(selectEl, inventory, residents, currentUnitValue) 
 
   unitsToShow.sort(function (a, b) { return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }); });
 
+  var resMap = reservedUnitsMap || new Map();
+
   for (var i = 0; i < unitsToShow.length; i++) {
+    var unitNum = unitsToShow[i];
+    var reservation = getUnitScholarshipReservation(unitNum, resMap);
     var opt = document.createElement('option');
-    opt.value = unitsToShow[i];
-    opt.textContent = unitsToShow[i];
+    opt.value = unitNum;
+    opt.textContent = unitNum + (reservation ? ' \u2014 Reserved for ' + reservation : '');
+    if (reservation) {
+      opt.setAttribute('data-reserved', reservation);
+    }
     selectEl.appendChild(opt);
   }
 }
@@ -790,6 +797,7 @@ function openResidentModal(resident, options) {
   var onSave = options.onSave;
   var inventory = options.inventory;
   var residents = options.residents;
+  var reservedUnitsMap = options.reservedUnitsMap || new Map();
 
   var isEdit = !!resident;
   var originalUnitKey = isEdit ? resident.Unit_Assigned.toUpperCase() : null;
@@ -843,7 +851,7 @@ function openResidentModal(resident, options) {
 
   // Populate unit dropdown
   var unitSelect = document.getElementById('form-unit-assigned');
-  populateUnitDropdown(unitSelect, inventory, residents, isEdit ? resident.Unit_Assigned : null);
+  populateUnitDropdown(unitSelect, inventory, residents, isEdit ? resident.Unit_Assigned : null, reservedUnitsMap);
   if (isEdit) {
     unitSelect.value = resident.Unit_Assigned;
   }
@@ -1097,6 +1105,17 @@ function renderWaitingBank(bankResidents, callbacks, searchQuery) {
         leaseEl.className = 'bank-item-lease';
         leaseEl.textContent = bankEntry.leaseStatus;
 
+        var btnGroup = document.createElement('span');
+        btnGroup.className = 'bank-item-actions';
+
+        var editBtn = document.createElement('button');
+        editBtn.className = 'bank-edit-btn';
+        editBtn.textContent = 'Edit';
+        editBtn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          if (callbacks.onEditClick) callbacks.onEditClick(bankEntry);
+        });
+
         var assignBtn = document.createElement('button');
         assignBtn.className = 'bank-assign-btn';
         assignBtn.textContent = 'Assign';
@@ -1105,9 +1124,12 @@ function renderWaitingBank(bankResidents, callbacks, searchQuery) {
           if (callbacks.onAssignClick) callbacks.onAssignClick(bankEntry);
         });
 
+        btnGroup.appendChild(editBtn);
+        btnGroup.appendChild(assignBtn);
+
         itemEl.appendChild(nameEl);
         itemEl.appendChild(leaseEl);
-        itemEl.appendChild(assignBtn);
+        itemEl.appendChild(btnGroup);
         list.appendChild(itemEl);
       })(entries[j]);
     }
@@ -1124,13 +1146,14 @@ function renderWaitingBank(bankResidents, callbacks, searchQuery) {
 
 function openBankAssignmentModal(bankEntry, availableUnits, callbacks) {
   var title = 'Assign Bank Resident';
+  var reservedUnitsMap = (callbacks && callbacks.reservedUnitsMap) || new Map();
 
   var infoHtml =
     '<div class="bank-assign-detail"><strong>Name:</strong> ' + escapeHtml(bankEntry.name) + '</div>' +
     '<div class="bank-assign-detail"><strong>Unit Type:</strong> ' + escapeHtml(bankEntry.unitType) + '</div>' +
     '<div class="bank-assign-detail"><strong>Lease Status:</strong> ' + escapeHtml(bankEntry.leaseStatus) + '</div>';
 
-  var selectHtml = '<div class="form-group"><label for="bank-assign-unit">Select Unit</label><select id="bank-assign-unit" class="select-input">';
+  var selectHtml = '<div class="form-group"><label for="bank-assign-unit">Select Unit</label><select id="bank-assign-unit" class="select-input bank-assign-unit-select">';
   selectHtml += '<option value="">-- Select Unit --</option>';
 
   if (availableUnits.length === 0) {
@@ -1140,7 +1163,15 @@ function openBankAssignmentModal(bankEntry, availableUnits, callbacks) {
       return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
     });
     for (var i = 0; i < sorted.length; i++) {
-      selectHtml += '<option value="' + escapeHtml(sorted[i]) + '">' + escapeHtml(sorted[i]) + '</option>';
+      var unitNum = sorted[i];
+      var reservation = getUnitScholarshipReservation(unitNum, reservedUnitsMap);
+      var optionLabel = escapeHtml(unitNum);
+      if (reservation) {
+        optionLabel += ' \u2014 Reserved for ' + escapeHtml(reservation);
+      }
+      selectHtml += '<option value="' + escapeHtml(unitNum) + '"' +
+        (reservation ? ' data-reserved="' + escapeHtml(reservation) + '"' : '') +
+        '>' + optionLabel + '</option>';
     }
   }
   selectHtml += '</select><div id="bank-assign-validation" class="validation-message"></div></div>';
@@ -1179,6 +1210,84 @@ function openBankAssignmentModal(bankEntry, availableUnits, callbacks) {
 
 function closeBankAssignmentModal() {
   hideModal();
+}
+
+/* ------------------------------------------------------------------
+   BANK RESIDENT EDIT MODAL
+   Allows editing Name, Unit Type, and Lease Status of a bank entry.
+   ------------------------------------------------------------------ */
+
+function openBankEditModal(bankEntry, callbacks) {
+  var title = 'Edit Bank Resident';
+
+  // Build unit type options
+  var unitTypeOptions = '<option value="">-- Select Unit Type --</option>';
+  for (var i = 0; i < APPROVED_BANK_UNIT_TYPES.length; i++) {
+    var ut = APPROVED_BANK_UNIT_TYPES[i];
+    var sel = (bankEntry.unitType === ut) ? ' selected' : '';
+    unitTypeOptions += '<option value="' + escapeHtml(ut) + '"' + sel + '>' + escapeHtml(ut) + '</option>';
+  }
+
+  // Build lease status options
+  var leaseOptions = '<option value="">-- Select --</option>';
+  for (var i = 0; i < ALLOWED_LEASE_STATUSES.length; i++) {
+    var ls = ALLOWED_LEASE_STATUSES[i];
+    var sel = (bankEntry.leaseStatus === ls) ? ' selected' : '';
+    leaseOptions += '<option value="' + escapeHtml(ls) + '"' + sel + '>' + escapeHtml(ls) + '</option>';
+  }
+
+  var bodyHtml =
+    '<form id="bank-edit-form" class="modal-form">' +
+      '<div class="form-group">' +
+        '<label for="bank-edit-name">Name</label>' +
+        '<input type="text" id="bank-edit-name" class="text-input" value="' + escapeHtml(bankEntry.name) + '" required />' +
+      '</div>' +
+      '<div class="form-group">' +
+        '<label for="bank-edit-unit-type">Unit Type</label>' +
+        '<select id="bank-edit-unit-type" class="select-input" required>' + unitTypeOptions + '</select>' +
+      '</div>' +
+      '<div class="form-group">' +
+        '<label for="bank-edit-lease-status">Lease Status</label>' +
+        '<select id="bank-edit-lease-status" class="select-input" required>' + leaseOptions + '</select>' +
+      '</div>' +
+    '</form>';
+
+  var footerHtml =
+    '<button type="button" class="btn btn-danger-outline" id="bank-edit-delete-btn">Delete</button>' +
+    '<button type="button" class="btn btn-secondary" id="bank-edit-cancel-btn">Cancel</button>' +
+    '<button type="submit" form="bank-edit-form" class="btn btn-primary" id="bank-edit-save-btn">Save</button>';
+
+  showModal(title, bodyHtml, footerHtml);
+
+  // Cancel
+  document.getElementById('bank-edit-cancel-btn').addEventListener('click', function () {
+    hideModal();
+  });
+
+  // Delete
+  document.getElementById('bank-edit-delete-btn').addEventListener('click', function () {
+    hideModal();
+    if (callbacks.onDelete) callbacks.onDelete(bankEntry);
+  });
+
+  // Form submit
+  document.getElementById('bank-edit-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    var updatedData = {
+      name: document.getElementById('bank-edit-name').value.trim(),
+      unitType: document.getElementById('bank-edit-unit-type').value,
+      leaseStatus: document.getElementById('bank-edit-lease-status').value,
+    };
+
+    if (!updatedData.name || !updatedData.unitType || !updatedData.leaseStatus) {
+      alert('All fields are required.');
+      return;
+    }
+
+    hideModal();
+    if (callbacks.onSave) callbacks.onSave(bankEntry, updatedData);
+  });
 }
 
 /* ------------------------------------------------------------------

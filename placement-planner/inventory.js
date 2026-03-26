@@ -1254,6 +1254,35 @@ function getOverTargetRecords(actualAuditResults, expectedData) {
 }
 
 /* ------------------------------------------------------------------
+   SCHOLARSHIP RESERVATION LOOKUP HELPERS
+   Used by bank assignment UI to show reservation labels inline.
+   ------------------------------------------------------------------ */
+
+/**
+ * Check if a unit is reserved for a scholarship.
+ * @param {string} unitNumber - The unit number to check
+ * @param {Map<string, string>} reservedUnitsMap - Uppercase unitKey -> scholarship name
+ * @returns {boolean}
+ */
+function isUnitScholarshipReserved(unitNumber, reservedUnitsMap) {
+  if (!unitNumber || !reservedUnitsMap || reservedUnitsMap.size === 0) return false;
+  return reservedUnitsMap.has(unitNumber.trim().toUpperCase());
+}
+
+/**
+ * Get the scholarship reservation label for a unit.
+ * Returns the scholarship name if the unit is reserved, or null if not.
+ * @param {string} unitNumber - The unit number to check
+ * @param {Map<string, string>} reservedUnitsMap - Uppercase unitKey -> scholarship name
+ * @returns {string|null}
+ */
+function getUnitScholarshipReservation(unitNumber, reservedUnitsMap) {
+  if (!unitNumber || !reservedUnitsMap || reservedUnitsMap.size === 0) return null;
+  var key = unitNumber.trim().toUpperCase();
+  return reservedUnitsMap.has(key) ? reservedUnitsMap.get(key) : null;
+}
+
+/* ------------------------------------------------------------------
    GLOBAL SEARCH — Combined Placed + Bank Residents
    ------------------------------------------------------------------ */
 
