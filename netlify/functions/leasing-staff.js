@@ -2,61 +2,48 @@ import { getDb, ObjectId } from './_db.js';
 import { verifyReqAuth } from './_auth.js';
 
 /**
- * Leasing Team Staff List API
- * 
+ * Leasing Team Staff Board API
+ *
  * Collections:
  *   leasingStaff      - staff members per property
- *   leasingTasks      - individual assigned tasks
+ *   leasingBoardTasks - board task rows
  *   leasingTemplates  - reusable task templates
- *   leasingRoles      - role definitions
  *
  * GET actions:
- *   staff          - list staff for property
- *   tasks          - list tasks (by property, date, staffMemberId)
- *   myTasks        - get tasks for the current authenticated user (staff direct link)
- *   templates      - list templates (global + property-specific)
- *   roles          - list roles
- *   export         - export data for property
- *   progress       - completion progress for property/date
- *   staffByUser    - find staff record by username
+ *   staff              - list staff for property
+ *   tasks              - list board tasks (by property, date, group, staffId)
+ *   myTasks            - tasks for current user / staffId
+ *   templates          - list templates (auto-seeds system defaults)
+ *   groups             - list default groups
  *
  * POST actions:
- *   staff          - create/update staff member
- *   task           - create/update single task
- *   taskBatch      - create multiple tasks at once (from template)
- *   template       - create/update template
- *   role           - create role
- *   seedTemplates  - seed default templates
- *   completeTask   - mark task complete (staff-facing)
+ *   staff              - create/update staff
+ *   task               - create/update single board task
+ *   taskBatch          - batch-create tasks (from template)
+ *   template           - create/update template
+ *   completeTask       - toggle task complete
+ *   updateStatus       - update task status
  *
  * DELETE actions:
- *   staff          - deactivate staff
- *   task           - delete task
- *   template       - delete template
+ *   staff, task, template
  */
 
-function userCanAccessProperty(user, propertyId) {
-  if (user.role === 'admin') return true;
-  if (user.properties === '*') return true;
-  if (Array.isArray(user.properties)) return user.properties.includes(propertyId);
-  if (typeof user.properties === 'string') return user.properties === propertyId;
-  return false;
-}
-
-function cors(body, statusCode = 200) {
-  return {
-    statusCode,
-    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-    body: typeof body === 'string' ? body : JSON.stringify(body),
-  };
-}
+const GROUPS = [
+  { id: 'opening', name: 'Opening', color: '#3b82f6', sortOrder: 0 },
+  { id: 'operations', name: 'Operations', color: '#8b5cf6', sortOrder: 1 },
+  { id: 'turn', name: 'Turn / Move-Ins', color: '#f59e0b', sortOrder: 2 },
+  { id: 'marketing', name: 'Marketing', color: '#10b981', sortOrder: 3 },
+  { id: 'lead-follow-up', name: 'Lead Follow Up', color: '#f97316', sortOrder: 4 },
+  { id: 'events', name: 'Events', color: '#ec4899', sortOrder: 5 },
+  { id: 'closing', name: 'Closing', color: '#ef4444', sortOrder: 6 },
+  { id: 'misc', name: 'Misc', color: '#64748b', sortOrder: 7 },
+];
 
 const SYSTEM_TEMPLATES = [
   {
     name: 'Simple Daily Checklist Version',
-    category: 'Opening Task',
-    isGlobal: true,
-    isSystem: true,
+    type: 'system',
+    defaultGroupId: 'opening',
     propertyId: null,
     tasks: [
       'Open leasing office',
@@ -76,9 +63,8 @@ const SYSTEM_TEMPLATES = [
   },
   {
     name: 'Simple Daily Closing Checklist',
-    category: 'Closing Task',
-    isGlobal: true,
-    isSystem: true,
+    type: 'system',
+    defaultGroupId: 'closing',
     propertyId: null,
     tasks: [
       'Clean and organize front desk',
@@ -97,11 +83,12 @@ const SYSTEM_TEMPLATES = [
   },
 ];
 
-// Auto-seed system templates if they don't exist
+const STATUSES = ['Not Started', 'Working on It', 'Done', 'On Hold'];
+
 async function ensureSystemTemplates(db) {
   const col = db.collection('leasingTemplates');
   for (const tpl of SYSTEM_TEMPLATES) {
-    const exists = await col.findOne({ name: tpl.name, isSystem: true });
+    const exists = await col.findOne({ name: tpl.name, type: 'system' });
     if (!exists) {
       await col.insertOne({
         ...tpl,
@@ -114,9 +101,25 @@ async function ensureSystemTemplates(db) {
   }
 }
 
+function userCanAccessProperty(user, propertyId) {
+  if (user.role === 'admin') return true;
+  if (user.properties === '*') return true;
+  if (Array.isArray(user.properties)) return user.properties.includes(propertyId);
+  if (typeof user.properties === 'string') return user.properties === propertyId;
+  return false;
+}
+
+function cors(body, statusCode = 200) {
+  return {
+    statusCode,
+    headers: { 'Content-Type': 'application/json' },
+    body: typeof body === 'string' ? body : JSON.stringify(body),
+  };
+}
+
 export async function handler(event) {
   if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 204, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type,Authorization' }, body: '' };
+    return { statusCode: 204, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET,POST,DELETE,OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type,Authorization' }, body: '' };
   }
 
   const user = verifyReqAuth(event);
@@ -124,341 +127,243 @@ export async function handler(event) {
 
   const db = await getDb();
   const staffCol = db.collection('leasingStaff');
-  const taskCol = db.collection('leasingTasks');
+  const taskCol = db.collection('leasingBoardTasks');
   const templateCol = db.collection('leasingTemplates');
-  const roleCol = db.collection('leasingRoles');
 
   const qs = event.queryStringParameters || {};
   const action = qs.action || '';
 
   try {
-    // ═══════════════════ GET ═══════════════════
+    // ═══ GET ═══
     if (event.httpMethod === 'GET') {
 
+      if (action === 'groups') {
+        return cors(GROUPS);
+      }
+
       if (action === 'staff') {
-        const propertyId = qs.propertyId;
-        if (!propertyId) return cors('Missing propertyId', 400);
-        if (!userCanAccessProperty(user, propertyId)) return cors('Forbidden', 403);
-        const filter = { propertyId };
-        if (qs.activeOnly !== 'false') filter.isActive = { $ne: false };
-        const staff = await staffCol.find(filter).sort({ employeeName: 1 }).toArray();
+        const pid = qs.propertyId;
+        if (!pid) return cors('Missing propertyId', 400);
+        if (!userCanAccessProperty(user, pid)) return cors('Forbidden', 403);
+        const staff = await staffCol.find({ propertyId: pid, isActive: { $ne: false } }).sort({ employeeName: 1 }).toArray();
         return cors(staff);
       }
 
-      if (action === 'staffByUser') {
-        const username = qs.username || user.sub;
-        const staff = await staffCol.findOne({ username, isActive: { $ne: false } });
-        return cors(staff || {});
-      }
-
       if (action === 'tasks') {
-        const propertyId = qs.propertyId;
-        if (!propertyId) return cors('Missing propertyId', 400);
-        if (!userCanAccessProperty(user, propertyId)) return cors('Forbidden', 403);
-        const filter = { propertyId };
-        if (qs.date) filter.shiftDate = qs.date;
-        if (qs.staffMemberId) filter.staffMemberId = qs.staffMemberId;
-        const tasks = await taskCol.find(filter).sort({ sortOrder: 1, category: 1, taskText: 1 }).toArray();
+        const pid = qs.propertyId;
+        if (!pid) return cors('Missing propertyId', 400);
+        if (!userCanAccessProperty(user, pid)) return cors('Forbidden', 403);
+        const filter = { propertyId: pid };
+        if (qs.date) filter.date = qs.date;
+        if (qs.groupId) filter.groupId = qs.groupId;
+        if (qs.assignedTo) filter.assignedToUserId = qs.assignedTo;
+        const tasks = await taskCol.find(filter).sort({ groupId: 1, sortOrder: 1, label: 1 }).toArray();
         return cors(tasks);
       }
 
       if (action === 'myTasks') {
-        // Find staff record for current user
-        const staffQuery = {};
+        // Find staff record
+        let staffRecord = null;
         if (qs.staffId) {
-          staffQuery._id = new ObjectId(qs.staffId);
+          staffRecord = await staffCol.findOne({ _id: new ObjectId(qs.staffId), isActive: { $ne: false } });
         } else {
-          staffQuery.username = user.sub;
+          staffRecord = await staffCol.findOne({ username: user.sub, isActive: { $ne: false } });
         }
-        staffQuery.isActive = { $ne: false };
-        const staffRecord = await staffCol.findOne(staffQuery);
         if (!staffRecord) return cors({ staff: null, tasks: [] });
         const date = qs.date || new Date().toISOString().slice(0, 10);
-        const myTasks = await taskCol.find({
-          staffMemberId: staffRecord._id.toString(),
-          shiftDate: date,
-        }).sort({ sortOrder: 1, category: 1 }).toArray();
-        return cors({ staff: staffRecord, tasks: myTasks, date });
+        const tasks = await taskCol.find({
+          assignedToUserId: staffRecord._id.toString(),
+          date,
+        }).sort({ groupId: 1, sortOrder: 1 }).toArray();
+        return cors({ staff: staffRecord, tasks, date });
       }
 
       if (action === 'templates') {
-        // Auto-seed system templates on first access
         await ensureSystemTemplates(db);
-        const filter = { $or: [{ isGlobal: true }, { isSystem: true }] };
+        const filter = {};
         if (qs.propertyId) {
-          filter.$or.push({ propertyId: qs.propertyId });
+          filter.$or = [{ type: 'system' }, { propertyId: qs.propertyId }, { propertyId: null }];
         }
-        // Also include templates created by this user
-        filter.$or.push({ createdBy: user.sub });
-        const templates = await templateCol.find(filter).sort({ isSystem: -1, name: 1 }).toArray();
+        const templates = await templateCol.find(filter).sort({ type: 1, name: 1 }).toArray();
         return cors(templates);
       }
 
-      if (action === 'roles') {
-        const roles = await roleCol.find({}).sort({ roleName: 1 }).toArray();
-        return cors(roles);
-      }
-
-      if (action === 'progress') {
-        const propertyId = qs.propertyId;
-        if (!propertyId) return cors('Missing propertyId', 400);
-        if (!userCanAccessProperty(user, propertyId)) return cors('Forbidden', 403);
-        const date = qs.date || new Date().toISOString().slice(0, 10);
-        const allTasks = await taskCol.find({ propertyId, shiftDate: date }).toArray();
-        // Group by staffMemberId
-        const byStaff = {};
-        allTasks.forEach(t => {
-          if (!byStaff[t.staffMemberId]) byStaff[t.staffMemberId] = { total: 0, completed: 0, staffName: t.employeeName || '' };
-          byStaff[t.staffMemberId].total++;
-          if (t.isCompleted) byStaff[t.staffMemberId].completed++;
-        });
-        return cors({ date, propertyId, progress: byStaff, totalTasks: allTasks.length, completedTasks: allTasks.filter(t => t.isCompleted).length });
-      }
-
-      if (action === 'export') {
-        const propertyId = qs.propertyId;
-        if (!propertyId) return cors('Missing propertyId', 400);
-        if (!userCanAccessProperty(user, propertyId)) return cors('Forbidden', 403);
-        const staff = await staffCol.find({ propertyId, isActive: { $ne: false } }).sort({ employeeName: 1 }).toArray();
-        const filter = { propertyId };
-        if (qs.date) filter.shiftDate = qs.date;
-        const tasks = await taskCol.find(filter).sort({ category: 1 }).toArray();
-        return cors({ staff, tasks });
-      }
-
-      return cors('Unknown GET action: ' + action, 400);
+      return cors('Unknown GET action', 400);
     }
 
-    // ═══════════════════ POST ═══════════════════
+    // ═══ POST ═══
     if (event.httpMethod === 'POST') {
       const body = JSON.parse(event.body || '{}');
 
       if (action === 'staff') {
         if (user.role !== 'admin') return cors('Forbidden', 403);
-        const { id, propertyId, employeeName, role, isActive, username, email, title } = body;
-        if (!propertyId || !employeeName) return cors('Missing required fields', 400);
-
-        if (id) {
-          const updates = { updatedAt: new Date().toISOString(), updatedBy: user.sub };
-          if (employeeName !== undefined) updates.employeeName = employeeName;
-          if (role !== undefined) updates.role = role;
-          if (propertyId !== undefined) updates.propertyId = propertyId;
-          if (isActive !== undefined) updates.isActive = isActive;
-          if (username !== undefined) updates.username = username;
-          if (email !== undefined) updates.email = email;
-          if (title !== undefined) updates.title = title;
-          await staffCol.updateOne({ _id: new ObjectId(id) }, { $set: updates });
-          return cors({ success: true, id });
-        } else {
-          const doc = {
-            propertyId,
-            employeeName,
-            role: role || '',
-            username: username || '',
-            email: email || '',
-            title: title || '',
-            isActive: isActive !== false,
-            createdAt: new Date().toISOString(),
-            createdBy: user.sub,
-            updatedAt: new Date().toISOString(),
-            updatedBy: user.sub,
-          };
-          const res = await staffCol.insertOne(doc);
-          doc._id = res.insertedId;
-          return cors(doc, 201);
-        }
-      }
-
-      if (action === 'task') {
-        const { id, propertyId, staffMemberId, employeeName, category, taskText, shiftDate, shiftType, isCompleted, notes, sortOrder } = body;
-        if (!propertyId || !staffMemberId || !taskText || !category) return cors('Missing required fields', 400);
-        if (!userCanAccessProperty(user, propertyId)) return cors('Forbidden', 403);
-
-        if (id) {
-          const updates = { updatedAt: new Date().toISOString(), updatedBy: user.sub };
-          if (category !== undefined) updates.category = category;
-          if (taskText !== undefined) updates.taskText = taskText;
-          if (shiftDate !== undefined) updates.shiftDate = shiftDate;
-          if (shiftType !== undefined) updates.shiftType = shiftType;
-          if (isCompleted !== undefined) {
-            updates.isCompleted = isCompleted;
-            if (isCompleted) {
-              updates.completedAt = new Date().toISOString();
-              updates.completedBy = user.sub;
-            } else {
-              updates.completedAt = null;
-              updates.completedBy = null;
-            }
-          }
-          if (notes !== undefined) updates.notes = notes;
-          if (staffMemberId !== undefined) updates.staffMemberId = staffMemberId;
-          if (employeeName !== undefined) updates.employeeName = employeeName;
-          if (sortOrder !== undefined) updates.sortOrder = sortOrder;
-          await taskCol.updateOne({ _id: new ObjectId(id) }, { $set: updates });
-          return cors({ success: true, id });
-        } else {
-          const doc = {
-            propertyId,
-            staffMemberId,
-            employeeName: employeeName || '',
-            category,
-            taskText,
-            shiftDate: shiftDate || new Date().toISOString().slice(0, 10),
-            shiftType: shiftType || '',
-            isCompleted: isCompleted || false,
-            completedAt: null,
-            completedBy: null,
-            notes: notes || '',
-            sortOrder: sortOrder || 0,
-            createdAt: new Date().toISOString(),
-            createdBy: user.sub,
-            updatedAt: new Date().toISOString(),
-            updatedBy: user.sub,
-          };
-          const res = await taskCol.insertOne(doc);
-          doc._id = res.insertedId;
-          return cors(doc, 201);
-        }
-      }
-
-      // Batch create tasks from template
-      if (action === 'taskBatch') {
-        const { propertyId, staffMemberId, employeeName, shiftDate, tasks: taskItems } = body;
-        if (!propertyId || !staffMemberId || !taskItems || !taskItems.length) return cors('Missing required fields', 400);
-        if (!userCanAccessProperty(user, propertyId)) return cors('Forbidden', 403);
-        const date = shiftDate || new Date().toISOString().slice(0, 10);
+        const { id, propertyId, employeeName, role, username, email, isActive } = body;
+        if (!propertyId || !employeeName) return cors('Missing fields', 400);
         const now = new Date().toISOString();
-        const docs = taskItems.map((t, i) => ({
-          propertyId,
-          staffMemberId,
-          employeeName: employeeName || '',
-          category: t.category || 'Misc Task',
-          taskText: t.taskText || t.label || t,
-          shiftDate: date,
-          shiftType: '',
-          isCompleted: false,
-          completedAt: null,
-          completedBy: null,
-          notes: t.notes || '',
-          sortOrder: t.sortOrder || i,
-          sourceTemplateId: t.sourceTemplateId || null,
-          createdAt: now,
-          createdBy: user.sub,
-          updatedAt: now,
-          updatedBy: user.sub,
-        }));
-        const res = await taskCol.insertMany(docs);
-        return cors({ success: true, insertedCount: res.insertedCount });
-      }
-
-      // Complete/uncomplete a task (staff-facing)
-      if (action === 'completeTask') {
-        const { id, isCompleted } = body;
-        if (!id) return cors('Missing id', 400);
-        const task = await taskCol.findOne({ _id: new ObjectId(id) });
-        if (!task) return cors('Not found', 404);
-        if (!userCanAccessProperty(user, task.propertyId)) return cors('Forbidden', 403);
-        const updates = {
-          isCompleted: !!isCompleted,
-          completedAt: isCompleted ? new Date().toISOString() : null,
-          completedBy: isCompleted ? user.sub : null,
-          updatedAt: new Date().toISOString(),
-          updatedBy: user.sub,
-        };
-        await taskCol.updateOne({ _id: new ObjectId(id) }, { $set: updates });
-        return cors({ success: true });
-      }
-
-      // Template CRUD
-      if (action === 'template') {
-        const { id, name, propertyId, isGlobal, category, tasks: tplTasks } = body;
-        if (!name) return cors('Missing template name', 400);
-        // Only admin can create global templates or templates for other properties
-        if (isGlobal && user.role !== 'admin') return cors('Forbidden', 403);
-
         if (id) {
-          const updates = { updatedAt: new Date().toISOString(), updatedBy: user.sub };
-          if (name !== undefined) updates.name = name;
-          if (propertyId !== undefined) updates.propertyId = propertyId;
-          if (isGlobal !== undefined) updates.isGlobal = isGlobal;
-          if (category !== undefined) updates.category = category;
-          if (tplTasks !== undefined) updates.tasks = tplTasks;
-          await templateCol.updateOne({ _id: new ObjectId(id) }, { $set: updates });
+          const upd = { updatedAt: now, updatedBy: user.sub };
+          if (employeeName !== undefined) upd.employeeName = employeeName;
+          if (role !== undefined) upd.role = role;
+          if (propertyId !== undefined) upd.propertyId = propertyId;
+          if (username !== undefined) upd.username = username;
+          if (email !== undefined) upd.email = email;
+          if (isActive !== undefined) upd.isActive = isActive;
+          await staffCol.updateOne({ _id: new ObjectId(id) }, { $set: upd });
           return cors({ success: true, id });
-        } else {
-          const doc = {
-            name,
-            propertyId: propertyId || null,
-            isGlobal: !!isGlobal,
-            category: category || 'Misc Task',
-            tasks: tplTasks || [],
-            createdAt: new Date().toISOString(),
-            createdBy: user.sub,
-            updatedAt: new Date().toISOString(),
-            updatedBy: user.sub,
-          };
-          const res = await templateCol.insertOne(doc);
-          doc._id = res.insertedId;
-          return cors(doc, 201);
         }
-      }
-
-      if (action === 'role') {
-        if (user.role !== 'admin') return cors('Forbidden', 403);
-        const { roleName } = body;
-        if (!roleName) return cors('Missing roleName', 400);
-        const existing = await roleCol.findOne({ roleName });
-        if (existing) return cors(existing);
-        const doc = { roleName, createdAt: new Date().toISOString(), createdBy: user.sub };
-        const res = await roleCol.insertOne(doc);
+        const doc = { propertyId, employeeName, role: role || '', username: username || '', email: email || '', isActive: true, createdAt: now, createdBy: user.sub, updatedAt: now, updatedBy: user.sub };
+        const res = await staffCol.insertOne(doc);
         doc._id = res.insertedId;
         return cors(doc, 201);
       }
 
-      // Seed system templates (manual trigger, also auto-seeds on template GET)
-      if (action === 'seedTemplates') {
-        if (user.role !== 'admin') return cors('Forbidden', 403);
-        await ensureSystemTemplates(db);
+      if (action === 'task') {
+        const { id, propertyId, label, groupId, assignedToUserId, assignedToName, status, date, completed, notes, sortOrder } = body;
+        if (!id && (!propertyId || !label)) return cors('Missing fields', 400);
+        if (propertyId && !userCanAccessProperty(user, propertyId)) return cors('Forbidden', 403);
+        const now = new Date().toISOString();
+        if (id) {
+          const upd = { updatedAt: now, updatedBy: user.sub };
+          if (label !== undefined) upd.label = label;
+          if (groupId !== undefined) upd.groupId = groupId;
+          if (assignedToUserId !== undefined) upd.assignedToUserId = assignedToUserId;
+          if (assignedToName !== undefined) upd.assignedToName = assignedToName;
+          if (status !== undefined) upd.status = status;
+          if (date !== undefined) upd.date = date;
+          if (completed !== undefined) {
+            upd.completed = completed;
+            upd.completedAt = completed ? now : null;
+            upd.completedBy = completed ? user.sub : null;
+            if (completed) upd.status = 'Done';
+          }
+          if (notes !== undefined) upd.notes = notes;
+          if (sortOrder !== undefined) upd.sortOrder = sortOrder;
+          await taskCol.updateOne({ _id: new ObjectId(id) }, { $set: upd });
+          return cors({ success: true });
+        }
+        const doc = {
+          propertyId, label, groupId: groupId || 'misc',
+          assignedToUserId: assignedToUserId || null,
+          assignedToName: assignedToName || '',
+          status: status || 'Not Started',
+          date: date || new Date().toISOString().slice(0, 10),
+          completed: false, completedAt: null, completedBy: null,
+          notes: notes || '',
+          sortOrder: sortOrder || 0,
+          createdAt: now, createdBy: user.sub, updatedAt: now, updatedBy: user.sub,
+        };
+        const res = await taskCol.insertOne(doc);
+        doc._id = res.insertedId;
+        return cors(doc, 201);
+      }
+
+      if (action === 'taskBatch') {
+        const { propertyId, tasks: items, assignedToUserId, assignedToName, date, groupId } = body;
+        if (!propertyId || !items || !items.length) return cors('Missing fields', 400);
+        if (!userCanAccessProperty(user, propertyId)) return cors('Forbidden', 403);
+        const now = new Date().toISOString();
+        const d = date || new Date().toISOString().slice(0, 10);
+        const docs = items.map((t, i) => ({
+          propertyId,
+          label: typeof t === 'string' ? t : (t.label || t.taskText || ''),
+          groupId: (typeof t === 'object' && t.groupId) ? t.groupId : (groupId || 'misc'),
+          assignedToUserId: assignedToUserId || null,
+          assignedToName: assignedToName || '',
+          status: 'Not Started',
+          date: d,
+          completed: false, completedAt: null, completedBy: null,
+          notes: '',
+          sortOrder: i,
+          createdFromTemplateId: body.templateId || null,
+          createdAt: now, createdBy: user.sub, updatedAt: now, updatedBy: user.sub,
+        }));
+        const res = await taskCol.insertMany(docs);
+        return cors({ success: true, count: res.insertedCount });
+      }
+
+      if (action === 'completeTask') {
+        const { id, completed } = body;
+        if (!id) return cors('Missing id', 400);
+        const task = await taskCol.findOne({ _id: new ObjectId(id) });
+        if (!task) return cors('Not found', 404);
+        if (!userCanAccessProperty(user, task.propertyId)) return cors('Forbidden', 403);
+        const now = new Date().toISOString();
+        await taskCol.updateOne({ _id: new ObjectId(id) }, { $set: {
+          completed: !!completed,
+          completedAt: completed ? now : null,
+          completedBy: completed ? user.sub : null,
+          status: completed ? 'Done' : 'Not Started',
+          updatedAt: now, updatedBy: user.sub,
+        }});
         return cors({ success: true });
       }
 
-      return cors('Unknown POST action: ' + action, 400);
+      if (action === 'updateStatus') {
+        const { id, status } = body;
+        if (!id || !status) return cors('Missing fields', 400);
+        if (!STATUSES.includes(status)) return cors('Invalid status', 400);
+        const task = await taskCol.findOne({ _id: new ObjectId(id) });
+        if (!task) return cors('Not found', 404);
+        if (!userCanAccessProperty(user, task.propertyId)) return cors('Forbidden', 403);
+        const now = new Date().toISOString();
+        const upd = { status, updatedAt: now, updatedBy: user.sub };
+        if (status === 'Done') { upd.completed = true; upd.completedAt = now; upd.completedBy = user.sub; }
+        else { upd.completed = false; upd.completedAt = null; upd.completedBy = null; }
+        await taskCol.updateOne({ _id: new ObjectId(id) }, { $set: upd });
+        return cors({ success: true });
+      }
+
+      if (action === 'template') {
+        const { id, name, type, defaultGroupId, propertyId, tasks: tplTasks } = body;
+        if (!name) return cors('Missing name', 400);
+        const now = new Date().toISOString();
+        if (id) {
+          const tpl = await templateCol.findOne({ _id: new ObjectId(id) });
+          if (tpl && tpl.type === 'system') return cors('System templates are read-only. Duplicate to customize.', 403);
+          const upd = { updatedAt: now, updatedBy: user.sub };
+          if (name !== undefined) upd.name = name;
+          if (defaultGroupId !== undefined) upd.defaultGroupId = defaultGroupId;
+          if (propertyId !== undefined) upd.propertyId = propertyId;
+          if (tplTasks !== undefined) upd.tasks = tplTasks;
+          await templateCol.updateOne({ _id: new ObjectId(id) }, { $set: upd });
+          return cors({ success: true });
+        }
+        const doc = { name, type: type || 'custom', defaultGroupId: defaultGroupId || 'misc', propertyId: propertyId || null, tasks: tplTasks || [], createdAt: now, createdBy: user.sub, updatedAt: now, updatedBy: user.sub };
+        const res = await templateCol.insertOne(doc);
+        doc._id = res.insertedId;
+        return cors(doc, 201);
+      }
+
+      return cors('Unknown POST action', 400);
     }
 
-    // ═══════════════════ DELETE ═══════════════════
+    // ═══ DELETE ═══
     if (event.httpMethod === 'DELETE') {
       const body = JSON.parse(event.body || '{}');
 
       if (action === 'staff') {
         if (user.role !== 'admin') return cors('Forbidden', 403);
-        const { id } = body;
-        if (!id) return cors('Missing id', 400);
-        await staffCol.updateOne({ _id: new ObjectId(id) }, { $set: { isActive: false, updatedAt: new Date().toISOString(), updatedBy: user.sub } });
+        await staffCol.updateOne({ _id: new ObjectId(body.id) }, { $set: { isActive: false, updatedAt: new Date().toISOString() } });
         return cors({ success: true });
       }
 
       if (action === 'task') {
-        const { id } = body;
-        if (!id) return cors('Missing id', 400);
-        const task = await taskCol.findOne({ _id: new ObjectId(id) });
+        const task = await taskCol.findOne({ _id: new ObjectId(body.id) });
         if (!task) return cors('Not found', 404);
         if (!userCanAccessProperty(user, task.propertyId)) return cors('Forbidden', 403);
-        await taskCol.deleteOne({ _id: new ObjectId(id) });
+        await taskCol.deleteOne({ _id: new ObjectId(body.id) });
         return cors({ success: true });
       }
 
       if (action === 'template') {
-        const { id } = body;
-        if (!id) return cors('Missing id', 400);
-        const tpl = await templateCol.findOne({ _id: new ObjectId(id) });
+        const tpl = await templateCol.findOne({ _id: new ObjectId(body.id) });
         if (!tpl) return cors('Not found', 404);
-        if (tpl.isSystem) return cors('System templates cannot be deleted. Duplicate it to create your own version.', 403);
-        if (tpl.isGlobal && user.role !== 'admin') return cors('Forbidden', 403);
-        await templateCol.deleteOne({ _id: new ObjectId(id) });
+        if (tpl.type === 'system') return cors('Cannot delete system templates', 403);
+        await templateCol.deleteOne({ _id: new ObjectId(body.id) });
         return cors({ success: true });
       }
 
-      return cors('Unknown DELETE action: ' + action, 400);
+      return cors('Unknown DELETE action', 400);
     }
 
     return cors('Method not allowed', 405);

@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Leasing Team Staff List &bull; Marketing Hub</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Leasing Team Staff Board &bull; Marketing Hub</title>
   <link rel="preconnect" href="https://use.typekit.net" crossorigin>
   <link rel="preconnect" href="https://p.typekit.net" crossorigin>
   <link rel="stylesheet" href="https://use.typekit.net/hqv8hwr.css">
@@ -12,1200 +12,743 @@
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
   <style>
-    :root{
-      --brand-primary:#446472;--brand-accent:#ffb732;--brand-accent-2:#52d5ff;
-      --brand-gray:#929497;--page-bg:#f8fafc;--bg:#fff;--text:#1e293b;
-      --subtext:#64748b;--border:#e2e8f0;--good:#22c55e;--warn:#ffb732;--bad:#ef4444;
-    }
-    *{box-sizing:border-box;margin:0;padding:0}
-    html,body{height:100%}
-    body{font-family:'Open Sans',system-ui,-apple-system,sans-serif;background:var(--page-bg);color:var(--text);font-size:14px;line-height:1.5}
+:root{--pri:#446472;--acc:#ffb732;--acc2:#52d5ff;--bg:#f8fafc;--card:#fff;--text:#1e293b;--sub:#64748b;--bdr:#e2e8f0;--good:#22c55e;--warn:#f59e0b;--bad:#ef4444;--purple:#8b5cf6}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'Open Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
 
-    header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-    .brand{display:flex;align-items:center;gap:10px}
-    .brand .logo-img{height:28px;width:auto}
-    .brand .title{color:#ffb732;font-family:zooja-pro,Arial,sans-serif;font-size:clamp(32px,4vw,48px);line-height:1}
-    .header-controls{display:flex;align-items:center;gap:12px;margin-left:auto}
-    .header-btn{background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;transition:all .15s}
-    .header-btn:hover{background:#f8fafc;border-color:#cbd5e1}
-    .company-name{font-size:12px;color:var(--subtext);font-weight:500}
+/* Header */
+header{padding:12px 24px;border-bottom:1px solid var(--bdr);background:#fff;position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px}
+.brand .logo-img{height:28px;width:auto}
+.brand .title{color:#ffb732;font-family:zooja-pro,Arial,sans-serif;font-size:clamp(32px,4vw,48px);line-height:1}
+.hdr-right{display:flex;align-items:center;gap:12px;margin-left:auto}
+.hdr-btn{background:#fff;border:1px solid var(--bdr);border-radius:6px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;transition:all .15s}
+.hdr-btn:hover{background:#f8fafc;border-color:#cbd5e1}
+.company{font-size:12px;color:var(--sub);font-weight:500}
 
-    .container{padding:24px;max-width:1400px;margin:0 auto}
-    .card{background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.06);overflow:hidden;margin-bottom:20px}
-    .card h2{margin:0;padding:20px 24px;font-size:18px;color:#111827;font-weight:700;border-bottom:1px solid var(--border)}
-    .card .content{padding:24px}
+.container{padding:24px;max-width:1500px;margin:0 auto}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;background:#e2e8f0;color:#475569}
+.badge.admin{background:#dbeafe;color:#1e40af}
 
-    /* Tabs */
-    .tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:24px;overflow-x:auto}
-    .tab{padding:12px 24px;font-size:14px;font-weight:600;color:var(--subtext);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:all .15s;background:none;border-top:none;border-left:none;border-right:none}
-    .tab:hover{color:var(--text)}
-    .tab.active{color:var(--brand-primary);border-bottom-color:var(--brand-accent-2)}
-    .tab-panel{display:none}
-    .tab-panel.active{display:block}
+/* Toolbar */
+.toolbar{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.toolbar .fg{display:flex;flex-direction:column;gap:4px}
+.toolbar .fg label{font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.3px}
+.toolbar select,.toolbar input[type=date]{padding:9px 14px;border-radius:8px;border:1px solid var(--bdr);background:#fff;color:var(--text);font-size:13px;font-family:inherit;cursor:pointer}
+.toolbar select:focus,.toolbar input:focus{outline:none;border-color:var(--acc2);box-shadow:0 0 0 3px rgba(82,213,255,.15)}
+.spacer{flex:1}
+button{padding:9px 18px;border-radius:8px;border:1px solid var(--bdr);background:#fff;color:var(--text);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;font-family:Roboto,sans-serif}
+button:hover{background:#f8fafc}
+button.pri{background:var(--pri);color:#fff;border-color:var(--pri)}
+button.pri:hover{background:#3b5561}
+button.acc{background:var(--acc2);color:#0b1b24;border-color:var(--acc2)}
+button.acc:hover{background:#3ecbf5}
+button.wrn{background:var(--acc);color:#1f1300;border-color:var(--acc)}
+button.wrn:hover{background:#f5a623}
+button.bad{background:var(--bad);color:#fff;border-color:var(--bad)}
+button.bad:hover{background:#dc2626}
+button.sm{padding:5px 12px;font-size:12px;border-radius:6px}
+button.xs{padding:3px 8px;font-size:11px;border-radius:5px}
 
-    /* Toolbar */
-    .toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}
-    .toolbar select,.toolbar input[type=date]{padding:9px 14px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--text);font-size:14px;font-family:'Open Sans',system-ui,sans-serif;cursor:pointer}
-    .toolbar select:focus,.toolbar input:focus{outline:none;border-color:var(--brand-accent-2);box-shadow:0 0 0 3px rgba(82,213,255,.15)}
-    .toolbar-spacer{flex:1}
+/* Tabs */
+.tabs{display:flex;gap:0;border-bottom:2px solid var(--bdr);margin-bottom:20px}
+.tab{padding:11px 22px;font-size:14px;font-weight:600;color:var(--sub);cursor:pointer;border:none;background:none;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s}
+.tab:hover{color:var(--text)}
+.tab.on{color:var(--pri);border-bottom-color:var(--acc2)}
+.pane{display:none}.pane.on{display:block}
 
-    button{padding:10px 20px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--text);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;font-family:Roboto,Arial,sans-serif}
-    button:hover{background:#f8fafc}
-    button.primary{background:var(--brand-primary);color:#fff;border-color:var(--brand-primary)}
-    button.primary:hover{background:#3b5561}
-    button.good{background:#52d5ff;color:#0b1b24;border-color:#52d5ff}
-    button.good:hover{background:#3ecbf5}
-    button.warn{background:#ffb732;color:#1f1300;border-color:#ffb732}
-    button.warn:hover{background:#f5a623}
-    button.danger{background:#ef4444;color:#fff;border-color:#ef4444}
-    button.danger:hover{background:#dc2626}
-    button.sm{padding:6px 14px;font-size:12px;border-radius:6px}
-    button.xs{padding:4px 10px;font-size:11px;border-radius:5px}
+/* ═══ BOARD TABLE ═══ */
+.board{width:100%;border-collapse:separate;border-spacing:0}
+.board th{text-align:left;padding:8px 12px;font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.3px;background:#f8fafc;border-bottom:2px solid var(--bdr);position:sticky;top:60px;z-index:5}
+.board th.w-chk{width:40px}
+.board th.w-task{min-width:240px}
+.board th.w-person{width:180px}
+.board th.w-status{width:140px}
+.board th.w-date{width:120px}
+.board th.w-act{width:60px}
 
-    /* Progress */
-    .progress-bar{height:8px;background:#e2e8f0;border-radius:99px;overflow:hidden;flex:1;min-width:80px}
-    .progress-fill{height:100%;background:var(--good);border-radius:99px;transition:width .3s}
-    .progress-row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
-    .progress-label{font-size:13px;font-weight:600;min-width:140px}
-    .progress-pct{font-size:12px;font-weight:700;color:var(--subtext);min-width:40px;text-align:right}
+/* Group header */
+.grp-row td{padding:0}
+.grp-hdr{display:flex;align-items:center;gap:10px;padding:10px 12px;font-size:13px;font-weight:700;cursor:pointer;user-select:none}
+.grp-hdr .dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.grp-hdr .cnt{font-size:11px;font-weight:600;color:var(--sub);margin-left:auto}
+.grp-hdr .arrow{font-size:12px;color:var(--sub);transition:transform .2s}
+.grp-hdr .arrow.collapsed{transform:rotate(-90deg)}
 
-    /* Staff cards */
-    .staff-grid{display:flex;flex-direction:column;gap:20px}
-    .staff-card{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04)}
-    .staff-card-header{display:flex;align-items:center;gap:16px;padding:16px 20px;background:linear-gradient(135deg,#446472 0%,#3b5561 100%);color:#fff}
-    .staff-avatar{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0}
-    .staff-info{flex:1}
-    .staff-name{font-size:16px;font-weight:700;margin-bottom:2px}
-    .staff-role{font-size:12px;opacity:.85}
-    .staff-card-actions{display:flex;gap:6px;flex-wrap:wrap}
-    .staff-card-actions button{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 12px;font-size:11px;border-radius:6px}
-    .staff-card-actions button:hover{background:rgba(255,255,255,.3)}
-    .staff-card-body{padding:16px 20px}
+/* Task row */
+.board .task-row td{padding:8px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle;font-size:13px}
+.board .task-row:hover td{background:#fafbfe}
+.board .task-row.done td{opacity:.6}
+.chk{width:20px;height:20px;border-radius:5px;border:2px solid var(--bdr);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;background:#fff;flex-shrink:0}
+.chk.on{background:var(--good);border-color:var(--good);color:#fff}
+.chk.on::after{content:'\2713';font-size:12px;font-weight:700}
+.task-label-cell{display:flex;align-items:center;gap:8px}
+.task-label-text{flex:1}
+.task-row.done .task-label-text{text-decoration:line-through;color:var(--sub)}
 
-    .category-group{margin-bottom:14px}
-    .category-group:last-child{margin-bottom:0}
-    .category-label{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;margin-bottom:8px;text-transform:uppercase;letter-spacing:.3px}
-    .cat-opening{background:#dbeafe;color:#1e40af}.cat-lead{background:#fef3c7;color:#92400e}
-    .cat-social{background:#ede9fe;color:#5b21b6}.cat-event{background:#fce7f3;color:#9d174d}
-    .cat-marketing{background:#d1fae5;color:#065f46}.cat-misc{background:#f3f4f6;color:#374151}
-    .cat-closing{background:#fee2e2;color:#991b1b}
+/* Status pill */
+.status-pill{display:inline-block;padding:4px 12px;border-radius:999px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap}
+.st-notstarted{background:#f1f5f9;color:#64748b}
+.st-working{background:#fef3c7;color:#92400e}
+.st-done{background:#d1fae5;color:#065f46}
+.st-onhold{background:#ede9fe;color:#5b21b6}
 
-    .task-list{list-style:none;padding:0;margin:0}
-    .task-item{display:flex;align-items:flex-start;gap:10px;padding:6px 0;border-bottom:1px solid #f1f5f9;font-size:13px}
-    .task-item:last-child{border-bottom:none}
-    .task-check{width:18px;height:18px;border-radius:4px;border:2px solid var(--border);cursor:pointer;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .15s;background:#fff}
-    .task-check.done{background:var(--good);border-color:var(--good);color:#fff}
-    .task-check.done::after{content:'\2713';font-size:11px;font-weight:700}
-    .task-text{flex:1;line-height:1.4}
-    .task-text.done{text-decoration:line-through;color:var(--subtext)}
-    .task-meta{font-size:10px;color:var(--subtext)}
-    .task-actions{display:flex;gap:4px;flex-shrink:0}
+/* Person cell */
+.person-cell{display:flex;align-items:center;gap:6px}
+.person-avatar{width:24px;height:24px;border-radius:50%;background:var(--pri);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.person-name{font-size:12px}
 
-    /* Template cards */
-    .tpl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
-    .tpl-card{border:1px solid var(--border);border-radius:12px;padding:20px;background:#fff;transition:all .2s;position:relative}
-    .tpl-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.08)}
-    .tpl-card h4{margin:0 0 6px;font-size:15px}
-    .tpl-card .tpl-meta{font-size:12px;color:var(--subtext);margin-bottom:12px}
-    .tpl-tasks-preview{font-size:12px;color:var(--subtext);line-height:1.6;max-height:120px;overflow:hidden}
-    .tpl-badge{position:absolute;top:12px;right:12px;padding:3px 10px;border-radius:999px;font-size:10px;font-weight:700;background:#dbeafe;color:#1e40af}
-    .tpl-badge.property{background:#fef3c7;color:#92400e}
+/* Add row */
+.add-row td{padding:6px 12px;border-bottom:1px solid #f1f5f9}
+.add-input{border:none;background:transparent;font-size:13px;color:var(--sub);width:100%;padding:4px 0;font-family:inherit}
+.add-input:focus{outline:none;color:var(--text)}
+.add-input::placeholder{color:#cbd5e1}
 
-    /* Staff mgmt table */
-    .staff-table{width:100%;border-collapse:collapse;font-size:13px}
-    .staff-table th{text-align:left;padding:10px 12px;background:#f8fafc;border-bottom:2px solid var(--border);font-weight:700;font-size:12px;color:var(--subtext);text-transform:uppercase}
-    .staff-table td{padding:10px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
-    .staff-table tr:hover td{background:#f8fafc}
-    .status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
-    .status-dot.active{background:var(--good)}
-    .status-dot.inactive{background:var(--bad)}
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+.modal-bg.show{display:flex}
+.modal{background:#fff;border:1px solid var(--bdr);border-radius:14px;max-width:600px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 20px 40px rgba(0,0,0,.15)}
+.modal-hd{padding:20px 24px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between}
+.modal-hd h3{margin:0;font-size:18px;font-weight:700}
+.x-btn{background:transparent;border:none;font-size:24px;color:var(--sub);cursor:pointer;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px}
+.x-btn:hover{background:var(--bdr);color:var(--text)}
+.modal-bd{padding:24px}
+label{font-size:13px;color:var(--text);display:block;margin-bottom:6px;font-weight:600}
+input,select,textarea{width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--bdr);background:#fff;color:var(--text);font-size:14px;font-family:inherit;transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--acc2);box-shadow:0 0 0 3px rgba(82,213,255,.15)}
+textarea{min-height:60px;resize:vertical}
+.fg{margin-bottom:16px}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.fa{display:flex;gap:12px;justify-content:flex-end;margin-top:24px}
+@media(max-width:768px){.fr{grid-template-columns:1fr}}
 
-    /* Link box */
-    .link-box{display:flex;align-items:center;gap:8px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:12px;font-family:monospace;word-break:break-all}
-    .link-box button{flex-shrink:0}
+/* Template cards */
+.tpl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.tpl-card{border:1px solid var(--bdr);border-radius:12px;padding:20px;background:#fff;position:relative;transition:box-shadow .2s}
+.tpl-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.06)}
+.tpl-card h4{margin:0 0 4px;font-size:15px}
+.tpl-meta{font-size:12px;color:var(--sub);margin-bottom:10px}
+.tpl-preview{font-size:12px;color:var(--sub);line-height:1.6;max-height:100px;overflow:hidden}
+.tpl-badge{position:absolute;top:12px;right:12px;padding:3px 10px;border-radius:999px;font-size:10px;font-weight:700}
+.tpl-badge.sys{background:#dbeafe;color:#1e40af}
+.tpl-badge.cust{background:#fef3c7;color:#92400e}
 
-    /* Modal */
-    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
-    .modal-backdrop.show{display:flex}
-    .modal{background:#fff;border:1px solid var(--border);border-radius:14px;max-width:640px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 20px 40px rgba(0,0,0,.15)}
-    .modal-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-    .modal-header h3{margin:0;font-size:18px;color:var(--text);font-weight:700}
-    .close-btn{background:transparent;border:none;font-size:24px;color:var(--subtext);cursor:pointer;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px}
-    .close-btn:hover{background:var(--border);color:var(--text)}
-    .modal-body{padding:24px}
-    label{font-size:13px;color:var(--text);display:block;margin-bottom:6px;font-weight:600}
-    input,select,textarea{width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--text);font-size:14px;transition:border-color .15s,box-shadow .15s;font-family:'Open Sans',system-ui,sans-serif}
-    input:focus,select:focus,textarea:focus{outline:none;border-color:var(--brand-accent-2);box-shadow:0 0 0 3px rgba(82,213,255,.15)}
-    textarea{min-height:60px;resize:vertical}
-    .form-group{margin-bottom:16px}
-    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-    .form-actions{display:flex;gap:12px;justify-content:flex-end;margin-top:24px}
+.empty{text-align:center;padding:60px 20px;color:var(--sub)}
+.empty h3{font-size:18px;margin-bottom:8px;color:var(--text)}
 
-    .empty-state{text-align:center;padding:60px 20px;color:var(--subtext)}
-    .empty-state h3{font-size:20px;margin-bottom:12px;color:var(--text)}
-    .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;background:#e2e8f0;color:#475569}
-    .badge.admin{background:#dbeafe;color:#1e40af}
-    .hidden{display:none}
-    .chip{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:600;background:#f1f5f9;color:#475569;margin:3px 4px 3px 0}
-    .chip .chip-x{cursor:pointer;font-weight:700;color:#94a3b8}
-    .chip .chip-x:hover{color:var(--bad)}
-
-    /* Assign panel */
-    .assign-panel{border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;background:#fafbfc}
-    .assign-panel h4{margin:0 0 12px;font-size:14px}
-    .task-input-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
-    .task-input-row input{flex:1}
-    .task-input-row select{width:160px;flex-shrink:0}
-    .sortable-task{display:flex;align-items:center;gap:8px;padding:6px 10px;background:#fff;border:1px solid var(--border);border-radius:6px;margin-bottom:4px;font-size:13px;cursor:grab}
-    .sortable-task .drag-handle{color:#94a3b8;cursor:grab}
-    .sortable-task .task-label{flex:1}
-    .sortable-task .task-cat{font-size:11px;color:var(--subtext)}
-
-    @media(max-width:768px){.form-row{grid-template-columns:1fr}.tpl-grid{grid-template-columns:1fr}}
-
-    /* Print */
-    @media print{
-      header,.sidebar-nav,.nav-toggle,.tabs,.toolbar button,.staff-card-actions,.task-actions,.header-controls,.form-actions{display:none!important}
-      .main-content{margin-left:0!important}
-      .staff-card{break-inside:avoid;page-break-inside:avoid;box-shadow:none;border:1px solid #ccc}
-      .staff-card-header{background:#446472!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-      body{background:#fff}
-    }
+/* Print */
+@media print{
+  header,.sidebar-nav,.nav-toggle,.toolbar,.tabs,.hdr-right,.add-row,.task-row .act-cell button{display:none!important}
+  .main-content{margin-left:0!important}
+  body{background:#fff;font-size:12px}
+  .board th{position:static}
+  .grp-hdr{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .status-pill{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .person-avatar{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
   </style>
 </head>
 <body>
-  <div id="bootLoader" style="position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;z-index:100;color:#111827;font-family:Roboto,Arial,sans-serif">
-    <div style="display:flex;flex-direction:column;gap:6px;align-items:center">
-      <div style="font-weight:800">Marketing Hub</div>
-      <div style="color:#6b7280;font-size:12px">Loading&hellip;</div>
-    </div>
+  <div id="boot" style="position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;z-index:100;font-family:Roboto,sans-serif">
+    <div style="text-align:center"><div style="font-weight:800">Marketing Hub</div><div style="color:#6b7280;font-size:12px">Loading&hellip;</div></div>
   </div>
 
-  <header id="appHeader" style="display:none">
-    <div class="brand">
-      <img src="logo-main.svg" class="logo-img" alt="Capstone" />
-      <div class="title">Marketing Hub</div>
+  <header id="hdr" style="display:none">
+    <div class="brand"><img src="logo-main.svg" class="logo-img" alt="Capstone"/><div class="title">Marketing Hub</div></div>
+    <div class="hdr-right">
+      <span id="userBadge" class="badge"></span>
+      <button class="hdr-btn" id="logoutBtn">Sign Out</button>
     </div>
-    <div class="header-controls">
-      <span id="userBadge" class="badge" style="margin-right:8px"></span>
-      <button class="header-btn" id="logoutBtn">Sign Out</button>
-    </div>
-    <span class="company-name">Capstone Management Partners</span>
+    <span class="company">Capstone Management Partners</span>
   </header>
 
-  <div class="container" id="appContainer" style="display:none">
+  <div class="container" id="app" style="display:none">
+    <!-- Toolbar -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap">
+      <h1 style="font-size:22px;font-weight:800;color:var(--pri)">Leasing Team Staff Board</h1>
+      <div class="spacer"></div>
+      <span id="userBadge2" class="badge" style="font-size:12px"></span>
+    </div>
 
-    <!-- Page Title + Tabs -->
-    <div class="card" style="margin-bottom:0;border-radius:14px 14px 0 0;border-bottom:none">
-      <div style="padding:20px 24px 0">
-        <h2 style="border:none;padding:0 0 16px;font-size:22px">Leasing Team Staff List</h2>
-        <div class="tabs" id="mainTabs">
-          <button class="tab active" data-tab="dashboard">Dashboard</button>
-          <button class="tab" data-tab="tasks">Task Lists</button>
-          <button class="tab" data-tab="templates">Templates</button>
-          <button class="tab" data-tab="staff" id="staffMgmtTab">Staff Management</button>
+    <div class="tabs" id="mainTabs">
+      <button class="tab on" data-t="board">Board</button>
+      <button class="tab" data-t="templates">Templates</button>
+      <button class="tab" data-t="staff" id="staffTab">Staff</button>
+    </div>
+
+    <!-- ═══ BOARD PANE ═══ -->
+    <div class="pane on" id="p-board">
+      <div class="toolbar">
+        <div class="fg"><label>Property</label><select id="bProp" style="min-width:200px"><option value="">— Select —</option></select></div>
+        <div class="fg"><label>Date</label><input type="date" id="bDate"/></div>
+        <div class="fg"><label>Filter Person</label><select id="bPerson" style="min-width:160px"><option value="">Everyone</option></select></div>
+        <div class="spacer"></div>
+        <button class="acc" id="addFromTplBtn">+ From Template</button>
+        <button class="sm" id="exportBtn">Export</button>
+        <button class="sm" id="printBtn" onclick="window.print()">Print</button>
+      </div>
+      <div id="boardArea">
+        <div class="empty" id="boardEmpty"><h3>Select a Property</h3><p>Choose a property and date to view the operations board.</p></div>
+        <div id="boardWrap" style="display:none;overflow-x:auto">
+          <table class="board" id="boardTable">
+            <thead><tr>
+              <th class="w-chk"></th>
+              <th class="w-task">Item</th>
+              <th class="w-person">Person</th>
+              <th class="w-status">Status</th>
+              <th class="w-date">Date</th>
+              <th class="w-act"></th>
+            </tr></thead>
+            <tbody id="boardBody"></tbody>
+          </table>
         </div>
       </div>
     </div>
-    <div class="card" style="border-radius:0 0 14px 14px;border-top:none">
-      <div class="content">
 
-        <!-- ═══ DASHBOARD TAB ═══ -->
-        <div class="tab-panel active" id="panel-dashboard">
-          <div class="toolbar">
-            <div>
-              <label style="margin-bottom:4px;font-size:12px">Property</label>
-              <select id="dashProperty" style="min-width:220px"><option value="">— Select —</option></select>
-            </div>
-            <div>
-              <label style="margin-bottom:4px;font-size:12px">Date</label>
-              <input type="date" id="dashDate" />
-            </div>
-            <div class="toolbar-spacer"></div>
-            <button class="primary sm" id="seedBtn" style="display:none" title="Re-seed default system templates">Re-seed Defaults</button>
+    <!-- ═══ TEMPLATES PANE ═══ -->
+    <div class="pane" id="p-templates">
+      <div class="toolbar">
+        <div class="spacer"></div>
+        <button class="acc" id="newTplBtn">+ New Template</button>
+      </div>
+      <div id="tplArea"></div>
+    </div>
+
+    <!-- ═══ STAFF PANE ═══ -->
+    <div class="pane" id="p-staff">
+      <div class="toolbar">
+        <div class="fg"><label>Property</label><select id="sProp" style="min-width:200px"><option value="">— Select —</option></select></div>
+        <div class="spacer"></div>
+        <button class="acc" id="addStaffBtn">+ Add Staff</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="board" id="staffTable" style="display:none">
+          <thead><tr><th>Name</th><th>Role</th><th>Username</th><th>My Tasks Link</th><th style="width:100px">Actions</th></tr></thead>
+          <tbody id="staffBody"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="staffEmpty"><h3>No Staff</h3><p>Add staff members to get started.</p></div>
+    </div>
+  </div>
+
+  <!-- ═══ ADD TASK MODAL ═══ -->
+  <div class="modal-bg" id="taskMod">
+    <div class="modal">
+      <div class="modal-hd"><h3 id="taskModTitle">Add Task</h3><button class="x-btn" onclick="closeM('taskMod')">&times;</button></div>
+      <div class="modal-bd">
+        <form id="taskForm">
+          <input type="hidden" id="tfId"/>
+          <div class="fg"><label>Task *</label><input type="text" id="tfLabel" required/></div>
+          <div class="fr">
+            <div class="fg"><label>Group</label><select id="tfGroup"></select></div>
+            <div class="fg"><label>Person</label><select id="tfPerson"><option value="">Unassigned</option></select></div>
           </div>
-          <div id="dashContent">
-            <div class="empty-state"><h3>Select a Property</h3><p>Choose a property and date to view daily progress.</p></div>
+          <div class="fr">
+            <div class="fg"><label>Status</label>
+              <select id="tfStatus"><option>Not Started</option><option>Working on It</option><option>Done</option><option>On Hold</option></select>
+            </div>
+            <div class="fg"><label>Date</label><input type="date" id="tfDate"/></div>
           </div>
+          <div class="fg"><label>Notes</label><textarea id="tfNotes" rows="2"></textarea></div>
+          <div class="fa">
+            <button type="button" onclick="closeM('taskMod')">Cancel</button>
+            <button type="submit" class="pri">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ FROM TEMPLATE MODAL ═══ -->
+  <div class="modal-bg" id="tplPickMod">
+    <div class="modal" style="max-width:660px">
+      <div class="modal-hd"><h3>Add Tasks from Template</h3><button class="x-btn" onclick="closeM('tplPickMod')">&times;</button></div>
+      <div class="modal-bd">
+        <div class="fr">
+          <div class="fg"><label>Assign To</label><select id="tpPerson"><option value="">Unassigned</option></select></div>
+          <div class="fg"><label>Date</label><input type="date" id="tpDate"/></div>
         </div>
-
-        <!-- ═══ TASK LISTS TAB ═══ -->
-        <div class="tab-panel" id="panel-tasks">
-          <div class="toolbar">
-            <div>
-              <label style="margin-bottom:4px;font-size:12px">Property</label>
-              <select id="taskProperty" style="min-width:220px"><option value="">— Select —</option></select>
-            </div>
-            <div>
-              <label style="margin-bottom:4px;font-size:12px">Date</label>
-              <input type="date" id="taskDate" />
-            </div>
-            <div class="toolbar-spacer"></div>
-            <button class="good" id="assignTasksBtn">+ Create / Assign Tasks</button>
-            <button id="exportCsvBtn">CSV</button>
-            <button id="exportXlsxBtn">Excel</button>
-            <button id="printAllBtn">Print All</button>
-          </div>
-          <div id="taskListArea">
-            <div class="empty-state" id="taskEmpty"><h3>No Tasks Yet</h3><p>Select a property and date, then create task assignments.</p></div>
-            <div class="staff-grid" id="staffGrid" style="display:none"></div>
-          </div>
+        <div class="fg">
+          <label>Choose Template</label>
+          <select id="tpTemplate" style="margin-bottom:12px"><option value="">— Select —</option></select>
         </div>
-
-        <!-- ═══ TEMPLATES TAB ═══ -->
-        <div class="tab-panel" id="panel-templates">
-          <div class="toolbar">
-            <div>
-              <label style="margin-bottom:4px;font-size:12px">Filter</label>
-              <select id="tplFilter" style="min-width:180px">
-                <option value="all">All Templates</option>
-                <option value="system">System Defaults</option>
-                <option value="global">Global (Custom)</option>
-                <option value="property">Property-Specific</option>
-                <option value="mine">My Saved Templates</option>
-              </select>
-            </div>
-            <div class="toolbar-spacer"></div>
-            <button class="good" id="newTplBtn">+ New Template</button>
-          </div>
-          <div class="tpl-grid" id="tplGrid"></div>
-          <div class="empty-state" id="tplEmpty" style="display:none"><h3>No Templates</h3><p>Create your first template or seed default templates from the Dashboard.</p></div>
+        <div id="tpPreview" style="max-height:220px;overflow:auto;border:1px solid var(--bdr);border-radius:8px;padding:12px;font-size:12px;color:var(--sub);display:none"></div>
+        <div class="fa">
+          <button type="button" onclick="closeM('tplPickMod')">Cancel</button>
+          <button type="button" class="pri" id="tpLoadBtn">Add Tasks to Board</button>
         </div>
-
-        <!-- ═══ STAFF MANAGEMENT TAB ═══ -->
-        <div class="tab-panel" id="panel-staff">
-          <div class="toolbar">
-            <div>
-              <label style="margin-bottom:4px;font-size:12px">Property</label>
-              <select id="staffMgmtProperty" style="min-width:220px"><option value="">— All Properties —</option></select>
-            </div>
-            <div class="toolbar-spacer"></div>
-            <button class="good" id="addStaffBtn">+ Add Staff Member</button>
-          </div>
-          <div style="overflow-x:auto">
-            <table class="staff-table" id="staffTable">
-              <thead><tr><th>Name</th><th>Role</th><th>Property</th><th>Username</th><th>Status</th><th>Direct Link</th><th>Actions</th></tr></thead>
-              <tbody id="staffTableBody"></tbody>
-            </table>
-          </div>
-          <div class="empty-state" id="staffEmpty" style="display:none"><h3>No Staff Members</h3><p>Add your first staff member to get started.</p></div>
-        </div>
-
       </div>
     </div>
   </div>
 
   <!-- ═══ STAFF MODAL ═══ -->
-  <div class="modal-backdrop" id="staffModal">
+  <div class="modal-bg" id="staffMod">
     <div class="modal">
-      <div class="modal-header">
-        <h3 id="staffModalTitle">Add Staff Member</h3>
-        <button class="close-btn" onclick="closeModal('staffModal')">&times;</button>
-      </div>
-      <div class="modal-body">
+      <div class="modal-hd"><h3 id="staffModTitle">Add Staff</h3><button class="x-btn" onclick="closeM('staffMod')">&times;</button></div>
+      <div class="modal-bd">
         <form id="staffForm">
-          <input type="hidden" id="sfId" />
-          <div class="form-row">
-            <div class="form-group"><label>Employee Name *</label><input type="text" id="sfName" required /></div>
-            <div class="form-group"><label>Role</label><input type="text" id="sfRole" list="rolesDL" /><datalist id="rolesDL"></datalist></div>
+          <input type="hidden" id="sfId"/>
+          <div class="fr">
+            <div class="fg"><label>Name *</label><input type="text" id="sfName" required/></div>
+            <div class="fg"><label>Role</label><input type="text" id="sfRole"/></div>
           </div>
-          <div class="form-row">
-            <div class="form-group"><label>Property *</label><select id="sfProperty" required></select></div>
-            <div class="form-group"><label>Username (login)</label><input type="text" id="sfUsername" placeholder="Optional - links to auth" /></div>
+          <div class="fr">
+            <div class="fg"><label>Property *</label><select id="sfProp" required></select></div>
+            <div class="fg"><label>Username (login)</label><input type="text" id="sfUser"/></div>
           </div>
-          <div class="form-row">
-            <div class="form-group"><label>Email</label><input type="email" id="sfEmail" /></div>
-            <div class="form-group"><label>Title</label><input type="text" id="sfTitle" placeholder="e.g. Leasing Agent" /></div>
-          </div>
-          <div class="form-actions">
-            <button type="button" onclick="closeModal('staffModal')">Cancel</button>
-            <button type="submit" class="primary">Save</button>
+          <div class="fa">
+            <button type="button" onclick="closeM('staffMod')">Cancel</button>
+            <button type="submit" class="pri">Save</button>
           </div>
         </form>
       </div>
     </div>
   </div>
 
-  <!-- ═══ TEMPLATE MODAL ═══ -->
-  <div class="modal-backdrop" id="tplModal">
-    <div class="modal" style="max-width:700px">
-      <div class="modal-header">
-        <h3 id="tplModalTitle">New Template</h3>
-        <button class="close-btn" onclick="closeModal('tplModal')">&times;</button>
-      </div>
-      <div class="modal-body">
+  <!-- ═══ TEMPLATE EDIT MODAL ═══ -->
+  <div class="modal-bg" id="tplMod">
+    <div class="modal" style="max-width:660px">
+      <div class="modal-hd"><h3 id="tplModTitle">New Template</h3><button class="x-btn" onclick="closeM('tplMod')">&times;</button></div>
+      <div class="modal-bd">
         <form id="tplForm">
-          <input type="hidden" id="tplId" />
-          <div class="form-row">
-            <div class="form-group"><label>Template Name *</label><input type="text" id="tplName" required /></div>
-            <div class="form-group"><label>Category</label>
-              <select id="tplCategory">
-                <option value="Opening Task">Opening Task</option>
-                <option value="Lead Follow Up">Lead Follow Up</option>
-                <option value="Social Media">Social Media</option>
-                <option value="Event">Event</option>
-                <option value="Marketing">Marketing</option>
-                <option value="Misc Task" selected>Misc Task</option>
-                <option value="Closing Task">Closing Task</option>
-              </select>
-            </div>
+          <input type="hidden" id="tpfId"/>
+          <div class="fr">
+            <div class="fg"><label>Name *</label><input type="text" id="tpfName" required/></div>
+            <div class="fg"><label>Default Group</label><select id="tpfGroup"></select></div>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Scope</label>
-              <select id="tplScope">
-                <option value="global">Global (all properties)</option>
-                <option value="property">Property-Specific</option>
-              </select>
-            </div>
-            <div class="form-group" id="tplPropertyWrap" style="display:none">
-              <label>Property</label>
-              <select id="tplPropertySelect"></select>
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Tasks (one per line) *</label>
-            <textarea id="tplTasksText" rows="10" placeholder="Open leasing office&#10;Turn on lights and music&#10;Clean and organize front desk"></textarea>
-          </div>
-          <div class="form-actions">
-            <button type="button" onclick="closeModal('tplModal')">Cancel</button>
-            <button type="submit" class="primary">Save Template</button>
+          <div class="fg"><label>Tasks (one per line) *</label><textarea id="tpfTasks" rows="10" placeholder="Open leasing office&#10;Turn on lights..."></textarea></div>
+          <div class="fa">
+            <button type="button" onclick="closeM('tplMod')">Cancel</button>
+            <button type="submit" class="pri">Save Template</button>
           </div>
         </form>
       </div>
     </div>
   </div>
 
-  <!-- ═══ ASSIGN TASKS MODAL ═══ -->
-  <div class="modal-backdrop" id="assignModal">
-    <div class="modal" style="max-width:760px">
-      <div class="modal-header">
-        <h3>Create / Assign Tasks</h3>
-        <button class="close-btn" onclick="closeModal('assignModal')">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="form-row">
-          <div class="form-group">
-            <label>Staff Member *</label>
-            <select id="assignStaff"><option value="">— Select —</option></select>
-          </div>
-          <div class="form-group">
-            <label>Date</label>
-            <input type="date" id="assignDate" />
-          </div>
-        </div>
-        <div class="assign-panel">
-          <h4 style="margin:0 0 8px;color:var(--brand-primary)">Add from Template</h4>
-          <p style="font-size:12px;color:var(--subtext);margin-bottom:10px">Select a starter template to populate this task sheet. You can add multiple templates and also add custom tasks below.</p>
-          <div style="display:flex;gap:8px">
-            <select id="assignTemplate" style="flex:1"><option value="">— Choose a Template —</option></select>
-            <button type="button" class="sm good" id="loadTplBtn">Load Tasks</button>
-          </div>
-        </div>
-        <hr style="margin:16px 0;border:none;border-top:1px solid var(--border)" />
-        <div class="form-group">
-          <label>Tasks to Assign</label>
-          <div id="assignTasksList"></div>
-          <div class="task-input-row" style="margin-top:8px">
-            <select id="addTaskCat" style="width:160px">
-              <option value="Opening Task">Opening Task</option>
-              <option value="Lead Follow Up">Lead Follow Up</option>
-              <option value="Social Media">Social Media</option>
-              <option value="Event">Event</option>
-              <option value="Marketing">Marketing</option>
-              <option value="Misc Task" selected>Misc Task</option>
-              <option value="Closing Task">Closing Task</option>
-            </select>
-            <input type="text" id="addTaskText" placeholder="Add a task..." />
-            <button type="button" class="sm good" id="addTaskItemBtn">Add</button>
-          </div>
-        </div>
-        <div class="form-actions">
-          <button type="button" onclick="closeModal('assignModal')">Cancel</button>
-          <button type="button" class="warn" id="saveAsTemplateBtn">Save as Template</button>
-          <button type="button" class="primary" id="submitAssignBtn">Assign Tasks</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ═══ TASK EDIT MODAL ═══ -->
-  <div class="modal-backdrop" id="taskEditModal">
-    <div class="modal">
-      <div class="modal-header">
-        <h3 id="taskEditTitle">Edit Task</h3>
-        <button class="close-btn" onclick="closeModal('taskEditModal')">&times;</button>
-      </div>
-      <div class="modal-body">
-        <form id="taskEditForm">
-          <input type="hidden" id="teId" />
-          <div class="form-group"><label>Task *</label><input type="text" id="teText" required /></div>
-          <div class="form-row">
-            <div class="form-group"><label>Category</label>
-              <select id="teCat">
-                <option value="Opening Task">Opening Task</option>
-                <option value="Lead Follow Up">Lead Follow Up</option>
-                <option value="Social Media">Social Media</option>
-                <option value="Event">Event</option>
-                <option value="Marketing">Marketing</option>
-                <option value="Misc Task">Misc Task</option>
-                <option value="Closing Task">Closing Task</option>
-              </select>
-            </div>
-            <div class="form-group"><label>Notes</label><input type="text" id="teNotes" /></div>
-          </div>
-          <div class="form-actions">
-            <button type="button" onclick="closeModal('taskEditModal')">Cancel</button>
-            <button type="submit" class="primary">Save</button>
-          </div>
-        </form>
-      </div>
-    </div>
+  <!-- ═══ STATUS PICKER POPUP ═══ -->
+  <div id="statusPop" style="position:fixed;display:none;z-index:200;background:#fff;border:1px solid var(--bdr);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:6px;min-width:150px">
+    <div class="sp-opt" data-s="Not Started"><span class="status-pill st-notstarted">Not Started</span></div>
+    <div class="sp-opt" data-s="Working on It"><span class="status-pill st-working">Working on It</span></div>
+    <div class="sp-opt" data-s="Done"><span class="status-pill st-done">Done</span></div>
+    <div class="sp-opt" data-s="On Hold"><span class="status-pill st-onhold">On Hold</span></div>
   </div>
 
 <script>
-/* ══════════════════════════════════════════
-   STATE
-   ══════════════════════════════════════════ */
-let currentUser=null, isAdmin=false;
-let properties=[], staffMembers=[], allStaff=[], tasks=[], templates=[], roles=[];
-let selectedPropertyId='', pendingAssignTasks=[];
-
-const CATEGORIES=['Opening Task','Lead Follow Up','Social Media','Event','Marketing','Misc Task','Closing Task'];
-const CAT_CLASS={'Opening Task':'cat-opening','Lead Follow Up':'cat-lead','Social Media':'cat-social','Event':'cat-event','Marketing':'cat-marketing','Misc Task':'cat-misc','Closing Task':'cat-closing'};
-
-/* ── Helpers ── */
+/* ═══════ STATE ═══════ */
+let me=null,isAdmin=false,properties=[],groups=[],staff=[],tasks=[],templates=[];
+let propId='',boardDate='';
 const $=id=>document.getElementById(id);
 function esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML;}
-function todayStr(){return new Date().toISOString().slice(0,10);}
-function closeModal(id){$(id).classList.remove('show');}
-function openModal(id){$(id).classList.add('show');}
+function today(){return new Date().toISOString().slice(0,10);}
+function openM(id){$(id).classList.add('show');}
+function closeM(id){$(id).classList.remove('show');}
+async function api(p,o={}){const h=Object.assign({'Content-Type':'application/json'},o.headers||{});const r=await fetch('/api'+p,Object.assign({},o,{headers:h,credentials:'include'}));if(!r.ok)throw new Error(await r.text()||'HTTP '+r.status);return r;}
 
-async function api(path,opts={}){
-  const headers=Object.assign({'Content-Type':'application/json'},opts.headers||{});
-  const res=await fetch('/api'+path,Object.assign({},opts,{headers,credentials:'include'}));
-  if(!res.ok){const t=await res.text();throw new Error(t||'HTTP '+res.status);}
-  return res;
+const ST_CLASS={'Not Started':'st-notstarted','Working on It':'st-working','Done':'st-done','On Hold':'st-onhold'};
+
+/* ═══════ AUTH ═══════ */
+async function init(){
+  try{const r=await fetch('/api/me',{credentials:'include'});if(r.ok){me=await r.json();isAdmin=me.role==='admin';boot();return;}}catch(e){console.error(e);}
+  location.href='index.html';
 }
 
-/* ══════════════════════════════════════════
-   AUTH
-   ══════════════════════════════════════════ */
-async function initAuth(){
-  try{
-    const r=await fetch('/api/me',{credentials:'include'});
-    if(r.ok){
-      currentUser=await r.json();
-      isAdmin=currentUser.role==='admin';
-      showApp(); return true;
-    }
-  }catch(e){console.error(e);}
-  location.href='index.html'; return false;
+function boot(){
+  $('boot').style.display='none';$('hdr').style.display='';$('app').style.display='';
+  $('userBadge').textContent=me.username+(isAdmin?' (Admin)':'');
+  $('userBadge2').textContent=me.username+(isAdmin?' (Admin)':'');
+  if(isAdmin){$('userBadge').classList.add('admin');$('userBadge2').classList.add('admin');}
+  if(!isAdmin)$('staffTab').style.display='none';
+  $('bDate').value=today();boardDate=today();
+  loadAll();
 }
 
-function showApp(){
-  $('bootLoader').style.display='none';
-  $('appHeader').style.display='';
-  $('appContainer').style.display='';
-  $('userBadge').textContent=currentUser.username+(isAdmin?' (Admin)':'');
-  if(isAdmin) $('userBadge').classList.add('admin');
-  $('dashDate').value=todayStr();
-  $('taskDate').value=todayStr();
-  if(!isAdmin){
-    $('staffMgmtTab').style.display='none';
-    $('addStaffBtn').style.display='none';
-    $('seedBtn').style.display='none';
-  } else {
-    $('seedBtn').style.display='';
-  }
-}
-
-/* ══════════════════════════════════════════
-   TABS
-   ══════════════════════════════════════════ */
-$('mainTabs').addEventListener('click',e=>{
-  const tab=e.target.closest('.tab');
-  if(!tab) return;
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
-  tab.classList.add('active');
-  $('panel-'+tab.dataset.tab).classList.add('active');
+/* ═══════ TABS ═══════ */
+$('mainTabs').addEventListener('click',e=>{const t=e.target.closest('.tab');if(!t)return;
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.pane').forEach(x=>x.classList.remove('on'));
+  t.classList.add('on');$('p-'+t.dataset.t).classList.add('on');
 });
 
-/* ══════════════════════════════════════════
-   PROPERTIES
-   ══════════════════════════════════════════ */
-async function loadProperties(){
-  const r=await api('/properties');
-  properties=await r.json();
+/* ═══════ LOAD ═══════ */
+async function loadAll(){
+  const [pRes,gRes]=await Promise.all([api('/properties'),api('/leasing-staff?action=groups')]);
+  properties=await pRes.json();groups=await gRes.json();
+  fillPropSelects();fillGroupSelects();
+  await loadTemplates();
+  // auto-select for non-admin
   const allowed=isAdmin?properties:properties.filter(p=>{
-    if(currentUser.properties==='*') return true;
-    if(Array.isArray(currentUser.properties)) return currentUser.properties.includes(p.id)||currentUser.properties.includes(p.name);
-    return currentUser.properties===p.id||currentUser.properties===p.name;
+    if(me.properties==='*')return true;
+    if(Array.isArray(me.properties))return me.properties.includes(p.id)||me.properties.includes(p.name);
+    return me.properties===p.id||me.properties===p.name;
+  });
+  if(!isAdmin&&allowed.length===1){$('bProp').value=allowed[0].id;$('sProp').value=allowed[0].id;propId=allowed[0].id;loadBoard();loadStaff();}
+}
+
+function fillPropSelects(){
+  const allowed=isAdmin?properties:properties.filter(p=>{
+    if(me.properties==='*')return true;
+    if(Array.isArray(me.properties))return me.properties.includes(p.id)||me.properties.includes(p.name);
+    return me.properties===p.id||me.properties===p.name;
   });
   const opts=allowed.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('');
-  ['dashProperty','taskProperty','staffMgmtProperty','sfProperty','tplPropertySelect'].forEach(id=>{
-    const el=$(id);
-    const first=el.querySelector('option');
-    el.innerHTML=(first?first.outerHTML:'')+opts;
-  });
-  if(!isAdmin&&allowed.length===1){
-    ['dashProperty','taskProperty'].forEach(id=>{$(id).value=allowed[0].id;});
-    selectedPropertyId=allowed[0].id;
-  }
+  ['bProp','sProp','sfProp'].forEach(id=>{const el=$(id);const f=el.querySelector('option');el.innerHTML=(f?f.outerHTML:'')+opts;});
 }
 
-/* ══════════════════════════════════════════
-   ROLES
-   ══════════════════════════════════════════ */
-async function loadRoles(){
-  const r=await api('/leasing-staff?action=roles');
-  roles=await r.json();
-  $('rolesDL').innerHTML=roles.map(r=>`<option value="${esc(r.roleName)}">`).join('');
+function fillGroupSelects(){
+  const opts=groups.map(g=>`<option value="${g.id}">${esc(g.name)}</option>`).join('');
+  ['tfGroup','tpfGroup'].forEach(id=>$(id).innerHTML=opts);
 }
 
-/* ══════════════════════════════════════════
-   DASHBOARD
-   ══════════════════════════════════════════ */
-async function loadDashboard(){
-  const pid=$('dashProperty').value;
-  const date=$('dashDate').value||todayStr();
-  if(!pid){$('dashContent').innerHTML='<div class="empty-state"><h3>Select a Property</h3><p>Choose a property and date to view daily progress.</p></div>';return;}
-  try{
-    const [progRes,staffRes]=await Promise.all([
-      api('/leasing-staff?action=progress&propertyId='+pid+'&date='+date),
-      api('/leasing-staff?action=staff&propertyId='+pid),
-    ]);
-    const prog=await progRes.json();
-    const staff=await staffRes.json();
-    const propName=(properties.find(p=>p.id===pid)||{}).name||'';
-    const pct=prog.totalTasks?Math.round(prog.completedTasks/prog.totalTasks*100):0;
-
-    let html=`
-      <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px">
-        <div style="flex:1">
-          <h3 style="font-size:16px;margin-bottom:4px">${esc(propName)} — ${esc(date)}</h3>
-          <span style="font-size:13px;color:var(--subtext)">${prog.totalTasks} total tasks &middot; ${prog.completedTasks} completed</span>
-        </div>
-        <div style="text-align:center">
-          <div style="font-size:32px;font-weight:800;color:${pct===100?'var(--good)':'var(--brand-primary)'}">${pct}%</div>
-          <div style="font-size:11px;color:var(--subtext)">Complete</div>
-        </div>
-      </div>`;
-
-    if(staff.length===0){
-      html+='<div class="empty-state"><h3>No Staff</h3><p>Add staff members in the Staff Management tab.</p></div>';
-    } else {
-      staff.forEach(s=>{
-        const sp=prog.progress[s._id]||{total:0,completed:0};
-        const spPct=sp.total?Math.round(sp.completed/sp.total*100):0;
-        const link=location.origin+'/my_tasks.html?staff='+s._id+'&date='+date;
-        html+=`
-          <div class="progress-row">
-            <span class="progress-label">${esc(s.employeeName)}</span>
-            <div class="progress-bar"><div class="progress-fill" style="width:${spPct}%"></div></div>
-            <span class="progress-pct">${sp.completed}/${sp.total}</span>
-            <button class="xs" onclick="copyLink('${esc(link)}')" title="Copy staff direct link">Link</button>
-          </div>`;
-      });
-    }
-    $('dashContent').innerHTML=html;
-  }catch(e){$('dashContent').innerHTML='<div class="empty-state"><h3>Error</h3><p>'+esc(e.message)+'</p></div>';}
+/* ═══════ BOARD ═══════ */
+async function loadBoard(){
+  if(!propId){$('boardEmpty').style.display='';$('boardWrap').style.display='none';return;}
+  const [sRes,tRes]=await Promise.all([
+    api('/leasing-staff?action=staff&propertyId='+propId),
+    api('/leasing-staff?action=tasks&propertyId='+propId+'&date='+boardDate),
+  ]);
+  staff=await sRes.json();tasks=await tRes.json();
+  fillPersonSelects();renderBoard();
 }
 
-function copyLink(url){
-  navigator.clipboard.writeText(url).then(()=>alert('Link copied!')).catch(()=>{
-    prompt('Copy this link:',url);
-  });
-}
-window.copyLink=copyLink;
-
-/* ══════════════════════════════════════════
-   TASK LISTS
-   ══════════════════════════════════════════ */
-async function loadTasks(){
-  const pid=$('taskProperty').value;
-  const date=$('taskDate').value||todayStr();
-  selectedPropertyId=pid;
-  if(!pid){$('taskEmpty').style.display='';$('staffGrid').style.display='none';return;}
-  try{
-    const [sRes,tRes]=await Promise.all([
-      api('/leasing-staff?action=staff&propertyId='+pid),
-      api('/leasing-staff?action=tasks&propertyId='+pid+'&date='+date),
-    ]);
-    staffMembers=await sRes.json();
-    tasks=await tRes.json();
-    renderTaskList();
-  }catch(e){console.error(e);$('taskEmpty').innerHTML='<h3>Error</h3><p>'+esc(e.message)+'</p>';$('taskEmpty').style.display='';$('staffGrid').style.display='none';}
+function fillPersonSelects(){
+  const opts=staff.map(s=>`<option value="${s._id}">${esc(s.employeeName)}</option>`).join('');
+  ['bPerson','tfPerson','tpPerson'].forEach(id=>{const el=$(id);const f=el.querySelector('option');el.innerHTML=(f?f.outerHTML:'')+opts;});
 }
 
-function renderTaskList(){
-  if(staffMembers.length===0){$('taskEmpty').innerHTML='<h3>No Staff</h3><p>Add staff in the Staff Management tab first.</p>';$('taskEmpty').style.display='';$('staffGrid').style.display='none';return;}
-  const hasAnyTasks=tasks.length>0;
-  if(!hasAnyTasks&&!isAdmin){$('taskEmpty').innerHTML='<h3>No Tasks</h3><p>No tasks assigned for this date.</p>';$('taskEmpty').style.display='';$('staffGrid').style.display='none';return;}
-  $('taskEmpty').style.display='none';
-  $('staffGrid').style.display='';
+function renderBoard(){
+  const personFilter=$('bPerson').value;
+  let filtered=tasks;
+  if(personFilter) filtered=tasks.filter(t=>t.assignedToUserId===personFilter);
 
-  $('staffGrid').innerHTML=staffMembers.map(staff=>{
-    const myTasks=tasks.filter(t=>t.staffMemberId===(staff._id||'').toString());
-    const grouped={};
-    myTasks.forEach(t=>{if(!grouped[t.category])grouped[t.category]=[];grouped[t.category].push(t);});
-    const initials=(staff.employeeName||'').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-    const completed=myTasks.filter(t=>t.isCompleted).length;
-    const pct=myTasks.length?Math.round(completed/myTasks.length*100):0;
+  if(filtered.length===0&&staff.length===0){$('boardEmpty').innerHTML='<h3>No Tasks Yet</h3><p>Add tasks to the board or load from a template.</p>';$('boardEmpty').style.display='';$('boardWrap').style.display='none';return;}
+  $('boardEmpty').style.display='none';$('boardWrap').style.display='';
 
-    let catHTML='';
-    CATEGORIES.forEach(cat=>{
-      if(!grouped[cat]||grouped[cat].length===0) return;
-      const items=grouped[cat].map(t=>{
-        const dc=t.isCompleted?'done':'';
-        const meta=t.isCompleted?`<div class="task-meta">Completed${t.completedBy?' by '+esc(t.completedBy):''}${t.completedAt?' at '+new Date(t.completedAt).toLocaleTimeString():''}</div>`:'';
-        return `<li class="task-item">
-          <div class="task-check ${dc}" data-tid="${t._id}"></div>
-          <div style="flex:1"><div class="task-text ${dc}">${esc(t.taskText)}</div>${t.notes?'<div class="task-meta">'+esc(t.notes)+'</div>':''}${meta}</div>
-          <div class="task-actions">
-            <button class="xs" onclick="openEditTask('${t._id}')">Edit</button>
-            <button class="xs danger" onclick="delTask('${t._id}')">Del</button>
-          </div>
-        </li>`;
-      }).join('');
-      catHTML+=`<div class="category-group"><span class="category-label ${CAT_CLASS[cat]||'cat-misc'}">${esc(cat)}</span><ul class="task-list">${items}</ul></div>`;
-    });
-    if(!catHTML) catHTML='<p style="color:var(--subtext);font-size:13px;padding:8px 0">No tasks assigned.</p>';
+  const byGroup={};
+  filtered.forEach(t=>{const g=t.groupId||'misc';if(!byGroup[g])byGroup[g]=[];byGroup[g].push(t);});
 
-    const staffLink=location.origin+'/my_tasks.html?staff='+staff._id;
-    const btns=`<div class="staff-card-actions">
-      <button onclick="openAssignForStaff('${staff._id}')">+ Task</button>
-      <button onclick="printOnePager('${staff._id}')">Print</button>
-      <button onclick="copyLink('${esc(staffLink)}')" title="Copy direct link">Link</button>
-      ${isAdmin?`<button onclick="openEditStaff('${staff._id}')">Edit</button>`:''}
-    </div>`;
-
-    return `<div class="staff-card" data-sid="${staff._id}">
-      <div class="staff-card-header">
-        <div class="staff-avatar">${initials}</div>
-        <div class="staff-info">
-          <div class="staff-name">${esc(staff.employeeName)}<span style="font-size:12px;opacity:.7;margin-left:8px">${pct}% (${completed}/${myTasks.length})</span></div>
-          <div class="staff-role">${esc(staff.role||'Team Member')}</div>
-        </div>
-        ${btns}
+  let html='';
+  groups.forEach(g=>{
+    const items=byGroup[g.id]||[];
+    // Always show group if board has any tasks, or if items exist
+    html+=`<tr class="grp-row" data-gid="${g.id}"><td colspan="6">
+      <div class="grp-hdr" onclick="toggleGrp('${g.id}')">
+        <span class="dot" style="background:${g.color}"></span>
+        <span>${esc(g.name)}</span>
+        <span class="cnt">${items.length} task${items.length!==1?'s':''}</span>
+        <span class="arrow" id="arrow-${g.id}">▾</span>
       </div>
-      <div class="staff-card-body">${catHTML}</div>
-    </div>`;
-  }).join('');
+    </td></tr>`;
 
-  // Toggle complete
-  $('staffGrid').querySelectorAll('.task-check').forEach(el=>{
+    items.forEach(t=>{
+      const done=t.completed;
+      const stCls=ST_CLASS[t.status]||'st-notstarted';
+      const assigned=staff.find(s=>(s._id||'').toString()===t.assignedToUserId);
+      const initials=assigned?(assigned.employeeName||'').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2):'';
+      html+=`<tr class="task-row ${done?'done':''}" data-gid="${g.id}" data-tid="${t._id}">
+        <td><div class="chk ${done?'on':''}" data-tid="${t._id}"></div></td>
+        <td><div class="task-label-cell"><span class="task-label-text">${esc(t.label)}</span></div></td>
+        <td>${assigned?`<div class="person-cell"><div class="person-avatar">${initials}</div><span class="person-name">${esc(assigned.employeeName)}</span></div>`:'<span style="color:#cbd5e1">—</span>'}</td>
+        <td><span class="status-pill ${stCls}" data-tid="${t._id}">${esc(t.status)}</span></td>
+        <td style="font-size:12px;color:var(--sub)">${t.date||''}</td>
+        <td class="act-cell"><button class="xs" onclick="editTask('${t._id}')">✎</button> <button class="xs bad" onclick="delTask('${t._id}')">✕</button></td>
+      </tr>`;
+    });
+
+    // Inline add row
+    html+=`<tr class="add-row" data-gid="${g.id}"><td></td><td colspan="5">
+      <input class="add-input" placeholder="+ Add task..." data-gid="${g.id}" onkeydown="if(event.key==='Enter'){event.preventDefault();quickAdd(this,'${g.id}')}"/>
+    </td></tr>`;
+  });
+
+  $('boardBody').innerHTML=html;
+
+  // Checkbox handlers
+  $('boardBody').querySelectorAll('.chk').forEach(el=>{
     el.addEventListener('click',async()=>{
       const tid=el.dataset.tid;
-      const t=tasks.find(x=>(x._id||'').toString()===tid);
-      if(!t) return;
-      try{
-        await api('/leasing-staff?action=completeTask',{method:'POST',body:JSON.stringify({id:tid,isCompleted:!t.isCompleted})});
-        await loadTasks();
-      }catch(e){alert('Error: '+e.message);}
+      const t=tasks.find(x=>(x._id||'').toString()===tid);if(!t)return;
+      try{await api('/leasing-staff?action=completeTask',{method:'POST',body:JSON.stringify({id:tid,completed:!t.completed})});await loadBoard();}catch(e){alert(e.message);}
+    });
+  });
+
+  // Status pill click
+  $('boardBody').querySelectorAll('.status-pill').forEach(el=>{
+    el.addEventListener('click',e=>{
+      e.stopPropagation();
+      showStatusPop(el,el.dataset.tid);
     });
   });
 }
 
-/* ── One Pager Print ── */
-function printOnePager(staffId){
-  const staff=staffMembers.find(s=>(s._id||'').toString()===staffId);
-  if(!staff) return;
-  const propName=(properties.find(p=>p.id===selectedPropertyId)||{}).name||'';
-  const date=$('taskDate').value||todayStr();
-  const myTasks=tasks.filter(t=>t.staffMemberId===staffId);
-  const grouped={};
-  myTasks.forEach(t=>{if(!grouped[t.category])grouped[t.category]=[];grouped[t.category].push(t);});
-  function e(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-  let catHTML='';
-  CATEGORIES.forEach(cat=>{
-    if(!grouped[cat]||grouped[cat].length===0) return;
-    const rows=grouped[cat].map(t=>`<tr><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-size:13px">${e(t.taskText)}${t.notes?'<br><span style="color:#64748b;font-size:11px;font-style:italic">'+e(t.notes)+'</span>':''}</td><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:center;width:70px;font-size:16px">${t.isCompleted?'&#10003;':'&#9744;'}</td></tr>`).join('');
-    catHTML+=`<table style="width:100%;border-collapse:collapse;margin-bottom:16px"><thead><tr><th style="background:#446472;color:#fff;padding:8px 12px;text-align:left;font-size:13px">${e(cat)}</th><th style="background:#446472;color:#fff;padding:8px 12px;text-align:center;width:70px;font-size:12px">Done</th></tr></thead><tbody>${rows}</tbody></table>`;
+// Toggle group collapse
+const collapsedGroups=new Set();
+function toggleGrp(gid){
+  if(collapsedGroups.has(gid)){collapsedGroups.delete(gid);}else{collapsedGroups.add(gid);}
+  document.querySelectorAll(`[data-gid="${gid}"]`).forEach(el=>{
+    if(el.classList.contains('grp-row'))return;
+    el.style.display=collapsedGroups.has(gid)?'none':'';
   });
-  if(!catHTML) catHTML='<p style="color:#64748b;text-align:center;padding:30px">No tasks assigned for this date.</p>';
-  const initials=(staff.employeeName||'').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Task Sheet - ${e(staff.employeeName)}</title>
-    <style>@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap');*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Open Sans',sans-serif;padding:32px 40px;color:#1e293b;max-width:800px;margin:0 auto}@media print{body{padding:20px}@page{margin:.5in}}</style></head><body>
-    <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #446472;padding-bottom:16px;margin-bottom:24px">
-      <div><h1 style="font-size:22px;color:#446472;margin-bottom:4px">Daily Task Sheet</h1><div style="font-size:14px;color:#64748b">${e(propName)}</div></div>
-      <div style="text-align:right"><div style="font-size:13px;color:#64748b">Date</div><div style="font-size:18px;font-weight:700">${e(date)}</div></div>
-    </div>
-    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:16px">
-      <div style="width:50px;height:50px;border-radius:50%;background:#446472;color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700">${initials}</div>
-      <div><div style="font-size:18px;font-weight:700">${e(staff.employeeName)}</div><div style="font-size:13px;color:#64748b">${e(staff.role||'Team Member')}</div></div>
-    </div>
-    ${catHTML}
-    <div style="margin-top:30px;padding-top:16px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;font-size:11px;color:#94a3b8"><span>Capstone Management Partners</span><span>Printed ${new Date().toLocaleString()}</span></div>
-  </body></html>`;
-  const w=window.open('','_blank','width=850,height=1100');
-  w.document.write(html);w.document.close();
-  setTimeout(()=>w.print(),400);
+  const arrow=$('arrow-'+gid);
+  if(arrow)arrow.classList.toggle('collapsed',collapsedGroups.has(gid));
 }
-window.printOnePager=printOnePager;
+window.toggleGrp=toggleGrp;
 
-/* ── Task Edit ── */
-function openEditTask(tid){
-  const t=tasks.find(x=>(x._id||'').toString()===tid);
-  if(!t) return;
-  $('teId').value=t._id;
-  $('teText').value=t.taskText;
-  $('teCat').value=t.category;
-  $('teNotes').value=t.notes||'';
-  $('taskEditTitle').textContent='Edit Task';
-  openModal('taskEditModal');
-}
-window.openEditTask=openEditTask;
-
-$('taskEditForm').addEventListener('submit',async e=>{
-  e.preventDefault();
-  const id=$('teId').value;
-  const t=tasks.find(x=>(x._id||'').toString()===id);
-  if(!t) return;
+// Quick add task
+async function quickAdd(input,gid){
+  const label=input.value.trim();if(!label)return;
   try{
-    await api('/leasing-staff?action=task',{method:'POST',body:JSON.stringify({
-      id, propertyId:t.propertyId, staffMemberId:t.staffMemberId,
-      category:$('teCat').value, taskText:$('teText').value.trim(), notes:$('teNotes').value.trim()
-    })});
-    closeModal('taskEditModal');
-    await loadTasks();
-  }catch(e){alert('Error: '+e.message);}
-});
+    await api('/leasing-staff?action=task',{method:'POST',body:JSON.stringify({propertyId:propId,label,groupId:gid,date:boardDate})});
+    input.value='';await loadBoard();
+  }catch(e){alert(e.message);}
+}
+window.quickAdd=quickAdd;
 
+// Status popup
+let statusPopTid=null;
+function showStatusPop(el,tid){
+  statusPopTid=tid;
+  const pop=$('statusPop');
+  const rect=el.getBoundingClientRect();
+  pop.style.top=(rect.bottom+4)+'px';
+  pop.style.left=rect.left+'px';
+  pop.style.display='block';
+}
+document.querySelectorAll('.sp-opt').forEach(opt=>{
+  opt.style.padding='6px 8px';opt.style.cursor='pointer';opt.style.borderRadius='6px';
+  opt.addEventListener('mouseenter',()=>opt.style.background='#f8fafc');
+  opt.addEventListener('mouseleave',()=>opt.style.background='');
+  opt.addEventListener('click',async()=>{
+    const s=opt.dataset.s;
+    $('statusPop').style.display='none';
+    if(!statusPopTid)return;
+    try{await api('/leasing-staff?action=updateStatus',{method:'POST',body:JSON.stringify({id:statusPopTid,status:s})});await loadBoard();}catch(e){alert(e.message);}
+  });
+});
+document.addEventListener('click',e=>{if(!e.target.closest('#statusPop')&&!e.target.closest('.status-pill'))$('statusPop').style.display='none';});
+
+// Edit task
+function editTask(tid){
+  const t=tasks.find(x=>(x._id||'').toString()===tid);if(!t)return;
+  $('tfId').value=t._id;$('tfLabel').value=t.label;$('tfGroup').value=t.groupId;
+  $('tfPerson').value=t.assignedToUserId||'';$('tfStatus').value=t.status;$('tfDate').value=t.date||'';$('tfNotes').value=t.notes||'';
+  $('taskModTitle').textContent='Edit Task';openM('taskMod');
+}
+window.editTask=editTask;
+
+// Delete task
 async function delTask(tid){
-  if(!confirm('Delete this task?')) return;
-  try{await api('/leasing-staff?action=task',{method:'DELETE',body:JSON.stringify({id:tid})});await loadTasks();}catch(e){alert(e.message);}
+  if(!confirm('Delete this task?'))return;
+  try{await api('/leasing-staff?action=task',{method:'DELETE',body:JSON.stringify({id:tid})});await loadBoard();}catch(e){alert(e.message);}
 }
 window.delTask=delTask;
 
-/* ══════════════════════════════════════════
-   ASSIGN TASKS
-   ══════════════════════════════════════════ */
-function openAssignModal(){
-  pendingAssignTasks=[];
-  $('assignStaff').innerHTML='<option value="">— Select —</option>'+staffMembers.map(s=>`<option value="${s._id}">${esc(s.employeeName)}</option>`).join('');
-  $('assignDate').value=$('taskDate').value||todayStr();
-  // Build grouped template picker
-  const sysTpls=templates.filter(t=>t.isSystem);
-  const globTpls=templates.filter(t=>t.isGlobal&&!t.isSystem);
-  const propTpls=templates.filter(t=>!t.isGlobal&&!t.isSystem);
-  let tplOpts='<option value="">— Choose a Template —</option>';
-  if(sysTpls.length) tplOpts+=`<optgroup label="System Defaults">${sysTpls.map(t=>`<option value="${t._id}">${esc(t.name)} (${(t.tasks||[]).length} tasks)</option>`).join('')}</optgroup>`;
-  if(globTpls.length) tplOpts+=`<optgroup label="Global Templates">${globTpls.map(t=>`<option value="${t._id}">${esc(t.name)} (${(t.tasks||[]).length} tasks)</option>`).join('')}</optgroup>`;
-  if(propTpls.length) tplOpts+=`<optgroup label="Property Templates">${propTpls.map(t=>`<option value="${t._id}">${esc(t.name)} (${(t.tasks||[]).length} tasks)</option>`).join('')}</optgroup>`;
-  $('assignTemplate').innerHTML=tplOpts;
-  renderPendingTasks();
-  openModal('assignModal');
-}
-
-function openAssignForStaff(staffId){
-  openAssignModal();
-  $('assignStaff').value=staffId;
-}
-window.openAssignForStaff=openAssignForStaff;
-
-function renderPendingTasks(){
-  $('assignTasksList').innerHTML=pendingAssignTasks.length===0?'<p style="color:var(--subtext);font-size:13px;padding:8px 0">No tasks added yet. Load a template or add tasks manually below.</p>':
-    pendingAssignTasks.map((t,i)=>`<div class="sortable-task">
-      <span class="drag-handle">&#9776;</span>
-      <span class="task-cat" style="min-width:100px">${esc(t.category)}</span>
-      <span class="task-label">${esc(t.taskText)}</span>
-      <button class="xs danger" onclick="removePendingTask(${i})">&#10005;</button>
-    </div>`).join('');
-}
-
-function removePendingTask(i){pendingAssignTasks.splice(i,1);renderPendingTasks();}
-window.removePendingTask=removePendingTask;
-
-$('loadTplBtn').addEventListener('click',()=>{
-  const tplId=$('assignTemplate').value;
-  if(!tplId) return;
-  const tpl=templates.find(t=>(t._id||'').toString()===tplId);
-  if(!tpl) return;
-  const newTasks=(tpl.tasks||[]).map((t,i)=>({
-    category:tpl.category||'Misc Task',
-    taskText:typeof t==='string'?t:(t.label||t.taskText||''),
-    notes:'',
-    sortOrder:pendingAssignTasks.length+i,
-  }));
-  pendingAssignTasks=pendingAssignTasks.concat(newTasks);
-  renderPendingTasks();
+// Task form
+$('taskForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const id=$('tfId').value;
+  const assignedId=$('tfPerson').value;
+  const assigned=staff.find(s=>(s._id||'').toString()===assignedId);
+  const data={
+    id:id||undefined,propertyId:propId,label:$('tfLabel').value.trim(),groupId:$('tfGroup').value,
+    assignedToUserId:assignedId||null,assignedToName:assigned?assigned.employeeName:'',
+    status:$('tfStatus').value,date:$('tfDate').value||boardDate,notes:$('tfNotes').value.trim(),
+  };
+  try{await api('/leasing-staff?action=task',{method:'POST',body:JSON.stringify(data)});closeM('taskMod');await loadBoard();}catch(e){alert(e.message);}
 });
 
-$('addTaskItemBtn').addEventListener('click',()=>{
-  const text=$('addTaskText').value.trim();
-  if(!text) return;
-  pendingAssignTasks.push({category:$('addTaskCat').value,taskText:text,notes:'',sortOrder:pendingAssignTasks.length});
-  $('addTaskText').value='';
-  renderPendingTasks();
-});
-$('addTaskText').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('addTaskItemBtn').click();}});
+// Add new task button (from group inline doesn't need modal, but toolbar does)
+function openAddTask(){
+  $('tfId').value='';$('tfLabel').value='';$('tfGroup').value='opening';$('tfPerson').value='';
+  $('tfStatus').value='Not Started';$('tfDate').value=boardDate;$('tfNotes').value='';
+  $('taskModTitle').textContent='Add Task';openM('taskMod');
+}
 
-$('submitAssignBtn').addEventListener('click',async()=>{
-  const staffId=$('assignStaff').value;
-  const date=$('assignDate').value;
-  if(!staffId){alert('Select a staff member');return;}
-  if(pendingAssignTasks.length===0){alert('Add at least one task');return;}
-  const staff=staffMembers.find(s=>(s._id||'').toString()===staffId);
+/* ═══════ FROM TEMPLATE ═══════ */
+$('addFromTplBtn').addEventListener('click',()=>{
+  if(!propId){alert('Select a property first');return;}
+  $('tpDate').value=boardDate;$('tpPerson').value='';
+  // Build grouped template options
+  const sys=templates.filter(t=>t.type==='system');
+  const cust=templates.filter(t=>t.type!=='system');
+  let opts='<option value="">— Choose Template —</option>';
+  if(sys.length) opts+=`<optgroup label="System Defaults">${sys.map(t=>`<option value="${t._id}">${esc(t.name)} (${(t.tasks||[]).length} tasks)</option>`).join('')}</optgroup>`;
+  if(cust.length) opts+=`<optgroup label="Custom Templates">${cust.map(t=>`<option value="${t._id}">${esc(t.name)} (${(t.tasks||[]).length} tasks)</option>`).join('')}</optgroup>`;
+  $('tpTemplate').innerHTML=opts;
+  $('tpPreview').style.display='none';
+  openM('tplPickMod');
+});
+
+$('tpTemplate').addEventListener('change',()=>{
+  const tid=$('tpTemplate').value;
+  const tpl=templates.find(t=>(t._id||'').toString()===tid);
+  if(!tpl){$('tpPreview').style.display='none';return;}
+  $('tpPreview').style.display='';
+  const grp=groups.find(g=>g.id===tpl.defaultGroupId);
+  $('tpPreview').innerHTML=`<div style="font-weight:700;margin-bottom:8px;color:var(--text)">${esc(tpl.name)}</div>
+    <div style="margin-bottom:8px;font-size:11px">Group: <strong>${grp?esc(grp.name):'Misc'}</strong> &middot; ${(tpl.tasks||[]).length} tasks</div>
+    ${(tpl.tasks||[]).map((t,i)=>`<div style="padding:3px 0;border-bottom:1px solid #f1f5f9">${i+1}. ${esc(typeof t==='string'?t:(t.label||''))}</div>`).join('')}`;
+});
+
+$('tpLoadBtn').addEventListener('click',async()=>{
+  const tid=$('tpTemplate').value;
+  if(!tid){alert('Select a template');return;}
+  const tpl=templates.find(t=>(t._id||'').toString()===tid);if(!tpl)return;
+  const assignedId=$('tpPerson').value;
+  const assigned=staff.find(s=>(s._id||'').toString()===assignedId);
   try{
     await api('/leasing-staff?action=taskBatch',{method:'POST',body:JSON.stringify({
-      propertyId:selectedPropertyId,
-      staffMemberId:staffId,
-      employeeName:staff?staff.employeeName:'',
-      shiftDate:date,
-      tasks:pendingAssignTasks,
+      propertyId:propId,templateId:tpl._id,groupId:tpl.defaultGroupId,
+      assignedToUserId:assignedId||null,assignedToName:assigned?assigned.employeeName:'',
+      date:$('tpDate').value||boardDate,
+      tasks:tpl.tasks,
     })});
-    closeModal('assignModal');
-    await loadTasks();
-  }catch(e){alert('Error: '+e.message);}
+    closeM('tplPickMod');await loadBoard();
+  }catch(e){alert(e.message);}
 });
 
-$('saveAsTemplateBtn').addEventListener('click',()=>{
-  if(pendingAssignTasks.length===0){alert('Add tasks first');return;}
-  const name=prompt('Template name:');
-  if(!name) return;
-  // Detect predominant category
-  const cats={};pendingAssignTasks.forEach(t=>{cats[t.category]=(cats[t.category]||0)+1;});
-  const topCat=Object.entries(cats).sort((a,b)=>b[1]-a[1])[0][0];
-  api('/leasing-staff?action=template',{method:'POST',body:JSON.stringify({
-    name,
-    isGlobal:isAdmin,
-    propertyId:isAdmin?null:selectedPropertyId,
-    category:topCat,
-    tasks:pendingAssignTasks.map(t=>t.taskText),
-  })}).then(()=>{alert('Template saved!');loadTemplates();}).catch(e=>alert('Error: '+e.message));
-});
-
-/* ══════════════════════════════════════════
-   TEMPLATES
-   ══════════════════════════════════════════ */
+/* ═══════ TEMPLATES ═══════ */
 async function loadTemplates(){
-  const pid=selectedPropertyId||$('taskProperty').value||'';
-  const r=await api('/leasing-staff?action=templates'+(pid?'&propertyId='+pid:''));
-  templates=await r.json();
-  renderTemplates();
+  const r=await api('/leasing-staff?action=templates'+(propId?'&propertyId='+propId:''));
+  templates=await r.json();renderTemplates();
 }
 
 function renderTemplates(){
-  const filter=$('tplFilter').value;
-  let filtered=templates;
-  if(filter==='system') filtered=templates.filter(t=>t.isSystem);
-  else if(filter==='global') filtered=templates.filter(t=>t.isGlobal&&!t.isSystem);
-  else if(filter==='property') filtered=templates.filter(t=>!t.isGlobal&&!t.isSystem);
-  else if(filter==='mine') filtered=templates.filter(t=>t.createdBy===currentUser.username);
+  const sys=templates.filter(t=>t.type==='system');
+  const cust=templates.filter(t=>t.type!=='system');
 
-  if(filtered.length===0&&filter!=='all'){$('tplGrid').innerHTML='';$('tplEmpty').style.display='';return;}
-  $('tplEmpty').style.display='none';
-
-  // Group into sections
-  const system=filtered.filter(t=>t.isSystem);
-  const global=filtered.filter(t=>t.isGlobal&&!t.isSystem);
-  const property=filtered.filter(t=>!t.isGlobal&&!t.isSystem);
-
-  function renderSection(title,badge,items){
-    if(items.length===0) return '';
+  function section(title,items,isSys){
+    if(!items.length)return '';
     const cards=items.map(t=>{
-      const taskList=(t.tasks||[]).slice(0,8).map(x=>typeof x==='string'?x:(x.label||x.taskText||'')).map(x=>'&bull; '+esc(x)).join('<br>');
-      const more=(t.tasks||[]).length>8?`<br><span style="color:var(--brand-accent-2)">+${t.tasks.length-8} more...</span>`:'';
-      const isSystemTpl=!!t.isSystem;
-      const badgeClass=t.isSystem?'':t.isGlobal?'':'property';
-      const badgeText=t.isSystem?'System Default':t.isGlobal?'Global':'Property';
-      const actions=isSystemTpl
-        ?`<button class="xs" onclick="dupeTemplate('${t._id}')">Duplicate &amp; Customize</button>`
-        :`<button class="xs" onclick="editTemplate('${t._id}')">Edit</button>
-          <button class="xs" onclick="dupeTemplate('${t._id}')">Duplicate</button>
-          <button class="xs danger" onclick="delTemplate('${t._id}')">Delete</button>`;
-      return `<div class="tpl-card">
-        <span class="tpl-badge ${badgeClass}">${badgeText}</span>
-        <h4>${esc(t.name)}</h4>
-        <div class="tpl-meta">${esc(t.category||'Mixed')} &middot; ${(t.tasks||[]).length} tasks</div>
-        <div class="tpl-tasks-preview">${taskList}${more}</div>
-        <div style="margin-top:12px;display:flex;gap:6px">${actions}</div>
-      </div>`;
+      const grp=groups.find(g=>g.id===t.defaultGroupId);
+      const preview=(t.tasks||[]).slice(0,6).map(x=>'&bull; '+esc(typeof x==='string'?x:(x.label||''))).join('<br>');
+      const more=(t.tasks||[]).length>6?`<br><span style="color:var(--acc2)">+${t.tasks.length-6} more</span>`:'';
+      const actions=isSys
+        ?`<button class="xs" onclick="dupeTpl('${t._id}')">Duplicate &amp; Customize</button>`
+        :`<button class="xs" onclick="editTpl('${t._id}')">Edit</button> <button class="xs" onclick="dupeTpl('${t._id}')">Duplicate</button> <button class="xs bad" onclick="delTpl('${t._id}')">Delete</button>`;
+      return `<div class="tpl-card"><span class="tpl-badge ${isSys?'sys':'cust'}">${isSys?'System Default':'Custom'}</span>
+        <h4>${esc(t.name)}</h4><div class="tpl-meta">${grp?esc(grp.name):'Misc'} &middot; ${(t.tasks||[]).length} tasks</div>
+        <div class="tpl-preview">${preview}${more}</div>
+        <div style="margin-top:12px;display:flex;gap:6px">${actions}</div></div>`;
     }).join('');
-    return `<div style="margin-bottom:24px">
-      <h3 style="font-size:15px;color:var(--brand-primary);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--border)">${title} <span class="badge">${items.length}</span></h3>
-      <div class="tpl-grid">${cards}</div>
-    </div>`;
+    return `<h3 style="font-size:15px;color:var(--pri);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--bdr)">${title} <span class="badge">${items.length}</span></h3>
+      <div class="tpl-grid" style="margin-bottom:24px">${cards}</div>`;
   }
 
-  let html='';
-  if(filter==='all'){
-    html+=renderSection('System Templates','system',system);
-    html+=renderSection('Global Templates','global',global);
-    html+=renderSection('Property Templates','property',property);
-  } else {
-    html+=`<div class="tpl-grid">${filtered.map(t=>{
-      const taskList=(t.tasks||[]).slice(0,8).map(x=>typeof x==='string'?x:(x.label||x.taskText||'')).map(x=>'&bull; '+esc(x)).join('<br>');
-      const more=(t.tasks||[]).length>8?`<br><span style="color:var(--brand-accent-2)">+${t.tasks.length-8} more...</span>`:'';
-      const isSystemTpl=!!t.isSystem;
-      const badgeText=t.isSystem?'System Default':t.isGlobal?'Global':'Property';
-      const actions=isSystemTpl
-        ?`<button class="xs" onclick="dupeTemplate('${t._id}')">Duplicate &amp; Customize</button>`
-        :`<button class="xs" onclick="editTemplate('${t._id}')">Edit</button>
-          <button class="xs" onclick="dupeTemplate('${t._id}')">Duplicate</button>
-          <button class="xs danger" onclick="delTemplate('${t._id}')">Delete</button>`;
-      return `<div class="tpl-card">
-        <span class="tpl-badge ${t.isSystem?'':t.isGlobal?'':'property'}">${badgeText}</span>
-        <h4>${esc(t.name)}</h4>
-        <div class="tpl-meta">${esc(t.category||'Mixed')} &middot; ${(t.tasks||[]).length} tasks</div>
-        <div class="tpl-tasks-preview">${taskList}${more}</div>
-        <div style="margin-top:12px;display:flex;gap:6px">${actions}</div>
-      </div>`;
-    }).join('')}</div>`;
-  }
-
-  if(!html.trim()){$('tplGrid').innerHTML='';$('tplEmpty').style.display='';return;}
-  $('tplGrid').innerHTML=html;
+  $('tplArea').innerHTML=(section('System Templates',sys,true)+section('Custom Templates',cust,false))||'<div class="empty"><h3>No Templates</h3></div>';
 }
 
-function openNewTemplate(){
-  $('tplId').value='';
-  $('tplName').value='';
-  $('tplCategory').value='Misc Task';
-  $('tplScope').value=isAdmin?'global':'property';
-  $('tplTasksText').value='';
-  $('tplPropertyWrap').style.display=$('tplScope').value==='property'?'':'none';
-  $('tplModalTitle').textContent='New Template';
-  openModal('tplModal');
+function editTpl(id){
+  const t=templates.find(x=>(x._id||'').toString()===id);if(!t)return;
+  $('tpfId').value=t._id;$('tpfName').value=t.name;$('tpfGroup').value=t.defaultGroupId||'misc';
+  $('tpfTasks').value=(t.tasks||[]).map(x=>typeof x==='string'?x:(x.label||'')).join('\n');
+  $('tplModTitle').textContent='Edit Template';openM('tplMod');
 }
+window.editTpl=editTpl;
 
-function editTemplate(id){
-  const t=templates.find(x=>(x._id||'').toString()===id);
-  if(!t) return;
-  $('tplId').value=t._id;
-  $('tplName').value=t.name;
-  $('tplCategory').value=t.category||'Misc Task';
-  $('tplScope').value=t.isGlobal?'global':'property';
-  $('tplPropertySelect').value=t.propertyId||'';
-  $('tplPropertyWrap').style.display=t.isGlobal?'none':'';
-  $('tplTasksText').value=(t.tasks||[]).map(x=>typeof x==='string'?x:(x.label||x.taskText||'')).join('\n');
-  $('tplModalTitle').textContent='Edit Template';
-  openModal('tplModal');
+async function dupeTpl(id){
+  const t=templates.find(x=>(x._id||'').toString()===id);if(!t)return;
+  const name=prompt('Name for copy:',t.name+' (Copy)');if(!name)return;
+  try{await api('/leasing-staff?action=template',{method:'POST',body:JSON.stringify({name,defaultGroupId:t.defaultGroupId,tasks:t.tasks})});await loadTemplates();}catch(e){alert(e.message);}
 }
-window.editTemplate=editTemplate;
+window.dupeTpl=dupeTpl;
 
-async function dupeTemplate(id){
-  const t=templates.find(x=>(x._id||'').toString()===id);
-  if(!t) return;
-  const name=prompt('Name for duplicate:',t.name+' (Copy)');
-  if(!name) return;
-  try{
-    await api('/leasing-staff?action=template',{method:'POST',body:JSON.stringify({
-      name, isGlobal:t.isGlobal, propertyId:t.propertyId, category:t.category, tasks:t.tasks
-    })});
-    await loadTemplates();
-  }catch(e){alert(e.message);}
-}
-window.dupeTemplate=dupeTemplate;
-
-async function delTemplate(id){
-  if(!confirm('Delete this template?')) return;
+async function delTpl(id){
+  if(!confirm('Delete this template?'))return;
   try{await api('/leasing-staff?action=template',{method:'DELETE',body:JSON.stringify({id})});await loadTemplates();}catch(e){alert(e.message);}
 }
-window.delTemplate=delTemplate;
+window.delTpl=delTpl;
 
-$('tplScope').addEventListener('change',()=>{$('tplPropertyWrap').style.display=$('tplScope').value==='property'?'':'none';});
+$('newTplBtn').addEventListener('click',()=>{
+  $('tpfId').value='';$('tpfName').value='';$('tpfGroup').value='opening';$('tpfTasks').value='';
+  $('tplModTitle').textContent='New Template';openM('tplMod');
+});
 
 $('tplForm').addEventListener('submit',async e=>{
   e.preventDefault();
-  const id=$('tplId').value;
-  const name=$('tplName').value.trim();
-  const category=$('tplCategory').value;
-  const isGlobal=$('tplScope').value==='global';
-  const propertyId=isGlobal?null:$('tplPropertySelect').value;
-  const tasks=$('tplTasksText').value.split('\n').map(l=>l.trim()).filter(Boolean);
-  if(!name||tasks.length===0){alert('Name and at least one task required');return;}
-  try{
-    await api('/leasing-staff?action=template',{method:'POST',body:JSON.stringify({id:id||undefined,name,isGlobal,propertyId,category,tasks})});
-    closeModal('tplModal');
-    await loadTemplates();
-  }catch(e){alert(e.message);}
+  const id=$('tpfId').value;
+  const tasks=$('tpfTasks').value.split('\n').map(l=>l.trim()).filter(Boolean);
+  if(!tasks.length){alert('Add at least one task');return;}
+  try{await api('/leasing-staff?action=template',{method:'POST',body:JSON.stringify({
+    id:id||undefined,name:$('tpfName').value.trim(),defaultGroupId:$('tpfGroup').value,tasks
+  })});closeM('tplMod');await loadTemplates();}catch(e){alert(e.message);}
 });
 
-/* ══════════════════════════════════════════
-   STAFF MANAGEMENT
-   ══════════════════════════════════════════ */
-async function loadAllStaff(){
-  // Load from all properties
-  const pid=$('staffMgmtProperty').value;
-  if(pid){
-    const r=await api('/leasing-staff?action=staff&propertyId='+pid+'&activeOnly=false');
-    allStaff=await r.json();
-  } else if(isAdmin){
-    // Load all properties staff
-    const all=[];
-    for(const p of properties){
-      try{const r=await api('/leasing-staff?action=staff&propertyId='+p.id+'&activeOnly=false');const s=await r.json();all.push(...s);}catch(e){}
-    }
-    allStaff=all;
-  }
-  renderStaffTable();
-}
-
-function renderStaffTable(){
-  if(allStaff.length===0){$('staffEmpty').style.display='';$('staffTable').style.display='none';return;}
+/* ═══════ STAFF ═══════ */
+async function loadStaff(){
+  const pid=$('sProp').value||propId;
+  if(!pid){$('staffEmpty').style.display='';$('staffTable').style.display='none';return;}
+  const r=await api('/leasing-staff?action=staff&propertyId='+pid);
+  const allStaff=await r.json();
+  if(!allStaff.length){$('staffEmpty').style.display='';$('staffTable').style.display='none';return;}
   $('staffEmpty').style.display='none';$('staffTable').style.display='';
-  $('staffTableBody').innerHTML=allStaff.map(s=>{
-    const prop=properties.find(p=>p.id===s.propertyId);
+  $('staffBody').innerHTML=allStaff.map(s=>{
     const link=location.origin+'/my_tasks.html?staff='+s._id;
-    const active=s.isActive!==false;
     return `<tr>
-      <td><strong>${esc(s.employeeName)}</strong>${s.title?'<br><span style="font-size:11px;color:var(--subtext)">'+esc(s.title)+'</span>':''}</td>
+      <td><strong>${esc(s.employeeName)}</strong></td>
       <td>${esc(s.role||'—')}</td>
-      <td>${prop?esc(prop.name):'—'}</td>
       <td>${esc(s.username||'—')}</td>
-      <td><span class="status-dot ${active?'active':'inactive'}"></span>${active?'Active':'Inactive'}</td>
-      <td><div class="link-box"><span>${esc(link)}</span><button class="xs" onclick="copyLink('${esc(link)}')">Copy</button></div></td>
-      <td>
-        <button class="xs" onclick="openEditStaff('${s._id}')">Edit</button>
-        ${active?`<button class="xs danger" onclick="deactivateStaff('${s._id}','${esc(s.employeeName)}')">Deactivate</button>`:`<button class="xs good" onclick="reactivateStaff('${s._id}')">Activate</button>`}
-      </td>
+      <td><span style="font-size:11px;font-family:monospace;color:var(--sub);word-break:break-all">${esc(link)}</span> <button class="xs" onclick="copyTxt('${esc(link)}')">Copy</button></td>
+      <td><button class="xs" onclick="editStaff('${s._id}')">Edit</button> <button class="xs bad" onclick="deactivateStaff('${s._id}','${esc(s.employeeName)}')">Remove</button></td>
     </tr>`;
   }).join('');
 }
 
-function openAddStaff(){
-  $('sfId').value='';$('sfName').value='';$('sfRole').value='';
-  $('sfProperty').value=selectedPropertyId||'';$('sfUsername').value='';$('sfEmail').value='';$('sfTitle').value='';
-  $('staffModalTitle').textContent='Add Staff Member';
-  openModal('staffModal');
-}
+function copyTxt(t){navigator.clipboard.writeText(t).then(()=>alert('Copied!')).catch(()=>prompt('Copy:',t));}
+window.copyTxt=copyTxt;
 
-function openEditStaff(id){
-  const s=allStaff.find(x=>(x._id||'').toString()===id)||staffMembers.find(x=>(x._id||'').toString()===id);
-  if(!s) return;
-  $('sfId').value=s._id;$('sfName').value=s.employeeName;$('sfRole').value=s.role||'';
-  $('sfProperty').value=s.propertyId;$('sfUsername').value=s.username||'';$('sfEmail').value=s.email||'';$('sfTitle').value=s.title||'';
-  $('staffModalTitle').textContent='Edit Staff Member';
-  openModal('staffModal');
-}
-window.openEditStaff=openEditStaff;
-
-$('staffForm').addEventListener('submit',async e=>{
-  e.preventDefault();
-  const id=$('sfId').value;
-  const data={
-    id:id||undefined,
-    propertyId:$('sfProperty').value,
-    employeeName:$('sfName').value.trim(),
-    role:$('sfRole').value.trim(),
-    username:$('sfUsername').value.trim(),
-    email:$('sfEmail').value.trim(),
-    title:$('sfTitle').value.trim(),
-  };
-  if(!data.propertyId||!data.employeeName){alert('Name and property required');return;}
-  try{
-    await api('/leasing-staff?action=staff',{method:'POST',body:JSON.stringify(data)});
-    if(data.role&&!roles.find(r=>r.roleName===data.role)){
-      try{await api('/leasing-staff?action=role',{method:'POST',body:JSON.stringify({roleName:data.role})});}catch(e){}
-      await loadRoles();
-    }
-    closeModal('staffModal');
-    await loadAllStaff();
-    await loadTasks();
-  }catch(e){alert(e.message);}
+$('addStaffBtn').addEventListener('click',()=>{
+  $('sfId').value='';$('sfName').value='';$('sfRole').value='';$('sfProp').value=propId||'';$('sfUser').value='';
+  $('staffModTitle').textContent='Add Staff';openM('staffMod');
 });
 
+function editStaff(id){
+  const s=(staff||[]).find(x=>(x._id||'').toString()===id);if(!s)return;
+  $('sfId').value=s._id;$('sfName').value=s.employeeName;$('sfRole').value=s.role||'';$('sfProp').value=s.propertyId;$('sfUser').value=s.username||'';
+  $('staffModTitle').textContent='Edit Staff';openM('staffMod');
+}
+window.editStaff=editStaff;
+
 async function deactivateStaff(id,name){
-  if(!confirm('Deactivate '+name+'?')) return;
-  try{await api('/leasing-staff?action=staff',{method:'DELETE',body:JSON.stringify({id})});await loadAllStaff();}catch(e){alert(e.message);}
+  if(!confirm('Remove '+name+'?'))return;
+  try{await api('/leasing-staff?action=staff',{method:'DELETE',body:JSON.stringify({id})});await loadStaff();await loadBoard();}catch(e){alert(e.message);}
 }
 window.deactivateStaff=deactivateStaff;
 
-async function reactivateStaff(id){
-  try{await api('/leasing-staff?action=staff',{method:'POST',body:JSON.stringify({id,propertyId:'_',employeeName:'_',isActive:true})});await loadAllStaff();}catch(e){alert(e.message);}
-}
-window.reactivateStaff=reactivateStaff;
-
-/* ══════════════════════════════════════════
-   EXPORT
-   ══════════════════════════════════════════ */
-function buildExportData(){
-  const propName=(properties.find(p=>p.id===selectedPropertyId)||{}).name||'';
-  const date=$('taskDate').value||todayStr();
-  const rows=[];
-  staffMembers.forEach(s=>{
-    const myT=tasks.filter(t=>t.staffMemberId===(s._id||'').toString());
-    if(myT.length===0) rows.push({Property:propName,Date:date,Employee:s.employeeName,Role:s.role||'',Category:'',Task:'',Notes:'',Completed:'',CompletedBy:'',CompletedAt:''});
-    else myT.forEach(t=>rows.push({Property:propName,Date:date,Employee:s.employeeName,Role:s.role||'',Category:t.category,Task:t.taskText,Notes:t.notes||'',Completed:t.isCompleted?'Yes':'No',CompletedBy:t.completedBy||'',CompletedAt:t.completedAt||''}));
-  });
-  return rows;
-}
-
-$('exportCsvBtn').addEventListener('click',()=>{
-  if(!selectedPropertyId){alert('Select a property');return;}
-  const rows=buildExportData();if(!rows.length){alert('No data');return;}
-  const h=Object.keys(rows[0]);
-  const csv=[h.join(','),...rows.map(r=>h.map(k=>`"${(r[k]||'').replace(/"/g,'""')}"`).join(','))].join('\n');
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-  const pn=(properties.find(p=>p.id===selectedPropertyId)||{}).name||'staff';
-  a.download=`leasing_staff_${pn.replace(/\s+/g,'_')}_${$('taskDate').value||todayStr()}.csv`;a.click();
+$('staffForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const data={id:$('sfId').value||undefined,propertyId:$('sfProp').value,employeeName:$('sfName').value.trim(),role:$('sfRole').value.trim(),username:$('sfUser').value.trim()};
+  try{await api('/leasing-staff?action=staff',{method:'POST',body:JSON.stringify(data)});closeM('staffMod');await loadStaff();await loadBoard();}catch(e){alert(e.message);}
 });
 
-$('exportXlsxBtn').addEventListener('click',()=>{
-  if(!selectedPropertyId){alert('Select a property');return;}
+/* ═══════ EXPORT ═══════ */
+$('exportBtn').addEventListener('click',()=>{
+  if(!propId){alert('Select a property');return;}
   if(typeof XLSX==='undefined'){alert('Excel library not loaded');return;}
-  const rows=buildExportData();if(!rows.length){alert('No data');return;}
+  const propName=(properties.find(p=>p.id===propId)||{}).name||'board';
+  const rows=tasks.map(t=>{
+    const grp=groups.find(g=>g.id===t.groupId);
+    const assigned=staff.find(s=>(s._id||'').toString()===t.assignedToUserId);
+    return{Group:grp?grp.name:'',Task:t.label,Person:assigned?assigned.employeeName:'',Status:t.status,Date:t.date||'',Completed:t.completed?'Yes':'No'};
+  });
+  if(!rows.length){alert('No tasks');return;}
   const ws=XLSX.utils.json_to_sheet(rows);
   ws['!cols']=Object.keys(rows[0]).map(k=>({wch:Math.max(k.length,...rows.map(r=>(r[k]||'').length))+2}));
-  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Staff List');
-  const pn=(properties.find(p=>p.id===selectedPropertyId)||{}).name||'Staff';
-  XLSX.writeFile(wb,`leasing_staff_${pn.replace(/\s+/g,'_')}_${$('taskDate').value||todayStr()}.xlsx`);
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Board');
+  XLSX.writeFile(wb,`staff_board_${propName.replace(/\s+/g,'_')}_${boardDate}.xlsx`);
 });
 
-$('printAllBtn').addEventListener('click',()=>window.print());
+/* ═══════ EVENTS ═══════ */
+$('logoutBtn').addEventListener('click',async()=>{try{await fetch('/api/auth-logout',{method:'POST',credentials:'include'});}catch(e){}location.href='index.html';});
+$('bProp').addEventListener('change',()=>{propId=$('bProp').value;loadBoard();loadTemplates();});
+$('bDate').addEventListener('change',()=>{boardDate=$('bDate').value;loadBoard();});
+$('bPerson').addEventListener('change',renderBoard);
+$('sProp').addEventListener('change',loadStaff);
 
-/* ══════════════════════════════════════════
-   SEED TEMPLATES
-   ══════════════════════════════════════════ */
-$('seedBtn').addEventListener('click',async()=>{
-  try{
-    const r=await api('/leasing-staff?action=seedTemplates',{method:'POST',body:'{}'});
-    const d=await r.json();
-    alert('Seeded '+d.seeded+' template(s)');
-    await loadTemplates();
-  }catch(e){alert(e.message);}
-});
+['taskMod','tplPickMod','staffMod','tplMod'].forEach(id=>$(id).addEventListener('click',e=>{if(e.target===$(id))closeM(id);}));
 
-/* ══════════════════════════════════════════
-   EVENT WIRING
-   ══════════════════════════════════════════ */
-$('logoutBtn').addEventListener('click',async()=>{
-  try{await fetch('/api/auth-logout',{method:'POST',credentials:'include'});}catch(e){}
-  location.href='index.html';
-});
-$('dashProperty').addEventListener('change',loadDashboard);
-$('dashDate').addEventListener('change',loadDashboard);
-$('taskProperty').addEventListener('change',()=>{selectedPropertyId=$('taskProperty').value;loadTasks();loadTemplates();});
-$('taskDate').addEventListener('change',loadTasks);
-$('assignTasksBtn').addEventListener('click',openAssignModal);
-$('newTplBtn').addEventListener('click',openNewTemplate);
-$('tplFilter').addEventListener('change',renderTemplates);
-$('addStaffBtn').addEventListener('click',openAddStaff);
-$('staffMgmtProperty').addEventListener('change',loadAllStaff);
-
-// Close modals on backdrop click
-['staffModal','tplModal','assignModal','taskEditModal'].forEach(id=>{
-  $(id).addEventListener('click',e=>{if(e.target===$(id))closeModal(id);});
-});
-
-/* ══════════════════════════════════════════
-   INIT
-   ══════════════════════════════════════════ */
-(async()=>{
-  const ok=await initAuth();
-  if(!ok) return;
-  await Promise.all([loadProperties(),loadRoles()]);
-  await loadTemplates();
-  // Auto-load if property pre-selected
-  if(selectedPropertyId){
-    loadDashboard();
-    loadTasks();
-  }
-  if(isAdmin) loadAllStaff();
-})();
+init();
 </script>
 <script src="standard-nav.js"></script>
 </body>

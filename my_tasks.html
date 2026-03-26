@@ -1,321 +1,232 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>My Tasks &bull; Marketing Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
-    :root{
-      --brand-primary:#446472;--brand-accent:#ffb732;--brand-accent-2:#52d5ff;
-      --text:#1e293b;--subtext:#64748b;--border:#e2e8f0;--good:#22c55e;--bad:#ef4444;
-      --page-bg:#f8fafc;
-    }
-    *{box-sizing:border-box;margin:0;padding:0}
-    html,body{height:100%}
-    body{font-family:'Open Sans',system-ui,-apple-system,sans-serif;background:var(--page-bg);color:var(--text);font-size:14px;line-height:1.5}
+:root{--pri:#446472;--acc2:#52d5ff;--text:#1e293b;--sub:#64748b;--bdr:#e2e8f0;--good:#22c55e;--bg:#f8fafc}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'Open Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
 
-    /* Top bar */
-    .topbar{background:var(--brand-primary);color:#fff;padding:16px 20px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:10}
-    .topbar .avatar{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0}
-    .topbar .info{flex:1}
-    .topbar .info h1{font-size:18px;font-weight:700;margin-bottom:2px}
-    .topbar .info .sub{font-size:12px;opacity:.8}
-    .topbar .print-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
-    .topbar .print-btn:hover{background:rgba(255,255,255,.3)}
+.topbar{background:var(--pri);color:#fff;padding:16px 20px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:10}
+.topbar .av{width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;flex-shrink:0}
+.topbar .info{flex:1}
+.topbar .info h1{font-size:18px;font-weight:700;margin-bottom:2px}
+.topbar .info .sub{font-size:12px;opacity:.8}
+.topbar button{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+.topbar button:hover{background:rgba(255,255,255,.3)}
 
-    .container{max-width:700px;margin:0 auto;padding:20px 16px}
+.container{max-width:800px;margin:0 auto;padding:20px 16px}
 
-    /* Progress */
-    .progress-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;display:flex;align-items:center;gap:16px}
-    .progress-ring{width:64px;height:64px;position:relative;flex-shrink:0}
-    .progress-ring svg{transform:rotate(-90deg)}
-    .progress-ring .pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:var(--brand-primary)}
-    .progress-info{flex:1}
-    .progress-info .title{font-size:15px;font-weight:700;margin-bottom:4px}
-    .progress-info .detail{font-size:12px;color:var(--subtext)}
+/* Progress */
+.prog-card{background:#fff;border:1px solid var(--bdr);border-radius:12px;padding:20px;margin-bottom:20px;display:flex;align-items:center;gap:16px}
+.prog-ring{width:60px;height:60px;position:relative;flex-shrink:0}
+.prog-ring svg{transform:rotate(-90deg)}
+.prog-ring .pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:var(--pri)}
+.prog-info{flex:1}
+.prog-info .t{font-size:15px;font-weight:700;margin-bottom:4px}
+.prog-info .d{font-size:12px;color:var(--sub)}
 
-    /* Date nav */
-    .date-nav{display:flex;align-items:center;gap:12px;margin-bottom:20px;justify-content:center}
-    .date-nav button{background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 16px;font-size:16px;font-weight:700;cursor:pointer;color:var(--text)}
-    .date-nav button:hover{background:#f1f5f9}
-    .date-nav .date-label{font-size:15px;font-weight:700;min-width:140px;text-align:center}
+/* Date nav */
+.date-nav{display:flex;align-items:center;gap:12px;margin-bottom:20px;justify-content:center}
+.date-nav button{background:#fff;border:1px solid var(--bdr);border-radius:8px;padding:8px 16px;font-size:16px;font-weight:700;cursor:pointer;color:var(--text)}
+.date-nav button:hover{background:#f1f5f9}
+.date-nav .dl{font-size:15px;font-weight:700;min-width:140px;text-align:center}
 
-    /* Category sections */
-    .cat-section{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px}
-    .cat-header{padding:12px 16px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;display:flex;align-items:center;justify-content:space-between}
-    .cat-opening .cat-header{background:#dbeafe;color:#1e40af}
-    .cat-lead .cat-header{background:#fef3c7;color:#92400e}
-    .cat-social .cat-header{background:#ede9fe;color:#5b21b6}
-    .cat-event .cat-header{background:#fce7f3;color:#9d174d}
-    .cat-marketing .cat-header{background:#d1fae5;color:#065f46}
-    .cat-misc .cat-header{background:#f3f4f6;color:#374151}
-    .cat-closing .cat-header{background:#fee2e2;color:#991b1b}
-    .cat-count{font-size:11px;opacity:.8}
+/* Groups */
+.grp{background:#fff;border:1px solid var(--bdr);border-radius:12px;overflow:hidden;margin-bottom:16px}
+.grp-hd{padding:12px 16px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:10px}
+.grp-hd .dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.grp-hd .cnt{margin-left:auto;font-size:11px;color:var(--sub)}
 
-    .task-row{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-bottom:1px solid #f1f5f9;cursor:pointer;transition:background .1s;-webkit-tap-highlight-color:transparent}
-    .task-row:last-child{border-bottom:none}
-    .task-row:active{background:#f8fafc}
-    .task-row.done{background:#f0fdf4}
-    .checkbox{width:24px;height:24px;border-radius:6px;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;margin-top:1px}
-    .task-row.done .checkbox{background:var(--good);border-color:var(--good);color:#fff}
-    .task-row.done .checkbox::after{content:'\2713';font-size:14px;font-weight:700}
-    .task-content{flex:1}
-    .task-label{font-size:14px;line-height:1.4}
-    .task-row.done .task-label{text-decoration:line-through;color:var(--subtext)}
-    .task-note{font-size:11px;color:var(--subtext);margin-top:2px;font-style:italic}
-    .task-time{font-size:10px;color:var(--subtext);margin-top:2px}
+.task{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #f1f5f9;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .1s}
+.task:last-child{border-bottom:none}
+.task:active{background:#f8fafc}
+.task.done{background:#f0fdf4}
+.cb{width:24px;height:24px;border-radius:6px;border:2px solid var(--bdr);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.task.done .cb{background:var(--good);border-color:var(--good);color:#fff}
+.task.done .cb::after{content:'\2713';font-size:14px;font-weight:700}
+.task-body{flex:1}
+.task-body .lbl{font-size:14px;line-height:1.4}
+.task.done .lbl{text-decoration:line-through;color:var(--sub)}
+.task-body .meta{font-size:11px;color:var(--sub);margin-top:2px}
 
-    .empty{text-align:center;padding:60px 20px;color:var(--subtext)}
-    .empty h2{font-size:20px;color:var(--text);margin-bottom:8px}
+/* Status inline */
+.st{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;margin-left:8px}
+.st-ns{background:#f1f5f9;color:#64748b}
+.st-wi{background:#fef3c7;color:#92400e}
+.st-dn{background:#d1fae5;color:#065f46}
+.st-oh{background:#ede9fe;color:#5b21b6}
 
-    .loading{text-align:center;padding:80px 20px;color:var(--subtext)}
-    .loading .spinner{width:40px;height:40px;border:4px solid var(--border);border-top-color:var(--brand-accent-2);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
-    @keyframes spin{to{transform:rotate(360deg)}}
+/* Status picker */
+.st-pick{display:none;position:absolute;z-index:50;background:#fff;border:1px solid var(--bdr);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:6px;min-width:140px}
+.st-pick.show{display:block}
+.st-pick div{padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600}
+.st-pick div:hover{background:#f8fafc}
 
-    /* Print */
-    @media print{
-      .topbar .print-btn,.date-nav button{display:none!important}
-      .topbar{background:var(--brand-primary)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-      .cat-section .cat-header{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-      body{background:#fff}
-      .task-row{cursor:default}
-    }
+.empty{text-align:center;padding:60px 20px;color:var(--sub)}
+.empty h2{font-size:20px;color:var(--text);margin-bottom:8px}
+.loading{text-align:center;padding:80px 20px;color:var(--sub)}
+.loading .spin{width:40px;height:40px;border:4px solid var(--bdr);border-top-color:var(--acc2);border-radius:50%;animation:sp .8s linear infinite;margin:0 auto 16px}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+@media print{
+  .topbar button,.date-nav button{display:none!important}
+  .topbar{background:var(--pri)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .grp-hd{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{background:#fff}.task{cursor:default}
+}
   </style>
 </head>
 <body>
 
-  <div id="loadingView" class="loading">
-    <div class="spinner"></div>
-    <div>Loading your tasks&hellip;</div>
-  </div>
+<div id="loadV" class="loading"><div class="spin"></div><div>Loading your tasks&hellip;</div></div>
+<div id="errV" class="empty" style="display:none"><h2>Unable to Load Tasks</h2><p id="errMsg">Please sign in or check your link.</p><a href="index.html" style="color:var(--acc2);font-weight:600;margin-top:16px;display:inline-block">Go to Login</a></div>
 
-  <div id="errorView" class="empty" style="display:none">
-    <h2>Unable to Load Tasks</h2>
-    <p id="errorMsg">Please sign in or check your link.</p>
-    <a href="index.html" style="color:var(--brand-accent-2);font-weight:600;margin-top:16px;display:inline-block">Go to Login</a>
+<div id="appV" style="display:none">
+  <div class="topbar">
+    <div class="av" id="av"></div>
+    <div class="info"><h1 id="sName"></h1><div class="sub"><span id="sRole"></span> &middot; <span id="sProp"></span></div></div>
+    <button onclick="window.print()">Print</button>
   </div>
-
-  <div id="appView" style="display:none">
-    <div class="topbar">
-      <div class="avatar" id="avatar"></div>
-      <div class="info">
-        <h1 id="staffName"></h1>
-        <div class="sub"><span id="staffRole"></span> &middot; <span id="propertyName"></span></div>
-      </div>
-      <button class="print-btn" onclick="window.print()">Print</button>
+  <div class="container">
+    <div class="date-nav">
+      <button id="prevD">&larr;</button>
+      <div class="dl" id="dLabel"></div>
+      <button id="nextD">&rarr;</button>
     </div>
-
-    <div class="container">
-      <div class="date-nav">
-        <button id="prevDay">&larr;</button>
-        <div class="date-label" id="dateLabel"></div>
-        <button id="nextDay">&rarr;</button>
+    <div class="prog-card">
+      <div class="prog-ring">
+        <svg width="60" height="60" viewBox="0 0 60 60"><circle cx="30" cy="30" r="26" fill="none" stroke="#e2e8f0" stroke-width="5"/><circle cx="30" cy="30" r="26" fill="none" stroke="#22c55e" stroke-width="5" stroke-dasharray="163.36" stroke-dashoffset="163.36" stroke-linecap="round" id="pCircle"/></svg>
+        <div class="pct" id="pPct">0%</div>
       </div>
-
-      <div class="progress-card">
-        <div class="progress-ring" id="progressRing">
-          <svg width="64" height="64" viewBox="0 0 64 64">
-            <circle cx="32" cy="32" r="28" fill="none" stroke="#e2e8f0" stroke-width="5"/>
-            <circle cx="32" cy="32" r="28" fill="none" stroke="#22c55e" stroke-width="5" stroke-dasharray="175.93" stroke-dashoffset="175.93" stroke-linecap="round" id="progressCircle"/>
-          </svg>
-          <div class="pct" id="progressPct">0%</div>
-        </div>
-        <div class="progress-info">
-          <div class="title" id="progressTitle">0 of 0 tasks completed</div>
-          <div class="detail" id="progressDetail">Get started by checking off your tasks!</div>
-        </div>
-      </div>
-
-      <div id="taskContainer"></div>
-
-      <div id="noTasks" class="empty" style="display:none">
-        <h2>No Tasks Today</h2>
-        <p>You have no tasks assigned for this date. Check back later or contact your manager.</p>
-      </div>
+      <div class="prog-info"><div class="t" id="pTitle">0 of 0 tasks</div><div class="d" id="pDetail">Get started!</div></div>
     </div>
+    <div id="taskArea"></div>
+    <div id="noTasks" class="empty" style="display:none"><h2>No Tasks Today</h2><p>No tasks assigned for this date.</p></div>
   </div>
+</div>
 
 <script>
-const CATEGORIES=['Opening Task','Lead Follow Up','Social Media','Event','Marketing','Misc Task','Closing Task'];
-const CAT_CSS={'Opening Task':'cat-opening','Lead Follow Up':'cat-lead','Social Media':'cat-social','Event':'cat-event','Marketing':'cat-marketing','Misc Task':'cat-misc','Closing Task':'cat-closing'};
+const GROUPS=[
+  {id:'opening',name:'Opening',color:'#3b82f6'},
+  {id:'operations',name:'Operations',color:'#8b5cf6'},
+  {id:'turn',name:'Turn / Move-Ins',color:'#f59e0b'},
+  {id:'marketing',name:'Marketing',color:'#10b981'},
+  {id:'lead-follow-up',name:'Lead Follow Up',color:'#f97316'},
+  {id:'events',name:'Events',color:'#ec4899'},
+  {id:'closing',name:'Closing',color:'#ef4444'},
+  {id:'misc',name:'Misc',color:'#64748b'},
+];
+const ST_CSS={'Not Started':'st-ns','Working on It':'st-wi','Done':'st-dn','On Hold':'st-oh'};
 
-let staffData=null, myTasks=[], currentDate='';
+let staffData=null,myTasks=[],curDate='';
 const params=new URLSearchParams(location.search);
-
 function esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML;}
-function todayStr(){return new Date().toISOString().slice(0,10);}
-function fmtDate(d){const dt=new Date(d+'T12:00:00');return dt.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});}
-
-async function apiFetch(path){
-  const res=await fetch('/api'+path,{credentials:'include'});
-  if(!res.ok) throw new Error(await res.text()||'HTTP '+res.status);
-  return res.json();
-}
+function today(){return new Date().toISOString().slice(0,10);}
+function fmtDate(d){return new Date(d+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});}
+async function apiFetch(p){const r=await fetch('/api'+p,{credentials:'include'});if(!r.ok)throw new Error(await r.text()||'HTTP '+r.status);return r.json();}
 
 async function init(){
   try{
-    // Check auth
-    const me=await apiFetch('/me');
-    currentDate=params.get('date')||todayStr();
-
-    // Get staff + tasks
+    await apiFetch('/me');
+    curDate=params.get('date')||today();
     const staffId=params.get('staff')||'';
-    let url='/leasing-staff?action=myTasks&date='+currentDate;
+    let url='/leasing-staff?action=myTasks&date='+curDate;
     if(staffId) url+='&staffId='+staffId;
     const data=await apiFetch(url);
+    if(!data.staff){showErr('No staff profile found. Ask your admin to link your username.');return;}
+    staffData=data.staff;myTasks=data.tasks||[];
 
-    if(!data.staff){
-      showError('No staff profile found for your account. Ask your admin to link your username.');
-      return;
-    }
-
-    staffData=data.staff;
-    myTasks=data.tasks||[];
-
-    // Get property name
     let propName='';
-    try{
-      const props=await apiFetch('/properties');
-      const prop=props.find(p=>p.id===staffData.propertyId);
-      if(prop) propName=prop.name;
-    }catch(e){}
+    try{const ps=await apiFetch('/properties');const p=ps.find(x=>x.id===staffData.propertyId);if(p)propName=p.name;}catch(e){}
 
-    // Show UI
-    document.getElementById('loadingView').style.display='none';
-    document.getElementById('appView').style.display='';
-
+    document.getElementById('loadV').style.display='none';
+    document.getElementById('appV').style.display='';
     const initials=(staffData.employeeName||'').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-    document.getElementById('avatar').textContent=initials;
-    document.getElementById('staffName').textContent=staffData.employeeName;
-    document.getElementById('staffRole').textContent=staffData.role||staffData.title||'Team Member';
-    document.getElementById('propertyName').textContent=propName||'Property';
-
-    renderDate();
-    renderTasks();
-  }catch(e){
-    console.error(e);
-    showError(e.message);
-  }
+    document.getElementById('av').textContent=initials;
+    document.getElementById('sName').textContent=staffData.employeeName;
+    document.getElementById('sRole').textContent=staffData.role||'Team Member';
+    document.getElementById('sProp').textContent=propName||'Property';
+    renderDate();render();
+  }catch(e){console.error(e);showErr(e.message);}
 }
 
-function showError(msg){
-  document.getElementById('loadingView').style.display='none';
-  document.getElementById('errorView').style.display='';
-  document.getElementById('errorMsg').textContent=msg;
-}
+function showErr(m){document.getElementById('loadV').style.display='none';document.getElementById('errV').style.display='';document.getElementById('errMsg').textContent=m;}
 
-function renderDate(){
-  document.getElementById('dateLabel').textContent=fmtDate(currentDate);
-}
+function renderDate(){document.getElementById('dLabel').textContent=fmtDate(curDate);}
 
-function renderTasks(){
-  const grouped={};
-  myTasks.forEach(t=>{if(!grouped[t.category])grouped[t.category]=[];grouped[t.category].push(t);});
+function render(){
+  const byGroup={};
+  myTasks.forEach(t=>{const g=t.groupId||'misc';if(!byGroup[g])byGroup[g]=[];byGroup[g].push(t);});
+  let html='',hasAny=false;
 
-  let html='';
-  let hasAny=false;
-  CATEGORIES.forEach(cat=>{
-    if(!grouped[cat]||grouped[cat].length===0) return;
+  GROUPS.forEach(g=>{
+    const items=byGroup[g.id];if(!items||!items.length)return;
     hasAny=true;
-    const items=grouped[cat];
-    const done=items.filter(t=>t.isCompleted).length;
-    html+=`<div class="cat-section ${CAT_CSS[cat]||'cat-misc'}">
-      <div class="cat-header"><span>${esc(cat)}</span><span class="cat-count">${done}/${items.length}</span></div>`;
+    const done=items.filter(t=>t.completed).length;
+    html+=`<div class="grp"><div class="grp-hd"><span class="dot" style="background:${g.color}"></span>${esc(g.name)}<span class="cnt">${done}/${items.length}</span></div>`;
     items.forEach(t=>{
-      const dc=t.isCompleted?'done':'';
-      const timeStr=t.completedAt?new Date(t.completedAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):'';
-      html+=`<div class="task-row ${dc}" data-tid="${t._id}">
-        <div class="checkbox"></div>
-        <div class="task-content">
-          <div class="task-label">${esc(t.taskText)}</div>
-          ${t.notes?'<div class="task-note">'+esc(t.notes)+'</div>':''}
-          ${t.isCompleted?'<div class="task-time">Completed '+esc(timeStr)+'</div>':''}
+      const dc=t.completed?'done':'';
+      const stCls=ST_CSS[t.status]||'st-ns';
+      const time=t.completedAt?new Date(t.completedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'';
+      html+=`<div class="task ${dc}" data-tid="${t._id}">
+        <div class="cb"></div>
+        <div class="task-body">
+          <div class="lbl">${esc(t.label)}<span class="st ${stCls}">${esc(t.status)}</span></div>
+          ${t.completed?'<div class="meta">Completed '+esc(time)+'</div>':''}
         </div>
       </div>`;
     });
     html+='</div>';
   });
 
-  document.getElementById('taskContainer').innerHTML=html;
+  document.getElementById('taskArea').innerHTML=html;
   document.getElementById('noTasks').style.display=hasAny?'none':'';
 
-  // Update progress
-  const total=myTasks.length;
-  const completed=myTasks.filter(t=>t.isCompleted).length;
-  const pct=total?Math.round(completed/total*100):0;
-  document.getElementById('progressPct').textContent=pct+'%';
-  document.getElementById('progressTitle').textContent=completed+' of '+total+' tasks completed';
-  const circ=document.getElementById('progressCircle');
-  const circumference=2*Math.PI*28; // r=28
-  circ.style.strokeDasharray=circumference;
-  circ.style.strokeDashoffset=circumference-(pct/100*circumference);
-  if(pct===100){
-    document.getElementById('progressDetail').textContent='All done! Great work today.';
-    circ.style.stroke='#22c55e';
-  } else if(pct>=50){
-    document.getElementById('progressDetail').textContent='Keep going, you\'re doing great!';
-    circ.style.stroke='#52d5ff';
-  } else {
-    document.getElementById('progressDetail').textContent='Get started by checking off your tasks!';
-    circ.style.stroke='#52d5ff';
-  }
+  // Progress
+  const total=myTasks.length,comp=myTasks.filter(t=>t.completed).length;
+  const pct=total?Math.round(comp/total*100):0;
+  document.getElementById('pPct').textContent=pct+'%';
+  document.getElementById('pTitle').textContent=comp+' of '+total+' tasks completed';
+  const circ=document.getElementById('pCircle');
+  const C=2*Math.PI*26;
+  circ.style.strokeDasharray=C;
+  circ.style.strokeDashoffset=C-(pct/100*C);
+  circ.style.stroke=pct===100?'#22c55e':'#52d5ff';
+  document.getElementById('pDetail').textContent=pct===100?'All done! Great work.':pct>=50?'Keep going!':'Get started!';
 
   // Click handlers
-  document.querySelectorAll('.task-row').forEach(row=>{
+  document.querySelectorAll('.task').forEach(row=>{
     row.addEventListener('click',async()=>{
       const tid=row.dataset.tid;
-      const task=myTasks.find(t=>(t._id||'').toString()===tid);
-      if(!task) return;
-      const newVal=!task.isCompleted;
-      // Optimistic update
-      task.isCompleted=newVal;
-      task.completedAt=newVal?new Date().toISOString():null;
-      renderTasks();
-      try{
-        await fetch('/api/leasing-staff?action=completeTask',{
-          method:'POST',credentials:'include',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({id:tid,isCompleted:newVal})
-        });
-      }catch(e){
-        // Revert
-        task.isCompleted=!newVal;
-        task.completedAt=null;
-        renderTasks();
-        alert('Failed to update task');
-      }
+      const t=myTasks.find(x=>(x._id||'').toString()===tid);if(!t)return;
+      const nv=!t.completed;
+      t.completed=nv;t.completedAt=nv?new Date().toISOString():null;t.status=nv?'Done':'Not Started';
+      render();
+      try{await fetch('/api/leasing-staff?action=completeTask',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:tid,completed:nv})});}
+      catch(e){t.completed=!nv;t.completedAt=null;t.status=nv?'Not Started':'Done';render();alert('Failed to update');}
     });
   });
 }
 
-// Date navigation
-async function navigateDate(offset){
-  const d=new Date(currentDate+'T12:00:00');
-  d.setDate(d.getDate()+offset);
-  currentDate=d.toISOString().slice(0,10);
+async function navDate(off){
+  const d=new Date(curDate+'T12:00:00');d.setDate(d.getDate()+off);curDate=d.toISOString().slice(0,10);
   renderDate();
-  // Reload tasks
   const staffId=params.get('staff')||'';
-  let url='/leasing-staff?action=myTasks&date='+currentDate;
+  let url='/leasing-staff?action=myTasks&date='+curDate;
   if(staffId) url+='&staffId='+staffId;
-  try{
-    const data=await apiFetch(url);
-    myTasks=data.tasks||[];
-    renderTasks();
-  }catch(e){
-    document.getElementById('taskContainer').innerHTML='<div class="empty"><p>Error loading tasks</p></div>';
-  }
-  // Update URL without reload
-  const u=new URL(location);
-  u.searchParams.set('date',currentDate);
-  history.replaceState(null,'',u);
+  try{const data=await apiFetch(url);myTasks=data.tasks||[];render();}catch(e){document.getElementById('taskArea').innerHTML='<div class="empty"><p>Error loading tasks</p></div>';}
+  const u=new URL(location);u.searchParams.set('date',curDate);history.replaceState(null,'',u);
 }
 
-document.getElementById('prevDay').addEventListener('click',()=>navigateDate(-1));
-document.getElementById('nextDay').addEventListener('click',()=>navigateDate(1));
+document.getElementById('prevD').addEventListener('click',()=>navDate(-1));
+document.getElementById('nextD').addEventListener('click',()=>navDate(1));
 
 init();
 </script>
