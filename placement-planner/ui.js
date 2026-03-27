@@ -572,7 +572,7 @@ function renderMasterList(residents, inventory, filters, callbacks) {
     table.className = 'master-list-table';
     table.innerHTML =
       '<thead><tr>' +
-        '<th>Name</th><th>Unit</th><th>Lease Status</th><th>Scholarship</th><th>Actions</th>' +
+        '<th>Name</th><th>Unit</th><th>Floorplan</th><th>Lease Status</th><th>Scholarship</th><th>Actions</th>' +
       '</tr></thead>' +
       '<tbody id="master-table-body"></tbody>';
     container.appendChild(table);
@@ -679,6 +679,9 @@ function renderMasterList(residents, inventory, filters, callbacks) {
     var tdUnit = document.createElement('td');
     tdUnit.textContent = unit || '--';
 
+    var tdFloorplan = document.createElement('td');
+    tdFloorplan.textContent = unitType || '--';
+
     var tdLease = document.createElement('td');
     tdLease.textContent = isOccupied ? (rowResident.Lease_Status || '--') : '';
 
@@ -713,6 +716,7 @@ function renderMasterList(residents, inventory, filters, callbacks) {
 
     tr.appendChild(tdName);
     tr.appendChild(tdUnit);
+    tr.appendChild(tdFloorplan);
     tr.appendChild(tdLease);
     tr.appendChild(tdScholarship);
     tr.appendChild(tdActions);
