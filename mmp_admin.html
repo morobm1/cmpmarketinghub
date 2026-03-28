@@ -199,6 +199,16 @@
     .modal-footer{padding:20px; border-top:1px solid var(--border); display:flex; gap:12px; justify-content:flex-end}
     .modal-footer .btn{width:auto; padding:10px 20px}
 
+    /* Email Preview Modal */
+    .email-preview-modal .modal{max-width:720px}
+    .email-preview-frame{border:1px solid var(--border); border-radius:10px; overflow:hidden; background:#f8fafc; max-height:420px; overflow-y:auto}
+    .email-preview-frame iframe{width:100%; border:none; min-height:400px}
+    .email-actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:16px}
+    .email-actions .btn{display:flex; align-items:center; gap:6px; font-size:13px}
+    .email-actions .btn svg{width:16px; height:16px}
+    .email-status{font-size:12px; color:var(--success); font-weight:600; display:none; align-items:center; gap:4px; margin-left:auto}
+    .email-status.show{display:flex}
+
     .hidden{display:none}
 
     @media(max-width:768px){
@@ -555,6 +565,30 @@
     </div>
   </div>
 
+  <!-- Email Preview Modal -->
+  <div id="emailPreviewModal" class="modal-overlay email-preview-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>📧 Welcome Email Preview</h3>
+        <button class="modal-close" id="closeEmailPreview">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin:0 0 12px; font-size:13px; color:var(--subtext);">Review the welcome email before sending to the new user.</p>
+        <div class="email-preview-frame">
+          <iframe id="emailPreviewFrame" sandbox="allow-same-origin"></iframe>
+        </div>
+        <div class="email-actions">
+          <button class="btn success" id="emailOpenMailto" title="Open in your default email client">✉️ Open in Email Client</button>
+          <button class="btn" id="emailCopyHtml" title="Copy formatted email to clipboard">📋 Copy Email</button>
+          <span class="email-status" id="emailCopyStatus">✓ Copied!</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="emailPreviewDone">Done</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const API_BASE = '/api';
     const CATALOG_STORAGE_KEY = 'mmp_uniform_catalog_v1';
@@ -898,87 +932,85 @@
       }
     }
 
-    function openEmailClient(username, password, email){
-      const subject = encodeURIComponent('Welcome to CMP Marketing Hub - Your Login Credentials');
-      
-      // Create a more professional HTML email body
-      const htmlBody = `
-<!DOCTYPE html>
+    function buildWelcomeEmailHTML(username, password){
+      return `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="margin: 0; padding: 0; font-family: 'Open Sans', Arial, sans-serif; background-color: #f8fafc;">
-  <table role="presentation" style="width: 100%; border-collapse: collapse;">
+<body style="margin:0; padding:0; font-family:'Open Sans', Arial, sans-serif; background-color:#f8fafc;">
+  <table role="presentation" style="width:100%; border-collapse:collapse;">
     <tr>
-      <td align="center" style="padding: 40px 20px;">
-        <table role="presentation" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;">
+      <td align="center" style="padding:40px 20px;">
+        <table role="presentation" style="max-width:600px; width:100%; background-color:#ffffff; border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,0.08); border:1px solid #e2e8f0;">
           <!-- Header -->
           <tr>
-            <td style="padding: 40px 40px 30px; text-align: center; background: linear-gradient(135deg, #446472 0%, #52d5ff 100%); border-radius: 14px 14px 0 0;">
-              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">Welcome to CMP Marketing Hub</h1>
-              <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 14px;">Capstone Management Partners</p>
+            <td style="padding:40px 40px 24px; text-align:center; background:linear-gradient(135deg, #446472 0%, #3a7e9a 50%, #52d5ff 100%); border-radius:14px 14px 0 0;">
+              <table role="presentation" style="width:100%;"><tr><td align="center">
+                <div style="width:56px; height:56px; background:rgba(255,255,255,0.2); border-radius:50%; margin:0 auto 16px; line-height:56px; font-size:28px; color:#fff;">&#9993;</div>
+              </td></tr></table>
+              <h1 style="margin:0; color:#ffffff; font-size:26px; font-weight:700; letter-spacing:-0.5px;">Welcome to CMP Marketing Hub</h1>
+              <p style="margin:8px 0 0; color:rgba(255,255,255,0.85); font-size:13px; font-weight:500;">Capstone Management Partners</p>
             </td>
           </tr>
-          
+
           <!-- Body -->
           <tr>
-            <td style="padding: 40px;">
-              <p style="margin: 0 0 20px; color: #1e293b; font-size: 16px; line-height: 1.6;">Hello <strong>${username}</strong>,</p>
-              
-              <p style="margin: 0 0 25px; color: #1e293b; font-size: 16px; line-height: 1.6;">Your account has been created for the CMP Marketing Hub platform. You now have access to our comprehensive marketing management tools.</p>
-              
+            <td style="padding:36px 40px;">
+              <p style="margin:0 0 18px; color:#1e293b; font-size:15px; line-height:1.6;">Hi <strong>${username}</strong>,</p>
+
+              <p style="margin:0 0 24px; color:#475569; font-size:15px; line-height:1.6;">Your account has been created. Below are your login credentials to access the CMP Marketing Hub &mdash; our centralized platform for marketing tools, SOPs, creative assets, and more.</p>
+
               <!-- Credentials Box -->
-              <table role="presentation" style="width: 100%; background-color: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0; margin: 0 0 25px;">
+              <table role="presentation" style="width:100%; background-color:#f8fafc; border-radius:10px; border:1px solid #e2e8f0; margin:0 0 24px;">
                 <tr>
-                  <td style="padding: 25px;">
-                    <p style="margin: 0 0 15px; color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Your Login Credentials</p>
-                    
-                    <table role="presentation" style="width: 100%;">
+                  <td style="padding:24px;">
+                    <p style="margin:0 0 14px; color:#64748b; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px;">Your Login Credentials</p>
+                    <table role="presentation" style="width:100%; border-collapse:collapse;">
                       <tr>
-                        <td style="padding: 8px 0; color: #64748b; font-size: 14px; font-weight: 600;">Username:</td>
-                        <td style="padding: 8px 0; color: #1e293b; font-size: 14px; font-family: 'Courier New', monospace; font-weight: 600;">${username}</td>
+                        <td style="padding:10px 12px; color:#64748b; font-size:13px; font-weight:600; width:100px; border-bottom:1px solid #e2e8f0;">Username</td>
+                        <td style="padding:10px 12px; color:#1e293b; font-size:14px; font-family:'Courier New', monospace; font-weight:700; border-bottom:1px solid #e2e8f0;">${username}</td>
                       </tr>
                       <tr>
-                        <td style="padding: 8px 0; color: #64748b; font-size: 14px; font-weight: 600;">Password:</td>
-                        <td style="padding: 8px 0; color: #1e293b; font-size: 14px; font-family: 'Courier New', monospace; font-weight: 600;">${password}</td>
+                        <td style="padding:10px 12px; color:#64748b; font-size:13px; font-weight:600; width:100px;">Password</td>
+                        <td style="padding:10px 12px; color:#1e293b; font-size:14px; font-family:'Courier New', monospace; font-weight:700;">${password}</td>
                       </tr>
                     </table>
                   </td>
                 </tr>
               </table>
-              
+
               <!-- CTA Button -->
-              <table role="presentation" style="width: 100%; margin: 0 0 25px;">
+              <table role="presentation" style="width:100%; margin:0 0 24px;">
                 <tr>
                   <td align="center">
-                    <a href="https://cmpmarketinghub.netlify.app/" style="display: inline-block; padding: 14px 32px; background-color: #52d5ff; color: #0b1b24; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 2px 8px rgba(82,213,255,0.3);">Access Marketing Hub</a>
+                    <a href="https://cmpmarketinghub.netlify.app/" style="display:inline-block; padding:14px 36px; background-color:#446472; color:#ffffff; text-decoration:none; border-radius:8px; font-weight:700; font-size:15px;">Log In to Marketing Hub &rarr;</a>
                   </td>
                 </tr>
               </table>
-              
+
               <!-- Security Notice -->
-              <table role="presentation" style="width: 100%; background-color: #fff7e6; border-radius: 8px; border-left: 4px solid #ffb732; margin: 0 0 25px;">
+              <table role="presentation" style="width:100%; background-color:#fffbeb; border-radius:8px; border-left:4px solid #f59e0b; margin:0 0 24px;">
                 <tr>
-                  <td style="padding: 16px 20px;">
-                    <p style="margin: 0; color: #8a5800; font-size: 13px; line-height: 1.5;"><strong>🔒 Security Reminder:</strong> Please change your password after your first login. Keep your credentials secure and do not share them with others.</p>
+                  <td style="padding:14px 18px;">
+                    <p style="margin:0; color:#92400e; font-size:13px; line-height:1.5;"><strong>Security Reminder:</strong> Please change your password after your first login. Do not share your credentials with others.</p>
                   </td>
                 </tr>
               </table>
-              
-              <p style="margin: 0 0 15px; color: #1e293b; font-size: 16px; line-height: 1.6;">If you have any questions or need assistance, please contact your administrator.</p>
-              
-              <p style="margin: 0; color: #1e293b; font-size: 16px; line-height: 1.6;">Best regards,<br><strong>The CMP Marketing Hub Team</strong></p>
+
+              <p style="margin:0 0 6px; color:#475569; font-size:14px; line-height:1.6;">Need help? Reach out to your administrator or reply to this email.</p>
+
+              <p style="margin:18px 0 0; color:#1e293b; font-size:14px; line-height:1.6;">Best,<br><strong style="color:#446472;">The CMP Marketing Hub Team</strong></p>
             </td>
           </tr>
-          
+
           <!-- Footer -->
           <tr>
-            <td style="padding: 30px 40px; text-align: center; background-color: #f8fafc; border-radius: 0 0 14px 14px; border-top: 1px solid #e2e8f0;">
-              <p style="margin: 0 0 8px; color: #64748b; font-size: 12px;">Capstone Management Partners</p>
-              <p style="margin: 0; color: #64748b; font-size: 12px;">
-                <a href="https://cmpmarketinghub.netlify.app/" style="color: #446472; text-decoration: none;">cmpmarketinghub.netlify.app</a>
+            <td style="padding:24px 40px; text-align:center; background-color:#f8fafc; border-radius:0 0 14px 14px; border-top:1px solid #e2e8f0;">
+              <p style="margin:0 0 4px; color:#94a3b8; font-size:11px;">Capstone Management Partners</p>
+              <p style="margin:0; color:#94a3b8; font-size:11px;">
+                <a href="https://cmpmarketinghub.netlify.app/" style="color:#446472; text-decoration:none;">cmpmarketinghub.netlify.app</a>
               </p>
             </td>
           </tr>
@@ -988,90 +1020,97 @@
   </table>
 </body>
 </html>`;
+    }
 
-      // For Gmail, we'll use a simplified plain text version with better formatting
-      const plainTextBody = encodeURIComponent(
-`Hello ${username},
+    function buildWelcomeEmailPlainText(username, password){
+      return `Hi ${username},
 
 Welcome to CMP Marketing Hub!
 
-Your account has been created for the CMP Marketing Hub platform. You now have access to our comprehensive marketing management tools.
+Your account has been created. Below are your login credentials to access the platform.
 
-━━━━━━━━━━━━━━━━━━━���━━━━━━━━━━━━━━
-YOUR LOGIN CREDENTIALS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+---------------------------------------
+  YOUR LOGIN CREDENTIALS
+---------------------------------------
+  Username:  ${username}
+  Password:  ${password}
+---------------------------------------
 
-Username: ${username}
-Password: ${password}
+Log in at: https://cmpmarketinghub.netlify.app/
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECURITY REMINDER: Please change your password after your first login. Do not share your credentials with others.
 
-🔗 Access the platform at:
-https://cmpmarketinghub.netlify.app/
+Need help? Reach out to your administrator.
 
-🔒 SECURITY REMINDER:
-Please change your password after your first login. Keep your credentials secure and do not share them with others.
-
-If you have any questions or need assistance, please contact your administrator.
-
-Best regards,
+Best,
 The CMP Marketing Hub Team
+Capstone Management Partners`;
+    }
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Capstone Management Partners
-https://cmpmarketinghub.netlify.app/
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
-      );
-      
-      // Open Gmail with the formatted email
-      window.open(`mailto:${email}?subject=${subject}&body=${plainTextBody}`, '_blank');
-      
-      // Also copy HTML version to clipboard for manual pasting if needed
-      copyHTMLEmailToClipboard(htmlBody, username, email);
+    function openEmailClient(username, password, email){
+      const htmlBody = buildWelcomeEmailHTML(username, password);
+      const plainText = buildWelcomeEmailPlainText(username, password);
+
+      // Store for modal actions
+      window._pendingEmail = { username, password, email, htmlBody, plainText };
+
+      // Show preview modal
+      const modal = document.getElementById('emailPreviewModal');
+      const frame = document.getElementById('emailPreviewFrame');
+      modal.classList.add('show');
+
+      // Write HTML into iframe for safe preview
+      const doc = frame.contentDocument || frame.contentWindow.document;
+      doc.open();
+      doc.write(htmlBody);
+      doc.close();
+
+      // Auto-size iframe to content
+      setTimeout(() => {
+        try { frame.style.height = doc.body.scrollHeight + 20 + 'px'; } catch(e){}
+      }, 150);
     }
-    
-    function copyHTMLEmailToClipboard(htmlBody, username, email){
-      // Create a temporary element to hold the HTML
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = htmlBody;
-      tempDiv.style.position = 'absolute';
-      tempDiv.style.left = '-9999px';
-      document.body.appendChild(tempDiv);
-      
-      try {
-        // Try to copy HTML to clipboard
-        const range = document.createRange();
-        range.selectNodeContents(tempDiv);
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
-        
-        // Show a notification that HTML email is available
-        setTimeout(() => {
-          const copyHtml = confirm(
-            `Gmail opened with plain text email.\n\n` +
-            `For a better-looking HTML email:\n` +
-            `1. Click OK to copy the HTML version\n` +
-            `2. Compose a new email in Gmail\n` +
-            `3. Click the three dots menu → "Show original"\n` +
-            `4. Or use an email client that supports HTML composition\n\n` +
-            `Would you like to copy the HTML version now?`
-          );
-          
-          if (copyHtml) {
-            navigator.clipboard.writeText(htmlBody).then(() => {
-              alert('HTML email template copied to clipboard!\n\nYou can paste this into an HTML email composer.');
-            }).catch(() => {
-              alert('Could not copy to clipboard. Please use the plain text email that opened in Gmail.');
-            });
-          }
-        }, 500);
-      } catch(e) {
-        console.error('Could not copy HTML email:', e);
-      } finally {
-        document.body.removeChild(tempDiv);
-      }
-    }
+
+    // Email preview modal handlers
+    (function(){
+      const modal = document.getElementById('emailPreviewModal');
+      const closeBtn = document.getElementById('closeEmailPreview');
+      const doneBtn = document.getElementById('emailPreviewDone');
+      const mailtoBtn = document.getElementById('emailOpenMailto');
+      const copyBtn = document.getElementById('emailCopyHtml');
+      const statusEl = document.getElementById('emailCopyStatus');
+
+      function closeModal(){ modal.classList.remove('show'); }
+      closeBtn.addEventListener('click', closeModal);
+      doneBtn.addEventListener('click', closeModal);
+      modal.addEventListener('click', (e) => { if(e.target === modal) closeModal(); });
+
+      mailtoBtn.addEventListener('click', () => {
+        const d = window._pendingEmail;
+        if(!d) return;
+        const subject = encodeURIComponent('Welcome to CMP Marketing Hub - Your Login Credentials');
+        const body = encodeURIComponent(d.plainText);
+        window.open(`mailto:${d.email}?subject=${subject}&body=${body}`, '_blank');
+      });
+
+      copyBtn.addEventListener('click', async () => {
+        const d = window._pendingEmail;
+        if(!d) return;
+        try {
+          // Try to copy rich HTML + plain text to clipboard
+          const blob = new Blob([d.htmlBody], { type: 'text/html' });
+          const textBlob = new Blob([d.plainText], { type: 'text/plain' });
+          await navigator.clipboard.write([
+            new ClipboardItem({ 'text/html': blob, 'text/plain': textBlob })
+          ]);
+        } catch(e) {
+          // Fallback: copy plain text
+          try { await navigator.clipboard.writeText(d.plainText); } catch(e2){}
+        }
+        statusEl.classList.add('show');
+        setTimeout(() => statusEl.classList.remove('show'), 2500);
+      });
+    })();
 
     async function fetchUsers(){
       try {
