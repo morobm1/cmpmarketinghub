@@ -756,15 +756,6 @@ const IMPORT_TYPES = [
     exampleRow: { 'Bldg-Unit': 'Building A-A108', 'Unit Type': 'Studio - A1', 'Resident': 'SMITH, JOHN', 'Lease Status': 'Lease Approved' },
     storageKey: 'entrataImport',
     clearLabel: 'Clear Entrata Data'
-  },
-  {
-    id: 'scholarship-expected',
-    label: 'Scholarship Expected Recipients',
-    description: 'Upload the expected recipient counts per scholarship and floorplan for variance analysis.',
-    requiredColumns: ['Scholarship Name', '# of Recipients', 'Floorplan'],
-    exampleRow: { 'Scholarship Name': 'FIRST ASCENT', '# of Recipients': '10', 'Floorplan': 'Studio - A1' },
-    storageKey: 'scholarshipExpectedData',
-    clearLabel: 'Clear Expected Recipients'
   }
 ];
 

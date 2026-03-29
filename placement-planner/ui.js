@@ -2117,221 +2117,81 @@ function openEditReserveUnitModal(unitKey, currentScholarship, inventory, reserv
 }
 
 /* ------------------------------------------------------------------
-   SCHOLARSHIP AUDIT UI
-   Renders into #scholarship-audit-table.
+   SCHOLARSHIP RECAP
+   Renders a summary of scholarship status counts into
+   #scholarship-recap-container.
    ------------------------------------------------------------------ */
 
-function renderScholarshipAudit(tab, residents, inventory) {
-  var content = document.getElementById('scholarship-audit-table');
-  if (!content) return;
-  content.innerHTML = '';
+function renderScholarshipRecap(residents) {
+  var container = document.getElementById('scholarship-recap-container');
+  if (!container) return;
+  container.innerHTML = '';
 
   if (!residents || residents.size === 0) {
-    content.innerHTML = '<div class="section-empty">No resident data loaded.</div>';
+    container.innerHTML = '<div class="section-empty">No resident data loaded.</div>';
     return;
   }
 
-  // Update active tab styling
-  var viewSelector = document.getElementById('scholarship-view-selector');
-  if (viewSelector) viewSelector.value = tab;
+  // Count each scholarship status across all residents in the master list
+  var counts = {};
+  var total = 0;
+  residents.forEach(function (r) {
+    var sch = (r.Scholarship || '').toUpperCase().trim();
+    if (!sch) sch = 'NONE';
+    counts[sch] = (counts[sch] || 0) + 1;
+    total++;
+  });
 
-  switch (tab) {
-    case 'overall':
-    case 'all':
-      renderAuditOverall(content, residents);
-      break;
-    case 'floorplan':
-      renderAuditByFloorplan(content, residents, inventory);
-      break;
-    case 'building':
-      renderAuditByBuilding(content, residents);
-      break;
-    case 'floor':
-      renderAuditByFloor(content, residents);
-      break;
-  }
-}
+  // Separate NONE from actual scholarships for display
+  var noneCount = counts['NONE'] || 0;
+  delete counts['NONE'];
 
-function renderAuditOverall(container, residents) {
-  var counts = getScholarshipCountsOverall(residents);
-  if (Object.keys(counts).length === 0) {
-    container.innerHTML = '<div class="section-empty">No scholarships assigned.</div>';
+  var scholarshipTotal = total - noneCount;
+
+  // Build summary line
+  var summary = document.createElement('div');
+  summary.className = 'scholarship-recap-summary';
+  summary.textContent = scholarshipTotal + ' of ' + total + ' resident(s) have a scholarship assigned';
+  container.appendChild(summary);
+
+  if (scholarshipTotal === 0) {
+    container.innerHTML += '<div class="section-empty">No scholarships assigned to any residents.</div>';
     return;
   }
-  container.appendChild(buildAuditTable(counts, 'Scholarship', 'Count'));
-}
 
-function renderAuditByFloorplan(container, residents, inventory) {
-  var grouped = getScholarshipCountsByFloorplan(residents, inventory);
-  if (Object.keys(grouped).length === 0) {
-    container.innerHTML = '<div class="section-empty">No scholarships assigned.</div>';
-    return;
-  }
-  var sortedKeys = Object.keys(grouped).sort();
-  for (var i = 0; i < sortedKeys.length; i++) {
-    var fp = sortedKeys[i];
-    var counts = grouped[fp];
-    var heading = document.createElement('div');
-    heading.className = 'audit-group-label';
-    heading.textContent = fp;
-    container.appendChild(heading);
-    container.appendChild(buildAuditTable(counts, 'Scholarship', 'Count'));
-  }
-}
-
-function renderAuditByBuilding(container, residents) {
-  var grouped = getScholarshipCountsByBuilding(residents);
-  if (Object.keys(grouped).length === 0) {
-    container.innerHTML = '<div class="section-empty">No scholarships assigned.</div>';
-    return;
-  }
-  var sortedKeys = Object.keys(grouped).sort();
-  for (var i = 0; i < sortedKeys.length; i++) {
-    var bld = sortedKeys[i];
-    var counts = grouped[bld];
-    var heading = document.createElement('div');
-    heading.className = 'audit-group-label';
-    heading.textContent = bld === 'Unknown' ? 'Unknown Building' : getBuildingLabel(bld);
-    container.appendChild(heading);
-    container.appendChild(buildAuditTable(counts, 'Scholarship', 'Count'));
-  }
-}
-
-function renderAuditByFloor(container, residents) {
-  var grouped = getScholarshipCountsByFloor(residents);
-  if (Object.keys(grouped).length === 0) {
-    container.innerHTML = '<div class="section-empty">No scholarships assigned.</div>';
-    return;
-  }
-  var sortedKeys = Object.keys(grouped).sort();
-  for (var i = 0; i < sortedKeys.length; i++) {
-    var floorKey = sortedKeys[i];
-    var counts = grouped[floorKey];
-    var heading = document.createElement('div');
-    heading.className = 'audit-group-label';
-    if (floorKey === 'Unknown') {
-      heading.textContent = 'Unknown Floor';
-    } else {
-      var parts = floorKey.split('-');
-      heading.textContent = getBuildingLabel(parts[0]) + ' ' + getFloorLabel(parseInt(parts[1]));
-    }
-    container.appendChild(heading);
-    container.appendChild(buildAuditTable(counts, 'Scholarship', 'Count'));
-  }
-}
-
-function buildAuditTable(counts, col1, col2) {
+  // Build recap table
   var table = document.createElement('table');
   table.className = 'audit-table';
 
   var thead = document.createElement('thead');
-  thead.innerHTML = '<tr><th>' + col1 + '</th><th>' + col2 + '</th></tr>';
+  thead.innerHTML = '<tr><th>Scholarship</th><th>Count</th></tr>';
   table.appendChild(thead);
 
   var tbody = document.createElement('tbody');
-  var sorted = Object.entries(counts).sort(function (a, b) { return b[1] - a[1]; });
-  var total = 0;
+
+  // Sort by count descending
+  var sorted = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; });
 
   for (var i = 0; i < sorted.length; i++) {
-    var key = sorted[i][0];
-    var count = sorted[i][1];
     var tr = document.createElement('tr');
-    tr.innerHTML = '<td>' + escapeHtml(key) + '</td><td>' + count + '</td>';
+    tr.innerHTML = '<td>' + escapeHtml(sorted[i]) + '</td><td>' + counts[sorted[i]] + '</td>';
     tbody.appendChild(tr);
-    total += count;
   }
 
+  // Total row
   var totalTr = document.createElement('tr');
   totalTr.className = 'audit-total-row';
-  totalTr.innerHTML = '<td><strong>Total</strong></td><td><strong>' + total + '</strong></td>';
+  totalTr.innerHTML = '<td><strong>Total w/ Scholarship</strong></td><td><strong>' + scholarshipTotal + '</strong></td>';
   tbody.appendChild(totalTr);
 
-  table.appendChild(tbody);
-  return table;
-}
-
-/* ------------------------------------------------------------------
-   VARIANCE ANALYSIS DISPLAY (NEW)
-   Renders into #variance-analysis.
-   ------------------------------------------------------------------ */
-
-function renderVarianceAnalysis(varianceData, overTargetRecords) {
-  var container = document.getElementById('variance-analysis');
-  if (!container) return;
-  container.innerHTML = '';
-
-  if (!varianceData || varianceData.length === 0) {
-    container.innerHTML =
-      '<div class="section-empty">No expected scholarship data uploaded. Upload expected recipients in the Import Data section (left sidebar) or below to see variance analysis.</div>';
-    return;
-  }
-
-  var heading = document.createElement('h3');
-  heading.textContent = 'Variance Analysis';
-  container.appendChild(heading);
-
-  var table = document.createElement('table');
-  table.className = 'audit-table variance-table';
-
-  var thead = document.createElement('thead');
-  thead.innerHTML = '<tr><th>Scholarship</th><th>Floorplan</th><th>Expected</th><th>Actual</th><th>Variance</th></tr>';
-  table.appendChild(thead);
-
-  var tbody = document.createElement('tbody');
-
-  for (var i = 0; i < varianceData.length; i++) {
-    var row = varianceData[i];
-    var tr = document.createElement('tr');
-
-    if (row.scholarshipName === 'TOTAL') {
-      tr.className = 'audit-total-row';
-    }
-
-    var varianceClass = '';
-    if (row.variance > 0) varianceClass = 'variance-over';
-    else if (row.variance < 0) varianceClass = 'variance-under';
-
-    tr.innerHTML =
-      '<td>' + (row.scholarshipName === 'TOTAL' ? '<strong>TOTAL</strong>' : escapeHtml(row.scholarshipName)) + '</td>' +
-      '<td>' + escapeHtml(row.floorplan) + '</td>' +
-      '<td>' + row.expected + '</td>' +
-      '<td>' + row.actual + '</td>' +
-      '<td class="' + varianceClass + '">' + (row.variance > 0 ? '+' : '') + row.variance + '</td>';
-
-    tbody.appendChild(tr);
-  }
+  // No scholarship row
+  var noneTr = document.createElement('tr');
+  noneTr.className = 'recap-none-row';
+  noneTr.innerHTML = '<td>No Scholarship (NONE)</td><td>' + noneCount + '</td>';
+  tbody.appendChild(noneTr);
 
   table.appendChild(tbody);
   container.appendChild(table);
-
-  // Over-target records button
-  if (overTargetRecords && overTargetRecords.length > 0) {
-    var pullBtn = document.createElement('button');
-    pullBtn.className = 'btn btn-secondary';
-    pullBtn.textContent = 'View Over-Target Records (' + overTargetRecords.length + ')';
-    pullBtn.addEventListener('click', function () {
-      showOverTargetRecordsModal(overTargetRecords);
-    });
-    container.appendChild(pullBtn);
-  }
-}
-
-function showOverTargetRecordsModal(records) {
-  var bodyHtml = '<table class="audit-table"><thead><tr><th>Name</th><th>Scholarship</th><th>Floorplan</th><th>Unit</th><th>Source</th></tr></thead><tbody>';
-  for (var i = 0; i < records.length; i++) {
-    var r = records[i];
-    bodyHtml +=
-      '<tr>' +
-        '<td>' + escapeHtml(r.name) + '</td>' +
-        '<td>' + escapeHtml(r.scholarship) + '</td>' +
-        '<td>' + escapeHtml(r.floorplan) + '</td>' +
-        '<td>' + escapeHtml(r.unit) + '</td>' +
-        '<td>' + escapeHtml(r.source) + '</td>' +
-      '</tr>';
-  }
-  bodyHtml += '</tbody></table>';
-
-  showModal('Over-Target Scholarship Records', bodyHtml, '<button class="btn btn-primary" onclick="hideModal()">Close</button>');
 }
 
 /* ------------------------------------------------------------------
@@ -2721,12 +2581,7 @@ function renderImportCards(state) {
           hasData = rCount > 0 || bCount > 0;
         }
         break;
-      case 'scholarship-expected':
-        if (state.scholarshipExpectedData && state.scholarshipExpectedData.length > 0) {
-          hasData = true;
-          infoText = state.scholarshipExpectedData.length + ' expected recipient records loaded';
-        }
-        break;
+
     }
 
     infoEl.textContent = infoText;
@@ -2760,83 +2615,13 @@ function renderImportCards(state) {
       case 'entrata':
         if ((state.residents && state.residents.size > 0) || (state.waitingBank && state.waitingBank.length > 0)) statusText = 'Loaded';
         break;
-      case 'scholarship-expected':
-        if (state.scholarshipExpectedData && state.scholarshipExpectedData.length > 0) statusText = state.scholarshipExpectedData.length + ' records';
-        break;
+
     }
     statusEl.textContent = statusText;
   });
 }
 
-/* ------------------------------------------------------------------
-   ENHANCED SCHOLARSHIP AUDIT TABLE (NEW)
-   Uses computeScholarshipAudit from inventory.js.
-   Renders into #scholarship-audit-table.
-   ------------------------------------------------------------------ */
 
-function renderEnhancedScholarshipAudit(auditResults, filterOptions) {
-  var container = document.getElementById('scholarship-audit-table');
-  if (!container) return;
-  container.innerHTML = '';
-
-  if (!auditResults || auditResults.length === 0) {
-    container.innerHTML = '<div class="section-empty">No scholarship data found.</div>';
-    return;
-  }
-
-  var view = (filterOptions && filterOptions.view) || 'all';
-  var subFilter = (filterOptions && filterOptions.subFilter) || '';
-
-  // Apply filtering
-  var filtered = auditResults;
-  if (view === 'floorplan' && subFilter) {
-    filtered = auditResults.filter(function (r) { return r.floorplan.toUpperCase() === subFilter.toUpperCase(); });
-  } else if (view === 'building' && subFilter) {
-    filtered = auditResults.filter(function (r) { return r.building === subFilter; });
-  } else if (view === 'floor' && subFilter) {
-    var parts = subFilter.split('-');
-    filtered = auditResults.filter(function (r) {
-      return r.building === parts[0] && r.floor === parseInt(parts[1]);
-    });
-  }
-
-  // Counts summary
-  var summary = document.createElement('div');
-  summary.className = 'audit-summary';
-  summary.textContent = filtered.length + ' scholarship holder(s) found' + (subFilter ? ' (filtered)' : '');
-  container.appendChild(summary);
-
-  if (filtered.length === 0) {
-    container.innerHTML += '<div class="section-empty">No records match the selected filter.</div>';
-    return;
-  }
-
-  // Table
-  var table = document.createElement('table');
-  table.className = 'audit-table';
-
-  var thead = document.createElement('thead');
-  thead.innerHTML = '<tr><th>Name</th><th>Scholarship</th><th>Floorplan</th><th>Building</th><th>Floor</th><th>Unit</th><th>Source</th></tr>';
-  table.appendChild(thead);
-
-  var tbody = document.createElement('tbody');
-  for (var i = 0; i < filtered.length; i++) {
-    var r = filtered[i];
-    var tr = document.createElement('tr');
-    tr.innerHTML =
-      '<td>' + escapeHtml(r.name) + '</td>' +
-      '<td>' + escapeHtml(r.scholarship) + '</td>' +
-      '<td>' + escapeHtml(r.floorplan) + '</td>' +
-      '<td>' + (r.building ? escapeHtml(getBuildingLabel(r.building)) : '--') + '</td>' +
-      '<td>' + (r.floor != null ? escapeHtml(getFloorLabel(r.floor)) : '--') + '</td>' +
-      '<td>' + escapeHtml(r.unit || '--') + '</td>' +
-      '<td><span class="source-badge source-' + r.source + '">' + escapeHtml(r.source) + '</span></td>';
-    tbody.appendChild(tr);
-  }
-
-  table.appendChild(tbody);
-  container.appendChild(table);
-}
 
 /* ------------------------------------------------------------------
    DEBUG PANEL (NEW)

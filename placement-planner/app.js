@@ -39,8 +39,7 @@ const AppState = {
   /** @type {boolean} Whether to highlight scholarship overrides only */
   scholarshipOnly: false,
 
-  /** @type {string} Current scholarship audit tab (legacy compat) */
-  scholarshipAuditTab: 'overall',
+
 
   /** @type {string} Current prelease progress scope (legacy compat) */
   preleaseProgressScope: 'property',
@@ -56,11 +55,7 @@ const AppState = {
   /** @type {string} Currently active view section */
   currentView: DEFAULT_VIEW,
 
-  /** @type {Array<{scholarshipName: string, expectedCount: number, floorplan: string}>} Expected scholarship recipients */
-  scholarshipExpectedData: [],
 
-  /** @type {object} Scholarship audit filter state */
-  scholarshipAuditFilter: { view: 'all', subFilter: '' },
 
   /** @type {object} Prelease scope state for enhanced prelease */
   preleaseScope: { type: 'property' },
@@ -117,7 +112,7 @@ function buildProjectData() {
     residents: residentsArr,
     waitingBank: AppState.waitingBank || [],
     unassignedScholarships: AppState.unassignedScholarships || [],
-    scholarshipExpectedData: AppState.scholarshipExpectedData || [],
+
     scholarshipReservedUnits: (function () {
       var arr = [];
       if (AppState.scholarshipReservedUnits) {
@@ -386,12 +381,7 @@ function restoreProjectData(data) {
     AppState.unassignedScholarships = [];
   }
 
-  // Restore scholarship expected data
-  if (Array.isArray(data.scholarshipExpectedData) && data.scholarshipExpectedData.length > 0) {
-    AppState.scholarshipExpectedData = data.scholarshipExpectedData;
-  } else {
-    AppState.scholarshipExpectedData = [];
-  }
+
 
   // Restore scholarship reserved units
   if (Array.isArray(data.scholarshipReservedUnits) && data.scholarshipReservedUnits.length > 0) {
@@ -471,7 +461,7 @@ function sanitizePersistedState(data) {
   if (!Array.isArray(data.inventory)) data.inventory = [];
   if (!Array.isArray(data.residents)) data.residents = [];
   if (!Array.isArray(data.waitingBank)) data.waitingBank = [];
-  if (!Array.isArray(data.scholarshipExpectedData)) data.scholarshipExpectedData = [];
+
   if (!data.settings || typeof data.settings !== 'object') data.settings = {};
   return data;
 }
@@ -633,7 +623,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   refreshMasterList();
   refreshBank();
   refreshUnassignedScholarships();
-  refreshScholarshipAudit();
+  refreshScholarshipRecap();
 
   // Populate floorplan filter and refresh prelease progress
   populateFloorplanFilter(AppState.inventory);
@@ -656,9 +646,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     renderPreleaseSummary(progressResult);
   }
 
-  // Refresh scholarship and variance views
-  refreshScholarshipAudit();
-  refreshVarianceAnalysis();
+  // Refresh scholarship recap
+  refreshScholarshipRecap();
 
   // Refresh reserved units
   refreshReservedUnits();
@@ -677,7 +666,6 @@ function initEventListeners() {
   initMapViewerEvents();
   initImportDataEvents();
   initImportSidebarButtons();
-  initScholarshipViewEvents();
   initPreleaseDetailButton();
   initBackupRestoreEvents();
   initModalEvents();
@@ -1167,20 +1155,7 @@ function initImportDataEvents() {
     handleImportFile(importType, file);
   });
 
-  // Scholarship expected upload (separate inputs in scholarship view)
-  var scholarshipExpectedBtn = document.getElementById('scholarship-expected-upload-btn');
-  var scholarshipExpectedInput = document.getElementById('scholarship-expected-file-input');
-  if (scholarshipExpectedBtn && scholarshipExpectedInput) {
-    scholarshipExpectedBtn.addEventListener('click', function () {
-      scholarshipExpectedInput.click();
-    });
-    scholarshipExpectedInput.addEventListener('change', function (e) {
-      var file = e.target.files[0];
-      if (!file) return;
-      e.target.value = '';
-      handleImportFile('scholarship-expected', file);
-    });
-  }
+
 }
 
 /**
@@ -1204,9 +1179,7 @@ async function handleImportFile(importType, file) {
       case 'entrata':
         await handlePreleaseImport(file);
         break;
-      case 'scholarship-expected':
-        await handleScholarshipExpectedUpload(file);
-        break;
+
     }
   } catch (err) {
     showNotification('Import failed: ' + err.message, 'error');
@@ -1247,9 +1220,7 @@ function handleImportClear(importType) {
         AppState.residents = null;
         AppState.waitingBank = [];
         break;
-      case 'scholarship-expected':
-        AppState.scholarshipExpectedData = [];
-        break;
+
     }
 
     persistProject();
@@ -1260,70 +1231,8 @@ function handleImportClear(importType) {
 }
 
 /* ------------------------------------------------------------------
-   5. SCHOLARSHIP VIEW EVENTS
+   5. SCHOLARSHIP RECAP (replaced former audit view events)
    ------------------------------------------------------------------ */
-
-function initScholarshipViewEvents() {
-  var viewSelector = document.getElementById('scholarship-view-selector');
-  if (viewSelector) {
-    viewSelector.addEventListener('change', function () {
-      AppState.scholarshipAuditFilter.view = viewSelector.value;
-      AppState.scholarshipAuditFilter.subFilter = '';
-      populateScholarshipSubFilter(viewSelector.value);
-      refreshScholarshipAudit();
-    });
-  }
-
-  var subFilter = document.getElementById('scholarship-sub-filter');
-  if (subFilter) {
-    subFilter.addEventListener('change', function () {
-      AppState.scholarshipAuditFilter.subFilter = subFilter.value;
-      refreshScholarshipAudit();
-    });
-  }
-}
-
-function populateScholarshipSubFilter(view) {
-  var select = document.getElementById('scholarship-sub-filter');
-  if (!select) return;
-  select.innerHTML = '';
-
-  var defaultOpt = document.createElement('option');
-  defaultOpt.value = '';
-  defaultOpt.textContent = 'All';
-  select.appendChild(defaultOpt);
-
-  if (view === 'floorplan') {
-    var types = getInventoryUnitTypes(AppState.inventory);
-    var sorted = sortFloorplansByDisplayOrder(types);
-    for (var i = 0; i < sorted.length; i++) {
-      var opt = document.createElement('option');
-      opt.value = sorted[i];
-      opt.textContent = sorted[i];
-      select.appendChild(opt);
-    }
-  } else if (view === 'building') {
-    var buildings = getRegisteredBuildings();
-    for (var i = 0; i < buildings.length; i++) {
-      var opt = document.createElement('option');
-      opt.value = buildings[i];
-      opt.textContent = getBuildingLabel(buildings[i]);
-      select.appendChild(opt);
-    }
-  } else if (view === 'floor') {
-    var buildings = getRegisteredBuildings();
-    for (var b = 0; b < buildings.length; b++) {
-      var bKey = buildings[b];
-      var floors = getFloorsForBuilding(bKey);
-      for (var f = 0; f < floors.length; f++) {
-        var opt = document.createElement('option');
-        opt.value = bKey + '-' + floors[f];
-        opt.textContent = getBuildingLabel(bKey) + ' ' + getFloorLabel(floors[f]);
-        select.appendChild(opt);
-      }
-    }
-  }
-}
 
 /* ------------------------------------------------------------------
    6. PRELEASE PROGRESS EVENTS
@@ -1872,79 +1781,7 @@ async function handleScholarshipUpload(file) {
   }
 }
 
-/* ------------------------------------------------------------------
-   SCHOLARSHIP EXPECTED RECIPIENTS UPLOAD HANDLER
-   ------------------------------------------------------------------ */
 
-async function handleScholarshipExpectedUpload(file) {
-  setUploadStatus('scholarship-expected', 'Parsing expected recipients...', '');
-
-  try {
-    var reader = new FileReader();
-
-    var parseResult = await new Promise(function (resolve, reject) {
-      reader.onerror = function () { reject(new Error('Failed to read file.')); };
-      reader.onload = function (e) {
-        try {
-          var data = new Uint8Array(e.target.result);
-          var workbook = XLSX.read(data, { type: 'array' });
-          var result = parseScholarshipExpectedRecipients(workbook);
-          resolve(result);
-        } catch (err) {
-          reject(new Error('Parse error: ' + err.message));
-        }
-      };
-      reader.readAsArrayBuffer(file);
-    });
-
-    if (!parseResult.success) {
-      setUploadStatus('scholarship-expected', parseResult.error, 'error');
-      addDebugWarnings([parseResult.error], 'error');
-      return;
-    }
-
-    AppState.scholarshipExpectedData = parseResult.data;
-
-    setUploadStatus(
-      'scholarship-expected',
-      'Loaded ' + parseResult.data.length + ' expected recipient record(s) from ' + file.name,
-      'success'
-    );
-
-    persistProject();
-    renderImportCards(AppState);
-    refreshVarianceAnalysis();
-    showNotification('Expected recipients loaded: ' + parseResult.data.length + ' records', 'success');
-
-  } catch (err) {
-    setUploadStatus('scholarship-expected', err.message, 'error');
-    addDebugWarnings([err.message], 'error');
-  }
-}
-
-/* ------------------------------------------------------------------
-   VARIANCE ANALYSIS REFRESH
-   ------------------------------------------------------------------ */
-
-function refreshVarianceAnalysis() {
-  if (!AppState.scholarshipExpectedData || AppState.scholarshipExpectedData.length === 0) {
-    renderVarianceAnalysis(null, null);
-    return;
-  }
-
-  // Compute audit from combined placed + bank
-  var auditResults = computeScholarshipAudit(
-    AppState.residents,
-    AppState.waitingBank,
-    AppState.unassignedScholarships,
-    AppState.inventory
-  );
-
-  var varianceData = computeScholarshipVariance(AppState.scholarshipExpectedData, auditResults);
-  var overTargetRecords = getOverTargetRecords(auditResults, AppState.scholarshipExpectedData);
-
-  renderVarianceAnalysis(varianceData, overTargetRecords);
-}
 
 /* ------------------------------------------------------------------
    INTERACTION HANDLERS
@@ -2045,7 +1882,7 @@ function handleResidentDelete(resident, unitKey) {
         refreshAllStats();
         refreshMasterList();
         renderCurrentMap();
-        refreshScholarshipAudit();
+        refreshScholarshipRecap();
         refreshPreleaseProgress();
 
         // Update prelease summary in sidebar
@@ -2118,9 +1955,8 @@ function _completeResidentSave(formData, isEdit, originalUnitKey, newUnitKey) {
   refreshAllStats();
   refreshMasterList();
   renderCurrentMap();
-  refreshScholarshipAudit();
+  refreshScholarshipRecap();
   refreshPreleaseProgress();
-  refreshVarianceAnalysis();
   renderImportCards(AppState);
 
   // Update prelease summary in sidebar
@@ -2313,7 +2149,7 @@ function handleScholarshipTransfer(item, unitKey) {
 
       persistProject();
       refreshUnassignedScholarships();
-      refreshScholarshipAudit();
+      refreshScholarshipRecap();
       refreshAllStats();
       refreshMasterList();
       renderCurrentMap();
@@ -2322,24 +2158,11 @@ function handleScholarshipTransfer(item, unitKey) {
 }
 
 /* ------------------------------------------------------------------
-   SCHOLARSHIP AUDIT -- REFRESH
+   SCHOLARSHIP RECAP -- REFRESH
    ------------------------------------------------------------------ */
 
-function refreshScholarshipAudit() {
-  var filter = AppState.scholarshipAuditFilter;
-
-  // Use enhanced audit from combined placed + bank
-  var auditResults = computeScholarshipAudit(
-    AppState.residents,
-    AppState.waitingBank,
-    AppState.unassignedScholarships,
-    AppState.inventory
-  );
-
-  renderEnhancedScholarshipAudit(auditResults, filter);
-
-  // Also refresh variance analysis when scholarship audit refreshes
-  refreshVarianceAnalysis();
+function refreshScholarshipRecap() {
+  renderScholarshipRecap(AppState.residents);
 }
 
 /* ------------------------------------------------------------------
@@ -2496,7 +2319,7 @@ function _completeBankAssignment(bankEntry, selectedUnit, unitKey) {
   refreshMasterList();
   renderCurrentMap();
   renderImportCards(AppState);
-  refreshScholarshipAudit();
+  refreshScholarshipRecap();
   refreshPreleaseProgress();
 
   // Update prelease summary in sidebar
@@ -2657,14 +2480,11 @@ function handleClearSession() {
           AppState.residents = null;
           AppState.waitingBank = [];
           AppState.unassignedScholarships = [];
-          AppState.scholarshipExpectedData = [];
           AppState.scholarshipReservedUnits = new Map();
           AppState.selectedBuilding = null;
           AppState.selectedFloor = null;
           AppState.showNames = false;
           AppState.scholarshipOnly = false;
-          AppState.scholarshipAuditTab = 'overall';
-          AppState.scholarshipAuditFilter = { view: 'all', subFilter: '' };
           AppState.preleaseScope = { type: 'property' };
           AppState.filters = { occupancy: 'all', scholarship: 'all', lease: 'all', floorplan: 'all' };
           AppState.preleaseProgressScope = 'property';
@@ -2694,7 +2514,7 @@ function handleClearSession() {
           refreshMasterList();
           refreshBank();
           refreshUnassignedScholarships();
-          refreshScholarshipAudit();
+          refreshScholarshipRecap();
           refreshReservedUnits();
           renderImportCards(AppState);
           renderDebugPanel(AppState);
@@ -2779,7 +2599,7 @@ function refreshAllAfterImport() {
   refreshMasterList();
   refreshBank();
   refreshUnassignedScholarships();
-  refreshScholarshipAudit();
+  refreshScholarshipRecap();
   renderImportCards(AppState);
   renderCurrentMap();
   refreshPreleaseProgress();
@@ -2834,9 +2654,7 @@ function updateImportSidebarStatuses() {
       case 'entrata':
         hasData = AppState.residents && AppState.residents.size > 0;
         break;
-      case 'scholarship-expected':
-        hasData = AppState.scholarshipExpectedData && AppState.scholarshipExpectedData.length > 0;
-        break;
+
     }
 
     statusEl.textContent = hasData ? 'Loaded' : '';
