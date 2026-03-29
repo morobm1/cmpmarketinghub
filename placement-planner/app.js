@@ -2101,6 +2101,8 @@ function _wireMasterListDelegation(container, refreshFn) {
     } else if (e.target.classList.contains('filter-floorplan')) {
       AppState.filters.floorplan = e.target.value;
       refreshFn();
+    } else if (e.target.classList.contains('bank-toggle-checkbox')) {
+      refreshFn();
     }
   });
   container.addEventListener('click', function (e) {

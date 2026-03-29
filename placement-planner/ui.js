@@ -587,6 +587,16 @@ function renderMasterListInto(container, residents, inventory, filters, callback
       leaseFilterHtml += '<option value="' + escapeHtml(ALLOWED_LEASE_STATUSES[li]) + '">' + escapeHtml(ALLOWED_LEASE_STATUSES[li]) + '</option>';
     }
 
+    // Build floorplan filter options from inventory
+    var fpFilterHtml = '<option value="all">All Floorplans</option>';
+    if (inventory && inventory.length > 0) {
+      var fpTypes = getInventoryUnitTypes(inventory);
+      var fpSorted = sortFloorplansByDisplayOrder(fpTypes);
+      for (var fi = 0; fi < fpSorted.length; fi++) {
+        fpFilterHtml += '<option value="' + escapeHtml(fpSorted[fi]) + '">' + escapeHtml(fpSorted[fi]) + '</option>';
+      }
+    }
+
     var filterDiv = document.createElement('div');
     filterDiv.className = 'master-list-filters';
     filterDiv.innerHTML =
@@ -595,11 +605,73 @@ function renderMasterListInto(container, residents, inventory, filters, callback
       '</select>' +
       '<select class="filter-scholarship select-input">' + schFilterHtml + '</select>' +
       '<select class="filter-lease select-input">' + leaseFilterHtml + '</select>' +
-      '<select class="filter-floorplan select-input">' +
-        '<option value="all">All Floorplans</option>' +
-      '</select>' +
-      '<button class="clear-filters-btn btn btn-secondary">Clear Filters</button>';
+      '<div class="fp-multi-filter">' +
+        '<button class="fp-multi-btn btn btn-sm btn-secondary" type="button">Floorplans ▾</button>' +
+        '<div class="fp-multi-dropdown" style="display:none">' +
+          '<label class="fp-multi-option"><input type="checkbox" value="all" checked /> <span>All Floorplans</span></label>' +
+        '</div>' +
+      '</div>' +
+      '<label class="toggle-row bank-toggle-row"><input type="checkbox" class="bank-toggle-checkbox" /> <span>Show Bank</span></label>' +
+      '<button class="clear-filters-btn btn btn-secondary">Clear</button>';
     container.appendChild(filterDiv);
+
+    // Populate floorplan multi-select checkboxes
+    var fpDropdown = filterDiv.querySelector('.fp-multi-dropdown');
+    if (fpDropdown && inventory && inventory.length > 0) {
+      var fpTypes2 = getInventoryUnitTypes(inventory);
+      var fpSorted2 = sortFloorplansByDisplayOrder(fpTypes2);
+      for (var fpi = 0; fpi < fpSorted2.length; fpi++) {
+        var fpLabel = document.createElement('label');
+        fpLabel.className = 'fp-multi-option';
+        fpLabel.innerHTML = '<input type="checkbox" value="' + escapeHtml(fpSorted2[fpi]) + '" checked /> <span>' + escapeHtml(fpSorted2[fpi]) + '</span>';
+        fpDropdown.appendChild(fpLabel);
+      }
+    }
+
+    // Wire floorplan multi-select toggle
+    var fpBtn = filterDiv.querySelector('.fp-multi-btn');
+    if (fpBtn && fpDropdown) {
+      fpBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        fpDropdown.style.display = fpDropdown.style.display === 'none' ? 'block' : 'none';
+      });
+      // Close dropdown when clicking outside
+      document.addEventListener('click', function () {
+        fpDropdown.style.display = 'none';
+      });
+      fpDropdown.addEventListener('click', function (e) {
+        e.stopPropagation();
+      });
+      // When checkboxes change, refresh the list
+      fpDropdown.addEventListener('change', function (e) {
+        if (e.target.value === 'all') {
+          // Toggle all checkboxes
+          var allChecked = e.target.checked;
+          fpDropdown.querySelectorAll('input[type="checkbox"]').forEach(function (cb) {
+            cb.checked = allChecked;
+          });
+        } else {
+          // Uncheck "all" if any individual is unchecked
+          var allCb = fpDropdown.querySelector('input[value="all"]');
+          if (allCb && !e.target.checked) allCb.checked = false;
+          // Check "all" if all individuals are checked
+          var allIndividual = fpDropdown.querySelectorAll('input[type="checkbox"]:not([value="all"])');
+          var allCheckedNow = true;
+          allIndividual.forEach(function (cb) { if (!cb.checked) allCheckedNow = false; });
+          if (allCb && allCheckedNow) allCb.checked = true;
+        }
+        // Update button text
+        var selected = [];
+        fpDropdown.querySelectorAll('input[type="checkbox"]:not([value="all"]):checked').forEach(function (cb) {
+          selected.push(cb.value);
+        });
+        var total = fpDropdown.querySelectorAll('input[type="checkbox"]:not([value="all"])').length;
+        fpBtn.textContent = selected.length === total ? 'All Floorplans ▾' : selected.length + ' Floorplan(s) ▾';
+        // Store selected and refresh
+        container._selectedFloorplans = selected.length === total ? null : selected;
+        if (callbacks._refreshFn) callbacks._refreshFn();
+      });
+    }
 
     table = document.createElement('table');
     table.className = 'master-list-table';
@@ -728,9 +800,18 @@ function renderMasterListInto(container, residents, inventory, filters, callback
       if ((rowResident.Lease_Status || '') !== filters.lease) continue;
     }
 
-    if (filters.floorplan && filters.floorplan !== 'all') {
+    // Multi-select floorplan filter (from checkbox dropdown)
+    var selectedFps = container._selectedFloorplans;
+    if (selectedFps && selectedFps.length > 0) {
       var rowFp = (unitType || '').trim().toUpperCase();
-      if (rowFp !== filters.floorplan.trim().toUpperCase()) continue;
+      var fpAllowed = false;
+      for (var fpk = 0; fpk < selectedFps.length; fpk++) {
+        if (selectedFps[fpk].toUpperCase() === rowFp) { fpAllowed = true; break; }
+      }
+      if (!fpAllowed) continue;
+    } else if (filters.floorplan && filters.floorplan !== 'all') {
+      var rowFp2 = (unitType || '').trim().toUpperCase();
+      if (rowFp2 !== filters.floorplan.trim().toUpperCase()) continue;
     }
 
     if (query) {
@@ -3024,6 +3105,7 @@ function openSplitViewModal() {
       onDelete: typeof handleResidentDelete === 'function' ? handleResidentDelete : null,
       onRowClick: typeof handleSplitViewRowClick === 'function' ? handleSplitViewRowClick : null,
       onAddResident: typeof handleSplitViewAddResident === 'function' ? handleSplitViewAddResident : null,
+      _refreshFn: refreshSplitViewMasterList,
     }
   );
 }
@@ -3055,8 +3137,63 @@ function refreshSplitViewMasterList() {
       onDelete: typeof handleResidentDelete === 'function' ? handleResidentDelete : null,
       onRowClick: typeof handleSplitViewRowClick === 'function' ? handleSplitViewRowClick : null,
       onAddResident: typeof handleSplitViewAddResident === 'function' ? handleSplitViewAddResident : null,
+      _refreshFn: refreshSplitViewMasterList,
     }
   );
+
+  // Render bank records section if bank toggle is checked
+  _renderBankInSplitView(svList);
+}
+
+/**
+ * Render bank records below the master list if the bank toggle is on.
+ */
+function _renderBankInSplitView(container) {
+  var bankToggle = container.querySelector('.bank-toggle-checkbox');
+  var existingBankSection = container.querySelector('.sv-bank-section');
+  if (existingBankSection) existingBankSection.remove();
+
+  if (!bankToggle || !bankToggle.checked) return;
+
+  var bankList = AppState.waitingBank || [];
+  if (bankList.length === 0) return;
+
+  var section = document.createElement('div');
+  section.className = 'sv-bank-section';
+  section.innerHTML = '<div class="sv-bank-header">Waiting Bank (' + bankList.length + ')</div>';
+
+  var bankTable = document.createElement('table');
+  bankTable.className = 'master-list-table bank-table';
+  bankTable.innerHTML =
+    '<thead><tr><th>Name</th><th>Unit Type</th><th>Lease Status</th><th>Actions</th></tr></thead>';
+  var tbody = document.createElement('tbody');
+
+  for (var i = 0; i < bankList.length; i++) {
+    (function (entry) {
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' + escapeHtml(entry.name) + '</td>' +
+        '<td>' + escapeHtml(entry.unitType || '--') + '</td>' +
+        '<td>' + escapeHtml(entry.leaseStatus || '--') + '</td>' +
+        '<td></td>';
+      var tdActions = tr.querySelector('td:last-child');
+      var assignBtn = document.createElement('button');
+      assignBtn.className = 'action-btn add';
+      assignBtn.textContent = 'Assign';
+      assignBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (typeof handleBankAssignClick === 'function') {
+          handleBankAssignClick(entry);
+        }
+      });
+      tdActions.appendChild(assignBtn);
+      tbody.appendChild(tr);
+    })(bankList[i]);
+  }
+
+  bankTable.appendChild(tbody);
+  section.appendChild(bankTable);
+  container.appendChild(section);
 }
 
 function populateModalMapSelectors() {
