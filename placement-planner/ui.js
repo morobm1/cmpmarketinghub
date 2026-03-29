@@ -752,7 +752,7 @@ function highlightMasterListRow(unitKey) {
    Uses generic modal overlay.
    ------------------------------------------------------------------ */
 
-function populateUnitDropdown(selectEl, inventory, residents, currentUnitValue, reservedUnitsMap) {
+function populateUnitDropdown(selectEl, inventory, residents, currentUnitValue, reservedUnitsMap, floorplanFilter) {
   selectEl.innerHTML = '<option value="">-- Select Unit --</option>';
 
   if (!inventory || inventory.length === 0) {
@@ -764,7 +764,15 @@ function populateUnitDropdown(selectEl, inventory, residents, currentUnitValue, 
     return;
   }
 
-  var available = getAvailableUnits(inventory, residents);
+  // Filter inventory by floorplan if a filter is provided
+  var filteredInventory = inventory;
+  if (floorplanFilter && floorplanFilter !== 'all') {
+    filteredInventory = inventory.filter(function (item) {
+      return (item.unitType || '').toUpperCase() === floorplanFilter.toUpperCase();
+    });
+  }
+
+  var available = getAvailableUnits(filteredInventory, residents);
   var currentKey = currentUnitValue ? currentUnitValue.toUpperCase() : null;
 
   var unitsToShow = available.slice();
@@ -826,11 +834,30 @@ function openResidentModal(resident, options) {
     scholarshipOptions += '<option value="' + escapeHtml(sc) + '"' + sel + '>' + escapeHtml(sc) + '</option>';
   }
 
+  // Build floorplan type options from inventory
+  var floorplanOptions = '<option value="all">All Floorplans</option>';
+  if (inventory && inventory.length > 0) {
+    var fpTypes = getInventoryUnitTypes(inventory);
+    var fpSorted = sortFloorplansByDisplayOrder(fpTypes);
+    var editFp = '';
+    if (isEdit && resident.Unit_Assigned) {
+      editFp = getInventoryUnitType(resident.Unit_Assigned, inventory) || '';
+    }
+    for (var i = 0; i < fpSorted.length; i++) {
+      var fpSel = (isEdit && fpSorted[i] === editFp) ? ' selected' : '';
+      floorplanOptions += '<option value="' + escapeHtml(fpSorted[i]) + '"' + fpSel + '>' + escapeHtml(fpSorted[i]) + '</option>';
+    }
+  }
+
   var bodyHtml =
     '<form id="resident-form" class="modal-form">' +
       '<div class="form-group">' +
         '<label for="form-resident-name">Name</label>' +
         '<input type="text" id="form-resident-name" class="text-input" value="' + (isEdit ? escapeHtml(resident.Resident_Name) : '') + '" required />' +
+      '</div>' +
+      '<div class="form-group">' +
+        '<label for="form-floorplan-type">Floorplan Type</label>' +
+        '<select id="form-floorplan-type" class="select-input">' + floorplanOptions + '</select>' +
       '</div>' +
       '<div class="form-group">' +
         '<label for="form-unit-assigned">Unit</label>' +
@@ -853,11 +880,32 @@ function openResidentModal(resident, options) {
 
   showModal(title, bodyHtml, footerHtml);
 
-  // Populate unit dropdown
+  // Populate unit dropdown (filtered by floorplan if set)
   var unitSelect = document.getElementById('form-unit-assigned');
-  populateUnitDropdown(unitSelect, inventory, residents, isEdit ? resident.Unit_Assigned : null, reservedUnitsMap);
+  var floorplanSelect = document.getElementById('form-floorplan-type');
+  var currentFpFilter = floorplanSelect ? floorplanSelect.value : 'all';
+
+  populateUnitDropdown(unitSelect, inventory, residents, isEdit ? resident.Unit_Assigned : null, reservedUnitsMap, currentFpFilter);
   if (isEdit) {
     unitSelect.value = resident.Unit_Assigned;
+  }
+
+  // When floorplan changes, re-filter the unit dropdown
+  if (floorplanSelect) {
+    floorplanSelect.addEventListener('change', function () {
+      var fpVal = floorplanSelect.value;
+      var previousUnit = unitSelect.value;
+      populateUnitDropdown(unitSelect, inventory, residents, isEdit ? resident.Unit_Assigned : null, reservedUnitsMap, fpVal);
+      // Try to preserve previously selected unit if still in the list
+      if (previousUnit) {
+        for (var k = 0; k < unitSelect.options.length; k++) {
+          if (unitSelect.options[k].value === previousUnit) {
+            unitSelect.value = previousUnit;
+            break;
+          }
+        }
+      }
+    });
   }
 
   // Validation on unit change
