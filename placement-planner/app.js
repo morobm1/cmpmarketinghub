@@ -1073,6 +1073,15 @@ function initMapViewerEvents() {
     exportMapBtn.addEventListener('click', exportMapAsSVG);
   }
 
+  // Export Master List button
+  var exportMasterBtn = document.getElementById('export-master-list-btn');
+  if (exportMasterBtn) {
+    exportMasterBtn.addEventListener('click', function (e) {
+      e.stopPropagation(); // prevent collapsible toggle
+      exportMasterListToExcel();
+    });
+  }
+
   // Master list search and filter controls are wired dynamically
   // when renderMasterList creates them. We use event delegation.
   var masterListContainer = document.getElementById('resident-master-list');
@@ -1863,6 +1872,90 @@ function handleSearchResultClick(result) {
 }
 
 /* ------------------------------------------------------------------
+   EXPORT MASTER LIST TO EXCEL
+   Builds an xlsx from inventory + residents with columns:
+   Name, Unit, Floorplan, Lease Status, Scholarship
+   ------------------------------------------------------------------ */
+
+function exportMasterListToExcel() {
+  var inventory = AppState.inventory || [];
+  var residents = AppState.residents || new Map();
+
+  var rows = [];
+
+  // Build rows from inventory (all units), merging resident data
+  if (inventory.length > 0) {
+    for (var i = 0; i < inventory.length; i++) {
+      var item = inventory[i];
+      var key = item.unitNumber.toUpperCase();
+      var r = residents.get(key);
+      rows.push({
+        Name: r ? (r.Resident_Name || '') : '',
+        Unit: item.unitNumber || '',
+        Floorplan: item.unitType || '',
+        'Lease Status': r ? (r.Lease_Status || '') : '',
+        Scholarship: r ? (r.Scholarship || '') : '',
+      });
+    }
+    // Also add residents not in inventory
+    var inventorySet = new Set(inventory.map(function (item) { return item.unitNumber.toUpperCase(); }));
+    residents.forEach(function (r, unitKey) {
+      if (!inventorySet.has(unitKey)) {
+        rows.push({
+          Name: r.Resident_Name || '',
+          Unit: r.Unit_Assigned || '',
+          Floorplan: '',
+          'Lease Status': r.Lease_Status || '',
+          Scholarship: r.Scholarship || '',
+        });
+      }
+    });
+  } else if (residents.size > 0) {
+    residents.forEach(function (r) {
+      rows.push({
+        Name: r.Resident_Name || '',
+        Unit: r.Unit_Assigned || '',
+        Floorplan: '',
+        'Lease Status': r.Lease_Status || '',
+        Scholarship: r.Scholarship || '',
+      });
+    });
+  }
+
+  if (rows.length === 0) {
+    showNotification('No data to export.', 'warning');
+    return;
+  }
+
+  // Sort by unit number
+  rows.sort(function (a, b) {
+    return (a.Unit || '').localeCompare(b.Unit || '', undefined, { numeric: true, sensitivity: 'base' });
+  });
+
+  var ws = XLSX.utils.json_to_sheet(rows, { header: ['Name', 'Unit', 'Floorplan', 'Lease Status', 'Scholarship'] });
+
+  // Set column widths
+  ws['!cols'] = [
+    { wch: 28 }, // Name
+    { wch: 14 }, // Unit
+    { wch: 20 }, // Floorplan
+    { wch: 24 }, // Lease Status
+    { wch: 22 }, // Scholarship
+  ];
+
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Resident Master List');
+
+  var today = new Date();
+  var dateStr = today.getFullYear() + '-' +
+    String(today.getMonth() + 1).padStart(2, '0') + '-' +
+    String(today.getDate()).padStart(2, '0');
+  XLSX.writeFile(wb, 'Resident_Master_List_' + dateStr + '.xlsx');
+
+  showNotification('Resident Master List exported.', 'success');
+}
+
+/* ------------------------------------------------------------------
    MASTER LIST HELPERS
    ------------------------------------------------------------------ */
 
@@ -2265,11 +2358,12 @@ function handleBankAssignClick(bankEntry) {
   });
 }
 
-function handleBankAssignment(bankEntry, selectedUnit) {
+function handleBankAssignment(bankEntry, selectedUnit, selectedScholarship) {
   if (!AppState.residents) {
     AppState.residents = new Map();
   }
 
+  var scholarship = selectedScholarship || 'NONE';
   var unitKey = selectedUnit.toUpperCase();
 
   if (AppState.residents.has(unitKey)) {
@@ -2300,21 +2394,21 @@ function handleBankAssignment(bankEntry, selectedUnit) {
       'Scholarship Reserved Unit',
       'Unit "' + selectedUnit + '" is reserved for the "' + reservedScholarship + '" scholarship. Do you want to proceed with this placement?',
       function () {
-        _completeBankAssignment(bankEntry, selectedUnit, unitKey);
+        _completeBankAssignment(bankEntry, selectedUnit, unitKey, scholarship);
       }
     );
     return;
   }
 
-  _completeBankAssignment(bankEntry, selectedUnit, unitKey);
+  _completeBankAssignment(bankEntry, selectedUnit, unitKey, scholarship);
 }
 
-function _completeBankAssignment(bankEntry, selectedUnit, unitKey) {
+function _completeBankAssignment(bankEntry, selectedUnit, unitKey, scholarship) {
   AppState.residents.set(unitKey, {
     Resident_Name: bankEntry.name,
     Unit_Assigned: selectedUnit,
     Lease_Status: bankEntry.leaseStatus,
-    Scholarship: 'NONE',
+    Scholarship: scholarship || 'NONE',
   });
 
   AppState.waitingBank = AppState.waitingBank.filter(function (entry) { return entry._id !== bankEntry._id; });

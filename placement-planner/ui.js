@@ -550,18 +550,28 @@ function renderMasterList(residents, inventory, filters, callbacks) {
     container.appendChild(searchDiv);
 
     // Filter bar
+    // Build scholarship filter options from ALLOWED_SCHOLARSHIPS
+    var schFilterHtml = '<option value="all">All Scholarships</option>';
+    for (var si = 0; si < ALLOWED_SCHOLARSHIPS.length; si++) {
+      var sc = ALLOWED_SCHOLARSHIPS[si];
+      if (sc === 'NONE') continue;
+      schFilterHtml += '<option value="' + escapeHtml(sc) + '">' + escapeHtml(sc) + '</option>';
+    }
+
+    // Build lease filter options from ALLOWED_LEASE_STATUSES
+    var leaseFilterHtml = '<option value="all">All Leases</option>';
+    for (var li = 0; li < ALLOWED_LEASE_STATUSES.length; li++) {
+      leaseFilterHtml += '<option value="' + escapeHtml(ALLOWED_LEASE_STATUSES[li]) + '">' + escapeHtml(ALLOWED_LEASE_STATUSES[li]) + '</option>';
+    }
+
     var filterDiv = document.createElement('div');
     filterDiv.className = 'master-list-filters';
     filterDiv.innerHTML =
       '<select id="filter-occupancy" class="select-input">' +
         '<option value="all">All</option><option value="occupied">Occupied</option><option value="available">Available</option>' +
       '</select>' +
-      '<select id="filter-scholarship" class="select-input">' +
-        '<option value="all">All Scholarships</option><option value="overrides">Has Scholarship</option>' +
-      '</select>' +
-      '<select id="filter-lease" class="select-input">' +
-        '<option value="all">All Leases</option>' +
-      '</select>' +
+      '<select id="filter-scholarship" class="select-input">' + schFilterHtml + '</select>' +
+      '<select id="filter-lease" class="select-input">' + leaseFilterHtml + '</select>' +
       '<select id="filter-floorplan" class="select-input">' +
         '<option value="all">All Floorplans</option>' +
       '</select>' +
@@ -641,15 +651,9 @@ function renderMasterList(residents, inventory, filters, callbacks) {
     if (filters.occupancy === 'available' && isOccupied) continue;
 
     if (filters.scholarship !== 'all') {
-      if (filters.scholarship === 'overrides') {
-        if (!isOccupied) continue;
-        var sch = (rowResident.Scholarship || '').toUpperCase();
-        if (!sch || sch === 'NONE') continue;
-      } else {
-        if (!isOccupied) continue;
-        var sch = (rowResident.Scholarship || '').toUpperCase();
-        if (sch !== filters.scholarship.toUpperCase()) continue;
-      }
+      if (!isOccupied) continue;
+      var sch = (rowResident.Scholarship || '').toUpperCase();
+      if (sch !== filters.scholarship.toUpperCase()) continue;
     }
 
     if (filters.lease !== 'all') {
@@ -1228,7 +1232,16 @@ function openBankAssignmentModal(bankEntry, availableUnits, callbacks) {
   }
   selectHtml += '</select><div id="bank-assign-validation" class="validation-message"></div></div>';
 
-  var bodyHtml = infoHtml + selectHtml;
+  // Scholarship selector
+  var schHtml = '<div class="form-group"><label for="bank-assign-scholarship">Scholarship</label><select id="bank-assign-scholarship" class="select-input">';
+  schHtml += '<option value="NONE">NONE</option>';
+  for (var si = 0; si < ALLOWED_SCHOLARSHIPS.length; si++) {
+    if (ALLOWED_SCHOLARSHIPS[si] === 'NONE') continue;
+    schHtml += '<option value="' + escapeHtml(ALLOWED_SCHOLARSHIPS[si]) + '">' + escapeHtml(ALLOWED_SCHOLARSHIPS[si]) + '</option>';
+  }
+  schHtml += '</select></div>';
+
+  var bodyHtml = infoHtml + selectHtml + schHtml;
   var footerHtml =
     '<button class="btn btn-secondary" id="bank-assign-cancel">Cancel</button>' +
     '<button class="btn btn-primary" id="bank-assign-confirm">Assign</button>';
@@ -1255,8 +1268,9 @@ function openBankAssignmentModal(bankEntry, availableUnits, callbacks) {
       v.className = 'validation-message validation-error';
       return;
     }
+    var selectedScholarship = document.getElementById('bank-assign-scholarship').value || 'NONE';
     closeBankAssignmentModal();
-    if (callbacks.onAssign) callbacks.onAssign(bankEntry, selectedUnit);
+    if (callbacks.onAssign) callbacks.onAssign(bankEntry, selectedUnit, selectedScholarship);
   });
 }
 
