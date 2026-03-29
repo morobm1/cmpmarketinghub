@@ -1078,13 +1078,7 @@ function initMapViewerEvents() {
     svCloseBtn.addEventListener('click', closeSplitViewModal);
   }
 
-  // Split-View overlay click-outside-to-close
-  var svOverlay = document.getElementById('split-view-overlay');
-  if (svOverlay) {
-    svOverlay.addEventListener('click', function (e) {
-      if (e.target === svOverlay) closeSplitViewModal();
-    });
-  }
+  // Split-View overlay: only close via the Close button (no click-outside)
 
   // Split-View export button
   var svExportBtn = document.getElementById('sv-export-btn');
@@ -1126,12 +1120,7 @@ function initMapViewerEvents() {
   if (swapCloseBtn) swapCloseBtn.addEventListener('click', closeSwapUnitModal);
   var swapCancelBtn = document.getElementById('swap-cancel-btn');
   if (swapCancelBtn) swapCancelBtn.addEventListener('click', closeSwapUnitModal);
-  var swapOverlay = document.getElementById('swap-unit-overlay');
-  if (swapOverlay) {
-    swapOverlay.addEventListener('click', function (e) {
-      if (e.target === swapOverlay) closeSwapUnitModal();
-    });
-  }
+  // Swap overlay: only close via Cancel/Close buttons (no click-outside)
 
   // Swap search inputs
   var swapSearchA = document.getElementById('swap-search-a');
@@ -1434,15 +1423,47 @@ function initDebugViewEvents() {
    ------------------------------------------------------------------ */
 
 function initModalEvents() {
-  // Escape key closes modal
   document.addEventListener('keydown', function (e) {
+    // Prevent backspace from navigating back when not in a text input
+    if (e.key === 'Backspace') {
+      var tag = (e.target.tagName || '').toLowerCase();
+      var isEditable = tag === 'input' || tag === 'textarea' || e.target.isContentEditable;
+      if (!isEditable) {
+        e.preventDefault();
+      }
+    }
+
+    // Escape key closes the topmost visible modal (but not while typing in an input)
     if (e.key === 'Escape') {
+      // Close split-view first if open
+      var svOverlay = document.getElementById('split-view-overlay');
+      if (svOverlay && svOverlay.style.display !== 'none') {
+        closeSplitViewModal();
+        return;
+      }
+      // Close swap modal if open
+      var swapOverlay = document.getElementById('swap-unit-overlay');
+      if (swapOverlay && swapOverlay.style.display !== 'none') {
+        closeSwapUnitModal();
+        return;
+      }
+      // Close generic modal
       var overlay = document.getElementById('modal-overlay');
       if (overlay && overlay.style.display !== 'none') {
         hideModal();
       }
     }
   });
+
+  // Prevent the main modal overlay from closing on click-outside
+  // (only close via buttons)
+  var mainOverlay = document.getElementById('modal-overlay');
+  if (mainOverlay) {
+    mainOverlay.addEventListener('click', function (e) {
+      // Do nothing — modals are only closed via explicit buttons
+      e.stopPropagation();
+    });
+  }
 }
 
 /* ------------------------------------------------------------------

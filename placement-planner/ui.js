@@ -3136,6 +3136,36 @@ async function loadMapInSplitView(buildingKey, floor, highlightUnitId) {
     inventory: AppState.inventory,
     onUnitClick: function (unitId) {
       highlightUnitInContainer(container, unitId);
+      // Show unit info overlay inside the split view map area
+      var normalizedId = unitId.toUpperCase();
+      var resident = residents.get(normalizedId);
+      var infoPanel = container.querySelector('.sv-map-info-panel');
+      if (!infoPanel) {
+        infoPanel = document.createElement('div');
+        infoPanel.className = 'sv-map-info-panel';
+        container.appendChild(infoPanel);
+      }
+      if (resident) {
+        var schText = (resident.Scholarship && resident.Scholarship.toUpperCase() !== 'NONE') ? resident.Scholarship : '--';
+        infoPanel.innerHTML =
+          '<div class="sv-info-header">' + escapeHtml(unitId) + '</div>' +
+          '<div class="sv-info-row"><span>Resident:</span> <strong>' + escapeHtml(resident.Resident_Name || '--') + '</strong></div>' +
+          '<div class="sv-info-row"><span>Lease:</span> ' + escapeHtml(resident.Lease_Status || '--') + '</div>' +
+          '<div class="sv-info-row"><span>Scholarship:</span> ' + escapeHtml(schText) + '</div>' +
+          '<button class="sv-info-close">&times;</button>';
+      } else {
+        infoPanel.innerHTML =
+          '<div class="sv-info-header">' + escapeHtml(unitId) + '</div>' +
+          '<div class="sv-info-row"><span>Status:</span> Available</div>' +
+          '<button class="sv-info-close">&times;</button>';
+      }
+      infoPanel.style.display = 'block';
+      var closeBtn = infoPanel.querySelector('.sv-info-close');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', function () {
+          infoPanel.style.display = 'none';
+        });
+      }
     }
   });
 
