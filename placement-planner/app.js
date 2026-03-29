@@ -1064,24 +1064,120 @@ function initMapViewerEvents() {
     });
   }
 
-  // Toggle Master List Drawer
+  // Toggle Master List — opens the split-view modal
   var toggleMasterBtn = document.getElementById('toggle-master-list-btn');
   if (toggleMasterBtn) {
     toggleMasterBtn.addEventListener('click', function () {
-      var drawer = document.getElementById('master-list-drawer');
-      if (drawer) {
-        var isOpen = drawer.getAttribute('data-open') === 'true';
-        drawer.setAttribute('data-open', isOpen ? 'false' : 'true');
-      }
+      openSplitViewModal();
     });
   }
 
-  // Close Master List Drawer
-  var closeMasterBtn = document.getElementById('master-list-close-btn');
-  if (closeMasterBtn) {
-    closeMasterBtn.addEventListener('click', function () {
-      var drawer = document.getElementById('master-list-drawer');
-      if (drawer) drawer.setAttribute('data-open', 'false');
+  // Split-View close button
+  var svCloseBtn = document.getElementById('sv-close-btn');
+  if (svCloseBtn) {
+    svCloseBtn.addEventListener('click', closeSplitViewModal);
+  }
+
+  // Split-View overlay click-outside-to-close
+  var svOverlay = document.getElementById('split-view-overlay');
+  if (svOverlay) {
+    svOverlay.addEventListener('click', function (e) {
+      if (e.target === svOverlay) closeSplitViewModal();
+    });
+  }
+
+  // Split-View export button
+  var svExportBtn = document.getElementById('sv-export-btn');
+  if (svExportBtn) {
+    svExportBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      exportMasterListToExcel();
+    });
+  }
+
+  // Split-View map selectors
+  var svBuildingSel = document.getElementById('sv-building-selector');
+  if (svBuildingSel) {
+    svBuildingSel.addEventListener('change', function () {
+      updateModalFloorSelector();
+      var b = svBuildingSel.value;
+      var fSel = document.getElementById('sv-floor-selector');
+      var f = fSel ? parseInt(fSel.value) : 0;
+      loadMapInSplitView(b, f);
+    });
+  }
+  var svFloorSel = document.getElementById('sv-floor-selector');
+  if (svFloorSel) {
+    svFloorSel.addEventListener('change', function () {
+      var bSel = document.getElementById('sv-building-selector');
+      var b = bSel ? bSel.value : '';
+      loadMapInSplitView(b, parseInt(svFloorSel.value));
+    });
+  }
+
+  // Swap Unit button
+  var swapUnitBtn = document.getElementById('swap-unit-btn');
+  if (swapUnitBtn) {
+    swapUnitBtn.addEventListener('click', openSwapUnitModal);
+  }
+
+  // Swap modal close/cancel
+  var swapCloseBtn = document.getElementById('swap-close-btn');
+  if (swapCloseBtn) swapCloseBtn.addEventListener('click', closeSwapUnitModal);
+  var swapCancelBtn = document.getElementById('swap-cancel-btn');
+  if (swapCancelBtn) swapCancelBtn.addEventListener('click', closeSwapUnitModal);
+  var swapOverlay = document.getElementById('swap-unit-overlay');
+  if (swapOverlay) {
+    swapOverlay.addEventListener('click', function (e) {
+      if (e.target === swapOverlay) closeSwapUnitModal();
+    });
+  }
+
+  // Swap search inputs
+  var swapSearchA = document.getElementById('swap-search-a');
+  if (swapSearchA) {
+    swapSearchA.addEventListener('input', function () {
+      renderSwapSearchResults(this.value, document.getElementById('swap-results-a'), 'a');
+    });
+  }
+  var swapSearchB = document.getElementById('swap-search-b');
+  if (swapSearchB) {
+    swapSearchB.addEventListener('input', function () {
+      renderSwapSearchResults(this.value, document.getElementById('swap-results-b'), 'b');
+    });
+  }
+
+  // Swap confirm
+  var swapConfirmBtn = document.getElementById('swap-confirm-btn');
+  if (swapConfirmBtn) {
+    swapConfirmBtn.addEventListener('click', function () {
+      if (!_swapState.a || !_swapState.b) return;
+
+      var resA = _swapState.a.resident;
+      var resB = _swapState.b.resident;
+      var unitA = resA.Unit_Assigned;
+      var unitB = resB.Unit_Assigned;
+
+      // Remove both from map
+      AppState.residents.delete(unitA.toUpperCase());
+      AppState.residents.delete(unitB.toUpperCase());
+
+      // Swap assignments
+      resA.Unit_Assigned = unitB;
+      resB.Unit_Assigned = unitA;
+
+      // Re-insert under swapped keys
+      AppState.residents.set(unitB.toUpperCase(), resA);
+      AppState.residents.set(unitA.toUpperCase(), resB);
+
+      persistResidents();
+      renderCurrentMap();
+      refreshAllStats();
+      refreshMasterList();
+      refreshSplitViewMasterList();
+
+      closeSwapUnitModal();
+      showNotification('Swapped ' + resA.Resident_Name + ' (' + unitB + ') and ' + resB.Resident_Name + ' (' + unitA + ')', 'success');
     });
   }
 
@@ -1097,58 +1193,11 @@ function initMapViewerEvents() {
     exportMapBtn.addEventListener('click', exportMapAsSVG);
   }
 
-  // Export Master List button
-  var exportMasterBtn = document.getElementById('export-master-list-btn');
-  if (exportMasterBtn) {
-    exportMasterBtn.addEventListener('click', function (e) {
-      e.stopPropagation(); // prevent collapsible toggle
-      exportMasterListToExcel();
-    });
-  }
-
-  // Master list search and filter controls are wired dynamically
-  // when renderMasterList creates them. We use event delegation.
-  var masterListContainer = document.getElementById('resident-master-list');
-  if (masterListContainer) {
-    masterListContainer.addEventListener('input', function (e) {
-      if (e.target.id === 'master-list-search') {
-        refreshMasterList();
-      }
-    });
-    masterListContainer.addEventListener('change', function (e) {
-      var id = e.target.id;
-      if (id === 'filter-occupancy') {
-        AppState.filters.occupancy = e.target.value;
-        refreshMasterList();
-      } else if (id === 'filter-scholarship') {
-        AppState.filters.scholarship = e.target.value;
-        refreshMasterList();
-      } else if (id === 'filter-lease') {
-        AppState.filters.lease = e.target.value;
-        refreshMasterList();
-      } else if (id === 'filter-floorplan') {
-        AppState.filters.floorplan = e.target.value;
-        refreshMasterList();
-      }
-    });
-    masterListContainer.addEventListener('click', function (e) {
-      if (e.target.id === 'clear-filters-btn') {
-        AppState.filters.occupancy = 'all';
-        AppState.filters.scholarship = 'all';
-        AppState.filters.lease = 'all';
-        AppState.filters.floorplan = 'all';
-        var fo = document.getElementById('filter-occupancy');
-        var fs = document.getElementById('filter-scholarship');
-        var fl = document.getElementById('filter-lease');
-        var ff = document.getElementById('filter-floorplan');
-        if (fo) fo.value = 'all';
-        if (fs) fs.value = 'all';
-        if (fl) fl.value = 'all';
-        if (ff) ff.value = 'all';
-        refreshMasterList();
-      }
-    });
-  }
+  // Master list search and filter controls are wired dynamically via
+  // event delegation. Uses class-based selectors to support both the
+  // hidden #resident-master-list and the split-view #sv-master-list.
+  _wireMasterListDelegation(document.getElementById('resident-master-list'), refreshMasterList);
+  _wireMasterListDelegation(document.getElementById('sv-master-list'), refreshSplitViewMasterList);
 
   // Bank search (event delegation - bank is rendered dynamically)
   var bankSection = document.getElementById('bank-section');
@@ -2006,6 +2055,89 @@ function handleMasterListRowClick(resident, unitKey) {
   });
 }
 
+/**
+ * Wire event delegation for master list search/filter controls.
+ * Uses class-based selectors so it works for any master list container
+ * (the hidden default one and the split-view modal one).
+ */
+function _wireMasterListDelegation(container, refreshFn) {
+  if (!container) return;
+  container.addEventListener('input', function (e) {
+    if (e.target.classList.contains('master-list-search')) {
+      refreshFn();
+    }
+  });
+  container.addEventListener('change', function (e) {
+    if (e.target.classList.contains('filter-occupancy')) {
+      AppState.filters.occupancy = e.target.value;
+      refreshFn();
+    } else if (e.target.classList.contains('filter-scholarship')) {
+      AppState.filters.scholarship = e.target.value;
+      refreshFn();
+    } else if (e.target.classList.contains('filter-lease')) {
+      AppState.filters.lease = e.target.value;
+      refreshFn();
+    } else if (e.target.classList.contains('filter-floorplan')) {
+      AppState.filters.floorplan = e.target.value;
+      refreshFn();
+    }
+  });
+  container.addEventListener('click', function (e) {
+    if (e.target.classList.contains('clear-filters-btn')) {
+      AppState.filters.occupancy = 'all';
+      AppState.filters.scholarship = 'all';
+      AppState.filters.lease = 'all';
+      AppState.filters.floorplan = 'all';
+      var fo = container.querySelector('.filter-occupancy');
+      var fs = container.querySelector('.filter-scholarship');
+      var fl = container.querySelector('.filter-lease');
+      var ff = container.querySelector('.filter-floorplan');
+      if (fo) fo.value = 'all';
+      if (fs) fs.value = 'all';
+      if (fl) fl.value = 'all';
+      if (ff) ff.value = 'all';
+      refreshFn();
+    }
+  });
+}
+
+/* ------------------------------------------------------------------
+   SPLIT-VIEW HANDLERS
+   ------------------------------------------------------------------ */
+
+function handleSplitViewRowClick(resident, unitKey) {
+  var parsed = parseUnitId(unitKey);
+  if (parsed.ambiguous) return;
+
+  // Update the modal's map selectors
+  var bSelect = document.getElementById('sv-building-selector');
+  var fSelect = document.getElementById('sv-floor-selector');
+  if (bSelect) bSelect.value = parsed.building;
+  updateModalFloorSelector();
+  if (fSelect) fSelect.value = parsed.floor;
+
+  // Load map and highlight
+  loadMapInSplitView(parsed.building, parsed.floor, unitKey);
+
+  // Highlight row in the split-view list
+  highlightMasterListRowIn(document.getElementById('sv-master-list'), unitKey);
+}
+
+function handleSplitViewAddResident(unitNumber, unitType) {
+  openResidentModal(null, {
+    onSave: function (formData, isEdit, origKey) {
+      handleResidentSave(formData, isEdit, origKey);
+      // Refresh the split-view list after save
+      refreshSplitViewMasterList();
+    },
+    inventory: AppState.inventory,
+    residents: AppState.residents,
+    reservedUnitsMap: AppState.scholarshipReservedUnits,
+    prefillUnit: unitNumber,
+    prefillFloorplan: unitType,
+  });
+}
+
 function handleResidentEdit(resident, unitKey) {
   openResidentModal(resident, {
     onSave: handleResidentSave,
@@ -2034,6 +2166,56 @@ function handleResidentDelete(resident, unitKey) {
 
         showNotification('Deleted resident "' + resident.Resident_Name + '" from unit ' + resident.Unit_Assigned, 'success');
       }
+    }
+  );
+}
+
+/* ------------------------------------------------------------------
+   UNASSIGN RESIDENT — Move from unit to waiting bank
+   ------------------------------------------------------------------ */
+
+function handleUnassignResident(unitKey) {
+  if (!AppState.residents || !AppState.residents.has(unitKey)) {
+    showNotification('No resident found for this unit.', 'error');
+    return;
+  }
+
+  var resident = AppState.residents.get(unitKey);
+  var residentName = resident.Resident_Name || 'Unknown';
+  var unitType = getResidentFloorplanType(resident, AppState.inventory || []) || '';
+
+  showConfirmModal(
+    'Unassign Resident',
+    'Unassign "' + residentName + '" from unit ' + (resident.Unit_Assigned || unitKey) + '? They will be moved to the waiting bank.',
+    function () {
+      // Create bank entry
+      var bankEntry = {
+        _id: 'bank_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+        name: residentName,
+        unitType: unitType,
+        leaseStatus: resident.Lease_Status || '',
+      };
+
+      // Remove from placed residents
+      AppState.residents.delete(unitKey);
+
+      // Add to waiting bank
+      if (!AppState.waitingBank) AppState.waitingBank = [];
+      AppState.waitingBank.push(bankEntry);
+
+      persistProject();
+      refreshAllStats();
+      refreshMasterList();
+      renderCurrentMap();
+      refreshBank();
+      refreshScholarshipRecap();
+      refreshPreleaseProgress();
+      refreshLeapfrogChecker();
+      refreshSummaryPanel();
+      renderImportCards(AppState);
+      hideDetailPanel();
+
+      showNotification('Unassigned "' + residentName + '" and moved to waiting bank.', 'success');
     }
   );
 }

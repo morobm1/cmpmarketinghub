@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=20260329.5" />
+  <link rel="stylesheet" href="styles.css?v=20260329.6" />
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
@@ -194,23 +194,13 @@
         <button id="toggle-master-list-btn" class="btn btn-secondary">Resident List</button>
         <button id="print-map-btn" class="btn btn-secondary">Print Map</button>
         <button id="export-map-btn" class="btn btn-secondary">Export Map</button>
+        <button id="swap-unit-btn" class="btn btn-secondary">Swap Units</button>
       </div>
 
     </main>
 
-    <!-- Resident Master List Drawer (slides up from bottom of center panel) -->
-    <div id="master-list-drawer" class="master-list-drawer" data-open="false">
-      <div id="master-list-drawer-header" class="master-list-drawer-header">
-        <span class="drawer-title">Resident Master List</span>
-        <div class="drawer-actions">
-          <button id="export-master-list-btn" class="btn btn-sm btn-outline" title="Export to Excel">Export</button>
-          <button id="master-list-close-btn" class="btn btn-sm btn-secondary" title="Close">✕</button>
-        </div>
-      </div>
-      <div class="master-list-drawer-body">
-        <div id="resident-master-list"></div>
-      </div>
-    </div>
+    <!-- Resident Master List (hidden container for backward compat) -->
+    <div id="resident-master-list" style="display:none"></div>
 
     <!-- ====== RIGHT PANEL ====== -->
     <aside id="right-panel">
@@ -380,6 +370,71 @@
     <div id="prelease-chart"></div>
   </div>
 
+  <!-- ====== SPLIT-VIEW MASTER LIST MODAL ====== -->
+  <div id="split-view-overlay" class="split-view-overlay" style="display:none">
+    <div class="split-view-container">
+
+      <!-- Left Panel: Master List -->
+      <div class="split-view-left">
+        <div class="split-view-left-header">
+          <h3 class="split-view-title">Resident Master List</h3>
+          <div class="split-view-left-actions">
+            <button id="sv-export-btn" class="btn btn-sm btn-outline">Export</button>
+            <button id="sv-close-btn" class="btn btn-sm btn-secondary">Close</button>
+          </div>
+        </div>
+        <div id="sv-master-list" class="split-view-left-body">
+          <!-- renderMasterListInto targets this container -->
+        </div>
+      </div>
+
+      <!-- Right Panel: Map Viewer -->
+      <div class="split-view-right">
+        <div class="split-view-right-header">
+          <div class="split-view-map-selectors">
+            <select id="sv-building-selector" class="select-input"></select>
+            <select id="sv-floor-selector" class="select-input"></select>
+          </div>
+          <span id="sv-map-label" class="split-view-map-label"></span>
+        </div>
+        <div id="sv-map-container" class="split-view-map-container">
+          <p class="placeholder-text">Click a resident row to view their unit on the map</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ====== SWAP UNIT MODAL ====== -->
+  <div id="swap-unit-overlay" class="modal-overlay" style="display:none">
+    <div class="modal-content swap-unit-modal">
+      <div class="modal-header">
+        <h3>Swap Units</h3>
+        <button id="swap-close-btn" class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body" id="swap-unit-body">
+        <p class="swap-instructions">Select two residents to swap their unit assignments.</p>
+        <div class="swap-slot" id="swap-slot-a">
+          <label>Resident A</label>
+          <input type="text" id="swap-search-a" class="text-input" placeholder="Search by name or unit..." />
+          <div id="swap-results-a" class="swap-search-results"></div>
+          <div id="swap-selected-a" class="swap-selected-card" style="display:none"></div>
+        </div>
+        <div class="swap-arrow">&#8596;</div>
+        <div class="swap-slot" id="swap-slot-b">
+          <label>Resident B</label>
+          <input type="text" id="swap-search-b" class="text-input" placeholder="Search by name or unit..." />
+          <div id="swap-results-b" class="swap-search-results"></div>
+          <div id="swap-selected-b" class="swap-selected-card" style="display:none"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="swap-cancel-btn" class="btn btn-secondary">Cancel</button>
+        <button id="swap-confirm-btn" class="btn btn-primary" disabled>Swap Units</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ====== MODAL OVERLAY ====== -->
   <div id="modal-overlay" class="modal-overlay" style="display:none">
     <div id="modal-content" class="modal-content">
@@ -396,11 +451,11 @@
   <input type="file" id="restore-file-input-global" accept=".json" style="display:none" />
 
   <!-- ====== SCRIPTS ====== -->
-  <script src="config.js?v=20260329.5"></script>
-  <script src="inventory.js?v=20260329.5"></script>
-  <script src="excel.js?v=20260329.5"></script>
-  <script src="map.js?v=20260329.5"></script>
-  <script src="ui.js?v=20260329.5"></script>
-  <script src="app.js?v=20260329.5"></script>
+  <script src="config.js?v=20260329.6"></script>
+  <script src="inventory.js?v=20260329.6"></script>
+  <script src="excel.js?v=20260329.6"></script>
+  <script src="map.js?v=20260329.6"></script>
+  <script src="ui.js?v=20260329.6"></script>
+  <script src="app.js?v=20260329.6"></script>
 </body>
 </html>

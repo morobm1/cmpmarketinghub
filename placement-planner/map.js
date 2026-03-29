@@ -112,21 +112,22 @@ function parseSVGString(svgText, name) {
    ------------------------------------------------------------------ */
 
 /**
- * Render an SVG into the map container, apply colors and labels.
+ * Render an SVG into any container element, apply colors and labels.
+ * This is the core rendering function used by both the main map and
+ * the split-view modal map.
+ *
+ * @param {HTMLElement} container - Target DOM element to render into
  * @param {SVGSVGElement} svgElement - The SVG DOM element (will be cloned)
  * @param {Map<string, object>} residents - Resident lookup keyed by UPPERCASE Unit_Assigned
- * @param {object} options - { showNames: boolean, scholarshipOnly: boolean, inventory: Array }
+ * @param {object} options - { showNames, scholarshipOnly, inventory, onUnitClick }
  * @returns {{ unmatchedUnits: string[], svgUnitIds: Set<string> }}
  */
-function renderMap(svgElement, residents, options = {}) {
-  const { showNames = false, scholarshipOnly = false, inventory = null } = options;
-  const container = document.getElementById('map-container');
-  const emptyState = document.getElementById('emptyState');
+function renderMapIntoContainer(container, svgElement, residents, options = {}) {
+  const { showNames = false, scholarshipOnly = false, inventory = null, onUnitClick = null } = options;
 
   container.innerHTML = '';
   container.style.backgroundImage = 'none';
   container.style.display = 'flex';
-  if (emptyState) emptyState.style.display = 'none';
 
   // Clone SVG to avoid mutating the stored original
   const svg = svgElement.cloneNode(true);
@@ -293,6 +294,14 @@ function renderMap(svgElement, residents, options = {}) {
 
   container.appendChild(svg);
 
+  // Bind unit click delegation if a callback was provided
+  if (onUnitClick) {
+    svg.addEventListener('click', function (e) {
+      var unitId = getClickableUnitIdFromSvgEvent(e, svg);
+      if (unitId) onUnitClick(unitId, e);
+    });
+  }
+
   // Find unmatched spreadsheet units (in spreadsheet but not in SVG)
   const unmatchedUnits = [];
   residents.forEach((_, unitKey) => {
@@ -302,6 +311,21 @@ function renderMap(svgElement, residents, options = {}) {
   });
 
   return { unmatchedUnits, svgUnitIds };
+}
+
+/**
+ * Render an SVG into the main #map-container. Thin wrapper around
+ * renderMapIntoContainer for backward compatibility.
+ * @param {SVGSVGElement} svgElement
+ * @param {Map<string, object>} residents
+ * @param {object} options - { showNames, scholarshipOnly, inventory }
+ * @returns {{ unmatchedUnits: string[], svgUnitIds: Set<string> }}
+ */
+function renderMap(svgElement, residents, options = {}) {
+  const container = document.getElementById('map-container');
+  const emptyState = document.getElementById('emptyState');
+  if (emptyState) emptyState.style.display = 'none';
+  return renderMapIntoContainer(container, svgElement, residents, options);
 }
 
 /* ------------------------------------------------------------------
@@ -367,29 +391,29 @@ function addUnitLabel(svg, el, name, bgColor) {
 }
 
 /**
- * Post-render: add text labels to all units that have data-label.
+ * Post-render: add text labels to all units that have data-label in any container.
  * Must be called AFTER the SVG is in the DOM so getBBox() works.
+ * @param {HTMLElement} container - The container holding the SVG
  */
-function applyLabelsPostRender() {
-  const container = document.getElementById('map-container');
-  const svg = container.querySelector('svg');
+function applyLabelsPostRenderInContainer(container) {
+  var svg = container.querySelector('svg');
   if (!svg) return;
 
-  const units = svg.querySelectorAll('[data-label]');
-  units.forEach((el) => {
-    const name = el.getAttribute('data-label');
-    const bgColor = el.getAttribute('data-label-bg') || '#ffffff';
+  var units = svg.querySelectorAll('[data-label]');
+  units.forEach(function (el) {
+    var name = el.getAttribute('data-label');
+    var bgColor = el.getAttribute('data-label-bg') || '#ffffff';
 
     try {
-      const bbox = el.getBBox();
+      var bbox = el.getBBox();
       if (bbox.width < 5 || bbox.height < 5) return;
 
-      const cx = bbox.x + bbox.width / 2;
-      const cy = bbox.y + bbox.height / 2;
+      var cx = bbox.x + bbox.width / 2;
+      var cy = bbox.y + bbox.height / 2;
 
-      const displayName = abbreviateName(name, bbox.width);
+      var displayName = abbreviateName(name, bbox.width);
 
-      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      var text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
       text.setAttribute('x', cx);
       text.setAttribute('y', cy);
       text.classList.add('unit-label');
@@ -400,7 +424,7 @@ function applyLabelsPostRender() {
         text.classList.add('light-bg');
       }
 
-      const fontSize = Math.min(Math.max(bbox.width / 8, 6), 11);
+      var fontSize = Math.min(Math.max(bbox.width / 8, 6), 11);
       text.style.fontSize = fontSize + 'px';
 
       text.textContent = displayName;
@@ -409,6 +433,14 @@ function applyLabelsPostRender() {
       // getBBox can throw if element is not rendered; silently skip
     }
   });
+}
+
+/**
+ * Post-render: add text labels in the main #map-container.
+ * Backward-compatible wrapper around applyLabelsPostRenderInContainer.
+ */
+function applyLabelsPostRender() {
+  applyLabelsPostRenderInContainer(document.getElementById('map-container'));
 }
 
 function abbreviateName(name, availableWidth) {
@@ -445,23 +477,31 @@ function isColorDark(color) {
    UNIT INTERACTION — HIGHLIGHT, SELECT, CLICK BINDING
    ------------------------------------------------------------------ */
 
-function highlightUnit(unitId) {
-  const container = document.getElementById('map-container');
-  const svg = container.querySelector('svg');
+/**
+ * Highlight a unit in any container's SVG.
+ * @param {HTMLElement} container - The container holding the SVG
+ * @param {string} unitId - Unit ID to highlight
+ */
+function highlightUnitInContainer(container, unitId) {
+  var svg = container.querySelector('svg');
   if (!svg) return;
 
-  svg.querySelectorAll('.unit-highlight').forEach((el) => {
+  svg.querySelectorAll('.unit-highlight').forEach(function (el) {
     el.classList.remove('unit-highlight');
   });
 
-  const normalized = unitId.toUpperCase();
-  const allUnits = svg.querySelectorAll('[data-unit]');
-  allUnits.forEach((u) => {
+  var normalized = unitId.toUpperCase();
+  svg.querySelectorAll('[data-unit]').forEach(function (u) {
     if (u.getAttribute('data-unit').toUpperCase() === normalized) {
       u.classList.add('unit-highlight');
       u.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
     }
   });
+}
+
+function highlightUnit(unitId) {
+  var container = document.getElementById('map-container');
+  highlightUnitInContainer(container, unitId);
 }
 
 function selectUnit(unitId) {

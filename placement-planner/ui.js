@@ -327,7 +327,10 @@ function showDetailPanel(resident, unitId) {
       '<div class="detail-field"><div class="detail-field-label">Resident</div><div class="detail-field-value">' + escapeHtml(resident.Resident_Name || '--') + '</div></div>' +
       '<div class="detail-field"><div class="detail-field-label">Lease Status</div><div class="detail-field-value">' + escapeHtml(resident.Lease_Status || '--') + '</div></div>' +
       '<div class="detail-field"><div class="detail-field-label">Scholarship</div><div class="detail-field-value">' + escapeHtml(scholarshipText) + '</div></div>' +
-      '<button class="btn btn-sm btn-secondary" id="detail-close-btn" style="margin-top:10px;width:100%">Clear Selection</button>';
+      '<div class="detail-actions" style="margin-top:10px;display:flex;gap:6px">' +
+        '<button class="btn btn-sm btn-danger-outline" id="detail-unassign-btn" style="flex:1" data-unit-key="' + escapeHtml((unitId || '').toUpperCase()) + '">Unassign</button>' +
+        '<button class="btn btn-sm btn-secondary" id="detail-close-btn" style="flex:1">Clear</button>' +
+      '</div>';
   } else {
     panel.innerHTML =
       '<div class="detail-header-label">Unit Details</div>' +
@@ -343,6 +346,17 @@ function showDetailPanel(resident, unitId) {
   var closeBtn = document.getElementById('detail-close-btn');
   if (closeBtn) {
     closeBtn.addEventListener('click', hideDetailPanel);
+  }
+
+  // Wire unassign button
+  var unassignBtn = document.getElementById('detail-unassign-btn');
+  if (unassignBtn) {
+    unassignBtn.addEventListener('click', function () {
+      var unitKey = unassignBtn.getAttribute('data-unit-key');
+      if (unitKey && typeof handleUnassignResident === 'function') {
+        handleUnassignResident(unitKey);
+      }
+    });
   }
 }
 
@@ -537,8 +551,14 @@ var masterListSort = { column: 'unit', dir: 'asc' };
  * @param {object} filters - { occupancy, scholarship, lease, floorplan }
  * @param {object} callbacks - { onEdit, onDelete, onRowClick }
  */
-function renderMasterList(residents, inventory, filters, callbacks) {
-  var container = document.getElementById('resident-master-list');
+/**
+ * Core master list renderer that targets any container element.
+ * Used by both the drawer/panel master list and the split-view modal.
+ *
+ * callbacks: { onEdit, onDelete, onRowClick, onAddResident }
+ *   onAddResident(unitNumber, unitType) — called when Add button clicked on vacant row
+ */
+function renderMasterListInto(container, residents, inventory, filters, callbacks) {
   if (!container) return;
 
   // Build or reuse table structure
@@ -549,7 +569,7 @@ function renderMasterList(residents, inventory, filters, callbacks) {
     var searchDiv = document.createElement('div');
     searchDiv.className = 'master-list-search-bar';
     searchDiv.innerHTML =
-      '<input type="text" id="master-list-search" class="search-input" placeholder="Search master list..." />';
+      '<input type="text" class="master-list-search search-input" placeholder="Search by name or unit number..." />';
     container.appendChild(searchDiv);
 
     // Filter bar
@@ -570,15 +590,15 @@ function renderMasterList(residents, inventory, filters, callbacks) {
     var filterDiv = document.createElement('div');
     filterDiv.className = 'master-list-filters';
     filterDiv.innerHTML =
-      '<select id="filter-occupancy" class="select-input">' +
+      '<select class="filter-occupancy select-input">' +
         '<option value="all">All</option><option value="occupied">Occupied</option><option value="available">Available</option>' +
       '</select>' +
-      '<select id="filter-scholarship" class="select-input">' + schFilterHtml + '</select>' +
-      '<select id="filter-lease" class="select-input">' + leaseFilterHtml + '</select>' +
-      '<select id="filter-floorplan" class="select-input">' +
+      '<select class="filter-scholarship select-input">' + schFilterHtml + '</select>' +
+      '<select class="filter-lease select-input">' + leaseFilterHtml + '</select>' +
+      '<select class="filter-floorplan select-input">' +
         '<option value="all">All Floorplans</option>' +
       '</select>' +
-      '<button id="clear-filters-btn" class="btn btn-secondary">Clear Filters</button>';
+      '<button class="clear-filters-btn btn btn-secondary">Clear Filters</button>';
     container.appendChild(filterDiv);
 
     table = document.createElement('table');
@@ -591,7 +611,7 @@ function renderMasterList(residents, inventory, filters, callbacks) {
         '<th class="sortable-th" data-sort-col="unit">Unit' + unitArrow + '</th>' +
         '<th>Floorplan</th><th>Lease Status</th><th>Scholarship</th><th>Actions</th>' +
       '</tr></thead>' +
-      '<tbody id="master-table-body"></tbody>';
+      '<tbody class="master-table-body"></tbody>';
     container.appendChild(table);
 
     // Wire sort click handlers on the sortable headers
@@ -604,20 +624,19 @@ function renderMasterList(residents, inventory, filters, callbacks) {
           masterListSort.column = col;
           masterListSort.dir = 'asc';
         }
-        renderMasterList(residents, inventory, filters, callbacks);
+        renderMasterListInto(container, residents, inventory, filters, callbacks);
       });
     });
 
     var emptyMsg = document.createElement('div');
-    emptyMsg.id = 'master-list-empty';
-    emptyMsg.className = 'section-empty';
+    emptyMsg.className = 'master-list-empty section-empty';
     emptyMsg.style.display = 'none';
     container.appendChild(emptyMsg);
   }
 
-  var tbody = document.getElementById('master-table-body');
-  var emptyMsg = document.getElementById('master-list-empty');
-  var searchBox = document.getElementById('master-list-search');
+  var tbody = container.querySelector('.master-table-body');
+  var emptyMsg = container.querySelector('.master-list-empty');
+  var searchBox = container.querySelector('.master-list-search');
   var query = (searchBox ? searchBox.value.trim().toUpperCase() : '');
 
   if (!tbody) return;
@@ -716,8 +735,9 @@ function renderMasterList(residents, inventory, filters, callbacks) {
 
     if (query) {
       var nameMatch = isOccupied && (rowResident.Resident_Name || '').toUpperCase().includes(query);
-      var unitMatch = rowKey.includes(query);
-      if (!nameMatch && !unitMatch) continue;
+      var unitMatch = rowKey.includes(query) || (unit || '').toUpperCase().includes(query);
+      var fpMatch = (unitType || '').toUpperCase().includes(query);
+      if (!nameMatch && !unitMatch && !fpMatch) continue;
     }
 
     visibleCount++;
@@ -764,6 +784,18 @@ function renderMasterList(residents, inventory, filters, callbacks) {
         tdActions.appendChild(editBtn);
         tdActions.appendChild(deleteBtn);
       })(rowResident, rowKey);
+    } else {
+      // Vacant row — show Add button
+      (function (u, ut) {
+        var addBtn = document.createElement('button');
+        addBtn.className = 'action-btn add';
+        addBtn.textContent = 'Add';
+        addBtn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          if (callbacks.onAddResident) callbacks.onAddResident(u, ut);
+        });
+        tdActions.appendChild(addBtn);
+      })(unit, unitType);
     }
 
     tr.appendChild(tdName);
@@ -773,11 +805,15 @@ function renderMasterList(residents, inventory, filters, callbacks) {
     tr.appendChild(tdScholarship);
     tr.appendChild(tdActions);
 
-    (function (res, k, occ) {
+    (function (res, k, occ, u, ut) {
       tr.addEventListener('click', function () {
-        if (occ && callbacks.onRowClick) callbacks.onRowClick(res, k);
+        if (occ && callbacks.onRowClick) {
+          callbacks.onRowClick(res, k);
+        } else if (!occ && callbacks.onAddResident) {
+          callbacks.onAddResident(u, ut);
+        }
       });
-    })(rowResident, rowKey, isOccupied);
+    })(rowResident, rowKey, isOccupied, unit, unitType);
 
     tbody.appendChild(tr);
   }
@@ -788,8 +824,28 @@ function renderMasterList(residents, inventory, filters, callbacks) {
   }
 }
 
+/**
+ * Render the master list into the default #resident-master-list container.
+ * Backward-compatible wrapper around renderMasterListInto.
+ */
+function renderMasterList(residents, inventory, filters, callbacks) {
+  var container = document.getElementById('resident-master-list');
+  if (!container) return;
+  renderMasterListInto(container, residents, inventory, filters, callbacks);
+}
+
 function highlightMasterListRow(unitKey) {
-  var tbody = document.getElementById('master-table-body');
+  // Highlight in the default drawer/panel master list
+  var container = document.getElementById('resident-master-list');
+  highlightMasterListRowIn(container, unitKey);
+}
+
+/**
+ * Highlight a row in any master list container by unit key.
+ */
+function highlightMasterListRowIn(container, unitKey) {
+  if (!container) return;
+  var tbody = container.querySelector('.master-table-body');
   if (!tbody) return;
   tbody.querySelectorAll('tr.row-active').forEach(function (r) { r.classList.remove('row-active'); });
   var row = tbody.querySelector('tr[data-unit-row="' + unitKey + '"]');
@@ -945,6 +1001,15 @@ function openResidentModal(resident, options) {
   populateUnitDropdown(unitSelect, inventory, residents, isEdit ? resident.Unit_Assigned : null, reservedUnitsMap, currentFpFilter);
   if (isEdit) {
     unitSelect.value = resident.Unit_Assigned;
+  }
+
+  // Pre-fill unit and floorplan from split-view Add button
+  if (!isEdit && options.prefillFloorplan && floorplanSelect) {
+    floorplanSelect.value = options.prefillFloorplan;
+    populateUnitDropdown(unitSelect, inventory, residents, null, reservedUnitsMap, options.prefillFloorplan);
+  }
+  if (!isEdit && options.prefillUnit) {
+    unitSelect.value = options.prefillUnit;
   }
 
   // When floorplan changes, re-filter the unit dropdown
@@ -2359,31 +2424,37 @@ function renderLeapfrogChecker(conflicts) {
    MASTER LIST FLOORPLAN FILTER
    ------------------------------------------------------------------ */
 
+/**
+ * Populate all .filter-floorplan select elements with inventory floorplan options.
+ * Works with both the hidden default master list and the split-view modal.
+ */
 function populateFloorplanFilter(inventory) {
-  var select = document.getElementById('filter-floorplan');
-  if (!select) return;
+  var selects = document.querySelectorAll('.filter-floorplan');
+  if (!selects.length) return;
 
-  var currentValue = select.value;
-  select.innerHTML = '<option value="all">All Floorplans</option>';
+  selects.forEach(function (select) {
+    var currentValue = select.value;
+    select.innerHTML = '<option value="all">All Floorplans</option>';
 
-  if (!inventory || inventory.length === 0) return;
+    if (!inventory || inventory.length === 0) return;
 
-  var types = getInventoryUnitTypes(inventory);
-  var sorted = sortFloorplansByDisplayOrder(types);
+    var types = getInventoryUnitTypes(inventory);
+    var sorted = sortFloorplansByDisplayOrder(types);
 
-  for (var i = 0; i < sorted.length; i++) {
-    var opt = document.createElement('option');
-    opt.value = sorted[i];
-    opt.textContent = sorted[i];
-    select.appendChild(opt);
-  }
-
-  if (currentValue && currentValue !== 'all') {
-    var stillExists = sorted.some(function (fp) { return fp === currentValue; });
-    if (stillExists) {
-      select.value = currentValue;
+    for (var i = 0; i < sorted.length; i++) {
+      var opt = document.createElement('option');
+      opt.value = sorted[i];
+      opt.textContent = sorted[i];
+      select.appendChild(opt);
     }
-  }
+
+    if (currentValue && currentValue !== 'all') {
+      var stillExists = sorted.some(function (fp) { return fp === currentValue; });
+      if (stillExists) {
+        select.value = currentValue;
+      }
+    }
+  });
 }
 
 /* ------------------------------------------------------------------
@@ -2925,4 +2996,259 @@ function renderBackupRestore(state) {
       '<p>' + invCount + ' inventory units, ' + resCount + ' placed residents, ' + bankCount + ' bank residents</p>' +
       '<p>Stored data size: ' + dataSize + '</p>' +
     '</div>';
+}
+
+/* ------------------------------------------------------------------
+   SPLIT-VIEW MASTER LIST MODAL
+   Full-screen modal with master list (left) and map viewer (right).
+   ------------------------------------------------------------------ */
+
+function openSplitViewModal() {
+  var overlay = document.getElementById('split-view-overlay');
+  if (!overlay) return;
+  overlay.style.display = 'flex';
+
+  // Populate map selectors
+  populateModalMapSelectors();
+
+  // Render master list into the modal container
+  var svList = document.getElementById('sv-master-list');
+  svList.innerHTML = '';
+  renderMasterListInto(
+    svList,
+    AppState.residents || new Map(),
+    AppState.inventory || [],
+    AppState.filters,
+    {
+      onEdit: typeof handleResidentEdit === 'function' ? handleResidentEdit : null,
+      onDelete: typeof handleResidentDelete === 'function' ? handleResidentDelete : null,
+      onRowClick: typeof handleSplitViewRowClick === 'function' ? handleSplitViewRowClick : null,
+      onAddResident: typeof handleSplitViewAddResident === 'function' ? handleSplitViewAddResident : null,
+    }
+  );
+}
+
+function closeSplitViewModal() {
+  var overlay = document.getElementById('split-view-overlay');
+  if (!overlay) return;
+  overlay.style.display = 'none';
+  // Clear map container
+  var mapContainer = document.getElementById('sv-map-container');
+  if (mapContainer) {
+    mapContainer.innerHTML = '<p class="placeholder-text">Click a resident row to view their unit on the map</p>';
+  }
+}
+
+function refreshSplitViewMasterList() {
+  var overlay = document.getElementById('split-view-overlay');
+  if (!overlay || overlay.style.display === 'none') return;
+  var svList = document.getElementById('sv-master-list');
+  if (!svList) return;
+  svList.innerHTML = '';
+  renderMasterListInto(
+    svList,
+    AppState.residents || new Map(),
+    AppState.inventory || [],
+    AppState.filters,
+    {
+      onEdit: typeof handleResidentEdit === 'function' ? handleResidentEdit : null,
+      onDelete: typeof handleResidentDelete === 'function' ? handleResidentDelete : null,
+      onRowClick: typeof handleSplitViewRowClick === 'function' ? handleSplitViewRowClick : null,
+      onAddResident: typeof handleSplitViewAddResident === 'function' ? handleSplitViewAddResident : null,
+    }
+  );
+}
+
+function populateModalMapSelectors() {
+  var bSelect = document.getElementById('sv-building-selector');
+  var fSelect = document.getElementById('sv-floor-selector');
+  if (!bSelect || !fSelect) return;
+  bSelect.innerHTML = '';
+
+  var buildings = getRegisteredBuildings();
+  for (var i = 0; i < buildings.length; i++) {
+    var opt = document.createElement('option');
+    opt.value = buildings[i];
+    opt.textContent = getBuildingLabel(buildings[i]);
+    bSelect.appendChild(opt);
+  }
+
+  // Set initial building to match main selector
+  if (AppState.selectedBuilding) {
+    bSelect.value = AppState.selectedBuilding;
+  }
+
+  // Populate floors for the selected building
+  updateModalFloorSelector();
+}
+
+function updateModalFloorSelector() {
+  var bSelect = document.getElementById('sv-building-selector');
+  var fSelect = document.getElementById('sv-floor-selector');
+  if (!bSelect || !fSelect) return;
+  var buildingKey = bSelect.value;
+  fSelect.innerHTML = '';
+
+  var floors = getFloorsForBuilding(buildingKey);
+  for (var i = 0; i < floors.length; i++) {
+    var opt = document.createElement('option');
+    opt.value = floors[i];
+    opt.textContent = getFloorLabel(floors[i]);
+    fSelect.appendChild(opt);
+  }
+
+  if (AppState.selectedFloor != null) {
+    fSelect.value = AppState.selectedFloor;
+  }
+}
+
+/**
+ * Load and render a map into the split-view modal's right panel.
+ * @param {string} buildingKey
+ * @param {number} floor
+ * @param {string} [highlightUnitId] - Optional unit to highlight after render
+ */
+async function loadMapInSplitView(buildingKey, floor, highlightUnitId) {
+  var container = document.getElementById('sv-map-container');
+  var label = document.getElementById('sv-map-label');
+  if (!container) return;
+  container.innerHTML = '<p class="placeholder-text">Loading map...</p>';
+
+  var cacheKey = buildingKey + ':' + floor;
+  var mapData = AppState.mapCache.get(cacheKey);
+
+  if (!mapData) {
+    mapData = await loadMapFromRegistry(buildingKey, floor);
+    if (mapData) AppState.mapCache.set(cacheKey, mapData);
+  }
+
+  if (!mapData) {
+    container.innerHTML = '<p class="placeholder-text">Map not available for ' + getBuildingLabel(buildingKey) + ' ' + getFloorLabel(floor) + '</p>';
+    return;
+  }
+
+  if (label) label.textContent = getBuildingLabel(buildingKey) + ' \u2014 ' + getFloorLabel(floor);
+
+  var residents = AppState.residents || new Map();
+  renderMapIntoContainer(container, mapData.svgElement, residents, {
+    showNames: AppState.showNames,
+    scholarshipOnly: AppState.scholarshipOnly,
+    inventory: AppState.inventory,
+    onUnitClick: function (unitId) {
+      highlightUnitInContainer(container, unitId);
+    }
+  });
+
+  // Apply labels if showNames is on
+  if (AppState.showNames) {
+    applyLabelsPostRenderInContainer(container);
+  }
+
+  if (highlightUnitId) {
+    highlightUnitInContainer(container, highlightUnitId);
+  }
+}
+
+/* ------------------------------------------------------------------
+   SWAP UNIT MODAL
+   Allows selecting two residents and swapping their Unit_Assigned.
+   ------------------------------------------------------------------ */
+
+var _swapState = { a: null, b: null };
+
+function openSwapUnitModal() {
+  var overlay = document.getElementById('swap-unit-overlay');
+  if (!overlay) return;
+  overlay.style.display = 'flex';
+
+  // Reset state
+  _swapState = { a: null, b: null };
+  document.getElementById('swap-search-a').value = '';
+  document.getElementById('swap-search-b').value = '';
+  document.getElementById('swap-search-a').style.display = '';
+  document.getElementById('swap-search-b').style.display = '';
+  document.getElementById('swap-results-a').innerHTML = '';
+  document.getElementById('swap-results-b').innerHTML = '';
+  document.getElementById('swap-selected-a').style.display = 'none';
+  document.getElementById('swap-selected-b').style.display = 'none';
+  document.getElementById('swap-confirm-btn').disabled = true;
+}
+
+function closeSwapUnitModal() {
+  var overlay = document.getElementById('swap-unit-overlay');
+  if (overlay) overlay.style.display = 'none';
+  _swapState = { a: null, b: null };
+}
+
+function renderSwapSearchResults(query, resultsContainer, slot) {
+  resultsContainer.innerHTML = '';
+  if (!query || query.length < 2) return;
+
+  var q = query.toUpperCase();
+  var results = [];
+
+  if (AppState.residents) {
+    AppState.residents.forEach(function (r, unitKey) {
+      var nameMatch = (r.Resident_Name || '').toUpperCase().includes(q);
+      var unitMatch = unitKey.includes(q);
+      if (nameMatch || unitMatch) {
+        results.push({ resident: r, unitKey: unitKey });
+      }
+    });
+  }
+
+  // Exclude already-selected resident from opposite slot
+  var otherSlot = slot === 'a' ? 'b' : 'a';
+  var otherKey = _swapState[otherSlot] ? _swapState[otherSlot].unitKey : null;
+
+  results = results.filter(function (r) { return r.unitKey !== otherKey; });
+
+  for (var i = 0; i < Math.min(results.length, 10); i++) {
+    var item = document.createElement('div');
+    item.className = 'swap-result-item';
+    item.textContent = results[i].resident.Resident_Name + ' \u2014 ' + results[i].resident.Unit_Assigned;
+    (function (res) {
+      item.addEventListener('click', function () {
+        selectSwapResident(slot, res);
+      });
+    })(results[i]);
+    resultsContainer.appendChild(item);
+  }
+
+  if (results.length === 0) {
+    var empty = document.createElement('div');
+    empty.className = 'swap-result-item';
+    empty.style.color = 'var(--text-muted)';
+    empty.style.fontStyle = 'italic';
+    empty.textContent = 'No matching residents found';
+    resultsContainer.appendChild(empty);
+  }
+}
+
+function selectSwapResident(slot, result) {
+  _swapState[slot] = result;
+
+  var searchEl = document.getElementById('swap-search-' + slot);
+  var resultsEl = document.getElementById('swap-results-' + slot);
+  var selectedEl = document.getElementById('swap-selected-' + slot);
+
+  searchEl.style.display = 'none';
+  resultsEl.innerHTML = '';
+  selectedEl.style.display = 'flex';
+  selectedEl.innerHTML =
+    '<span>' + escapeHtml(result.resident.Resident_Name) + ' \u2014 ' + escapeHtml(result.resident.Unit_Assigned) + '</span>' +
+    '<button class="btn btn-sm btn-outline swap-clear-btn">Change</button>';
+
+  selectedEl.querySelector('.swap-clear-btn').addEventListener('click', function () {
+    _swapState[slot] = null;
+    searchEl.style.display = '';
+    searchEl.value = '';
+    selectedEl.style.display = 'none';
+    document.getElementById('swap-confirm-btn').disabled = true;
+  });
+
+  // Enable confirm if both selected
+  if (_swapState.a && _swapState.b) {
+    document.getElementById('swap-confirm-btn').disabled = false;
+  }
 }
