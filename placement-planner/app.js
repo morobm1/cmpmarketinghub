@@ -669,29 +669,31 @@ function initEventListeners() {
    Wires the toggle buttons in #summary-toggle-bar.
    ------------------------------------------------------------------ */
 function initSummaryToggle() {
-  var bar = document.getElementById('summary-toggle-bar');
-  if (!bar) return;
+  var buttons = document.querySelectorAll('#summary-toggle-bar .summary-toggle-btn');
+  if (!buttons || buttons.length === 0) return;
 
-  bar.addEventListener('click', function (e) {
-    var btn = e.target.closest('.summary-toggle-btn');
-    if (!btn) return;
+  for (var i = 0; i < buttons.length; i++) {
+    (function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation(); // prevent collapsible section from toggling
 
-    var view = btn.getAttribute('data-view');
-    if (!view) return;
+        var view = btn.getAttribute('data-view');
+        if (!view) return;
 
-    // Update active button
-    var buttons = bar.querySelectorAll('.summary-toggle-btn');
-    for (var i = 0; i < buttons.length; i++) {
-      buttons[i].classList.remove('active');
-    }
-    btn.classList.add('active');
+        // Update active button
+        for (var j = 0; j < buttons.length; j++) {
+          buttons[j].classList.remove('active');
+        }
+        btn.classList.add('active');
 
-    // Show/hide views
-    var preView = document.getElementById('summary-view-prelease');
-    var schView = document.getElementById('summary-view-scholarship');
-    if (preView) preView.style.display = view === 'prelease' ? '' : 'none';
-    if (schView) schView.style.display = view === 'scholarship' ? '' : 'none';
-  });
+        // Show/hide views
+        var preView = document.getElementById('summary-view-prelease');
+        var schView = document.getElementById('summary-view-scholarship');
+        if (preView) preView.style.display = view === 'prelease' ? '' : 'none';
+        if (schView) schView.style.display = view === 'scholarship' ? '' : 'none';
+      });
+    })(buttons[i]);
+  }
 }
 
 /* ------------------------------------------------------------------
