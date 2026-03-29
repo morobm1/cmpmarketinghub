@@ -2117,78 +2117,58 @@ function openEditReserveUnitModal(unitKey, currentScholarship, inventory, reserv
 }
 
 /* ------------------------------------------------------------------
-   SCHOLARSHIP RECAP
-   Renders a summary of scholarship status counts into
-   #scholarship-recap-container.
+   SCHOLARSHIP SUMMARY (inline in Prelease/Scholarship toggle)
+   Renders into #scholarship-summary-content using aggregateScholarshipCounts.
+   Source of truth: Resident Master List (placed residents only).
    ------------------------------------------------------------------ */
 
-function renderScholarshipRecap(residents) {
-  var container = document.getElementById('scholarship-recap-container');
+function renderScholarshipSummary(residents) {
+  var container = document.getElementById('scholarship-summary-content');
   if (!container) return;
   container.innerHTML = '';
 
   if (!residents || residents.size === 0) {
-    container.innerHTML = '<div class="section-empty">No resident data loaded.</div>';
+    container.innerHTML = '<p class="placeholder-text">No resident data loaded.</p>';
     return;
   }
 
-  // Count each scholarship status across all residents in the master list
-  var counts = {};
-  var total = 0;
-  residents.forEach(function (r) {
-    var sch = (r.Scholarship || '').toUpperCase().trim();
-    if (!sch) sch = 'NONE';
-    counts[sch] = (counts[sch] || 0) + 1;
-    total++;
-  });
+  var scholarships = aggregateScholarshipCounts(residents);
 
-  // Separate NONE from actual scholarships for display
-  var noneCount = counts['NONE'] || 0;
-  delete counts['NONE'];
-
-  var scholarshipTotal = total - noneCount;
-
-  // Build summary line
-  var summary = document.createElement('div');
-  summary.className = 'scholarship-recap-summary';
-  summary.textContent = scholarshipTotal + ' of ' + total + ' resident(s) have a scholarship assigned';
-  container.appendChild(summary);
-
-  if (scholarshipTotal === 0) {
-    container.innerHTML += '<div class="section-empty">No scholarships assigned to any residents.</div>';
+  if (scholarships.length === 0) {
+    container.innerHTML = '<p class="placeholder-text">No scholarships assigned to any residents.</p>';
     return;
   }
 
-  // Build recap table
+  // Summary line
+  var totalWithSch = 0;
+  for (var s = 0; s < scholarships.length; s++) {
+    totalWithSch += scholarships[s].count;
+  }
+  var summaryDiv = document.createElement('div');
+  summaryDiv.className = 'scholarship-recap-summary';
+  summaryDiv.textContent = totalWithSch + ' of ' + residents.size + ' resident(s) have a scholarship';
+  container.appendChild(summaryDiv);
+
+  // Build table
   var table = document.createElement('table');
-  table.className = 'audit-table';
+  table.className = 'summary-table';
 
   var thead = document.createElement('thead');
   thead.innerHTML = '<tr><th>Scholarship</th><th>Count</th></tr>';
   table.appendChild(thead);
 
   var tbody = document.createElement('tbody');
-
-  // Sort by count descending
-  var sorted = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; });
-
-  for (var i = 0; i < sorted.length; i++) {
+  for (var i = 0; i < scholarships.length; i++) {
     var tr = document.createElement('tr');
-    tr.innerHTML = '<td>' + escapeHtml(sorted[i]) + '</td><td>' + counts[sorted[i]] + '</td>';
+    tr.innerHTML = '<td>' + escapeHtml(scholarships[i].scholarship) + '</td><td>' + scholarships[i].count + '</td>';
     tbody.appendChild(tr);
   }
 
   // Total row
   var totalTr = document.createElement('tr');
-  totalTr.className = 'audit-total-row';
-  totalTr.innerHTML = '<td><strong>Total w/ Scholarship</strong></td><td><strong>' + scholarshipTotal + '</strong></td>';
+  totalTr.className = 'summary-total-row';
+  totalTr.innerHTML = '<td><strong>Total</strong></td><td><strong>' + totalWithSch + '</strong></td>';
   tbody.appendChild(totalTr);
-
-  // No scholarship row
-  var noneTr = document.createElement('tr');
-  noneTr.className = 'recap-none-row';
-  noneTr.innerHTML = '<td>No Scholarship (NONE)</td><td>' + noneCount + '</td>';
-  tbody.appendChild(noneTr);
 
   table.appendChild(tbody);
   container.appendChild(table);
@@ -2698,22 +2678,36 @@ function renderDebugPanel(state) {
    Renders compact summary into #prelease-summary-content.
    ------------------------------------------------------------------ */
 
-function renderPreleaseSummary(progressResult) {
+function renderPreleaseSummary(summaryResult) {
   var container = document.getElementById('prelease-summary-content');
   if (!container) return;
-  if (!progressResult || !progressResult.totals) {
+  if (!summaryResult || !summaryResult.totals) {
     container.innerHTML = '<p class="placeholder-text">No prelease data loaded.</p>';
     return;
   }
-  var t = progressResult.totals;
-  container.innerHTML =
+  var t = summaryResult.totals;
+
+  // Top-level stats
+  var html =
     '<div class="prelease-summary-compact">' +
-      '<div class="summary-stat"><span class="stat-label">Target</span><span class="stat-value">' + (t.target || t.capacity || 0) + '</span></div>' +
-      '<div class="summary-stat"><span class="stat-label">Placed</span><span class="stat-value">' + (t.placed || t.preleased || 0) + '</span></div>' +
-      '<div class="summary-stat"><span class="stat-label">Bank</span><span class="stat-value">' + (t.bank || 0) + '</span></div>' +
-      '<div class="summary-stat"><span class="stat-label">Total</span><span class="stat-value">' + (t.combined || t.total || 0) + '</span></div>' +
-      '<div class="summary-stat"><span class="stat-label">Progress</span><span class="stat-value">' + (t.combinedPercent || t.percent || '0') + '%</span></div>' +
+      '<div class="summary-stat"><span class="stat-label">Capacity</span><span class="stat-value">' + t.capacity + '</span></div>' +
+      '<div class="summary-stat"><span class="stat-label">Placed</span><span class="stat-value">' + t.placed + '</span></div>' +
+      '<div class="summary-stat"><span class="stat-label">Bank</span><span class="stat-value">' + t.bank + '</span></div>' +
+      '<div class="summary-stat"><span class="stat-label">Total</span><span class="stat-value">' + t.combined + '</span></div>' +
+      '<div class="summary-stat highlight"><span class="stat-label">Placed %</span><span class="stat-value">' + t.percent + '%</span></div>' +
     '</div>';
+
+  // Floorplan breakdown table
+  if (summaryResult.rows && summaryResult.rows.length > 0) {
+    html += '<table class="summary-table"><thead><tr><th>Floorplan</th><th>Cap</th><th>Placed</th><th>%</th></tr></thead><tbody>';
+    for (var i = 0; i < summaryResult.rows.length; i++) {
+      var row = summaryResult.rows[i];
+      html += '<tr><td>' + escapeHtml(row.floorplan) + '</td><td>' + row.capacity + '</td><td>' + row.placed + '</td><td>' + row.percent + '%</td></tr>';
+    }
+    html += '</tbody></table>';
+  }
+
+  container.innerHTML = html;
 }
 
 /* ------------------------------------------------------------------

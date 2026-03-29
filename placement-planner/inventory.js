@@ -1022,6 +1022,119 @@ function computeEnhancedPreleaseProgress(inventory, residents, bankList, scope) 
 
 
 /* ------------------------------------------------------------------
+   PROPERTY SUMMARY — Placed-only Prelease + Scholarship Counts
+   Source of truth: Resident Master List (placed residents Map).
+   Bank residents are counted separately, not as "placed".
+   ------------------------------------------------------------------ */
+
+/**
+ * Compute a property-level prelease summary using ONLY the Resident Master
+ * List (placed residents).  Bank residents are counted as a separate number.
+ *
+ * Returns an object suitable for renderPreleaseSummary:
+ *   {
+ *     rows: [{ floorplan, capacity, placed, percent }],
+ *     totals: { capacity, placed, bank, combined, percent, combinedPercent }
+ *   }
+ *
+ * @param {Array<{unitNumber: string, unitType: string}>} inventory
+ * @param {Map<string, object>|null} residents  – placed residents keyed by UPPERCASE unit
+ * @param {Array<object>} bankList              – waiting bank array
+ * @returns {object}
+ */
+function computePropertySummary(inventory, residents, bankList) {
+  if (!inventory || inventory.length === 0) {
+    return {
+      rows: [],
+      totals: { capacity: 0, placed: 0, bank: 0, combined: 0, percent: 0, combinedPercent: 0 },
+    };
+  }
+
+  // Capacity per floorplan from inventory
+  var fpCapacity = {};
+  for (var i = 0; i < inventory.length; i++) {
+    var fp = inventory[i].unitType || 'Unknown';
+    fpCapacity[fp] = (fpCapacity[fp] || 0) + 1;
+  }
+
+  // Placed counts per floorplan from Resident Master List only
+  var fpPlaced = {};
+  var totalPlaced = 0;
+  if (residents && residents.size > 0) {
+    residents.forEach(function (r) {
+      var fp = getResidentFloorplanType(r, inventory) || 'Unknown';
+      fpPlaced[fp] = (fpPlaced[fp] || 0) + 1;
+      totalPlaced++;
+    });
+  }
+
+  // Bank count (not counted as placed)
+  var bankCount = (bankList && bankList.length) || 0;
+
+  // Build rows sorted by display order
+  var allFloorplans = Object.keys(fpCapacity);
+  var sorted = sortFloorplansByDisplayOrder(allFloorplans);
+
+  var rows = [];
+  var totalCapacity = 0;
+  for (var j = 0; j < sorted.length; j++) {
+    var fpKey = sorted[j];
+    var cap = fpCapacity[fpKey] || 0;
+    var placed = fpPlaced[fpKey] || 0;
+    var pct = cap > 0 ? Math.round((placed / cap) * 1000) / 10 : 0;
+    rows.push({ floorplan: fpKey, capacity: cap, placed: placed, percent: pct });
+    totalCapacity += cap;
+  }
+
+  var totalPercent = totalCapacity > 0
+    ? Math.round((totalPlaced / totalCapacity) * 1000) / 10
+    : 0;
+
+  var combined = totalPlaced + bankCount;
+  var combinedPercent = totalCapacity > 0
+    ? Math.round((combined / totalCapacity) * 1000) / 10
+    : 0;
+
+  return {
+    rows: rows,
+    totals: {
+      capacity: totalCapacity,
+      placed: totalPlaced,
+      bank: bankCount,
+      combined: combined,
+      percent: totalPercent,
+      combinedPercent: combinedPercent,
+    },
+  };
+}
+
+/**
+ * Aggregate scholarship counts from the Resident Master List (placed
+ * residents only).  Excludes NONE / empty.
+ *
+ * @param {Map<string, object>|null} residents
+ * @returns {Array<{scholarship: string, count: number}>}  sorted descending
+ */
+function aggregateScholarshipCounts(residents) {
+  var counts = {};
+  if (!residents || residents.size === 0) return [];
+
+  residents.forEach(function (r) {
+    var sch = (r.Scholarship || '').toUpperCase().trim();
+    if (!sch || sch === 'NONE') return;
+    counts[sch] = (counts[sch] || 0) + 1;
+  });
+
+  var result = [];
+  var keys = Object.keys(counts);
+  for (var i = 0; i < keys.length; i++) {
+    result.push({ scholarship: keys[i], count: counts[keys[i]] });
+  }
+  result.sort(function (a, b) { return b.count - a.count; });
+  return result;
+}
+
+/* ------------------------------------------------------------------
    SCHOLARSHIP RESERVATION LOOKUP HELPERS
    Used by bank assignment UI to show reservation labels inline.
    ------------------------------------------------------------------ */

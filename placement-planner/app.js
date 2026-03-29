@@ -636,18 +636,8 @@ document.addEventListener('DOMContentLoaded', async function () {
   renderDebugPanel(AppState);
   renderBackupRestore(AppState);
 
-  // Render prelease summary in sidebar
-  if (typeof renderPreleaseSummary === 'function') {
-    var inventory = AppState.inventory || [];
-    var residents = AppState.residents || new Map();
-    var bankList = AppState.waitingBank || [];
-    var scope = AppState.preleaseScope || { type: 'property' };
-    var progressResult = computeEnhancedPreleaseProgress(inventory, residents, bankList, scope);
-    renderPreleaseSummary(progressResult);
-  }
-
-  // Refresh scholarship recap
-  refreshScholarshipRecap();
+  // Refresh summary panel (prelease + scholarship)
+  refreshSummaryPanel();
 
   // Refresh reserved units
   refreshReservedUnits();
@@ -671,6 +661,37 @@ function initEventListeners() {
   initModalEvents();
   initDebugViewEvents();
   initReservedUnitsEvents();
+  initSummaryToggle();
+}
+
+/* ------------------------------------------------------------------
+   SUMMARY TOGGLE (Prelease / Scholarship)
+   Wires the toggle buttons in #summary-toggle-bar.
+   ------------------------------------------------------------------ */
+function initSummaryToggle() {
+  var bar = document.getElementById('summary-toggle-bar');
+  if (!bar) return;
+
+  bar.addEventListener('click', function (e) {
+    var btn = e.target.closest('.summary-toggle-btn');
+    if (!btn) return;
+
+    var view = btn.getAttribute('data-view');
+    if (!view) return;
+
+    // Update active button
+    var buttons = bar.querySelectorAll('.summary-toggle-btn');
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].classList.remove('active');
+    }
+    btn.classList.add('active');
+
+    // Show/hide views
+    var preView = document.getElementById('summary-view-prelease');
+    var schView = document.getElementById('summary-view-scholarship');
+    if (preView) preView.style.display = view === 'prelease' ? '' : 'none';
+    if (schView) schView.style.display = view === 'scholarship' ? '' : 'none';
+  });
 }
 
 /* ------------------------------------------------------------------
@@ -1885,15 +1906,7 @@ function handleResidentDelete(resident, unitKey) {
         refreshScholarshipRecap();
         refreshPreleaseProgress();
 
-        // Update prelease summary in sidebar
-        if (typeof renderPreleaseSummary === 'function') {
-          var inventory = AppState.inventory || [];
-          var residents = AppState.residents || new Map();
-          var bankList = AppState.waitingBank || [];
-          var scope = AppState.preleaseScope || { type: 'property' };
-          var progressResult = computeEnhancedPreleaseProgress(inventory, residents, bankList, scope);
-          renderPreleaseSummary(progressResult);
-        }
+        refreshSummaryPanel();
 
         showNotification('Deleted resident "' + resident.Resident_Name + '" from unit ' + resident.Unit_Assigned, 'success');
       }
@@ -1959,15 +1972,7 @@ function _completeResidentSave(formData, isEdit, originalUnitKey, newUnitKey) {
   refreshPreleaseProgress();
   renderImportCards(AppState);
 
-  // Update prelease summary in sidebar
-  if (typeof renderPreleaseSummary === 'function') {
-    var inventory = AppState.inventory || [];
-    var residents = AppState.residents || new Map();
-    var bankList = AppState.waitingBank || [];
-    var scope = AppState.preleaseScope || { type: 'property' };
-    var progressResult = computeEnhancedPreleaseProgress(inventory, residents, bankList, scope);
-    renderPreleaseSummary(progressResult);
-  }
+  refreshSummaryPanel();
 
   var action = isEdit ? 'updated' : 'added';
   showNotification('Resident ' + action + ': ' + formData.Resident_Name + ' → ' + formData.Unit_Assigned, 'success');
@@ -2158,11 +2163,26 @@ function handleScholarshipTransfer(item, unitKey) {
 }
 
 /* ------------------------------------------------------------------
-   SCHOLARSHIP RECAP -- REFRESH
+   SUMMARY PANEL — Prelease + Scholarship (toggle in left sidebar)
+   Uses computePropertySummary & aggregateScholarshipCounts from inventory.js.
    ------------------------------------------------------------------ */
 
+function refreshSummaryPanel() {
+  // Prelease summary — placed-only from Resident Master List
+  var summaryResult = computePropertySummary(
+    AppState.inventory || [],
+    AppState.residents,
+    AppState.waitingBank || []
+  );
+  renderPreleaseSummary(summaryResult);
+
+  // Scholarship summary — from Resident Master List
+  renderScholarshipSummary(AppState.residents);
+}
+
+/** Legacy alias kept so existing refreshScholarshipRecap() calls still work */
 function refreshScholarshipRecap() {
-  renderScholarshipRecap(AppState.residents);
+  refreshSummaryPanel();
 }
 
 /* ------------------------------------------------------------------
@@ -2201,15 +2221,7 @@ function handleBankEditSave(originalEntry, updatedData) {
   refreshPreleaseProgress();
   renderImportCards(AppState);
 
-  // Update prelease summary in sidebar
-  if (typeof renderPreleaseSummary === 'function') {
-    var inventory = AppState.inventory || [];
-    var residents = AppState.residents || new Map();
-    var bankList = AppState.waitingBank || [];
-    var scope = AppState.preleaseScope || { type: 'property' };
-    var progressResult = computeEnhancedPreleaseProgress(inventory, residents, bankList, scope);
-    renderPreleaseSummary(progressResult);
-  }
+  refreshSummaryPanel();
 
   showNotification('Bank resident "' + updatedData.name + '" updated.', 'success');
 }
@@ -2225,15 +2237,7 @@ function handleBankEditDelete(bankEntry) {
       refreshPreleaseProgress();
       renderImportCards(AppState);
 
-      // Update prelease summary in sidebar
-      if (typeof renderPreleaseSummary === 'function') {
-        var inventory = AppState.inventory || [];
-        var residents = AppState.residents || new Map();
-        var bankList = AppState.waitingBank || [];
-        var scope = AppState.preleaseScope || { type: 'property' };
-        var progressResult = computeEnhancedPreleaseProgress(inventory, residents, bankList, scope);
-        renderPreleaseSummary(progressResult);
-      }
+      refreshSummaryPanel();
 
       showNotification('Bank resident "' + bankEntry.name + '" removed.', 'success');
     }
@@ -2322,15 +2326,7 @@ function _completeBankAssignment(bankEntry, selectedUnit, unitKey) {
   refreshScholarshipRecap();
   refreshPreleaseProgress();
 
-  // Update prelease summary in sidebar
-  if (typeof renderPreleaseSummary === 'function') {
-    var inventory = AppState.inventory || [];
-    var residents = AppState.residents || new Map();
-    var bankList = AppState.waitingBank || [];
-    var scope = AppState.preleaseScope || { type: 'property' };
-    var progressResult = computeEnhancedPreleaseProgress(inventory, residents, bankList, scope);
-    renderPreleaseSummary(progressResult);
-  }
+  refreshSummaryPanel();
 
   showNotification('Assigned "' + bankEntry.name + '" to unit ' + selectedUnit, 'success');
 }
@@ -2607,15 +2603,7 @@ function refreshAllAfterImport() {
   renderBackupRestore(AppState);
   refreshReservedUnits();
 
-  // Update prelease summary in sidebar
-  if (typeof renderPreleaseSummary === 'function') {
-    var inventory = AppState.inventory || [];
-    var residents = AppState.residents || new Map();
-    var bankList = AppState.waitingBank || [];
-    var scope = AppState.preleaseScope || { type: 'property' };
-    var progressResult = computeEnhancedPreleaseProgress(inventory, residents, bankList, scope);
-    renderPreleaseSummary(progressResult);
-  }
+  refreshSummaryPanel();
 
   // Update sidebar import row statuses
   updateImportSidebarStatuses();
