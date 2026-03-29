@@ -639,6 +639,9 @@ document.addEventListener('DOMContentLoaded', async function () {
   // Refresh summary panel (prelease + scholarship)
   refreshSummaryPanel();
 
+  // Refresh leapfrog checker
+  refreshLeapfrogChecker();
+
   // Refresh reserved units
   refreshReservedUnits();
 
@@ -1895,6 +1898,7 @@ function exportMasterListToExcel() {
         Floorplan: item.unitType || '',
         'Lease Status': r ? (r.Lease_Status || '') : '',
         Scholarship: r ? (r.Scholarship || '') : '',
+        'Old Unit': r ? (r.Old_Unit || '') : '',
       });
     }
     // Also add residents not in inventory
@@ -1907,6 +1911,7 @@ function exportMasterListToExcel() {
           Floorplan: '',
           'Lease Status': r.Lease_Status || '',
           Scholarship: r.Scholarship || '',
+          'Old Unit': r.Old_Unit || '',
         });
       }
     });
@@ -1918,6 +1923,7 @@ function exportMasterListToExcel() {
         Floorplan: '',
         'Lease Status': r.Lease_Status || '',
         Scholarship: r.Scholarship || '',
+        'Old Unit': r.Old_Unit || '',
       });
     });
   }
@@ -1932,7 +1938,7 @@ function exportMasterListToExcel() {
     return (a.Unit || '').localeCompare(b.Unit || '', undefined, { numeric: true, sensitivity: 'base' });
   });
 
-  var ws = XLSX.utils.json_to_sheet(rows, { header: ['Name', 'Unit', 'Floorplan', 'Lease Status', 'Scholarship'] });
+  var ws = XLSX.utils.json_to_sheet(rows, { header: ['Name', 'Unit', 'Floorplan', 'Lease Status', 'Scholarship', 'Old Unit'] });
 
   // Set column widths
   ws['!cols'] = [
@@ -1941,6 +1947,7 @@ function exportMasterListToExcel() {
     { wch: 20 }, // Floorplan
     { wch: 24 }, // Lease Status
     { wch: 22 }, // Scholarship
+    { wch: 14 }, // Old Unit
   ];
 
   var wb = XLSX.utils.book_new();
@@ -2000,6 +2007,7 @@ function handleResidentDelete(resident, unitKey) {
         renderCurrentMap();
         refreshScholarshipRecap();
         refreshPreleaseProgress();
+        refreshLeapfrogChecker();
 
         refreshSummaryPanel();
 
@@ -2054,6 +2062,7 @@ function _completeResidentSave(formData, isEdit, originalUnitKey, newUnitKey) {
     Unit_Assigned: formData.Unit_Assigned,
     Lease_Status: formData.Lease_Status,
     Scholarship: formData.Scholarship,
+    Old_Unit: formData.Old_Unit || '',
   });
 
   persistResidents();
@@ -2066,6 +2075,7 @@ function _completeResidentSave(formData, isEdit, originalUnitKey, newUnitKey) {
   refreshScholarshipRecap();
   refreshPreleaseProgress();
   renderImportCards(AppState);
+  refreshLeapfrogChecker();
 
   refreshSummaryPanel();
 
@@ -2278,6 +2288,16 @@ function refreshSummaryPanel() {
 /** Legacy alias kept so existing refreshScholarshipRecap() calls still work */
 function refreshScholarshipRecap() {
   refreshSummaryPanel();
+}
+
+/* ------------------------------------------------------------------
+   LEAPFROG CHECKER -- REFRESH
+   Computes and renders renewal transfer leapfrog conflicts.
+   ------------------------------------------------------------------ */
+
+function refreshLeapfrogChecker() {
+  var conflicts = computeLeapfrogConflicts(AppState.residents);
+  renderLeapfrogChecker(conflicts);
 }
 
 /* ------------------------------------------------------------------
@@ -2698,6 +2718,7 @@ function refreshAllAfterImport() {
   renderDebugPanel(AppState);
   renderBackupRestore(AppState);
   refreshReservedUnits();
+  refreshLeapfrogChecker();
 
   refreshSummaryPanel();
 

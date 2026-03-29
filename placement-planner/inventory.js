@@ -1135,6 +1135,72 @@ function aggregateScholarshipCounts(residents) {
 }
 
 /* ------------------------------------------------------------------
+   LEAPFROG CONFLICT DETECTION
+   Finds Renewal Transfer residents assigned into another
+   Renewal Transfer resident's Old_Unit.
+   ------------------------------------------------------------------ */
+
+/**
+ * Compute leapfrog conflicts among Renewal Transfer residents.
+ *
+ * A conflict exists when Resident A (Renewal Transfer) has Unit_Assigned
+ * that matches Resident B (Renewal Transfer) Old_Unit.
+ *
+ * @param {Map<string, object>|null} residents - placed residents
+ * @returns {Array<{incoming: object, conflictsWith: object, unit: string}>}
+ */
+function computeLeapfrogConflicts(residents) {
+  if (!residents || residents.size === 0) return [];
+
+  // Collect all Renewal Transfer records
+  var transfers = [];
+  residents.forEach(function (r) {
+    var ls = (r.Lease_Status || '').trim();
+    if (ls === 'Renewal Transfer') {
+      transfers.push(r);
+    }
+  });
+
+  if (transfers.length < 2) return [];
+
+  // Build a lookup: normalized Old_Unit -> resident who is vacating that unit
+  var oldUnitMap = {};
+  for (var i = 0; i < transfers.length; i++) {
+    var oldUnit = (transfers[i].Old_Unit || '').trim().toUpperCase();
+    if (!oldUnit) continue;
+    // Multiple residents could share an old unit in theory
+    if (!oldUnitMap[oldUnit]) oldUnitMap[oldUnit] = [];
+    oldUnitMap[oldUnit].push(transfers[i]);
+  }
+
+  var conflicts = [];
+
+  for (var j = 0; j < transfers.length; j++) {
+    var incoming = transfers[j];
+    var assignedUnit = (incoming.Unit_Assigned || '').trim().toUpperCase();
+    if (!assignedUnit) continue;
+
+    var vacating = oldUnitMap[assignedUnit];
+    if (!vacating) continue;
+
+    for (var k = 0; k < vacating.length; k++) {
+      // Don't compare resident to themselves
+      if (vacating[k] === incoming) continue;
+      if ((vacating[k].Unit_Assigned || '').trim().toUpperCase() === assignedUnit &&
+          (vacating[k].Resident_Name || '') === (incoming.Resident_Name || '')) continue;
+
+      conflicts.push({
+        incoming: incoming,
+        conflictsWith: vacating[k],
+        unit: incoming.Unit_Assigned,
+      });
+    }
+  }
+
+  return conflicts;
+}
+
+/* ------------------------------------------------------------------
    SCHOLARSHIP RESERVATION LOOKUP HELPERS
    Used by bank assignment UI to show reservation labels inline.
    ------------------------------------------------------------------ */

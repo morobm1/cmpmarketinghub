@@ -920,6 +920,11 @@ function openResidentModal(resident, options) {
         '<label for="form-lease-status">Lease Status</label>' +
         '<select id="form-lease-status" class="select-input" required>' + leaseOptions + '</select>' +
       '</div>' +
+      '<div class="form-group" id="old-unit-group" style="display:' + (isEdit && resident.Lease_Status === 'Renewal Transfer' ? 'block' : 'none') + '">' +
+        '<label for="form-old-unit">Old Unit <span class="required-star">*</span></label>' +
+        '<input type="text" id="form-old-unit" class="text-input" placeholder="e.g. B314" value="' + (isEdit ? escapeHtml(resident.Old_Unit || '') : '') + '" />' +
+        '<div id="old-unit-validation-msg" class="validation-message"></div>' +
+      '</div>' +
       '<div class="form-group">' +
         '<label for="form-scholarship">Scholarship</label>' +
         '<select id="form-scholarship" class="select-input" required>' + scholarshipOptions + '</select>' +
@@ -979,6 +984,20 @@ function openResidentModal(resident, options) {
     }
   });
 
+  // Lease status change: show/hide Old Unit
+  var leaseSelect = document.getElementById('form-lease-status');
+  var oldUnitGroup = document.getElementById('old-unit-group');
+  if (leaseSelect && oldUnitGroup) {
+    leaseSelect.addEventListener('change', function () {
+      var isRenewalTransfer = leaseSelect.value === 'Renewal Transfer';
+      oldUnitGroup.style.display = isRenewalTransfer ? 'block' : 'none';
+      if (!isRenewalTransfer) {
+        var oldUnitMsg = document.getElementById('old-unit-validation-msg');
+        if (oldUnitMsg) { oldUnitMsg.textContent = ''; oldUnitMsg.className = 'validation-message'; }
+      }
+    });
+  }
+
   // Cancel
   document.getElementById('resident-cancel-btn').addEventListener('click', function () {
     closeResidentModal();
@@ -988,15 +1007,27 @@ function openResidentModal(resident, options) {
   document.getElementById('resident-form').addEventListener('submit', function (e) {
     e.preventDefault();
 
+    var oldUnitVal = (document.getElementById('form-old-unit') ? document.getElementById('form-old-unit').value.trim() : '');
     var formData = {
       Resident_Name: document.getElementById('form-resident-name').value.trim(),
       Unit_Assigned: document.getElementById('form-unit-assigned').value.trim(),
       Lease_Status: document.getElementById('form-lease-status').value,
       Scholarship: document.getElementById('form-scholarship').value,
+      Old_Unit: oldUnitVal,
     };
 
     if (!formData.Resident_Name || !formData.Unit_Assigned || !formData.Lease_Status || !formData.Scholarship) {
       alert('All fields are required.');
+      return;
+    }
+
+    // Validate Old Unit required for Renewal Transfer
+    if (formData.Lease_Status === 'Renewal Transfer' && !formData.Old_Unit) {
+      var ouMsg = document.getElementById('old-unit-validation-msg');
+      if (ouMsg) {
+        ouMsg.textContent = 'Old Unit is required for Renewal Transfer.';
+        ouMsg.className = 'validation-message validation-error';
+      }
       return;
     }
 
@@ -2282,6 +2313,46 @@ function renderScholarshipSummary(residents) {
 
   table.appendChild(tbody);
   container.appendChild(table);
+}
+
+/* ------------------------------------------------------------------
+   LEAPFROG CHECKER
+   Renders into #leapfrog-checker-content.
+   ------------------------------------------------------------------ */
+
+function renderLeapfrogChecker(conflicts) {
+  var container = document.getElementById('leapfrog-checker-content');
+  var badge = document.getElementById('leapfrog-count-badge');
+  if (!container) return;
+  container.innerHTML = '';
+
+  // Update badge
+  if (badge) {
+    if (conflicts && conflicts.length > 0) {
+      badge.textContent = conflicts.length;
+      badge.style.display = '';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  if (!conflicts || conflicts.length === 0) {
+    container.innerHTML = '<p class="placeholder-text">No renewal transfer leapfrog conflicts found.</p>';
+    return;
+  }
+
+  for (var i = 0; i < conflicts.length; i++) {
+    var c = conflicts[i];
+    var card = document.createElement('div');
+    card.className = 'leapfrog-card';
+    card.innerHTML =
+      '<div class="leapfrog-row"><span class="leapfrog-label">Incoming:</span> <strong>' + escapeHtml(c.incoming.Resident_Name) + '</strong></div>' +
+      '<div class="leapfrog-row"><span class="leapfrog-label">Assigned Unit:</span> ' + escapeHtml(c.unit) + '</div>' +
+      '<div class="leapfrog-divider"></div>' +
+      '<div class="leapfrog-row"><span class="leapfrog-label">Conflicts With:</span> <strong>' + escapeHtml(c.conflictsWith.Resident_Name) + '</strong></div>' +
+      '<div class="leapfrog-row"><span class="leapfrog-label">Old Unit:</span> ' + escapeHtml(c.conflictsWith.Old_Unit || '') + '</div>';
+    container.appendChild(card);
+  }
 }
 
 /* ------------------------------------------------------------------
