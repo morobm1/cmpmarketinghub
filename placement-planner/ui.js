@@ -3044,7 +3044,7 @@ function refreshSplitViewMasterList() {
   if (!overlay || overlay.style.display === 'none') return;
   var svList = document.getElementById('sv-master-list');
   if (!svList) return;
-  svList.innerHTML = '';
+  // Do NOT clear innerHTML — renderMasterListInto reuses existing table/search
   renderMasterListInto(
     svList,
     AppState.residents || new Map(),
