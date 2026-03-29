@@ -3261,7 +3261,15 @@ function _renderBankInSplitView(container) {
 
   bankTable.appendChild(tbody);
   section.appendChild(bankTable);
-  container.appendChild(section);
+
+  // Insert bank section right after the filter bar, before the master list table
+  var filterBar = container.querySelector('.master-list-filters');
+  var masterTable = container.querySelector('.master-list-table');
+  if (filterBar && masterTable) {
+    container.insertBefore(section, masterTable);
+  } else {
+    container.insertBefore(section, container.firstChild);
+  }
 }
 
 function populateModalMapSelectors() {
