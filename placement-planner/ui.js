@@ -527,6 +527,9 @@ function updateDebugCount() {
    Renders into #resident-master-list.
    ------------------------------------------------------------------ */
 
+/** Sort state for master list columns. column = 'name'|'unit', dir = 'asc'|'desc' */
+var masterListSort = { column: 'unit', dir: 'asc' };
+
 /**
  * Render the master list table from current residents, inventory, and filters.
  * @param {Map<string, object>} residents
@@ -580,12 +583,30 @@ function renderMasterList(residents, inventory, filters, callbacks) {
 
     table = document.createElement('table');
     table.className = 'master-list-table';
+    var nameArrow = masterListSort.column === 'name' ? (masterListSort.dir === 'asc' ? ' ▲' : ' ▼') : '';
+    var unitArrow = masterListSort.column === 'unit' ? (masterListSort.dir === 'asc' ? ' ▲' : ' ▼') : '';
     table.innerHTML =
       '<thead><tr>' +
-        '<th>Name</th><th>Unit</th><th>Floorplan</th><th>Lease Status</th><th>Scholarship</th><th>Actions</th>' +
+        '<th class="sortable-th" data-sort-col="name">Name' + nameArrow + '</th>' +
+        '<th class="sortable-th" data-sort-col="unit">Unit' + unitArrow + '</th>' +
+        '<th>Floorplan</th><th>Lease Status</th><th>Scholarship</th><th>Actions</th>' +
       '</tr></thead>' +
       '<tbody id="master-table-body"></tbody>';
     container.appendChild(table);
+
+    // Wire sort click handlers on the sortable headers
+    table.querySelectorAll('.sortable-th').forEach(function (th) {
+      th.addEventListener('click', function () {
+        var col = th.getAttribute('data-sort-col');
+        if (masterListSort.column === col) {
+          masterListSort.dir = masterListSort.dir === 'asc' ? 'desc' : 'asc';
+        } else {
+          masterListSort.column = col;
+          masterListSort.dir = 'asc';
+        }
+        renderMasterList(residents, inventory, filters, callbacks);
+      });
+    });
 
     var emptyMsg = document.createElement('div');
     emptyMsg.id = 'master-list-empty';
@@ -633,6 +654,33 @@ function renderMasterList(residents, inventory, filters, callbacks) {
       emptyMsg.style.display = 'block';
     }
     return;
+  }
+
+  // Sort rows based on masterListSort state
+  var sortCol = masterListSort.column;
+  var sortDir = masterListSort.dir === 'asc' ? 1 : -1;
+  rows.sort(function (a, b) {
+    var valA, valB;
+    if (sortCol === 'name') {
+      valA = (a.resident ? (a.resident.Resident_Name || '') : '').toUpperCase();
+      valB = (b.resident ? (b.resident.Resident_Name || '') : '').toUpperCase();
+    } else {
+      valA = (a.unit || '').toUpperCase();
+      valB = (b.unit || '').toUpperCase();
+    }
+    return sortDir * valA.localeCompare(valB, undefined, { numeric: true, sensitivity: 'base' });
+  });
+
+  // Update sort arrows in header
+  var thElements = table.querySelectorAll('.sortable-th');
+  for (var si = 0; si < thElements.length; si++) {
+    var thCol = thElements[si].getAttribute('data-sort-col');
+    var label = thCol === 'name' ? 'Name' : 'Unit';
+    if (thCol === sortCol) {
+      thElements[si].textContent = label + (masterListSort.dir === 'asc' ? ' ▲' : ' ▼');
+    } else {
+      thElements[si].textContent = label;
+    }
   }
 
   if (emptyMsg) emptyMsg.style.display = 'none';
