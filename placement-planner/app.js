@@ -1064,6 +1064,27 @@ function initMapViewerEvents() {
     });
   }
 
+  // Toggle Master List Drawer
+  var toggleMasterBtn = document.getElementById('toggle-master-list-btn');
+  if (toggleMasterBtn) {
+    toggleMasterBtn.addEventListener('click', function () {
+      var drawer = document.getElementById('master-list-drawer');
+      if (drawer) {
+        var isOpen = drawer.getAttribute('data-open') === 'true';
+        drawer.setAttribute('data-open', isOpen ? 'false' : 'true');
+      }
+    });
+  }
+
+  // Close Master List Drawer
+  var closeMasterBtn = document.getElementById('master-list-close-btn');
+  if (closeMasterBtn) {
+    closeMasterBtn.addEventListener('click', function () {
+      var drawer = document.getElementById('master-list-drawer');
+      if (drawer) drawer.setAttribute('data-open', 'false');
+    });
+  }
+
   // Print Map button
   var printMapBtn = document.getElementById('print-map-btn');
   if (printMapBtn) {
