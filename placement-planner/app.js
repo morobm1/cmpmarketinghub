@@ -1990,6 +1990,8 @@ function exportMasterListToExcel() {
         'Lease Status': r ? (r.Lease_Status || '') : '',
         Scholarship: r ? (r.Scholarship || '') : '',
         'Old Unit': r ? (r.Old_Unit || '') : '',
+        'Requested Roommate': r ? (r.Requested_Roommate || '') : '',
+        'Placement Notes': r ? (r.Placement_Notes || '') : '',
       });
     }
     // Also add residents not in inventory
@@ -2003,6 +2005,8 @@ function exportMasterListToExcel() {
           'Lease Status': r.Lease_Status || '',
           Scholarship: r.Scholarship || '',
           'Old Unit': r.Old_Unit || '',
+          'Requested Roommate': r.Requested_Roommate || '',
+          'Placement Notes': r.Placement_Notes || '',
         });
       }
     });
@@ -2015,6 +2019,8 @@ function exportMasterListToExcel() {
         'Lease Status': r.Lease_Status || '',
         Scholarship: r.Scholarship || '',
         'Old Unit': r.Old_Unit || '',
+        'Requested Roommate': r.Requested_Roommate || '',
+        'Placement Notes': r.Placement_Notes || '',
       });
     });
   }
@@ -2029,7 +2035,7 @@ function exportMasterListToExcel() {
     return (a.Unit || '').localeCompare(b.Unit || '', undefined, { numeric: true, sensitivity: 'base' });
   });
 
-  var ws = XLSX.utils.json_to_sheet(rows, { header: ['Name', 'Unit', 'Floorplan', 'Lease Status', 'Scholarship', 'Old Unit'] });
+  var ws = XLSX.utils.json_to_sheet(rows, { header: ['Name', 'Unit', 'Floorplan', 'Lease Status', 'Scholarship', 'Old Unit', 'Requested Roommate', 'Placement Notes'] });
 
   // Set column widths
   ws['!cols'] = [
@@ -2039,6 +2045,8 @@ function exportMasterListToExcel() {
     { wch: 24 }, // Lease Status
     { wch: 22 }, // Scholarship
     { wch: 14 }, // Old Unit
+    { wch: 24 }, // Requested Roommate
+    { wch: 36 }, // Placement Notes
   ];
 
   var wb = XLSX.utils.book_new();
@@ -2191,6 +2199,28 @@ function handleResidentDelete(resident, unitKey) {
       }
     }
   );
+}
+
+/* ------------------------------------------------------------------
+   RESIDENT DETAIL MODAL — View/edit Placement Notes & Requested Roommate
+   ------------------------------------------------------------------ */
+
+function handleResidentNameClick(resident, unitKey) {
+  openResidentDetailModal(resident, unitKey, AppState.inventory, function (key, updates) {
+    var r = AppState.residents ? AppState.residents.get(key) : null;
+    if (!r) return;
+
+    if (updates.Placement_Notes !== undefined) {
+      r.Placement_Notes = updates.Placement_Notes;
+    }
+    if (updates.Requested_Roommate !== undefined) {
+      r.Requested_Roommate = updates.Requested_Roommate;
+    }
+
+    AppState.residents.set(key, r);
+    persistProject();
+    showNotification('Resident details saved.', 'success');
+  });
 }
 
 /* ------------------------------------------------------------------

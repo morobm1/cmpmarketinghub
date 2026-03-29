@@ -827,7 +827,20 @@ function renderMasterListInto(container, residents, inventory, filters, callback
     if (!isOccupied) tr.classList.add('row-available');
 
     var tdName = document.createElement('td');
-    tdName.textContent = isOccupied ? (rowResident.Resident_Name || '--') : '';
+    if (isOccupied) {
+      var nameLink = document.createElement('span');
+      nameLink.className = 'resident-name-link';
+      nameLink.textContent = rowResident.Resident_Name || '--';
+      (function (res, k) {
+        nameLink.addEventListener('click', function (e) {
+          e.stopPropagation();
+          if (typeof handleResidentNameClick === 'function') {
+            handleResidentNameClick(res, k);
+          }
+        });
+      })(rowResident, rowKey);
+      tdName.appendChild(nameLink);
+    }
 
     var tdUnit = document.createElement('td');
     tdUnit.textContent = unit || '--';
@@ -1188,6 +1201,61 @@ function openResidentModal(resident, options) {
     if (onSave) {
       onSave(formData, isEdit, originalUnitKey);
     }
+  });
+}
+
+/**
+ * Open a read/edit detail modal when clicking a resident's name.
+ * Shows info fields + editable Requested Roommate and Placement Notes.
+ */
+function openResidentDetailModal(resident, unitKey, inventory, onSave) {
+  if (!resident) return;
+
+  var floorplan = getResidentFloorplanType(resident, inventory || []) || '';
+  var is3BR = floorplan.toUpperCase().indexOf('3BR') !== -1 || floorplan.toUpperCase().indexOf('3BA') !== -1;
+
+  var schText = (resident.Scholarship && resident.Scholarship.toUpperCase() !== 'NONE') ? resident.Scholarship : '--';
+
+  var bodyHtml =
+    '<div class="resident-detail-modal">' +
+      '<div class="rd-field"><span class="rd-label">Name</span><span class="rd-value">' + escapeHtml(resident.Resident_Name || '--') + '</span></div>' +
+      '<div class="rd-field"><span class="rd-label">Unit #</span><span class="rd-value">' + escapeHtml(resident.Unit_Assigned || '--') + '</span></div>' +
+      '<div class="rd-field"><span class="rd-label">Floorplan</span><span class="rd-value">' + escapeHtml(floorplan || '--') + '</span></div>' +
+      '<div class="rd-field"><span class="rd-label">Lease Status</span><span class="rd-value">' + escapeHtml(resident.Lease_Status || '--') + '</span></div>' +
+      '<div class="rd-field"><span class="rd-label">Scholarship</span><span class="rd-value">' + escapeHtml(schText) + '</span></div>' +
+      (is3BR ?
+        '<div class="rd-field rd-editable">' +
+          '<label class="rd-label" for="rd-roommate">Requested Roommate</label>' +
+          '<input type="text" id="rd-roommate" class="text-input" value="' + escapeHtml(resident.Requested_Roommate || '') + '" placeholder="Enter roommate name..." />' +
+        '</div>'
+        : '') +
+      '<div class="rd-field rd-editable">' +
+        '<label class="rd-label" for="rd-notes">Placement Notes</label>' +
+        '<textarea id="rd-notes" class="text-input rd-textarea" rows="4" placeholder="Add placement preference notes...">' + escapeHtml(resident.Placement_Notes || '') + '</textarea>' +
+      '</div>' +
+    '</div>';
+
+  var footerHtml =
+    '<button class="btn btn-secondary" id="rd-cancel-btn">Close</button>' +
+    '<button class="btn btn-primary" id="rd-save-btn">Save</button>';
+
+  showModal('Resident Details', bodyHtml, footerHtml);
+
+  document.getElementById('rd-cancel-btn').addEventListener('click', hideModal);
+
+  document.getElementById('rd-save-btn').addEventListener('click', function () {
+    var roommateInput = document.getElementById('rd-roommate');
+    var notesInput = document.getElementById('rd-notes');
+
+    var updates = {
+      Placement_Notes: notesInput ? notesInput.value.trim() : (resident.Placement_Notes || ''),
+    };
+    if (roommateInput) {
+      updates.Requested_Roommate = roommateInput.value.trim();
+    }
+
+    if (onSave) onSave(unitKey, updates);
+    hideModal();
   });
 }
 
