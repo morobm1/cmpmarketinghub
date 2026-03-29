@@ -1990,7 +1990,8 @@ function exportMasterListToExcel() {
         'Lease Status': r ? (r.Lease_Status || '') : '',
         Scholarship: r ? (r.Scholarship || '') : '',
         'Old Unit': r ? (r.Old_Unit || '') : '',
-        'Requested Roommate': r ? (r.Requested_Roommate || '') : '',
+        'Requested Roommate 1': r ? (r.Requested_Roommate_1 || r.Requested_Roommate || '') : '',
+        'Requested Roommate 2': r ? (r.Requested_Roommate_2 || '') : '',
         'Placement Notes': r ? (r.Placement_Notes || '') : '',
       });
     }
@@ -2005,7 +2006,8 @@ function exportMasterListToExcel() {
           'Lease Status': r.Lease_Status || '',
           Scholarship: r.Scholarship || '',
           'Old Unit': r.Old_Unit || '',
-          'Requested Roommate': r.Requested_Roommate || '',
+          'Requested Roommate 1': r.Requested_Roommate_1 || r.Requested_Roommate || '',
+          'Requested Roommate 2': r.Requested_Roommate_2 || '',
           'Placement Notes': r.Placement_Notes || '',
         });
       }
@@ -2035,7 +2037,7 @@ function exportMasterListToExcel() {
     return (a.Unit || '').localeCompare(b.Unit || '', undefined, { numeric: true, sensitivity: 'base' });
   });
 
-  var ws = XLSX.utils.json_to_sheet(rows, { header: ['Name', 'Unit', 'Floorplan', 'Lease Status', 'Scholarship', 'Old Unit', 'Requested Roommate', 'Placement Notes'] });
+  var ws = XLSX.utils.json_to_sheet(rows, { header: ['Name', 'Unit', 'Floorplan', 'Lease Status', 'Scholarship', 'Old Unit', 'Requested Roommate 1', 'Requested Roommate 2', 'Placement Notes'] });
 
   // Set column widths
   ws['!cols'] = [
@@ -2045,7 +2047,8 @@ function exportMasterListToExcel() {
     { wch: 24 }, // Lease Status
     { wch: 22 }, // Scholarship
     { wch: 14 }, // Old Unit
-    { wch: 24 }, // Requested Roommate
+    { wch: 24 }, // Requested Roommate 1
+    { wch: 24 }, // Requested Roommate 2
     { wch: 36 }, // Placement Notes
   ];
 
@@ -2213,8 +2216,11 @@ function handleResidentNameClick(resident, unitKey) {
     if (updates.Placement_Notes !== undefined) {
       r.Placement_Notes = updates.Placement_Notes;
     }
-    if (updates.Requested_Roommate !== undefined) {
-      r.Requested_Roommate = updates.Requested_Roommate;
+    if (updates.Requested_Roommate_1 !== undefined) {
+      r.Requested_Roommate_1 = updates.Requested_Roommate_1;
+    }
+    if (updates.Requested_Roommate_2 !== undefined) {
+      r.Requested_Roommate_2 = updates.Requested_Roommate_2;
     }
 
     AppState.residents.set(key, r);

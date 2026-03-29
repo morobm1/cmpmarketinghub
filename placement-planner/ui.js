@@ -1225,8 +1225,18 @@ function openResidentDetailModal(resident, unitKey, inventory, onSave) {
       '<div class="rd-field"><span class="rd-label">Scholarship</span><span class="rd-value">' + escapeHtml(schText) + '</span></div>' +
       (is3BR ?
         '<div class="rd-field rd-editable">' +
-          '<label class="rd-label" for="rd-roommate">Requested Roommate</label>' +
-          '<input type="text" id="rd-roommate" class="text-input" value="' + escapeHtml(resident.Requested_Roommate || '') + '" placeholder="Enter roommate name..." />' +
+          '<label class="rd-label">Requested Roommate 1</label>' +
+          '<div class="rd-roommate-row">' +
+            '<input type="text" id="rd-roommate-1" class="text-input" value="' + escapeHtml(resident.Requested_Roommate_1 || resident.Requested_Roommate || '') + '" placeholder="Enter roommate name..." />' +
+            '<span id="rd-roommate-1-status" class="rd-match-badge"></span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="rd-field rd-editable">' +
+          '<label class="rd-label">Requested Roommate 2</label>' +
+          '<div class="rd-roommate-row">' +
+            '<input type="text" id="rd-roommate-2" class="text-input" value="' + escapeHtml(resident.Requested_Roommate_2 || '') + '" placeholder="Enter roommate name..." />' +
+            '<span id="rd-roommate-2-status" class="rd-match-badge"></span>' +
+          '</div>' +
         '</div>'
         : '') +
       '<div class="rd-field rd-editable">' +
@@ -1243,15 +1253,51 @@ function openResidentDetailModal(resident, unitKey, inventory, onSave) {
 
   document.getElementById('rd-cancel-btn').addEventListener('click', hideModal);
 
+  // Roommate name validation — check if name exists in Resident Master List
+  function _checkRoommateMatch(inputId, statusId) {
+    var input = document.getElementById(inputId);
+    var status = document.getElementById(statusId);
+    if (!input || !status) return;
+
+    function check() {
+      var name = input.value.trim();
+      if (!name) { status.textContent = ''; status.className = 'rd-match-badge'; return; }
+      var nameUpper = name.toUpperCase();
+      var found = false;
+      if (AppState && AppState.residents) {
+        AppState.residents.forEach(function (r) {
+          if ((r.Resident_Name || '').toUpperCase() === nameUpper) found = true;
+        });
+      }
+      if (found) {
+        status.textContent = '✓ Found';
+        status.className = 'rd-match-badge rd-match-found';
+      } else {
+        status.textContent = '✗ Not found';
+        status.className = 'rd-match-badge rd-match-missing';
+      }
+    }
+
+    input.addEventListener('input', check);
+    check(); // run immediately
+  }
+
+  _checkRoommateMatch('rd-roommate-1', 'rd-roommate-1-status');
+  _checkRoommateMatch('rd-roommate-2', 'rd-roommate-2-status');
+
   document.getElementById('rd-save-btn').addEventListener('click', function () {
-    var roommateInput = document.getElementById('rd-roommate');
+    var roommate1Input = document.getElementById('rd-roommate-1');
+    var roommate2Input = document.getElementById('rd-roommate-2');
     var notesInput = document.getElementById('rd-notes');
 
     var updates = {
       Placement_Notes: notesInput ? notesInput.value.trim() : (resident.Placement_Notes || ''),
     };
-    if (roommateInput) {
-      updates.Requested_Roommate = roommateInput.value.trim();
+    if (roommate1Input) {
+      updates.Requested_Roommate_1 = roommate1Input.value.trim();
+    }
+    if (roommate2Input) {
+      updates.Requested_Roommate_2 = roommate2Input.value.trim();
     }
 
     if (onSave) onSave(unitKey, updates);
