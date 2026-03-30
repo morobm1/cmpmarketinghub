@@ -114,7 +114,14 @@
     .validation-error{border-color:#ef4444 !important; box-shadow:0 0 0 3px rgba(239,68,68,0.15) !important}
     .field-required::after{content:" *"; color:#ef4444}
 
-    .hidden{display:none}
+    /* AI Revision Panel */
+    .ai-revise-btn:hover{background:#e0e7ff !important; border-color:#6366f1 !important}
+    .ai-revise-btn:disabled{opacity:0.5; cursor:not-allowed}
+    .ai-revision-panel{margin-top:10px; border:1px solid #c7d2fe; border-radius:8px; background:#f5f3ff; overflow:hidden}
+    .ai-revision-header{display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:#ede9fe; border-bottom:1px solid #c7d2fe}
+    .ai-revision-text{padding:14px; font-size:14px; line-height:1.6; color:var(--text); white-space:pre-wrap}
+    @keyframes aiPulse{0%,100%{opacity:1}50%{opacity:0.5}}
+    .ai-loading{animation:aiPulse 1.2s ease-in-out infinite}
 
     .tab-content{display:none}
     .tab-content.active{display:block}
@@ -248,6 +255,22 @@
             <div class="form-group">
               <label for="introNotes">Optional Intro Notes</label>
               <textarea id="introNotes" placeholder="Optional opening sentence or context for this week's report..."></textarea>
+              <div style="margin-top:8px; display:flex; align-items:center; gap:8px">
+                <button type="button" class="sm ai-revise-btn" onclick="requestAiRevise('introNotes','intro notes')" style="background:#f0f4ff; border-color:#818cf8; color:#4338ca; font-size:12px">
+                  &#10024; AI Revise
+                </button>
+                <span id="introNotes_aiStatus" style="font-size:12px; color:var(--subtext)"></span>
+              </div>
+              <div id="introNotes_aiPanel" class="ai-revision-panel" style="display:none">
+                <div class="ai-revision-header">
+                  <span style="font-weight:600; font-size:13px; color:#4338ca">&#10024; AI Suggestion</span>
+                  <div style="display:flex; gap:6px">
+                    <button type="button" class="sm" onclick="acceptRevision('introNotes')" style="background:#d1fae5; border-color:#22c55e; color:#065f46; font-size:11px">&#10003; Accept</button>
+                    <button type="button" class="sm" onclick="rejectRevision('introNotes')" style="background:#fee2e2; border-color:#ef4444; color:#991b1b; font-size:11px">&#10005; Reject</button>
+                  </div>
+                </div>
+                <div id="introNotes_aiText" class="ai-revision-text"></div>
+              </div>
             </div>
 
             <div class="button-group">
@@ -413,6 +436,22 @@
             <div class="form-group">
               <label for="otherNotes">Notes (leave blank to omit this section)</label>
               <textarea id="otherNotes" placeholder="Any additional important notes for the week..."></textarea>
+              <div style="margin-top:8px; display:flex; align-items:center; gap:8px">
+                <button type="button" class="sm ai-revise-btn" onclick="requestAiRevise('otherNotes','other important notes')" style="background:#f0f4ff; border-color:#818cf8; color:#4338ca; font-size:12px">
+                  &#10024; AI Revise
+                </button>
+                <span id="otherNotes_aiStatus" style="font-size:12px; color:var(--subtext)"></span>
+              </div>
+              <div id="otherNotes_aiPanel" class="ai-revision-panel" style="display:none">
+                <div class="ai-revision-header">
+                  <span style="font-weight:600; font-size:13px; color:#4338ca">&#10024; AI Suggestion</span>
+                  <div style="display:flex; gap:6px">
+                    <button type="button" class="sm" onclick="acceptRevision('otherNotes')" style="background:#d1fae5; border-color:#22c55e; color:#065f46; font-size:11px">&#10003; Accept</button>
+                    <button type="button" class="sm" onclick="rejectRevision('otherNotes')" style="background:#fee2e2; border-color:#ef4444; color:#991b1b; font-size:11px">&#10005; Reject</button>
+                  </div>
+                </div>
+                <div id="otherNotes_aiText" class="ai-revision-text"></div>
+              </div>
             </div>
 
             <div class="section-header">Attached WRS Index</div>
@@ -1679,6 +1718,135 @@
     autoSaveFields.forEach(id => {
       $(id).addEventListener('input', saveData);
     });
+
+    /* ====================================================
+       SMART REVISE (client-side, no API needed)
+    ==================================================== */
+    let aiRevisions = {};
+
+    function requestAiRevise(fieldId, contextLabel) {
+      const textarea = $(fieldId);
+      const text = textarea.value.trim();
+      if (!text) { alert('Type something first, then click AI Revise.'); return; }
+
+      const statusEl = $(fieldId + '_aiStatus');
+      const panelEl = $(fieldId + '_aiPanel');
+      const textEl = $(fieldId + '_aiText');
+
+      statusEl.textContent = 'Polishing...';
+      statusEl.classList.add('ai-loading');
+      panelEl.style.display = 'none';
+
+      // Small delay to feel responsive
+      setTimeout(() => {
+        const revised = polishText(text);
+        aiRevisions[fieldId] = { original: text, revised };
+        textEl.textContent = revised;
+        panelEl.style.display = '';
+        statusEl.textContent = 'Suggestion ready — accept or reject below';
+        statusEl.classList.remove('ai-loading');
+      }, 400);
+    }
+
+    function acceptRevision(fieldId) {
+      const rev = aiRevisions[fieldId];
+      if (!rev) return;
+      $(fieldId).value = rev.revised;
+      $(fieldId + '_aiPanel').style.display = 'none';
+      $(fieldId + '_aiStatus').textContent = 'Revision accepted';
+      setTimeout(() => { $(fieldId + '_aiStatus').textContent = ''; }, 2500);
+      delete aiRevisions[fieldId];
+      saveData();
+    }
+
+    function rejectRevision(fieldId) {
+      $(fieldId + '_aiPanel').style.display = 'none';
+      $(fieldId + '_aiStatus').textContent = 'Revision rejected — original kept';
+      setTimeout(() => { $(fieldId + '_aiStatus').textContent = ''; }, 2500);
+      delete aiRevisions[fieldId];
+    }
+
+    /**
+     * Client-side text polisher — rule-based, no API cost.
+     * Cleans up capitalization, punctuation, filler words,
+     * clichés, and sentence structure for a professional weekly-report tone.
+     */
+    function polishText(text) {
+      let t = text;
+
+      // Normalize whitespace
+      t = t.replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+
+      // Fix double periods
+      t = t.replace(/\.{2,}/g, '.');
+
+      // Capitalize first letter of each sentence
+      t = t.replace(/(^|[.!?]\s+)([a-z])/g, (m, p, c) => p + c.toUpperCase());
+
+      // Capitalize first character overall
+      t = t.charAt(0).toUpperCase() + t.slice(1);
+
+      // Remove filler phrases
+      const fillers = [
+        /\b(just wanted to|I just wanted to|wanted to quickly|I wanted to quickly)\b/gi,
+        /\b(basically|essentially|actually|honestly|literally)\b/gi,
+        /\b(kind of|sort of|pretty much)\b/gi,
+        /\b(I think that|I feel like|I believe that)\b/gi,
+        /\b(as you know|as we all know|obviously)\b/gi,
+        /\b(in order to)\b/gi,
+        /\b(at this point in time)\b/gi,
+        /\b(due to the fact that)\b/gi,
+        /\b(for the purpose of)\b/gi,
+      ];
+      fillers.forEach(rx => { t = t.replace(rx, ''); });
+
+      // Replace clichés with cleaner alternatives
+      const replacements = [
+        [/\bthe perfect balance of\b/gi, 'a strong mix of'],
+        [/\bwe('re| are) excited to\b/gi, 'we plan to'],
+        [/\bexcited to announce\b/gi, 'announcing'],
+        [/\bexcited to share\b/gi, 'sharing'],
+        [/\bplease don't hesitate to\b/gi, 'feel free to'],
+        [/\bat the end of the day\b/gi, 'ultimately'],
+        [/\bmoving forward\b/gi, 'going forward'],
+        [/\bgoing forward,?\s*/gi, ''],
+        [/\bin terms of\b/gi, 'regarding'],
+        [/\bwith regards to\b/gi, 'regarding'],
+        [/\bwith respect to\b/gi, 'regarding'],
+        [/\bin order to\b/gi, 'to'],
+        [/\bdue to the fact that\b/gi, 'because'],
+        [/\bfor the purpose of\b/gi, 'to'],
+        [/\bat this point in time\b/gi, 'currently'],
+        [/\bin the near future\b/gi, 'soon'],
+        [/\bgame changer\b/gi, 'significant improvement'],
+        [/\bhit the ground running\b/gi, 'started immediately'],
+        [/\bsynergy\b/gi, 'collaboration'],
+        [/\blow-hanging fruit\b/gi, 'quick wins'],
+        [/\bbest in class\b/gi, 'top-performing'],
+        [/\bthink outside the box\b/gi, 'find creative solutions'],
+        [/\btouch base\b/gi, 'connect'],
+        [/\bloop in\b/gi, 'include'],
+        [/\bcircle back\b/gi, 'follow up'],
+        [/\bpivot\b/gi, 'adjust'],
+      ];
+      replacements.forEach(([rx, rep]) => { t = t.replace(rx, rep); });
+
+      // Clean up double spaces from removals
+      t = t.replace(/\s{2,}/g, ' ').trim();
+
+      // Fix orphan punctuation from removals (e.g., ", ," or ". .")
+      t = t.replace(/,\s*,/g, ',');
+      t = t.replace(/\.\s*\./g, '.');
+      t = t.replace(/\s+([.,;:!?])/g, '$1');
+
+      // Ensure ends with period if it doesn't end with punctuation
+      if (t && !/[.!?]$/.test(t)) t += '.';
+
+      // Re-capitalize after cleanup
+      t = t.replace(/(^|[.!?]\s+)([a-z])/g, (m, p, c) => p + c.toUpperCase());
+
+      return t;
+    }
 
     /* ====================================================
        INIT
