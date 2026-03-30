@@ -395,78 +395,83 @@ function renderBoard(){
   if(filtered.length===0&&staff.length===0){$('boardEmpty').innerHTML='<h3>No Tasks Yet</h3><p>Add tasks or load a template.</p>';$('boardEmpty').style.display='';$('boardWrap').style.display='none';return;}
   $('boardEmpty').style.display='none';$('boardWrap').style.display='';
 
-  const byG={};filtered.forEach(t=>{const g=t.groupId||'misc';if(!byG[g])byG[g]=[];byG[g].push(t);});
+  // Separate active vs completed tasks
+  const activeTasks=filtered.filter(t=>!t.completed);
+  const completedTasks=filtered.filter(t=>t.completed);
+
+  const byG={};activeTasks.forEach(t=>{const g=t.groupId||'misc';if(!byG[g])byG[g]=[];byG[g].push(t);});
   let html='';
 
+  // Helper to render a task row
+  function taskRowHtml(t,color){
+    const done=t.completed;
+    const stC=ST_CLS[t.status]||'st-ns';
+    const prC=PR_CLS[t.priority||'']||'pr-none';
+    const owners=(t.assignees||[]);
+    const ownerHtml=owners.length?owners.map(a=>{const ini=(a.userName||'').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);return `<span class="owner-pill"><span class="oi">${ini}</span>${esc(a.userName)}</span>`;}).join(''):'<span style="color:var(--muted);font-size:11px">—</span>';
+    const budgetStr=t.budget?'$'+Number(t.budget).toLocaleString('en-US',{minimumFractionDigits:2}):'';
+    const filesCount=(t.files||[]).length;
+    return `<div class="board-row task${done?' done':''}" data-tid="${t._id}">
+      <div><div class="chk${done?' on':''}" data-tid="${t._id}"></div></div>
+      <div class="c-accent" style="background:${color};opacity:.15"></div>
+      <div class="c-task">${esc(t.label)}</div>
+      <div><div class="owner-pills">${ownerHtml}</div></div>
+      <div><span class="st-pill ${stC}" data-tid="${t._id}">${esc(t.status)}</span></div>
+      <div style="font-size:12px;font-weight:600;color:var(--sub)">${t.date||'—'}</div>
+      <div><span class="pr-pill ${prC}" data-tid="${t._id}">${esc(t.priority||'—')}</span></div>
+      <div style="font-size:12px;color:var(--sub)" title="${esc(t.notes||'')}">${esc(t.notes||'')}</div>
+      <div style="font-size:12px;font-weight:600">${budgetStr||'—'}</div>
+      <div style="text-align:center;font-size:12px;color:var(--sub)">${filesCount?'📎'+filesCount:'—'}</div>
+      <div style="text-align:center"><button class="xs" onclick="editTask('${t._id}')">✎</button></div>
+    </div>`;
+  }
+
+  // Render active groups
   groups.forEach(g=>{
     const items=byG[g.id]||[];
     const open=!collapsedGroups.has(g.id);
 
-    // Group title (full-width, not grid)
     html+=`<div class="grp-title-row" onclick="toggleGrp('${g.id}')">
       <div class="grp-color-bar" style="background:${g.color}"></div>
       <span class="grp-chevron${open?'':' collapsed'}" id="chev-${g.id}">▾</span>
       <span>${esc(g.name)}</span>
       <span class="grp-count">${items.length}</span>
     </div>`;
-
     html+=`<div class="grp-body${open?' open':''}" id="gbody-${g.id}">`;
-
-    // Task rows (CSS grid aligned)
-    items.forEach(t=>{
-      const done=t.completed;
-      const stC=ST_CLS[t.status]||'st-ns';
-      const prC=PR_CLS[t.priority||'']||'pr-none';
-      const owners=(t.assignees||[]);
-      const ownerHtml=owners.length?owners.map(a=>{const ini=(a.userName||'').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);return `<span class="owner-pill"><span class="oi">${ini}</span>${esc(a.userName)}</span>`;}).join(''):'<span style="color:var(--muted);font-size:11px">—</span>';
-      const budgetStr=t.budget?'$'+Number(t.budget).toLocaleString('en-US',{minimumFractionDigits:2}):'';
-      const filesCount=(t.files||[]).length;
-
-      html+=`<div class="board-row task${done?' done':''}" data-tid="${t._id}">
-        <div><div class="chk${done?' on':''}" data-tid="${t._id}"></div></div>
-        <div class="c-accent" style="background:${g.color};opacity:.15"></div>
-        <div class="c-task">${esc(t.label)}</div>
-        <div><div class="owner-pills">${ownerHtml}</div></div>
-        <div><span class="st-pill ${stC}" data-tid="${t._id}">${esc(t.status)}</span></div>
-        <div style="font-size:12px;font-weight:600;color:var(--sub)">${t.date||'—'}</div>
-        <div><span class="pr-pill ${prC}" data-tid="${t._id}">${esc(t.priority||'—')}</span></div>
-        <div style="font-size:12px;color:var(--sub)" title="${esc(t.notes||'')}">${esc(t.notes||'')}</div>
-        <div style="font-size:12px;font-weight:600">${budgetStr||'—'}</div>
-        <div style="text-align:center;font-size:12px;color:var(--sub)">${filesCount?'📎'+filesCount:'—'}</div>
-        <div style="text-align:center"><button class="xs" onclick="editTask('${t._id}')">✎</button></div>
-      </div>`;
-    });
-
-    // Add task row (grid aligned)
+    items.forEach(t=>html+=taskRowHtml(t,g.color));
     html+=`<div class="board-row add-row">
-      <div></div>
-      <div style="background:${g.color};opacity:.08"></div>
+      <div></div><div style="background:${g.color};opacity:.08"></div>
       <div style="grid-column:3/-1"><input class="add-input" placeholder="+ Add task…" onkeydown="if(event.key==='Enter'){event.preventDefault();quickAdd(this,'${g.id}')}" /></div>
     </div>`;
-
-    // Footer/summary (grid aligned)
     if(items.length>0){
       const totalBudget=items.reduce((s,t)=>s+(Number(t.budget)||0),0);
       const totalFiles=items.reduce((s,t)=>s+(t.files||[]).length,0);
-      const doneCount=items.filter(t=>t.completed).length;
       const nearestDate=items.filter(t=>t.date).map(t=>t.date).sort()[0]||'';
       const highPri=items.filter(t=>t.priority==='High'||t.priority==='Critical').length;
-      html+=`<div class="board-row footer">
-        <div></div><div></div>
-        <div>${doneCount}/${items.length} done</div>
-        <div></div>
-        <div></div>
-        <div style="font-size:10px">${nearestDate?'Next: '+nearestDate:''}</div>
-        <div>${highPri?'<span style="color:var(--bad)">'+highPri+' high</span>':''}</div>
-        <div></div>
-        <div style="font-size:11px;font-weight:700">${totalBudget?'$'+totalBudget.toLocaleString('en-US',{minimumFractionDigits:2}):''}</div>
-        <div style="text-align:center">${totalFiles?'📎'+totalFiles:''}</div>
-        <div></div>
-      </div>`;
+      html+=`<div class="board-row footer"><div></div><div></div><div>${items.length} active</div><div></div><div></div><div style="font-size:10px">${nearestDate?'Next: '+nearestDate:''}</div><div>${highPri?'<span style="color:var(--bad)">'+highPri+' high</span>':''}</div><div></div><div style="font-size:11px;font-weight:700">${totalBudget?'$'+totalBudget.toLocaleString('en-US',{minimumFractionDigits:2}):''}</div><div style="text-align:center">${totalFiles?'📎'+totalFiles:''}</div><div></div></div>`;
     }
-
-    html+=`</div>`; // close grp-body
+    html+=`</div>`;
   });
+
+  // Render completed tasks section
+  if(completedTasks.length>0){
+    const cOpen=!collapsedGroups.has('__completed');
+    html+=`<div class="grp-title-row" onclick="toggleGrp('__completed')" style="background:#f0fdf4;border-top:3px solid var(--good)">
+      <div class="grp-color-bar" style="background:var(--good)"></div>
+      <span class="grp-chevron${cOpen?'':' collapsed'}" id="chev-__completed">▾</span>
+      <span style="color:var(--good)">✓ Completed</span>
+      <span class="grp-count" style="background:#dcfce7;color:#166534">${completedTasks.length}</span>
+    </div>`;
+    html+=`<div class="grp-body${cOpen?' open':''}" id="gbody-__completed">`;
+    completedTasks.forEach(t=>{
+      const grp=groups.find(g=>g.id===t.groupId);
+      html+=taskRowHtml(t,grp?grp.color:'#94a3b8');
+    });
+    const cBudget=completedTasks.reduce((s,t)=>s+(Number(t.budget)||0),0);
+    const cFiles=completedTasks.reduce((s,t)=>s+(t.files||[]).length,0);
+    html+=`<div class="board-row footer" style="background:#f0fdf4"><div></div><div></div><div style="color:var(--good)">${completedTasks.length} completed</div><div></div><div></div><div></div><div></div><div></div><div style="font-size:11px;font-weight:700">${cBudget?'$'+cBudget.toLocaleString('en-US',{minimumFractionDigits:2}):''}</div><div style="text-align:center">${cFiles?'📎'+cFiles:''}</div><div></div></div>`;
+    html+=`</div>`;
+  }
 
   $('groupsArea').innerHTML=html;
 
