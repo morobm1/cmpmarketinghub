@@ -3,12 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>Property Site Map</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=20260330.1" />
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script>
+    // Auto cache-bust: append current timestamp to CSS so browsers always get fresh files
+    var _cb = Date.now();
+    document.write('<link rel="stylesheet" href="styles.css?v=' + _cb + '" />');
+  </script>
+  <noscript><link rel="stylesheet" href="styles.css" /></noscript>
 </head>
 <body>
 
@@ -452,12 +460,14 @@
   <!-- ====== HIDDEN INPUTS ====== -->
   <input type="file" id="restore-file-input-global" accept=".json" style="display:none" />
 
-  <!-- ====== SCRIPTS ====== -->
-  <script src="config.js?v=20260330.1"></script>
-  <script src="inventory.js?v=20260330.1"></script>
-  <script src="excel.js?v=20260330.1"></script>
-  <script src="map.js?v=20260330.1"></script>
-  <script src="ui.js?v=20260330.1"></script>
-  <script src="app.js?v=20260330.1"></script>
+  <!-- ====== SCRIPTS (auto cache-bust with timestamp) ====== -->
+  <script>
+    // Dynamically load all JS with cache-busting timestamp
+    var _scripts = ['config.js','inventory.js','excel.js','map.js','ui.js','app.js'];
+    var _v = Date.now();
+    for (var _i = 0; _i < _scripts.length; _i++) {
+      document.write('<script src="' + _scripts[_i] + '?v=' + _v + '"><\/script>');
+    }
+  </script>
 </body>
 </html>
