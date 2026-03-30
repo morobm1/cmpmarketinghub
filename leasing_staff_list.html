@@ -205,7 +205,14 @@ textarea{min-height:50px;resize:vertical}
     <!-- BOARD -->
     <div class="pane on" id="p-board">
       <div class="toolbar">
-        <div class="fg"><label>Property</label><select id="bProp" style="min-width:200px"><option value="">— Select —</option></select></div>
+        <div class="fg"><label>Property</label>
+          <div style="position:relative">
+            <input type="text" id="bPropSearch" placeholder="Search properties..." autocomplete="off" style="min-width:220px;padding-right:28px"/>
+            <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);font-size:10px">▼</span>
+            <div id="bPropDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:2px solid var(--bdr);border-top:none;border-radius:0 0 8px 8px;max-height:220px;overflow:auto;z-index:20;box-shadow:0 8px 20px rgba(0,0,0,.12)"></div>
+          </div>
+          <select id="bProp" style="display:none"><option value="">— Select —</option></select>
+        </div>
         <div class="fg"><label>Date</label><input type="date" id="bDate"/></div>
         <div class="fg"><label>Person</label><select id="bPerson" style="min-width:140px"><option value="">Everyone</option></select></div>
         <div class="fg"><label>Status</label><select id="bStatus" style="min-width:120px"><option value="">All</option><option>Not Started</option><option>Working on It</option><option>Done</option><option>On Hold</option></select></div>
@@ -343,7 +350,7 @@ function showSave(s){const el=$('saveInd');el.className='save-ind '+s;el.textCon
 /* ═══ AUTH ═══ */
 async function init(){
   try{const r=await fetch('/api/me',{credentials:'include'});if(r.ok){me=await r.json();isAdmin=me.role==='admin';boot();return;}}catch(e){console.error(e);}
-  location.href='index.html';
+  location.href='index.html?redirect='+encodeURIComponent(location.pathname+location.search);
 }
 function boot(){
   $('boot').style.display='none';$('hdr').style.display='';$('app').style.display='';
@@ -366,7 +373,44 @@ async function loadAll(){
   if(!isAdmin&&allowed.length===1){$('bProp').value=allowed[0].id;$('sProp').value=allowed[0].id;propId=allowed[0].id;loadBoard();loadStaff();}
   startPolling();
 }
-function fillPropSelects(){const allowed=isAdmin?properties:properties.filter(p=>{if(me.properties==='*')return true;if(Array.isArray(me.properties))return me.properties.includes(p.id)||me.properties.includes(p.name);return me.properties===p.id||me.properties===p.name;});const o=allowed.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('');['bProp','sProp','sfProp'].forEach(id=>{const el=$(id);const f=el.querySelector('option');el.innerHTML=(f?f.outerHTML:'')+o;});}
+let allowedProps=[];
+function fillPropSelects(){
+  allowedProps=isAdmin?properties:properties.filter(p=>{if(me.properties==='*')return true;if(Array.isArray(me.properties))return me.properties.includes(p.id)||me.properties.includes(p.name);return me.properties===p.id||me.properties===p.name;});
+  const o=allowedProps.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('');
+  ['bProp','sProp','sfProp'].forEach(id=>{const el=$(id);const f=el.querySelector('option');el.innerHTML=(f?f.outerHTML:'')+o;});
+  // Init searchable property dropdown
+  initPropSearch();
+}
+
+function initPropSearch(){
+  const input=$('bPropSearch');
+  const dd=$('bPropDropdown');
+  const sel=$('bProp');
+
+  function renderDD(filter){
+    const q=(filter||'').toLowerCase();
+    const matches=q?allowedProps.filter(p=>p.name.toLowerCase().includes(q)):allowedProps;
+    if(matches.length===0){dd.innerHTML='<div style="padding:10px 12px;color:var(--muted);font-size:12px">No results</div>';dd.style.display='block';return;}
+    dd.innerHTML=matches.map(p=>`<div class="prop-dd-item" data-id="${p.id}" style="padding:9px 12px;cursor:pointer;font-size:13px;font-weight:600;border-bottom:1px solid var(--bdr-l)">${esc(p.name)}</div>`).join('');
+    dd.style.display='block';
+    dd.querySelectorAll('.prop-dd-item').forEach(item=>{
+      item.addEventListener('mouseenter',()=>item.style.background='var(--row-hover)');
+      item.addEventListener('mouseleave',()=>item.style.background='');
+      item.addEventListener('mousedown',e=>{
+        e.preventDefault();
+        const id=item.dataset.id;
+        const p=allowedProps.find(x=>x.id===id);
+        if(p){input.value=p.name;sel.value=id;propId=id;dd.style.display='none';loadBoard();loadTemplates();}
+      });
+    });
+  }
+
+  input.addEventListener('focus',()=>renderDD(input.value));
+  input.addEventListener('input',()=>renderDD(input.value));
+  input.addEventListener('blur',()=>{setTimeout(()=>dd.style.display='none',200);});
+  // If property already selected, show its name
+  if(propId){const p=allowedProps.find(x=>x.id===propId);if(p)input.value=p.name;}
+}
 function fillGroupSelects(){const o=groups.map(g=>`<option value="${g.id}">${esc(g.name)}</option>`).join('');['tfGroup','tpfGroup'].forEach(id=>$(id).innerHTML=o);}
 
 /* ═══ POLLING ═══ */

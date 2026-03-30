@@ -57,7 +57,7 @@
       const btn = els.loginBtn; const orig = btn.textContent; btn.disabled = true; btn.textContent = 'Signing in…';
       try{
         const res = await fetch('/api/auth-login', { method:'POST', headers:{ 'Content-Type':'application/json', 'Accept':'application/json' }, credentials:'include', body: JSON.stringify({ username, password }) });
-        if (res.ok){ try{localStorage.setItem('mmp_last_activity',Date.now().toString())}catch(e){} window.location.href = 'mmp_calendar_app.html'; return; }
+        if (res.ok){ try{localStorage.setItem('mmp_last_activity',Date.now().toString())}catch(e){} const redir=new URLSearchParams(window.location.search).get('redirect'); window.location.href = redir||'mmp_calendar_app.html'; return; }
         if (res.status === 401 || res.status === 400){
           els.error.textContent = 'Incorrect username or password';
         } else {
@@ -79,7 +79,7 @@
 
     // If already logged in via cookie, redirect to app
     (async function(){
-      try{ const me = await fetch('/api/me', { credentials:'include' }); if (me.ok){ window.location.href = 'mmp_calendar_app.html'; } }catch(e){}
+      try{ const me = await fetch('/api/me', { credentials:'include' }); if (me.ok){ const redir=new URLSearchParams(window.location.search).get('redirect'); window.location.href = redir||'mmp_calendar_app.html'; } }catch(e){}
     })();
   </script>
 </body>
