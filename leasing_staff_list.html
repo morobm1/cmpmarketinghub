@@ -19,7 +19,7 @@
   --good:#16a34a;--warn:#d97706;--bad:#dc2626;--purple:#7c3aed;
   --row-hover:#f1f5f9;--grp-bg:#f8fafc;
   /* ═══ SHARED COLUMN GRID ═══ */
-  --board-cols: 40px 4px minmax(200px,1fr) 150px 120px 100px 100px 150px 80px 60px 50px;
+  --board-cols: 40px 4px minmax(200px,1fr) 150px 120px 100px 100px 150px 80px 60px 64px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
@@ -209,6 +209,7 @@ textarea{min-height:50px;resize:vertical}
         <div class="fg"><label>Person</label><select id="bPerson" style="min-width:140px"><option value="">Everyone</option></select></div>
         <div class="fg"><label>Status</label><select id="bStatus" style="min-width:120px"><option value="">All</option><option>Not Started</option><option>Working on It</option><option>Done</option><option>On Hold</option></select></div>
         <div class="spacer"></div>
+        <button class="sm" id="viewToggleBtn" onclick="toggleBoardView()" style="border-color:var(--good);color:var(--good);font-weight:700">✓ Completed Tasks</button>
         <button class="acc sm" id="addFromTplBtn">+ From Template</button>
         <button class="pri sm" id="addTaskBtn">+ Add Task</button>
         <button class="sm" id="exportBtn">Export</button>
@@ -327,7 +328,7 @@ textarea{min-height:50px;resize:vertical}
 <script>
 /* ═══ STATE ═══ */
 let me=null,isAdmin=false,properties=[],groups=[],staff=[],tasks=[],templates=[];
-let propId='',boardDate='',pollTimer=null;
+let propId='',boardDate='',pollTimer=null,viewMode='active'; // 'active' or 'completed'
 const $=id=>document.getElementById(id);
 function esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML;}
 function today(){return new Date().toISOString().slice(0,10);}
@@ -387,6 +388,22 @@ async function loadBoard(){
 }
 function fillPersonFilter(){$('bPerson').innerHTML='<option value="">Everyone</option>'+staff.map(s=>`<option value="${s._id}">${esc(s.employeeName)}</option>`).join('');}
 
+function toggleBoardView(){
+  viewMode=viewMode==='active'?'completed':'active';
+  const btn=$('viewToggleBtn');
+  if(viewMode==='completed'){
+    btn.textContent='← Back to Active Board';
+    btn.style.borderColor='var(--pri)';btn.style.color='var(--pri)';btn.style.background='#e0f2fe';
+    $('addFromTplBtn').style.display='none';$('addTaskBtn').style.display='none';
+  } else {
+    btn.textContent='✓ Completed Tasks';
+    btn.style.borderColor='var(--good)';btn.style.color='var(--good)';btn.style.background='';
+    $('addFromTplBtn').style.display='';$('addTaskBtn').style.display='';
+  }
+  renderBoard();
+}
+window.toggleBoardView=toggleBoardView;
+
 function renderBoard(){
   const pf=$('bPerson').value,sf=$('bStatus').value;
   let filtered=tasks;
@@ -395,11 +412,15 @@ function renderBoard(){
   if(filtered.length===0&&staff.length===0){$('boardEmpty').innerHTML='<h3>No Tasks Yet</h3><p>Add tasks or load a template.</p>';$('boardEmpty').style.display='';$('boardWrap').style.display='none';return;}
   $('boardEmpty').style.display='none';$('boardWrap').style.display='';
 
-  // Separate active vs completed tasks
-  const activeTasks=filtered.filter(t=>!t.completed);
-  const completedTasks=filtered.filter(t=>t.completed);
+  // Split by view mode
+  const isCompleted=viewMode==='completed';
+  const viewTasks=isCompleted?filtered.filter(t=>t.completed):filtered.filter(t=>!t.completed);
 
-  const byG={};activeTasks.forEach(t=>{const g=t.groupId||'misc';if(!byG[g])byG[g]=[];byG[g].push(t);});
+  // Update toggle button count
+  const completedCount=filtered.filter(t=>t.completed).length;
+  if(viewMode==='active') $('viewToggleBtn').textContent='✓ Completed Tasks'+(completedCount?' ('+completedCount+')':'');
+
+  const byG={};viewTasks.forEach(t=>{const g=t.groupId||'misc';if(!byG[g])byG[g]=[];byG[g].push(t);});
   let html='';
 
   // Helper to render a task row
@@ -422,13 +443,25 @@ function renderBoard(){
       <div style="font-size:12px;color:var(--sub)" title="${esc(t.notes||'')}">${esc(t.notes||'')}</div>
       <div style="font-size:12px;font-weight:600">${budgetStr||'—'}</div>
       <div style="text-align:center;font-size:12px;color:var(--sub)">${filesCount?'📎'+filesCount:'—'}</div>
-      <div style="text-align:center"><button class="xs" onclick="editTask('${t._id}')">✎</button></div>
+      <div style="text-align:center"><button class="xs" onclick="editTask('${t._id}')" title="Edit">✎</button><button class="xs bad" onclick="delTask('${t._id}')" title="Delete" style="margin-left:2px">✕</button></div>
     </div>`;
   }
 
-  // Render active groups
+  // View title banner for completed view
+  if(isCompleted){
+    html+=`<div style="padding:12px 16px;background:#f0fdf4;border-bottom:2px solid #86efac;display:flex;align-items:center;gap:10px">
+      <span style="font-size:18px">✓</span>
+      <span style="font-size:15px;font-weight:800;color:#166534">Completed Tasks</span>
+      <span class="grp-count" style="background:#dcfce7;color:#166534">${viewTasks.length}</span>
+      <span style="font-size:12px;color:var(--muted);margin-left:8px">Uncheck a task to move it back to the active board</span>
+    </div>`;
+  }
+
+  // Render groups
   groups.forEach(g=>{
     const items=byG[g.id]||[];
+    // In completed view, skip empty groups
+    if(isCompleted&&items.length===0) return;
     const open=!collapsedGroups.has(g.id);
 
     html+=`<div class="grp-title-row" onclick="toggleGrp('${g.id}')">
@@ -439,39 +472,25 @@ function renderBoard(){
     </div>`;
     html+=`<div class="grp-body${open?' open':''}" id="gbody-${g.id}">`;
     items.forEach(t=>html+=taskRowHtml(t,g.color));
-    html+=`<div class="board-row add-row">
-      <div></div><div style="background:${g.color};opacity:.08"></div>
-      <div style="grid-column:3/-1"><input class="add-input" placeholder="+ Add task…" onkeydown="if(event.key==='Enter'){event.preventDefault();quickAdd(this,'${g.id}')}" /></div>
-    </div>`;
+
+    // Add task row only in active view
+    if(!isCompleted){
+      html+=`<div class="board-row add-row">
+        <div></div><div style="background:${g.color};opacity:.08"></div>
+        <div style="grid-column:3/-1"><input class="add-input" placeholder="+ Add task…" onkeydown="if(event.key==='Enter'){event.preventDefault();quickAdd(this,'${g.id}')}" /></div>
+      </div>`;
+    }
+
+    // Footer
     if(items.length>0){
       const totalBudget=items.reduce((s,t)=>s+(Number(t.budget)||0),0);
       const totalFiles=items.reduce((s,t)=>s+(t.files||[]).length,0);
       const nearestDate=items.filter(t=>t.date).map(t=>t.date).sort()[0]||'';
       const highPri=items.filter(t=>t.priority==='High'||t.priority==='Critical').length;
-      html+=`<div class="board-row footer"><div></div><div></div><div>${items.length} active</div><div></div><div></div><div style="font-size:10px">${nearestDate?'Next: '+nearestDate:''}</div><div>${highPri?'<span style="color:var(--bad)">'+highPri+' high</span>':''}</div><div></div><div style="font-size:11px;font-weight:700">${totalBudget?'$'+totalBudget.toLocaleString('en-US',{minimumFractionDigits:2}):''}</div><div style="text-align:center">${totalFiles?'📎'+totalFiles:''}</div><div></div></div>`;
+      html+=`<div class="board-row footer"><div></div><div></div><div>${items.length} ${isCompleted?'completed':'active'}</div><div></div><div></div><div style="font-size:10px">${nearestDate&&!isCompleted?'Next: '+nearestDate:''}</div><div>${highPri?'<span style="color:var(--bad)">'+highPri+' high</span>':''}</div><div></div><div style="font-size:11px;font-weight:700">${totalBudget?'$'+totalBudget.toLocaleString('en-US',{minimumFractionDigits:2}):''}</div><div style="text-align:center">${totalFiles?'📎'+totalFiles:''}</div><div></div></div>`;
     }
     html+=`</div>`;
   });
-
-  // Render completed tasks section
-  if(completedTasks.length>0){
-    const cOpen=!collapsedGroups.has('__completed');
-    html+=`<div class="grp-title-row" onclick="toggleGrp('__completed')" style="background:#f0fdf4;border-top:3px solid var(--good)">
-      <div class="grp-color-bar" style="background:var(--good)"></div>
-      <span class="grp-chevron${cOpen?'':' collapsed'}" id="chev-__completed">▾</span>
-      <span style="color:var(--good)">✓ Completed</span>
-      <span class="grp-count" style="background:#dcfce7;color:#166534">${completedTasks.length}</span>
-    </div>`;
-    html+=`<div class="grp-body${cOpen?' open':''}" id="gbody-__completed">`;
-    completedTasks.forEach(t=>{
-      const grp=groups.find(g=>g.id===t.groupId);
-      html+=taskRowHtml(t,grp?grp.color:'#94a3b8');
-    });
-    const cBudget=completedTasks.reduce((s,t)=>s+(Number(t.budget)||0),0);
-    const cFiles=completedTasks.reduce((s,t)=>s+(t.files||[]).length,0);
-    html+=`<div class="board-row footer" style="background:#f0fdf4"><div></div><div></div><div style="color:var(--good)">${completedTasks.length} completed</div><div></div><div></div><div></div><div></div><div></div><div style="font-size:11px;font-weight:700">${cBudget?'$'+cBudget.toLocaleString('en-US',{minimumFractionDigits:2}):''}</div><div style="text-align:center">${cFiles?'📎'+cFiles:''}</div><div></div></div>`;
-    html+=`</div>`;
-  }
 
   $('groupsArea').innerHTML=html;
 
