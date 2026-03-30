@@ -188,15 +188,14 @@ export async function handler(event) {
         return cors(doc, 201);
       }
 
-      // ─── Task CRUD (multi-assignee) ───
+      // ─── Task CRUD (multi-assignee + priority/budget/files) ───
       if (action === 'task') {
-        const { id, propertyId, label, groupId, assignees, status, date, completed, notes, sortOrder } = body;
+        const { id, propertyId, label, groupId, assignees, status, date, completed, notes, sortOrder, priority, budget, files } = body;
         if (!id && (!propertyId || !label)) return cors('Missing fields', 400);
         if (propertyId && !canAccess(user, propertyId)) return cors('Forbidden', 403);
         const now = new Date().toISOString();
 
         if (id) {
-          // Update existing task
           const existing = await taskCol.findOne({ _id: new ObjectId(id) });
           if (!existing) return cors('Not found', 404);
           const upd = { updatedAt: now, updatedBy: user.sub };
@@ -206,6 +205,9 @@ export async function handler(event) {
           if (date !== undefined) upd.date = date;
           if (notes !== undefined) upd.notes = notes;
           if (sortOrder !== undefined) upd.sortOrder = sortOrder;
+          if (priority !== undefined) upd.priority = priority;
+          if (budget !== undefined) upd.budget = budget;
+          if (files !== undefined) upd.files = files;
           if (completed !== undefined) {
             upd.completed = completed;
             upd.completedAt = completed ? now : null;
@@ -218,18 +220,10 @@ export async function handler(event) {
           if (assignees !== undefined) {
             const oldIds = (existing.assignees || []).map(a => a.userId);
             const newAssignees = (assignees || []).map(a => ({
-              userId: a.userId,
-              userName: a.userName || '',
-              userEmail: a.userEmail || '',
-              assignedAt: oldIds.includes(a.userId)
-                ? ((existing.assignees || []).find(x => x.userId === a.userId) || {}).assignedAt || now
-                : now,
-              assignedBy: oldIds.includes(a.userId)
-                ? ((existing.assignees || []).find(x => x.userId === a.userId) || {}).assignedBy || user.sub
-                : user.sub,
-              notificationSentAt: oldIds.includes(a.userId)
-                ? ((existing.assignees || []).find(x => x.userId === a.userId) || {}).notificationSentAt || null
-                : null,
+              userId: a.userId, userName: a.userName || '', userEmail: a.userEmail || '',
+              assignedAt: oldIds.includes(a.userId) ? ((existing.assignees || []).find(x => x.userId === a.userId) || {}).assignedAt || now : now,
+              assignedBy: oldIds.includes(a.userId) ? ((existing.assignees || []).find(x => x.userId === a.userId) || {}).assignedBy || user.sub : user.sub,
+              notificationSentAt: oldIds.includes(a.userId) ? ((existing.assignees || []).find(x => x.userId === a.userId) || {}).notificationSentAt || null : null,
             }));
             upd.assignees = newAssignees;
             newAssigneeIds = newAssignees.filter(a => !oldIds.includes(a.userId)).map(a => a.userId);
@@ -237,14 +231,17 @@ export async function handler(event) {
 
           await taskCol.updateOne({ _id: new ObjectId(id) }, { $set: upd });
 
-          // Send email notifications to newly added assignees
+          // Email notifications for newly added assignees
           if (newAssigneeIds.length > 0) {
             const updatedTask = await taskCol.findOne({ _id: new ObjectId(id) });
-            const prop = await db.collection('properties').findOne({ _id: new ObjectId(existing.propertyId).toString() === existing.propertyId ? undefined : undefined });
+            // Resolve property name
             let propName = '';
-            try { const p = await db.collection('properties').findOne({}); propName = ''; } catch (e) {}
+            try {
+              const allProps = await db.collection('properties').find({}).toArray();
+              const p = allProps.find(x => x._id.toString() === (updatedTask.propertyId || existing.propertyId));
+              if (p) propName = p.name;
+            } catch (e) {}
             const grp = GROUPS.find(g => g.id === (updatedTask.groupId || existing.groupId));
-            // Fire and forget notifications
             notifyNewAssignees(db, updatedTask, newAssigneeIds, propName, grp ? grp.name : '').catch(e => console.error('[Email] notify error:', e));
           }
 
@@ -253,12 +250,8 @@ export async function handler(event) {
 
         // Create new task
         const taskAssignees = (assignees || []).map(a => ({
-          userId: a.userId,
-          userName: a.userName || '',
-          userEmail: a.userEmail || '',
-          assignedAt: now,
-          assignedBy: user.sub,
-          notificationSentAt: null,
+          userId: a.userId, userName: a.userName || '', userEmail: a.userEmail || '',
+          assignedAt: now, assignedBy: user.sub, notificationSentAt: null,
         }));
 
         const doc = {
@@ -268,6 +261,7 @@ export async function handler(event) {
           date: date || new Date().toISOString().slice(0, 10),
           completed: false, completedAt: null, completedBy: null,
           notes: notes || '', sortOrder: sortOrder || 0,
+          priority: priority || '', budget: budget || null, files: files || [],
           createdAt: now, createdBy: user.sub, updatedAt: now, updatedBy: user.sub,
         };
         const res = await taskCol.insertOne(doc);
@@ -275,8 +269,14 @@ export async function handler(event) {
 
         // Send notifications
         if (taskAssignees.length > 0) {
+          let propName = '';
+          try {
+            const allProps = await db.collection('properties').find({}).toArray();
+            const p = allProps.find(x => x._id.toString() === propertyId);
+            if (p) propName = p.name;
+          } catch (e) {}
           const grp = GROUPS.find(g => g.id === doc.groupId);
-          notifyNewAssignees(db, doc, taskAssignees.map(a => a.userId), '', grp ? grp.name : '').catch(e => console.error('[Email] notify error:', e));
+          notifyNewAssignees(db, doc, taskAssignees.map(a => a.userId), propName, grp ? grp.name : '').catch(e => console.error('[Email] notify error:', e));
         }
 
         return cors(doc, 201);
@@ -303,6 +303,7 @@ export async function handler(event) {
           date: d,
           completed: false, completedAt: null, completedBy: null,
           notes: '', sortOrder: i,
+          priority: '', budget: null, files: [],
           createdFromTemplateId: templateId || null,
           createdAt: now, createdBy: user.sub, updatedAt: now, updatedBy: user.sub,
         }));

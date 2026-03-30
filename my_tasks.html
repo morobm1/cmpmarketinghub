@@ -171,10 +171,12 @@ function render(){
       const dc=t.completed?'done':'';
       const stC=ST_CSS[t.status]||'st-ns';
       const time=t.completedAt?new Date(t.completedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'';
+      const prC={'':'','Low':'color:#1e40af','Medium':'color:#92400e','High':'color:#991b1b','Critical':'color:#fff;background:#dc2626;padding:2px 6px;border-radius:4px'}[t.priority||'']||'';
       html+=`<div class="task ${dc}" data-tid="${t._id}">
         <div class="cb"></div>
         <div class="task-body">
-          <div class="lbl">${esc(t.label)}<span class="st ${stC}" data-tid="${t._id}" onclick="event.stopPropagation();showSP(this,'${t._id}')">${esc(t.status)}</span></div>
+          <div class="lbl">${esc(t.label)}<span class="st ${stC}" data-tid="${t._id}" onclick="event.stopPropagation();showSP(this,'${t._id}')">${esc(t.status)}</span>${t.priority?`<span style="font-size:10px;font-weight:800;margin-left:6px;${prC}">${esc(t.priority)}</span>`:''}</div>
+          ${t.date?'<div class="meta">Due: '+esc(t.date)+'</div>':''}
           ${t.notes?'<div class="meta">'+esc(t.notes)+'</div>':''}
           ${t.completed?'<div class="meta">Completed '+esc(time)+'</div>':''}
         </div>
