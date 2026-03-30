@@ -22,15 +22,18 @@ function escapeHtml(str) {
 
 const DEFAULT_COLORS = {
   leaseStatus: {
-    'RENEWAL':                       '#22c55e',
-    'NEW LEASE':                     '#3b82f6',
-    'RENEWAL TRANSFER':              '#eab308',
-    'NEW LEASE - MOMI':              '#3b82f6',
-    'NEW LEASE - PARTIALLY COMPLETE':'#60a5fa',
-    'NEW LEASE - COMPLETE':          '#2563eb',
-    'NEW LEASE - STARTED':           '#93c5fd',
-    'RENEWAL PENDING - STARTED':     '#ef4444',
-    'RENEWAL PENDING - NOT STARTED': '#ef4444',
+    'LEASE APPROVED':                    '#22c55e',
+    'LEASE COMPLETED':                   '#60a5fa',
+    'LEASE PARTIALLY COMPLETED':         '#93c5fd',
+    'LEASE STARTED':                     '#3b82f6',
+    'RENEWAL LEASE APPROVED':            '#16a34a',
+    'RENEWAL LEASE COMPLETED':           '#a78bfa',
+    'RENEWAL LEASE PARTIALLY COMPLETED': '#c4b5fd',
+    'RENEWAL LEASE STARTED':             '#8b5cf6',
+    'RENEWAL TRANSFER':                  '#eab308',
+    'APPLICATION STARTED':               '#f59e0b',
+    'APPLICATION COMPLETE':              '#fb923c',
+    'NO APPLICATION':                    '#ef4444',
   },
   scholarship: {
     'FIRST ASCENT':  '#f97316',

@@ -29,16 +29,19 @@ const APP_VERSION = '20260321.1';
 const COLOR_CONFIG = {
   /* --- Base Lease Status Colors --- */
   leaseStatus: {
-    'RENEWAL':                       '#22c55e',  // green
-    'NEW LEASE':                     '#3b82f6',  // blue
-    'RENEWAL TRANSFER':              '#eab308',  // yellow
-    'NEW LEASE - MOMI':              '#3b82f6',  // blue (same as New Lease)
-    'NEW LEASE - PARTIALLY COMPLETE':'#60a5fa',  // light blue
-    'NEW LEASE - COMPLETE':          '#2563eb',  // dark blue
-    'NEW LEASE - STARTED':           '#93c5fd',  // pale blue
-    'RENEWAL PENDING - STARTED':     '#ef4444',  // red
-    'RENEWAL PENDING - NOT STARTED': '#ef4444',  // red
-    'BLANK':                         '#d1d5db',  // medium gray
+    'LEASE APPROVED':                    '#22c55e',  // green (solid)
+    'LEASE COMPLETED':                   '#60a5fa',  // light blue (pattern)
+    'LEASE PARTIALLY COMPLETED':         '#93c5fd',  // pale blue (pattern)
+    'LEASE STARTED':                     '#3b82f6',  // blue (pattern)
+    'RENEWAL LEASE APPROVED':            '#16a34a',  // dark green (solid)
+    'RENEWAL LEASE COMPLETED':           '#a78bfa',  // purple (pattern)
+    'RENEWAL LEASE PARTIALLY COMPLETED': '#c4b5fd',  // light purple (pattern)
+    'RENEWAL LEASE STARTED':             '#8b5cf6',  // violet (pattern)
+    'RENEWAL TRANSFER':                  '#eab308',  // yellow (pattern)
+    'APPLICATION STARTED':               '#f59e0b',  // amber (pattern)
+    'APPLICATION COMPLETE':              '#fb923c',  // orange (pattern)
+    'NO APPLICATION':                    '#ef4444',  // red (pattern)
+    'BLANK':                             '#d1d5db',  // medium gray
   },
 
   /* --- Scholarship Override Colors ---
@@ -73,11 +76,16 @@ const COLOR_CONFIG = {
    Legend definitions used by UI module
    ------------------------------------------------------------------ */
 const PATTERN_FILL_STATUSES = [
-  'RENEWAL PENDING - STARTED',
-  'RENEWAL PENDING - NOT STARTED',
-  'NEW LEASE - PARTIALLY COMPLETE',
-  'NEW LEASE - COMPLETE',
-  'NEW LEASE - STARTED',
+  'LEASE COMPLETED',
+  'LEASE PARTIALLY COMPLETED',
+  'LEASE STARTED',
+  'RENEWAL LEASE COMPLETED',
+  'RENEWAL LEASE PARTIALLY COMPLETED',
+  'RENEWAL LEASE STARTED',
+  'RENEWAL TRANSFER',
+  'APPLICATION STARTED',
+  'APPLICATION COMPLETE',
+  'NO APPLICATION',
 ];
 
 function isPatternFillStatus(leaseStatus) {
@@ -86,15 +94,18 @@ function isPatternFillStatus(leaseStatus) {
 }
 
 const LEGEND_ITEMS = [
-  { label: 'Renewal',                    color: COLOR_CONFIG.leaseStatus['RENEWAL'] },
-  { label: 'New Lease',                  color: COLOR_CONFIG.leaseStatus['NEW LEASE'] },
-  { label: 'Renewal Transfer',           color: COLOR_CONFIG.leaseStatus['RENEWAL TRANSFER'] },
-  { label: 'New Lease - MOMI',           color: COLOR_CONFIG.leaseStatus['NEW LEASE - MOMI'] },
-  { label: 'New Lease - Part. Complete',  color: COLOR_CONFIG.leaseStatus['NEW LEASE - PARTIALLY COMPLETE'], pattern: true },
-  { label: 'New Lease - Complete',        color: COLOR_CONFIG.leaseStatus['NEW LEASE - COMPLETE'], pattern: true },
-  { label: 'New Lease - Started',         color: COLOR_CONFIG.leaseStatus['NEW LEASE - STARTED'], pattern: true },
-  { label: 'Renewal Pending - Started',   color: COLOR_CONFIG.leaseStatus['RENEWAL PENDING - STARTED'], pattern: true },
-  { label: 'Renewal Pending - Not Start', color: COLOR_CONFIG.leaseStatus['RENEWAL PENDING - NOT STARTED'], pattern: true },
+  { label: 'Lease Approved',                  color: COLOR_CONFIG.leaseStatus['LEASE APPROVED'] },
+  { label: 'Renewal Lease Approved',          color: COLOR_CONFIG.leaseStatus['RENEWAL LEASE APPROVED'] },
+  { label: 'Lease Completed',                 color: COLOR_CONFIG.leaseStatus['LEASE COMPLETED'], pattern: true },
+  { label: 'Lease Partially Completed',       color: COLOR_CONFIG.leaseStatus['LEASE PARTIALLY COMPLETED'], pattern: true },
+  { label: 'Lease Started',                   color: COLOR_CONFIG.leaseStatus['LEASE STARTED'], pattern: true },
+  { label: 'Renewal Lease Completed',         color: COLOR_CONFIG.leaseStatus['RENEWAL LEASE COMPLETED'], pattern: true },
+  { label: 'Renewal Lease Part. Completed',   color: COLOR_CONFIG.leaseStatus['RENEWAL LEASE PARTIALLY COMPLETED'], pattern: true },
+  { label: 'Renewal Lease Started',           color: COLOR_CONFIG.leaseStatus['RENEWAL LEASE STARTED'], pattern: true },
+  { label: 'Renewal Transfer',                color: COLOR_CONFIG.leaseStatus['RENEWAL TRANSFER'], pattern: true },
+  { label: 'Application Started',             color: COLOR_CONFIG.leaseStatus['APPLICATION STARTED'], pattern: true },
+  { label: 'Application Complete',            color: COLOR_CONFIG.leaseStatus['APPLICATION COMPLETE'], pattern: true },
+  { label: 'No Application',                  color: COLOR_CONFIG.leaseStatus['NO APPLICATION'], pattern: true },
   { label: 'First Ascent',       color: COLOR_CONFIG.scholarship['FIRST ASCENT'] },
   { label: 'Hinkley',            color: COLOR_CONFIG.scholarship['HINKLEY'] },
   { label: 'RBL',                color: COLOR_CONFIG.scholarship['RBL'] },
@@ -433,15 +444,18 @@ function _restoreColorsFromData(data) {
 function rebuildLegendItems() {
   LEGEND_ITEMS.length = 0;
   LEGEND_ITEMS.push(
-    { label: 'Renewal',                    color: COLOR_CONFIG.leaseStatus['RENEWAL'] },
-    { label: 'New Lease',                  color: COLOR_CONFIG.leaseStatus['NEW LEASE'] },
-    { label: 'Renewal Transfer',           color: COLOR_CONFIG.leaseStatus['RENEWAL TRANSFER'] },
-    { label: 'New Lease - MOMI',           color: COLOR_CONFIG.leaseStatus['NEW LEASE - MOMI'] },
-    { label: 'New Lease - Part. Complete',  color: COLOR_CONFIG.leaseStatus['NEW LEASE - PARTIALLY COMPLETE'], pattern: true },
-    { label: 'New Lease - Complete',        color: COLOR_CONFIG.leaseStatus['NEW LEASE - COMPLETE'], pattern: true },
-    { label: 'New Lease - Started',         color: COLOR_CONFIG.leaseStatus['NEW LEASE - STARTED'], pattern: true },
-    { label: 'Renewal Pending - Started',   color: COLOR_CONFIG.leaseStatus['RENEWAL PENDING - STARTED'], pattern: true },
-    { label: 'Renewal Pending - Not Start', color: COLOR_CONFIG.leaseStatus['RENEWAL PENDING - NOT STARTED'], pattern: true },
+    { label: 'Lease Approved',                  color: COLOR_CONFIG.leaseStatus['LEASE APPROVED'] },
+    { label: 'Renewal Lease Approved',          color: COLOR_CONFIG.leaseStatus['RENEWAL LEASE APPROVED'] },
+    { label: 'Lease Completed',                 color: COLOR_CONFIG.leaseStatus['LEASE COMPLETED'], pattern: true },
+    { label: 'Lease Partially Completed',       color: COLOR_CONFIG.leaseStatus['LEASE PARTIALLY COMPLETED'], pattern: true },
+    { label: 'Lease Started',                   color: COLOR_CONFIG.leaseStatus['LEASE STARTED'], pattern: true },
+    { label: 'Renewal Lease Completed',         color: COLOR_CONFIG.leaseStatus['RENEWAL LEASE COMPLETED'], pattern: true },
+    { label: 'Renewal Lease Part. Completed',   color: COLOR_CONFIG.leaseStatus['RENEWAL LEASE PARTIALLY COMPLETED'], pattern: true },
+    { label: 'Renewal Lease Started',           color: COLOR_CONFIG.leaseStatus['RENEWAL LEASE STARTED'], pattern: true },
+    { label: 'Renewal Transfer',                color: COLOR_CONFIG.leaseStatus['RENEWAL TRANSFER'], pattern: true },
+    { label: 'Application Started',             color: COLOR_CONFIG.leaseStatus['APPLICATION STARTED'], pattern: true },
+    { label: 'Application Complete',            color: COLOR_CONFIG.leaseStatus['APPLICATION COMPLETE'], pattern: true },
+    { label: 'No Application',                  color: COLOR_CONFIG.leaseStatus['NO APPLICATION'], pattern: true },
     { label: 'First Ascent',       color: COLOR_CONFIG.scholarship['FIRST ASCENT'] },
     { label: 'Hinkley',            color: COLOR_CONFIG.scholarship['HINKLEY'] },
     { label: 'RBL',                color: COLOR_CONFIG.scholarship['RBL'] },
@@ -480,15 +494,18 @@ function isApprovedBankUnitType(unitType) {
    Canonical lists used for validation and dropdowns.
    ------------------------------------------------------------------ */
 const ALLOWED_LEASE_STATUSES = [
-  'Renewal',
+  'Lease Approved',
+  'Lease Completed',
+  'Lease Partially Completed',
+  'Lease Started',
+  'Renewal Lease Approved',
+  'Renewal Lease Completed',
+  'Renewal Lease Partially Completed',
+  'Renewal Lease Started',
   'Renewal Transfer',
-  'New Lease',
-  'New Lease - Partially Complete',
-  'New Lease - Complete',
-  'New Lease - Started',
-  'Renewal Pending - Started',
-  'Renewal Pending - Not Started',
-  'New Lease - MOMI',
+  'Application Started',
+  'Application Complete',
+  'No Application',
 ];
 
 const ALLOWED_SCHOLARSHIPS = [
@@ -538,22 +555,24 @@ const FLOORPLAN_DISPLAY_ORDER = [
  * Lease statuses that count as "New Lease" for prelease progress.
  */
 const PRELEASE_NEW_LEASE_STATUSES = [
-  'New Lease',
-  'New Lease - MOMI',
-  'New Lease - Partially Complete',
-  'New Lease - Complete',
-  'New Lease - Started',
+  'Lease Approved',
+  'Lease Completed',
+  'Lease Partially Completed',
+  'Lease Started',
+  'Application Started',
+  'Application Complete',
+  'No Application',
 ];
 
 /**
  * Lease statuses that count as "Renewal" for prelease progress.
- * Renewal Pending - Started is counted under Renewal for progress reporting.
  */
 const PRELEASE_RENEWAL_STATUSES = [
-  'Renewal',
+  'Renewal Lease Approved',
+  'Renewal Lease Completed',
+  'Renewal Lease Partially Completed',
+  'Renewal Lease Started',
   'Renewal Transfer',
-  'Renewal Pending - Started',
-  'Renewal Pending - Not Started',
 ];
 
 /**

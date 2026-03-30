@@ -1089,6 +1089,22 @@ function initMapViewerEvents() {
     });
   }
 
+  // Split-View import button
+  var svImportBtn = document.getElementById('sv-import-btn');
+  var svImportFile = document.getElementById('sv-import-file');
+  if (svImportBtn && svImportFile) {
+    svImportBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      svImportFile.click();
+    });
+    svImportFile.addEventListener('change', function (e) {
+      var file = e.target.files[0];
+      if (!file) return;
+      e.target.value = '';
+      importResidentMasterListFromXlsx(file);
+    });
+  }
+
   // Split-View map selectors
   var svBuildingSel = document.getElementById('sv-building-selector');
   if (svBuildingSel) {
@@ -1963,6 +1979,121 @@ function handleSearchResultClick(result) {
   var searchInput = document.getElementById('search-input');
   if (searchInput) searchInput.value = '';
   clearSearchResults();
+}
+
+/* ------------------------------------------------------------------
+   IMPORT RESIDENT MASTER LIST FROM XLSX
+   Reads an xlsx and overwrites the resident data.
+   Expects columns: Name, Unit, Lease Status, Scholarship
+   Optional: Old Unit, Requested Roommate 1, Requested Roommate 2, Placement Notes
+   ------------------------------------------------------------------ */
+
+function importResidentMasterListFromXlsx(file) {
+  var reader = new FileReader();
+  reader.onerror = function () {
+    showNotification('Failed to read file.', 'error');
+  };
+  reader.onload = function (e) {
+    try {
+      var data = new Uint8Array(e.target.result);
+      var workbook = XLSX.read(data, { type: 'array' });
+      var sheetName = workbook.SheetNames[0];
+      if (!sheetName) { showNotification('No sheets found in file.', 'error'); return; }
+
+      var jsonRows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: '' });
+      if (jsonRows.length === 0) { showNotification('No data rows found.', 'error'); return; }
+
+      // Build case-insensitive header map
+      var rawHeaders = Object.keys(jsonRows[0]);
+      var headerMap = {};
+      for (var i = 0; i < rawHeaders.length; i++) {
+        headerMap[rawHeaders[i].trim().toUpperCase()] = rawHeaders[i];
+      }
+
+      // Required columns
+      var nameCol = headerMap['NAME'] || headerMap['RESIDENT'] || headerMap['RESIDENT_NAME'] || null;
+      var unitCol = headerMap['UNIT'] || headerMap['UNIT #'] || headerMap['UNIT_ASSIGNED'] || headerMap['BLDG-UNIT'] || null;
+      var leaseCol = headerMap['LEASE STATUS'] || headerMap['LEASE_STATUS'] || null;
+      var schCol = headerMap['SCHOLARSHIP'] || null;
+
+      // Optional columns
+      var oldUnitCol = headerMap['OLD UNIT'] || headerMap['OLD_UNIT'] || null;
+      var rm1Col = headerMap['REQUESTED ROOMMATE 1'] || headerMap['REQUESTED_ROOMMATE_1'] || headerMap['REQUESTED ROOMMATE'] || null;
+      var rm2Col = headerMap['REQUESTED ROOMMATE 2'] || headerMap['REQUESTED_ROOMMATE_2'] || null;
+      var notesCol = headerMap['PLACEMENT NOTES'] || headerMap['PLACEMENT_NOTES'] || headerMap['NOTES'] || null;
+
+      if (!nameCol) {
+        showNotification('Missing required column: Name.', 'error');
+        return;
+      }
+
+      // Also look for floorplan column
+      var fpCol = headerMap['FLOORPLAN'] || headerMap['UNIT TYPE'] || headerMap['UNIT_TYPE'] || null;
+
+      // Build new residents map and bank list
+      var newResidents = new Map();
+      var newBank = [];
+      var placedCount = 0;
+      var bankCount = 0;
+
+      for (var r = 0; r < jsonRows.length; r++) {
+        var row = jsonRows[r];
+        var name = (row[nameCol] != null ? String(row[nameCol]) : '').trim();
+        var unit = unitCol ? (row[unitCol] != null ? String(row[unitCol]) : '').trim() : '';
+        var floorplan = fpCol ? (row[fpCol] != null ? String(row[fpCol]) : '').trim() : '';
+
+        if (!name) continue;
+
+        var leaseStatus = leaseCol ? (row[leaseCol] != null ? String(row[leaseCol]) : '').trim() : '';
+        var scholarship = schCol ? (row[schCol] != null ? String(row[schCol]) : 'NONE').trim() : 'NONE';
+
+        if (!unit) {
+          // No unit — add to bank
+          newBank.push({
+            _id: 'bank_import_' + Date.now() + '_' + bankCount,
+            name: name,
+            unitType: floorplan,
+            leaseStatus: leaseStatus,
+          });
+          bankCount++;
+        } else {
+          var unitKey = unit.toUpperCase();
+          var resident = {
+            Resident_Name: name,
+            Unit_Assigned: unit,
+            Lease_Status: leaseStatus,
+            Scholarship: scholarship,
+            Old_Unit: oldUnitCol ? (row[oldUnitCol] != null ? String(row[oldUnitCol]) : '').trim() : '',
+            Requested_Roommate_1: rm1Col ? (row[rm1Col] != null ? String(row[rm1Col]) : '').trim() : '',
+            Requested_Roommate_2: rm2Col ? (row[rm2Col] != null ? String(row[rm2Col]) : '').trim() : '',
+            Placement_Notes: notesCol ? (row[notesCol] != null ? String(row[notesCol]) : '').trim() : '',
+          };
+          newResidents.set(unitKey, resident);
+          placedCount++;
+        }
+      }
+
+      if (placedCount === 0 && bankCount === 0) {
+        showNotification('No valid records found in file.', 'error');
+        return;
+      }
+
+      // Overwrite residents and bank
+      AppState.residents = newResidents;
+      AppState.waitingBank = newBank;
+      persistProject();
+      refreshAllAfterImport();
+
+      var msg = 'Imported ' + placedCount + ' placed resident(s)';
+      if (bankCount > 0) msg += ' and ' + bankCount + ' bank record(s)';
+      msg += '. Previous data overwritten.';
+      showNotification(msg, 'success');
+
+    } catch (err) {
+      showNotification('Import failed: ' + err.message, 'error');
+    }
+  };
+  reader.readAsArrayBuffer(file);
 }
 
 /* ------------------------------------------------------------------
