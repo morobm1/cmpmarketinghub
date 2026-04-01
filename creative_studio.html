@@ -120,130 +120,126 @@
     (function() {
       'use strict';
 
-      function base64UrlDecode(str) {
-        var s = str.replace(/-/g, '+').replace(/_/g, '/');
-        while (s.length % 4) s += '=';
-        return decodeURIComponent(
-          atob(s).split('').map(function(c) {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-          }).join('')
-        );
-      }
-
-      function getUser() {
-        try {
-          var match = document.cookie.match(/mmp_token=([^;]+)/);
-          if (!match) return null;
-          var parts = match[1].split('.');
-          if (parts.length !== 3) return null;
-          var payload = JSON.parse(base64UrlDecode(parts[1]));
-          return {
-            username: payload.sub || '',
-            role: payload.role || 'user',
-            properties: Array.isArray(payload.properties) ? payload.properties
-              : payload.properties === '*' ? ['*'] : []
-          };
-        } catch(e) { return null; }
-      }
-
-      var user = getUser();
-      if (!user) {
-        window.location.href = 'index.html';
-        return;
-      }
-
-      // Expose user info for the React app
-      window.__EMAIL_SHOP_USER__ = user;
-
-      // Fetch properties for names
-      var propertyNames = {};
-      function loadProperties() {
-        return fetch('/.netlify/functions/properties', { credentials: 'include' })
-          .then(function(r) { return r.json(); })
-          .then(function(props) {
-            if (Array.isArray(props)) {
-              props.forEach(function(p) {
-                propertyNames[p.id || p._id] = p.name || p.id || p._id;
-              });
-            }
-            return propertyNames;
+      // Use /api/me to verify auth (cookie is HttpOnly, can't read via JS)
+      function fetchUser() {
+        return fetch('/.netlify/functions/me', { credentials: 'include' })
+          .then(function(r) {
+            if (!r.ok) return null;
+            return r.json();
           })
-          .catch(function() { return propertyNames; });
+          .catch(function() { return null; });
       }
 
-      function startApp(propertyId, propertyName) {
-        document.getElementById('propertySelectorOverlay').style.display = 'none';
-        document.getElementById('propertyLabel').textContent = propertyName || propertyId;
-        window.__EMAIL_SHOP_PROPERTY__ = { id: propertyId, name: propertyName || propertyId };
+      // Show loading state
+      document.getElementById('email-shop-root').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:calc(100vh - 60px);color:#64748b;font-size:16px">Loading Creative Studio...</div>';
 
-        // Show property switcher if multiple
-        if (user.properties.length > 1 || user.properties[0] === '*') {
-          var sel = document.getElementById('propertySelect');
-          sel.style.display = '';
-          sel.innerHTML = '';
-          var ids = user.properties[0] === '*' ? Object.keys(propertyNames) : user.properties;
+      fetchUser().then(function(userData) {
+        if (!userData) {
+          window.location.href = 'index.html';
+          return;
+        }
+
+        var user = {
+          username: userData.username || '',
+          role: userData.role || 'user',
+          properties: Array.isArray(userData.properties) ? userData.properties
+            : userData.properties === '*' ? ['*'] : []
+        };
+
+        // Expose user info for the React app
+        window.__EMAIL_SHOP_USER__ = user;
+
+        // Fetch properties for names
+        var propertyNames = {};
+        function loadProperties() {
+          return fetch('/.netlify/functions/properties', { credentials: 'include' })
+            .then(function(r) { return r.json(); })
+            .then(function(props) {
+              if (Array.isArray(props)) {
+                props.forEach(function(p) {
+                  propertyNames[p.id || p._id] = p.name || p.id || p._id;
+                });
+              }
+              return propertyNames;
+            })
+            .catch(function() { return propertyNames; });
+        }
+
+        function startApp(propertyId, propertyName) {
+          document.getElementById('propertySelectorOverlay').style.display = 'none';
+          document.getElementById('email-shop-root').innerHTML = '';
+          document.getElementById('propertyLabel').textContent = propertyName || propertyId;
+          window.__EMAIL_SHOP_PROPERTY__ = { id: propertyId, name: propertyName || propertyId };
+
+          // Show property switcher if multiple
+          if (user.properties.length > 1 || user.properties[0] === '*') {
+            var sel = document.getElementById('propertySelect');
+            sel.style.display = '';
+            sel.innerHTML = '';
+            var ids = user.properties[0] === '*' ? Object.keys(propertyNames) : user.properties;
+            ids.forEach(function(pid) {
+              var opt = document.createElement('option');
+              opt.value = pid;
+              opt.textContent = propertyNames[pid] || pid;
+              if (pid === propertyId) opt.selected = true;
+              sel.appendChild(opt);
+            });
+          }
+
+          // Load the React app bundle
+          loadReactApp();
+        }
+
+        window.switchProperty = function(newId) {
+          startApp(newId, propertyNames[newId] || newId);
+        };
+
+        function showPropertySelector(ids) {
+          var overlay = document.getElementById('propertySelectorOverlay');
+          var list = document.getElementById('propertyList');
+          list.innerHTML = '';
           ids.forEach(function(pid) {
-            var opt = document.createElement('option');
-            opt.value = pid;
-            opt.textContent = propertyNames[pid] || pid;
-            if (pid === propertyId) opt.selected = true;
-            sel.appendChild(opt);
+            var btn = document.createElement('button');
+            btn.className = 'property-btn';
+            btn.textContent = propertyNames[pid] || pid;
+            btn.onclick = function() { startApp(pid, propertyNames[pid] || pid); };
+            list.appendChild(btn);
           });
+          overlay.style.display = 'flex';
         }
 
-        // Load the React app bundle
-        loadReactApp();
-      }
-
-      window.switchProperty = function(newId) {
-        startApp(newId, propertyNames[newId] || newId);
-      };
-
-      function showPropertySelector(ids) {
-        var overlay = document.getElementById('propertySelectorOverlay');
-        var list = document.getElementById('propertyList');
-        list.innerHTML = '';
-        ids.forEach(function(pid) {
-          var btn = document.createElement('button');
-          btn.className = 'property-btn';
-          btn.textContent = propertyNames[pid] || pid;
-          btn.onclick = function() { startApp(pid, propertyNames[pid] || pid); };
-          list.appendChild(btn);
+        loadProperties().then(function() {
+          var props = user.properties;
+          if (props[0] === '*') {
+            props = Object.keys(propertyNames);
+          }
+          if (props.length === 0) {
+            document.getElementById('email-shop-root').innerHTML = '<div style="padding:40px;text-align:center;color:#64748b"><h2>No Properties Assigned</h2><p>Contact your admin to get access to properties.</p></div>';
+          } else if (props.length === 1) {
+            startApp(props[0], propertyNames[props[0]] || props[0]);
+          } else {
+            showPropertySelector(props);
+          }
         });
-        overlay.style.display = 'flex';
-      }
 
-      loadProperties().then(function() {
-        var props = user.properties;
-        if (props[0] === '*') {
-          props = Object.keys(propertyNames);
+        function loadReactApp() {
+          // Check if already loaded
+          if (document.getElementById('email-shop-script')) return;
+
+          // Load the CSS
+          var link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href = '/email-shop/dist/assets/email-shop-index.css';
+          document.head.appendChild(link);
+
+          // Load the JS
+          var script = document.createElement('script');
+          script.id = 'email-shop-script';
+          script.type = 'module';
+          script.src = '/email-shop/dist/assets/email-shop.js';
+          document.body.appendChild(script);
         }
-        if (props.length === 0) {
-          document.getElementById('email-shop-root').innerHTML = '<div style="padding:40px;text-align:center;color:#64748b"><h2>No Properties Assigned</h2><p>Contact your admin to get access to properties.</p></div>';
-        } else if (props.length === 1) {
-          startApp(props[0], propertyNames[props[0]] || props[0]);
-        } else {
-          showPropertySelector(props);
-        }
-      });
-
-      function loadReactApp() {
-        // Check if already loaded
-        if (document.getElementById('email-shop-script')) return;
-
-        // Load the CSS
-        var link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = '/email-shop/dist/assets/email-shop-index.css';
-        document.head.appendChild(link);
-
-        // Load the JS
-        var script = document.createElement('script');
-        script.id = 'email-shop-script';
-        script.type = 'module';
-        script.src = '/email-shop/dist/assets/email-shop.js';
-        document.body.appendChild(script);
-      }
+      }); // end fetchUser().then()
     })();
   </script>
 </body>

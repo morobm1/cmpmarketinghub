@@ -1,6 +1,8 @@
 /**
- * Auth Context - reads the mmp_token JWT cookie to extract user info.
- * The JWT payload has: { sub: username, role: 'admin'|'user', properties: string[] }
+ * Auth Context - reads user info from the host page or API.
+ * The JWT cookie (mmp_token) is HttpOnly, so we can't read it directly.
+ * Instead, the host page (creative_studio.html) calls /api/me and injects
+ * user info into window.__EMAIL_SHOP_USER__.
  */
 
 export interface AuthUser {
@@ -9,42 +11,31 @@ export interface AuthUser {
   properties: string[];
 }
 
-function base64UrlDecode(str: string): string {
-  // Replace URL-safe chars
-  let s = str.replace(/-/g, '+').replace(/_/g, '/');
-  // Pad with '='
-  while (s.length % 4) s += '=';
-  return decodeURIComponent(
-    atob(s)
-      .split('')
-      .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-      .join(''),
-  );
-}
-
 export function getAuthUser(): AuthUser | null {
   try {
-    // Also check if user info was injected by the host page
+    // Read from host page injection
     const win = window as unknown as { __EMAIL_SHOP_USER__?: AuthUser };
     if (win.__EMAIL_SHOP_USER__) {
       return win.__EMAIL_SHOP_USER__;
     }
+    return null;
+  } catch {
+    return null;
+  }
+}
 
-    // Read from mmp_token cookie
-    const match = document.cookie.match(/mmp_token=([^;]+)/);
-    if (!match) return null;
-
-    const token = match[1] ?? '';
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-
-    const payload = JSON.parse(base64UrlDecode(parts[1]!));
+/** Fetch user from API (for standalone dev mode or when host page hasn't injected) */
+export async function fetchAuthUser(): Promise<AuthUser | null> {
+  try {
+    const res = await fetch('/.netlify/functions/me', { credentials: 'include' });
+    if (!res.ok) return null;
+    const data = await res.json();
     return {
-      username: payload.sub || '',
-      role: payload.role || 'user',
-      properties: Array.isArray(payload.properties)
-        ? payload.properties
-        : payload.properties === '*'
+      username: data.username || '',
+      role: data.role || 'user',
+      properties: Array.isArray(data.properties)
+        ? data.properties
+        : data.properties === '*'
           ? ['*']
           : [],
     };
