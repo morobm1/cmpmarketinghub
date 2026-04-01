@@ -1,57 +1,54 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Creative Studio • Marketing Hub</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    html,body{height:100%;overflow:hidden}
-    body{font-family:'Open Sans',system-ui,sans-serif;background:#f1f5f9;color:#1e293b;font-size:14px}
-    #email-shop-root{position:absolute;top:0;left:0;right:0;bottom:0}
-  </style>
-</head>
-<body>
-  <div id="email-shop-root"></div>
-
-  <script>
-    (function() {
-      'use strict';
-      document.getElementById('email-shop-root').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:#64748b;font-size:16px">Loading Creative Studio...</div>';
-
-      fetch('/.netlify/functions/me', { credentials: 'include' })
-        .then(function(r) {
-          if (!r.ok) throw new Error('Not authenticated');
-          return r.json();
-        })
-        .then(function(userData) {
-          window.__EMAIL_SHOP_USER__ = {
-            username: userData.username || '',
-            role: userData.role || 'user',
-            properties: Array.isArray(userData.properties) ? userData.properties
-              : userData.properties === '*' ? ['*'] : []
-          };
-
-          document.getElementById('email-shop-root').innerHTML = '';
-
-          var link = document.createElement('link');
-          link.rel = 'stylesheet';
-          link.href = '/email-shop/dist/assets/email-shop-index.css';
-          document.head.appendChild(link);
-
-          var script = document.createElement('script');
-          script.id = 'email-shop-script';
-          script.type = 'module';
-          script.src = '/email-shop/dist/assets/email-shop.js';
-          document.body.appendChild(script);
-        })
-        .catch(function() {
-          window.location.href = 'index.html';
-        });
-    })();
-  </script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Creative Studio • Marketing Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/email-shop/dist/assets/email-shop-index.css" />
+    <style>
+      /* Auth loading screen */
+      .auth-loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        color: #64748b;
+        font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+        font-size: 16px;
+        background: #f1f5f9;
+      }
+    </style>
+  </head>
+  <body class="antialiased">
+    <div id="email-shop-root">
+      <div class="auth-loading">Loading Creative Studio...</div>
+    </div>
+    <script>
+      // Auth check — redirect to login if not authenticated
+      // This runs before the React app loads
+      (function() {
+        fetch('/.netlify/functions/me', { credentials: 'include' })
+          .then(function(r) {
+            if (!r.ok) throw new Error('Not authenticated');
+            return r.json();
+          })
+          .then(function(userData) {
+            window.__EMAIL_SHOP_USER__ = {
+              username: userData.username || '',
+              role: userData.role || 'user',
+              properties: Array.isArray(userData.properties) ? userData.properties
+                : userData.properties === '*' ? ['*'] : []
+            };
+            // Auth succeeded — React app will mount and replace the loading screen
+          })
+          .catch(function() {
+            window.location.href = 'index.html';
+          });
+      })();
+    </script>
+    <script type="module" src="/email-shop/dist/assets/email-shop.js"></script>
+  </body>
 </html>
