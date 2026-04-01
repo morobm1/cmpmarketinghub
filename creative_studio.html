@@ -27,65 +27,19 @@
     .header-controls select:focus{outline:none;border-color:var(--brand-accent-2);box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
     .company-name{font-size:12px;color:var(--subtext);font-weight:500}
 
-    /* Email Shop Container - full viewport minus header */
+    /* Creative Studio Container - full viewport minus header */
     #email-shop-root {
-      height: calc(100vh - 60px);
-      width: 100%;
+      position: fixed;
+      top: 49px; /* header height */
+      left: 0;
+      right: 0;
+      bottom: 0;
       overflow: hidden;
     }
 
-    /* Property selector overlay */
-    .property-selector-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.5);
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .property-selector-modal {
-      background: #fff;
-      border-radius: 16px;
-      padding: 32px;
-      max-width: 480px;
-      width: 90%;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-    }
-    .property-selector-modal h2 {
-      font-size: 20px;
-      font-weight: 700;
-      margin-bottom: 8px;
-      color: #1e293b;
-    }
-    .property-selector-modal p {
-      font-size: 14px;
-      color: #64748b;
-      margin-bottom: 20px;
-    }
-    .property-btn {
-      display: block;
-      width: 100%;
-      padding: 14px 16px;
-      margin-bottom: 8px;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 600;
-      color: #1e293b;
-      cursor: pointer;
-      text-align: left;
-      transition: all 0.15s;
-    }
-    .property-btn:hover {
-      background: #eff6ff;
-      border-color: #52d5ff;
-    }
-
-    /* Hide the sidebar nav for Email Shop - it uses its own full-screen UI */
+    /* Hide the sidebar nav for Creative Studio - it uses its own full-screen UI */
     .sidebar-nav, .nav-toggle { display: none !important; }
-    .main-content { margin-left: 0 !important; }
+    .main-content { margin-left: 0 !important; padding: 0 !important; }
   </style>
 </head>
 <body>
@@ -95,19 +49,9 @@
       <span class="title">MarketingHub</span>
     </div>
     <div class="header-controls">
-      <span class="company-name" id="propertyLabel"></span>
-      <select id="propertySelect" style="display:none" onchange="switchProperty(this.value)"></select>
+      <span class="company-name" id="userLabel"></span>
     </div>
   </header>
-
-  <!-- Property selector shown if user has multiple properties -->
-  <div id="propertySelectorOverlay" class="property-selector-overlay" style="display:none">
-    <div class="property-selector-modal">
-      <h2>🎨 Creative Studio</h2>
-      <p>Select a property to get started with email creation.</p>
-      <div id="propertyList"></div>
-    </div>
-  </div>
 
   <!-- React app mounts here -->
   <div id="email-shop-root"></div>
@@ -116,115 +60,35 @@
   <script src="standard-nav.js"></script>
 
   <script>
-    // ---- Auth & Property Selection ----
+    // ---- Auth — User-centric Creative Studio ----
     (function() {
       'use strict';
-
-      // Use /api/me to verify auth (cookie is HttpOnly, can't read via JS)
-      function fetchUser() {
-        return fetch('/.netlify/functions/me', { credentials: 'include' })
-          .then(function(r) {
-            if (!r.ok) return null;
-            return r.json();
-          })
-          .catch(function() { return null; });
-      }
 
       // Show loading state
       document.getElementById('email-shop-root').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:calc(100vh - 60px);color:#64748b;font-size:16px">Loading Creative Studio...</div>';
 
-      fetchUser().then(function(userData) {
-        if (!userData) {
-          window.location.href = 'index.html';
-          return;
-        }
+      // Use /api/me to verify auth (cookie is HttpOnly, can't read via JS)
+      fetch('/.netlify/functions/me', { credentials: 'include' })
+        .then(function(r) {
+          if (!r.ok) throw new Error('Not authenticated');
+          return r.json();
+        })
+        .then(function(userData) {
+          var user = {
+            username: userData.username || '',
+            role: userData.role || 'user',
+            properties: Array.isArray(userData.properties) ? userData.properties
+              : userData.properties === '*' ? ['*'] : []
+          };
 
-        var user = {
-          username: userData.username || '',
-          role: userData.role || 'user',
-          properties: Array.isArray(userData.properties) ? userData.properties
-            : userData.properties === '*' ? ['*'] : []
-        };
+          // Expose user info for the React app
+          window.__EMAIL_SHOP_USER__ = user;
 
-        // Expose user info for the React app
-        window.__EMAIL_SHOP_USER__ = user;
+          // Show username in header
+          document.getElementById('userLabel').textContent = user.username;
 
-        // Fetch properties for names
-        var propertyNames = {};
-        function loadProperties() {
-          return fetch('/.netlify/functions/properties', { credentials: 'include' })
-            .then(function(r) { return r.json(); })
-            .then(function(props) {
-              if (Array.isArray(props)) {
-                props.forEach(function(p) {
-                  propertyNames[p.id || p._id] = p.name || p.id || p._id;
-                });
-              }
-              return propertyNames;
-            })
-            .catch(function() { return propertyNames; });
-        }
-
-        function startApp(propertyId, propertyName) {
-          document.getElementById('propertySelectorOverlay').style.display = 'none';
+          // Clear loading state and load the React app immediately
           document.getElementById('email-shop-root').innerHTML = '';
-          document.getElementById('propertyLabel').textContent = propertyName || propertyId;
-          window.__EMAIL_SHOP_PROPERTY__ = { id: propertyId, name: propertyName || propertyId };
-
-          // Show property switcher if multiple
-          if (user.properties.length > 1 || user.properties[0] === '*') {
-            var sel = document.getElementById('propertySelect');
-            sel.style.display = '';
-            sel.innerHTML = '';
-            var ids = user.properties[0] === '*' ? Object.keys(propertyNames) : user.properties;
-            ids.forEach(function(pid) {
-              var opt = document.createElement('option');
-              opt.value = pid;
-              opt.textContent = propertyNames[pid] || pid;
-              if (pid === propertyId) opt.selected = true;
-              sel.appendChild(opt);
-            });
-          }
-
-          // Load the React app bundle
-          loadReactApp();
-        }
-
-        window.switchProperty = function(newId) {
-          startApp(newId, propertyNames[newId] || newId);
-        };
-
-        function showPropertySelector(ids) {
-          var overlay = document.getElementById('propertySelectorOverlay');
-          var list = document.getElementById('propertyList');
-          list.innerHTML = '';
-          ids.forEach(function(pid) {
-            var btn = document.createElement('button');
-            btn.className = 'property-btn';
-            btn.textContent = propertyNames[pid] || pid;
-            btn.onclick = function() { startApp(pid, propertyNames[pid] || pid); };
-            list.appendChild(btn);
-          });
-          overlay.style.display = 'flex';
-        }
-
-        loadProperties().then(function() {
-          var props = user.properties;
-          if (props[0] === '*') {
-            props = Object.keys(propertyNames);
-          }
-          if (props.length === 0) {
-            document.getElementById('email-shop-root').innerHTML = '<div style="padding:40px;text-align:center;color:#64748b"><h2>No Properties Assigned</h2><p>Contact your admin to get access to properties.</p></div>';
-          } else if (props.length === 1) {
-            startApp(props[0], propertyNames[props[0]] || props[0]);
-          } else {
-            showPropertySelector(props);
-          }
-        });
-
-        function loadReactApp() {
-          // Check if already loaded
-          if (document.getElementById('email-shop-script')) return;
 
           // Load the CSS
           var link = document.createElement('link');
@@ -238,8 +102,10 @@
           script.type = 'module';
           script.src = '/email-shop/dist/assets/email-shop.js';
           document.body.appendChild(script);
-        }
-      }); // end fetchUser().then()
+        })
+        .catch(function() {
+          window.location.href = 'index.html';
+        });
     })();
   </script>
 </body>

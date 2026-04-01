@@ -42,12 +42,11 @@ export async function handler(event) {
       if (propertyId) {
         if (!userCanAccessProperty(propertyId)) return { statusCode: 403, body: 'Access denied' };
         filter.propertyId = propertyId;
-      } else if (user.role !== 'admin' && user.properties !== '*') {
-        const allowed = Array.isArray(user.properties) ? user.properties : [];
-        filter.$or = [
-          { propertyId: { $in: allowed } },
-          { createdBy: user.sub },
-        ];
+      } else if (user.role === 'admin' || user.properties === '*') {
+        // Admin sees all — no filter needed
+      } else {
+        // User-scoped: show projects created by this user
+        filter.createdBy = user.sub;
       }
 
       const docs = await col.find(filter).sort({ updatedAt: -1 }).toArray();
