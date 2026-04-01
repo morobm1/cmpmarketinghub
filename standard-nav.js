@@ -18,6 +18,7 @@
     tools: [
       { href: 'promo_order_tracker.html', label: 'Promo Order Tracker' },
       { href: 'uniform_shop.html', label: 'Uniform Shop' },
+      { href: 'email_shop.html', label: 'Email Shop' },
       { href: 'creative_library.html', label: 'Creative Library' },
       { href: 'marketing_contacts.html', label: 'Marketing Contacts' },
       { href: 'leasing_staff_list.html', label: 'Staff Board' }

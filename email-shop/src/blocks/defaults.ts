@@ -1,0 +1,242 @@
+import type {
+  EmailBlockType,
+  BlockDataMap,
+  HeaderBlockData,
+  LogoBlockData,
+  HeroImageBlockData,
+  TextBlockData,
+  ButtonBlockData,
+  SpacerBlockData,
+  DividerBlockData,
+  ImageTextBlockData,
+  TwoColumnBlockData,
+  AmenitiesBlockData,
+  FloorplanSpotlightBlockData,
+  PromoBannerBlockData,
+  CalloutBoxBlockData,
+  TestimonialBlockData,
+  FooterBlockData,
+  SocialLinksBlockData,
+  ColorBarBlockData,
+  BrandedHeaderBlockData,
+  VirtualTourBlockData,
+} from '@/types';
+
+const baseStyle = {
+  backgroundColor: '',
+  textColor: '#333333',
+  paddingTop: 16,
+  paddingBottom: 16,
+  paddingLeft: 24,
+  paddingRight: 24,
+  textAlign: 'center' as const,
+};
+
+export const blockDefaults: Record<EmailBlockType, BlockDataMap[EmailBlockType]> = {
+  'header': {
+    style: { ...baseStyle, backgroundColor: '#ffffff', paddingTop: 12, paddingBottom: 12 },
+    visible: true,
+    logoUrl: '',
+    logoAlt: 'Logo',
+    logoWidth: 180,
+    preheaderText: '',
+    backgroundColor: '#ffffff',
+  } satisfies HeaderBlockData,
+
+  'logo': {
+    style: { ...baseStyle },
+    visible: true,
+    imageUrl: '',
+    altText: 'Property Logo',
+    width: 200,
+    alignment: 'center',
+  } satisfies LogoBlockData,
+
+  'hero-image': {
+    style: { ...baseStyle, paddingLeft: 0, paddingRight: 0, paddingTop: 0, paddingBottom: 0 },
+    visible: true,
+    imageUrl: '',
+    altText: 'Hero image',
+    overlayText: '',
+    imageHeight: 250,
+    objectPosition: 'center center',
+  } satisfies HeroImageBlockData,
+
+  'text': {
+    style: { ...baseStyle, textAlign: 'left' },
+    visible: true,
+    content: 'Enter your text here...',
+    fontSize: 16,
+    fontWeight: 400,
+    lineHeight: 1.6,
+  } satisfies TextBlockData,
+
+  'button': {
+    style: { ...baseStyle },
+    visible: true,
+    label: 'Schedule a Tour',
+    url: '#',
+    backgroundColor: '#2563eb',
+    textColor: '#ffffff',
+    borderRadius: 6,
+    fontSize: 16,
+    fontWeight: 600,
+    paddingX: 32,
+    paddingY: 14,
+    alignment: 'center',
+    fullWidth: false,
+  } satisfies ButtonBlockData,
+
+  'spacer': {
+    style: { ...baseStyle, paddingTop: 0, paddingBottom: 0, paddingLeft: 0, paddingRight: 0 },
+    visible: true,
+    height: 32,
+  } satisfies SpacerBlockData,
+
+  'divider': {
+    style: { ...baseStyle },
+    visible: true,
+    color: '#e2e8f0',
+    thickness: 1,
+    widthPercent: 100,
+    lineStyle: 'solid',
+  } satisfies DividerBlockData,
+
+  'image-text': {
+    style: { ...baseStyle, textAlign: 'left' },
+    visible: true,
+    imageUrl: '',
+    imageAlt: 'Image',
+    imagePosition: 'left',
+    imageWidth: 40,
+    heading: 'Your Heading',
+    body: 'Describe your community amenity, special offer, or any other content here.',
+  } satisfies ImageTextBlockData,
+
+  'two-column': {
+    style: { ...baseStyle, textAlign: 'left' },
+    visible: true,
+    leftContent: 'Left column content',
+    rightContent: 'Right column content',
+    columnRatio: '50-50',
+  } satisfies TwoColumnBlockData,
+
+  'amenities': {
+    style: { ...baseStyle },
+    visible: true,
+    heading: 'Community Amenities',
+    items: [
+      { label: 'Pool & Spa', description: 'Resort-style swimming pool' },
+      { label: 'Fitness Center', description: '24/7 state-of-the-art gym' },
+      { label: 'Study Lounge', description: 'Quiet study spaces' },
+      { label: 'Game Room', description: 'Entertainment & gaming' },
+    ],
+    columns: 2,
+  } satisfies AmenitiesBlockData,
+
+  'floorplan-spotlight': {
+    style: { ...baseStyle },
+    visible: true,
+    heading: 'Featured Floor Plan',
+    floorplanImageUrl: '',
+    floorplanImageAlt: 'Floor plan',
+    unitName: '2 Bed / 2 Bath',
+    bedsBaths: '2 BD / 2 BA',
+    sqft: '950',
+    price: 'Starting at $1,299/mo',
+    buttonLabel: 'Check Availability',
+    buttonUrl: '#',
+  } satisfies FloorplanSpotlightBlockData,
+
+  'promo-banner': {
+    style: { ...baseStyle },
+    visible: true,
+    heading: 'Limited Time Offer!',
+    subheading: 'Sign a lease this month and get your first month free.',
+    backgroundColor: '#1e40af',
+    textColor: '#ffffff',
+    buttonLabel: 'Apply Now',
+    buttonUrl: '#',
+  } satisfies PromoBannerBlockData,
+
+  'callout-box': {
+    style: { ...baseStyle },
+    visible: true,
+    heading: 'Important Notice',
+    body: 'Add important information or a special callout here.',
+    backgroundColor: '#eff6ff',
+    borderColor: '#3b82f6',
+  } satisfies CalloutBoxBlockData,
+
+  'testimonial': {
+    style: { ...baseStyle },
+    visible: true,
+    quote: '"Living here has been an amazing experience. The staff is incredibly helpful and the amenities are top-notch!"',
+    authorName: 'Happy Resident',
+    authorTitle: 'Current Resident',
+    rating: 5,
+  } satisfies TestimonialBlockData,
+
+  'footer': {
+    style: { ...baseStyle, backgroundColor: '#1e293b', textColor: '#94a3b8' },
+    visible: true,
+    companyName: 'Property Name',
+    address: '123 Main Street, City, ST 12345',
+    phone: '(555) 123-4567',
+    email: 'leasing@property.com',
+    website: 'www.property.com',
+    socialLinks: [],
+    legalText: 'You are receiving this email because you opted in to our mailing list.',
+  } satisfies FooterBlockData,
+
+  'social-links': {
+    style: { ...baseStyle },
+    visible: true,
+    alignment: 'center',
+    links: [
+      { platform: 'facebook', url: '#' },
+      { platform: 'instagram', url: '#' },
+      { platform: 'twitter', url: '#' },
+    ],
+    iconSize: 32,
+    spacing: 12,
+  } satisfies SocialLinksBlockData,
+
+  'color-bar': {
+    style: { ...baseStyle, paddingTop: 0, paddingBottom: 0, paddingLeft: 0, paddingRight: 0 },
+    visible: true,
+    color: '#1e40af',
+    height: 8,
+  } satisfies ColorBarBlockData,
+
+  'branded-header': {
+    style: { ...baseStyle, paddingTop: 0, paddingBottom: 0, paddingLeft: 0, paddingRight: 0 },
+    visible: true,
+    backgroundImageUrl: '',
+    backgroundImageAlt: 'Property header',
+    overlayColor: '#1e40af',
+    overlayOpacity: 0.5,
+    logoUrl: '',
+    logoAlt: 'Property Logo',
+    logoWidth: 200,
+    headingText: '',
+    subheadingText: '',
+    textColor: '#ffffff',
+    height: 200,
+    objectPosition: 'center center',
+  } satisfies BrandedHeaderBlockData,
+
+  'virtual-tour': {
+    style: { ...baseStyle, backgroundColor: '#f0f9ff' },
+    visible: true,
+    tourUrl: '#',
+    thumbnailUrl: '',
+    thumbnailAlt: 'Virtual Tour',
+    heading: 'Take a Virtual Tour',
+    description: 'Explore our community from anywhere. Click below to start your 3D walkthrough.',
+    buttonLabel: 'Start Virtual Tour',
+    buttonColor: '#2563eb',
+    buttonTextColor: '#ffffff',
+    thumbnailHeight: 200,
+  } satisfies VirtualTourBlockData,
+};
