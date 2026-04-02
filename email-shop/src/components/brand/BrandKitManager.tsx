@@ -62,6 +62,8 @@ export function BrandKitManager() {
       const saved = await brandKitService.save(kitToSave);
       if (isCreating) {
         addBrandKit(saved);
+        // Auto-activate newly created brand kit
+        setActiveBrandKit(saved);
       } else {
         updateBrandKit(saved);
       }

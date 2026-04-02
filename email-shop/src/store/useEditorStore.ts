@@ -20,6 +20,8 @@ import type {
 } from '@/types/ai';
 import { blockDefaults } from '@/blocks/defaults';
 import { defaultGlobalStyles } from '@/services/mockData';
+import { templateService } from '@/services/templateService';
+import { emailProjectService } from '@/services/emailProjectService';
 
 // ---- History for undo/redo ----
 interface HistoryEntry {
@@ -298,7 +300,11 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
       updatedAt: now,
       isDefault: false,
     };
+    // Optimistically add to store, then persist to API
     set((s) => ({ templates: [...s.templates, template] }));
+    templateService.save(template).catch((err) => {
+      console.error('Failed to save template to API:', err);
+    });
   },
 
   // ---- History actions ----
