@@ -15,9 +15,11 @@ export default defineConfig({
     assetsDir: 'assets',
     rollupOptions: {
       output: {
-        entryFileNames: 'assets/email-shop.js',
-        chunkFileNames: 'assets/email-shop-[name].js',
-        assetFileNames: 'assets/email-shop-[name][extname]',
+        // Content hashes in filenames ensure browsers always fetch the latest version
+        // When code changes, the hash changes, busting the cache automatically
+        entryFileNames: 'assets/email-shop-[hash].js',
+        chunkFileNames: 'assets/email-shop-[name]-[hash].js',
+        assetFileNames: 'assets/email-shop-[name]-[hash][extname]',
       },
     },
   },
