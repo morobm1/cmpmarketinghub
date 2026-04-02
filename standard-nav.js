@@ -22,7 +22,7 @@
       { href: 'creative_library.html', label: 'Creative Library' },
       { href: 'marketing_contacts.html', label: 'Marketing Contacts' },
       { href: 'leasing_staff_list.html', label: 'Project Management' },
-      { href: 'custom-tools.html', label: 'Custom Tools' }
+      { href: 'custom_tools.html', label: 'Custom Tools' }
     ],
     resources: [
       { href: 'sop_library.html', label: 'SOP Library' }

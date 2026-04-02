@@ -15,11 +15,12 @@ export default defineConfig({
     assetsDir: 'assets',
     rollupOptions: {
       output: {
-        // Content hashes in filenames ensure browsers always fetch the latest version
-        // When code changes, the hash changes, busting the cache automatically
-        entryFileNames: 'assets/email-shop-[hash].js',
-        chunkFileNames: 'assets/email-shop-[name]-[hash].js',
-        assetFileNames: 'assets/email-shop-[name]-[hash][extname]',
+        // Stable filenames so creative_studio.html can reference them directly.
+        // Cache-busting is handled by HTTP headers (no-cache, must-revalidate)
+        // which forces browsers to revalidate on every page load via ETag/304.
+        entryFileNames: 'assets/email-shop.js',
+        chunkFileNames: 'assets/email-shop-[name].js',
+        assetFileNames: 'assets/email-shop-[name][extname]',
       },
     },
   },
