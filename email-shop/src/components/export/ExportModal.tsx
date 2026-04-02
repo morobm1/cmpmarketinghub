@@ -48,7 +48,11 @@ export function ExportModal() {
         <div className="flex items-center justify-between px-6 py-4 border-b border-surface-200">
           <div>
             <h2 className="text-lg font-semibold text-surface-800">Export Email HTML</h2>
-            <p className="text-sm text-surface-500">Copy the HTML and paste into Entrata Message Center</p>
+            <p className="text-sm text-surface-500">
+              {exportType === 'body'
+                ? 'Copy and paste directly into Entrata Message Center source editor'
+                : 'Full HTML document — download or use as standalone email file'}
+            </p>
           </div>
           <button onClick={() => setShowExportModal(false)} className="p-2 rounded-lg hover:bg-surface-100">
             <X size={20} className="text-surface-400" />
@@ -72,7 +76,7 @@ export function ExportModal() {
               exportType === 'body' ? 'bg-primary-100 text-primary-700' : 'bg-surface-100 text-surface-500 hover:bg-surface-200'
             }`}
           >
-            Body Only (for Entrata paste)
+            Entrata Paste-In
           </button>
         </div>
 

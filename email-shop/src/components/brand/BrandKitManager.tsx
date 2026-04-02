@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useEditorStore } from '@/store/useEditorStore';
-import { ArrowLeft, Palette, Plus, Trash2, Edit3, Check, X, Copy } from 'lucide-react';
+import { brandKitService } from '@/services';
+import { ArrowLeft, Palette, Plus, Trash2, Edit3, Check, X, Copy, Loader2 } from 'lucide-react';
 import type { BrandKit, BrandColor, BrandFont, ButtonStyle, ContentSnippet } from '@/types';
 
 // ---- Helper to create a new empty brand kit ----
@@ -34,38 +35,61 @@ export function BrandKitManager() {
 
   const [editingKit, setEditingKit] = useState<BrandKit | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const handleCreate = () => {
     const newKit = createEmptyBrandKit('', '');
     setEditingKit(newKit);
     setIsCreating(true);
+    setSaveError(null);
   };
 
   const handleEdit = (kit: BrandKit) => {
     setEditingKit(JSON.parse(JSON.stringify(kit)));
     setIsCreating(false);
+    setSaveError(null);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!editingKit) return;
-    if (isCreating) {
-      addBrandKit(editingKit);
-    } else {
-      updateBrandKit({ ...editingKit, updatedAt: new Date().toISOString() });
+    setIsSaving(true);
+    setSaveError(null);
+    try {
+      const kitToSave = isCreating
+        ? editingKit
+        : { ...editingKit, updatedAt: new Date().toISOString() };
+      const saved = await brandKitService.save(kitToSave);
+      if (isCreating) {
+        addBrandKit(saved);
+      } else {
+        updateBrandKit(saved);
+      }
+      setEditingKit(null);
+      setIsCreating(false);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Failed to save brand kit');
+    } finally {
+      setIsSaving(false);
     }
-    setEditingKit(null);
-    setIsCreating(false);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this brand kit?')) {
-      deleteBrandKit(id);
+      try {
+        await brandKitService.delete(id);
+        deleteBrandKit(id);
+      } catch (err) {
+        console.error('Failed to delete brand kit:', err);
+        alert('Failed to delete brand kit. Please try again.');
+      }
     }
   };
 
   const handleCancel = () => {
     setEditingKit(null);
     setIsCreating(false);
+    setSaveError(null);
   };
 
   return (
@@ -87,6 +111,8 @@ export function BrandKitManager() {
               onSave={handleSave}
               onCancel={handleCancel}
               isCreating={isCreating}
+              isSaving={isSaving}
+              saveError={saveError}
             />
           ) : (
             <BrandKitList
@@ -206,13 +232,15 @@ function BrandKitList({
 
 // ---- Brand Kit Editor ----
 function BrandKitEditor({
-  kit, setKit, onSave, onCancel, isCreating,
+  kit, setKit, onSave, onCancel, isCreating, isSaving, saveError,
 }: {
   kit: BrandKit;
   setKit: (kit: BrandKit | null) => void;
   onSave: () => void;
   onCancel: () => void;
   isCreating: boolean;
+  isSaving?: boolean;
+  saveError?: string | null;
 }) {
   const update = (partial: Partial<BrandKit>) => setKit({ ...kit, ...partial });
 
@@ -223,14 +251,21 @@ function BrandKitEditor({
           {isCreating ? 'Create New Brand Kit' : 'Edit Brand Kit'}
         </h2>
         <div className="flex gap-2">
-          <button onClick={onCancel} className="px-4 py-2 text-sm font-medium text-surface-500 bg-surface-100 rounded-lg hover:bg-surface-200">
+          <button onClick={onCancel} disabled={isSaving} className="px-4 py-2 text-sm font-medium text-surface-500 bg-surface-100 rounded-lg hover:bg-surface-200 disabled:opacity-50">
             Cancel
           </button>
-          <button onClick={onSave} className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-primary-600 text-white rounded-lg hover:bg-primary-500">
-            <Check size={14} /> Save Brand Kit
+          <button onClick={onSave} disabled={isSaving} className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-primary-600 text-white rounded-lg hover:bg-primary-500 disabled:opacity-50">
+            {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+            {isSaving ? 'Saving...' : 'Save Brand Kit'}
           </button>
         </div>
       </div>
+
+      {saveError && (
+        <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+          {saveError}
+        </div>
+      )}
 
       <div className="space-y-6">
         {/* Property Info */}
