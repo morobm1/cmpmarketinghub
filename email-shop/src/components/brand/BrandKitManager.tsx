@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useEditorStore } from '@/store/useEditorStore';
 import { brandKitService } from '@/services';
 import { getAuthUser } from '@/services/authContext';
-import { ArrowLeft, Palette, Plus, Trash2, Edit3, Check, X, Copy, Loader2, ImageIcon, Eye } from 'lucide-react';
+import { downloadBrandKitTemplate, parseExcelToBrandKits } from '@/services/bulkBrandKitService';
+import { ArrowLeft, Palette, Plus, Trash2, Edit3, Check, X, Copy, Loader2, ImageIcon, Eye, Download, Upload, FileSpreadsheet } from 'lucide-react';
 import type { BrandKit, BrandColor, BrandFont, ButtonStyle, ContentSnippet, Asset, AssetCategory } from '@/types';
 
 // Tag presets for image management
@@ -43,6 +44,36 @@ export function BrandKitManager() {
   const [isCreating, setIsCreating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [bulkImporting, setBulkImporting] = useState(false);
+  const [bulkResult, setBulkResult] = useState<{ success: number; errors: string[] } | null>(null);
+
+  const handleBulkImport = async (file: File) => {
+    setBulkImporting(true);
+    setBulkResult(null);
+    try {
+      const kits = await parseExcelToBrandKits(file);
+      if (kits.length === 0) {
+        setBulkResult({ success: 0, errors: ['No valid brand kits found in the file.'] });
+        return;
+      }
+      let success = 0;
+      const errors: string[] = [];
+      for (const kit of kits) {
+        try {
+          const saved = await brandKitService.save(kit);
+          addBrandKit(saved);
+          success++;
+        } catch (err) {
+          errors.push(`Failed to save "${kit.propertyName}": ${err instanceof Error ? err.message : String(err)}`);
+        }
+      }
+      setBulkResult({ success, errors });
+    } catch (err) {
+      setBulkResult({ success: 0, errors: [err instanceof Error ? err.message : 'Failed to parse file'] });
+    } finally {
+      setBulkImporting(false);
+    }
+  };
 
   const handleCreate = () => {
     const newKit = createEmptyBrandKit('', '');
@@ -130,6 +161,10 @@ export function BrandKitManager() {
               onEdit={handleEdit}
               onDelete={handleDelete}
               onCreate={handleCreate}
+              onBulkImport={handleBulkImport}
+              bulkImporting={bulkImporting}
+              bulkResult={bulkResult}
+              onDismissBulkResult={() => setBulkResult(null)}
             />
           )}
         </div>
@@ -140,7 +175,7 @@ export function BrandKitManager() {
 
 // ---- Brand Kit List View ----
 function BrandKitList({
-  kits, activeKit, onSelect, onEdit, onDelete, onCreate,
+  kits, activeKit, onSelect, onEdit, onDelete, onCreate, onBulkImport, bulkImporting, bulkResult, onDismissBulkResult,
 }: {
   kits: BrandKit[];
   activeKit: BrandKit | null;
@@ -148,7 +183,23 @@ function BrandKitList({
   onEdit: (kit: BrandKit) => void;
   onDelete: (id: string) => void;
   onCreate: () => void;
+  onBulkImport: (file: File) => void;
+  bulkImporting: boolean;
+  bulkResult: { success: number; errors: string[] } | null;
+  onDismissBulkResult: () => void;
 }) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const user = getAuthUser();
+  const isAdmin = user?.role === 'admin';
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      onBulkImport(file);
+      e.target.value = ''; // reset so same file can be re-uploaded
+    }
+  };
+
   return (
     <>
       <div className="flex items-center justify-between mb-8">
@@ -156,19 +207,90 @@ function BrandKitList({
           <h2 className="text-2xl font-bold text-surface-800 mb-2">Property Brand Kits</h2>
           <p className="text-surface-500">Manage colors, logos, fonts, and assets for each property</p>
         </div>
-        <button
-          onClick={onCreate}
-          className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-500 transition-colors"
-        >
-          <Plus size={16} /> New Brand Kit
-        </button>
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <>
+              <button
+                onClick={() => downloadBrandKitTemplate()}
+                className="flex items-center gap-2 px-3 py-2.5 bg-surface-100 text-surface-700 rounded-lg text-sm font-medium hover:bg-surface-200 transition-colors"
+                title="Download Excel template for bulk import"
+              >
+                <Download size={16} /> Template
+              </button>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={bulkImporting}
+                className="flex items-center gap-2 px-3 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-500 transition-colors disabled:opacity-50"
+                title="Upload filled Excel template to bulk-import brand kits"
+              >
+                {bulkImporting ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+                {bulkImporting ? 'Importing...' : 'Bulk Import'}
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+            </>
+          )}
+          <button
+            onClick={onCreate}
+            className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-500 transition-colors"
+          >
+            <Plus size={16} /> New Brand Kit
+          </button>
+        </div>
       </div>
+
+      {/* Bulk import result banner */}
+      {bulkResult && (
+        <div className={'mb-6 rounded-xl border p-4 flex items-start gap-3 ' + (
+          bulkResult.errors.length > 0 && bulkResult.success === 0
+            ? 'bg-red-50 border-red-200'
+            : bulkResult.errors.length > 0
+            ? 'bg-amber-50 border-amber-200'
+            : 'bg-emerald-50 border-emerald-200'
+        )}>
+          <FileSpreadsheet size={20} className={
+            bulkResult.errors.length > 0 && bulkResult.success === 0
+              ? 'text-red-500'
+              : bulkResult.errors.length > 0
+              ? 'text-amber-500'
+              : 'text-emerald-500'
+          } />
+          <div className="flex-1">
+            {bulkResult.success > 0 && (
+              <p className="text-sm font-medium text-surface-800">
+                Successfully imported {bulkResult.success} brand kit{bulkResult.success !== 1 ? 's' : ''}
+              </p>
+            )}
+            {bulkResult.errors.map((err, i) => (
+              <p key={i} className="text-sm text-red-600 mt-1">{err}</p>
+            ))}
+            {bulkResult.success > 0 && bulkResult.errors.length === 0 && (
+              <p className="text-xs text-surface-500 mt-1">
+                Kits are ready to use. Add logos and images by editing each kit.
+              </p>
+            )}
+          </div>
+          <button onClick={onDismissBulkResult} className="p-1 rounded-md hover:bg-surface-200 text-surface-400">
+            <X size={16} />
+          </button>
+        </div>
+      )}
 
       {kits.length === 0 && (
         <div className="text-center py-16">
           <Palette size={40} className="mx-auto text-surface-300 mb-3" />
           <h3 className="text-lg font-semibold text-surface-600 mb-1">No brand kits yet</h3>
           <p className="text-sm text-surface-400 mb-4">Create your first brand kit to get started</p>
+          {isAdmin && (
+            <p className="text-sm text-surface-400 mb-4">
+              Or <button onClick={() => downloadBrandKitTemplate()} className="text-primary-600 underline hover:text-primary-500">download the Excel template</button> to bulk-import multiple properties at once.
+            </p>
+          )}
           <button onClick={onCreate} className="px-5 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-500">
             Create Brand Kit
           </button>

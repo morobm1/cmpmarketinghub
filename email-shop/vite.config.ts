@@ -21,6 +21,9 @@ export default defineConfig({
         entryFileNames: 'assets/email-shop.js',
         chunkFileNames: 'assets/email-shop-[name].js',
         assetFileNames: 'assets/email-shop-[name][extname]',
+        manualChunks: {
+          xlsx: ['xlsx'],
+        },
       },
     },
   },
