@@ -56,7 +56,7 @@ export function TopToolbar() {
     { view: 'builder', label: 'Builder', icon: <FileText size={16} /> },
     { view: 'templates', label: 'Templates', icon: <LayoutTemplate size={16} /> },
     { view: 'brand-kit', label: 'Brand Kit', icon: <Palette size={16} /> },
-    { view: 'assets', label: 'Assets', icon: <ImageIcon size={16} /> },
+    { view: 'assets', label: 'Image Library', icon: <ImageIcon size={16} /> },
     { view: 'projects', label: 'Projects', icon: <FolderOpen size={16} /> },
   ];
 

@@ -92,9 +92,13 @@ interface EditorStore {
   updateBrandKit: (kit: BrandKit) => void;
   deleteBrandKit: (id: ID) => void;
   setAssets: (assets: Asset[]) => void;
+  addAsset: (asset: Asset) => void;
+  updateAsset: (asset: Asset) => void;
+  deleteAsset: (id: ID) => void;
   setTemplates: (templates: EmailTemplate[]) => void;
   setProjects: (projects: EmailProject[]) => void;
   saveAsTemplate: (name: string, description: string, category: string) => void;
+  rebrandDraft: () => void;
 
   // ---- Actions: History ----
   undo: () => void;
@@ -282,6 +286,13 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     activeBrandKit: state.activeBrandKit?.id === id ? null : state.activeBrandKit,
   })),
   setAssets: (assets) => set({ assets }),
+  addAsset: (asset) => set((state) => ({ assets: [...state.assets, asset] })),
+  updateAsset: (asset) => set((state) => ({
+    assets: state.assets.map((a) => a.id === asset.id ? asset : a),
+  })),
+  deleteAsset: (id) => set((state) => ({
+    assets: state.assets.filter((a) => a.id !== id),
+  })),
   setTemplates: (templates) => set({ templates }),
   setProjects: (projects) => set({ projects }),
 
@@ -305,6 +316,134 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     templateService.save(template).catch((err) => {
       console.error('Failed to save template to API:', err);
     });
+  },
+
+  rebrandDraft: () => {
+    const state = get();
+    const kit = state.activeBrandKit;
+    if (!kit) return;
+
+    state.pushHistory();
+
+    const primary = kit.colors[0]?.hex;
+    const secondary = kit.colors[1]?.hex;
+    const accent = kit.colors[2]?.hex;
+    const firstLogo = kit.logos[0];
+    const firstBtnStyle = kit.buttonStyles[0];
+    const heroImg = kit.images.find((img) =>
+      img.tags.some((t) => ['building', 'exterior', 'hero'].includes(t.toLowerCase()))
+    ) || kit.images[0];
+
+    const blocks = JSON.parse(JSON.stringify(state.blocks)) as EmailBlock[];
+
+    blocks.forEach((block) => {
+      const d = block.data as Record<string, any>;
+
+      switch (block.type) {
+        case 'header':
+          if (firstLogo) {
+            d.logoUrl = firstLogo.sourceUrl;
+            d.logoAlt = firstLogo.altText || firstLogo.name;
+          }
+          if (primary) {
+            d.backgroundColor = primary;
+            d.style.backgroundColor = primary;
+          }
+          break;
+
+        case 'logo':
+          if (firstLogo) {
+            d.imageUrl = firstLogo.sourceUrl;
+            d.altText = firstLogo.altText || firstLogo.name;
+          }
+          break;
+
+        case 'hero-image':
+          if (heroImg) {
+            d.imageUrl = heroImg.sourceUrl;
+            d.altText = heroImg.altText || heroImg.name;
+          }
+          break;
+
+        case 'text':
+          if (d.style.textColor && primary) {
+            // Only rebrand colored headings (large/bold text), not body text
+            if (d.fontSize >= 20 || d.fontWeight >= 700) {
+              d.style.textColor = primary;
+            }
+          }
+          break;
+
+        case 'button':
+          if (firstBtnStyle) {
+            d.backgroundColor = firstBtnStyle.backgroundColor;
+            d.textColor = firstBtnStyle.textColor;
+            d.borderRadius = firstBtnStyle.borderRadius;
+            d.fontSize = firstBtnStyle.fontSize;
+            d.fontWeight = firstBtnStyle.fontWeight;
+            d.paddingX = firstBtnStyle.paddingX;
+            d.paddingY = firstBtnStyle.paddingY;
+          } else if (primary) {
+            d.backgroundColor = primary;
+          }
+          break;
+
+        case 'promo-banner':
+          if (primary) d.backgroundColor = primary;
+          if (accent) d.textColor = accent;
+          break;
+
+        case 'color-bar':
+          if (primary) d.color = primary;
+          break;
+
+        case 'branded-header':
+          if (firstLogo) {
+            d.logoUrl = firstLogo.sourceUrl;
+            d.logoAlt = firstLogo.altText || firstLogo.name;
+          }
+          if (heroImg) d.backgroundImageUrl = heroImg.sourceUrl;
+          break;
+
+        case 'footer':
+          if (kit.contactInfo) {
+            if (kit.contactInfo.phone) d.phone = kit.contactInfo.phone;
+            if (kit.contactInfo.email) d.email = kit.contactInfo.email;
+            if (kit.contactInfo.address) d.address = kit.contactInfo.address;
+            if (kit.contactInfo.website) d.website = kit.contactInfo.website;
+          }
+          d.companyName = kit.propertyName || d.companyName;
+          if (primary) d.style.backgroundColor = primary;
+          break;
+
+        case 'amenities':
+          if (secondary) d.style.backgroundColor = secondary;
+          break;
+
+        case 'image-text': {
+          // Try to match image by heading keywords to tags
+          const heading = (d.heading || '').toLowerCase();
+          const match = kit.images.find((img) =>
+            img.tags.some((t) => heading.includes(t.toLowerCase()))
+          );
+          if (match) {
+            d.imageUrl = match.sourceUrl;
+            d.imageAlt = match.altText || match.name;
+          }
+          break;
+        }
+      }
+    });
+
+    // Update global styles with brand fonts
+    const globalStyles = { ...state.globalStyles };
+    if (kit.fonts[0]) {
+      globalStyles.fontFamily = kit.fonts[0].family;
+      globalStyles.fontFallback = kit.fonts[0].fallback;
+    }
+    if (primary) globalStyles.defaultLinkColor = primary;
+
+    set({ blocks, globalStyles, isDirty: true });
   },
 
   // ---- History actions ----

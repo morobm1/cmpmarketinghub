@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useEditorStore } from '@/store/useEditorStore';
-import { brandKitService, templateService, emailProjectService } from '@/services';
+import { brandKitService, templateService, emailProjectService, assetLibraryService } from '@/services';
 import { getAuthUser, fetchAuthUser } from '@/services/authContext';
 import { templateLibrary } from '@/templates/templateLibrary';
 import { EditorLayout } from '@/components/layout/EditorLayout';
@@ -32,6 +32,7 @@ export default function App() {
   const setActiveBrandKit = useEditorStore((s) => s.setActiveBrandKit);
   const setTemplates = useEditorStore((s) => s.setTemplates);
   const setProjects = useEditorStore((s) => s.setProjects);
+  const setAssets = useEditorStore((s) => s.setAssets);
 
   // Load initial data — user-scoped, filtered by assigned properties
   useEffect(() => {
@@ -44,10 +45,11 @@ export default function App() {
 
       // Even without auth, load built-in templates so the app works in dev
       try {
-        const [apiKits, apiTemplates, apiProjects] = await Promise.all([
+        const [apiKits, apiTemplates, apiProjects, apiAssets] = await Promise.all([
           brandKitService.getAll().catch(() => []),
           templateService.getAll().catch(() => []),
           emailProjectService.getAll().catch(() => []),
+          assetLibraryService.getAll().catch(() => []),
         ]);
 
         // Filter brand kits by user's assigned properties
@@ -71,6 +73,12 @@ export default function App() {
         setTemplates([...builtInTemplates, ...apiTemplates]);
 
         setProjects(apiProjects);
+
+        // Filter assets by user's accessible properties
+        const filteredAssets = isAdminUser
+          ? apiAssets
+          : apiAssets.filter((a) => userProps.includes(a.propertyId));
+        setAssets(filteredAssets);
       } catch (err) {
         console.error('Failed to load Creative Studio data:', err);
         // Fallback: at least load built-in templates
@@ -78,7 +86,7 @@ export default function App() {
       }
     };
     load();
-  }, [setBrandKits, setActiveBrandKit, setTemplates, setProjects]);
+  }, [setBrandKits, setActiveBrandKit, setTemplates, setProjects, setAssets]);
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-surface-100 flex flex-col">

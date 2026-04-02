@@ -1,8 +1,14 @@
 import { useState } from 'react';
 import { useEditorStore } from '@/store/useEditorStore';
 import { brandKitService } from '@/services';
-import { ArrowLeft, Palette, Plus, Trash2, Edit3, Check, X, Copy, Loader2 } from 'lucide-react';
-import type { BrandKit, BrandColor, BrandFont, ButtonStyle, ContentSnippet } from '@/types';
+import { getAuthUser } from '@/services/authContext';
+import { ArrowLeft, Palette, Plus, Trash2, Edit3, Check, X, Copy, Loader2, ImageIcon, Eye } from 'lucide-react';
+import type { BrandKit, BrandColor, BrandFont, ButtonStyle, ContentSnippet, Asset, AssetCategory } from '@/types';
+
+// Tag presets for image management
+const PHOTO_TAG_PRESETS = ['Building', 'Exterior', 'Interior', 'Lobby', 'Pool', 'Gym', 'Kitchen', 'Bedroom', 'Bathroom', 'Living Room', 'Bike Storage', 'Events', 'Community', 'Study Lounge', 'Rooftop', 'Parking', 'Laundry', 'Pet Area'];
+const LOGO_TAG_PRESETS = ['Primary', 'Secondary', 'White', 'Dark', 'Icon', 'Full'];
+const FLOORPLAN_TAG_PRESETS = ['Studio', '1BR', '2BR', '3BR', '4BR', 'Penthouse', 'Townhome'];
 
 // ---- Helper to create a new empty brand kit ----
 function createEmptyBrandKit(propertyId: string, propertyName: string): BrandKit {
@@ -270,12 +276,9 @@ function BrandKitEditor({
       )}
 
       <div className="space-y-6">
-        {/* Property Info */}
+        {/* Property Info with dropdown */}
         <Section title="Property Information">
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Property Name" value={kit.propertyName} onChange={(v) => update({ propertyName: v })} />
-            <Field label="Property ID" value={kit.propertyId} onChange={(v) => update({ propertyId: v })} placeholder="e.g., prop-123" />
-          </div>
+          <PropertySelector kit={kit} update={update} />
         </Section>
 
         {/* Contact Info */}
@@ -395,6 +398,36 @@ function BrandKitEditor({
               <Plus size={14} /> Add Font
             </button>
           </div>
+        </Section>
+
+        {/* Logos */}
+        <Section title="Logos">
+          <ImageAssetList
+            items={kit.logos}
+            tagPresets={LOGO_TAG_PRESETS}
+            category="logo"
+            onUpdate={(logos) => update({ logos })}
+          />
+        </Section>
+
+        {/* Property Photos */}
+        <Section title="Property Photos">
+          <ImageAssetList
+            items={kit.images}
+            tagPresets={PHOTO_TAG_PRESETS}
+            category="photo"
+            onUpdate={(images) => update({ images })}
+          />
+        </Section>
+
+        {/* Floorplans */}
+        <Section title="Floor Plans">
+          <ImageAssetList
+            items={kit.floorplans}
+            tagPresets={FLOORPLAN_TAG_PRESETS}
+            category="floorplan"
+            onUpdate={(floorplans) => update({ floorplans })}
+          />
         </Section>
 
         {/* Button Styles */}
@@ -553,6 +586,228 @@ function Field({ label, value, onChange, placeholder }: { label: string; value: 
         placeholder={placeholder}
         className="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
       />
+    </div>
+  );
+}
+
+// ---- Property Selector ----
+function PropertySelector({ kit, update }: { kit: BrandKit; update: (partial: Partial<BrandKit>) => void }) {
+  const user = getAuthUser();
+  const userProps = user?.properties || [];
+  const isAdminUser = user?.role === 'admin' || userProps.includes('*');
+  const brandKits = useEditorStore((s) => s.brandKits);
+
+  // Build property options from existing brand kits + user properties
+  const knownProperties = new Map<string, string>();
+  brandKits.forEach((bk) => {
+    if (bk.propertyId && bk.propertyName) knownProperties.set(bk.propertyId, bk.propertyName);
+  });
+  userProps.forEach((pid) => {
+    if (pid !== '*' && !knownProperties.has(pid)) knownProperties.set(pid, pid);
+  });
+
+  return (
+    <div className="grid grid-cols-2 gap-4">
+      <div>
+        <label className="block text-xs font-medium text-surface-500 mb-1">Property Name</label>
+        <input
+          type="text"
+          value={kit.propertyName}
+          onChange={(e) => update({ propertyName: e.target.value })}
+          className="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+          placeholder="e.g., Meridian on Main"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-surface-500 mb-1">Property ID</label>
+        {isAdminUser ? (
+          <input
+            type="text"
+            value={kit.propertyId}
+            onChange={(e) => update({ propertyId: e.target.value })}
+            className="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            placeholder="e.g., prop-123"
+          />
+        ) : (
+          <select
+            value={kit.propertyId}
+            onChange={(e) => {
+              const pid = e.target.value;
+              const pName = knownProperties.get(pid) || pid;
+              update({ propertyId: pid, propertyName: pName !== pid ? pName : kit.propertyName });
+            }}
+            className="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+          >
+            <option value="">Select property...</option>
+            {Array.from(knownProperties.entries()).map(([pid, pName]) => (
+              <option key={pid} value={pid}>{pName} ({pid})</option>
+            ))}
+          </select>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ---- Image Asset List (for logos, photos, floorplans) ----
+function ImageAssetList({
+  items, tagPresets, category, onUpdate,
+}: {
+  items: Asset[];
+  tagPresets: string[];
+  category: AssetCategory;
+  onUpdate: (items: Asset[]) => void;
+}) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const addItem = () => {
+    const now = new Date().toISOString();
+    const newAsset: Asset = {
+      id: `asset-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+      name: '',
+      category,
+      thumbnailUrl: '',
+      sourceUrl: '',
+      altText: '',
+      propertyId: '',
+      tags: [],
+      createdAt: now,
+    };
+    onUpdate([...items, newAsset]);
+  };
+
+  const updateItem = (index: number, partial: Partial<Asset>) => {
+    const updated = [...items];
+    const existing = updated[index];
+    if (!existing) return;
+    const merged = { ...existing, ...partial };
+    // Sync thumbnailUrl with sourceUrl for simplicity
+    if (partial.sourceUrl !== undefined) {
+      merged.thumbnailUrl = partial.sourceUrl;
+    }
+    updated[index] = merged;
+    onUpdate(updated);
+  };
+
+  const removeItem = (index: number) => {
+    onUpdate(items.filter((_, i) => i !== index));
+  };
+
+  const toggleTag = (index: number, tag: string) => {
+    const item = items[index];
+    if (!item) return;
+    const tags = item.tags.includes(tag)
+      ? item.tags.filter((t) => t !== tag)
+      : [...item.tags, tag];
+    updateItem(index, { tags });
+  };
+
+  return (
+    <div className="space-y-3">
+      {items.map((item, i) => (
+        <div key={item.id} className="border border-surface-200 rounded-xl overflow-hidden">
+          <div className="flex gap-3 p-4">
+            {/* Preview */}
+            <div className="w-24 h-24 shrink-0 bg-surface-100 rounded-lg overflow-hidden border border-surface-200 flex items-center justify-center">
+              {item.sourceUrl ? (
+                <img
+                  src={item.sourceUrl}
+                  alt={item.altText || item.name}
+                  className="max-w-full max-h-full object-contain cursor-pointer"
+                  onClick={() => setPreviewUrl(item.sourceUrl)}
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+              ) : (
+                <ImageIcon size={20} className="text-surface-300" />
+              )}
+            </div>
+
+            {/* Fields */}
+            <div className="flex-1 space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  value={item.name}
+                  onChange={(e) => updateItem(i, { name: e.target.value })}
+                  className="px-3 py-1.5 text-sm border border-surface-200 rounded-lg"
+                  placeholder="Name"
+                />
+                <input
+                  type="text"
+                  value={item.altText}
+                  onChange={(e) => updateItem(i, { altText: e.target.value })}
+                  className="px-3 py-1.5 text-sm border border-surface-200 rounded-lg"
+                  placeholder="Alt text"
+                />
+              </div>
+              <input
+                type="url"
+                value={item.sourceUrl}
+                onChange={(e) => updateItem(i, { sourceUrl: e.target.value })}
+                className="w-full px-3 py-1.5 text-sm border border-surface-200 rounded-lg font-mono"
+                placeholder="Paste Entrata image URL..."
+              />
+
+              {/* Tags */}
+              <div className="flex flex-wrap gap-1">
+                {tagPresets.map((tag) => (
+                  <button
+                    key={tag}
+                    onClick={() => toggleTag(i, tag)}
+                    className={'px-2 py-0.5 text-xs rounded-full transition-colors ' +
+                      (item.tags.includes(tag)
+                        ? 'bg-primary-100 text-primary-700 font-medium'
+                        : 'bg-surface-100 text-surface-400 hover:bg-surface-200')}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-col gap-1 shrink-0">
+              {item.sourceUrl && (
+                <button
+                  onClick={() => setPreviewUrl(item.sourceUrl)}
+                  className="p-1.5 text-surface-400 hover:text-primary-600 rounded-md hover:bg-primary-50"
+                  title="Preview"
+                >
+                  <Eye size={14} />
+                </button>
+              )}
+              <button
+                onClick={() => removeItem(i)}
+                className="p-1.5 text-surface-400 hover:text-red-500 rounded-md hover:bg-red-50"
+                title="Remove"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
+
+      <button
+        onClick={addItem}
+        className="flex items-center gap-1.5 px-3 py-2 text-sm text-primary-600 hover:bg-primary-50 rounded-lg"
+      >
+        <Plus size={14} /> Add {category === 'logo' ? 'Logo' : category === 'floorplan' ? 'Floor Plan' : 'Photo'}
+      </button>
+
+      {/* Full preview modal */}
+      {previewUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setPreviewUrl(null)}>
+          <div className="max-w-3xl max-h-[80vh] bg-white rounded-xl p-2 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-end mb-1">
+              <button onClick={() => setPreviewUrl(null)} className="p-1 rounded-md hover:bg-surface-100">
+                <X size={18} className="text-surface-400" />
+              </button>
+            </div>
+            <img src={previewUrl} alt="Preview" className="max-w-full max-h-[70vh] object-contain rounded-lg" />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
