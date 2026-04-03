@@ -9,7 +9,7 @@
  * Property matching is done by name (fuzzy) with admin confirmation.
  */
 import * as XLSX from 'xlsx';
-import type { BrandKit, BrandColor, BrandFont, ButtonStyle, ContentSnippet, Asset } from '@/types';
+import type { BrandKit, BrandColor, BrandFont, ButtonStyle, ContentSnippet, BrandLink, BrandLinkCategory, Asset } from '@/types';
 
 // ---- Excel Template Generation ----
 
@@ -151,6 +151,21 @@ export function downloadBrandKitTemplate(): void {
   const snippetSheet = XLSX.utils.aoa_to_sheet(snippetData);
   snippetSheet['!cols'] = [{ wch: 28 }, { wch: 20 }, { wch: 60 }, { wch: 12 }];
   XLSX.utils.book_append_sheet(wb, snippetSheet, 'Snippets');
+
+  // ── Links sheet ──
+  const linkData = [
+    ['kitName', 'label', 'url', 'category'],
+    ['Parkview Tower - Primary', 'Main Website', 'https://parkviewtower.com', 'website'],
+    ['Parkview Tower - Primary', 'Prospect Portal', 'https://parkviewtower.entrata.com/prospect', 'prospect-portal'],
+    ['Parkview Tower - Primary', 'Resident Portal', 'https://parkviewtower.entrata.com/resident', 'resident-portal'],
+    ['Parkview Tower - Primary', 'Apply Now', 'https://parkviewtower.entrata.com/apply', 'apply'],
+    ['Parkview Tower - Primary', 'Schedule a Tour', 'https://parkviewtower.entrata.com/tour', 'tour'],
+    ['Sunrise Lofts - Primary', 'Main Website', 'https://sunriselofts.com', 'website'],
+    ['Sunrise Lofts - Primary', 'Resident Portal', 'https://sunriselofts.entrata.com/resident', 'resident-portal'],
+  ];
+  const linkSheet = XLSX.utils.aoa_to_sheet(linkData);
+  linkSheet['!cols'] = [{ wch: 28 }, { wch: 22 }, { wch: 55 }, { wch: 18 }];
+  XLSX.utils.book_append_sheet(wb, linkSheet, 'Links');
 
   XLSX.writeFile(wb, 'BrandKit_Import_Template.xlsx');
 }
@@ -308,6 +323,7 @@ export function parseExcelToPendingKits(
         const fontRows = sheetToRows(wb, 'Fonts');
         const buttonRows = sheetToRows(wb, 'Button Styles');
         const snippetRows = sheetToRows(wb, 'Snippets');
+        const linkRows = sheetToRows(wb, 'Links');
 
         if (kitRows.length === 0) {
           reject(new Error('No brand kit rows found in the "Brand Kits" sheet.'));
@@ -393,6 +409,18 @@ export function parseExcelToPendingKits(
                 : 'custom') as ContentSnippet['category'],
             }));
 
+          // Links
+          const validLinkCategories = ['website', 'prospect-portal', 'resident-portal', 'apply', 'tour', 'survey', 'google-form', 'social', 'other'];
+          const links: BrandLink[] = linkRows
+            .filter((r) => r.kitName === kitName)
+            .filter((r) => r.url)
+            .map((r) => ({
+              id: uid(),
+              label: r.label || 'Link',
+              url: r.url || '',
+              category: (validLinkCategories.includes(r.category || '') ? r.category! : 'other') as BrandLinkCategory,
+            }));
+
           const brandKit: BrandKit = {
             id: 'bk-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
             propertyId,
@@ -404,6 +432,7 @@ export function parseExcelToPendingKits(
             fonts,
             buttonStyles,
             snippets,
+            links,
             contactInfo: {
               phone: row.phone || '',
               email: row.email || '',

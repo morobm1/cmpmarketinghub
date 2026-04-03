@@ -20,6 +20,10 @@ import type {
   ColorBarBlockData,
   BrandedHeaderBlockData,
   VirtualTourBlockData,
+  ImageGalleryBlockData,
+  EventDetailsBlockData,
+  NumberedStepsBlockData,
+  PromoBarBlockData,
 } from '@/types';
 
 const baseStyle = {
@@ -239,4 +243,53 @@ export const blockDefaults: Record<EmailBlockType, BlockDataMap[EmailBlockType]>
     buttonTextColor: '#ffffff',
     thumbnailHeight: 200,
   } satisfies VirtualTourBlockData,
+
+  'image-gallery': {
+    style: { ...baseStyle },
+    visible: true,
+    images: [
+      { url: '', alt: 'Image 1' },
+      { url: '', alt: 'Image 2' },
+      { url: '', alt: 'Image 3' },
+    ],
+    columns: 3,
+    gap: 8,
+    caption: '',
+  } satisfies ImageGalleryBlockData,
+
+  'event-details': {
+    style: { ...baseStyle },
+    visible: true,
+    eventName: 'Community Event',
+    date: 'Saturday, March 15',
+    time: '6:00 PM - 9:00 PM',
+    location: 'Clubhouse',
+    description: 'Join us for an evening of fun, food, and community! All residents and guests are welcome.',
+    accentColor: '#f59e0b',
+    buttonLabel: 'RSVP Now',
+    buttonUrl: '#',
+  } satisfies EventDetailsBlockData,
+
+  'numbered-steps': {
+    style: { ...baseStyle },
+    visible: true,
+    heading: 'How It Works',
+    steps: [
+      { title: 'Step 1', description: 'Schedule a tour of our community' },
+      { title: 'Step 2', description: 'Submit your application online' },
+      { title: 'Step 3', description: 'Sign your lease and pick up keys' },
+    ],
+    accentColor: '#2563eb',
+  } satisfies NumberedStepsBlockData,
+
+  'promo-bar': {
+    style: { ...baseStyle, paddingTop: 10, paddingBottom: 10, paddingLeft: 16, paddingRight: 16 },
+    visible: true,
+    text: '🎉 Limited Time: Get $500 off your first month!',
+    backgroundColor: '#e63946',
+    textColor: '#ffffff',
+    fontSize: 14,
+    linkUrl: '#',
+    linkLabel: 'Learn More →',
+  } satisfies PromoBarBlockData,
 };

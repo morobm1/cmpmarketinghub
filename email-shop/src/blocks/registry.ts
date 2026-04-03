@@ -155,19 +155,55 @@ export const blockRegistry: BlockDefinition[] = [
   },
   {
     type: 'branded-header',
-    label: 'Branded Header',
+    label: 'Branded Header ⚠️',
     icon: 'ImagePlus',
     category: 'media',
     description: 'Property image with color overlay and logo',
     defaultData: blockDefaults['branded-header'],
+    entrataWarning: 'Uses background-image CSS which may not render in Outlook/Entrata. Consider using a Hero Image block instead.',
   },
   {
     type: 'virtual-tour',
-    label: 'Virtual Tour',
+    label: 'Virtual Tour ⚠️',
     icon: 'Grid2x2',
     category: 'property',
-    description: 'Matterport or 3D virtual tour link with thumbnail',
+    description: 'Virtual tour link — NOT compatible with Entrata Message Center',
     defaultData: blockDefaults['virtual-tour'],
+    entrataWarning: 'Embedded virtual tour previews do not work in Entrata Message Center or most email clients. The tour link will work, but the preview iframe will not render. Consider using a Hero Image block with a tour screenshot and a Button linking to the tour instead.',
+  },
+
+  // New content blocks — all Entrata-safe
+  {
+    type: 'image-gallery',
+    label: 'Image Gallery',
+    icon: 'LayoutGrid',
+    category: 'media',
+    description: 'Row of 2-3 images — great for property photos',
+    defaultData: blockDefaults['image-gallery'],
+  },
+  {
+    type: 'event-details',
+    label: 'Event Details',
+    icon: 'CalendarDays',
+    category: 'content',
+    description: 'Structured event card with date, time, location, and RSVP',
+    defaultData: blockDefaults['event-details'],
+  },
+  {
+    type: 'numbered-steps',
+    label: 'Numbered Steps',
+    icon: 'ListOrdered',
+    category: 'content',
+    description: 'Numbered step-by-step process (move-in, apply, etc.)',
+    defaultData: blockDefaults['numbered-steps'],
+  },
+  {
+    type: 'promo-bar',
+    label: 'Promo Bar (Skinny)',
+    icon: 'Megaphone',
+    category: 'property',
+    description: 'Thin promotional strip — great for limited-time offers, one-liners',
+    defaultData: blockDefaults['promo-bar'],
   },
 ];
 

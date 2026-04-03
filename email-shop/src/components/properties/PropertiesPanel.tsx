@@ -1,8 +1,23 @@
 import { useEditorStore } from '@/store/useEditorStore';
 import { getBlockDefinition } from '@/blocks/registry';
-import { X, ChevronDown, ImageIcon, Plus, Trash2 } from 'lucide-react';
+import { X, ChevronDown, ImageIcon, Plus, Trash2, Link2, Sparkles, Search } from 'lucide-react';
 import { useState } from 'react';
-import type { EmailBlock, EmailBlockStyle, Asset } from '@/types';
+import type { EmailBlock, EmailBlockStyle, Asset, BrandLink } from '@/types';
+import { ctaLibrary, getEmailButtonCTAs, getTop25, searchCTAs, type CTACategory } from '@/data/ctaLibrary';
+import { removeImageBackground, blobUrlToDataUrl, type BgRemovalStatus } from '@/services/backgroundRemoval';
+
+const EMAIL_SAFE_FONTS = [
+  { family: 'Arial', fallback: 'Helvetica, sans-serif', label: 'Arial' },
+  { family: 'Helvetica', fallback: 'Arial, sans-serif', label: 'Helvetica' },
+  { family: 'Georgia', fallback: 'Times New Roman, serif', label: 'Georgia (Serif)' },
+  { family: 'Times New Roman', fallback: 'Georgia, serif', label: 'Times New Roman' },
+  { family: 'Trebuchet MS', fallback: 'Arial, sans-serif', label: 'Trebuchet MS' },
+  { family: 'Verdana', fallback: 'Geneva, sans-serif', label: 'Verdana' },
+  { family: 'Tahoma', fallback: 'Geneva, sans-serif', label: 'Tahoma' },
+  { family: 'Lucida Sans Unicode', fallback: 'Lucida Grande, sans-serif', label: 'Lucida Sans' },
+  { family: 'Palatino Linotype', fallback: 'Book Antiqua, Georgia, serif', label: 'Palatino' },
+  { family: 'Courier New', fallback: 'Courier, monospace', label: 'Courier New (Mono)' },
+];
 import { amenityIcons, getIconsByCategory, recolorIcon } from '@/blocks/amenityIcons';
 import { socialPlatforms, getSocialPlatform } from '@/blocks/socialIcons';
 
@@ -12,6 +27,9 @@ export function PropertiesPanel() {
   const updateBlockData = useEditorStore((s) => s.updateBlockData);
   const selectBlock = useEditorStore((s) => s.selectBlock);
   const activeBrandKit = useEditorStore((s) => s.activeBrandKit);
+
+  const globalStyles = useEditorStore((s) => s.globalStyles);
+  const updateGlobalStyles = useEditorStore((s) => s.updateGlobalStyles);
 
   const block = blocks.find((b: EmailBlock) => b.id === selectedBlockId);
   if (!block) return null;
@@ -48,7 +66,7 @@ export function PropertiesPanel() {
       {/* Properties */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* Content properties based on block type */}
-        <ContentProperties block={block} data={data} update={update} brandColors={activeBrandKit?.colors} />
+        <ContentProperties block={block} data={data} update={update} brandColors={activeBrandKit?.colors} brandLinks={activeBrandKit?.links || []} />
 
         {/* Style section */}
         <PropertySection title="Style">
@@ -59,6 +77,29 @@ export function PropertiesPanel() {
             { value: 'center', label: 'Center' },
             { value: 'right', label: 'Right' },
           ]} />
+        </PropertySection>
+
+        {/* Email Font (global) */}
+        <PropertySection title="Email Font">
+          <div>
+            <label className="block text-xs font-medium text-surface-500 mb-1">Font Family</label>
+            <select
+              value={globalStyles.fontFamily}
+              onChange={(e) => {
+                const selected = EMAIL_SAFE_FONTS.find((f) => f.family === e.target.value);
+                if (selected) updateGlobalStyles({ fontFamily: selected.family, fontFallback: selected.fallback });
+              }}
+              className="w-full px-2.5 py-1.5 text-sm border border-surface-200 rounded-md bg-white"
+              style={{ fontFamily: globalStyles.fontFamily + ', ' + globalStyles.fontFallback }}
+            >
+              {EMAIL_SAFE_FONTS.map((f) => (
+                <option key={f.family} value={f.family} style={{ fontFamily: f.family + ', ' + f.fallback }}>{f.label}</option>
+              ))}
+            </select>
+            <p className="text-[10px] text-surface-400 mt-1">Applies to entire email. Only email-safe fonts shown.</p>
+          </div>
+          <ColorField label="Link Color" value={globalStyles.defaultLinkColor || '#2563eb'} onChange={(v) => updateGlobalStyles({ defaultLinkColor: v })} brandColors={activeBrandKit?.colors} />
+          <NumberField label="Base Font Size" value={globalStyles.defaultFontSize || 16} onChange={(v) => updateGlobalStyles({ defaultFontSize: v })} min={12} max={20} />
         </PropertySection>
 
         {/* Padding section */}
@@ -74,7 +115,7 @@ export function PropertiesPanel() {
 }
 
 /** Render content-specific properties based on block type */
-function ContentProperties({ block, data, update, brandColors }: { block: EmailBlock; data: Record<string, any>; update: (key: string, value: any) => void; brandColors?: Array<{ id: string; name: string; hex: string }> }) {
+function ContentProperties({ block, data, update, brandColors, brandLinks }: { block: EmailBlock; data: Record<string, any>; update: (key: string, value: any) => void; brandColors?: Array<{ id: string; name: string; hex: string }>; brandLinks: BrandLink[] }) {
   switch (block.type) {
     case 'text':
       return (
@@ -114,8 +155,11 @@ function ContentProperties({ block, data, update, brandColors }: { block: EmailB
     case 'button':
       return (
         <PropertySection title="Button">
-          <TextField label="Label" value={data.label || ''} onChange={(v) => update('label', v)} />
-          <TextField label="URL" value={data.url || ''} onChange={(v) => update('url', v)} placeholder="https://" />
+          <div className="flex items-end gap-2">
+            <div className="flex-1"><TextField label="Label" value={data.label || ''} onChange={(v) => update('label', v)} /></div>
+            <CTAPickerButton onSelect={(cta) => update('label', cta)} />
+          </div>
+          <UrlFieldWithLinks label="URL" value={data.url || ''} onChange={(v) => update('url', v)} brandLinks={brandLinks} />
           <ColorField label="Background" value={data.backgroundColor || ''} onChange={(v) => update('backgroundColor', v)} brandColors={brandColors} />
           <ColorField label="Text Color" value={data.textColor || ''} onChange={(v) => update('textColor', v)} brandColors={brandColors} />
           <NumberField label="Border Radius" value={data.borderRadius ?? 6} onChange={(v) => update('borderRadius', v)} min={0} max={50} />
@@ -132,25 +176,10 @@ function ContentProperties({ block, data, update, brandColors }: { block: EmailB
     case 'hero-image':
       return (
         <PropertySection title="Hero Image">
-          <ImageUrlField label="Image / GIF URL" value={data.imageUrl || ''} onChange={(v) => update('imageUrl', v)} />
+          <ImageUrlField label="Image / GIF URL" value={data.imageUrl || ''} onChange={(v) => update('imageUrl', v)} filterCategory="photo" />
           <TextField label="Alt Text" value={data.altText || ''} onChange={(v) => update('altText', v)} />
           <TextField label="Link URL" value={data.linkUrl || ''} onChange={(v) => update('linkUrl', v)} placeholder="https://" />
-          <div>
-            <label className="block text-xs font-medium text-surface-500 mb-1">Image Height: {data.imageHeight || 250}px</label>
-            <input
-              type="range"
-              min={100}
-              max={500}
-              value={data.imageHeight || 250}
-              onChange={(e) => update('imageHeight', Number(e.target.value))}
-              className="w-full accent-primary-500"
-            />
-            <div className="flex justify-between text-[10px] text-surface-400">
-              <span>100px</span>
-              <span>Best: 200-300px</span>
-              <span>500px</span>
-            </div>
-          </div>
+          <NumberField label="Image Height (px)" value={data.imageHeight || 250} onChange={(v) => update('imageHeight', v)} min={100} max={500} step={10} />
           <SelectField label="Image Position (Crop)" value={data.objectPosition || 'center center'} onChange={(v) => update('objectPosition', v)} options={[
             { value: 'center center', label: 'Center' },
             { value: 'center top', label: 'Top' },
@@ -169,7 +198,7 @@ function ContentProperties({ block, data, update, brandColors }: { block: EmailB
     case 'logo':
       return (
         <PropertySection title="Image">
-          <ImageUrlField label="Image URL" value={data.imageUrl || ''} onChange={(v) => update('imageUrl', v)} />
+          <ImageUrlField label="Image URL" value={data.imageUrl || ''} onChange={(v) => update('imageUrl', v)} filterCategory="photo" />
           <TextField label="Alt Text" value={data.altText || ''} onChange={(v) => update('altText', v)} />
           <NumberField label="Width" value={data.width || 200} onChange={(v) => update('width', v)} min={50} max={600} />
           <SelectField label="Alignment" value={data.alignment || 'center'} onChange={(v) => update('alignment', v)} options={[
@@ -182,7 +211,7 @@ function ContentProperties({ block, data, update, brandColors }: { block: EmailB
     case 'header':
       return (
         <PropertySection title="Header">
-          <ImageUrlField label="Logo URL" value={data.logoUrl || ''} onChange={(v) => update('logoUrl', v)} />
+          <ImageUrlField label="Logo URL" value={data.logoUrl || ''} onChange={(v) => update('logoUrl', v)} filterCategory="logo" />
           <TextField label="Logo Alt" value={data.logoAlt || ''} onChange={(v) => update('logoAlt', v)} />
           <NumberField label="Logo Width" value={data.logoWidth || 180} onChange={(v) => update('logoWidth', v)} min={50} max={400} />
           <TextField label="Preheader Text" value={data.preheaderText || ''} onChange={(v) => update('preheaderText', v)} />
@@ -212,7 +241,7 @@ function ContentProperties({ block, data, update, brandColors }: { block: EmailB
     case 'image-text':
       return (
         <PropertySection title="Image + Text">
-          <ImageUrlField label="Image URL" value={data.imageUrl || ''} onChange={(v) => update('imageUrl', v)} />
+          <ImageUrlField label="Image URL" value={data.imageUrl || ''} onChange={(v) => update('imageUrl', v)} filterCategory="photo" />
           <TextField label="Image Alt" value={data.imageAlt || ''} onChange={(v) => update('imageAlt', v)} />
           <SelectField label="Image Position" value={data.imagePosition || 'left'} onChange={(v) => update('imagePosition', v)} options={[
             { value: 'left', label: 'Left' }, { value: 'right', label: 'Right' },
@@ -220,8 +249,10 @@ function ContentProperties({ block, data, update, brandColors }: { block: EmailB
           <NumberField label="Image Width %" value={data.imageWidth || 40} onChange={(v) => update('imageWidth', v)} min={20} max={80} />
           <TextField label="Heading" value={data.heading || ''} onChange={(v) => update('heading', v)} />
           <TextAreaField label="Body" value={data.body || ''} onChange={(v) => update('body', v)} />
-          <TextField label="Button Label" value={data.buttonLabel || ''} onChange={(v) => update('buttonLabel', v)} />
-          <TextField label="Button URL" value={data.buttonUrl || ''} onChange={(v) => update('buttonUrl', v)} />
+          <div className="flex items-end gap-2"><div className="flex-1"><TextField label="Button Label" value={data.buttonLabel || ''} onChange={(v) => update('buttonLabel', v)} /></div><CTAPickerButton onSelect={(cta) => update('buttonLabel', cta)} /></div>
+          <UrlFieldWithLinks label="Button URL" value={data.buttonUrl || ''} onChange={(v) => update('buttonUrl', v)} brandLinks={brandLinks} />
+          <ColorField label="Button BG" value={data.buttonStyle?.backgroundColor || '#2563eb'} onChange={(v) => update('buttonStyle', { ...data.buttonStyle, backgroundColor: v })} brandColors={brandColors} />
+          <ColorField label="Button Text" value={data.buttonStyle?.textColor || '#ffffff'} onChange={(v) => update('buttonStyle', { ...data.buttonStyle, textColor: v })} brandColors={brandColors} />
         </PropertySection>
       );
 
@@ -233,8 +264,8 @@ function ContentProperties({ block, data, update, brandColors }: { block: EmailB
           <ColorField label="Background" value={data.backgroundColor || ''} onChange={(v) => update('backgroundColor', v)} brandColors={brandColors} />
           <ColorField label="Text Color" value={data.textColor || ''} onChange={(v) => update('textColor', v)} brandColors={brandColors} />
           <TextField label="BG Image URL" value={data.backgroundImageUrl || ''} onChange={(v) => update('backgroundImageUrl', v)} />
-          <TextField label="Button Label" value={data.buttonLabel || ''} onChange={(v) => update('buttonLabel', v)} />
-          <TextField label="Button URL" value={data.buttonUrl || ''} onChange={(v) => update('buttonUrl', v)} />
+          <div className="flex items-end gap-2"><div className="flex-1"><TextField label="Button Label" value={data.buttonLabel || ''} onChange={(v) => update('buttonLabel', v)} /></div><CTAPickerButton onSelect={(cta) => update('buttonLabel', cta)} /></div>
+          <UrlFieldWithLinks label="Button URL" value={data.buttonUrl || ''} onChange={(v) => update('buttonUrl', v)} brandLinks={brandLinks} />
         </PropertySection>
       );
 
@@ -276,14 +307,16 @@ function ContentProperties({ block, data, update, brandColors }: { block: EmailB
       return (
         <PropertySection title="Floor Plan">
           <TextField label="Heading" value={data.heading || ''} onChange={(v) => update('heading', v)} />
-          <ImageUrlField label="Image URL" value={data.floorplanImageUrl || ''} onChange={(v) => update('floorplanImageUrl', v)} />
+          <ImageUrlField label="Image URL" value={data.floorplanImageUrl || ''} onChange={(v) => update('floorplanImageUrl', v)} filterCategory="floorplan" />
           <TextField label="Image Alt" value={data.floorplanImageAlt || ''} onChange={(v) => update('floorplanImageAlt', v)} />
           <TextField label="Unit Name" value={data.unitName || ''} onChange={(v) => update('unitName', v)} />
           <TextField label="Beds/Baths" value={data.bedsBaths || ''} onChange={(v) => update('bedsBaths', v)} />
           <TextField label="Sq Ft" value={data.sqft || ''} onChange={(v) => update('sqft', v)} />
           <TextField label="Price" value={data.price || ''} onChange={(v) => update('price', v)} />
-          <TextField label="Button Label" value={data.buttonLabel || ''} onChange={(v) => update('buttonLabel', v)} />
-          <TextField label="Button URL" value={data.buttonUrl || ''} onChange={(v) => update('buttonUrl', v)} />
+          <div className="flex items-end gap-2"><div className="flex-1"><TextField label="Button Label" value={data.buttonLabel || ''} onChange={(v) => update('buttonLabel', v)} /></div><CTAPickerButton onSelect={(cta) => update('buttonLabel', cta)} /></div>
+          <UrlFieldWithLinks label="Button URL" value={data.buttonUrl || ''} onChange={(v) => update('buttonUrl', v)} brandLinks={brandLinks} />
+          <ColorField label="Button BG" value={data.buttonStyle?.backgroundColor || '#2563eb'} onChange={(v) => update('buttonStyle', { ...data.buttonStyle, backgroundColor: v })} brandColors={brandColors} />
+          <ColorField label="Button Text" value={data.buttonStyle?.textColor || '#ffffff'} onChange={(v) => update('buttonStyle', { ...data.buttonStyle, textColor: v })} brandColors={brandColors} />
         </PropertySection>
       );
 
@@ -332,7 +365,7 @@ function ContentProperties({ block, data, update, brandColors }: { block: EmailB
           <TextField label="Thumbnail Alt" value={data.thumbnailAlt || ''} onChange={(v) => update('thumbnailAlt', v)} />
           <TextField label="Heading" value={data.heading || ''} onChange={(v) => update('heading', v)} />
           <TextAreaField label="Description" value={data.description || ''} onChange={(v) => update('description', v)} />
-          <TextField label="Button Label" value={data.buttonLabel || ''} onChange={(v) => update('buttonLabel', v)} />
+          <div className="flex items-end gap-2"><div className="flex-1"><TextField label="Button Label" value={data.buttonLabel || ''} onChange={(v) => update('buttonLabel', v)} /></div><CTAPickerButton onSelect={(cta) => update('buttonLabel', cta)} /></div>
           <ColorField label="Button Color" value={data.buttonColor || '#2563eb'} onChange={(v) => update('buttonColor', v)} brandColors={brandColors} />
           <NumberField label="Thumbnail Height" value={data.thumbnailHeight || 200} onChange={(v) => update('thumbnailHeight', v)} min={100} max={400} />
         </PropertySection>
@@ -349,11 +382,11 @@ function ContentProperties({ block, data, update, brandColors }: { block: EmailB
     case 'branded-header':
       return (
         <PropertySection title="Branded Header">
-          <ImageUrlField label="Background Image URL" value={data.backgroundImageUrl || ''} onChange={(v) => update('backgroundImageUrl', v)} />
+          <ImageUrlField label="Background Image URL" value={data.backgroundImageUrl || ''} onChange={(v) => update('backgroundImageUrl', v)} filterCategory="photo" />
           <TextField label="Image Alt Text" value={data.backgroundImageAlt || ''} onChange={(v) => update('backgroundImageAlt', v)} />
           <ColorField label="Overlay Color" value={data.overlayColor || '#1e40af'} onChange={(v) => update('overlayColor', v)} brandColors={brandColors} />
           <NumberField label="Overlay Opacity (0-100)" value={Math.round((data.overlayOpacity || 0.5) * 100)} onChange={(v) => update('overlayOpacity', v / 100)} min={0} max={100} />
-          <ImageUrlField label="Logo URL" value={data.logoUrl || ''} onChange={(v) => update('logoUrl', v)} />
+          <ImageUrlField label="Logo URL" value={data.logoUrl || ''} onChange={(v) => update('logoUrl', v)} filterCategory="logo" />
           <TextField label="Logo Alt" value={data.logoAlt || ''} onChange={(v) => update('logoAlt', v)} />
           <NumberField label="Logo Width" value={data.logoWidth || 200} onChange={(v) => update('logoWidth', v)} min={50} max={400} />
           <TextField label="Heading" value={data.headingText || ''} onChange={(v) => update('headingText', v)} />
@@ -369,6 +402,82 @@ function ContentProperties({ block, data, update, brandColors }: { block: EmailB
           ]} />
         </PropertySection>
       );
+
+    case 'image-gallery': {
+      const images = data.images || [];
+      return (
+        <PropertySection title="Image Gallery">
+          <SelectField label="Columns" value={String(data.columns || 3)} onChange={(v) => update('columns', Number(v))} options={[{ value: '2', label: '2 Columns' }, { value: '3', label: '3 Columns' }]} />
+          <NumberField label="Gap (px)" value={data.gap ?? 8} onChange={(v) => update('gap', v)} min={0} max={24} />
+          <TextField label="Caption" value={data.caption || ''} onChange={(v) => update('caption', v)} placeholder="Optional caption text" />
+          <div className="space-y-2 mt-2">
+            <label className="block text-xs font-medium text-surface-500">Images</label>
+            {images.map((img: { url: string; alt: string; linkUrl?: string }, i: number) => (
+              <div key={i} className="p-2 border border-surface-200 rounded-lg space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-surface-500">Image {i + 1}</span>
+                  <button onClick={() => update('images', images.filter((_: any, j: number) => j !== i))} className="text-surface-400 hover:text-red-500"><Trash2 size={12} /></button>
+                </div>
+                <ImageUrlField label="URL" value={img.url} onChange={(v) => { const imgs = [...images]; imgs[i] = { ...img, url: v }; update('images', imgs); }} filterCategory="photo" />
+                <TextField label="Alt" value={img.alt} onChange={(v) => { const imgs = [...images]; imgs[i] = { ...img, alt: v }; update('images', imgs); }} />
+                <TextField label="Link URL" value={img.linkUrl || ''} onChange={(v) => { const imgs = [...images]; imgs[i] = { ...img, linkUrl: v }; update('images', imgs); }} placeholder="Optional click URL" />
+              </div>
+            ))}
+            <button onClick={() => update('images', [...images, { url: '', alt: 'Image ' + (images.length + 1) }])} className="flex items-center gap-1 text-xs text-primary-600 hover:bg-primary-50 px-2 py-1.5 rounded-md"><Plus size={12} /> Add Image</button>
+          </div>
+        </PropertySection>
+      );
+    }
+
+    case 'event-details':
+      return (
+        <PropertySection title="Event Details">
+          <TextField label="Event Name" value={data.eventName || ''} onChange={(v) => update('eventName', v)} />
+          <TextField label="Date" value={data.date || ''} onChange={(v) => update('date', v)} placeholder="Saturday, March 15" />
+          <TextField label="Time" value={data.time || ''} onChange={(v) => update('time', v)} placeholder="6:00 PM - 9:00 PM" />
+          <TextField label="Location" value={data.location || ''} onChange={(v) => update('location', v)} placeholder="Clubhouse" />
+          <TextAreaField label="Description" value={data.description || ''} onChange={(v) => update('description', v)} />
+          <ColorField label="Accent Color" value={data.accentColor || '#f59e0b'} onChange={(v) => update('accentColor', v)} brandColors={brandColors} />
+          <div className="flex items-end gap-2"><div className="flex-1"><TextField label="Button Label" value={data.buttonLabel || ''} onChange={(v) => update('buttonLabel', v)} /></div><CTAPickerButton onSelect={(cta) => update('buttonLabel', cta)} /></div>
+          <UrlFieldWithLinks label="Button URL" value={data.buttonUrl || ''} onChange={(v) => update('buttonUrl', v)} brandLinks={brandLinks} />
+        </PropertySection>
+      );
+
+    case 'promo-bar':
+      return (
+        <PropertySection title="Promo Bar">
+          <TextField label="Text" value={data.text || ''} onChange={(v) => update('text', v)} />
+          <ColorField label="Background" value={data.backgroundColor || '#e63946'} onChange={(v) => update('backgroundColor', v)} brandColors={brandColors} />
+          <ColorField label="Text Color" value={data.textColor || '#ffffff'} onChange={(v) => update('textColor', v)} brandColors={brandColors} />
+          <NumberField label="Font Size" value={data.fontSize || 14} onChange={(v) => update('fontSize', v)} min={10} max={20} />
+          <TextField label="Link Label" value={data.linkLabel || ''} onChange={(v) => update('linkLabel', v)} placeholder="Learn More →" />
+          <UrlFieldWithLinks label="Link URL" value={data.linkUrl || ''} onChange={(v) => update('linkUrl', v)} brandLinks={brandLinks} />
+        </PropertySection>
+      );
+
+    case 'numbered-steps': {
+      const steps = data.steps || [];
+      return (
+        <PropertySection title="Numbered Steps">
+          <TextField label="Heading" value={data.heading || ''} onChange={(v) => update('heading', v)} />
+          <ColorField label="Accent Color" value={data.accentColor || '#2563eb'} onChange={(v) => update('accentColor', v)} brandColors={brandColors} />
+          <div className="space-y-2 mt-2">
+            <label className="block text-xs font-medium text-surface-500">Steps</label>
+            {steps.map((step: { title: string; description: string }, i: number) => (
+              <div key={i} className="flex gap-2 items-start p-2 border border-surface-200 rounded-lg">
+                <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 mt-1" style={{ backgroundColor: data.accentColor || '#2563eb' }}>{i + 1}</div>
+                <div className="flex-1 space-y-1">
+                  <input type="text" value={step.title} onChange={(e) => { const s = [...steps]; s[i] = { ...step, title: e.target.value }; update('steps', s); }} className="w-full px-2 py-1 text-sm border border-surface-200 rounded-md font-medium" placeholder="Step title" />
+                  <input type="text" value={step.description} onChange={(e) => { const s = [...steps]; s[i] = { ...step, description: e.target.value }; update('steps', s); }} className="w-full px-2 py-1 text-xs border border-surface-200 rounded-md" placeholder="Description" />
+                </div>
+                <button onClick={() => update('steps', steps.filter((_: any, j: number) => j !== i))} className="text-surface-400 hover:text-red-500 shrink-0 mt-1"><Trash2 size={12} /></button>
+              </div>
+            ))}
+            <button onClick={() => update('steps', [...steps, { title: 'Step ' + (steps.length + 1), description: '' }])} className="flex items-center gap-1 text-xs text-primary-600 hover:bg-primary-50 px-2 py-1.5 rounded-md"><Plus size={12} /> Add Step</button>
+          </div>
+        </PropertySection>
+      );
+    }
 
     default:
       return <p className="text-sm text-surface-400 p-2">No editable properties for this block type.</p>;
@@ -408,6 +517,136 @@ function TextField({ label, value, onChange, placeholder }: { label: string; val
   );
 }
 
+function UrlFieldWithLinks({ label, value, onChange, brandLinks }: { label: string; value: string; onChange: (v: string) => void; brandLinks: BrandLink[] }) {
+  const [showPicker, setShowPicker] = useState(false);
+  return (
+    <div>
+      <label className="block text-xs font-medium text-surface-500 mb-1">{label}</label>
+      <div className="flex gap-1">
+        <input
+          type="url"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="https://..."
+          className="flex-1 px-2.5 py-1.5 text-sm border border-surface-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono"
+        />
+        {brandLinks.length > 0 && (
+          <div className="relative">
+            <button
+              onClick={() => setShowPicker(!showPicker)}
+              className="p-1.5 rounded-md border border-surface-200 text-surface-400 hover:text-primary-600 hover:border-primary-300 transition-colors"
+              title="Pick from stored links"
+            >
+              <Link2 size={14} />
+            </button>
+            {showPicker && (
+              <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-surface-200 rounded-lg shadow-xl z-30 py-1 max-h-48 overflow-auto">
+                {brandLinks.map((link) => (
+                  <button
+                    key={link.id}
+                    onClick={() => { onChange(link.url); setShowPicker(false); }}
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-primary-50 transition-colors"
+                  >
+                    <div className="font-medium text-surface-700 truncate">{link.label}</div>
+                    <div className="text-xs text-surface-400 truncate font-mono">{link.url}</div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CTAPickerButton({ onSelect }: { onSelect: (cta: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [selectedCat, setSelectedCat] = useState<string | null>(null);
+
+  const top25 = getTop25();
+  const emailBtnCTAs = getEmailButtonCTAs();
+  const searchResults = search.length >= 2 ? searchCTAs(search) : [];
+
+  const activeCat = selectedCat ? ctaLibrary.categories.find((c) => c.id === selectedCat) : null;
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-violet-600 bg-violet-50 rounded-md hover:bg-violet-100 transition-colors"
+        title="Browse CTA suggestions"
+      >
+        <Sparkles size={12} />
+        CTA Library
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 w-72 bg-white border border-surface-200 rounded-xl shadow-2xl z-40 max-h-80 flex flex-col overflow-hidden">
+          <div className="px-3 py-2 border-b border-surface-100">
+            <div className="relative">
+              <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-surface-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setSelectedCat(null); }}
+                placeholder="Search CTAs..."
+                className="w-full pl-7 pr-2 py-1.5 text-xs border border-surface-200 rounded-md focus:outline-none focus:ring-1 focus:ring-violet-400"
+                autoFocus
+              />
+            </div>
+          </div>
+          <div className="flex-1 overflow-auto">
+            {search.length >= 2 ? (
+              <div className="p-2 space-y-0.5">
+                {searchResults.length === 0 && <p className="text-xs text-surface-400 px-2 py-3 text-center">No CTAs match "{search}"</p>}
+                {searchResults.slice(0, 20).map((r, i) => (
+                  <button key={i} onClick={() => { onSelect(r.cta); setOpen(false); setSearch(''); }} className="w-full text-left px-2.5 py-1.5 text-xs rounded-md hover:bg-violet-50 transition-colors">
+                    <span className="text-surface-800">{r.cta}</span>
+                    <span className="ml-1.5 text-[10px] text-surface-400">{r.category.name}</span>
+                  </button>
+                ))}
+              </div>
+            ) : selectedCat && activeCat ? (
+              <div>
+                <button onClick={() => setSelectedCat(null)} className="w-full text-left px-3 py-2 text-xs text-violet-600 hover:bg-violet-50 border-b border-surface-100 font-medium">← Back to categories</button>
+                <p className="px-3 py-1.5 text-[10px] text-surface-400">{activeCat.reason}</p>
+                <div className="p-2 space-y-0.5">
+                  {activeCat.ctas.map((cta, i) => (
+                    <button key={i} onClick={() => { onSelect(cta); setOpen(false); }} className="w-full text-left px-2.5 py-1.5 text-xs text-surface-800 rounded-md hover:bg-violet-50 transition-colors">{cta}</button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div className="px-3 py-2 border-b border-surface-100">
+                  <div className="text-[10px] font-semibold text-surface-400 uppercase mb-1.5">Top Email CTAs</div>
+                  <div className="flex flex-wrap gap-1">
+                    {emailBtnCTAs.slice(0, 8).map((cta, i) => (
+                      <button key={i} onClick={() => { onSelect(cta); setOpen(false); }} className="px-2 py-1 text-[11px] bg-violet-50 text-violet-700 rounded-full hover:bg-violet-100 transition-colors">{cta}</button>
+                    ))}
+                  </div>
+                </div>
+                <div className="p-2">
+                  <div className="text-[10px] font-semibold text-surface-400 uppercase px-1 mb-1">Browse by Category</div>
+                  <div className="space-y-0.5">
+                    {ctaLibrary.categories.map((cat) => (
+                      <button key={cat.id} onClick={() => setSelectedCat(cat.id)} className="w-full text-left px-2.5 py-1.5 text-xs text-surface-700 rounded-md hover:bg-surface-50 transition-colors flex items-center justify-between">
+                        <span>{cat.name}</span>
+                        <span className="text-[10px] text-surface-400">{cat.ctas.length}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function TextAreaField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
     <div>
@@ -423,18 +662,26 @@ function TextAreaField({ label, value, onChange }: { label: string; value: strin
 }
 
 function NumberField({ label, value, onChange, min, max, step }: { label: string; value: number; onChange: (v: number) => void; min?: number; max?: number; step?: number }) {
+  const s = step || 1;
+  const clamp = (v: number) => Math.min(max ?? Infinity, Math.max(min ?? -Infinity, v));
   return (
     <div>
       <label className="block text-xs font-medium text-surface-500 mb-1">{label}</label>
-      <input
-        type="number"
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        min={min}
-        max={max}
-        step={step}
-        className="w-full px-2.5 py-1.5 text-sm border border-surface-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-      />
+      <div className="flex items-center gap-1">
+        <button onClick={() => onChange(clamp(value - s * 5))} className="w-7 h-7 rounded-md bg-surface-100 text-surface-500 hover:bg-surface-200 text-xs font-bold shrink-0">−−</button>
+        <button onClick={() => onChange(clamp(value - s))} className="w-7 h-7 rounded-md bg-surface-100 text-surface-500 hover:bg-surface-200 text-xs font-bold shrink-0">−</button>
+        <input
+          type="number"
+          value={value}
+          onChange={(e) => onChange(clamp(Number(e.target.value)))}
+          min={min}
+          max={max}
+          step={step}
+          className="flex-1 px-2 py-1.5 text-sm text-center border border-surface-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+        />
+        <button onClick={() => onChange(clamp(value + s))} className="w-7 h-7 rounded-md bg-surface-100 text-surface-500 hover:bg-surface-200 text-xs font-bold shrink-0">+</button>
+        <button onClick={() => onChange(clamp(value + s * 5))} className="w-7 h-7 rounded-md bg-surface-100 text-surface-500 hover:bg-surface-200 text-xs font-bold shrink-0">++</button>
+      </div>
     </div>
   );
 }
@@ -506,9 +753,41 @@ function CheckboxField({ label, value, onChange }: { label: string; value: boole
   );
 }
 
-function ImageUrlField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+function ImageUrlField({ label, value, onChange, filterCategory }: { label: string; value: string; onChange: (v: string) => void; filterCategory?: 'logo' | 'photo' | 'floorplan' }) {
   const [showBrowser, setShowBrowser] = useState(false);
-  const assets = useEditorStore((s) => s.assets);
+  const [bgRemovalStatus, setBgRemovalStatus] = useState<BgRemovalStatus>('idle');
+  const activeBrandKit = useEditorStore((s) => s.activeBrandKit);
+  const storeAssets = useEditorStore((s) => s.assets);
+
+  const handleRemoveBg = async () => {
+    if (!value || bgRemovalStatus === 'loading-model' || bgRemovalStatus === 'processing') return;
+    try {
+      const resultUrl = await removeImageBackground(value, setBgRemovalStatus);
+      const dataUrl = await blobUrlToDataUrl(resultUrl);
+      URL.revokeObjectURL(resultUrl);
+      onChange(dataUrl);
+      setBgRemovalStatus('idle');
+    } catch (err) {
+      console.error('Background removal failed:', err);
+      setBgRemovalStatus('idle');
+    }
+  };
+
+  // Prioritize brand kit assets filtered by category, then fall back to all store assets
+  const getBrandKitAssets = (): Asset[] => {
+    if (!activeBrandKit) return [];
+    if (filterCategory === 'logo') return activeBrandKit.logos || [];
+    if (filterCategory === 'floorplan') return activeBrandKit.floorplans || [];
+    if (filterCategory === 'photo') return activeBrandKit.images || [];
+    return [...(activeBrandKit.logos || []), ...(activeBrandKit.images || []), ...(activeBrandKit.floorplans || [])];
+  };
+
+  const brandKitAssets = getBrandKitAssets();
+  const otherAssets = filterCategory
+    ? storeAssets.filter((a) => a.category === filterCategory && !brandKitAssets.some((bk) => bk.id === a.id))
+    : storeAssets.filter((a) => !brandKitAssets.some((bk) => bk.id === a.id));
+
+  const categoryLabel = filterCategory === 'logo' ? 'Logos' : filterCategory === 'floorplan' ? 'Floor Plans' : filterCategory === 'photo' ? 'Photos' : 'Images';
 
   return (
     <div>
@@ -524,36 +803,76 @@ function ImageUrlField({ label, value, onChange }: { label: string; value: strin
         <button
           onClick={() => setShowBrowser(!showBrowser)}
           className="px-2 py-1.5 text-xs font-medium bg-surface-100 border border-surface-200 rounded-md hover:bg-primary-50 hover:border-primary-300 hover:text-primary-700 transition-colors shrink-0"
-          title="Browse assets"
+          title={`Browse ${categoryLabel.toLowerCase()}`}
         >
           <ImageIcon size={14} />
         </button>
       </div>
       {value && (
-        <div className="mt-1.5 rounded overflow-hidden border border-surface-200">
-          <img src={value} alt="Preview" className="w-full h-20 object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+        <div className="mt-1.5">
+          <div className="rounded overflow-hidden border border-surface-200">
+            <img src={value} alt="Preview" className="w-full h-20 object-cover" style={{ background: 'repeating-conic-gradient(#e5e7eb 0% 25%, transparent 0% 50%) 50% / 16px 16px' }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+          </div>
+          <button
+            onClick={handleRemoveBg}
+            disabled={bgRemovalStatus === 'loading-model' || bgRemovalStatus === 'processing'}
+            className="mt-1 w-full flex items-center justify-center gap-1.5 px-2 py-1.5 text-[11px] font-medium text-surface-600 bg-surface-50 border border-surface-200 rounded-md hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 disabled:opacity-50 disabled:cursor-wait transition-colors"
+            title="Remove image background using AI (runs in browser)"
+          >
+            {bgRemovalStatus === 'loading-model' ? '⏳ Loading AI model...' :
+             bgRemovalStatus === 'processing' ? '⏳ Removing background...' :
+             bgRemovalStatus === 'error' ? '❌ Failed — try again' :
+             '✨ Remove Background'}
+          </button>
         </div>
       )}
-      {showBrowser && assets.length > 0 && (
-        <div className="mt-2 max-h-40 overflow-y-auto border border-surface-200 rounded-lg bg-white shadow-sm">
-          {assets.map((asset: Asset) => (
-            <button
-              key={asset.id}
-              onClick={() => { onChange(asset.sourceUrl); setShowBrowser(false); }}
-              className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-primary-50 text-left transition-colors"
-            >
-              <img src={asset.thumbnailUrl} alt={asset.altText} className="w-8 h-8 object-cover rounded" />
-              <div className="min-w-0">
-                <div className="text-xs font-medium text-surface-700 truncate">{asset.name}</div>
-                <div className="text-[10px] text-surface-400">{asset.category}</div>
+      {showBrowser && (
+        <div className="mt-2 max-h-48 overflow-y-auto border border-surface-200 rounded-lg bg-white shadow-sm">
+          {brandKitAssets.length > 0 && (
+            <>
+              <div className="px-2 py-1.5 text-[10px] font-semibold text-surface-400 uppercase bg-surface-50 border-b border-surface-100 sticky top-0">
+                Brand Kit {categoryLabel}
               </div>
-            </button>
-          ))}
-        </div>
-      )}
-      {showBrowser && assets.length === 0 && (
-        <div className="mt-2 p-3 text-center border border-surface-200 rounded-lg bg-surface-50">
-          <p className="text-xs text-surface-400">No assets available. Add assets in the Asset Library.</p>
+              {brandKitAssets.map((asset: Asset) => (
+                <button
+                  key={asset.id}
+                  onClick={() => { onChange(asset.sourceUrl); setShowBrowser(false); }}
+                  className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-primary-50 text-left transition-colors"
+                >
+                  <img src={asset.thumbnailUrl || asset.sourceUrl} alt={asset.altText} className="w-8 h-8 object-cover rounded" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  <div className="min-w-0">
+                    <div className="text-xs font-medium text-surface-700 truncate">{asset.name}</div>
+                    {asset.tags.length > 0 && <div className="text-[10px] text-surface-400 truncate">{asset.tags.join(', ')}</div>}
+                  </div>
+                </button>
+              ))}
+            </>
+          )}
+          {otherAssets.length > 0 && (
+            <>
+              <div className="px-2 py-1.5 text-[10px] font-semibold text-surface-400 uppercase bg-surface-50 border-b border-surface-100 sticky top-0">
+                {brandKitAssets.length > 0 ? 'Other ' : ''}{categoryLabel}
+              </div>
+              {otherAssets.map((asset: Asset) => (
+                <button
+                  key={asset.id}
+                  onClick={() => { onChange(asset.sourceUrl); setShowBrowser(false); }}
+                  className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-primary-50 text-left transition-colors"
+                >
+                  <img src={asset.thumbnailUrl || asset.sourceUrl} alt={asset.altText} className="w-8 h-8 object-cover rounded" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  <div className="min-w-0">
+                    <div className="text-xs font-medium text-surface-700 truncate">{asset.name}</div>
+                    <div className="text-[10px] text-surface-400">{asset.category}</div>
+                  </div>
+                </button>
+              ))}
+            </>
+          )}
+          {brandKitAssets.length === 0 && otherAssets.length === 0 && (
+            <div className="p-3 text-center">
+              <p className="text-xs text-surface-400">No {categoryLabel.toLowerCase()} available. Add images in the Brand Kit or Asset Library.</p>
+            </div>
+          )}
         </div>
       )}
     </div>

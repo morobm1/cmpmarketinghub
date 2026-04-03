@@ -20,6 +20,8 @@ import {
   X,
   Loader2,
   CheckCircle2,
+  Copy,
+  Share2,
 } from 'lucide-react';
 
 export function TopToolbar() {
@@ -108,9 +110,15 @@ export function TopToolbar() {
       {/* Spacer */}
       <div className="flex-1 min-w-4" />
 
-      {/* Project Name */}
-      <div className="flex items-center gap-1.5 mr-2 max-w-48 shrink-0">
-        <span className="text-xs text-surface-400 truncate">{projectName}</span>
+      {/* Project Name (editable) */}
+      <div className="flex items-center gap-1.5 mr-2 max-w-56 shrink-0">
+        <input
+          type="text"
+          value={projectName}
+          onChange={(e) => useEditorStore.getState().setProject({ name: e.target.value } as any)}
+          className="text-xs text-surface-400 bg-transparent border-0 border-b border-transparent hover:border-surface-600 focus:border-primary-400 focus:text-white outline-none truncate w-full px-0.5 py-0.5"
+          title="Click to rename project"
+        />
         {isDirty && (
           <span className="text-[10px] text-amber-400 font-semibold shrink-0">Unsaved</span>
         )}
@@ -186,9 +194,13 @@ export function TopToolbar() {
                 <button
                   onClick={async () => {
                     setShowSaveMenu(false);
-                    await saveProject('draft');
-                    setSavedFlash('Draft Saved');
-                    setTimeout(() => setSavedFlash(null), 2000);
+                    try {
+                      await saveProject('draft');
+                      setSavedFlash('Draft Saved');
+                    } catch {
+                      setSavedFlash('Save Error');
+                    }
+                    setTimeout(() => setSavedFlash(null), 2500);
                   }}
                   className="w-full text-left px-3 py-2 text-sm text-surface-700 hover:bg-surface-50 flex items-center gap-2"
                 >
@@ -198,14 +210,56 @@ export function TopToolbar() {
                 <button
                   onClick={async () => {
                     setShowSaveMenu(false);
-                    await saveProject('complete');
-                    setSavedFlash('Saved');
-                    setTimeout(() => setSavedFlash(null), 2000);
+                    try {
+                      await saveProject('complete');
+                      setSavedFlash('Saved');
+                    } catch {
+                      setSavedFlash('Save Error');
+                    }
+                    setTimeout(() => setSavedFlash(null), 2500);
                   }}
                   className="w-full text-left px-3 py-2 text-sm text-surface-700 hover:bg-surface-50 flex items-center gap-2"
                 >
                   <CheckCircle2 size={14} className="text-emerald-500" />
                   Save Complete
+                </button>
+                <div className="border-t border-surface-100 my-1" />
+                <button
+                  onClick={async () => {
+                    setShowSaveMenu(false);
+                    // Clear projectId to force a new save
+                    useEditorStore.setState({ projectId: null, projectName: projectName + ' (Copy)' });
+                    try {
+                      await saveProject('draft');
+                      setSavedFlash('New Copy Saved');
+                    } catch {
+                      setSavedFlash('Save Error');
+                    }
+                    setTimeout(() => setSavedFlash(null), 2500);
+                  }}
+                  className="w-full text-left px-3 py-2 text-sm text-surface-700 hover:bg-surface-50 flex items-center gap-2"
+                >
+                  <Copy size={14} className="text-blue-500" />
+                  Save As New Copy
+                </button>
+                <button
+                  onClick={() => {
+                    setShowSaveMenu(false);
+                    const pid = useEditorStore.getState().projectId;
+                    if (pid) {
+                      const shareUrl = window.location.origin + '/creative_studio.html?project=' + pid;
+                      navigator.clipboard.writeText(shareUrl);
+                      setSavedFlash('Link Copied');
+                      setTimeout(() => setSavedFlash(null), 2500);
+                    } else {
+                      setSavedFlash('Save first');
+                      setTimeout(() => setSavedFlash(null), 2500);
+                    }
+                  }}
+                  className="w-full text-left px-3 py-2 text-sm text-surface-700 hover:bg-surface-50 flex items-center gap-2"
+                >
+                  <Share2 size={14} className="text-purple-500" />
+                  Copy Share Link
                 </button>
               </div>
             )}

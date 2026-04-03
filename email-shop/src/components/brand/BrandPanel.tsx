@@ -1,6 +1,29 @@
 import { useEditorStore } from '@/store/useEditorStore';
-import { Palette, Type, ChevronDown, Wand2 } from 'lucide-react';
+import { useDraggable } from '@dnd-kit/core';
+import { Palette, Type, ChevronDown, Wand2, GripVertical } from 'lucide-react';
 import { useState } from 'react';
+import type { Asset } from '@/types';
+
+function DraggableBrandAsset({ asset, category, children }: { asset: Asset; category: 'logo' | 'photo' | 'floorplan'; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `brand-asset-${asset.id}`,
+    data: { type: 'brand-asset', sourceUrl: asset.sourceUrl, altText: asset.altText || asset.name, category },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      style={{ touchAction: 'none' }}
+      className={`group rounded-lg border border-surface-200 overflow-hidden hover:border-primary-300 transition-all cursor-grab ${isDragging ? 'opacity-40 ring-2 ring-primary-400' : ''}`}
+      title={`Drag to canvas • Click to copy URL: ${asset.name}`}
+      onClick={() => navigator.clipboard.writeText(asset.sourceUrl)}
+    >
+      {children}
+    </div>
+  );
+}
 
 /** Brand panel in the left sidebar - quick access to brand kit colors, fonts, and rebrand */
 export function BrandPanel() {
@@ -125,20 +148,15 @@ export function BrandPanel() {
           {/* Logos */}
           {activeBrandKit.logos.length > 0 && (
             <div>
-              <h4 className="text-xs font-semibold text-surface-400 uppercase tracking-wider px-1 mb-2">Logos</h4>
+              <h4 className="text-xs font-semibold text-surface-400 uppercase tracking-wider px-1 mb-2">Logos <span className="font-normal normal-case">— drag to canvas</span></h4>
               <div className="grid grid-cols-2 gap-2">
                 {activeBrandKit.logos.map((logo) => (
-                  <button
-                    key={logo.id}
-                    onClick={() => navigator.clipboard.writeText(logo.sourceUrl)}
-                    className="group rounded-lg border border-surface-200 overflow-hidden hover:border-primary-300 transition-all"
-                    title={`Copy URL: ${logo.name}`}
-                  >
+                  <DraggableBrandAsset key={logo.id} asset={logo} category="logo">
                     <div className="aspect-video bg-surface-50 flex items-center justify-center p-2">
                       <img src={logo.sourceUrl} alt={logo.altText || logo.name} className="max-w-full max-h-full object-contain" />
                     </div>
                     <div className="px-2 py-1.5 text-xs text-surface-600 truncate">{logo.name}</div>
-                  </button>
+                  </DraggableBrandAsset>
                 ))}
               </div>
             </div>
@@ -147,17 +165,12 @@ export function BrandPanel() {
           {/* Property Photos */}
           {activeBrandKit.images.length > 0 && (
             <div>
-              <h4 className="text-xs font-semibold text-surface-400 uppercase tracking-wider px-1 mb-2">Photos</h4>
+              <h4 className="text-xs font-semibold text-surface-400 uppercase tracking-wider px-1 mb-2">Photos <span className="font-normal normal-case">— drag to canvas</span></h4>
               <div className="grid grid-cols-2 gap-2">
                 {activeBrandKit.images.map((img) => (
-                  <button
-                    key={img.id}
-                    onClick={() => navigator.clipboard.writeText(img.sourceUrl)}
-                    className="group rounded-lg border border-surface-200 overflow-hidden hover:border-primary-300 transition-all"
-                    title={`Copy URL: ${img.name}`}
-                  >
+                  <DraggableBrandAsset key={img.id} asset={img} category="photo">
                     <div className="aspect-video bg-surface-100 overflow-hidden">
-                      <img src={img.sourceUrl} alt={img.altText || img.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                      <img src={img.sourceUrl} alt={img.altText || img.name} className="w-full h-full object-cover" />
                     </div>
                     <div className="px-2 py-1">
                       <div className="text-xs text-surface-600 truncate">{img.name}</div>
@@ -169,7 +182,7 @@ export function BrandPanel() {
                         </div>
                       )}
                     </div>
-                  </button>
+                  </DraggableBrandAsset>
                 ))}
               </div>
             </div>
@@ -247,6 +260,29 @@ export function BrandPanel() {
                   >
                     <div className="text-xs font-medium text-surface-600">{snippet.name}</div>
                     <div className="text-xs text-surface-400 truncate mt-0.5">{snippet.content}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Stored Links */}
+          {(activeBrandKit.links || []).length > 0 && (
+            <div>
+              <h4 className="text-xs font-semibold text-surface-400 uppercase tracking-wider px-1 mb-2">Stored Links</h4>
+              <div className="space-y-1.5">
+                {(activeBrandKit.links || []).map((link) => (
+                  <button
+                    key={link.id}
+                    onClick={() => navigator.clipboard.writeText(link.url)}
+                    className="w-full text-left p-2 bg-surface-50 rounded-lg hover:bg-surface-100 transition-colors"
+                    title={`Copy: ${link.url}`}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-medium text-surface-600">{link.label}</span>
+                      <span className="text-[10px] px-1.5 py-0.5 bg-surface-200 rounded text-surface-400">{link.category}</span>
+                    </div>
+                    <div className="text-xs text-surface-400 truncate mt-0.5 font-mono">{link.url}</div>
                   </button>
                 ))}
               </div>

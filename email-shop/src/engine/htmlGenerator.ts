@@ -21,6 +21,10 @@ import type {
   ColorBarBlockData,
   BrandedHeaderBlockData,
   VirtualTourBlockData,
+  ImageGalleryBlockData,
+  EventDetailsBlockData,
+  NumberedStepsBlockData,
+  PromoBarBlockData,
 } from '@/types';
 
 /**
@@ -76,9 +80,10 @@ function wrapRow(content: string, data: { style: { backgroundColor?: string; pad
 
 function renderHeader(data: HeaderBlockData): string {
   const bg = data.backgroundColor || data.style.backgroundColor || '#ffffff';
+  const logoW = Math.min(Math.max(data.logoWidth || 180, 60), 500);
   let content = '';
   if (data.logoUrl) {
-    content = `<img src="${data.logoUrl}" alt="${data.logoAlt || 'Logo'}" width="${data.logoWidth || 180}" style="display: block; margin: 0 auto; max-width: 100%; height: auto; border: 0;" />`;
+    content = `<img src="${data.logoUrl}" alt="${data.logoAlt || 'Logo'}" width="${logoW}" style="display: block; margin: 0 auto; max-width: 85%; height: auto; border: 0;" />`;
   }
   return wrapRow(content, { style: { ...data.style, backgroundColor: bg } });
 }
@@ -151,7 +156,7 @@ function renderImageText(data: ImageTextBlockData): string {
   const textContent = [
     data.heading ? `<h2 style="margin: 0 0 8px; ${ff()} font-size: 20px; font-weight: 700; color: ${data.style.textColor || '#333333'};">${data.heading}</h2>` : '',
     `<p style="margin: 0 0 12px; ${ff()} font-size: 15px; line-height: 1.5; color: ${data.style.textColor || '#555555'};">${data.body}</p>`,
-    data.buttonLabel ? `<a href="${data.buttonUrl || '#'}" target="_blank" style="display: inline-block; ${ff()} background-color: #2563eb; color: #ffffff; padding: 10px 24px; border-radius: 4px; text-decoration: none; font-size: 14px; line-height: 14px; font-weight: 600;">${data.buttonLabel}</a>` : '',
+    data.buttonLabel ? `<a href="${data.buttonUrl || '#'}" target="_blank" style="display: inline-block; ${ff()} background-color: ${data.buttonStyle?.backgroundColor || '#2563eb'}; color: ${data.buttonStyle?.textColor || '#ffffff'}; padding: 10px 24px; border-radius: ${data.buttonStyle?.borderRadius ?? 4}px; text-decoration: none; font-size: 14px; line-height: 14px; font-weight: 600; mso-padding-alt: 0;">${data.buttonLabel}</a>` : '',
   ].join('\n');
   const textCell = `<td width="${textPercent}%" valign="top" style="${ff()} padding: 8px;">${textContent}</td>`;
   const cells = data.imagePosition === 'left' ? imgCell + textCell : textCell + imgCell;
@@ -210,18 +215,21 @@ function _autoMatchIcon(label: string): string | undefined {
 }
 
 function renderFloorplanSpotlight(data: FloorplanSpotlightBlockData): string {
+  const btnBg = data.buttonStyle?.backgroundColor || '#2563eb';
+  const btnText = data.buttonStyle?.textColor || '#ffffff';
+  const btnRadius = data.buttonStyle?.borderRadius ?? 4;
   const content = `<h2 style="margin: 0 0 16px; ${ff()} text-align: center; font-size: 22px; color: ${data.style.textColor || '#333'};">${data.heading}</h2>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
 <tr>
-  <td width="50%" valign="top" style="${ff()} padding: 8px;">
-    <img src="${data.floorplanImageUrl}" alt="${data.floorplanImageAlt}" width="100%" style="display: block; max-width: 100%; height: auto; border: 0;" />
+  <td width="45%" valign="middle" style="${ff()} padding: 8px;">
+    ${data.floorplanImageUrl ? `<img src="${data.floorplanImageUrl}" alt="${data.floorplanImageAlt}" width="260" style="display: block; width: 100%; max-width: 260px; height: auto; border: 0; margin: 0 auto;" />` : ''}
   </td>
-  <td width="50%" valign="top" style="${ff()} padding: 16px;">
-    <h3 style="margin: 0 0 8px; ${ff()} font-size: 18px;">${data.unitName}</h3>
-    <p style="margin: 0 0 4px; ${ff()} font-size: 14px; color: #666;">${data.bedsBaths}</p>
-    <p style="margin: 0 0 4px; ${ff()} font-size: 14px; color: #666;">${data.sqft} sq ft</p>
-    <p style="margin: 0 0 16px; ${ff()} font-size: 18px; font-weight: 700; color: #333;">${data.price}</p>
-    <a href="${data.buttonUrl}" target="_blank" style="display: inline-block; ${ff()} background-color: #2563eb; color: #fff; padding: 10px 24px; border-radius: 4px; text-decoration: none; font-size: 14px; line-height: 14px; font-weight: 600;">${data.buttonLabel}</a>
+  <td width="55%" valign="middle" style="${ff()} padding: 16px;">
+    <h3 style="margin: 0 0 8px; ${ff()} font-size: 18px; color: ${data.style.textColor || '#333'};">${data.unitName}</h3>
+    <p style="margin: 0 0 4px; ${ff()} font-size: 14px; line-height: 1.4; color: #666;">${data.bedsBaths}</p>
+    <p style="margin: 0 0 4px; ${ff()} font-size: 14px; line-height: 1.4; color: #666;">${data.sqft} sq ft</p>
+    <p style="margin: 0 0 16px; ${ff()} font-size: 18px; font-weight: 700; color: ${data.style.textColor || '#333'};">${data.price}</p>
+    <a href="${data.buttonUrl}" target="_blank" style="display: inline-block; ${ff()} background-color: ${btnBg}; color: ${btnText}; padding: 10px 24px; border-radius: ${btnRadius}px; text-decoration: none; font-size: 14px; line-height: 14px; font-weight: 600; mso-padding-alt: 0;">${data.buttonLabel}</a>
   </td>
 </tr>
 </table>`;
@@ -338,6 +346,61 @@ function renderVirtualTour(data: VirtualTourBlockData): string {
   return wrapRow(content, data);
 }
 
+function renderImageGallery(data: ImageGalleryBlockData): string {
+  const colW = Math.floor(100 / data.columns);
+  const cells = data.images.slice(0, data.columns).map(
+    (img) => `<td width="${colW}%" valign="top" style="${ff()} padding: ${data.gap / 2}px;">
+      ${img.url ? (img.linkUrl
+        ? `<a href="${img.linkUrl}" target="_blank" style="text-decoration: none;"><img src="${img.url}" alt="${img.alt}" width="100%" style="display: block; max-width: 100%; height: auto; border: 0; border-radius: 4px;" /></a>`
+        : `<img src="${img.url}" alt="${img.alt}" width="100%" style="display: block; max-width: 100%; height: auto; border: 0; border-radius: 4px;" />`)
+      : ''}
+    </td>`,
+  ).join('');
+  let content = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>${cells}</tr></table>`;
+  if (data.caption) content += `<p style="margin: 8px 0 0; ${ff()} text-align: center; font-size: 12px; color: #999;">${data.caption}</p>`;
+  return wrapRow(content, data);
+}
+
+function renderEventDetails(data: EventDetailsBlockData): string {
+  const content = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border: 2px solid ${data.accentColor}; border-radius: 8px; overflow: hidden;">
+<tr><td style="${ff()} background-color: ${data.accentColor}; color: #ffffff; padding: 14px 20px; text-align: center; font-size: 20px; font-weight: 700;">${data.eventName}</td></tr>
+<tr><td style="${ff()} padding: 20px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr><td width="70" style="${ff()} padding: 4px 0; font-size: 13px; font-weight: 700; color: #999;">Date</td><td style="${ff()} padding: 4px 0; font-size: 14px; color: #333;">${data.date}</td></tr>
+    <tr><td width="70" style="${ff()} padding: 4px 0; font-size: 13px; font-weight: 700; color: #999;">Time</td><td style="${ff()} padding: 4px 0; font-size: 14px; color: #333;">${data.time}</td></tr>
+    <tr><td width="70" style="${ff()} padding: 4px 0; font-size: 13px; font-weight: 700; color: #999;">Where</td><td style="${ff()} padding: 4px 0; font-size: 14px; color: #333;">${data.location}</td></tr>
+  </table>
+  ${data.description ? `<p style="margin: 12px 0 0; ${ff()} font-size: 14px; line-height: 1.5; color: #555; border-top: 1px solid #eee; padding-top: 12px;">${data.description}</p>` : ''}
+  ${data.buttonLabel ? `<div style="${ff()} text-align: center; padding-top: 16px;"><a href="${data.buttonUrl || '#'}" target="_blank" style="display: inline-block; ${ff()} background-color: ${data.accentColor}; color: #ffffff; padding: 10px 28px; border-radius: 6px; text-decoration: none; font-size: 14px; line-height: 14px; font-weight: 700;">${data.buttonLabel}</a></div>` : ''}
+</td></tr>
+</table>`;
+  return wrapRow(content, data);
+}
+
+function renderNumberedSteps(data: NumberedStepsBlockData): string {
+  const rows = data.steps.map((step, i) =>
+    `<tr>
+      <td width="40" valign="top" style="${ff()} padding: 8px 12px 8px 0; text-align: center;">
+        <div style="${ff()} width: 32px; height: 32px; line-height: 32px; border-radius: 16px; background-color: ${data.accentColor}; color: #ffffff; font-size: 14px; font-weight: 700; text-align: center; margin: 0 auto;">${i + 1}</div>
+      </td>
+      <td valign="top" style="${ff()} padding: 8px 0;">
+        <strong style="${ff()} font-size: 14px; color: #333;">${step.title}</strong>
+        <p style="margin: 2px 0 0; ${ff()} font-size: 13px; line-height: 1.5; color: #666;">${step.description}</p>
+      </td>
+    </tr>`,
+  ).join('');
+  const content = `<h2 style="margin: 0 0 16px; ${ff()} text-align: center; font-size: 20px; font-weight: 700; color: ${data.accentColor};">${data.heading}</h2>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${rows}</table>`;
+  return wrapRow(content, data);
+}
+
+function renderPromoBar(data: PromoBarBlockData): string {
+  const linkHtml = data.linkLabel && data.linkUrl
+    ? ` <a href="${data.linkUrl}" target="_blank" style="${ff()} color: ${data.textColor}; text-decoration: underline; font-weight: 600;">${data.linkLabel}</a>`
+    : '';
+  return `<tr><td style="${ff()} background-color: ${data.backgroundColor}; color: ${data.textColor}; padding: 10px 16px; text-align: center; font-size: ${data.fontSize || 14}px; font-weight: 600; line-height: 1.4;">${data.text}${linkHtml}</td></tr>`;
+}
+
 // ---- Main block renderer ----
 
 function renderBlock(block: EmailBlock): string {
@@ -363,6 +426,10 @@ function renderBlock(block: EmailBlock): string {
     case 'color-bar': return renderColorBar(block.data as ColorBarBlockData);
     case 'branded-header': return renderBrandedHeader(block.data as BrandedHeaderBlockData);
     case 'virtual-tour': return renderVirtualTour(block.data as VirtualTourBlockData);
+    case 'image-gallery': return renderImageGallery(block.data as ImageGalleryBlockData);
+    case 'event-details': return renderEventDetails(block.data as EventDetailsBlockData);
+    case 'numbered-steps': return renderNumberedSteps(block.data as NumberedStepsBlockData);
+    case 'promo-bar': return renderPromoBar(block.data as PromoBarBlockData);
     default: return '';
   }
 }
@@ -407,10 +474,19 @@ body, table, td, p, a, span {font-family: ${fontFamily}, sans-serif !important;}
 <![endif]-->
 <style type="text/css">
   body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
-  table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
-  img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
-  body { margin: 0; padding: 0; width: 100% !important; height: 100% !important; }
+  table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-collapse: collapse; }
+  img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; display: block; }
+  body { margin: 0; padding: 0; width: 100% !important; height: 100% !important; -webkit-font-smoothing: antialiased; }
+  p { margin: 0; padding: 0; }
   a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !important; font-size: inherit !important; font-family: inherit !important; font-weight: inherit !important; line-height: inherit !important; }
+  #MessageViewBody a { color: inherit; text-decoration: none; }
+  .ExternalClass { width: 100%; }
+  .ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font, .ExternalClass td, .ExternalClass div { line-height: 100%; }
+  @media only screen and (max-width: 620px) {
+    table.email-container { width: 100% !important; }
+    td.stack-column { display: block !important; width: 100% !important; }
+    img.fluid { width: 100% !important; max-width: 100% !important; height: auto !important; }
+  }
 </style>
 </head>
 <body style="margin: 0; padding: 0; background-color: ${bodyBackgroundColor}; ${ff()} color: ${defaultTextColor};">

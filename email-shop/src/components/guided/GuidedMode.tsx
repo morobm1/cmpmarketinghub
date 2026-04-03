@@ -9,6 +9,7 @@ import {
   LayoutTemplate, ImageIcon, Type, MousePointer,
   Star, ListChecks, Eye,
 } from 'lucide-react';
+import { getEmailButtonCTAs, getTop25 } from '@/data/ctaLibrary';
 
 type GuidedStep = 'purpose' | 'header' | 'hero' | 'content' | 'cta' | 'extras' | 'ending' | 'review';
 
@@ -125,50 +126,50 @@ export function GuidedMode() {
     const base = (bg?: string) => ({ backgroundColor: bg || '', paddingTop: 16, paddingBottom: 16, paddingLeft: 32, paddingRight: 32, textAlign: 'center' as const });
 
     // Header
-    blocks.push({ id: bid(), type: 'header', data: { ...blockDefaults['header'], style: { ...base(state.headerColor) }, logoUrl: state.headerLogoUrl, logoAlt: 'Logo', logoWidth: 180, backgroundColor: state.headerColor } });
+    blocks.push({ id: bid(), type: 'header', data: { ...(blockDefaults['header'] as any), style: { ...base(state.headerColor) }, logoUrl: state.headerLogoUrl, logoAlt: 'Logo', logoWidth: 180, backgroundColor: state.headerColor } });
 
     // Hero
     if (state.includeHero) {
-      blocks.push({ id: bid(), type: 'hero-image', data: { ...blockDefaults['hero-image'], imageUrl: state.heroImageUrl, altText: 'Email banner' } });
+      blocks.push({ id: bid(), type: 'hero-image', data: { ...(blockDefaults['hero-image'] as any), imageUrl: state.heroImageUrl, altText: 'Email banner' } });
     }
 
     // Heading
     if (state.headingText) {
-      blocks.push({ id: bid(), type: 'text', data: { ...blockDefaults['text'], style: { ...base(), textAlign: 'left', textColor: state.headingColor }, content: state.headingText, fontSize: 24, fontWeight: 700, lineHeight: 1.3 } });
+      blocks.push({ id: bid(), type: 'text', data: { ...(blockDefaults['text'] as any), style: { ...base(), textAlign: 'left', textColor: state.headingColor }, content: state.headingText, fontSize: 24, fontWeight: 700, lineHeight: 1.3 } });
     }
 
     // Body
     if (state.bodyText) {
-      blocks.push({ id: bid(), type: 'text', data: { ...blockDefaults['text'], style: { ...base(), textAlign: 'left', textColor: '#555555', paddingTop: 8 }, content: state.bodyText, fontSize: 15, fontWeight: 400, lineHeight: 1.7 } });
+      blocks.push({ id: bid(), type: 'text', data: { ...(blockDefaults['text'] as any), style: { ...base(), textAlign: 'left', textColor: '#555555', paddingTop: 8 }, content: state.bodyText, fontSize: 15, fontWeight: 400, lineHeight: 1.7 } });
     }
 
     // CTA Button
     if (state.includeButton) {
-      blocks.push({ id: bid(), type: 'button', data: { ...blockDefaults['button'], style: { ...base() }, label: state.buttonLabel, url: state.buttonUrl, backgroundColor: state.buttonColor, textColor: state.buttonTextColor } });
+      blocks.push({ id: bid(), type: 'button', data: { ...(blockDefaults['button'] as any), style: { ...base() }, label: state.buttonLabel, url: state.buttonUrl, backgroundColor: state.buttonColor, textColor: state.buttonTextColor } });
     }
 
     // Promo Banner
     if (state.includePromo) {
-      blocks.push({ id: bid(), type: 'promo-banner', data: { ...blockDefaults['promo-banner'], heading: state.promoHeading, subheading: state.promoSubheading, backgroundColor: state.promoColor, textColor: '#ffffff' } });
+      blocks.push({ id: bid(), type: 'promo-banner', data: { ...(blockDefaults['promo-banner'] as any), heading: state.promoHeading, subheading: state.promoSubheading, backgroundColor: state.promoColor, textColor: '#ffffff' } });
     }
 
     // Amenities
     if (state.includeAmenities) {
-      blocks.push({ id: bid(), type: 'amenities', data: { ...blockDefaults['amenities'] } });
+      blocks.push({ id: bid(), type: 'amenities', data: { ...(blockDefaults['amenities'] as any) } });
     }
 
     // Floorplan
     if (state.includeFloorplan) {
-      blocks.push({ id: bid(), type: 'floorplan-spotlight', data: { ...blockDefaults['floorplan-spotlight'] } });
+      blocks.push({ id: bid(), type: 'floorplan-spotlight', data: { ...(blockDefaults['floorplan-spotlight'] as any) } });
     }
 
     // Testimonial
     if (state.includeTestimonial) {
-      blocks.push({ id: bid(), type: 'testimonial', data: { ...blockDefaults['testimonial'] } });
+      blocks.push({ id: bid(), type: 'testimonial', data: { ...(blockDefaults['testimonial'] as any) } });
     }
 
     // End bar
-    blocks.push({ id: bid(), type: 'color-bar', data: { ...blockDefaults['color-bar'], color: state.endingBarColor } });
+    blocks.push({ id: bid(), type: 'color-bar', data: { ...(blockDefaults['color-bar'] as any), color: state.endingBarColor } });
 
     return blocks;
   };
@@ -397,6 +398,16 @@ function StepCTA({ state, update }: { state: GuidedState; update: (p: Partial<Gu
           <div>
             <label className="block text-xs font-medium text-surface-500 mb-1">Button Label</label>
             <input type="text" value={state.buttonLabel} onChange={(e) => update({ buttonLabel: e.target.value })} className="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-surface-500 mb-1.5">Quick CTA Suggestions</label>
+            <div className="flex flex-wrap gap-1.5">
+              {getEmailButtonCTAs().map((cta) => (
+                <button key={cta} onClick={() => update({ buttonLabel: cta })} className={'px-2.5 py-1 text-xs rounded-full transition-colors ' + (state.buttonLabel === cta ? 'bg-primary-600 text-white' : 'bg-surface-100 text-surface-600 hover:bg-primary-50 hover:text-primary-700')}>
+                  {cta}
+                </button>
+              ))}
+            </div>
           </div>
           <div>
             <label className="block text-xs font-medium text-surface-500 mb-1">Button URL</label>

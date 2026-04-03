@@ -10,8 +10,8 @@ import {
   type PendingBrandKit,
   type KnownProperty,
 } from '@/services/bulkBrandKitService';
-import { ArrowLeft, Palette, Plus, Trash2, Edit3, Check, X, Copy, Loader2, ImageIcon, Eye, Download, Upload, FileSpreadsheet, AlertTriangle, CheckCircle2, Search } from 'lucide-react';
-import type { BrandKit, BrandColor, BrandFont, ButtonStyle, ContentSnippet, Asset, AssetCategory } from '@/types';
+import { ArrowLeft, Palette, Plus, Trash2, Edit3, Check, X, Copy, Loader2, ImageIcon, Eye, Download, Upload, FileSpreadsheet, AlertTriangle, CheckCircle2, Search, Link2 } from 'lucide-react';
+import type { BrandKit, BrandColor, BrandFont, ButtonStyle, ContentSnippet, BrandLink, BrandLinkCategory, Asset, AssetCategory } from '@/types';
 
 // Tag presets for image management
 const PHOTO_TAG_PRESETS = ['Building', 'Exterior', 'Interior', 'Lobby', 'Pool', 'Gym', 'Kitchen', 'Bedroom', 'Bathroom', 'Living Room', 'Bike Storage', 'Events', 'Community', 'Study Lounge', 'Rooftop', 'Parking', 'Laundry', 'Pet Area'];
@@ -32,6 +32,7 @@ function createEmptyBrandKit(propertyId: string, propertyName: string): BrandKit
     fonts: [{ id: 'f-' + Date.now(), name: 'Primary', family: 'Arial', fallback: 'Helvetica, sans-serif' }],
     buttonStyles: [],
     snippets: [],
+    links: [],
     contactInfo: { phone: '', email: '', address: '', website: '' },
     createdAt: now,
     updatedAt: now,
@@ -917,6 +918,71 @@ function BrandKitEditor({
               className="flex items-center gap-1.5 px-3 py-2 text-sm text-primary-600 hover:bg-primary-50 rounded-lg"
             >
               <Plus size={14} /> Add Snippet
+            </button>
+          </div>
+        </Section>
+
+        {/* Links */}
+        <Section title="Stored Links">
+          <p className="text-xs text-surface-400 mb-3">Store property URLs so they can be quickly inserted into buttons and links throughout your emails.</p>
+          <div className="space-y-2">
+            {(kit.links || []).map((link, i) => (
+              <div key={link.id} className="flex items-center gap-3 p-3 border border-surface-200 rounded-lg">
+                <Link2 size={16} className="text-surface-400 shrink-0" />
+                <input
+                  type="text"
+                  value={link.label}
+                  onChange={(e) => {
+                    const l = [...(kit.links || [])];
+                    l[i] = { ...link, label: e.target.value };
+                    update({ links: l });
+                  }}
+                  className="w-36 px-3 py-1.5 text-sm border border-surface-200 rounded-lg"
+                  placeholder="Label"
+                />
+                <select
+                  value={link.category}
+                  onChange={(e) => {
+                    const l = [...(kit.links || [])];
+                    l[i] = { ...link, category: e.target.value as BrandLinkCategory };
+                    update({ links: l });
+                  }}
+                  className="px-3 py-1.5 text-sm border border-surface-200 rounded-lg bg-white"
+                >
+                  <option value="website">Website</option>
+                  <option value="prospect-portal">Prospect Portal</option>
+                  <option value="resident-portal">Resident Portal</option>
+                  <option value="apply">Apply</option>
+                  <option value="tour">Tour</option>
+                  <option value="survey">Survey</option>
+                  <option value="google-form">Google Form</option>
+                  <option value="social">Social</option>
+                  <option value="other">Other</option>
+                </select>
+                <input
+                  type="url"
+                  value={link.url}
+                  onChange={(e) => {
+                    const l = [...(kit.links || [])];
+                    l[i] = { ...link, url: e.target.value };
+                    update({ links: l });
+                  }}
+                  className="flex-1 px-3 py-1.5 text-sm border border-surface-200 rounded-lg font-mono"
+                  placeholder="https://..."
+                />
+                <button
+                  onClick={() => update({ links: (kit.links || []).filter((_, j) => j !== i) })}
+                  className="p-2 text-surface-400 hover:text-red-500 rounded-md hover:bg-red-50 shrink-0"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+            <button
+              onClick={() => update({ links: [...(kit.links || []), { id: 'lnk-' + Date.now(), label: '', url: '', category: 'website' as BrandLinkCategory }] })}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-primary-600 hover:bg-primary-50 rounded-lg"
+            >
+              <Plus size={14} /> Add Link
             </button>
           </div>
         </Section>

@@ -245,10 +245,12 @@
     </div>
   </nav>
 
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <main id="appContainer" class="container hidden">
     <!-- Tabs Navigation -->
     <div class="tabs">
-      <button class="tab-btn active" data-tab="users">User Management</button>
+      <button class="tab-btn active" data-tab="users">👤 User Management</button>
+      <button class="tab-btn" data-tab="properties">🏢 Properties</button>
       <button class="tab-btn" data-tab="catalog">Uniform Catalog</button>
       <button class="tab-btn" onclick="location.href='cmpfont.html'">CMP Font</button>
       <button class="tab-btn" onclick="location.href='calendar_test.html'" style="background:#fef3c7;border-color:#fcd34d;color:#92400e">🧪 Calendar UX Test</button>
@@ -274,6 +276,11 @@
             <button class="add-user-btn" id="addUserBtn">
               <span style="font-size:18px">+</span> Add New User
             </button>
+            <div style="display:flex;gap:6px;padding:10px 16px;border-top:1px solid var(--border)">
+              <button class="btn sm primary" id="bulkImportBtn" style="flex:1;padding:8px 10px;font-size:12px;font-weight:600;background:var(--brand-primary);color:#fff;border:none;border-radius:6px;cursor:pointer">📥 Import</button>
+              <button class="btn sm" id="downloadTemplateBtn" style="flex:1;padding:8px 10px;font-size:12px;font-weight:600;background:#fff;color:var(--text);border:1px solid var(--border);border-radius:6px;cursor:pointer">📄 Template</button>
+              <button class="btn sm" id="auditExportBtn" style="flex:1;padding:8px 10px;font-size:12px;font-weight:600;background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;border-radius:6px;cursor:pointer">📊 Audit</button>
+            </div>
           </div>
         </aside>
 
@@ -368,6 +375,61 @@
             </div>
           </div>
         </section>
+      </div>
+    </div>
+
+    <!-- Properties Tab -->
+    <div id="propertiesTab" class="tab-content">
+      <section class="card" style="background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden">
+        <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+          <h2 style="font-size:18px;font-weight:700;margin:0">🏢 Property Management</h2>
+          <span style="font-size:12px;color:var(--subtext)" id="propCount">0 properties</span>
+        </div>
+        <div style="padding:24px">
+          <div id="propList" style="display:grid;gap:8px;margin-bottom:20px"></div>
+          <div style="border-top:1px solid var(--border);padding-top:16px">
+            <h3 style="font-size:14px;font-weight:700;margin-bottom:12px">Add New Property</h3>
+            <div style="display:flex;gap:8px">
+              <input type="text" id="newPropName" placeholder="Property Name (e.g., Parkview Tower)" style="flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+              <button id="addPropBtn" style="padding:10px 20px;background:var(--brand-primary);color:#fff;border:none;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer">Add Property</button>
+            </div>
+            <p id="newPropId" style="font-size:11px;color:var(--subtext);margin-top:6px"></p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Bulk Import Modal -->
+    <div id="importModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center">
+      <div style="background:#fff;border-radius:16px;max-width:640px;width:90%;max-height:85vh;overflow:auto;padding:24px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <h3 id="importTitle" style="font-size:18px;font-weight:700;margin:0">📥 Bulk Import Users</h3>
+          <button id="importCloseBtn" style="background:none;border:none;font-size:24px;cursor:pointer;color:#999">&times;</button>
+        </div>
+        <div id="importUpload">
+          <div style="border:2px dashed var(--border);border-radius:12px;padding:32px;text-align:center;cursor:pointer" id="importDropZone">
+            <p style="font-size:14px;font-weight:600;margin-bottom:4px">Drop an Excel file here or click to upload</p>
+            <p style="font-size:12px;color:var(--subtext)">Accepts .xlsx files with columns: username, password, role, email, properties</p>
+            <input type="file" id="importFileInput" accept=".xlsx,.xls" style="display:none">
+          </div>
+        </div>
+        <div id="importPreview" style="display:none">
+          <p style="font-size:13px;color:var(--subtext);margin-bottom:12px" id="importSummary"></p>
+          <div style="max-height:300px;overflow:auto;border:1px solid var(--border);border-radius:8px;margin-bottom:16px">
+            <table style="width:100%;border-collapse:collapse;font-size:12px" id="importTable">
+              <thead><tr style="background:#f8fafc"><th style="padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)">Username</th><th style="padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)">Role</th><th style="padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)">Properties</th><th style="padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)">Status</th></tr></thead>
+              <tbody id="importTableBody"></tbody>
+            </table>
+          </div>
+          <div style="display:flex;gap:8px;justify-content:flex-end">
+            <button id="importCancelBtn" style="padding:10px 20px;background:#fff;border:1px solid var(--border);border-radius:8px;font-weight:600;cursor:pointer">Cancel</button>
+            <button id="importConfirmBtn" style="padding:10px 20px;background:var(--brand-primary);color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer">Import Users</button>
+          </div>
+        </div>
+        <div id="importResults" style="display:none">
+          <div id="importResultsContent"></div>
+          <button id="importDoneBtn" style="margin-top:16px;padding:10px 20px;background:var(--brand-primary);color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;width:100%">Done</button>
+        </div>
       </div>
     </div>
 
@@ -1491,6 +1553,226 @@ Capstone Management Partners`;
       loadCatalog();
       initCatalogHandlers();
     }
+
+    // ==================== BULK USER IMPORT ====================
+    
+    let parsedImportUsers = [];
+
+    document.getElementById('bulkImportBtn').addEventListener('click', () => {
+      document.getElementById('importModal').style.display = 'flex';
+      document.getElementById('importUpload').style.display = '';
+      document.getElementById('importPreview').style.display = 'none';
+      document.getElementById('importResults').style.display = 'none';
+      document.getElementById('importFileInput').value = '';
+    });
+
+    document.getElementById('importCloseBtn').addEventListener('click', () => {
+      document.getElementById('importModal').style.display = 'none';
+    });
+
+    document.getElementById('importDropZone').addEventListener('click', () => {
+      document.getElementById('importFileInput').click();
+    });
+
+    document.getElementById('importFileInput').addEventListener('change', (e) => {
+      if (e.target.files[0]) parseImportFile(e.target.files[0]);
+    });
+
+    document.getElementById('importDropZone').addEventListener('dragover', (e) => { e.preventDefault(); e.currentTarget.style.borderColor = '#52d5ff'; });
+    document.getElementById('importDropZone').addEventListener('dragleave', (e) => { e.currentTarget.style.borderColor = ''; });
+    document.getElementById('importDropZone').addEventListener('drop', (e) => {
+      e.preventDefault(); e.currentTarget.style.borderColor = '';
+      if (e.dataTransfer.files[0]) parseImportFile(e.dataTransfer.files[0]);
+    });
+
+    function matchPropertyNameToId(input) {
+      if (!input) return input;
+      const norm = input.toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (input === '*') return '*';
+      // Check if it's already a valid property ID
+      const exactId = properties.find(p => (typeof p === 'object' ? (p._id || p.id) : p) === input);
+      if (exactId) return input;
+      // Try matching by name
+      for (const p of properties) {
+        const name = typeof p === 'object' ? p.name : p;
+        const id = typeof p === 'object' ? (p._id || p.id) : p;
+        if (name.toLowerCase().replace(/[^a-z0-9]/g, '') === norm) return id;
+        if (name.toLowerCase().includes(input.toLowerCase())) return id;
+        if (id.toLowerCase() === norm) return id;
+      }
+      return input; // Return as-is if no match found
+    }
+
+    function parseImportFile(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+          const sheet = wb.Sheets[wb.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+          parsedImportUsers = rows.filter(r => r.username).map(r => {
+            const rawProps = String(r.properties || '').split(',').map(p => p.trim()).filter(Boolean);
+            const matchedProps = rawProps.map(p => ({ original: p, matched: matchPropertyNameToId(p) }));
+            return {
+              username: String(r.username || '').trim(),
+              password: String(r.password || '').trim(),
+              role: String(r.role || 'user').trim().toLowerCase(),
+              email: String(r.email || '').trim(),
+              properties: matchedProps.map(m => m.matched),
+              propertyMatches: matchedProps,
+              status: ''
+            };
+          });
+          showImportPreview();
+        } catch (err) {
+          alert('Failed to parse file: ' + err.message);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function showImportPreview() {
+      document.getElementById('importUpload').style.display = 'none';
+      document.getElementById('importPreview').style.display = '';
+      document.getElementById('importSummary').textContent = parsedImportUsers.length + ' user(s) found. Property names auto-matched to IDs where possible.';
+      const tbody = document.getElementById('importTableBody');
+      tbody.innerHTML = parsedImportUsers.map((u, i) => {
+        const warn = !u.username || !u.password;
+        const propHtml = u.propertyMatches.map(m => {
+          if (m.original === m.matched) return `<span style="color:var(--text)">${m.matched}</span>`;
+          return `<span style="color:#22c55e" title="Matched: ${m.original} → ${m.matched}">${m.original} → <strong>${m.matched}</strong></span>`;
+        }).join(', ') || '<em style="color:var(--subtext)">none</em>';
+        return `<tr style="${warn ? 'background:#fef2f2' : ''}"><td style="padding:6px 10px;border-bottom:1px solid var(--border)">${u.username || '<em style=color:red>missing</em>'}</td><td style="padding:6px 10px;border-bottom:1px solid var(--border)">${u.role}</td><td style="padding:6px 10px;border-bottom:1px solid var(--border);font-size:11px">${propHtml}</td><td style="padding:6px 10px;border-bottom:1px solid var(--border)" id="importStatus${i}">Ready</td></tr>`;
+      }).join('');
+    }
+
+    document.getElementById('importCancelBtn').addEventListener('click', () => {
+      document.getElementById('importUpload').style.display = '';
+      document.getElementById('importPreview').style.display = 'none';
+      document.getElementById('importFileInput').value = '';
+    });
+
+    document.getElementById('importConfirmBtn').addEventListener('click', async () => {
+      let success = 0, failed = 0;
+      for (let i = 0; i < parsedImportUsers.length; i++) {
+        const u = parsedImportUsers[i];
+        const statusEl = document.getElementById('importStatus' + i);
+        if (!u.username || !u.password) { statusEl.textContent = '⚠️ Skipped'; statusEl.style.color = '#f59e0b'; failed++; continue; }
+        statusEl.textContent = '⏳ Importing...';
+        try {
+          const res = await fetch('/.netlify/functions/auth-users', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: u.username, password: u.password, role: u.role, properties: u.properties }) });
+          if (!res.ok) throw new Error(await res.text());
+          statusEl.textContent = '✅ Done'; statusEl.style.color = '#22c55e'; success++;
+        } catch (err) {
+          statusEl.textContent = '❌ ' + (err.message || 'Failed'); statusEl.style.color = '#ef4444'; failed++;
+        }
+      }
+      document.getElementById('importPreview').style.display = 'none';
+      document.getElementById('importResults').style.display = '';
+      document.getElementById('importResultsContent').innerHTML = `<div style="text-align:center;padding:16px"><p style="font-size:32px;margin-bottom:8px">${failed === 0 ? '🎉' : '⚠️'}</p><p style="font-size:16px;font-weight:700">${success} imported successfully</p>${failed > 0 ? `<p style="font-size:13px;color:#ef4444">${failed} failed or skipped</p>` : ''}</div>`;
+      await fetchUsers(); await fetchProperties(); renderUserList();
+    });
+
+    document.getElementById('importDoneBtn').addEventListener('click', () => {
+      document.getElementById('importModal').style.display = 'none';
+    });
+
+    document.getElementById('auditExportBtn').addEventListener('click', () => {
+      if (users.length === 0) { alert('No users loaded.'); return; }
+      const rows = [['Username', 'Role', 'Properties', 'Property Names']];
+      users.forEach(u => {
+        const propIds = u.properties === '*' ? ['* (All)'] : (u.properties || []);
+        const propNames = u.properties === '*' ? ['All Properties'] : (u.properties || []).map(pid => {
+          const p = properties.find(pr => (typeof pr === 'object' ? (pr._id || pr.id) : pr) === pid);
+          return p ? (typeof p === 'object' ? p.name : p) : pid;
+        });
+        rows.push([u.username, u.role, propIds.join(', '), propNames.join(', ')]);
+      });
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols'] = [{ wch: 20 }, { wch: 10 }, { wch: 40 }, { wch: 40 }];
+      XLSX.utils.book_append_sheet(wb, ws, 'User Audit');
+      const date = new Date().toISOString().slice(0, 10);
+      XLSX.writeFile(wb, `User_Audit_${date}.xlsx`);
+    });
+
+    document.getElementById('downloadTemplateBtn').addEventListener('click', () => {
+      const wb = XLSX.utils.book_new();
+      const data = [['username', 'password', 'role', 'email', 'properties'], ['jdoe', 'TempPass123!', 'user', 'jdoe@example.com', 'Parkview Tower, Sunrise Lofts'], ['admin2', 'AdminPass!', 'admin', 'admin2@example.com', '*']];
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      ws['!cols'] = [{ wch: 18 }, { wch: 16 }, { wch: 8 }, { wch: 28 }, { wch: 40 }];
+      XLSX.utils.book_append_sheet(wb, ws, 'Users');
+      // Instructions sheet
+      const instrData = [['User Import Template — Instructions'], [''], ['Columns:'], ['• username — Required. Login username.'], ['• password — Required. Initial password.'], ['• role — "admin" or "user" (default: user)'], ['• email — Optional. Email address.'], ['• properties — Comma-separated. You can use property NAMES or IDs.'], ['  The system will auto-match names to IDs on import.'], ['  Use * for admin access to all properties.'], [''], ['Example properties: "Parkview Tower, Sunrise Lofts" or "parkview-tower, sunrise-lofts"']];
+      const instrWs = XLSX.utils.aoa_to_sheet(instrData);
+      instrWs['!cols'] = [{ wch: 70 }];
+      XLSX.utils.book_append_sheet(wb, instrWs, 'Instructions');
+      XLSX.writeFile(wb, 'User_Import_Template.xlsx');
+    });
+
+    // ==================== PROPERTY MANAGEMENT ====================
+
+    function renderPropertyList() {
+      const list = document.getElementById('propList');
+      document.getElementById('propCount').textContent = properties.length + ' properties';
+      list.innerHTML = properties.map(p => {
+        const name = typeof p === 'object' ? p.name : p;
+        const id = typeof p === 'object' ? (p._id || p.id) : p;
+        return `<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:#fff;border:1px solid var(--border);border-radius:8px" data-propid="${id}">
+          <span style="flex:1;font-weight:600;font-size:13px" class="prop-name-display">${name}</span>
+          <code style="font-size:11px;color:var(--subtext);background:#f1f5f9;padding:3px 8px;border-radius:4px">${id}</code>
+          <button onclick="startRenameProp('${id}','${name.replace(/'/g, "\\'")}')" style="padding:4px 10px;font-size:11px;font-weight:600;background:#fff;border:1px solid var(--border);border-radius:6px;cursor:pointer">✏️ Rename</button>
+        </div>`;
+      }).join('');
+    }
+
+    window.startRenameProp = function(id, currentName) {
+      const el = document.querySelector(`[data-propid="${id}"] .prop-name-display`);
+      if (!el) return;
+      el.innerHTML = `<input type="text" value="${currentName}" style="padding:4px 8px;border:1px solid var(--brand-accent-2);border-radius:4px;font-size:13px;width:200px" id="renameInput_${id}"><button onclick="saveRenameProp('${id}')" style="margin-left:6px;padding:4px 10px;font-size:11px;font-weight:600;background:var(--brand-primary);color:#fff;border:none;border-radius:6px;cursor:pointer">Save</button>`;
+      document.getElementById('renameInput_' + id).focus();
+    };
+
+    window.saveRenameProp = async function(id) {
+      const input = document.getElementById('renameInput_' + id);
+      if (!input) return;
+      const newName = input.value.trim();
+      if (!newName) return;
+      try {
+        const res = await fetch('/.netlify/functions/properties', { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, name: newName }) });
+        if (!res.ok) throw new Error(await res.text());
+        await fetchProperties(); renderPropertyList(); 
+      } catch (err) {
+        alert('Rename failed: ' + err.message);
+      }
+    };
+
+    document.getElementById('addPropBtn').addEventListener('click', async () => {
+      const name = document.getElementById('newPropName').value.trim();
+      if (!name) return;
+      try {
+        const res = await fetch('/.netlify/functions/properties', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
+        if (!res.ok) throw new Error(await res.text());
+        document.getElementById('newPropName').value = '';
+        document.getElementById('newPropId').textContent = '';
+        await fetchProperties(); renderPropertyList();
+      } catch (err) {
+        alert('Failed to add property: ' + err.message);
+      }
+    });
+
+    document.getElementById('newPropName').addEventListener('input', (e) => {
+      const slug = e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      document.getElementById('newPropId').textContent = slug ? 'ID will be: ' + slug : '';
+    });
+
+    // Load properties on tab switch
+    const origTabClick = document.querySelectorAll('.tab-btn');
+    origTabClick.forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.getAttribute('data-tab') === 'properties') renderPropertyList();
+      });
+    });
 
     init();
   </script>

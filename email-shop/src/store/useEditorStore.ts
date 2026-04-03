@@ -197,10 +197,29 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
   addBlock: (type, index) => {
     const state = get();
     state.pushHistory();
+    const data = JSON.parse(JSON.stringify(blockDefaults[type]));
+
+    // Auto-populate footer with active brand kit contact info
+    if (type === 'footer' && state.activeBrandKit) {
+      const kit = state.activeBrandKit;
+      if (kit.contactInfo?.phone) data.phone = kit.contactInfo.phone;
+      if (kit.contactInfo?.email) data.email = kit.contactInfo.email;
+      if (kit.contactInfo?.address) data.address = kit.contactInfo.address;
+      if (kit.contactInfo?.website) data.website = kit.contactInfo.website;
+      if (kit.propertyName) data.companyName = kit.propertyName;
+      if (kit.footerHtml) data.legalText = kit.footerHtml;
+    }
+
+    // Auto-populate header with active brand kit logo
+    if (type === 'header' && state.activeBrandKit?.logos?.[0]) {
+      data.logoUrl = state.activeBrandKit.logos[0].sourceUrl;
+      data.logoAlt = state.activeBrandKit.logos[0].altText || state.activeBrandKit.logos[0].name;
+    }
+
     const newBlock: EmailBlock = {
       id: `block-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       type,
-      data: JSON.parse(JSON.stringify(blockDefaults[type])),
+      data,
     };
     const blocks = [...state.blocks];
     if (index !== undefined && index >= 0) {
@@ -331,11 +350,14 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     set({ isSavingProject: true, lastSaveError: null });
     try {
       const now = new Date().toISOString();
+
+      // For new projects (no existing projectId), omit the id so the API generates one
+      const isNew = !state.projectId;
       const project: EmailProject = {
-        id: state.projectId || 'proj-' + Date.now(),
-        name: state.projectName,
-        propertyId: state.propertyId,
-        propertyName: state.propertyName,
+        id: isNew ? '' : state.projectId!,
+        name: state.projectName || 'Untitled Email',
+        propertyId: state.propertyId || 'default',
+        propertyName: state.propertyName || 'Property',
         createdBy: '',
         createdAt: now,
         updatedAt: now,
@@ -344,6 +366,10 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
         globalStyles: { ...state.globalStyles },
         tags: [],
       };
+
+      // Remove empty id so API creates new document
+      if (isNew) delete (project as any).id;
+
       const saved = await emailProjectService.save(project);
       set((s) => ({
         projectId: saved.id,
@@ -354,7 +380,31 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
           : [...s.projects, saved],
       }));
     } catch (err) {
-      set({ isSavingProject: false, lastSaveError: err instanceof Error ? err.message : 'Failed to save project' });
+      console.error('Failed to save project:', err);
+      // Even if API fails, add to local store so it appears in Projects tab
+      const fallbackId = state.projectId || 'local-' + Date.now();
+      const fallbackProject: EmailProject = {
+        id: fallbackId,
+        name: state.projectName || 'Untitled Email',
+        propertyId: state.propertyId || 'default',
+        propertyName: state.propertyName || 'Property',
+        createdBy: 'local',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        status,
+        blocks: JSON.parse(JSON.stringify(state.blocks)),
+        globalStyles: { ...state.globalStyles },
+        tags: [],
+      };
+      set((s) => ({
+        projectId: fallbackId,
+        isDirty: false,
+        isSavingProject: false,
+        lastSaveError: err instanceof Error ? err.message : 'Saved locally — API sync failed',
+        projects: s.projects.some((p) => p.id === fallbackId)
+          ? s.projects.map((p) => (p.id === fallbackId ? fallbackProject : p))
+          : [...s.projects, fallbackProject],
+      }));
     }
   },
 

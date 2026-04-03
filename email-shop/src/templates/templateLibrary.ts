@@ -2,28 +2,37 @@ import type { EmailTemplate, EmailBlock, EmailGlobalStyles } from '@/types';
 
 const now = new Date().toISOString();
 
-// Sample placeholder images that simulate real student housing marketing assets.
-// These use placehold.co with realistic dimensions and labels.
+// Sample placeholder images using inline SVG data URIs.
+// These render reliably without external dependencies.
 // They can be swapped for real Entrata-hosted images via Brand Kit rebrand.
+function svgPlaceholder(w: number, h: number, bg: string, fg: string, text: string): string {
+  return 'data:image/svg+xml,' + encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">` +
+    `<rect width="${w}" height="${h}" fill="${bg}"/>` +
+    `<text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="${fg}" font-family="Arial,sans-serif" font-size="${Math.round(h * 0.08)}" font-weight="600">${text}</text>` +
+    `</svg>`
+  );
+}
+
 const SAMPLE = {
-  exterior: 'https://placehold.co/600x300/1e293b/f8fafc?text=Property+Exterior&font=raleway',
-  pool: 'https://placehold.co/600x300/0ea5e9/ffffff?text=Resort-Style+Pool&font=raleway',
-  lobby: 'https://placehold.co/600x300/6366f1/ffffff?text=Modern+Lobby&font=raleway',
-  fitness: 'https://placehold.co/280x200/334155/f8fafc?text=Fitness+Center&font=raleway',
-  kitchen: 'https://placehold.co/280x200/78716c/ffffff?text=Gourmet+Kitchen&font=raleway',
-  bedroom: 'https://placehold.co/280x200/6b7280/ffffff?text=Private+Bedroom&font=raleway',
-  studyLounge: 'https://placehold.co/280x200/4f46e5/ffffff?text=Study+Lounge&font=raleway',
-  amenities: 'https://placehold.co/280x200/059669/ffffff?text=Community+Amenities&font=raleway',
-  gameRoom: 'https://placehold.co/280x200/7c3aed/ffffff?text=Game+Room&font=raleway',
-  clubhouse: 'https://placehold.co/280x200/f59e0b/1e293b?text=Clubhouse&font=raleway',
-  floorplan: 'https://placehold.co/280x280/f1f5f9/64748b?text=Floor+Plan+Layout&font=raleway',
-  event: 'https://placehold.co/280x200/f59e0b/ffffff?text=Community+Event&font=raleway',
-  logo: 'https://placehold.co/180x60/ffffff/333333?text=PROPERTY+LOGO&font=raleway',
-  logoDark: 'https://placehold.co/180x60/1e293b/ffffff?text=PROPERTY+LOGO&font=raleway',
-  logoWhite: 'https://placehold.co/350x80/8F1D2C/ffffff?text=PROPERTY+NAME&font=raleway',
-  heroStudent: 'https://placehold.co/600x300/16213e/ffffff?text=Student+Living+Redefined&font=raleway',
-  heroLuxury: 'https://placehold.co/600x300/3d5c3a/ffffff?text=Comfortable+City+Living&font=raleway',
-  heroMoveIn: 'https://placehold.co/600x300/065f46/a7f3d0?text=Welcome+Home&font=raleway',
+  exterior: svgPlaceholder(600, 300, '#1e293b', '#f8fafc', 'Property Exterior'),
+  pool: svgPlaceholder(600, 300, '#0ea5e9', '#ffffff', 'Resort-Style Pool'),
+  lobby: svgPlaceholder(600, 300, '#6366f1', '#ffffff', 'Modern Lobby'),
+  fitness: svgPlaceholder(280, 200, '#334155', '#f8fafc', 'Fitness Center'),
+  kitchen: svgPlaceholder(280, 200, '#78716c', '#ffffff', 'Gourmet Kitchen'),
+  bedroom: svgPlaceholder(280, 200, '#6b7280', '#ffffff', 'Private Bedroom'),
+  studyLounge: svgPlaceholder(280, 200, '#4f46e5', '#ffffff', 'Study Lounge'),
+  amenities: svgPlaceholder(280, 200, '#059669', '#ffffff', 'Community Amenities'),
+  gameRoom: svgPlaceholder(280, 200, '#7c3aed', '#ffffff', 'Game Room'),
+  clubhouse: svgPlaceholder(280, 200, '#f59e0b', '#1e293b', 'Clubhouse'),
+  floorplan: svgPlaceholder(280, 280, '#f1f5f9', '#64748b', 'Floor Plan Layout'),
+  event: svgPlaceholder(280, 200, '#f59e0b', '#ffffff', 'Community Event'),
+  logo: svgPlaceholder(180, 60, '#ffffff', '#333333', 'PROPERTY LOGO'),
+  logoDark: svgPlaceholder(180, 60, '#1e293b', '#ffffff', 'PROPERTY LOGO'),
+  logoWhite: svgPlaceholder(350, 80, '#8F1D2C', '#ffffff', 'PROPERTY NAME'),
+  heroStudent: svgPlaceholder(600, 300, '#16213e', '#ffffff', 'Student Living Redefined'),
+  heroLuxury: svgPlaceholder(600, 300, '#3d5c3a', '#ffffff', 'Comfortable City Living'),
+  heroMoveIn: svgPlaceholder(600, 300, '#065f46', '#a7f3d0', 'Welcome Home'),
 };
 
 const baseGlobal: EmailGlobalStyles = {

@@ -24,6 +24,7 @@ export function EditorLayout() {
   const selectedBlockId = useEditorStore((s) => s.selectedBlockId);
   const blocks = useEditorStore((s) => s.blocks);
   const addBlock = useEditorStore((s) => s.addBlock);
+  const updateBlockData = useEditorStore((s) => s.updateBlockData);
   const reorderBlocks = useEditorStore((s) => s.reorderBlocks);
   const setDragging = useEditorStore((s) => s.setDragging);
 
@@ -61,6 +62,67 @@ export function EditorLayout() {
       } else {
         const overIndex = blocks.findIndex((b) => b.id === overStr);
         addBlock(blockType, overIndex >= 0 ? overIndex : undefined);
+      }
+      return;
+    }
+
+    // Dropping a brand asset from the sidebar onto the canvas
+    if (activeData?.type === 'brand-asset') {
+      const { sourceUrl, altText, category } = activeData as { sourceUrl: string; altText: string; category: string };
+      const overStr = String(over.id);
+
+      // Check if dropped on an existing block with an image field
+      const targetBlock = blocks.find((b) => b.id === overStr);
+      if (targetBlock) {
+        const d = targetBlock.data as Record<string, any>;
+        // Replace image URL in matching block types
+        if (targetBlock.type === 'header' && category === 'logo') {
+          updateBlockData(targetBlock.id, { logoUrl: sourceUrl, logoAlt: altText } as any);
+          return;
+        }
+        if (targetBlock.type === 'logo') {
+          updateBlockData(targetBlock.id, { imageUrl: sourceUrl, altText } as any);
+          return;
+        }
+        if (targetBlock.type === 'hero-image') {
+          updateBlockData(targetBlock.id, { imageUrl: sourceUrl, altText } as any);
+          return;
+        }
+        if (targetBlock.type === 'branded-header') {
+          if (category === 'logo') {
+            updateBlockData(targetBlock.id, { logoUrl: sourceUrl, logoAlt: altText } as any);
+          } else {
+            updateBlockData(targetBlock.id, { backgroundImageUrl: sourceUrl, backgroundImageAlt: altText } as any);
+          }
+          return;
+        }
+        if (targetBlock.type === 'image-text') {
+          updateBlockData(targetBlock.id, { imageUrl: sourceUrl, imageAlt: altText } as any);
+          return;
+        }
+        if (targetBlock.type === 'floorplan-spotlight' && category === 'floorplan') {
+          updateBlockData(targetBlock.id, { floorplanImageUrl: sourceUrl, floorplanImageAlt: altText } as any);
+          return;
+        }
+        if (targetBlock.type === 'virtual-tour') {
+          updateBlockData(targetBlock.id, { thumbnailUrl: sourceUrl, thumbnailAlt: altText } as any);
+          return;
+        }
+      }
+
+      // Not dropped on an image block — add a new hero-image block
+      if (overStr === 'canvas-drop-zone') {
+        addBlock('hero-image');
+        // Set the image URL on the newly added block (last block)
+        const newBlocks = useEditorStore.getState().blocks;
+        const last = newBlocks[newBlocks.length - 1];
+        if (last) updateBlockData(last.id, { imageUrl: sourceUrl, altText } as any);
+      } else {
+        const overIndex = blocks.findIndex((b) => b.id === overStr);
+        addBlock('hero-image', overIndex >= 0 ? overIndex : undefined);
+        const newBlocks = useEditorStore.getState().blocks;
+        const inserted = newBlocks[overIndex >= 0 ? overIndex : newBlocks.length - 1];
+        if (inserted) updateBlockData(inserted.id, { imageUrl: sourceUrl, altText } as any);
       }
       return;
     }

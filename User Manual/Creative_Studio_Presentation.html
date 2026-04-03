@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Creative Studio Training — CMP Marketing Hub</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    /* ========== RESET ========== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: #2d3748;
+      background: #1a1a2e;
+      line-height: 1.6;
+    }
+
+    /* ========== SLIDE CONTAINER ========== */
+    .slide {
+      width: 100%;
+      max-width: 1100px;
+      min-height: 100vh;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 60px 80px;
+      position: relative;
+      background: #fff;
+    }
+    .slide + .slide { border-top: 4px solid #ffb732; }
+
+    /* ========== SLIDE VARIANTS ========== */
+    .slide--dark {
+      background: linear-gradient(135deg, #446472 0%, #2f4f5c 60%, #1e3a47 100%);
+      color: #fff;
+    }
+    .slide--accent {
+      background: linear-gradient(135deg, #ffb732 0%, #f59e0b 100%);
+      color: #1a202c;
+    }
+    .slide--light-gray { background: #f7fafc; }
+
+    /* ========== TYPOGRAPHY ========== */
+    .slide-number {
+      position: absolute;
+      top: 24px;
+      right: 36px;
+      font-size: .75rem;
+      font-weight: 600;
+      opacity: .4;
+      letter-spacing: 1px;
+    }
+    .slide h1 {
+      font-size: 3rem;
+      font-weight: 900;
+      letter-spacing: -1.5px;
+      line-height: 1.15;
+      margin-bottom: 16px;
+    }
+    .slide h2 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1.2;
+      margin-bottom: 20px;
+      color: #446472;
+    }
+    .slide--dark h2, .slide--accent h2 { color: inherit; }
+    .slide h3 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #446472;
+    }
+    .slide--dark h3 { color: #ffb732; }
+    .slide p {
+      font-size: 1.15rem;
+      margin-bottom: 14px;
+      max-width: 800px;
+    }
+    .subtitle {
+      font-size: 1.4rem;
+      font-weight: 400;
+      opacity: .8;
+      margin-bottom: 32px;
+    }
+
+    /* ========== LISTS ========== */
+    .slide ul, .slide ol {
+      padding-left: 28px;
+      margin-bottom: 16px;
+    }
+    .slide li {
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+    .big-list { list-style: none; padding-left: 0; }
+    .big-list li {
+      font-size: 1.2rem;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(0,0,0,.06);
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    .slide--dark .big-list li { border-bottom-color: rgba(255,255,255,.1); }
+    .big-list .emoji-icon { font-size: 1.5rem; flex-shrink: 0; }
+
+    /* ========== GRID ========== */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      margin-top: 20px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 24px;
+      margin-top: 20px;
+    }
+
+    /* ========== CARDS ========== */
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 28px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.06);
+      border: 1px solid #e2e8f0;
+    }
+    .slide--dark .card {
+      background: rgba(255,255,255,.1);
+      border-color: rgba(255,255,255,.15);
+      color: #fff;
+    }
+    .card h4 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #446472;
+    }
+    .slide--dark .card h4 { color: #ffb732; }
+    .card p { font-size: .95rem; margin-bottom: 0; }
+
+    /* ========== CALLOUT ========== */
+    .callout {
+      background: #e6f7ec;
+      border-left: 5px solid #38a169;
+      border-radius: 8px;
+      padding: 18px 24px;
+      margin: 20px 0;
+      font-size: 1.05rem;
+    }
+    .callout--warn {
+      background: #fef3cd;
+      border-left-color: #d69e2e;
+    }
+    .slide--dark .callout {
+      background: rgba(56,161,105,.15);
+      border-left-color: #68d391;
+      color: #c6f6d5;
+    }
+
+    /* ========== BADGE ========== */
+    .badge {
+      display: inline-block;
+      background: #ffb732;
+      color: #1a202c;
+      font-size: .75rem;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 12px;
+    }
+    .badge--red { background: #fc8181; color: #742a2a; }
+
+    /* ========== SCREENSHOT PLACEHOLDER ========== */
+    .screenshot-box {
+      background: #f0f4f8;
+      border: 2px dashed #cbd5e0;
+      border-radius: 12px;
+      padding: 40px;
+      text-align: center;
+      color: #a0aec0;
+      font-style: italic;
+      margin: 20px 0;
+      font-size: 1rem;
+    }
+    .slide--dark .screenshot-box {
+      background: rgba(255,255,255,.05);
+      border-color: rgba(255,255,255,.15);
+      color: rgba(255,255,255,.4);
+    }
+
+    /* ========== ACCENT BAR ========== */
+    .accent-bar {
+      width: 80px;
+      height: 5px;
+      background: #ffb732;
+      border-radius: 3px;
+      margin-bottom: 24px;
+    }
+
+    /* ========== TABLE ========== */
+    .simple-table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    .simple-table th {
+      background: #446472;
+      color: #fff;
+      text-align: left;
+      padding: 12px 16px;
+      font-weight: 700;
+      font-size: .95rem;
+    }
+    .simple-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: .95rem;
+    }
+    .simple-table tr:nth-child(even) { background: #f7fafc; }
+
+    /* ========== PRINT ========== */
+    @media print {
+      body { background: #fff; }
+      .slide { min-height: auto; page-break-after: always; padding: 40px 50px; }
+      .slide + .slide { border-top: none; }
+    }
+
+    /* ========== FOOTER ========== */
+    .slide-footer {
+      position: absolute;
+      bottom: 24px;
+      left: 80px;
+      right: 80px;
+      display: flex;
+      justify-content: space-between;
+      font-size: .75rem;
+      opacity: .35;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ============================== SLIDE 1: TITLE ============================== -->
+<div class="slide slide--dark" style="text-align:center; justify-content:center;">
+  <div class="slide-number" style="color:rgba(255,255,255,.3);">01 / 12</div>
+  <div style="font-size:4rem; margin-bottom:20px;">🎨</div>
+  <h1 style="font-size:3.5rem; margin-bottom:12px;">Creative Studio</h1>
+  <div class="subtitle" style="font-size:1.5rem;">Your Guide to Building Beautiful Property Emails</div>
+  <div class="accent-bar" style="margin:0 auto 32px;"></div>
+  <p style="font-size:1.1rem; opacity:.6; margin:0 auto;">CMP Marketing Hub &bull; Training Session</p>
+</div>
+
+<!-- ============================== SLIDE 2: WHAT IS IT? ============================== -->
+<div class="slide">
+  <div class="slide-number">02 / 12</div>
+  <div class="badge">Overview</div>
+  <h2>What is Creative Studio? 🤔</h2>
+  <div class="accent-bar"></div>
+  <p style="font-size:1.25rem; margin-bottom:28px;">
+    Think of it as <strong>Canva for property marketing emails</strong> — drag, drop, and design
+    without needing any technical skills!
+  </p>
+
+  <ul class="big-list">
+    <li><span class="emoji-icon">🧱</span> <span><strong>Drag-and-drop blocks</strong> — Stack content blocks like LEGO® bricks to build your email</span></li>
+    <li><span class="emoji-icon">📋</span> <span><strong>Ready-made templates</strong> — Start from designs built for student housing</span></li>
+    <li><span class="emoji-icon">🎨</span> <span><strong>Brand kits</strong> — Every property stays on-brand automatically</span></li>
+    <li><span class="emoji-icon">📤</span> <span><strong>One-click export</strong> — Copy and paste right into Entrata Message Center</span></li>
+    <li><span class="emoji-icon">🔗</span> <span><strong>Share links</strong> — Send a preview link to teammates for review</span></li>
+  </ul>
+</div>
+
+<!-- ============================== SLIDE 3: THE WORKSPACE ============================== -->
+<div class="slide slide--light-gray">
+  <div class="slide-number">03 / 12</div>
+  <div class="badge">Navigation</div>
+  <h2>Know Your Workspace 🗺️</h2>
+  <div class="accent-bar"></div>
+
+  <div class="grid-2">
+    <div>
+      <h3>Top Toolbar — 5 Main Tabs</h3>
+      <ul>
+        <li>📝 <strong>Builder</strong> — Your email canvas</li>
+        <li>📄 <strong>Templates</strong> — Pre-made starting points</li>
+        <li>🎨 <strong>Brand Kit</strong> — Colors, fonts, logos</li>
+        <li>🖼️ <strong>Image Library</strong> — Your property photos</li>
+        <li>📂 <strong>Projects</strong> — Saved drafts &amp; completed emails</li>
+      </ul>
+
+      <h3 style="margin-top:28px;">Builder Layout</h3>
+      <ul>
+        <li><strong>Left sidebar</strong> → Block palette &amp; brand panel</li>
+        <li><strong>Center</strong> → Email canvas (your email preview)</li>
+        <li><strong>Right sidebar</strong> → Properties panel (edit the selected block)</li>
+      </ul>
+    </div>
+    <div>
+      <div class="screenshot-box" style="min-height:280px;">
+        📷 Screenshot: Creative Studio workspace showing the three-panel layout<br><br>
+        Left = Blocks &amp; Brand<br>
+        Center = Email Canvas<br>
+        Right = Properties Panel
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    💡 <strong>Always check mobile preview!</strong> Toggle between 🖥️ Desktop and 📱 Mobile views in the toolbar.
+    Most students read email on their phone!
+  </div>
+</div>
+
+<!-- ============================== SLIDE 4: TEMPLATES ============================== -->
+<div class="slide">
+  <div class="slide-number">04 / 12</div>
+  <div class="badge">Templates</div>
+  <h2>Start From a Template 📋</h2>
+  <div class="accent-bar"></div>
+  <p>Don't reinvent the wheel! Templates give you a head start with pre-built layouts.</p>
+
+  <div class="grid-3" style="margin-top:28px;">
+    <div class="card">
+      <h4>1. Browse</h4>
+      <p>Click the <strong>Templates</strong> tab and browse by category — leasing, promos, events, renewals, and more.</p>
+    </div>
+    <div class="card">
+      <h4>2. Preview</h4>
+      <p>Click <strong>Preview</strong> to see the full template before committing.</p>
+    </div>
+    <div class="card">
+      <h4>3. Customize</h4>
+      <p>Click <strong>Use Template</strong> to load it, then swap in your property's text, images, and links!</p>
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:32px;">
+    💡 <strong>Pro tip:</strong> After customizing a template, save it as a <em>new template</em> so you can re-use it for future campaigns!
+  </div>
+</div>
+
+<!-- ============================== SLIDE 5: BUILDING ============================== -->
+<div class="slide slide--dark">
+  <div class="slide-number" style="color:rgba(255,255,255,.3);">05 / 12</div>
+  <div class="badge">Builder</div>
+  <h2 style="color:#fff;">Building Your Email 🏗️</h2>
+  <div class="accent-bar"></div>
+
+  <div class="grid-2">
+    <div>
+      <h3>How It Works</h3>
+      <ol style="font-size:1.1rem;">
+        <li style="margin-bottom:14px;"><strong>Drag</strong> a block from the left sidebar onto your canvas</li>
+        <li style="margin-bottom:14px;"><strong>Click</strong> the block to select it</li>
+        <li style="margin-bottom:14px;"><strong>Edit</strong> in the right-side properties panel</li>
+        <li style="margin-bottom:14px;"><strong>Reorder</strong> by dragging blocks up/down on the canvas</li>
+        <li style="margin-bottom:14px;"><strong>Repeat</strong> until your email is perfect!</li>
+      </ol>
+    </div>
+    <div>
+      <h3>Quick Actions</h3>
+      <ul class="big-list">
+        <li><span class="emoji-icon">📋</span> <span><strong>Duplicate</strong> — Copy a block</span></li>
+        <li><span class="emoji-icon">🗑️</span> <span><strong>Delete</strong> — Remove a block</span></li>
+        <li><span class="emoji-icon">↩️</span> <span><strong>Undo</strong> — Revert last change</span></li>
+        <li><span class="emoji-icon">↪️</span> <span><strong>Redo</strong> — Re-apply a change</span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== SLIDE 6: CONTENT BLOCKS ============================== -->
+<div class="slide">
+  <div class="slide-number">06 / 12</div>
+  <div class="badge">Blocks</div>
+  <h2>Content Blocks at a Glance 🧱</h2>
+  <div class="accent-bar"></div>
+
+  <div class="grid-2">
+    <div>
+      <h3>Structure</h3>
+      <ul>
+        <li>📄 <strong>Header</strong> — Logo &amp; preheader</li>
+        <li>📄 <strong>Footer</strong> — Contact &amp; legal info</li>
+        <li>↕️ <strong>Spacer</strong> — Blank space</li>
+        <li>➖ <strong>Divider</strong> — Horizontal line</li>
+        <li>🟧 <strong>Color Bar</strong> — Decorative accent strip</li>
+      </ul>
+
+      <h3 style="margin-top:20px;">Content</h3>
+      <ul>
+        <li>✏️ <strong>Text</strong> — Body copy, headings, lists</li>
+        <li>🔘 <strong>Button</strong> — Call-to-action link</li>
+        <li>💬 <strong>Callout Box</strong> — Highlighted info</li>
+        <li>💭 <strong>Testimonial</strong> — Resident quotes</li>
+        <li>📅 <strong>Event Details</strong> — Event date/time/place</li>
+        <li>🔢 <strong>Numbered Steps</strong> — How-to process</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Media</h3>
+      <ul>
+        <li>🖼️ <strong>Logo</strong> — Property logo image</li>
+        <li>🌄 <strong>Hero Image</strong> — Big banner image</li>
+        <li>📸 <strong>Image Gallery</strong> — 2–3 photos in a row</li>
+        <li>📱 <strong>Social Links</strong> — Social media icons</li>
+        <li>⚠️ <strong>Branded Header</strong> — Fancy overlay (Entrata warning)</li>
+      </ul>
+
+      <h3 style="margin-top:20px;">Layout &amp; Property</h3>
+      <ul>
+        <li>🖼️ <strong>Image + Text</strong> — Side by side</li>
+        <li>📊 <strong>Two Columns</strong> — Split layout</li>
+        <li>✨ <strong>Amenities</strong> — Amenity icon grid</li>
+        <li>🏠 <strong>Floor Plan Spotlight</strong> — Featured unit</li>
+        <li>📣 <strong>Promo Banner</strong> — Big offer banner</li>
+        <li>📣 <strong>Promo Bar</strong> — Thin promo strip</li>
+        <li>⚠️ <strong>Virtual Tour</strong> — Tour link (Entrata warning)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout callout--warn" style="margin-top:24px;">
+    ⚠️ Blocks marked with warnings use features that don't fully work in Entrata/Outlook.
+    Use <strong>Hero Image + Button</strong> as a safe alternative!
+  </div>
+</div>
+
+<!-- ============================== SLIDE 7: BRAND KIT ============================== -->
+<div class="slide slide--light-gray">
+  <div class="slide-number">07 / 12</div>
+  <div class="badge">Branding</div>
+  <h2>Brand Kit Magic 🎨</h2>
+  <div class="accent-bar"></div>
+
+  <div class="grid-2">
+    <div>
+      <h3>What's in a Brand Kit?</h3>
+      <ul class="big-list">
+        <li><span class="emoji-icon">🎨</span> <span><strong>Colors</strong> — Primary, secondary, accent colors</span></li>
+        <li><span class="emoji-icon">🔤</span> <span><strong>Fonts</strong> — Heading &amp; body fonts</span></li>
+        <li><span class="emoji-icon">🖼️</span> <span><strong>Images</strong> — Logos, photos, floor plans</span></li>
+      </ul>
+
+      <h3 style="margin-top:24px;">How to Switch</h3>
+      <ol>
+        <li>Open the <strong>Brand</strong> tab in the left sidebar</li>
+        <li>Use the dropdown to select a property's kit</li>
+        <li>Colors and fonts update in the panel</li>
+      </ol>
+    </div>
+    <div>
+      <div class="card" style="text-align:center; padding:36px;">
+        <div style="font-size:3rem; margin-bottom:12px;">🪄</div>
+        <h4 style="font-size:1.3rem; color:#446472;">Rebrand My Draft</h4>
+        <p style="font-size:1.05rem; margin-top:12px;">
+          Built an email for Property A?<br>
+          Switch to Property B's brand kit, hit <strong>✨ Rebrand My Draft</strong>,
+          and all colors &amp; fonts update instantly!
+        </p>
+        <p style="font-size:.9rem; color:#718096; margin-top:12px;">
+          Perfect for multi-property teams.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== SLIDE 8: CTA LIBRARY & STORED LINKS ============================== -->
+<div class="slide">
+  <div class="slide-number">08 / 12</div>
+  <div class="badge">Buttons</div>
+  <h2>CTAs &amp; Stored Links 💬🔗</h2>
+  <div class="accent-bar"></div>
+
+  <div class="grid-2">
+    <div>
+      <h3>CTA Library</h3>
+      <p>
+        Stuck on what your button should say? We have <strong>hundreds of proven CTAs</strong>
+        organized by category:
+      </p>
+      <ul style="margin-top:12px;">
+        <li>🏠 General Leasing — "Apply Now", "Secure Your Spot"</li>
+        <li>🔥 Urgency — "Limited Spaces Left"</li>
+        <li>🚶 Tours — "Schedule a Tour"</li>
+        <li>💰 Promos — "Lock In Special Pricing"</li>
+        <li>🔄 Renewals — "Renew Today"</li>
+        <li>👯 Roommates — "Lease Together"</li>
+        <li>… and 10+ more categories!</li>
+      </ul>
+      <p style="margin-top:12px; font-size:.95rem; color:#718096;">
+        Click a <strong>Button</strong> block, then tap any CTA suggestion chip to use it.
+      </p>
+    </div>
+    <div>
+      <h3>Stored Links (Link Bank)</h3>
+      <p>
+        Save frequently-used URLs so you never have to hunt for them:
+      </p>
+      <ul style="margin-top:12px;">
+        <li>🔗 Application page</li>
+        <li>🔗 Tour scheduling link</li>
+        <li>🔗 Virtual tour URL</li>
+        <li>🔗 Floor plans page</li>
+        <li>🔗 Property website</li>
+      </ul>
+      <p style="margin-top:16px;">
+        Select a stored link from the dropdown when editing a Button block — the URL fills in automatically!
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== SLIDE 9: IMAGES & BG REMOVAL ============================== -->
+<div class="slide slide--dark">
+  <div class="slide-number" style="color:rgba(255,255,255,.3);">09 / 12</div>
+  <div class="badge">Media</div>
+  <h2 style="color:#fff;">Images &amp; Background Removal 🖼️✨</h2>
+  <div class="accent-bar"></div>
+
+  <div class="grid-2">
+    <div>
+      <h3>Adding Images</h3>
+      <ol>
+        <li>Click an image block (Hero, Logo, Gallery, etc.)</li>
+        <li>Paste an image URL <strong>or</strong> browse the Image Library</li>
+        <li><strong>Drag from Brand Kit</strong> — images drop right onto the canvas!</li>
+      </ol>
+
+      <div class="callout" style="margin-top:20px;">
+        💡 Use landscape images for hero banners. Always fill in alt text!
+      </div>
+    </div>
+    <div>
+      <h3>✨ Remove Background</h3>
+      <p>Need a clean cutout? One click removes the background from any image!</p>
+      <ol style="margin-top:12px;">
+        <li>Select an image block</li>
+        <li>Click <strong>✨ Remove Background</strong></li>
+        <li>Wait a few seconds…</li>
+        <li>Clean cutout! 🎉</li>
+      </ol>
+      <p style="font-size:.9rem; opacity:.7; margin-top:12px;">
+        Works best with clear subjects — people, objects, logos.
+        First use takes a moment to load the engine.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== SLIDE 10: SAVING & EXPORTING ============================== -->
+<div class="slide">
+  <div class="slide-number">10 / 12</div>
+  <div class="badge">Save &amp; Export</div>
+  <h2>Saving &amp; Exporting 💾📤</h2>
+  <div class="accent-bar"></div>
+
+  <div class="grid-2">
+    <div>
+      <h3>Save Options</h3>
+      <table class="simple-table">
+        <tr><th>Option</th><th>When to Use</th></tr>
+        <tr><td>💾 <strong>Save Draft</strong></td><td>Still working on it</td></tr>
+        <tr><td>✅ <strong>Save Complete</strong></td><td>Ready to send</td></tr>
+        <tr><td>📋 <strong>Save As New Copy</strong></td><td>Create a variation</td></tr>
+      </table>
+      <p style="margin-top:12px; font-size:.9rem; color:#718096;">
+        Watch for the yellow <strong>"Unsaved"</strong> badge — save often!
+      </p>
+    </div>
+    <div>
+      <h3>Exporting for Entrata</h3>
+      <ol>
+        <li>Click <strong>📤 Export</strong> in the toolbar</li>
+        <li>Choose <strong>Entrata Paste-In</strong></li>
+        <li>Click <strong>📋 Copy to Clipboard</strong></li>
+        <li>Open Entrata → New Message → Source Editor</li>
+        <li><strong>Paste</strong> and you're done! 🎉</li>
+      </ol>
+      <div class="callout callout--warn" style="margin-top:16px;">
+        ⚠️ Fix any export warnings (missing images, broken links, missing alt text) before pasting into Entrata!
+      </div>
+    </div>
+  </div>
+
+  <h3 style="margin-top:24px;">Sharing for Review 🔗</h3>
+  <p>
+    Click <strong>Share</strong> in the toolbar to generate a read-only preview link.
+    Paste it in Slack or Teams for teammate review!
+  </p>
+</div>
+
+<!-- ============================== SLIDE 11: TIPS ============================== -->
+<div class="slide slide--light-gray">
+  <div class="slide-number">11 / 12</div>
+  <div class="badge">Best Practices</div>
+  <h2>Tips for Awesome Emails 🧠</h2>
+  <div class="accent-bar"></div>
+
+  <div class="grid-3">
+    <div class="card">
+      <h4>📐 Structure</h4>
+      <ul style="font-size:.9rem;">
+        <li>Keep emails scannable — short paragraphs, bullet points</li>
+        <li>One main CTA per email</li>
+        <li>Important stuff goes first</li>
+        <li>Always check mobile preview</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>✍️ Copy</h4>
+      <ul style="font-size:.9rem;">
+        <li>Subject lines under 50 chars</li>
+        <li>Write like you talk to a friend</li>
+        <li>Use specific numbers ("Starting at $799")</li>
+        <li>Create urgency ("Only 3 spots left!")</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>🎨 Design</h4>
+      <ul style="font-size:.9rem;">
+        <li>Less is more — 4–6 blocks per email</li>
+        <li>Stick to brand kit colors &amp; fonts</li>
+        <li>Use high-quality property photos</li>
+        <li>White space is your friend</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:28px;">
+    🪄 <strong>Power Move:</strong> Build "starter emails" for each type you send regularly (leasing, events, renewals)
+    and save them as templates. Your team can crank out on-brand emails in under 10 minutes!
+  </div>
+</div>
+
+<!-- ============================== SLIDE 12: WRAP UP ============================== -->
+<div class="slide slide--dark" style="text-align:center;">
+  <div class="slide-number" style="color:rgba(255,255,255,.3);">12 / 12</div>
+  <div style="font-size:3.5rem; margin-bottom:20px;">🚀</div>
+  <h1 style="font-size:2.8rem; margin-bottom:16px;">You're Ready!</h1>
+  <div class="accent-bar" style="margin:0 auto 28px;"></div>
+  <p style="font-size:1.3rem; opacity:.85; max-width:600px; margin:0 auto 36px;">
+    Go build something amazing. Your next great email is just a drag and drop away!
+  </p>
+
+  <div style="display:flex; gap:20px; justify-content:center; flex-wrap:wrap; max-width:700px; margin:0 auto;">
+    <div class="card" style="flex:1; min-width:180px; text-align:center;">
+      <div style="font-size:2rem;">📋</div>
+      <h4 style="color:#ffb732;">Start with a Template</h4>
+      <p>Browse the gallery for inspiration</p>
+    </div>
+    <div class="card" style="flex:1; min-width:180px; text-align:center;">
+      <div style="font-size:2rem;">🎨</div>
+      <h4 style="color:#ffb732;">Set Your Brand Kit</h4>
+      <p>Select your property's kit first</p>
+    </div>
+    <div class="card" style="flex:1; min-width:180px; text-align:center;">
+      <div style="font-size:2rem;">🧱</div>
+      <h4 style="color:#ffb732;">Drag &amp; Build</h4>
+      <p>Add blocks, customize, and export</p>
+    </div>
+  </div>
+
+  <p style="font-size:1rem; opacity:.4; margin-top:48px;">
+    Questions? Reach out to your CMP Marketing Hub admin or the marketing team channel!
+  </p>
+
+  <div style="margin-top:36px;">
+    <div style="width:60px; height:3px; background:#ffb732; margin:0 auto; border-radius:2px;"></div>
+    <p style="font-size:.8rem; opacity:.3; margin-top:12px;">CMP Marketing Hub &bull; Creative Studio Training &bull; April 2026</p>
+  </div>
+</div>
+
+</body>
+</html>
