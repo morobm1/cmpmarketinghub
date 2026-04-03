@@ -12,6 +12,7 @@ import type {
   EmailProject,
   EmailTemplate,
   BlockDataMap,
+  ProjectStatus,
 } from '@/types';
 import type {
   AIGenerationStatus,
@@ -98,6 +99,9 @@ interface EditorStore {
   setTemplates: (templates: EmailTemplate[]) => void;
   setProjects: (projects: EmailProject[]) => void;
   saveAsTemplate: (name: string, description: string, category: string) => void;
+  saveProject: (status: ProjectStatus) => Promise<void>;
+  isSavingProject: boolean;
+  lastSaveError: string | null;
   rebrandDraft: () => void;
 
   // ---- Actions: History ----
@@ -154,6 +158,10 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
   assets: [],
   templates: [],
   projects: [],
+
+  // ---- Save state ----
+  isSavingProject: false,
+  lastSaveError: null,
 
   // ---- History ----
   history: [],
@@ -318,6 +326,38 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     });
   },
 
+  saveProject: async (status: ProjectStatus) => {
+    const state = get();
+    set({ isSavingProject: true, lastSaveError: null });
+    try {
+      const now = new Date().toISOString();
+      const project: EmailProject = {
+        id: state.projectId || 'proj-' + Date.now(),
+        name: state.projectName,
+        propertyId: state.propertyId,
+        propertyName: state.propertyName,
+        createdBy: '',
+        createdAt: now,
+        updatedAt: now,
+        status,
+        blocks: JSON.parse(JSON.stringify(state.blocks)),
+        globalStyles: { ...state.globalStyles },
+        tags: [],
+      };
+      const saved = await emailProjectService.save(project);
+      set((s) => ({
+        projectId: saved.id,
+        isDirty: false,
+        isSavingProject: false,
+        projects: s.projects.some((p) => p.id === saved.id)
+          ? s.projects.map((p) => (p.id === saved.id ? saved : p))
+          : [...s.projects, saved],
+      }));
+    } catch (err) {
+      set({ isSavingProject: false, lastSaveError: err instanceof Error ? err.message : 'Failed to save project' });
+    }
+  },
+
   rebrandDraft: () => {
     const state = get();
     const kit = state.activeBrandKit;
@@ -328,11 +368,37 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     const primary = kit.colors[0]?.hex;
     const secondary = kit.colors[1]?.hex;
     const accent = kit.colors[2]?.hex;
+    const darkText = kit.colors.find((c) => c.name.toLowerCase().includes('dark') || c.name.toLowerCase().includes('text'))?.hex;
+    const lightBg = kit.colors.find((c) => c.name.toLowerCase().includes('light') || c.name.toLowerCase().includes('background'))?.hex;
     const firstLogo = kit.logos[0];
     const firstBtnStyle = kit.buttonStyles[0];
     const heroImg = kit.images.find((img) =>
       img.tags.some((t) => ['building', 'exterior', 'hero'].includes(t.toLowerCase()))
     ) || kit.images[0];
+    const firstFloorplan = kit.floorplans[0];
+
+    // Build a pool of images for sequential assignment to image-text blocks
+    const usedImageIds = new Set<string>();
+    const getNextImage = (preferTags?: string[]): typeof kit.images[0] | undefined => {
+      // First try to match by tags
+      if (preferTags && preferTags.length > 0) {
+        const tagMatch = kit.images.find((img) =>
+          !usedImageIds.has(img.id) &&
+          img.tags.some((t) => preferTags.some((pt) => t.toLowerCase().includes(pt.toLowerCase())))
+        );
+        if (tagMatch) {
+          usedImageIds.add(tagMatch.id);
+          return tagMatch;
+        }
+      }
+      // Fallback: next unused image
+      const unused = kit.images.find((img) => !usedImageIds.has(img.id));
+      if (unused) {
+        usedImageIds.add(unused.id);
+        return unused;
+      }
+      return undefined;
+    };
 
     const blocks = JSON.parse(JSON.stringify(state.blocks)) as EmailBlock[];
 
@@ -362,15 +428,14 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
           if (heroImg) {
             d.imageUrl = heroImg.sourceUrl;
             d.altText = heroImg.altText || heroImg.name;
+            usedImageIds.add(heroImg.id);
           }
           break;
 
         case 'text':
-          if (d.style.textColor && primary) {
-            // Only rebrand colored headings (large/bold text), not body text
-            if (d.fontSize >= 20 || d.fontWeight >= 700) {
-              d.style.textColor = primary;
-            }
+          // Rebrand heading-style text (large or bold) with primary color
+          if (primary && (d.fontSize >= 20 || d.fontWeight >= 600)) {
+            d.style.textColor = primary;
           }
           break;
 
@@ -391,6 +456,13 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
         case 'promo-banner':
           if (primary) d.backgroundColor = primary;
           if (accent) d.textColor = accent;
+          else d.textColor = '#ffffff';
+          // Apply button style to promo banner button if present
+          if (firstBtnStyle && d.buttonStyle) {
+            d.buttonStyle.backgroundColor = firstBtnStyle.backgroundColor;
+            d.buttonStyle.textColor = firstBtnStyle.textColor;
+            d.buttonStyle.borderRadius = firstBtnStyle.borderRadius;
+          }
           break;
 
         case 'color-bar':
@@ -402,7 +474,12 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
             d.logoUrl = firstLogo.sourceUrl;
             d.logoAlt = firstLogo.altText || firstLogo.name;
           }
-          if (heroImg) d.backgroundImageUrl = heroImg.sourceUrl;
+          if (heroImg) {
+            d.backgroundImageUrl = heroImg.sourceUrl;
+            d.backgroundImageAlt = heroImg.altText || heroImg.name;
+            usedImageIds.add(heroImg.id);
+          }
+          if (primary) d.textColor = '#ffffff';
           break;
 
         case 'footer':
@@ -414,24 +491,73 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
           }
           d.companyName = kit.propertyName || d.companyName;
           if (primary) d.style.backgroundColor = primary;
+          // Use footer HTML if available
+          if (kit.footerHtml) d.legalText = kit.footerHtml;
           break;
 
         case 'amenities':
           if (secondary) d.style.backgroundColor = secondary;
+          else if (lightBg) d.style.backgroundColor = lightBg;
+          if (primary) d.style.textColor = primary;
           break;
 
         case 'image-text': {
           // Try to match image by heading keywords to tags
           const heading = (d.heading || '').toLowerCase();
-          const match = kit.images.find((img) =>
-            img.tags.some((t) => heading.includes(t.toLowerCase()))
-          );
+          const headingWords = heading.split(/\s+/).filter((w: string) => w.length > 3);
+          const match = getNextImage(headingWords.length > 0 ? headingWords : undefined);
           if (match) {
             d.imageUrl = match.sourceUrl;
             d.imageAlt = match.altText || match.name;
           }
           break;
         }
+
+        case 'floorplan-spotlight':
+          if (firstFloorplan) {
+            d.floorplanImageUrl = firstFloorplan.sourceUrl;
+            d.floorplanImageAlt = firstFloorplan.altText || firstFloorplan.name;
+          }
+          // Apply button style
+          if (firstBtnStyle) {
+            d.buttonStyle = {
+              backgroundColor: firstBtnStyle.backgroundColor,
+              textColor: firstBtnStyle.textColor,
+              borderRadius: firstBtnStyle.borderRadius,
+            };
+          } else if (primary) {
+            d.buttonStyle = { backgroundColor: primary, textColor: '#ffffff' };
+          }
+          break;
+
+        case 'two-column': {
+          // Assign property images to columns if they have image fields
+          const leftImg = getNextImage();
+          const rightImg = getNextImage();
+          if (leftImg) {
+            d.leftImageUrl = leftImg.sourceUrl;
+            d.leftImageAlt = leftImg.altText || leftImg.name;
+          }
+          if (rightImg) {
+            d.rightImageUrl = rightImg.sourceUrl;
+            d.rightImageAlt = rightImg.altText || rightImg.name;
+          }
+          break;
+        }
+
+        case 'callout-box':
+          if (lightBg) d.backgroundColor = lightBg;
+          else if (secondary) d.backgroundColor = secondary;
+          if (primary) d.borderColor = primary;
+          break;
+
+        case 'testimonial':
+          if (lightBg) d.style.backgroundColor = lightBg;
+          break;
+
+        case 'virtual-tour':
+          if (primary) d.style.backgroundColor = primary;
+          break;
       }
     });
 

@@ -78,7 +78,22 @@ export default function App() {
         const filteredAssets = isAdminUser
           ? apiAssets
           : apiAssets.filter((a) => userProps.includes(a.propertyId));
-        setAssets(filteredAssets);
+
+        // Merge brand kit images into the asset library so they appear
+        // in the Image Library view. Brand kits store logos/images/floorplans
+        // inline, but the Asset Library reads from the separate assets store.
+        const existingAssetIds = new Set(filteredAssets.map((a) => a.id));
+        const brandKitAssets: typeof filteredAssets = [];
+        for (const kit of filteredKits) {
+          for (const asset of [...kit.logos, ...kit.images, ...kit.floorplans]) {
+            if (asset.sourceUrl && !existingAssetIds.has(asset.id)) {
+              existingAssetIds.add(asset.id);
+              brandKitAssets.push(asset);
+            }
+          }
+        }
+
+        setAssets([...filteredAssets, ...brandKitAssets]);
       } catch (err) {
         console.error('Failed to load Creative Studio data:', err);
         // Fallback: at least load built-in templates

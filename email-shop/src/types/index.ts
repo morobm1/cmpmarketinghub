@@ -347,7 +347,7 @@ export interface EmailBlock<T extends EmailBlockType = EmailBlockType> {
 
 // ---- Email Project Types ----
 
-export type ProjectStatus = 'draft' | 'template' | 'published' | 'archived';
+export type ProjectStatus = 'draft' | 'complete' | 'template' | 'published' | 'archived';
 
 export interface EmailProject {
   id: ID;

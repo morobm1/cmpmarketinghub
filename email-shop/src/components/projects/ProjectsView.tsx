@@ -4,6 +4,7 @@ import type { EmailProject } from '@/types';
 
 const statusColors: Record<string, string> = {
   draft: 'bg-amber-100 text-amber-700',
+  complete: 'bg-emerald-100 text-emerald-700',
   template: 'bg-purple-100 text-purple-700',
   published: 'bg-green-100 text-green-700',
   archived: 'bg-surface-100 text-surface-500',

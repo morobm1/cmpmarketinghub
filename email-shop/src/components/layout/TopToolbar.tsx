@@ -18,6 +18,8 @@ import {
   Sparkles,
   BookmarkPlus,
   X,
+  Loader2,
+  CheckCircle2,
 } from 'lucide-react';
 
 export function TopToolbar() {
@@ -37,8 +39,13 @@ export function TopToolbar() {
   const setShowAIPanel = useEditorStore((s) => s.setShowAIPanel);
   const blocks = useEditorStore((s) => s.blocks);
   const saveAsTemplate = useEditorStore((s) => s.saveAsTemplate);
+  const saveProject = useEditorStore((s) => s.saveProject);
+  const isSavingProject = useEditorStore((s) => s.isSavingProject);
+  const lastSaveError = useEditorStore((s) => s.lastSaveError);
 
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [showSaveMenu, setShowSaveMenu] = useState(false);
+  const [savedFlash, setSavedFlash] = useState<string | null>(null);
   const [tmplName, setTmplName] = useState('');
   const [tmplDesc, setTmplDesc] = useState('');
   const [tmplCat, setTmplCat] = useState('marketing');
@@ -159,6 +166,51 @@ export function TopToolbar() {
 
       {/* Actions */}
       <div className="flex items-center gap-1.5 shrink-0 relative">
+        {/* Save Draft / Save Complete dropdown */}
+        {blocks.length > 0 && (
+          <div className="relative">
+            <button
+              onClick={() => setShowSaveMenu(!showSaveMenu)}
+              onBlur={() => setTimeout(() => setShowSaveMenu(false), 150)}
+              disabled={isSavingProject}
+              className={'flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ' +
+                (savedFlash ? 'text-emerald-400' : isDirty ? 'text-amber-400 hover:text-white hover:bg-surface-700' : 'text-surface-400 hover:text-white hover:bg-surface-700')}
+              title="Save Project"
+            >
+              {isSavingProject ? <Loader2 size={14} className="animate-spin" /> : savedFlash ? <CheckCircle2 size={14} /> : <Save size={14} />}
+              <span className="hidden xl:inline">{savedFlash || 'Save'}</span>
+              {!savedFlash && <ChevronDown size={10} />}
+            </button>
+            {showSaveMenu && (
+              <div className="absolute top-full right-0 mt-1 w-44 bg-white rounded-lg shadow-xl border border-surface-200 py-1 z-50">
+                <button
+                  onClick={async () => {
+                    setShowSaveMenu(false);
+                    await saveProject('draft');
+                    setSavedFlash('Draft Saved');
+                    setTimeout(() => setSavedFlash(null), 2000);
+                  }}
+                  className="w-full text-left px-3 py-2 text-sm text-surface-700 hover:bg-surface-50 flex items-center gap-2"
+                >
+                  <Save size={14} className="text-amber-500" />
+                  Save Draft
+                </button>
+                <button
+                  onClick={async () => {
+                    setShowSaveMenu(false);
+                    await saveProject('complete');
+                    setSavedFlash('Saved');
+                    setTimeout(() => setSavedFlash(null), 2000);
+                  }}
+                  className="w-full text-left px-3 py-2 text-sm text-surface-700 hover:bg-surface-50 flex items-center gap-2"
+                >
+                  <CheckCircle2 size={14} className="text-emerald-500" />
+                  Save Complete
+                </button>
+              </div>
+            )}
+          </div>
+        )}
         <button
           onClick={() => setShowAIPanel(true)}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:from-violet-500 hover:to-purple-500 transition-all shadow-sm whitespace-nowrap"

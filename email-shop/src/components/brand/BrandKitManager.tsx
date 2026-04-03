@@ -83,10 +83,23 @@ export function BrandKitManager() {
     setBulkImporting(true);
     let success = 0;
     const errors: string[] = [];
+    const addAsset = useEditorStore.getState().addAsset;
+    const existingAssetIds = new Set(useEditorStore.getState().assets.map((a) => a.id));
+
     for (const pk of pendingKits) {
       try {
         const saved = await brandKitService.save(pk.brandKit);
         addBrandKit(saved);
+
+        // Sync brand kit images into the asset library store so they
+        // appear in the Image Library view immediately after import
+        for (const asset of [...saved.logos, ...saved.images, ...saved.floorplans]) {
+          if (asset.sourceUrl && !existingAssetIds.has(asset.id)) {
+            existingAssetIds.add(asset.id);
+            addAsset(asset);
+          }
+        }
+
         success++;
       } catch (err) {
         errors.push(`Failed to save "${pk.kitName}": ${err instanceof Error ? err.message : String(err)}`);
@@ -140,6 +153,17 @@ export function BrandKitManager() {
       } else {
         updateBrandKit(saved);
       }
+
+      // Sync brand kit images into the asset library store
+      const addAssetToStore = useEditorStore.getState().addAsset;
+      const existingIds = new Set(useEditorStore.getState().assets.map((a) => a.id));
+      for (const asset of [...saved.logos, ...saved.images, ...saved.floorplans]) {
+        if (asset.sourceUrl && !existingIds.has(asset.id)) {
+          existingIds.add(asset.id);
+          addAssetToStore(asset);
+        }
+      }
+
       setEditingKit(null);
       setIsCreating(false);
     } catch (err) {

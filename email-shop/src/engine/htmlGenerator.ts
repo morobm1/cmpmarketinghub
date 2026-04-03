@@ -1,3 +1,4 @@
+import { matchAmenityIcon as _matchIcon } from '@/blocks/amenityIcons';
 import type {
   EmailBlock,
   EmailGlobalStyles,
@@ -175,20 +176,37 @@ function renderTwoColumn(data: TwoColumnBlockData): string {
 
 function renderAmenities(data: AmenitiesBlockData): string {
   const colWidth = Math.floor(100 / data.columns);
+  const textColor = data.style.textColor || '#333333';
   const rows: string[] = [];
   for (let i = 0; i < data.items.length; i += data.columns) {
-    const cells = data.items.slice(i, i + data.columns).map(
-      (item) => `<td width="${colWidth}%" valign="top" style="${ff()} padding: 8px; text-align: center;">
-        ${item.icon ? `<img src="${item.icon}" alt="${item.label}" width="32" height="32" style="display: block; margin: 0 auto 6px; width: 32px; height: 32px; border: 0;" />` : ''}
-        <strong style="${ff()} font-size: 14px; color: #333;">${item.label}</strong>
-        ${item.description ? `<br/><span style="${ff()} font-size: 13px; color: #666;">${item.description}</span>` : ''}
-      </td>`,
+    const slice = data.items.slice(i, i + data.columns);
+    // Pad last row with empty cells for consistent layout
+    while (slice.length < data.columns) {
+      slice.push({ label: '', description: '' });
+    }
+    const cells = slice.map(
+      (item) => {
+        if (!item.label) return `<td width="${colWidth}%" style="padding: 8px;">&nbsp;</td>`;
+        // Auto-match icon from amenity library if not explicitly set
+        const iconSrc = item.icon || _autoMatchIcon(item.label);
+        return `<td width="${colWidth}%" valign="top" style="${ff()} padding: 10px 8px; text-align: center;">
+        ${iconSrc ? `<img src="${iconSrc}" alt="${item.label}" width="28" height="28" style="display: block; margin: 0 auto 6px; width: 28px; height: 28px; border: 0;" />` : ''}
+        <strong style="${ff()} font-size: 13px; line-height: 1.3; color: ${textColor};">${item.label}</strong>
+        ${item.description ? `<br/><span style="${ff()} font-size: 12px; line-height: 1.4; color: #666666;">${item.description}</span>` : ''}
+      </td>`;
+      },
     ).join('');
     rows.push(`<tr>${cells}</tr>`);
   }
-  const content = `<h2 style="margin: 0 0 16px; ${ff()} text-align: center; font-size: 22px; color: ${data.style.textColor || '#333'};">${data.heading}</h2>
+  const content = `<h2 style="margin: 0 0 16px; ${ff()} text-align: center; font-size: 20px; font-weight: 700; color: ${textColor};">${data.heading}</h2>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${rows.join('')}</table>`;
   return wrapRow(content, data);
+}
+
+/** Try to auto-match an amenity icon by label from the icon library */
+function _autoMatchIcon(label: string): string | undefined {
+  const match = _matchIcon(label);
+  return match?.svg;
 }
 
 function renderFloorplanSpotlight(data: FloorplanSpotlightBlockData): string {
