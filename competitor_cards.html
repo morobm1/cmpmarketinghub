@@ -331,6 +331,23 @@
       .cc-preview { box-shadow: none; border: none; }
     }
 
+    /* Subject Property Card */
+    .subject-card-section { background: linear-gradient(135deg, var(--card-navy), var(--card-navy-dark)); border-radius: 12px; padding: 20px; margin-bottom: 20px; color: #fff; }
+    .subject-card-section .sc-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .subject-card-section .sc-header h3 { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-family: Roboto, Arial, sans-serif; }
+    .subject-card-section .sc-header .sc-label { font-size: 11px; color: var(--brand-accent); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+    .subject-card-section .sc-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 14px; }
+    .subject-card-section .sc-stat { background: rgba(255,255,255,0.1); border-radius: 8px; padding: 10px 12px; }
+    .subject-card-section .sc-stat .sc-stat-label { font-size: 10px; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+    .subject-card-section .sc-stat .sc-stat-value { font-size: 14px; font-weight: 700; margin-top: 2px; }
+    .subject-card-section .sc-empty { font-size: 13px; color: rgba(255,255,255,0.7); margin-top: 10px; }
+    .subject-card-section .btn-subject { background: var(--brand-accent); color: #1e293b; border: none; font-weight: 700; }
+    .subject-card-section .btn-subject:hover { background: #ffc94d; }
+
+    /* Assigned Property Banner */
+    .assigned-banner { background: var(--card-navy); color: #fff; padding: 8px 16px; border-radius: 8px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; font-size: 12px; }
+    .assigned-banner .ab-label { color: var(--brand-accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-size: 11px; }
+
     /* Loading */
     .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; z-index: 50; }
     .loading-overlay .spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top-color: var(--brand-accent-2); border-radius: 50%; animation: spin 0.8s linear infinite; }
@@ -420,7 +437,8 @@
     // ── State ──
     var currentUser = null;
     var currentProperty = '';
-    var cards = [];
+    var cards = [];        // competitor cards only
+    var subjectCard = null; // "our property" master card
     var currentCard = null;
     var viewingCard = null;
     var currentView = 'gallery';
@@ -450,9 +468,10 @@
       setTimeout(function() { els.toast.classList.remove('show'); }, 2500);
     }
 
-    function createEmptyCard() {
+    function createEmptyCard(cardType) {
       return {
         property: currentProperty,
+        cardType: cardType || 'competitor', // 'subject' or 'competitor'
         status: 'draft',
         competitorName: '', heroImage: '', website: '', address: '',
         distanceFromCampus: '', driveTimeToCampus: '', propertyType: '', targetAudience: '',
@@ -523,7 +542,7 @@
       els.pageSubtitle.style.display = '';
 
       var compareIds = getCompareIds();
-      var compareBtn = compareIds.length >= 2
+      var compareBtn = compareIds.length >= 1
         ? '<button class="btn btn-accent" id="compareBtn">' + icon('compare') + ' Compare (' + compareIds.length + ')</button>'
         : '';
 
@@ -629,7 +648,7 @@
             // Re-render toolbar to update compare button
             var cIds = getCompareIds();
             var cBtn = document.getElementById('compareBtn');
-            if (cIds.length >= 2 && !cBtn) {
+            if (cIds.length >= 1 && !cBtn) {
               var newBtn = document.createElement('button');
               newBtn.className = 'btn btn-accent';
               newBtn.id = 'compareBtn';
@@ -637,7 +656,7 @@
               newBtn.onclick = function() { renderComparison(); };
               els.toolbarActions.insertBefore(newBtn, els.toolbarActions.firstChild);
             } else if (cBtn) {
-              if (cIds.length >= 2) {
+              if (cIds.length >= 1) {
                 cBtn.innerHTML = icon('compare') + ' Compare (' + cIds.length + ')';
               } else {
                 cBtn.remove();
@@ -649,7 +668,37 @@
 
       var typeOpts = Object.entries(PROPERTY_TYPE_LABELS).map(function(e) { return '<option value="' + e[0] + '">' + e[1] + '</option>'; }).join('');
 
-      els.mainContent.innerHTML =
+      // Build subject property card section
+      var subjectHTML = '';
+      if (subjectCard) {
+        var sc = subjectCard;
+        subjectHTML = '<div class="subject-card-section">' +
+          '<div class="sc-header">' +
+            '<div><div class="sc-label">Our Property</div><h3>' + esc(sc.competitorName || currentProperty) + '</h3></div>' +
+            '<div style="display:flex;gap:8px;">' +
+              '<button class="btn btn-subject btn-sm" id="editSubjectBtn">' + icon('edit') + ' Edit Our Property Card</button>' +
+              '<button class="btn btn-sm btn-outline" id="viewSubjectBtn" style="color:#fff;border-color:rgba(255,255,255,0.3);">' + icon('eye') + ' View</button>' +
+            '</div>' +
+          '</div>' +
+          '<div class="sc-body">';
+        if (sc.startingRate) subjectHTML += '<div class="sc-stat"><div class="sc-stat-label">Starting Rate</div><div class="sc-stat-value">' + esc(sc.startingRate) + '</div></div>';
+        if (sc.unitCount) subjectHTML += '<div class="sc-stat"><div class="sc-stat-label">Units</div><div class="sc-stat-value">' + esc(sc.unitCount) + '</div></div>';
+        if (sc.currentOccupancy) subjectHTML += '<div class="sc-stat"><div class="sc-stat-label">Occupancy</div><div class="sc-stat-value">' + esc(sc.currentOccupancy) + '</div></div>';
+        if (sc.floorplans) subjectHTML += '<div class="sc-stat"><div class="sc-stat-label">Floorplans</div><div class="sc-stat-value">' + esc(sc.floorplans) + '</div></div>';
+        if (sc.propertyType) subjectHTML += '<div class="sc-stat"><div class="sc-stat-label">Type</div><div class="sc-stat-value">' + esc(PROPERTY_TYPE_LABELS[sc.propertyType] || sc.propertyType) + '</div></div>';
+        if (sc.topAmenities) subjectHTML += '<div class="sc-stat"><div class="sc-stat-label">Top Amenities</div><div class="sc-stat-value" style="font-size:12px;">' + esc(sc.topAmenities) + '</div></div>';
+        subjectHTML += '</div></div>';
+      } else {
+        subjectHTML = '<div class="subject-card-section">' +
+          '<div class="sc-header">' +
+            '<div><div class="sc-label">Our Property</div><h3>' + esc(currentProperty) + '</h3></div>' +
+            '<button class="btn btn-subject btn-sm" id="setupSubjectBtn">' + icon('plus') + ' Set Up Our Property Card</button>' +
+          '</div>' +
+          '<div class="sc-empty">Set up your property card to enable side-by-side comparisons with competitors. This card contains your property\'s rates, floorplans, amenities, and other details.</div>' +
+        '</div>';
+      }
+
+      els.mainContent.innerHTML = subjectHTML +
         '<div class="gallery-toolbar">' +
           '<div class="search-box"><span class="search-icon">' + icon('search') + '</span><input type="text" id="gallerySearch" placeholder="Search competitors..."></div>' +
           '<select id="filterImpact"><option value="">All Impact</option><option value="high">High Impact</option><option value="medium">Medium Impact</option><option value="low">Low Impact</option></select>' +
@@ -680,6 +729,28 @@
       statusEl.onchange = onFilter;
       sortEl.onchange = onFilter;
 
+      // Subject card button handlers
+      var setupBtn = document.getElementById('setupSubjectBtn');
+      if (setupBtn) {
+        setupBtn.onclick = function() {
+          currentCard = createEmptyCard('subject');
+          currentCard.competitorName = currentProperty;
+          renderEditor();
+        };
+      }
+      var editSubBtn = document.getElementById('editSubjectBtn');
+      if (editSubBtn) {
+        editSubBtn.onclick = function() {
+          handleEditCard(subjectCard);
+        };
+      }
+      var viewSubBtn = document.getElementById('viewSubjectBtn');
+      if (viewSubBtn) {
+        viewSubBtn.onclick = function() {
+          handleViewCard(subjectCard);
+        };
+      }
+
       renderGrid();
     }
 
@@ -688,7 +759,10 @@
       currentView = 'editor';
       viewingCard = null;
 
-      els.pageTitle.textContent = currentCard.competitorName || 'New Competitor Card';
+      var isSubject = currentCard.cardType === 'subject';
+      els.pageTitle.textContent = isSubject
+        ? 'Our Property: ' + (currentCard.competitorName || currentProperty)
+        : (currentCard.competitorName || 'New Competitor Card');
       els.pageSubtitle.style.display = 'none';
       els.toolbarActions.innerHTML =
         '<button class="btn btn-back" id="backBtn">' + icon('arrowLeft') + ' Back</button>' +
@@ -702,7 +776,11 @@
       document.getElementById('presentBtn').onclick = function() { handlePresentation(currentCard); };
 
       var statusText = currentCard.status === 'draft' ? 'Draft' : currentCard.status === 'complete' ? 'Complete' : 'Archived';
-      els.mainContent.innerHTML =
+      var bannerHTML = '<div class="assigned-banner">' +
+        '<span class="ab-label">' + (isSubject ? 'Our Property Card' : 'Competitor For') + ':</span> ' +
+        esc(currentProperty) +
+      '</div>';
+      els.mainContent.innerHTML = bannerHTML +
         '<div class="editor-layout">' +
           '<div class="editor-form">' +
             '<div class="editor-panel-header"><span>Data Entry</span><span>' + statusText + '</span></div>' +
@@ -785,7 +863,7 @@
       var ids = getCompareIds();
       var compCards = ids.map(function(id) { return cards.find(function(c) { return c.id === id; }); }).filter(Boolean);
 
-      if (compCards.length < 2) { showToast('Select at least 2 cards to compare'); renderGallery(); return; }
+      if (compCards.length < 1) { showToast('Select at least 1 card to compare'); renderGallery(); return; }
 
       els.pageTitle.textContent = 'Competitor Comparison';
       els.pageSubtitle.textContent = 'Comparing ' + compCards.length + ' competitors for ' + currentProperty;
@@ -803,9 +881,16 @@
         colHeaders += '<th class="col-header">' + esc(c.competitorName) + '</th>';
       });
 
+      var sc = subjectCard; // our property data (may be null)
+      function ourVal(getter) {
+        if (!sc) return '<span style="color:#d1d5db;">--</span>';
+        var v = getter(sc);
+        return v ? esc(v) : '<span style="color:#d1d5db;">--</span>';
+      }
+
       function row(label, getter, highlight) {
         var cls = highlight ? ' class="highlight"' : '';
-        var html = '<tr><th>' + label + '</th><td' + cls + '>--</td>';
+        var html = '<tr><th>' + label + '</th><td' + cls + '>' + ourVal(getter) + '</td>';
         compCards.forEach(function(c) {
           var val = getter(c);
           html += '<td' + cls + '>' + (val ? esc(val) : '<span style="color:#d1d5db;">--</span>') + '</td>';
@@ -814,7 +899,8 @@
       }
 
       function badgeRow(label, getter, variant) {
-        var html = '<tr><th>' + label + '</th><td>--</td>';
+        var ourBadge = sc ? (function() { var v = getter(sc); return v ? badgeHTML(variant, v, (variant === 'impact' ? IMPACT_LABELS : VELOCITY_LABELS)[v] || v) : '<span style="color:#d1d5db;">--</span>'; })() : '<span style="color:#d1d5db;">--</span>';
+        var html = '<tr><th>' + label + '</th><td>' + ourBadge + '</td>';
         compCards.forEach(function(c) {
           var val = getter(c);
           html += '<td>' + (val ? badgeHTML(variant, val, (variant === 'impact' ? IMPACT_LABELS : VELOCITY_LABELS)[val] || val) : '<span style="color:#d1d5db;">--</span>') + '</td>';
@@ -830,25 +916,26 @@
       // Floorplan comparison rows
       function fpRows() {
         var html = '';
-        compCards.forEach(function(c) {
-          var fps = c.floorplanDetails || [];
-          if (fps.length > 0) {
-            html += '<tr><th>' + esc(c.competitorName) + ' Floorplans</th><td>--</td>';
-            compCards.forEach(function(c2) {
-              if (c2.id === c.id) {
-                var fpHtml = '<table class="fp-table" style="margin:0;"><tbody>';
-                fps.forEach(function(fp) {
-                  fpHtml += '<tr><td>' + esc(fp.name) + '</td><td>' + esc(fp.bedsBaths) + '</td><td>' + esc(fp.sqft) + '</td><td class="rate-cell">' + esc(fp.rate) + '</td></tr>';
-                });
-                fpHtml += '</tbody></table>';
-                html += '<td>' + fpHtml + '</td>';
-              } else {
-                html += '<td></td>';
-              }
-            });
-            html += '</tr>';
-          }
-        });
+        function buildFpTable(fps) {
+          if (!fps || fps.length === 0) return '<span style="color:#d1d5db;">--</span>';
+          var t = '<table class="fp-table" style="margin:0;"><tbody>';
+          fps.forEach(function(fp) {
+            t += '<tr><td>' + esc(fp.name) + '</td><td>' + esc(fp.bedsBaths) + '</td><td>' + esc(fp.sqft) + '</td><td class="rate-cell">' + esc(fp.rate) + '</td></tr>';
+          });
+          return t + '</tbody></table>';
+        }
+        // Our property floorplans
+        var allCards = [].concat(sc ? [sc] : []).concat(compCards);
+        var hasAnyFP = allCards.some(function(c) { return (c.floorplanDetails || []).length > 0; });
+        if (hasAnyFP) {
+          // Single row showing all floorplans
+          html += '<tr><th>Floorplan Rates</th>';
+          html += '<td>' + buildFpTable(sc ? sc.floorplanDetails : []) + '</td>';
+          compCards.forEach(function(c) {
+            html += '<td>' + buildFpTable(c.floorplanDetails) + '</td>';
+          });
+          html += '</tr>';
+        }
         return html;
       }
 
@@ -1365,6 +1452,17 @@
       }
     }
 
+    function updateCardInState(card) {
+      var copy = JSON.parse(JSON.stringify(card));
+      if (card.cardType === 'subject') {
+        subjectCard = copy;
+      } else {
+        var idx = cards.findIndex(function(c) { return c.id === card.id; });
+        if (idx >= 0) cards[idx] = copy;
+        else cards.unshift(copy);
+      }
+    }
+
     async function handleSaveDraft() {
       if (!currentCard) return;
       try {
@@ -1373,15 +1471,13 @@
         if (currentCard.id) {
           var result = await apiUpdate(currentCard);
           currentCard.updatedAt = result.updatedAt;
-          var idx = cards.findIndex(function(c) { return c.id === currentCard.id; });
-          if (idx >= 0) cards[idx] = JSON.parse(JSON.stringify(currentCard));
         } else {
           var result = await apiCreate(currentCard);
           currentCard.id = result.id;
           currentCard.createdAt = result.createdAt;
           currentCard.updatedAt = result.updatedAt;
-          cards.unshift(JSON.parse(JSON.stringify(currentCard)));
         }
+        updateCardInState(currentCard);
         showToast('Draft saved');
       } catch (e) {
         showToast('Error saving draft');
@@ -1392,7 +1488,7 @@
     async function handleSaveComplete() {
       if (!currentCard) return;
       if (!(currentCard.competitorName || '').trim()) {
-        showToast('Competitor name is required');
+        showToast(currentCard.cardType === 'subject' ? 'Property name is required' : 'Competitor name is required');
         return;
       }
       try {
@@ -1401,15 +1497,13 @@
         if (currentCard.id) {
           var result = await apiUpdate(currentCard);
           currentCard.updatedAt = result.updatedAt;
-          var idx = cards.findIndex(function(c) { return c.id === currentCard.id; });
-          if (idx >= 0) cards[idx] = JSON.parse(JSON.stringify(currentCard));
         } else {
           var result = await apiCreate(currentCard);
           currentCard.id = result.id;
           currentCard.createdAt = result.createdAt;
           currentCard.updatedAt = result.updatedAt;
-          cards.unshift(JSON.parse(JSON.stringify(currentCard)));
         }
+        updateCardInState(currentCard);
         showToast('Card saved as complete');
       } catch (e) {
         showToast('Error saving card');
@@ -1427,14 +1521,19 @@
     // ── Load Data ──
     async function loadCards() {
       try {
-        cards = await apiGet();
+        var allCards = await apiGet();
         // Ensure floorplanDetails exists on all cards
-        cards.forEach(function(c) {
+        allCards.forEach(function(c) {
           if (!c.floorplanDetails) c.floorplanDetails = [];
           if (!c.monthlyExtraFees) c.monthlyExtraFees = {};
+          if (!c.cardType) c.cardType = 'competitor';
         });
+        // Separate subject card from competitor cards
+        subjectCard = allCards.find(function(c) { return c.cardType === 'subject'; }) || null;
+        cards = allCards.filter(function(c) { return c.cardType !== 'subject'; });
       } catch (e) {
         cards = [];
+        subjectCard = null;
         console.error('Error loading cards:', e);
       }
       compareSelected = {};
