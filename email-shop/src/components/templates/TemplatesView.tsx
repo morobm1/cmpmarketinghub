@@ -1,16 +1,22 @@
 import { useState, useMemo } from 'react';
 import { useEditorStore } from '@/store/useEditorStore';
 import { generateEmailHtml } from '@/engine/htmlGenerator';
-import { ArrowLeft, LayoutTemplate, Plus, Eye, X } from 'lucide-react';
+import { ArrowLeft, LayoutTemplate, Plus, Eye, Pencil, X } from 'lucide-react';
 import type { EmailTemplate } from '@/types';
 
 export function TemplatesView() {
   const templates = useEditorStore((s) => s.templates);
   const setView = useEditorStore((s) => s.setView);
   const setProject = useEditorStore((s) => s.setProject);
+  const editTemplateAction = useEditorStore((s) => s.editTemplate);
 
   const [previewTemplate, setPreviewTemplate] = useState<EmailTemplate | null>(null);
   const [filterCategory, setFilterCategory] = useState<string>('all');
+
+  const handleEditTemplate = (template: EmailTemplate) => {
+    editTemplateAction(template);
+    setView('builder');
+  };
 
   const useTemplate = (template: EmailTemplate) => {
     setProject({
@@ -44,7 +50,7 @@ export function TemplatesView() {
 
   return (
     <div className="flex flex-col h-full">
-      <header className="h-14 bg-surface-900 text-white flex items-center px-6 gap-4 shrink-0">
+      <header className="h-14 bg-[#1e293b] text-white flex items-center px-6 gap-4 shrink-0">
         <button onClick={() => setView('builder')} className="p-1.5 rounded-md hover:bg-surface-700">
           <ArrowLeft size={18} />
         </button>
@@ -92,6 +98,7 @@ export function TemplatesView() {
                 categoryColor={categoryColors[template.category] || 'bg-surface-100 text-surface-600'}
                 onUse={() => useTemplate(template)}
                 onPreview={() => setPreviewTemplate(template)}
+                onEdit={() => handleEditTemplate(template)}
               />
             ))}
           </div>
@@ -119,11 +126,12 @@ export function TemplatesView() {
 
 // ---- Template Card with live iframe preview ----
 
-function TemplateCard({ template, categoryColor, onUse, onPreview }: {
+function TemplateCard({ template, categoryColor, onUse, onPreview, onEdit }: {
   template: EmailTemplate;
   categoryColor: string;
   onUse: () => void;
   onPreview: () => void;
+  onEdit: () => void;
 }) {
   // Generate a live HTML preview for the thumbnail
   const previewHtml = useMemo(() => {
@@ -171,6 +179,13 @@ function TemplateCard({ template, categoryColor, onUse, onPreview }: {
             className="flex-1 py-2 text-sm font-medium text-primary-600 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors text-center"
           >
             Use Template
+          </button>
+          <button
+            onClick={onEdit}
+            title="Edit Template"
+            className="px-3 py-2 text-sm font-medium text-amber-600 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors"
+          >
+            <Pencil size={14} />
           </button>
           <button
             onClick={onPreview}

@@ -99,6 +99,9 @@ interface EditorStore {
   setTemplates: (templates: EmailTemplate[]) => void;
   setProjects: (projects: EmailProject[]) => void;
   saveAsTemplate: (name: string, description: string, category: string) => void;
+  editTemplate: (template: EmailTemplate) => void;
+  saveEditedTemplate: () => void;
+  editingTemplateId: ID | null;
   saveProject: (status: ProjectStatus) => Promise<void>;
   isSavingProject: boolean;
   lastSaveError: string | null;
@@ -162,6 +165,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
   // ---- Save state ----
   isSavingProject: false,
   lastSaveError: null,
+  editingTemplateId: null,
 
   // ---- History ----
   history: [],
@@ -342,6 +346,46 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     set((s) => ({ templates: [...s.templates, template] }));
     templateService.save(template).catch((err) => {
       console.error('Failed to save template to API:', err);
+    });
+  },
+
+  editTemplate: (template: EmailTemplate) => {
+    set({
+      projectId: null,
+      projectName: template.name,
+      propertyId: template.propertyId || '',
+      propertyName: '',
+      blocks: JSON.parse(JSON.stringify(template.blocks)),
+      globalStyles: { ...template.globalStyles },
+      editingTemplateId: template.id,
+      isDirty: false,
+      selectedBlockId: null,
+      history: [],
+      historyIndex: -1,
+    });
+  },
+
+  saveEditedTemplate: () => {
+    const state = get();
+    if (!state.editingTemplateId) return;
+    const now = new Date().toISOString();
+    const existing = state.templates.find((t) => t.id === state.editingTemplateId);
+    if (!existing) return;
+    const updated: EmailTemplate = {
+      ...existing,
+      blocks: JSON.parse(JSON.stringify(state.blocks)),
+      globalStyles: { ...state.globalStyles },
+      name: state.projectName || existing.name,
+      updatedAt: now,
+    };
+    // Update in store
+    set((s) => ({
+      templates: s.templates.map((t) => t.id === updated.id ? updated : t),
+      isDirty: false,
+    }));
+    // Persist to API
+    templateService.save(updated).catch((err) => {
+      console.error('Failed to save edited template to API:', err);
     });
   },
 

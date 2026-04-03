@@ -18,6 +18,13 @@ export async function handler(event) {
   const params = new URLSearchParams(event.rawQuery || '');
   const json = (data) => ({ statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
 
+  // Refresh properties from DB to avoid stale JWT claims
+  const freshUser = await db.collection('users').findOne({ username: user.sub });
+  if (freshUser) {
+    user.properties = freshUser.properties;
+    user.role = freshUser.role;
+  }
+
   function userCanAccessProperty(propertyId) {
     if (user.role === 'admin' || user.properties === '*') return true;
     const allowed = Array.isArray(user.properties) ? user.properties : [];

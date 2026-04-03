@@ -44,6 +44,8 @@ export function TopToolbar() {
   const saveProject = useEditorStore((s) => s.saveProject);
   const isSavingProject = useEditorStore((s) => s.isSavingProject);
   const lastSaveError = useEditorStore((s) => s.lastSaveError);
+  const editingTemplateId = useEditorStore((s) => s.editingTemplateId);
+  const saveEditedTemplate = useEditorStore((s) => s.saveEditedTemplate);
 
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showSaveMenu, setShowSaveMenu] = useState(false);
@@ -75,14 +77,14 @@ export function TopToolbar() {
   ];
 
   return (
-    <header className="h-12 bg-surface-900 text-white flex items-center px-3 gap-1.5 shrink-0 shadow-lg z-50">
+    <header className="h-12 bg-[#1e293b] text-white flex items-center px-3 gap-1.5 shrink-0 shadow-lg z-50">
       {/* Logo / App Name */}
       <div className="flex items-center gap-2 mr-2 shrink-0">
-        <div className="w-7 h-7 rounded-md bg-primary-500 flex items-center justify-center text-white font-bold text-xs">
-          E
+        <div className="w-7 h-7 rounded-md bg-[#446472] flex items-center justify-center text-white font-bold text-xs">
+          CS
         </div>
         <div className="hidden lg:block leading-none">
-          <div className="text-xs font-semibold whitespace-nowrap">Email Generator</div>
+          <div className="text-xs font-semibold whitespace-nowrap text-[#52d5ff]">Creative Studio</div>
         </div>
       </div>
 
@@ -119,7 +121,10 @@ export function TopToolbar() {
           className="text-xs text-surface-400 bg-transparent border-0 border-b border-transparent hover:border-surface-600 focus:border-primary-400 focus:text-white outline-none truncate w-full px-0.5 py-0.5"
           title="Click to rename project"
         />
-        {isDirty && (
+        {editingTemplateId && (
+          <span className="text-[10px] text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded font-semibold shrink-0">Editing Template</span>
+        )}
+        {isDirty && !editingTemplateId && (
           <span className="text-[10px] text-amber-400 font-semibold shrink-0">Unsaved</span>
         )}
       </div>
@@ -223,6 +228,23 @@ export function TopToolbar() {
                   <CheckCircle2 size={14} className="text-emerald-500" />
                   Save Complete
                 </button>
+                {editingTemplateId && (
+                  <>
+                    <div className="border-t border-surface-100 my-1" />
+                    <button
+                      onClick={() => {
+                        setShowSaveMenu(false);
+                        saveEditedTemplate();
+                        setSavedFlash('Template Updated');
+                        setTimeout(() => setSavedFlash(null), 2500);
+                      }}
+                      className="w-full text-left px-3 py-2 text-sm text-surface-700 hover:bg-surface-50 flex items-center gap-2"
+                    >
+                      <LayoutTemplate size={14} className="text-amber-500" />
+                      Update Template
+                    </button>
+                  </>
+                )}
                 <div className="border-t border-surface-100 my-1" />
                 <button
                   onClick={async () => {

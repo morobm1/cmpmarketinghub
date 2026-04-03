@@ -30,7 +30,7 @@ export function ProjectsView() {
 
   return (
     <div className="flex flex-col h-full">
-      <header className="h-14 bg-surface-900 text-white flex items-center px-6 gap-4 shrink-0">
+      <header className="h-14 bg-[#1e293b] text-white flex items-center px-6 gap-4 shrink-0">
         <button onClick={() => setView('builder')} className="p-1.5 rounded-md hover:bg-surface-700">
           <ArrowLeft size={18} />
         </button>
