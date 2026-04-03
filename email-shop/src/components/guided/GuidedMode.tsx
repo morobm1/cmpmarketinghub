@@ -9,6 +9,7 @@ import {
   LayoutTemplate, ImageIcon, Type, MousePointer,
   Star, ListChecks, Eye,
 } from 'lucide-react';
+import { getEmailButtonCTAs, getTop25 } from '@/data/ctaLibrary';
 
 type GuidedStep = 'purpose' | 'header' | 'hero' | 'content' | 'cta' | 'extras' | 'ending' | 'review';
 
@@ -397,6 +398,16 @@ function StepCTA({ state, update }: { state: GuidedState; update: (p: Partial<Gu
           <div>
             <label className="block text-xs font-medium text-surface-500 mb-1">Button Label</label>
             <input type="text" value={state.buttonLabel} onChange={(e) => update({ buttonLabel: e.target.value })} className="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-surface-500 mb-1.5">Quick CTA Suggestions</label>
+            <div className="flex flex-wrap gap-1.5">
+              {getEmailButtonCTAs().map((cta) => (
+                <button key={cta} onClick={() => update({ buttonLabel: cta })} className={'px-2.5 py-1 text-xs rounded-full transition-colors ' + (state.buttonLabel === cta ? 'bg-primary-600 text-white' : 'bg-surface-100 text-surface-600 hover:bg-primary-50 hover:text-primary-700')}>
+                  {cta}
+                </button>
+              ))}
+            </div>
           </div>
           <div>
             <label className="block text-xs font-medium text-surface-500 mb-1">Button URL</label>
