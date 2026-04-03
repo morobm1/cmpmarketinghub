@@ -139,22 +139,7 @@ function ContentProperties({ block, data, update, brandColors, brandLinks }: { b
           <ImageUrlField label="Image / GIF URL" value={data.imageUrl || ''} onChange={(v) => update('imageUrl', v)} filterCategory="photo" />
           <TextField label="Alt Text" value={data.altText || ''} onChange={(v) => update('altText', v)} />
           <TextField label="Link URL" value={data.linkUrl || ''} onChange={(v) => update('linkUrl', v)} placeholder="https://" />
-          <div>
-            <label className="block text-xs font-medium text-surface-500 mb-1">Image Height: {data.imageHeight || 250}px</label>
-            <input
-              type="range"
-              min={100}
-              max={500}
-              value={data.imageHeight || 250}
-              onChange={(e) => update('imageHeight', Number(e.target.value))}
-              className="w-full accent-primary-500"
-            />
-            <div className="flex justify-between text-[10px] text-surface-400">
-              <span>100px</span>
-              <span>Best: 200-300px</span>
-              <span>500px</span>
-            </div>
-          </div>
+          <NumberField label="Image Height (px)" value={data.imageHeight || 250} onChange={(v) => update('imageHeight', v)} min={100} max={500} step={10} />
           <SelectField label="Image Position (Crop)" value={data.objectPosition || 'center center'} onChange={(v) => update('objectPosition', v)} options={[
             { value: 'center center', label: 'Center' },
             { value: 'center top', label: 'Top' },
@@ -378,6 +363,70 @@ function ContentProperties({ block, data, update, brandColors, brandLinks }: { b
         </PropertySection>
       );
 
+    case 'image-gallery': {
+      const images = data.images || [];
+      return (
+        <PropertySection title="Image Gallery">
+          <SelectField label="Columns" value={String(data.columns || 3)} onChange={(v) => update('columns', Number(v))} options={[{ value: '2', label: '2 Columns' }, { value: '3', label: '3 Columns' }]} />
+          <NumberField label="Gap (px)" value={data.gap ?? 8} onChange={(v) => update('gap', v)} min={0} max={24} />
+          <TextField label="Caption" value={data.caption || ''} onChange={(v) => update('caption', v)} placeholder="Optional caption text" />
+          <div className="space-y-2 mt-2">
+            <label className="block text-xs font-medium text-surface-500">Images</label>
+            {images.map((img: { url: string; alt: string; linkUrl?: string }, i: number) => (
+              <div key={i} className="p-2 border border-surface-200 rounded-lg space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-surface-500">Image {i + 1}</span>
+                  <button onClick={() => update('images', images.filter((_: any, j: number) => j !== i))} className="text-surface-400 hover:text-red-500"><Trash2 size={12} /></button>
+                </div>
+                <ImageUrlField label="URL" value={img.url} onChange={(v) => { const imgs = [...images]; imgs[i] = { ...img, url: v }; update('images', imgs); }} filterCategory="photo" />
+                <TextField label="Alt" value={img.alt} onChange={(v) => { const imgs = [...images]; imgs[i] = { ...img, alt: v }; update('images', imgs); }} />
+                <TextField label="Link URL" value={img.linkUrl || ''} onChange={(v) => { const imgs = [...images]; imgs[i] = { ...img, linkUrl: v }; update('images', imgs); }} placeholder="Optional click URL" />
+              </div>
+            ))}
+            <button onClick={() => update('images', [...images, { url: '', alt: 'Image ' + (images.length + 1) }])} className="flex items-center gap-1 text-xs text-primary-600 hover:bg-primary-50 px-2 py-1.5 rounded-md"><Plus size={12} /> Add Image</button>
+          </div>
+        </PropertySection>
+      );
+    }
+
+    case 'event-details':
+      return (
+        <PropertySection title="Event Details">
+          <TextField label="Event Name" value={data.eventName || ''} onChange={(v) => update('eventName', v)} />
+          <TextField label="Date" value={data.date || ''} onChange={(v) => update('date', v)} placeholder="Saturday, March 15" />
+          <TextField label="Time" value={data.time || ''} onChange={(v) => update('time', v)} placeholder="6:00 PM - 9:00 PM" />
+          <TextField label="Location" value={data.location || ''} onChange={(v) => update('location', v)} placeholder="Clubhouse" />
+          <TextAreaField label="Description" value={data.description || ''} onChange={(v) => update('description', v)} />
+          <ColorField label="Accent Color" value={data.accentColor || '#f59e0b'} onChange={(v) => update('accentColor', v)} brandColors={brandColors} />
+          <div className="flex items-end gap-2"><div className="flex-1"><TextField label="Button Label" value={data.buttonLabel || ''} onChange={(v) => update('buttonLabel', v)} /></div><CTAPickerButton onSelect={(cta) => update('buttonLabel', cta)} /></div>
+          <UrlFieldWithLinks label="Button URL" value={data.buttonUrl || ''} onChange={(v) => update('buttonUrl', v)} brandLinks={brandLinks} />
+        </PropertySection>
+      );
+
+    case 'numbered-steps': {
+      const steps = data.steps || [];
+      return (
+        <PropertySection title="Numbered Steps">
+          <TextField label="Heading" value={data.heading || ''} onChange={(v) => update('heading', v)} />
+          <ColorField label="Accent Color" value={data.accentColor || '#2563eb'} onChange={(v) => update('accentColor', v)} brandColors={brandColors} />
+          <div className="space-y-2 mt-2">
+            <label className="block text-xs font-medium text-surface-500">Steps</label>
+            {steps.map((step: { title: string; description: string }, i: number) => (
+              <div key={i} className="flex gap-2 items-start p-2 border border-surface-200 rounded-lg">
+                <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 mt-1" style={{ backgroundColor: data.accentColor || '#2563eb' }}>{i + 1}</div>
+                <div className="flex-1 space-y-1">
+                  <input type="text" value={step.title} onChange={(e) => { const s = [...steps]; s[i] = { ...step, title: e.target.value }; update('steps', s); }} className="w-full px-2 py-1 text-sm border border-surface-200 rounded-md font-medium" placeholder="Step title" />
+                  <input type="text" value={step.description} onChange={(e) => { const s = [...steps]; s[i] = { ...step, description: e.target.value }; update('steps', s); }} className="w-full px-2 py-1 text-xs border border-surface-200 rounded-md" placeholder="Description" />
+                </div>
+                <button onClick={() => update('steps', steps.filter((_: any, j: number) => j !== i))} className="text-surface-400 hover:text-red-500 shrink-0 mt-1"><Trash2 size={12} /></button>
+              </div>
+            ))}
+            <button onClick={() => update('steps', [...steps, { title: 'Step ' + (steps.length + 1), description: '' }])} className="flex items-center gap-1 text-xs text-primary-600 hover:bg-primary-50 px-2 py-1.5 rounded-md"><Plus size={12} /> Add Step</button>
+          </div>
+        </PropertySection>
+      );
+    }
+
     default:
       return <p className="text-sm text-surface-400 p-2">No editable properties for this block type.</p>;
   }
@@ -561,18 +610,26 @@ function TextAreaField({ label, value, onChange }: { label: string; value: strin
 }
 
 function NumberField({ label, value, onChange, min, max, step }: { label: string; value: number; onChange: (v: number) => void; min?: number; max?: number; step?: number }) {
+  const s = step || 1;
+  const clamp = (v: number) => Math.min(max ?? Infinity, Math.max(min ?? -Infinity, v));
   return (
     <div>
       <label className="block text-xs font-medium text-surface-500 mb-1">{label}</label>
-      <input
-        type="number"
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        min={min}
-        max={max}
-        step={step}
-        className="w-full px-2.5 py-1.5 text-sm border border-surface-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-      />
+      <div className="flex items-center gap-1">
+        <button onClick={() => onChange(clamp(value - s * 5))} className="w-7 h-7 rounded-md bg-surface-100 text-surface-500 hover:bg-surface-200 text-xs font-bold shrink-0">−−</button>
+        <button onClick={() => onChange(clamp(value - s))} className="w-7 h-7 rounded-md bg-surface-100 text-surface-500 hover:bg-surface-200 text-xs font-bold shrink-0">−</button>
+        <input
+          type="number"
+          value={value}
+          onChange={(e) => onChange(clamp(Number(e.target.value)))}
+          min={min}
+          max={max}
+          step={step}
+          className="flex-1 px-2 py-1.5 text-sm text-center border border-surface-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+        />
+        <button onClick={() => onChange(clamp(value + s))} className="w-7 h-7 rounded-md bg-surface-100 text-surface-500 hover:bg-surface-200 text-xs font-bold shrink-0">+</button>
+        <button onClick={() => onChange(clamp(value + s * 5))} className="w-7 h-7 rounded-md bg-surface-100 text-surface-500 hover:bg-surface-200 text-xs font-bold shrink-0">++</button>
+      </div>
     </div>
   );
 }
