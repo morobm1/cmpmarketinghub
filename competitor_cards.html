@@ -1,0 +1,1243 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Competitor Cards • Marketing Hub</title>
+  <link rel="preconnect" href="https://use.typekit.net" crossorigin>
+  <link rel="preconnect" href="https://p.typekit.net" crossorigin>
+  <link rel="stylesheet" href="https://use.typekit.net/hqv8hwr.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --brand-primary: #446472;
+      --brand-accent: #ffb732;
+      --brand-accent-2: #52d5ff;
+      --brand-gray: #929497;
+      --page-bg: #e5e7eb;
+      --bg: #ffffff;
+      --panel: #ffffff;
+      --text: #1f2937;
+      --subtext: #6b7280;
+      --border: #e5e7eb;
+      --card-navy: #446472;
+      --card-navy-dark: #365059;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body { font-family: 'Open Sans', Arial, sans-serif; background: var(--page-bg); color: var(--text); }
+
+    /* ── Header ── */
+    header { padding: 16px 18px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: #ffffff; z-index: 20; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand .logo-img { height: 32px; width: auto; display: block; }
+    .brand .title { color: #ffb732; font-family: zooja-pro, Arial, sans-serif; font-weight: 400; font-size: clamp(36px, 5vw, 64px); line-height: 1.05; }
+    .pill { border: 1px solid var(--border); background: var(--panel); border-radius: 999px; padding: 6px 10px; font-size: 12px; color: var(--subtext); display: flex; align-items: center; gap: 8px; }
+    .pill select, .pill button { font-family: Roboto, Arial, sans-serif; }
+    .pill select { background: #ffffff; border: 1px solid #d1d5db; border-radius: 8px; padding: 6px 8px; min-width: 220px; }
+    .pill button { background: #ffffff; color: #111827; border: 1px solid #d1d5db; padding: 6px 10px; border-radius: 8px; cursor: pointer; }
+    .pill button:hover { background: #f9fafb; }
+    .meta { color: var(--subtext); font-size: 13px; }
+
+    /* ── Layout ── */
+    .layout { max-width: 1600px; margin: 0 auto; padding: 0 16px 16px; }
+    .content-pane { padding-top: 16px; }
+
+    /* ── Page Toolbar ── */
+    .page-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+    .page-toolbar .page-title h1 { font-size: 20px; font-weight: 700; color: var(--text); font-family: Roboto, Arial, sans-serif; }
+    .page-toolbar .page-title p { font-size: 13px; color: var(--subtext); margin-top: 2px; }
+    .page-toolbar .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+    /* ── Buttons ── */
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; border: 1px solid transparent; font-size: 13px; font-weight: 600; cursor: pointer; font-family: Roboto, Arial, sans-serif; transition: all 0.15s; text-decoration: none; }
+    .btn-primary { background: var(--brand-primary); color: #fff; border-color: var(--brand-primary); }
+    .btn-primary:hover { background: var(--card-navy-dark); }
+    .btn-success { background: #059669; color: #fff; }
+    .btn-success:hover { background: #047857; }
+    .btn-outline { background: #fff; color: var(--text); border-color: #d1d5db; }
+    .btn-outline:hover { background: #f9fafb; }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+    .btn-back { background: none; border: none; color: var(--subtext); cursor: pointer; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; }
+    .btn-back:hover { color: var(--text); background: #f3f4f6; }
+
+    /* ── Toast ── */
+    .toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: #1e293b; color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 500; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.15); opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+    .toast.show { opacity: 1; }
+
+    /* ── Gallery Toolbar ── */
+    .gallery-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
+    .gallery-toolbar .search-box { position: relative; flex: 1; min-width: 200px; }
+    .gallery-toolbar .search-box input { width: 100%; padding: 8px 12px 8px 34px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 13px; background: #fff; font-family: 'Open Sans', Arial, sans-serif; }
+    .gallery-toolbar .search-box input::placeholder { color: #9ca3af; }
+    .gallery-toolbar .search-box .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 14px; }
+    .gallery-toolbar select { font-size: 12px; border: 1px solid #d1d5db; border-radius: 8px; padding: 6px 8px; background: #fff; color: var(--subtext); font-family: Roboto, Arial, sans-serif; }
+    .gallery-count { font-size: 12px; color: #9ca3af; margin-bottom: 8px; }
+
+    /* ── Card Grid ── */
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+    .card-thumb { background: #fff; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.06); overflow: hidden; transition: box-shadow 0.2s; cursor: default; }
+    .card-thumb:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .card-thumb .thumb-img { position: relative; height: 140px; overflow: hidden; background: linear-gradient(135deg, var(--card-navy), var(--card-navy-dark)); }
+    .card-thumb .thumb-img img { width: 100%; height: 100%; object-fit: cover; }
+    .card-thumb .thumb-img .overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.5), transparent); }
+    .card-thumb .thumb-img .no-img { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.2); font-size: 40px; }
+    .card-thumb .thumb-badges { position: absolute; top: 8px; left: 8px; display: flex; gap: 6px; }
+    .card-thumb .thumb-badges-right { position: absolute; top: 8px; right: 8px; display: flex; gap: 6px; }
+    .card-thumb .thumb-view-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0); transition: background 0.2s; cursor: pointer; }
+    .card-thumb:hover .thumb-view-overlay { background: rgba(0,0,0,0.2); }
+    .card-thumb .thumb-view-label { opacity: 0; background: rgba(255,255,255,0.9); color: var(--text); font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 999px; transition: opacity 0.2s; }
+    .card-thumb:hover .thumb-view-label { opacity: 1; }
+    .card-thumb .thumb-body { padding: 14px; }
+    .card-thumb .thumb-body h3 { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-thumb .thumb-body .thumb-address { font-size: 12px; color: #9ca3af; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-thumb .thumb-meta { display: flex; gap: 10px; margin-top: 8px; font-size: 12px; color: var(--subtext); }
+    .card-thumb .thumb-meta .rate { color: #059669; font-weight: 600; }
+    .card-thumb .thumb-takeaway { font-size: 12px; color: var(--subtext); margin-top: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-style: italic; line-height: 1.5; }
+    .card-thumb .thumb-actions { display: flex; gap: 2px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #f3f4f6; }
+    .card-thumb .thumb-actions button { background: none; border: none; font-size: 12px; color: var(--subtext); cursor: pointer; padding: 4px 8px; border-radius: 6px; font-family: Roboto, Arial, sans-serif; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; }
+    .card-thumb .thumb-actions button:hover { background: #f3f4f6; color: var(--text); }
+    .card-thumb .thumb-actions button.archive-btn { margin-left: auto; }
+    .card-thumb .thumb-actions button.archive-btn:hover { color: #dc2626; background: #fef2f2; }
+
+    /* ── Badges ── */
+    .badge { display: inline-flex; align-items: center; padding: 2px 10px; font-size: 11px; font-weight: 600; border-radius: 999px; border: 1px solid; white-space: nowrap; }
+    .badge-impact-high { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+    .badge-impact-medium { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+    .badge-impact-low { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+    .badge-status-draft { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+    .badge-status-complete { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+    .badge-status-archived { background: #f1f5f9; color: #64748b; border-color: #cbd5e1; }
+    .badge-velocity-strong { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+    .badge-velocity-moderate { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+    .badge-velocity-soft { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+
+    /* ── Empty State ── */
+    .empty-state { text-align: center; padding: 60px 20px; color: #9ca3af; }
+    .empty-state .icon { font-size: 48px; margin-bottom: 12px; opacity: 0.3; }
+    .empty-state p { font-size: 14px; }
+
+    /* ── Editor Layout ── */
+    .editor-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+    @media (max-width: 1200px) { .editor-layout { grid-template-columns: 1fr; } }
+    .editor-form { }
+    .editor-preview { position: sticky; top: 80px; }
+    .editor-panel-header { background: #f1f5f9; border-radius: 10px; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .editor-panel-header span { font-size: 11px; font-weight: 700; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.5px; }
+    .editor-panel-header a, .editor-panel-header .status-label { font-size: 12px; color: var(--subtext); }
+    .editor-panel-header a { color: var(--brand-accent-2); text-decoration: none; font-weight: 500; cursor: pointer; }
+    .editor-panel-header a:hover { text-decoration: underline; }
+
+    /* ── Form Sections ── */
+    .form-section { background: #fff; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
+    .form-section-header { display: flex; align-items: center; gap: 8px; padding: 12px 16px; cursor: pointer; user-select: none; background: #fff; border-bottom: 1px solid transparent; transition: background 0.15s; }
+    .form-section-header:hover { background: #f9fafb; }
+    .form-section-header .section-icon { font-size: 16px; }
+    .form-section-header .section-title { font-size: 13px; font-weight: 700; color: var(--text); flex: 1; }
+    .form-section-header .section-chevron { font-size: 14px; color: #9ca3af; transition: transform 0.2s; }
+    .form-section.open .form-section-header { border-bottom-color: var(--border); }
+    .form-section.open .section-chevron { transform: rotate(180deg); }
+    .form-section-body { display: none; padding: 16px; }
+    .form-section.open .form-section-body { display: block; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 700px) { .form-grid { grid-template-columns: 1fr; } }
+    .form-grid .full { grid-column: 1 / -1; }
+    .form-field label { display: block; font-size: 11px; font-weight: 600; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 4px; font-family: Roboto, Arial, sans-serif; }
+    .form-field label .req { color: #dc2626; }
+    .form-field input, .form-field select, .form-field textarea { width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 13px; font-family: 'Open Sans', Arial, sans-serif; color: var(--text); background: #fff; transition: border-color 0.15s; }
+    .form-field input:focus, .form-field select:focus, .form-field textarea:focus { outline: none; border-color: var(--brand-accent-2); box-shadow: 0 0 0 3px rgba(82,213,255,0.15); }
+    .form-field textarea { resize: vertical; min-height: 60px; }
+    .form-field input::placeholder, .form-field textarea::placeholder { color: #c0c4cc; }
+    .form-subsection-title { font-size: 11px; font-weight: 700; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.5px; margin: 12px 0 8px; grid-column: 1 / -1; }
+
+    /* ── Card Preview ── */
+    .cc-preview { background: #fff; border-radius: 14px; border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden; }
+
+    /* Top: Hero + Navy Header */
+    .cc-top { display: grid; grid-template-columns: 2fr 3fr; }
+    @media (max-width: 900px) { .cc-top { grid-template-columns: 1fr; } }
+    .cc-hero { position: relative; min-height: 280px; }
+    .cc-hero .gold-bar { position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: var(--brand-accent); z-index: 2; }
+    .cc-hero img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .cc-hero .no-hero { width: 100%; height: 100%; min-height: 280px; background: linear-gradient(135deg, #d1d5db, #9ca3af); display: flex; align-items: center; justify-content: center; color: #6b7280; font-size: 48px; }
+    .cc-navy { background: var(--card-navy); color: #fff; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; }
+    .cc-navy .badges-row { display: flex; gap: 8px; margin-bottom: 10px; }
+    .cc-navy h2 { font-size: 24px; font-weight: 800; text-transform: uppercase; letter-spacing: -0.5px; line-height: 1.2; font-family: Roboto, Arial, sans-serif; }
+    .cc-navy .website-link { color: var(--brand-accent); font-size: 13px; margin-top: 8px; display: inline-flex; align-items: center; gap: 4px; text-decoration: none; }
+    .cc-navy .website-link:hover { color: #ffd06b; }
+    .cc-navy .address { color: #b0bec5; font-size: 13px; margin-top: 4px; }
+    .cc-navy .description { color: #cfd8dc; font-size: 13px; margin-top: 12px; line-height: 1.6; }
+    .cc-navy .quick-stats { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.15); font-size: 12px; }
+    .cc-navy .quick-stats .stat { display: flex; align-items: center; gap: 5px; }
+    .cc-navy .quick-stats .stat-icon { color: var(--brand-accent); }
+
+    /* Middle: Product + Fees */
+    .cc-middle { display: grid; grid-template-columns: 3fr 2fr; border-top: 1px solid var(--border); }
+    @media (max-width: 900px) { .cc-middle { grid-template-columns: 1fr; } }
+    .cc-product { padding: 24px; }
+    .cc-product .section-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    @media (max-width: 600px) { .cc-product .section-row { grid-template-columns: 1fr; } }
+    .cc-product h4 { font-size: 11px; font-weight: 700; color: var(--card-navy); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+    .cc-product h4 .h4-icon { color: var(--brand-accent); }
+    .cc-product p { font-size: 13px; color: #475569; line-height: 1.5; }
+    .cc-product .tag { display: inline-block; font-size: 11px; background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 4px; margin-right: 4px; margin-top: 4px; }
+    .cc-product .detail-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-top: 12px; border-top: 1px solid #f1f5f9; margin-bottom: 12px; }
+    .cc-product .detail-item { display: flex; gap: 8px; font-size: 13px; }
+    .cc-product .detail-item .detail-icon { color: #9ca3af; flex-shrink: 0; margin-top: 2px; }
+    .cc-product .detail-item .detail-label { font-size: 11px; font-weight: 600; color: var(--subtext); text-transform: uppercase; }
+    .cc-product .detail-item .detail-value { color: #334155; }
+    .cc-product .pricing-notes { font-size: 12px; color: var(--subtext); font-style: italic; padding-top: 12px; border-top: 1px solid #f1f5f9; }
+    .cc-product .starting-rate-row { display: flex; align-items: flex-end; gap: 16px; padding-top: 12px; border-top: 1px solid #f1f5f9; flex-wrap: wrap; }
+    .cc-product .rate-label { font-size: 11px; font-weight: 600; color: var(--subtext); text-transform: uppercase; }
+    .cc-product .rate-value { font-size: 28px; font-weight: 800; color: var(--card-navy); font-family: Roboto, Arial, sans-serif; }
+    .cc-product .rate-extra { font-size: 12px; color: #b45309; background: #fffbeb; padding: 4px 8px; border-radius: 4px; font-weight: 500; }
+    .cc-product .rate-utility { font-size: 12px; color: #9ca3af; font-style: italic; margin-left: auto; }
+
+    /* Fees Panel */
+    .cc-fees { background: var(--card-navy); padding: 20px; display: flex; flex-direction: column; }
+    .cc-fees h4 { font-size: 11px; font-weight: 700; color: var(--brand-accent); text-transform: uppercase; letter-spacing: 2px; text-align: center; padding-bottom: 8px; border-bottom: 1px solid rgba(255,183,50,0.3); margin-bottom: 8px; }
+    .cc-fees .fee-item { display: flex; justify-content: space-between; font-size: 12px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .cc-fees .fee-item:last-child { border-bottom: none; }
+    .cc-fees .fee-label { color: #b0bec5; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 500; }
+    .cc-fees .fee-value { color: #fff; font-weight: 700; }
+    .cc-fees .fee-section-gap { margin-top: 16px; }
+    .cc-fees .fee-total { margin-top: auto; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.15); text-align: center; }
+    .cc-fees .fee-total .total-label { font-size: 11px; color: #9ca3af; }
+    .cc-fees .fee-total .total-value { font-size: 20px; font-weight: 700; color: var(--brand-accent); margin-top: 2px; }
+
+    /* Specials */
+    .cc-specials { border-top: 1px solid var(--border); padding: 16px 24px; background: #fffdf7; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 600px) { .cc-specials { grid-template-columns: 1fr; } }
+    .cc-specials .special-active { display: flex; gap: 12px; }
+    .cc-specials .special-icon { width: 32px; height: 32px; background: var(--brand-accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; flex-shrink: 0; }
+    .cc-specials .special-label { font-size: 11px; font-weight: 700; color: #b45309; text-transform: uppercase; letter-spacing: 0.5px; }
+    .cc-specials .special-text { font-size: 13px; color: #78350f; font-weight: 600; margin-top: 2px; }
+    .cc-specials .special-exp { font-size: 11px; color: #b45309; margin-top: 2px; }
+    .cc-specials .hist-label { font-size: 11px; font-weight: 700; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.5px; }
+    .cc-specials .hist-text { font-size: 12px; color: #475569; margin-top: 4px; }
+    .cc-specials .hist-note { font-size: 12px; color: #9ca3af; margin-top: 4px; font-style: italic; }
+
+    /* Competitive Takeaway */
+    .cc-takeaway { border-top: 1px solid var(--border); background: linear-gradient(to right, var(--card-navy), #547a8a); padding: 20px 24px; color: #fff; display: flex; gap: 12px; }
+    .cc-takeaway .takeaway-icon { color: var(--brand-accent); font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+    .cc-takeaway .takeaway-label { font-size: 11px; font-weight: 700; color: var(--brand-accent); text-transform: uppercase; letter-spacing: 1.5px; }
+    .cc-takeaway .takeaway-text { font-size: 13px; line-height: 1.6; margin-top: 4px; font-weight: 500; }
+
+    /* Market Performance */
+    .cc-market { border-top: 1px solid var(--border); padding: 20px 24px; }
+    .cc-market h3 { font-size: 11px; font-weight: 700; color: var(--card-navy); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+    .cc-market h3 .h3-icon { color: var(--brand-accent); }
+    .cc-market .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    @media (max-width: 700px) { .cc-market .metrics-grid { grid-template-columns: repeat(2, 1fr); } }
+    .cc-market .metric-card { background: #f8fafc; border-radius: 10px; padding: 12px; text-align: center; border: 1px solid #f1f5f9; }
+    .cc-market .metric-value { font-size: 22px; font-weight: 800; color: var(--card-navy); font-family: Roboto, Arial, sans-serif; }
+    .cc-market .metric-label { font-size: 11px; color: var(--subtext); margin-top: 2px; font-weight: 500; }
+    .cc-market .availability { font-size: 12px; color: var(--subtext); margin-top: 10px; }
+    .cc-market .impact-box { margin-top: 10px; background: #fef2f2; border-radius: 8px; padding: 10px 14px; border: 1px solid #fecaca; }
+    .cc-market .impact-box p { font-size: 12px; color: #991b1b; line-height: 1.5; }
+
+    /* Strategic Comparison */
+    .cc-strategy { border-top: 1px solid var(--border); padding: 20px 24px; }
+    .cc-strategy h3 { font-size: 11px; font-weight: 700; color: var(--card-navy); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+    .cc-strategy h3 .h3-icon { color: var(--brand-accent); }
+    .cc-strategy .sw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 700px) { .cc-strategy .sw-grid { grid-template-columns: 1fr; } }
+    .cc-strategy .sw-card { border-radius: 10px; padding: 14px; border: 1px solid; }
+    .cc-strategy .sw-card.strengths { background: #fef2f2; border-color: #fecaca; }
+    .cc-strategy .sw-card.strengths .sw-label { color: #dc2626; }
+    .cc-strategy .sw-card.strengths p { color: #991b1b; }
+    .cc-strategy .sw-card.weaknesses { background: #ecfdf5; border-color: #a7f3d0; }
+    .cc-strategy .sw-card.weaknesses .sw-label { color: #059669; }
+    .cc-strategy .sw-card.weaknesses p { color: #065f46; }
+    .cc-strategy .sw-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+    .cc-strategy .sw-card p { font-size: 13px; line-height: 1.5; margin-top: 6px; }
+
+    /* Win/Loss */
+    .cc-winloss { border-top: 1px solid var(--border); padding: 20px 24px; }
+    .cc-winloss .wl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 700px) { .cc-winloss .wl-grid { grid-template-columns: 1fr; } }
+    .cc-winloss .wl-label { font-size: 11px; font-weight: 700; color: var(--card-navy); text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; }
+    .cc-winloss .wl-label .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .cc-winloss .wl-label .dot.red { background: #f87171; }
+    .cc-winloss .wl-label .dot.green { background: #34d399; }
+    .cc-winloss p { font-size: 13px; color: #334155; line-height: 1.5; margin-top: 6px; }
+    .cc-winloss .comparable { margin-top: 14px; background: #f5f3ff; border-radius: 8px; padding: 10px 14px; border: 1px solid #ddd6fe; }
+    .cc-winloss .comparable .comp-label { font-size: 11px; font-weight: 700; color: #6d28d9; text-transform: uppercase; letter-spacing: 0.5px; }
+    .cc-winloss .comparable p { font-size: 13px; color: #4c1d95; margin-top: 4px; }
+
+    /* Positioning */
+    .cc-positioning { border-top: 1px solid var(--border); padding: 20px 24px; }
+    .cc-positioning .pos-box { background: linear-gradient(to right, #f5f3ff, #eff6ff); border-radius: 10px; padding: 16px; border: 1px solid #ddd6fe; }
+    .cc-positioning .pos-label { font-size: 11px; font-weight: 700; color: #6d28d9; text-transform: uppercase; letter-spacing: 1.5px; display: flex; align-items: center; gap: 6px; }
+    .cc-positioning .pos-text { font-size: 13px; color: #3b0764; line-height: 1.6; margin-top: 8px; font-weight: 500; }
+
+    /* Footer Metadata */
+    .cc-footer { border-top: 1px solid var(--border); background: #f8fafc; padding: 10px 24px; }
+    .cc-footer .footer-row { display: flex; flex-wrap: wrap; gap: 20px; font-size: 12px; color: #9ca3af; }
+    .cc-footer .footer-item { display: flex; align-items: center; gap: 4px; }
+    .cc-footer .footer-analyst { margin-left: auto; }
+    .cc-footer .footer-notes { font-size: 12px; color: #9ca3af; font-style: italic; margin-top: 6px; }
+
+    /* Viewer */
+    .viewer-wrap { max-width: 900px; margin: 0 auto; }
+
+    /* Presentation Mode */
+    .presentation-mode { background: #fff; padding: 32px; min-height: 100vh; }
+    .presentation-mode .no-print { margin-bottom: 16px; display: flex; justify-content: flex-end; gap: 8px; }
+
+    /* Print */
+    @media print {
+      .no-print, header, .sidebar-nav, .nav-toggle, .page-toolbar { display: none !important; }
+      .main-content { margin-left: 0 !important; }
+      body { background: #fff; }
+      .cc-preview { box-shadow: none; border: none; }
+    }
+
+    /* Loading */
+    .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; z-index: 50; }
+    .loading-overlay .spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top-color: var(--brand-accent-2); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <img src="logo-main.svg" class="logo-img" alt="Capstone" />
+      <div class="title">Marketing Hub</div>
+    </div>
+    <div class="pill">
+      <label for="propertySelect">Property</label>
+      <select id="propertySelect"></select>
+      <button class="secondary" id="logoutBtn">Logout</button>
+      <button class="secondary" id="adminPageBtn" style="display:none">Admin</button>
+    </div>
+    <div class="meta">Capstone Management Partners</div>
+  </header>
+
+  <div id="loadingOverlay" class="loading-overlay"><div class="spinner"></div></div>
+  <div id="toastEl" class="toast"></div>
+
+  <div class="layout">
+    <div class="content-pane">
+      <!-- Page Toolbar -->
+      <div class="page-toolbar" id="pageToolbar">
+        <div class="page-title" id="pageTitleArea">
+          <h1 id="pageTitle">Competitor Cards</h1>
+          <p id="pageSubtitle">Market competitor profiles for annual planning and strategy review</p>
+        </div>
+        <div class="actions" id="toolbarActions"></div>
+      </div>
+
+      <!-- Main Content Area -->
+      <div id="mainContent"></div>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    // ── Constants & Labels ──
+    const STORE_KEY = 'mmp_current_property_v1';
+    const PROPERTY_TYPE_LABELS = {
+      'student-housing': 'Student Housing', 'conventional': 'Conventional', 'mixed-use': 'Mixed-Use',
+      'luxury-multifamily': 'Luxury Multifamily', 'cottage-townhome': 'Cottage / Townhome', 'other': 'Other'
+    };
+    const TARGET_AUDIENCE_LABELS = {
+      'undergraduate': 'Undergraduate', 'graduate': 'Graduate', 'international': 'International',
+      'young-professionals': 'Young Professionals', 'luxury-renter': 'Luxury Renter', 'budget-conscious': 'Budget-Conscious', 'mixed': 'Mixed'
+    };
+    const LEASE_STYLE_LABELS = { 'by-bed': 'By-Bed', 'conventional-joint': 'Conventional / Joint Lease' };
+    const FURNISHED_LABELS = { 'furnished': 'Furnished', 'unfurnished': 'Unfurnished', 'optional': 'Optional' };
+    const UTILITY_LABELS = { 'fully-included': 'Fully Included', 'partially-included': 'Partially Included', 'resident-paid': 'Resident-Paid' };
+    const VELOCITY_LABELS = { 'strong': 'Strong', 'moderate': 'Moderate', 'soft': 'Soft' };
+    const IMPACT_LABELS = { 'high': 'High', 'medium': 'Medium', 'low': 'Low' };
+
+    // ── State ──
+    let currentUser = null;
+    let currentProperty = '';
+    let cards = [];
+    let currentCard = null;
+    let viewingCard = null;
+    let currentView = 'gallery'; // gallery | editor | viewer | presentation
+
+    // ── DOM refs ──
+    const els = {
+      propertySelect: document.getElementById('propertySelect'),
+      logoutBtn: document.getElementById('logoutBtn'),
+      adminPageBtn: document.getElementById('adminPageBtn'),
+      loading: document.getElementById('loadingOverlay'),
+      toast: document.getElementById('toastEl'),
+      toolbar: document.getElementById('pageToolbar'),
+      titleArea: document.getElementById('pageTitleArea'),
+      pageTitle: document.getElementById('pageTitle'),
+      pageSubtitle: document.getElementById('pageSubtitle'),
+      toolbarActions: document.getElementById('toolbarActions'),
+      mainContent: document.getElementById('mainContent')
+    };
+
+    // ── Helpers ──
+    function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+    function hideLoading() { els.loading.style.display = 'none'; }
+    function showToast(msg) {
+      els.toast.textContent = msg;
+      els.toast.classList.add('show');
+      setTimeout(() => els.toast.classList.remove('show'), 2500);
+    }
+
+    function createEmptyCard() {
+      return {
+        property: currentProperty,
+        status: 'draft',
+        competitorName: '', heroImage: '', website: '', address: '',
+        distanceFromCampus: '', driveTimeToCampus: '', propertyType: '', targetAudience: '',
+        shortDescription: '', floorplans: '', unitCount: '', leaseStyle: '', furnished: '',
+        utilityStructure: '', topAmenities: '', parkingType: '', petPolicy: '',
+        startingRate: '', pricingNotes: '', applicationFee: '', adminFee: '', signingFee: '', deposit: '',
+        monthlyExtraFees: { parking: '', petRent: '', packageLocker: '', valetTrash: '', internetTechFee: '', utilityBillingFee: '', rentersInsurance: '', otherRecurring: '' },
+        estimatedCostAboveBase: '', currentSpecials: '', specialsExpiration: '', historicalSpecials: '', pastConcessionsNote: '',
+        currentOccupancy: '', preleasedPercent: '', availabilitySummary: '', leasingVelocity: '', impactToProperty: '',
+        impactExplanation: '', competitiveTakeaway: '',
+        biggestStrengths: '', biggestWeaknesses: '', whoWeLoseTo: '', whoWeWinAgainst: '',
+        closestComparableFloorplans: '', recommendedPositioning: '',
+        surveyDate: '', sourceOfInformation: '', lastUpdatedDate: '', notes: '', analystName: ''
+      };
+    }
+
+    function getAccessible(properties, me) {
+      const names = properties.map(p => p.name).filter(Boolean);
+      if (!me) return names;
+      if (me.role === 'admin') return names;
+      if (me.properties === '*') return names;
+      const allowed = Array.isArray(me.properties) ? me.properties : [];
+      return names.filter(n => allowed.includes(n));
+    }
+
+    // ── API ──
+    async function apiGet() {
+      const res = await fetch('/api/competitor-cards?property=' + encodeURIComponent(currentProperty));
+      if (!res.ok) throw new Error('Failed to load cards');
+      return res.json();
+    }
+    async function apiCreate(card) {
+      const res = await fetch('/api/competitor-cards', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(card) });
+      if (!res.ok) throw new Error('Failed to create card');
+      return res.json();
+    }
+    async function apiUpdate(card) {
+      const res = await fetch('/api/competitor-cards', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(card) });
+      if (!res.ok) throw new Error('Failed to update card');
+      return res.json();
+    }
+    async function apiDelete(id, archive) {
+      const res = await fetch('/api/competitor-cards', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, archive }) });
+      if (!res.ok) throw new Error('Failed to delete card');
+      return res.json();
+    }
+
+    // ── Badge HTML ──
+    function badgeHTML(variant, level, text) {
+      if (!level) return '';
+      return '<span class="badge badge-' + esc(variant) + '-' + esc(level) + '">' + esc(text) + '</span>';
+    }
+
+    // ── Render: Gallery ──
+    function renderGallery() {
+      currentView = 'gallery';
+      currentCard = null;
+      viewingCard = null;
+
+      els.pageTitle.textContent = 'Competitor Cards';
+      els.pageSubtitle.textContent = 'Market competitor profiles for annual planning and strategy review';
+      els.pageSubtitle.style.display = '';
+      els.toolbarActions.innerHTML = '<button class="btn btn-primary" id="newCardBtn">+ New Competitor Card</button>';
+      document.getElementById('newCardBtn').onclick = handleNewCard;
+
+      // Filter state
+      var search = '', impactFilter = '', typeFilter = '', statusFilter = '', sort = 'recent';
+
+      function getFiltered() {
+        var result = cards.filter(function(c) { return c.status !== 'archived' || statusFilter === 'archived'; });
+        if (search) {
+          var q = search.toLowerCase();
+          result = result.filter(function(c) {
+            return (c.competitorName || '').toLowerCase().includes(q) ||
+                   (c.address || '').toLowerCase().includes(q) ||
+                   (c.competitiveTakeaway || '').toLowerCase().includes(q);
+          });
+        }
+        if (impactFilter) result = result.filter(function(c) { return c.impactToProperty === impactFilter; });
+        if (typeFilter) result = result.filter(function(c) { return c.propertyType === typeFilter; });
+        if (statusFilter) result = result.filter(function(c) { return c.status === statusFilter; });
+        else result = result.filter(function(c) { return c.status !== 'archived'; });
+
+        if (sort === 'recent') result.sort(function(a, b) { return (b.updatedAt || '').localeCompare(a.updatedAt || ''); });
+        else if (sort === 'name') result.sort(function(a, b) { return (a.competitorName || '').localeCompare(b.competitorName || ''); });
+        else if (sort === 'impact') {
+          var order = { high: 0, medium: 1, low: 2, '': 3 };
+          result.sort(function(a, b) { return (order[a.impactToProperty] || 3) - (order[b.impactToProperty] || 3); });
+        }
+        return result;
+      }
+
+      function renderGrid() {
+        var filtered = getFiltered();
+        var countEl = els.mainContent.querySelector('.gallery-count');
+        if (countEl) countEl.textContent = filtered.length + ' of ' + cards.length + ' competitor' + (cards.length !== 1 ? 's' : '');
+
+        var grid = els.mainContent.querySelector('.card-grid');
+        if (!grid) return;
+
+        if (filtered.length === 0) {
+          grid.innerHTML = '<div class="empty-state"><div class="icon">&#x1F3E2;</div><p>No competitor cards found</p></div>';
+          return;
+        }
+
+        grid.innerHTML = filtered.map(function(card) {
+          var img = card.heroImage
+            ? '<img src="' + esc(card.heroImage) + '" alt="' + esc(card.competitorName) + '"><div class="overlay"></div>'
+            : '<div class="no-img">&#x1F3E2;</div>';
+          return '<div class="card-thumb" data-id="' + esc(card.id) + '">' +
+            '<div class="thumb-img">' + img +
+              '<div class="thumb-badges">' + badgeHTML('status', card.status, card.status === 'draft' ? 'Draft' : card.status === 'complete' ? 'Complete' : 'Archived') + '</div>' +
+              '<div class="thumb-badges-right">' + (card.impactToProperty ? badgeHTML('impact', card.impactToProperty, IMPACT_LABELS[card.impactToProperty] + ' Impact') : '') + '</div>' +
+              '<div class="thumb-view-overlay" data-action="view" data-id="' + esc(card.id) + '"><span class="thumb-view-label">&#x1F441; View Card</span></div>' +
+            '</div>' +
+            '<div class="thumb-body">' +
+              '<h3>' + esc(card.competitorName || 'Untitled') + '</h3>' +
+              (card.address ? '<div class="thumb-address">' + esc(card.address) + '</div>' : '') +
+              '<div class="thumb-meta">' +
+                (card.propertyType ? '<span>' + esc(PROPERTY_TYPE_LABELS[card.propertyType] || card.propertyType) + '</span>' : '') +
+                (card.currentOccupancy ? '<span>' + esc(card.currentOccupancy) + ' Occ.</span>' : '') +
+                (card.startingRate ? '<span class="rate">' + esc(card.startingRate) + '</span>' : '') +
+              '</div>' +
+              (card.competitiveTakeaway ? '<div class="thumb-takeaway">' + esc(card.competitiveTakeaway) + '</div>' : '') +
+              '<div class="thumb-actions">' +
+                '<button data-action="edit" data-id="' + esc(card.id) + '">&#x270F; Edit</button>' +
+                '<button data-action="duplicate" data-id="' + esc(card.id) + '">&#x1F4CB; Duplicate</button>' +
+                '<button data-action="view" data-id="' + esc(card.id) + '">&#x1F441; View</button>' +
+                '<button class="archive-btn" data-action="archive" data-id="' + esc(card.id) + '">&#x1F5C4;</button>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+
+        // Attach events
+        grid.querySelectorAll('[data-action]').forEach(function(el) {
+          el.onclick = function(e) {
+            e.stopPropagation();
+            var id = el.getAttribute('data-id');
+            var action = el.getAttribute('data-action');
+            var card = cards.find(function(c) { return c.id === id; });
+            if (!card) return;
+            if (action === 'edit') handleEditCard(card);
+            else if (action === 'view') handleViewCard(card);
+            else if (action === 'duplicate') handleDuplicateCard(card);
+            else if (action === 'archive') handleArchiveCard(card.id);
+          };
+        });
+      }
+
+      // Build toolbar + grid
+      var typeOpts = Object.entries(PROPERTY_TYPE_LABELS).map(function(e) { return '<option value="' + e[0] + '">' + e[1] + '</option>'; }).join('');
+
+      els.mainContent.innerHTML =
+        '<div class="gallery-toolbar">' +
+          '<div class="search-box"><span class="search-icon">&#x1F50D;</span><input type="text" id="gallerySearch" placeholder="Search competitors..."></div>' +
+          '<select id="filterImpact"><option value="">All Impact</option><option value="high">High Impact</option><option value="medium">Medium Impact</option><option value="low">Low Impact</option></select>' +
+          '<select id="filterType"><option value="">All Types</option>' + typeOpts + '</select>' +
+          '<select id="filterStatus"><option value="">All Status</option><option value="draft">Drafts</option><option value="complete">Complete</option><option value="archived">Archived</option></select>' +
+          '<select id="sortBy"><option value="recent">Most Recent</option><option value="name">Name A–Z</option><option value="impact">Highest Impact</option></select>' +
+        '</div>' +
+        '<div class="gallery-count"></div>' +
+        '<div class="card-grid"></div>';
+
+      // Wire up filters
+      var searchEl = document.getElementById('gallerySearch');
+      var impactEl = document.getElementById('filterImpact');
+      var typeEl = document.getElementById('filterType');
+      var statusEl = document.getElementById('filterStatus');
+      var sortEl = document.getElementById('sortBy');
+
+      function onFilter() {
+        search = searchEl.value;
+        impactFilter = impactEl.value;
+        typeFilter = typeEl.value;
+        statusFilter = statusEl.value;
+        sort = sortEl.value;
+        renderGrid();
+      }
+      searchEl.oninput = onFilter;
+      impactEl.onchange = onFilter;
+      typeEl.onchange = onFilter;
+      statusEl.onchange = onFilter;
+      sortEl.onchange = onFilter;
+
+      renderGrid();
+    }
+
+    // ── Render: Editor ──
+    function renderEditor() {
+      currentView = 'editor';
+      viewingCard = null;
+
+      els.pageTitle.textContent = currentCard.competitorName || 'New Competitor Card';
+      els.pageSubtitle.style.display = 'none';
+      els.toolbarActions.innerHTML =
+        '<button class="btn btn-back" id="backBtn">&#x2190; Back</button>' +
+        '<button class="btn btn-outline" id="saveDraftBtn">&#x1F4BE; Save Draft</button>' +
+        '<button class="btn btn-success" id="saveCompleteBtn">&#x2705; Save Complete</button>' +
+        '<button class="btn btn-outline" id="presentBtn">&#x1F5A8; Present</button>';
+
+      document.getElementById('backBtn').onclick = function() { renderGallery(); };
+      document.getElementById('saveDraftBtn').onclick = handleSaveDraft;
+      document.getElementById('saveCompleteBtn').onclick = handleSaveComplete;
+      document.getElementById('presentBtn').onclick = function() { handlePresentation(currentCard); };
+
+      els.mainContent.innerHTML =
+        '<div class="editor-layout">' +
+          '<div class="editor-form">' +
+            '<div class="editor-panel-header"><span>Data Entry</span><span class="status-label">' + (currentCard.status === 'draft' ? '&#x25CF; Draft' : currentCard.status === 'complete' ? '&#x25CF; Complete' : '&#x25CF; Archived') + '</span></div>' +
+            '<div id="formContainer"></div>' +
+          '</div>' +
+          '<div class="editor-preview">' +
+            '<div class="editor-panel-header"><span>Live Preview</span><a id="openPresentLink">Open Presentation &rarr;</a></div>' +
+            '<div id="previewContainer"></div>' +
+          '</div>' +
+        '</div>';
+
+      document.getElementById('openPresentLink').onclick = function() { handlePresentation(currentCard); };
+
+      buildForm();
+      renderPreview(currentCard, document.getElementById('previewContainer'));
+    }
+
+    // ── Render: Viewer ──
+    function renderViewer() {
+      currentView = 'viewer';
+
+      els.pageTitle.textContent = viewingCard.competitorName || 'Competitor Card';
+      els.pageSubtitle.style.display = 'none';
+      els.toolbarActions.innerHTML =
+        '<button class="btn btn-back" id="backBtn">&#x2190; Back</button>' +
+        '<button class="btn btn-outline" id="editFromViewBtn">Edit Card</button>' +
+        '<button class="btn btn-primary" id="presentFromViewBtn">&#x1F5A8; Presentation View</button>';
+
+      document.getElementById('backBtn').onclick = function() { renderGallery(); };
+      document.getElementById('editFromViewBtn').onclick = function() { handleEditCard(viewingCard); };
+      document.getElementById('presentFromViewBtn').onclick = function() { handlePresentation(viewingCard); };
+
+      els.mainContent.innerHTML = '<div class="viewer-wrap" id="viewerContainer"></div>';
+      renderPreview(viewingCard, document.getElementById('viewerContainer'));
+    }
+
+    // ── Render: Presentation ──
+    function renderPresentation(card) {
+      currentView = 'presentation';
+      document.body.classList.add('presentation-active');
+
+      // Hide header and toolbar
+      document.querySelector('header').style.display = 'none';
+      var sidebar = document.getElementById('sidebarNav');
+      if (sidebar) sidebar.style.display = 'none';
+      var toggle = document.getElementById('navToggle');
+      if (toggle) toggle.style.display = 'none';
+      els.toolbar.style.display = 'none';
+
+      var mainContentWrap = document.querySelector('.main-content');
+      if (mainContentWrap) mainContentWrap.style.marginLeft = '0';
+
+      els.mainContent.innerHTML =
+        '<div class="presentation-mode">' +
+          '<div class="no-print">' +
+            '<button class="btn btn-primary" id="printBtn">&#x1F5A8; Print</button>' +
+            '<button class="btn btn-outline" id="exitPresentBtn">&#x2715; Exit Presentation</button>' +
+          '</div>' +
+          '<div id="presentContainer"></div>' +
+        '</div>';
+
+      document.getElementById('printBtn').onclick = function() { window.print(); };
+      document.getElementById('exitPresentBtn').onclick = function() { exitPresentation(); };
+
+      renderPreview(card, document.getElementById('presentContainer'));
+    }
+
+    function exitPresentation() {
+      document.body.classList.remove('presentation-active');
+      document.querySelector('header').style.display = '';
+      var sidebar = document.getElementById('sidebarNav');
+      if (sidebar) sidebar.style.display = '';
+      var toggle = document.getElementById('navToggle');
+      if (toggle) toggle.style.display = '';
+      els.toolbar.style.display = '';
+      var mainContentWrap = document.querySelector('.main-content');
+      if (mainContentWrap) mainContentWrap.style.marginLeft = '';
+
+      if (currentCard) renderEditor();
+      else if (viewingCard) renderViewer();
+      else renderGallery();
+    }
+
+    // ── Build Form ──
+    function buildForm() {
+      var c = currentCard;
+      var container = document.getElementById('formContainer');
+
+      function section(title, icon, id, fields) {
+        return '<div class="form-section open" id="section_' + id + '">' +
+          '<div class="form-section-header" onclick="this.parentElement.classList.toggle(\'open\')">' +
+            '<span class="section-icon">' + icon + '</span>' +
+            '<span class="section-title">' + esc(title) + '</span>' +
+            '<span class="section-chevron">&#x25BC;</span>' +
+          '</div>' +
+          '<div class="form-section-body"><div class="form-grid">' + fields + '</div></div>' +
+        '</div>';
+      }
+
+      function field(label, name, value, opts) {
+        opts = opts || {};
+        var cls = opts.full ? ' full' : '';
+        var req = opts.required ? ' <span class="req">*</span>' : '';
+        var input;
+        if (opts.type === 'textarea') {
+          input = '<textarea data-field="' + esc(name) + '" rows="' + (opts.rows || 3) + '" placeholder="' + esc(opts.placeholder || '') + '">' + esc(value) + '</textarea>';
+        } else if (opts.type === 'select') {
+          var options = '<option value="">Select...</option>' + opts.options.map(function(o) {
+            return '<option value="' + esc(o[0]) + '"' + (value === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>';
+          }).join('');
+          input = '<select data-field="' + esc(name) + '">' + options + '</select>';
+        } else {
+          input = '<input type="' + (opts.type || 'text') + '" data-field="' + esc(name) + '" value="' + esc(value) + '" placeholder="' + esc(opts.placeholder || '') + '">';
+        }
+        return '<div class="form-field' + cls + '"><label>' + label + req + '</label>' + input + '</div>';
+      }
+
+      var ptOpts = Object.entries(PROPERTY_TYPE_LABELS);
+      var taOpts = Object.entries(TARGET_AUDIENCE_LABELS);
+      var lsOpts = Object.entries(LEASE_STYLE_LABELS);
+      var fuOpts = Object.entries(FURNISHED_LABELS);
+      var utOpts = Object.entries(UTILITY_LABELS);
+      var vlOpts = Object.entries(VELOCITY_LABELS);
+      var imOpts = Object.entries(IMPACT_LABELS);
+
+      var html = '';
+
+      // Property Snapshot
+      html += section('Property Snapshot', '&#x1F3E2;', 'snapshot',
+        field('Competitor Name', 'competitorName', c.competitorName, { full: true, required: true, placeholder: 'e.g., The Hub at State Street' }) +
+        field('Hero Image URL', 'heroImage', c.heroImage, { full: true, placeholder: 'https://example.com/image.jpg' }) +
+        field('Website', 'website', c.website, { placeholder: 'https://competitor.com' }) +
+        field('Address', 'address', c.address, { placeholder: '123 Main St, City, ST 12345' }) +
+        field('Distance from Campus', 'distanceFromCampus', c.distanceFromCampus, { placeholder: 'e.g., 0.5 miles' }) +
+        field('Drive Time to Campus', 'driveTimeToCampus', c.driveTimeToCampus, { placeholder: 'e.g., 5 min drive' }) +
+        field('Property Type', 'propertyType', c.propertyType, { type: 'select', options: ptOpts }) +
+        field('Target Audience', 'targetAudience', c.targetAudience, { type: 'select', options: taOpts })
+      );
+
+      // Product Summary
+      html += section('Product Summary', '&#x1F4E6;', 'product',
+        field('Short Description', 'shortDescription', c.shortDescription, { full: true, type: 'textarea', rows: 3, placeholder: 'Brief strategic overview...' }) +
+        field('Floorplans', 'floorplans', c.floorplans, { placeholder: 'e.g., 2x2, 3x3, 4x4' }) +
+        field('Unit Count', 'unitCount', c.unitCount, { placeholder: 'e.g., 300 units / 1,200 beds' }) +
+        field('Lease Style', 'leaseStyle', c.leaseStyle, { type: 'select', options: lsOpts }) +
+        field('Furnished Status', 'furnished', c.furnished, { type: 'select', options: fuOpts }) +
+        field('Utility Structure', 'utilityStructure', c.utilityStructure, { type: 'select', options: utOpts }) +
+        field('Parking Type', 'parkingType', c.parkingType, { placeholder: 'e.g., Garage — $100/mo' }) +
+        field('Top Amenities', 'topAmenities', c.topAmenities, { full: true, type: 'textarea', rows: 2, placeholder: 'Pool, fitness center, study lounges...' }) +
+        field('Pet Policy', 'petPolicy', c.petPolicy, { full: true, placeholder: 'e.g., Dogs & cats welcome, $300 deposit + $35/mo' })
+      );
+
+      // Pricing & Fees
+      var fees = c.monthlyExtraFees || {};
+      html += section('Pricing & Fees', '&#x1F4B2;', 'pricing',
+        field('Starting Rate', 'startingRate', c.startingRate, { required: true, placeholder: 'e.g., $879/bed' }) +
+        field('Pricing Notes', 'pricingNotes', c.pricingNotes, { placeholder: 'Rate variations, premiums...' }) +
+        field('Application Fee', 'applicationFee', c.applicationFee, { placeholder: '$50' }) +
+        field('Admin Fee', 'adminFee', c.adminFee, { placeholder: '$300' }) +
+        field('Signing Fee', 'signingFee', c.signingFee, { placeholder: '$0' }) +
+        field('Deposit', 'deposit', c.deposit, { placeholder: '$250' }) +
+        '<div class="form-subsection-title">Monthly Extra Fees</div>' +
+        field('Parking', 'monthlyExtraFees.parking', fees.parking, { placeholder: '$125' }) +
+        field('Pet Rent', 'monthlyExtraFees.petRent', fees.petRent, { placeholder: '$35' }) +
+        field('Package Locker', 'monthlyExtraFees.packageLocker', fees.packageLocker, { placeholder: '$0' }) +
+        field('Valet Trash', 'monthlyExtraFees.valetTrash', fees.valetTrash, { placeholder: '$30' }) +
+        field('Internet / Tech Fee', 'monthlyExtraFees.internetTechFee', fees.internetTechFee, { placeholder: '$50' }) +
+        field('Utility Billing Fee', 'monthlyExtraFees.utilityBillingFee', fees.utilityBillingFee, { placeholder: '$4.50' }) +
+        field('Renters Insurance', 'monthlyExtraFees.rentersInsurance', fees.rentersInsurance, { placeholder: '$15' }) +
+        field('Other Recurring', 'monthlyExtraFees.otherRecurring', fees.otherRecurring, { placeholder: 'Any other monthly fee' }) +
+        field('Estimated Cost Above Base', 'estimatedCostAboveBase', c.estimatedCostAboveBase, { full: true, placeholder: 'e.g., $170/mo with parking' }) +
+        field('Current Specials', 'currentSpecials', c.currentSpecials, { full: true, type: 'textarea', rows: 2, placeholder: 'Active concessions or promotions...' }) +
+        field('Specials Expiration', 'specialsExpiration', c.specialsExpiration, { type: 'date' }) +
+        field('Historical Specials', 'historicalSpecials', c.historicalSpecials, { full: true, type: 'textarea', rows: 2, placeholder: 'Past concessions and promotions...' }) +
+        field('Past Concessions Note', 'pastConcessionsNote', c.pastConcessionsNote, { full: true, type: 'textarea', rows: 2, placeholder: 'Strategic notes on concession patterns...' })
+      );
+
+      // Market Performance
+      html += section('Market Performance', '&#x1F4C8;', 'market',
+        field('Current Occupancy %', 'currentOccupancy', c.currentOccupancy, { placeholder: 'e.g., 97%' }) +
+        field('Preleased %', 'preleasedPercent', c.preleasedPercent, { placeholder: 'e.g., 72% (for Fall 2026)' }) +
+        field('Availability Summary', 'availabilitySummary', c.availabilitySummary, { full: true, type: 'textarea', rows: 2, placeholder: 'Current unit availability details...' }) +
+        field('Leasing Velocity', 'leasingVelocity', c.leasingVelocity, { type: 'select', options: vlOpts }) +
+        field('Impact to Subject Property', 'impactToProperty', c.impactToProperty, { type: 'select', options: imOpts }) +
+        field('Impact Explanation', 'impactExplanation', c.impactExplanation, { full: true, type: 'textarea', rows: 3, placeholder: 'Why does this competitor impact our property at this level?' }) +
+        field('Competitive Takeaway', 'competitiveTakeaway', c.competitiveTakeaway, { full: true, type: 'textarea', rows: 2, placeholder: 'One-line executive insight on competitive positioning...' })
+      );
+
+      // Strategic Comparison
+      html += section('Strategic Comparison', '&#x1F3AF;', 'strategy',
+        field('Biggest Strengths vs Us', 'biggestStrengths', c.biggestStrengths, { full: true, type: 'textarea', rows: 3, placeholder: 'What advantages does this competitor have over our property?' }) +
+        field('Biggest Weaknesses vs Us', 'biggestWeaknesses', c.biggestWeaknesses, { full: true, type: 'textarea', rows: 3, placeholder: 'Where does this competitor fall short compared to us?' }) +
+        field('Who We Lose to Them', 'whoWeLoseTo', c.whoWeLoseTo, { type: 'textarea', rows: 2, placeholder: 'Which prospect profiles choose them over us?' }) +
+        field('Who We Win Against Them', 'whoWeWinAgainst', c.whoWeWinAgainst, { type: 'textarea', rows: 2, placeholder: 'Which prospect profiles choose us over them?' }) +
+        field('Closest Comparable Floorplans', 'closestComparableFloorplans', c.closestComparableFloorplans, { full: true, type: 'textarea', rows: 2, placeholder: 'Direct floorplan and pricing comparisons...' }) +
+        field('Recommended Positioning', 'recommendedPositioning', c.recommendedPositioning, { full: true, type: 'textarea', rows: 3, placeholder: 'How should we position against this competitor?' })
+      );
+
+      // Notes & Metadata
+      html += section('Notes & Metadata', '&#x1F4DD;', 'metadata',
+        field('Survey Date', 'surveyDate', c.surveyDate, { type: 'date' }) +
+        field('Last Updated Date', 'lastUpdatedDate', c.lastUpdatedDate, { type: 'date' }) +
+        field('Source of Information', 'sourceOfInformation', c.sourceOfInformation, { placeholder: 'e.g., On-site visit, mystery shop, website' }) +
+        field('Analyst / Team Member', 'analystName', c.analystName, { placeholder: 'e.g., Sarah Mitchell' }) +
+        field('Notes', 'notes', c.notes, { full: true, type: 'textarea', rows: 3, placeholder: 'Additional observations, context, or follow-up items...' })
+      );
+
+      container.innerHTML = html;
+
+      // Attach change listeners
+      container.querySelectorAll('[data-field]').forEach(function(el) {
+        var handler = function() {
+          var fieldName = el.getAttribute('data-field');
+          var val = el.value;
+          if (fieldName.startsWith('monthlyExtraFees.')) {
+            var subField = fieldName.split('.')[1];
+            if (!currentCard.monthlyExtraFees) currentCard.monthlyExtraFees = {};
+            currentCard.monthlyExtraFees[subField] = val;
+          } else {
+            currentCard[fieldName] = val;
+          }
+          // Update title if competitor name changed
+          if (fieldName === 'competitorName') {
+            els.pageTitle.textContent = val || 'New Competitor Card';
+          }
+          renderPreview(currentCard, document.getElementById('previewContainer'));
+        };
+        el.addEventListener('input', handler);
+        el.addEventListener('change', handler);
+      });
+    }
+
+    // ── Render: Card Preview ──
+    function renderPreview(card, container) {
+      if (!container) return;
+      var c = card;
+      var fees = c.monthlyExtraFees || {};
+
+      if (!(c.competitorName || '').trim()) {
+        container.innerHTML =
+          '<div class="cc-preview" style="padding:48px;text-align:center;">' +
+            '<div style="font-size:48px;color:#d1d5db;margin-bottom:12px;">&#x1F3E2;</div>' +
+            '<h3 style="font-size:16px;color:#9ca3af;margin-bottom:8px;">Competitor Card Preview</h3>' +
+            '<p style="font-size:13px;color:#9ca3af;max-width:300px;margin:0 auto;">Start filling in the form to see a live preview of your competitor card here.</p>' +
+          '</div>';
+        return;
+      }
+
+      var html = '<div class="cc-preview">';
+
+      // ── Top: Hero + Navy Header ──
+      html += '<div class="cc-top">';
+      // Hero
+      html += '<div class="cc-hero"><div class="gold-bar"></div>';
+      if (c.heroImage) {
+        html += '<img src="' + esc(c.heroImage) + '" alt="' + esc(c.competitorName) + '">';
+      } else {
+        html += '<div class="no-hero">&#x1F3E2;</div>';
+      }
+      html += '</div>';
+
+      // Navy header
+      html += '<div class="cc-navy">';
+      html += '<div>';
+      // Badges
+      html += '<div class="badges-row">';
+      if (c.impactToProperty) html += badgeHTML('impact', c.impactToProperty, IMPACT_LABELS[c.impactToProperty] + ' Impact');
+      if (c.status === 'draft') html += badgeHTML('status', 'draft', 'Draft');
+      html += '</div>';
+      // Name
+      html += '<h2>' + esc(c.competitorName || 'Untitled Competitor') + '</h2>';
+      // Website
+      if (c.website) {
+        var displayUrl = c.website.replace(/^https?:\/\//, '');
+        html += '<a href="' + esc(c.website) + '" target="_blank" rel="noopener noreferrer" class="website-link">' + esc(displayUrl) + ' &#x2197;</a>';
+      }
+      // Address
+      if (c.address) html += '<p class="address">' + esc(c.address) + '</p>';
+      // Description
+      if (c.shortDescription) html += '<p class="description">' + esc(c.shortDescription) + '</p>';
+      html += '</div>';
+
+      // Quick stats
+      html += '<div class="quick-stats">';
+      if (c.propertyType) html += '<div class="stat"><span class="stat-icon">&#x1F3E2;</span> ' + esc(PROPERTY_TYPE_LABELS[c.propertyType] || c.propertyType) + '</div>';
+      if (c.targetAudience) html += '<div class="stat"><span class="stat-icon">&#x1F465;</span> ' + esc(TARGET_AUDIENCE_LABELS[c.targetAudience] || c.targetAudience) + '</div>';
+      if (c.distanceFromCampus) html += '<div class="stat"><span class="stat-icon">&#x1F4CD;</span> ' + esc(c.distanceFromCampus) + '</div>';
+      if (c.driveTimeToCampus) html += '<div class="stat"><span class="stat-icon">&#x1F697;</span> ' + esc(c.driveTimeToCampus) + '</div>';
+      if (c.currentOccupancy) html += '<div class="stat"><span class="stat-icon">&#x1F4C8;</span> <strong>' + esc(c.currentOccupancy) + ' Occupied</strong></div>';
+      html += '</div>';
+      html += '</div>'; // cc-navy
+      html += '</div>'; // cc-top
+
+      // ── Middle: Product + Fees ──
+      html += '<div class="cc-middle">';
+
+      // Product details
+      html += '<div class="cc-product">';
+      // Floorplans + Amenities row
+      if (c.floorplans || c.unitCount || c.leaseStyle || c.topAmenities) {
+        html += '<div class="section-row">';
+        if (c.floorplans || c.unitCount || c.leaseStyle) {
+          html += '<div>';
+          html += '<h4><span class="h4-icon">&#x1F4D0;</span> Floorplan Options</h4>';
+          if (c.floorplans) html += '<p style="font-weight:500;">' + esc(c.floorplans) + '</p>';
+          if (c.unitCount) html += '<p style="font-size:12px;color:#6b7280;margin-top:4px;">' + esc(c.unitCount) + '</p>';
+          var tags = '';
+          if (c.leaseStyle) tags += '<span class="tag">' + esc(LEASE_STYLE_LABELS[c.leaseStyle] || c.leaseStyle) + '</span>';
+          if (c.furnished) tags += '<span class="tag">' + esc(FURNISHED_LABELS[c.furnished] || c.furnished) + '</span>';
+          if (c.utilityStructure) tags += '<span class="tag">' + esc(UTILITY_LABELS[c.utilityStructure] || c.utilityStructure) + '</span>';
+          if (tags) html += '<div style="margin-top:6px;">' + tags + '</div>';
+          html += '</div>';
+        }
+        if (c.topAmenities) {
+          html += '<div>';
+          html += '<h4><span class="h4-icon">&#x26A1;</span> Top Amenities</h4>';
+          html += '<p>' + esc(c.topAmenities) + '</p>';
+          html += '</div>';
+        }
+        html += '</div>';
+      }
+
+      // Parking + Pet
+      if (c.parkingType || c.petPolicy) {
+        html += '<div class="detail-row">';
+        if (c.parkingType) {
+          html += '<div class="detail-item"><span class="detail-icon">&#x1F17F;</span><div><div class="detail-label">Parking</div><div class="detail-value">' + esc(c.parkingType) + '</div></div></div>';
+        }
+        if (c.petPolicy) {
+          html += '<div class="detail-item"><span class="detail-icon">&#x1F43E;</span><div><div class="detail-label">Pet Policy</div><div class="detail-value">' + esc(c.petPolicy) + '</div></div></div>';
+        }
+        html += '</div>';
+      }
+
+      // Pricing notes
+      if (c.pricingNotes) {
+        html += '<div class="pricing-notes">' + esc(c.pricingNotes) + '</div>';
+      }
+
+      // Starting rate
+      if (c.startingRate) {
+        html += '<div class="starting-rate-row">';
+        html += '<div><div class="rate-label">Starting Rate</div><div class="rate-value">' + esc(c.startingRate) + '</div></div>';
+        if (c.estimatedCostAboveBase) html += '<div style="padding-bottom:4px;"><span class="rate-extra">+' + esc(c.estimatedCostAboveBase) + ' above base</span></div>';
+        if (c.utilityStructure) {
+          var utilNote = c.utilityStructure === 'fully-included' ? 'utilities included' : c.utilityStructure === 'partially-included' ? 'partial utilities' : 'does not include utilities';
+          html += '<div class="rate-utility">' + utilNote + '</div>';
+        }
+        html += '</div>';
+      }
+      html += '</div>'; // cc-product
+
+      // Fees panel
+      html += '<div class="cc-fees">';
+      html += '<h4>Additional Fees</h4>';
+      function feeItem(label, val) { return val ? '<div class="fee-item"><span class="fee-label">' + esc(label) + '</span><span class="fee-value">' + esc(val) + '</span></div>' : ''; }
+      html += feeItem('Package Locker', fees.packageLocker);
+      html += feeItem('Pet Rent', fees.petRent);
+      html += feeItem('Parking', fees.parking);
+      html += feeItem('Valet Trash', fees.valetTrash);
+      html += feeItem('Internet / Tech', fees.internetTechFee);
+      html += feeItem('Utility Billing', fees.utilityBillingFee);
+      html += feeItem('Renters Insurance', fees.rentersInsurance);
+      html += feeItem('Other', fees.otherRecurring);
+
+      if (c.applicationFee || c.adminFee || c.deposit) {
+        html += '<div class="fee-section-gap"></div>';
+        html += '<h4>Signing Fees</h4>';
+        html += feeItem('Application', c.applicationFee);
+        html += feeItem('Admin Fee', c.adminFee);
+        html += feeItem('Signing Fee', c.signingFee);
+        html += feeItem('Deposit', c.deposit);
+      }
+
+      if (c.estimatedCostAboveBase) {
+        html += '<div class="fee-total"><div class="total-label">Est. Monthly Above Base</div><div class="total-value">' + esc(c.estimatedCostAboveBase) + '</div></div>';
+      }
+      html += '</div>'; // cc-fees
+      html += '</div>'; // cc-middle
+
+      // ── Specials ──
+      if (c.currentSpecials || c.historicalSpecials) {
+        html += '<div class="cc-specials">';
+        if (c.currentSpecials) {
+          html += '<div class="special-active"><div class="special-icon">&#x1F3F7;</div><div>' +
+            '<div class="special-label">Active Special</div>' +
+            '<div class="special-text">' + esc(c.currentSpecials) + '</div>' +
+            (c.specialsExpiration ? '<div class="special-exp">Expires: ' + esc(c.specialsExpiration) + '</div>' : '') +
+          '</div></div>';
+        }
+        if (c.historicalSpecials) {
+          html += '<div><div class="hist-label">Historical Specials</div>' +
+            '<div class="hist-text">' + esc(c.historicalSpecials) + '</div>' +
+            (c.pastConcessionsNote ? '<div class="hist-note">' + esc(c.pastConcessionsNote) + '</div>' : '') +
+          '</div>';
+        }
+        html += '</div>';
+      }
+
+      // ── Competitive Takeaway ──
+      if (c.competitiveTakeaway) {
+        html += '<div class="cc-takeaway">' +
+          '<div class="takeaway-icon">&#x26A0;</div>' +
+          '<div><div class="takeaway-label">Competitive Takeaway</div>' +
+          '<div class="takeaway-text">' + esc(c.competitiveTakeaway) + '</div></div>' +
+        '</div>';
+      }
+
+      // ── Market Performance ──
+      if (c.currentOccupancy || c.preleasedPercent || c.leasingVelocity || c.impactToProperty) {
+        html += '<div class="cc-market">';
+        html += '<h3><span class="h3-icon">&#x1F4C8;</span> Market Performance</h3>';
+        html += '<div class="metrics-grid">';
+        if (c.currentOccupancy) html += '<div class="metric-card"><div class="metric-value">' + esc(c.currentOccupancy) + '</div><div class="metric-label">Occupancy</div></div>';
+        if (c.preleasedPercent) html += '<div class="metric-card"><div class="metric-value">' + esc(c.preleasedPercent) + '</div><div class="metric-label">Preleased</div></div>';
+        if (c.leasingVelocity) html += '<div class="metric-card">' + badgeHTML('velocity', c.leasingVelocity, VELOCITY_LABELS[c.leasingVelocity]) + '<div class="metric-label" style="margin-top:4px;">Leasing Velocity</div></div>';
+        if (c.impactToProperty) html += '<div class="metric-card">' + badgeHTML('impact', c.impactToProperty, IMPACT_LABELS[c.impactToProperty]) + '<div class="metric-label" style="margin-top:4px;">Impact Level</div></div>';
+        html += '</div>';
+        if (c.availabilitySummary) html += '<div class="availability">' + esc(c.availabilitySummary) + '</div>';
+        if (c.impactExplanation) html += '<div class="impact-box"><p>' + esc(c.impactExplanation) + '</p></div>';
+        html += '</div>';
+      }
+
+      // ── Strategic Comparison ──
+      if (c.biggestStrengths || c.biggestWeaknesses) {
+        html += '<div class="cc-strategy">';
+        html += '<h3><span class="h3-icon">&#x1F6E1;</span> Strategic Comparison</h3>';
+        html += '<div class="sw-grid">';
+        if (c.biggestStrengths) html += '<div class="sw-card strengths"><div class="sw-label">Their Strengths vs Us</div><p>' + esc(c.biggestStrengths) + '</p></div>';
+        if (c.biggestWeaknesses) html += '<div class="sw-card weaknesses"><div class="sw-label">Their Weaknesses vs Us</div><p>' + esc(c.biggestWeaknesses) + '</p></div>';
+        html += '</div>';
+        html += '</div>';
+      }
+
+      // ── Win/Loss ──
+      if (c.whoWeLoseTo || c.whoWeWinAgainst || c.closestComparableFloorplans) {
+        html += '<div class="cc-winloss">';
+        html += '<div class="wl-grid">';
+        if (c.whoWeLoseTo) html += '<div><div class="wl-label"><span class="dot red"></span> Who We Lose to Them</div><p>' + esc(c.whoWeLoseTo) + '</p></div>';
+        if (c.whoWeWinAgainst) html += '<div><div class="wl-label"><span class="dot green"></span> Who We Win Against Them</div><p>' + esc(c.whoWeWinAgainst) + '</p></div>';
+        html += '</div>';
+        if (c.closestComparableFloorplans) {
+          html += '<div class="comparable"><div class="comp-label">Comparable Floorplans</div><p>' + esc(c.closestComparableFloorplans) + '</p></div>';
+        }
+        html += '</div>';
+      }
+
+      // ── Positioning ──
+      if (c.recommendedPositioning) {
+        html += '<div class="cc-positioning"><div class="pos-box">' +
+          '<div class="pos-label">&#x1F3AF; Recommended Positioning Response</div>' +
+          '<div class="pos-text">' + esc(c.recommendedPositioning) + '</div>' +
+        '</div></div>';
+      }
+
+      // ── Footer Metadata ──
+      if (c.surveyDate || c.analystName || c.sourceOfInformation) {
+        html += '<div class="cc-footer"><div class="footer-row">';
+        if (c.surveyDate) html += '<div class="footer-item">&#x1F552; Surveyed: ' + esc(c.surveyDate) + '</div>';
+        if (c.lastUpdatedDate) html += '<div class="footer-item">&#x1F552; Updated: ' + esc(c.lastUpdatedDate) + '</div>';
+        if (c.sourceOfInformation) html += '<div class="footer-item">&#x1F4C4; Source: ' + esc(c.sourceOfInformation) + '</div>';
+        if (c.analystName) html += '<div class="footer-item footer-analyst">&#x1F464; Analyst: ' + esc(c.analystName) + '</div>';
+        html += '</div>';
+        if (c.notes) html += '<div class="footer-notes">' + esc(c.notes) + '</div>';
+        html += '</div>';
+      }
+
+      html += '</div>'; // cc-preview
+      container.innerHTML = html;
+    }
+
+    // ── Handlers ──
+    function handleNewCard() {
+      currentCard = createEmptyCard();
+      renderEditor();
+    }
+
+    function handleEditCard(card) {
+      currentCard = JSON.parse(JSON.stringify(card));
+      renderEditor();
+    }
+
+    function handleViewCard(card) {
+      viewingCard = card;
+      renderViewer();
+    }
+
+    async function handleDuplicateCard(card) {
+      try {
+        var dup = JSON.parse(JSON.stringify(card));
+        delete dup.id;
+        dup.competitorName = (dup.competitorName || '') + ' (Copy)';
+        dup.status = 'draft';
+        dup.property = currentProperty;
+        var result = await apiCreate(dup);
+        dup.id = result.id;
+        dup.createdAt = result.createdAt;
+        dup.updatedAt = result.updatedAt;
+        cards.unshift(dup);
+        showToast('Card duplicated');
+        renderGallery();
+      } catch (e) {
+        showToast('Error duplicating card');
+        console.error(e);
+      }
+    }
+
+    async function handleArchiveCard(id) {
+      try {
+        await apiDelete(id, true);
+        var card = cards.find(function(c) { return c.id === id; });
+        if (card) { card.status = 'archived'; card.updatedAt = new Date().toISOString(); }
+        showToast('Card archived');
+        renderGallery();
+      } catch (e) {
+        showToast('Error archiving card');
+        console.error(e);
+      }
+    }
+
+    async function handleSaveDraft() {
+      if (!currentCard) return;
+      try {
+        currentCard.status = 'draft';
+        currentCard.property = currentProperty;
+        if (currentCard.id) {
+          var result = await apiUpdate(currentCard);
+          currentCard.updatedAt = result.updatedAt;
+          var idx = cards.findIndex(function(c) { return c.id === currentCard.id; });
+          if (idx >= 0) cards[idx] = JSON.parse(JSON.stringify(currentCard));
+        } else {
+          var result = await apiCreate(currentCard);
+          currentCard.id = result.id;
+          currentCard.createdAt = result.createdAt;
+          currentCard.updatedAt = result.updatedAt;
+          cards.unshift(JSON.parse(JSON.stringify(currentCard)));
+        }
+        showToast('Draft saved');
+      } catch (e) {
+        showToast('Error saving draft');
+        console.error(e);
+      }
+    }
+
+    async function handleSaveComplete() {
+      if (!currentCard) return;
+      if (!(currentCard.competitorName || '').trim()) {
+        showToast('Competitor name is required');
+        return;
+      }
+      try {
+        currentCard.status = 'complete';
+        currentCard.property = currentProperty;
+        if (currentCard.id) {
+          var result = await apiUpdate(currentCard);
+          currentCard.updatedAt = result.updatedAt;
+          var idx = cards.findIndex(function(c) { return c.id === currentCard.id; });
+          if (idx >= 0) cards[idx] = JSON.parse(JSON.stringify(currentCard));
+        } else {
+          var result = await apiCreate(currentCard);
+          currentCard.id = result.id;
+          currentCard.createdAt = result.createdAt;
+          currentCard.updatedAt = result.updatedAt;
+          cards.unshift(JSON.parse(JSON.stringify(currentCard)));
+        }
+        showToast('Card saved as complete');
+      } catch (e) {
+        showToast('Error saving card');
+        console.error(e);
+      }
+    }
+
+    function handlePresentation(card) {
+      if (card) {
+        viewingCard = card;
+        renderPresentation(card);
+      }
+    }
+
+    // ── Load Data ──
+    async function loadCards() {
+      try {
+        cards = await apiGet();
+      } catch (e) {
+        cards = [];
+        console.error('Error loading cards:', e);
+      }
+      renderGallery();
+    }
+
+    // ── Init ──
+    async function init() {
+      try {
+        var meRes = await fetch('/api/me');
+        if (!meRes.ok) { location.href = 'index.html'; return; }
+        var me = await meRes.json();
+        currentUser = me;
+
+        if (els.adminPageBtn) {
+          els.adminPageBtn.style.display = me.role === 'admin' ? '' : 'none';
+          els.adminPageBtn.onclick = function() { location.href = 'mmp_admin.html'; };
+        }
+        if (els.logoutBtn) {
+          els.logoutBtn.onclick = async function() {
+            try { await fetch('/api/auth-logout', { method: 'POST' }); } catch (e) {}
+            location.href = 'index.html';
+          };
+        }
+
+        var props = [];
+        try {
+          var pres = await fetch('/api/properties');
+          props = await pres.json();
+        } catch (e) { props = []; }
+
+        var list = getAccessible(props, me);
+        var saved = (localStorage.getItem(STORE_KEY) || '').trim();
+        currentProperty = list.includes(saved) ? saved : (list[0] || '');
+
+        if (els.propertySelect) {
+          els.propertySelect.innerHTML = list.map(function(p) { return '<option value="' + p.replace(/"/g, '&quot;') + '">' + esc(p) + '</option>'; }).join('');
+          els.propertySelect.value = currentProperty;
+          els.propertySelect.onchange = async function() {
+            currentProperty = els.propertySelect.value;
+            localStorage.setItem(STORE_KEY, currentProperty);
+            await loadCards();
+          };
+        }
+
+        await loadCards();
+        hideLoading();
+      } catch (e) {
+        console.error('Init error:', e);
+        hideLoading();
+        location.href = 'index.html';
+      }
+    }
+
+    init();
+  })();
+  </script>
+  <script src="standard-nav.js"></script>
+</body>
+</html>

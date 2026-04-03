@@ -13,6 +13,7 @@
       { href: 'mmp_calendar_app.html', label: 'Marketing Calendar' },
       { href: 'marketing_plans.html', label: 'Marketing Plans' },
       { href: 'velocity_tracker.html', label: 'Velocity Tracker' },
+      { href: 'competitor_cards.html', label: 'Competitor Cards' },
       { href: 'mplr.html', label: 'MPLR' }
     ],
     tools: [
