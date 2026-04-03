@@ -43,6 +43,15 @@ export interface ContentSnippet {
   category: 'footer' | 'contact' | 'legal' | 'promo' | 'custom';
 }
 
+export type BrandLinkCategory = 'website' | 'prospect-portal' | 'resident-portal' | 'apply' | 'tour' | 'survey' | 'google-form' | 'social' | 'other';
+
+export interface BrandLink {
+  id: ID;
+  label: string;
+  url: string;
+  category: BrandLinkCategory;
+}
+
 export interface BrandKit {
   id: ID;
   propertyId: ID;
@@ -54,6 +63,7 @@ export interface BrandKit {
   fonts: BrandFont[];
   buttonStyles: ButtonStyle[];
   snippets: ContentSnippet[];
+  links: BrandLink[];
   footerHtml?: string;
   contactInfo?: {
     phone?: string;
@@ -104,7 +114,10 @@ export type EmailBlockType =
   | 'social-links'
   | 'color-bar'
   | 'branded-header'
-  | 'virtual-tour';
+  | 'virtual-tour'
+  | 'image-gallery'
+  | 'event-details'
+  | 'numbered-steps';
 
 export interface EmailBlockStyle {
   backgroundColor?: string;
@@ -314,6 +327,30 @@ export interface VirtualTourBlockData extends BaseBlockData {
   thumbnailHeight: number;
 }
 
+export interface ImageGalleryBlockData extends BaseBlockData {
+  images: Array<{ url: string; alt: string; linkUrl?: string }>;
+  columns: 2 | 3;
+  gap: number;
+  caption?: string;
+}
+
+export interface EventDetailsBlockData extends BaseBlockData {
+  eventName: string;
+  date: string;
+  time: string;
+  location: string;
+  description: string;
+  accentColor: string;
+  buttonLabel?: string;
+  buttonUrl?: string;
+}
+
+export interface NumberedStepsBlockData extends BaseBlockData {
+  heading: string;
+  steps: Array<{ title: string; description: string }>;
+  accentColor: string;
+}
+
 /** Map block type to its data type */
 export interface BlockDataMap {
   'header': HeaderBlockData;
@@ -335,6 +372,9 @@ export interface BlockDataMap {
   'color-bar': ColorBarBlockData;
   'branded-header': BrandedHeaderBlockData;
   'virtual-tour': VirtualTourBlockData;
+  'image-gallery': ImageGalleryBlockData;
+  'event-details': EventDetailsBlockData;
+  'numbered-steps': NumberedStepsBlockData;
 }
 
 /** An email block instance placed in the canvas */
@@ -417,4 +457,5 @@ export interface BlockDefinition {
   category: 'structure' | 'content' | 'media' | 'property' | 'layout';
   description: string;
   defaultData: BlockDataMap[EmailBlockType];
+  entrataWarning?: string;
 }

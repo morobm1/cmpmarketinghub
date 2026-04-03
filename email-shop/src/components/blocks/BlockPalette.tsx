@@ -7,6 +7,7 @@ import {
   Image, ImagePlus, Share2,
   LayoutList, Columns2,
   Sparkles, Grid2x2, Megaphone,
+  LayoutGrid, CalendarDays, ListOrdered, AlertTriangle,
 } from 'lucide-react';
 
 const iconMap: Record<string, React.ComponentType<{ size?: number }>> = {
@@ -15,6 +16,7 @@ const iconMap: Record<string, React.ComponentType<{ size?: number }>> = {
   Image, ImagePlus, Share2,
   LayoutList, Columns2,
   Sparkles, Grid2x2, Megaphone,
+  LayoutGrid, CalendarDays, ListOrdered,
 };
 
 function DraggableBlock({ block }: { block: BlockDefinition }) {
@@ -38,9 +40,13 @@ function DraggableBlock({ block }: { block: BlockDefinition }) {
       <div className="w-8 h-8 rounded-md bg-surface-100 flex items-center justify-center text-surface-500 shrink-0">
         {IconComponent ? <IconComponent size={16} /> : <Type size={16} />}
       </div>
-      <div className="min-w-0">
-        <div className="text-sm font-medium text-surface-800 truncate">{block.label}</div>
+      <div className="min-w-0 flex-1">
+        <div className="text-sm font-medium text-surface-800 truncate flex items-center gap-1">
+          {block.label}
+          {block.entrataWarning && <AlertTriangle size={12} className="text-amber-500 shrink-0" />}
+        </div>
         <div className="text-xs text-surface-400 truncate">{block.description}</div>
+        {block.entrataWarning && <div className="text-[10px] text-amber-500 mt-0.5 truncate">Not Entrata-compatible</div>}
       </div>
     </div>
   );

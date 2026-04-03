@@ -21,6 +21,9 @@ import type {
   ColorBarBlockData,
   BrandedHeaderBlockData,
   VirtualTourBlockData,
+  ImageGalleryBlockData,
+  EventDetailsBlockData,
+  NumberedStepsBlockData,
 } from '@/types';
 
 /**
@@ -76,9 +79,10 @@ function wrapRow(content: string, data: { style: { backgroundColor?: string; pad
 
 function renderHeader(data: HeaderBlockData): string {
   const bg = data.backgroundColor || data.style.backgroundColor || '#ffffff';
+  const logoW = Math.min(Math.max(data.logoWidth || 180, 60), 500);
   let content = '';
   if (data.logoUrl) {
-    content = `<img src="${data.logoUrl}" alt="${data.logoAlt || 'Logo'}" width="${data.logoWidth || 180}" style="display: block; margin: 0 auto; max-width: 100%; height: auto; border: 0;" />`;
+    content = `<img src="${data.logoUrl}" alt="${data.logoAlt || 'Logo'}" width="${logoW}" style="display: block; margin: 0 auto; max-width: 85%; height: auto; border: 0;" />`;
   }
   return wrapRow(content, { style: { ...data.style, backgroundColor: bg } });
 }
@@ -338,6 +342,54 @@ function renderVirtualTour(data: VirtualTourBlockData): string {
   return wrapRow(content, data);
 }
 
+function renderImageGallery(data: ImageGalleryBlockData): string {
+  const colW = Math.floor(100 / data.columns);
+  const cells = data.images.slice(0, data.columns).map(
+    (img) => `<td width="${colW}%" valign="top" style="${ff()} padding: ${data.gap / 2}px;">
+      ${img.url ? (img.linkUrl
+        ? `<a href="${img.linkUrl}" target="_blank" style="text-decoration: none;"><img src="${img.url}" alt="${img.alt}" width="100%" style="display: block; max-width: 100%; height: auto; border: 0; border-radius: 4px;" /></a>`
+        : `<img src="${img.url}" alt="${img.alt}" width="100%" style="display: block; max-width: 100%; height: auto; border: 0; border-radius: 4px;" />`)
+      : ''}
+    </td>`,
+  ).join('');
+  let content = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>${cells}</tr></table>`;
+  if (data.caption) content += `<p style="margin: 8px 0 0; ${ff()} text-align: center; font-size: 12px; color: #999;">${data.caption}</p>`;
+  return wrapRow(content, data);
+}
+
+function renderEventDetails(data: EventDetailsBlockData): string {
+  const content = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border: 2px solid ${data.accentColor}; border-radius: 8px; overflow: hidden;">
+<tr><td style="${ff()} background-color: ${data.accentColor}; color: #ffffff; padding: 14px 20px; text-align: center; font-size: 20px; font-weight: 700;">${data.eventName}</td></tr>
+<tr><td style="${ff()} padding: 20px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr><td width="70" style="${ff()} padding: 4px 0; font-size: 13px; font-weight: 700; color: #999;">Date</td><td style="${ff()} padding: 4px 0; font-size: 14px; color: #333;">${data.date}</td></tr>
+    <tr><td width="70" style="${ff()} padding: 4px 0; font-size: 13px; font-weight: 700; color: #999;">Time</td><td style="${ff()} padding: 4px 0; font-size: 14px; color: #333;">${data.time}</td></tr>
+    <tr><td width="70" style="${ff()} padding: 4px 0; font-size: 13px; font-weight: 700; color: #999;">Where</td><td style="${ff()} padding: 4px 0; font-size: 14px; color: #333;">${data.location}</td></tr>
+  </table>
+  ${data.description ? `<p style="margin: 12px 0 0; ${ff()} font-size: 14px; line-height: 1.5; color: #555; border-top: 1px solid #eee; padding-top: 12px;">${data.description}</p>` : ''}
+  ${data.buttonLabel ? `<div style="${ff()} text-align: center; padding-top: 16px;"><a href="${data.buttonUrl || '#'}" target="_blank" style="display: inline-block; ${ff()} background-color: ${data.accentColor}; color: #ffffff; padding: 10px 28px; border-radius: 6px; text-decoration: none; font-size: 14px; line-height: 14px; font-weight: 700;">${data.buttonLabel}</a></div>` : ''}
+</td></tr>
+</table>`;
+  return wrapRow(content, data);
+}
+
+function renderNumberedSteps(data: NumberedStepsBlockData): string {
+  const rows = data.steps.map((step, i) =>
+    `<tr>
+      <td width="40" valign="top" style="${ff()} padding: 8px 12px 8px 0; text-align: center;">
+        <div style="${ff()} width: 32px; height: 32px; line-height: 32px; border-radius: 16px; background-color: ${data.accentColor}; color: #ffffff; font-size: 14px; font-weight: 700; text-align: center; margin: 0 auto;">${i + 1}</div>
+      </td>
+      <td valign="top" style="${ff()} padding: 8px 0;">
+        <strong style="${ff()} font-size: 14px; color: #333;">${step.title}</strong>
+        <p style="margin: 2px 0 0; ${ff()} font-size: 13px; line-height: 1.5; color: #666;">${step.description}</p>
+      </td>
+    </tr>`,
+  ).join('');
+  const content = `<h2 style="margin: 0 0 16px; ${ff()} text-align: center; font-size: 20px; font-weight: 700; color: ${data.accentColor};">${data.heading}</h2>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${rows}</table>`;
+  return wrapRow(content, data);
+}
+
 // ---- Main block renderer ----
 
 function renderBlock(block: EmailBlock): string {
@@ -363,6 +415,9 @@ function renderBlock(block: EmailBlock): string {
     case 'color-bar': return renderColorBar(block.data as ColorBarBlockData);
     case 'branded-header': return renderBrandedHeader(block.data as BrandedHeaderBlockData);
     case 'virtual-tour': return renderVirtualTour(block.data as VirtualTourBlockData);
+    case 'image-gallery': return renderImageGallery(block.data as ImageGalleryBlockData);
+    case 'event-details': return renderEventDetails(block.data as EventDetailsBlockData);
+    case 'numbered-steps': return renderNumberedSteps(block.data as NumberedStepsBlockData);
     default: return '';
   }
 }

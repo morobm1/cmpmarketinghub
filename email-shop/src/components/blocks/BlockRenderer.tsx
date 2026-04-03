@@ -19,8 +19,11 @@ import type {
   ColorBarBlockData,
   BrandedHeaderBlockData,
   VirtualTourBlockData,
+  ImageGalleryBlockData,
+  EventDetailsBlockData,
+  NumberedStepsBlockData,
 } from '@/types';
-import { ImageIcon, Star } from 'lucide-react';
+import { ImageIcon, Star, AlertTriangle } from 'lucide-react';
 import { getSocialPlatform } from '@/blocks/socialIcons';
 
 interface BlockRendererProps {
@@ -83,6 +86,12 @@ export function BlockRenderer({ block, isPreview }: BlockRendererProps) {
       return <BrandedHeaderPreview data={data as BrandedHeaderBlockData} />;
     case 'virtual-tour':
       return <VirtualTourPreview data={data as VirtualTourBlockData} style={style} />;
+    case 'image-gallery':
+      return <ImageGalleryPreview data={data as ImageGalleryBlockData} style={style} />;
+    case 'event-details':
+      return <EventDetailsPreview data={data as EventDetailsBlockData} style={style} />;
+    case 'numbered-steps':
+      return <NumberedStepsPreview data={data as NumberedStepsBlockData} style={style} />;
     default:
       return <div style={style} className="text-surface-400 text-sm">Unknown block type</div>;
   }
@@ -100,8 +109,11 @@ function ImagePlaceholder({ alt, className }: { alt: string; className?: string 
 }
 
 function HeaderPreview({ data, style }: { data: HeaderBlockData; style: React.CSSProperties }) {
+  // Clamp logo width: min 60px, max 85% of container, default 180px
+  const rawWidth = data.logoWidth || 180;
+  const clampedWidth = Math.min(Math.max(rawWidth, 60), 500);
   return (
-    <div style={{ ...style, backgroundColor: data.backgroundColor || style.backgroundColor, paddingTop: 10, paddingBottom: 10 }}>
+    <div style={{ ...style, backgroundColor: data.backgroundColor || style.backgroundColor, paddingTop: 12, paddingBottom: 12, minHeight: 48 }}>
       {data.preheaderText && (
         <div className="text-xs text-surface-400 mb-1 text-center">{data.preheaderText}</div>
       )}
@@ -110,13 +122,15 @@ function HeaderPreview({ data, style }: { data: HeaderBlockData; style: React.CS
           src={data.logoUrl}
           alt={data.logoAlt || 'Logo'}
           style={{
-            maxWidth: data.logoWidth || 180,
-            maxHeight: 80,
+            width: clampedWidth,
+            maxWidth: '85%',
+            maxHeight: 100,
+            height: 'auto',
             margin: '0 auto',
             display: 'block',
             objectFit: 'contain',
-            mixBlendMode: 'multiply', // makes white backgrounds transparent
           }}
+          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
         />
       ) : (
         <div className="flex items-center justify-center h-10 text-surface-400 text-sm">
@@ -474,6 +488,10 @@ function BrandedHeaderPreview({ data }: { data: BrandedHeaderBlockData }) {
 function VirtualTourPreview({ data, style }: { data: VirtualTourBlockData; style: React.CSSProperties }) {
   return (
     <div style={style}>
+      <div className="flex items-center gap-1.5 px-3 py-2 mb-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700">
+        <AlertTriangle size={14} className="shrink-0" />
+        <span>Not Entrata-compatible — preview/embed will not render in email clients</span>
+      </div>
       <h3 className="text-lg font-bold text-center mb-2">{data.heading}</h3>
       <p className="text-sm text-surface-500 text-center mb-3">{data.description}</p>
       <div className="relative rounded-lg overflow-hidden" style={{ height: data.thumbnailHeight || 200 }}>
@@ -497,6 +515,80 @@ function VirtualTourPreview({ data, style }: { data: VirtualTourBlockData; style
         <span style={{ backgroundColor: data.buttonColor, color: data.buttonTextColor, padding: '10px 24px', borderRadius: 6, fontSize: 14, fontWeight: 700, display: 'inline-block' }}>
           {data.buttonLabel}
         </span>
+      </div>
+    </div>
+  );
+}
+
+// ---- New Blocks ----
+
+function ImageGalleryPreview({ data, style }: { data: ImageGalleryBlockData; style: React.CSSProperties }) {
+  return (
+    <div style={style}>
+      <div className="flex gap-2">
+        {data.images.map((img, i) => (
+          <div key={i} className="flex-1" style={{ width: `${100 / data.columns}%` }}>
+            {img.url ? (
+              <img src={img.url} alt={img.alt} className="w-full rounded-md object-cover" style={{ aspectRatio: '4/3' }} />
+            ) : (
+              <ImagePlaceholder alt={img.alt || `Image ${i + 1}`} className="h-28 rounded-md" />
+            )}
+          </div>
+        ))}
+      </div>
+      {data.caption && <p className="text-xs text-surface-400 text-center mt-2">{data.caption}</p>}
+    </div>
+  );
+}
+
+function EventDetailsPreview({ data, style }: { data: EventDetailsBlockData; style: React.CSSProperties }) {
+  return (
+    <div style={style}>
+      <div className="rounded-xl border-2 overflow-hidden" style={{ borderColor: data.accentColor }}>
+        <div className="px-5 py-3 text-white text-center" style={{ backgroundColor: data.accentColor }}>
+          <div className="text-lg font-bold">{data.eventName}</div>
+        </div>
+        <div className="px-5 py-4 space-y-2">
+          <div className="flex items-center gap-2 text-sm">
+            <span className="font-semibold text-surface-500 w-16">Date</span>
+            <span className="text-surface-700">{data.date}</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <span className="font-semibold text-surface-500 w-16">Time</span>
+            <span className="text-surface-700">{data.time}</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <span className="font-semibold text-surface-500 w-16">Where</span>
+            <span className="text-surface-700">{data.location}</span>
+          </div>
+          {data.description && <p className="text-sm text-surface-500 mt-2 pt-2 border-t border-surface-100">{data.description}</p>}
+          {data.buttonLabel && (
+            <div className="text-center pt-2">
+              <span className="inline-block px-6 py-2 text-sm font-bold text-white rounded-md" style={{ backgroundColor: data.accentColor }}>{data.buttonLabel}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NumberedStepsPreview({ data, style }: { data: NumberedStepsBlockData; style: React.CSSProperties }) {
+  return (
+    <div style={style}>
+      <h3 className="text-lg font-bold text-center mb-4" style={{ color: data.accentColor }}>{data.heading}</h3>
+      <div className="space-y-3">
+        {data.steps.map((step, i) => (
+          <div key={i} className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0" style={{ backgroundColor: data.accentColor }}>
+              {i + 1}
+            </div>
+            <div className="flex-1 pt-0.5">
+              <div className="text-sm font-semibold text-surface-800">{step.title}</div>
+              <div className="text-xs text-surface-500 mt-0.5">{step.description}</div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

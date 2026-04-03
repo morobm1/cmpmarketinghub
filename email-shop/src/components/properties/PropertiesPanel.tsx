@@ -1,8 +1,8 @@
 import { useEditorStore } from '@/store/useEditorStore';
 import { getBlockDefinition } from '@/blocks/registry';
-import { X, ChevronDown, ImageIcon, Plus, Trash2 } from 'lucide-react';
+import { X, ChevronDown, ImageIcon, Plus, Trash2, Link2 } from 'lucide-react';
 import { useState } from 'react';
-import type { EmailBlock, EmailBlockStyle, Asset } from '@/types';
+import type { EmailBlock, EmailBlockStyle, Asset, BrandLink } from '@/types';
 import { amenityIcons, getIconsByCategory, recolorIcon } from '@/blocks/amenityIcons';
 import { socialPlatforms, getSocialPlatform } from '@/blocks/socialIcons';
 
@@ -48,7 +48,7 @@ export function PropertiesPanel() {
       {/* Properties */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* Content properties based on block type */}
-        <ContentProperties block={block} data={data} update={update} brandColors={activeBrandKit?.colors} />
+        <ContentProperties block={block} data={data} update={update} brandColors={activeBrandKit?.colors} brandLinks={activeBrandKit?.links || []} />
 
         {/* Style section */}
         <PropertySection title="Style">
@@ -74,7 +74,7 @@ export function PropertiesPanel() {
 }
 
 /** Render content-specific properties based on block type */
-function ContentProperties({ block, data, update, brandColors }: { block: EmailBlock; data: Record<string, any>; update: (key: string, value: any) => void; brandColors?: Array<{ id: string; name: string; hex: string }> }) {
+function ContentProperties({ block, data, update, brandColors, brandLinks }: { block: EmailBlock; data: Record<string, any>; update: (key: string, value: any) => void; brandColors?: Array<{ id: string; name: string; hex: string }>; brandLinks: BrandLink[] }) {
   switch (block.type) {
     case 'text':
       return (
@@ -115,7 +115,7 @@ function ContentProperties({ block, data, update, brandColors }: { block: EmailB
       return (
         <PropertySection title="Button">
           <TextField label="Label" value={data.label || ''} onChange={(v) => update('label', v)} />
-          <TextField label="URL" value={data.url || ''} onChange={(v) => update('url', v)} placeholder="https://" />
+          <UrlFieldWithLinks label="URL" value={data.url || ''} onChange={(v) => update('url', v)} brandLinks={brandLinks} />
           <ColorField label="Background" value={data.backgroundColor || ''} onChange={(v) => update('backgroundColor', v)} brandColors={brandColors} />
           <ColorField label="Text Color" value={data.textColor || ''} onChange={(v) => update('textColor', v)} brandColors={brandColors} />
           <NumberField label="Border Radius" value={data.borderRadius ?? 6} onChange={(v) => update('borderRadius', v)} min={0} max={50} />
@@ -221,7 +221,7 @@ function ContentProperties({ block, data, update, brandColors }: { block: EmailB
           <TextField label="Heading" value={data.heading || ''} onChange={(v) => update('heading', v)} />
           <TextAreaField label="Body" value={data.body || ''} onChange={(v) => update('body', v)} />
           <TextField label="Button Label" value={data.buttonLabel || ''} onChange={(v) => update('buttonLabel', v)} />
-          <TextField label="Button URL" value={data.buttonUrl || ''} onChange={(v) => update('buttonUrl', v)} />
+          <UrlFieldWithLinks label="Button URL" value={data.buttonUrl || ''} onChange={(v) => update('buttonUrl', v)} brandLinks={brandLinks} />
         </PropertySection>
       );
 
@@ -234,7 +234,7 @@ function ContentProperties({ block, data, update, brandColors }: { block: EmailB
           <ColorField label="Text Color" value={data.textColor || ''} onChange={(v) => update('textColor', v)} brandColors={brandColors} />
           <TextField label="BG Image URL" value={data.backgroundImageUrl || ''} onChange={(v) => update('backgroundImageUrl', v)} />
           <TextField label="Button Label" value={data.buttonLabel || ''} onChange={(v) => update('buttonLabel', v)} />
-          <TextField label="Button URL" value={data.buttonUrl || ''} onChange={(v) => update('buttonUrl', v)} />
+          <UrlFieldWithLinks label="Button URL" value={data.buttonUrl || ''} onChange={(v) => update('buttonUrl', v)} brandLinks={brandLinks} />
         </PropertySection>
       );
 
@@ -283,7 +283,7 @@ function ContentProperties({ block, data, update, brandColors }: { block: EmailB
           <TextField label="Sq Ft" value={data.sqft || ''} onChange={(v) => update('sqft', v)} />
           <TextField label="Price" value={data.price || ''} onChange={(v) => update('price', v)} />
           <TextField label="Button Label" value={data.buttonLabel || ''} onChange={(v) => update('buttonLabel', v)} />
-          <TextField label="Button URL" value={data.buttonUrl || ''} onChange={(v) => update('buttonUrl', v)} />
+          <UrlFieldWithLinks label="Button URL" value={data.buttonUrl || ''} onChange={(v) => update('buttonUrl', v)} brandLinks={brandLinks} />
         </PropertySection>
       );
 
@@ -404,6 +404,49 @@ function TextField({ label, value, onChange, placeholder }: { label: string; val
         placeholder={placeholder}
         className="w-full px-2.5 py-1.5 text-sm border border-surface-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
       />
+    </div>
+  );
+}
+
+function UrlFieldWithLinks({ label, value, onChange, brandLinks }: { label: string; value: string; onChange: (v: string) => void; brandLinks: BrandLink[] }) {
+  const [showPicker, setShowPicker] = useState(false);
+  return (
+    <div>
+      <label className="block text-xs font-medium text-surface-500 mb-1">{label}</label>
+      <div className="flex gap-1">
+        <input
+          type="url"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="https://..."
+          className="flex-1 px-2.5 py-1.5 text-sm border border-surface-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono"
+        />
+        {brandLinks.length > 0 && (
+          <div className="relative">
+            <button
+              onClick={() => setShowPicker(!showPicker)}
+              className="p-1.5 rounded-md border border-surface-200 text-surface-400 hover:text-primary-600 hover:border-primary-300 transition-colors"
+              title="Pick from stored links"
+            >
+              <Link2 size={14} />
+            </button>
+            {showPicker && (
+              <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-surface-200 rounded-lg shadow-xl z-30 py-1 max-h-48 overflow-auto">
+                {brandLinks.map((link) => (
+                  <button
+                    key={link.id}
+                    onClick={() => { onChange(link.url); setShowPicker(false); }}
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-primary-50 transition-colors"
+                  >
+                    <div className="font-medium text-surface-700 truncate">{link.label}</div>
+                    <div className="text-xs text-surface-400 truncate font-mono">{link.url}</div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -252,6 +252,29 @@ export function BrandPanel() {
               </div>
             </div>
           )}
+
+          {/* Stored Links */}
+          {(activeBrandKit.links || []).length > 0 && (
+            <div>
+              <h4 className="text-xs font-semibold text-surface-400 uppercase tracking-wider px-1 mb-2">Stored Links</h4>
+              <div className="space-y-1.5">
+                {(activeBrandKit.links || []).map((link) => (
+                  <button
+                    key={link.id}
+                    onClick={() => navigator.clipboard.writeText(link.url)}
+                    className="w-full text-left p-2 bg-surface-50 rounded-lg hover:bg-surface-100 transition-colors"
+                    title={`Copy: ${link.url}`}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-medium text-surface-600">{link.label}</span>
+                      <span className="text-[10px] px-1.5 py-0.5 bg-surface-200 rounded text-surface-400">{link.category}</span>
+                    </div>
+                    <div className="text-xs text-surface-400 truncate mt-0.5 font-mono">{link.url}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>
