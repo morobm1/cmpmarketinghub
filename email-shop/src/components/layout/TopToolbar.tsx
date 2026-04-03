@@ -186,9 +186,13 @@ export function TopToolbar() {
                 <button
                   onClick={async () => {
                     setShowSaveMenu(false);
-                    await saveProject('draft');
-                    setSavedFlash('Draft Saved');
-                    setTimeout(() => setSavedFlash(null), 2000);
+                    try {
+                      await saveProject('draft');
+                      setSavedFlash('Draft Saved');
+                    } catch {
+                      setSavedFlash('Save Error');
+                    }
+                    setTimeout(() => setSavedFlash(null), 2500);
                   }}
                   className="w-full text-left px-3 py-2 text-sm text-surface-700 hover:bg-surface-50 flex items-center gap-2"
                 >
@@ -198,9 +202,13 @@ export function TopToolbar() {
                 <button
                   onClick={async () => {
                     setShowSaveMenu(false);
-                    await saveProject('complete');
-                    setSavedFlash('Saved');
-                    setTimeout(() => setSavedFlash(null), 2000);
+                    try {
+                      await saveProject('complete');
+                      setSavedFlash('Saved');
+                    } catch {
+                      setSavedFlash('Save Error');
+                    }
+                    setTimeout(() => setSavedFlash(null), 2500);
                   }}
                   className="w-full text-left px-3 py-2 text-sm text-surface-700 hover:bg-surface-50 flex items-center gap-2"
                 >
