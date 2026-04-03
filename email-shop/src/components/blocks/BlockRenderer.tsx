@@ -112,8 +112,9 @@ function HeaderPreview({ data, style }: { data: HeaderBlockData; style: React.CS
   // Clamp logo width: min 60px, max 85% of container, default 180px
   const rawWidth = data.logoWidth || 180;
   const clampedWidth = Math.min(Math.max(rawWidth, 60), 500);
+  const bgColor = data.backgroundColor || style.backgroundColor || '#ffffff';
   return (
-    <div style={{ ...style, backgroundColor: data.backgroundColor || style.backgroundColor, paddingTop: 12, paddingBottom: 12, minHeight: 48 }}>
+    <div style={{ ...style, backgroundColor: bgColor, paddingTop: 14, paddingBottom: 14, minHeight: 52 }}>
       {data.preheaderText && (
         <div className="text-xs text-surface-400 mb-1 text-center">{data.preheaderText}</div>
       )}
@@ -129,6 +130,8 @@ function HeaderPreview({ data, style }: { data: HeaderBlockData; style: React.CS
             margin: '0 auto',
             display: 'block',
             objectFit: 'contain',
+            position: 'relative',
+            zIndex: 1,
           }}
           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
         />

@@ -136,7 +136,7 @@ function ContentProperties({ block, data, update, brandColors, brandLinks }: { b
     case 'hero-image':
       return (
         <PropertySection title="Hero Image">
-          <ImageUrlField label="Image / GIF URL" value={data.imageUrl || ''} onChange={(v) => update('imageUrl', v)} />
+          <ImageUrlField label="Image / GIF URL" value={data.imageUrl || ''} onChange={(v) => update('imageUrl', v)} filterCategory="photo" />
           <TextField label="Alt Text" value={data.altText || ''} onChange={(v) => update('altText', v)} />
           <TextField label="Link URL" value={data.linkUrl || ''} onChange={(v) => update('linkUrl', v)} placeholder="https://" />
           <div>
@@ -173,7 +173,7 @@ function ContentProperties({ block, data, update, brandColors, brandLinks }: { b
     case 'logo':
       return (
         <PropertySection title="Image">
-          <ImageUrlField label="Image URL" value={data.imageUrl || ''} onChange={(v) => update('imageUrl', v)} />
+          <ImageUrlField label="Image URL" value={data.imageUrl || ''} onChange={(v) => update('imageUrl', v)} filterCategory="photo" />
           <TextField label="Alt Text" value={data.altText || ''} onChange={(v) => update('altText', v)} />
           <NumberField label="Width" value={data.width || 200} onChange={(v) => update('width', v)} min={50} max={600} />
           <SelectField label="Alignment" value={data.alignment || 'center'} onChange={(v) => update('alignment', v)} options={[
@@ -186,7 +186,7 @@ function ContentProperties({ block, data, update, brandColors, brandLinks }: { b
     case 'header':
       return (
         <PropertySection title="Header">
-          <ImageUrlField label="Logo URL" value={data.logoUrl || ''} onChange={(v) => update('logoUrl', v)} />
+          <ImageUrlField label="Logo URL" value={data.logoUrl || ''} onChange={(v) => update('logoUrl', v)} filterCategory="logo" />
           <TextField label="Logo Alt" value={data.logoAlt || ''} onChange={(v) => update('logoAlt', v)} />
           <NumberField label="Logo Width" value={data.logoWidth || 180} onChange={(v) => update('logoWidth', v)} min={50} max={400} />
           <TextField label="Preheader Text" value={data.preheaderText || ''} onChange={(v) => update('preheaderText', v)} />
@@ -216,7 +216,7 @@ function ContentProperties({ block, data, update, brandColors, brandLinks }: { b
     case 'image-text':
       return (
         <PropertySection title="Image + Text">
-          <ImageUrlField label="Image URL" value={data.imageUrl || ''} onChange={(v) => update('imageUrl', v)} />
+          <ImageUrlField label="Image URL" value={data.imageUrl || ''} onChange={(v) => update('imageUrl', v)} filterCategory="photo" />
           <TextField label="Image Alt" value={data.imageAlt || ''} onChange={(v) => update('imageAlt', v)} />
           <SelectField label="Image Position" value={data.imagePosition || 'left'} onChange={(v) => update('imagePosition', v)} options={[
             { value: 'left', label: 'Left' }, { value: 'right', label: 'Right' },
@@ -282,7 +282,7 @@ function ContentProperties({ block, data, update, brandColors, brandLinks }: { b
       return (
         <PropertySection title="Floor Plan">
           <TextField label="Heading" value={data.heading || ''} onChange={(v) => update('heading', v)} />
-          <ImageUrlField label="Image URL" value={data.floorplanImageUrl || ''} onChange={(v) => update('floorplanImageUrl', v)} />
+          <ImageUrlField label="Image URL" value={data.floorplanImageUrl || ''} onChange={(v) => update('floorplanImageUrl', v)} filterCategory="floorplan" />
           <TextField label="Image Alt" value={data.floorplanImageAlt || ''} onChange={(v) => update('floorplanImageAlt', v)} />
           <TextField label="Unit Name" value={data.unitName || ''} onChange={(v) => update('unitName', v)} />
           <TextField label="Beds/Baths" value={data.bedsBaths || ''} onChange={(v) => update('bedsBaths', v)} />
@@ -357,11 +357,11 @@ function ContentProperties({ block, data, update, brandColors, brandLinks }: { b
     case 'branded-header':
       return (
         <PropertySection title="Branded Header">
-          <ImageUrlField label="Background Image URL" value={data.backgroundImageUrl || ''} onChange={(v) => update('backgroundImageUrl', v)} />
+          <ImageUrlField label="Background Image URL" value={data.backgroundImageUrl || ''} onChange={(v) => update('backgroundImageUrl', v)} filterCategory="photo" />
           <TextField label="Image Alt Text" value={data.backgroundImageAlt || ''} onChange={(v) => update('backgroundImageAlt', v)} />
           <ColorField label="Overlay Color" value={data.overlayColor || '#1e40af'} onChange={(v) => update('overlayColor', v)} brandColors={brandColors} />
           <NumberField label="Overlay Opacity (0-100)" value={Math.round((data.overlayOpacity || 0.5) * 100)} onChange={(v) => update('overlayOpacity', v / 100)} min={0} max={100} />
-          <ImageUrlField label="Logo URL" value={data.logoUrl || ''} onChange={(v) => update('logoUrl', v)} />
+          <ImageUrlField label="Logo URL" value={data.logoUrl || ''} onChange={(v) => update('logoUrl', v)} filterCategory="logo" />
           <TextField label="Logo Alt" value={data.logoAlt || ''} onChange={(v) => update('logoAlt', v)} />
           <NumberField label="Logo Width" value={data.logoWidth || 200} onChange={(v) => update('logoWidth', v)} min={50} max={400} />
           <TextField label="Heading" value={data.headingText || ''} onChange={(v) => update('headingText', v)} />
@@ -644,9 +644,26 @@ function CheckboxField({ label, value, onChange }: { label: string; value: boole
   );
 }
 
-function ImageUrlField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+function ImageUrlField({ label, value, onChange, filterCategory }: { label: string; value: string; onChange: (v: string) => void; filterCategory?: 'logo' | 'photo' | 'floorplan' }) {
   const [showBrowser, setShowBrowser] = useState(false);
-  const assets = useEditorStore((s) => s.assets);
+  const activeBrandKit = useEditorStore((s) => s.activeBrandKit);
+  const storeAssets = useEditorStore((s) => s.assets);
+
+  // Prioritize brand kit assets filtered by category, then fall back to all store assets
+  const getBrandKitAssets = (): Asset[] => {
+    if (!activeBrandKit) return [];
+    if (filterCategory === 'logo') return activeBrandKit.logos || [];
+    if (filterCategory === 'floorplan') return activeBrandKit.floorplans || [];
+    if (filterCategory === 'photo') return activeBrandKit.images || [];
+    return [...(activeBrandKit.logos || []), ...(activeBrandKit.images || []), ...(activeBrandKit.floorplans || [])];
+  };
+
+  const brandKitAssets = getBrandKitAssets();
+  const otherAssets = filterCategory
+    ? storeAssets.filter((a) => a.category === filterCategory && !brandKitAssets.some((bk) => bk.id === a.id))
+    : storeAssets.filter((a) => !brandKitAssets.some((bk) => bk.id === a.id));
+
+  const categoryLabel = filterCategory === 'logo' ? 'Logos' : filterCategory === 'floorplan' ? 'Floor Plans' : filterCategory === 'photo' ? 'Photos' : 'Images';
 
   return (
     <div>
@@ -662,7 +679,7 @@ function ImageUrlField({ label, value, onChange }: { label: string; value: strin
         <button
           onClick={() => setShowBrowser(!showBrowser)}
           className="px-2 py-1.5 text-xs font-medium bg-surface-100 border border-surface-200 rounded-md hover:bg-primary-50 hover:border-primary-300 hover:text-primary-700 transition-colors shrink-0"
-          title="Browse assets"
+          title={`Browse ${categoryLabel.toLowerCase()}`}
         >
           <ImageIcon size={14} />
         </button>
@@ -672,26 +689,53 @@ function ImageUrlField({ label, value, onChange }: { label: string; value: strin
           <img src={value} alt="Preview" className="w-full h-20 object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
         </div>
       )}
-      {showBrowser && assets.length > 0 && (
-        <div className="mt-2 max-h-40 overflow-y-auto border border-surface-200 rounded-lg bg-white shadow-sm">
-          {assets.map((asset: Asset) => (
-            <button
-              key={asset.id}
-              onClick={() => { onChange(asset.sourceUrl); setShowBrowser(false); }}
-              className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-primary-50 text-left transition-colors"
-            >
-              <img src={asset.thumbnailUrl} alt={asset.altText} className="w-8 h-8 object-cover rounded" />
-              <div className="min-w-0">
-                <div className="text-xs font-medium text-surface-700 truncate">{asset.name}</div>
-                <div className="text-[10px] text-surface-400">{asset.category}</div>
+      {showBrowser && (
+        <div className="mt-2 max-h-48 overflow-y-auto border border-surface-200 rounded-lg bg-white shadow-sm">
+          {brandKitAssets.length > 0 && (
+            <>
+              <div className="px-2 py-1.5 text-[10px] font-semibold text-surface-400 uppercase bg-surface-50 border-b border-surface-100 sticky top-0">
+                Brand Kit {categoryLabel}
               </div>
-            </button>
-          ))}
-        </div>
-      )}
-      {showBrowser && assets.length === 0 && (
-        <div className="mt-2 p-3 text-center border border-surface-200 rounded-lg bg-surface-50">
-          <p className="text-xs text-surface-400">No assets available. Add assets in the Asset Library.</p>
+              {brandKitAssets.map((asset: Asset) => (
+                <button
+                  key={asset.id}
+                  onClick={() => { onChange(asset.sourceUrl); setShowBrowser(false); }}
+                  className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-primary-50 text-left transition-colors"
+                >
+                  <img src={asset.thumbnailUrl || asset.sourceUrl} alt={asset.altText} className="w-8 h-8 object-cover rounded" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  <div className="min-w-0">
+                    <div className="text-xs font-medium text-surface-700 truncate">{asset.name}</div>
+                    {asset.tags.length > 0 && <div className="text-[10px] text-surface-400 truncate">{asset.tags.join(', ')}</div>}
+                  </div>
+                </button>
+              ))}
+            </>
+          )}
+          {otherAssets.length > 0 && (
+            <>
+              <div className="px-2 py-1.5 text-[10px] font-semibold text-surface-400 uppercase bg-surface-50 border-b border-surface-100 sticky top-0">
+                {brandKitAssets.length > 0 ? 'Other ' : ''}{categoryLabel}
+              </div>
+              {otherAssets.map((asset: Asset) => (
+                <button
+                  key={asset.id}
+                  onClick={() => { onChange(asset.sourceUrl); setShowBrowser(false); }}
+                  className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-primary-50 text-left transition-colors"
+                >
+                  <img src={asset.thumbnailUrl || asset.sourceUrl} alt={asset.altText} className="w-8 h-8 object-cover rounded" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  <div className="min-w-0">
+                    <div className="text-xs font-medium text-surface-700 truncate">{asset.name}</div>
+                    <div className="text-[10px] text-surface-400">{asset.category}</div>
+                  </div>
+                </button>
+              ))}
+            </>
+          )}
+          {brandKitAssets.length === 0 && otherAssets.length === 0 && (
+            <div className="p-3 text-center">
+              <p className="text-xs text-surface-400">No {categoryLabel.toLowerCase()} available. Add images in the Brand Kit or Asset Library.</p>
+            </div>
+          )}
         </div>
       )}
     </div>
