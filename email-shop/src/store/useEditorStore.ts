@@ -101,6 +101,7 @@ interface EditorStore {
   saveAsTemplate: (name: string, description: string, category: string) => void;
   editTemplate: (template: EmailTemplate) => void;
   saveEditedTemplate: () => void;
+  deleteTemplate: (id: ID) => void;
   editingTemplateId: ID | null;
   saveProject: (status: ProjectStatus) => Promise<void>;
   isSavingProject: boolean;
@@ -386,6 +387,18 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     // Persist to API
     templateService.save(updated).catch((err) => {
       console.error('Failed to save edited template to API:', err);
+    });
+  },
+
+  deleteTemplate: (id: ID) => {
+    set((s) => ({
+      templates: s.templates.filter((t) => t.id !== id),
+      // Clear editing state if we're deleting the template being edited
+      editingTemplateId: s.editingTemplateId === id ? null : s.editingTemplateId,
+    }));
+    // Persist deletion to API
+    templateService.delete(id).catch((err) => {
+      console.error('Failed to delete template from API:', err);
     });
   },
 

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useEditorStore } from '@/store/useEditorStore';
 import { generateEmailHtml } from '@/engine/htmlGenerator';
-import { ArrowLeft, LayoutTemplate, Plus, Eye, Pencil, X } from 'lucide-react';
+import { ArrowLeft, LayoutTemplate, Plus, Eye, Pencil, Trash2, X } from 'lucide-react';
 import type { EmailTemplate } from '@/types';
 
 export function TemplatesView() {
@@ -9,6 +9,7 @@ export function TemplatesView() {
   const setView = useEditorStore((s) => s.setView);
   const setProject = useEditorStore((s) => s.setProject);
   const editTemplateAction = useEditorStore((s) => s.editTemplate);
+  const deleteTemplateAction = useEditorStore((s) => s.deleteTemplate);
 
   const [previewTemplate, setPreviewTemplate] = useState<EmailTemplate | null>(null);
   const [filterCategory, setFilterCategory] = useState<string>('all');
@@ -16,6 +17,12 @@ export function TemplatesView() {
   const handleEditTemplate = (template: EmailTemplate) => {
     editTemplateAction(template);
     setView('builder');
+  };
+
+  const handleDeleteTemplate = (template: EmailTemplate) => {
+    if (window.confirm('Delete template "' + template.name + '"? This cannot be undone.')) {
+      deleteTemplateAction(template.id);
+    }
   };
 
   const useTemplate = (template: EmailTemplate) => {
@@ -99,6 +106,7 @@ export function TemplatesView() {
                 onUse={() => useTemplate(template)}
                 onPreview={() => setPreviewTemplate(template)}
                 onEdit={() => handleEditTemplate(template)}
+                onDelete={() => handleDeleteTemplate(template)}
               />
             ))}
           </div>
@@ -126,12 +134,13 @@ export function TemplatesView() {
 
 // ---- Template Card with live iframe preview ----
 
-function TemplateCard({ template, categoryColor, onUse, onPreview, onEdit }: {
+function TemplateCard({ template, categoryColor, onUse, onPreview, onEdit, onDelete }: {
   template: EmailTemplate;
   categoryColor: string;
   onUse: () => void;
   onPreview: () => void;
   onEdit: () => void;
+  onDelete: () => void;
 }) {
   // Generate a live HTML preview for the thumbnail
   const previewHtml = useMemo(() => {
@@ -192,6 +201,13 @@ function TemplateCard({ template, categoryColor, onUse, onPreview, onEdit }: {
             className="px-3 py-2 text-sm font-medium text-surface-500 bg-surface-50 rounded-lg hover:bg-surface-100 transition-colors"
           >
             <Eye size={14} />
+          </button>
+          <button
+            onClick={onDelete}
+            title="Delete Template"
+            className="px-3 py-2 text-sm font-medium text-red-400 bg-red-50 rounded-lg hover:bg-red-100 hover:text-red-600 transition-colors"
+          >
+            <Trash2 size={14} />
           </button>
         </div>
       </div>
