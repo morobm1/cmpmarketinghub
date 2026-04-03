@@ -4,6 +4,20 @@ import { X, ChevronDown, ImageIcon, Plus, Trash2, Link2, Sparkles, Search } from
 import { useState } from 'react';
 import type { EmailBlock, EmailBlockStyle, Asset, BrandLink } from '@/types';
 import { ctaLibrary, getEmailButtonCTAs, getTop25, searchCTAs, type CTACategory } from '@/data/ctaLibrary';
+import { removeImageBackground, blobUrlToDataUrl, type BgRemovalStatus } from '@/services/backgroundRemoval';
+
+const EMAIL_SAFE_FONTS = [
+  { family: 'Arial', fallback: 'Helvetica, sans-serif', label: 'Arial' },
+  { family: 'Helvetica', fallback: 'Arial, sans-serif', label: 'Helvetica' },
+  { family: 'Georgia', fallback: 'Times New Roman, serif', label: 'Georgia (Serif)' },
+  { family: 'Times New Roman', fallback: 'Georgia, serif', label: 'Times New Roman' },
+  { family: 'Trebuchet MS', fallback: 'Arial, sans-serif', label: 'Trebuchet MS' },
+  { family: 'Verdana', fallback: 'Geneva, sans-serif', label: 'Verdana' },
+  { family: 'Tahoma', fallback: 'Geneva, sans-serif', label: 'Tahoma' },
+  { family: 'Lucida Sans Unicode', fallback: 'Lucida Grande, sans-serif', label: 'Lucida Sans' },
+  { family: 'Palatino Linotype', fallback: 'Book Antiqua, Georgia, serif', label: 'Palatino' },
+  { family: 'Courier New', fallback: 'Courier, monospace', label: 'Courier New (Mono)' },
+];
 import { amenityIcons, getIconsByCategory, recolorIcon } from '@/blocks/amenityIcons';
 import { socialPlatforms, getSocialPlatform } from '@/blocks/socialIcons';
 
@@ -13,6 +27,9 @@ export function PropertiesPanel() {
   const updateBlockData = useEditorStore((s) => s.updateBlockData);
   const selectBlock = useEditorStore((s) => s.selectBlock);
   const activeBrandKit = useEditorStore((s) => s.activeBrandKit);
+
+  const globalStyles = useEditorStore((s) => s.globalStyles);
+  const updateGlobalStyles = useEditorStore((s) => s.updateGlobalStyles);
 
   const block = blocks.find((b: EmailBlock) => b.id === selectedBlockId);
   if (!block) return null;
@@ -60,6 +77,29 @@ export function PropertiesPanel() {
             { value: 'center', label: 'Center' },
             { value: 'right', label: 'Right' },
           ]} />
+        </PropertySection>
+
+        {/* Email Font (global) */}
+        <PropertySection title="Email Font">
+          <div>
+            <label className="block text-xs font-medium text-surface-500 mb-1">Font Family</label>
+            <select
+              value={globalStyles.fontFamily}
+              onChange={(e) => {
+                const selected = EMAIL_SAFE_FONTS.find((f) => f.family === e.target.value);
+                if (selected) updateGlobalStyles({ fontFamily: selected.family, fontFallback: selected.fallback });
+              }}
+              className="w-full px-2.5 py-1.5 text-sm border border-surface-200 rounded-md bg-white"
+              style={{ fontFamily: globalStyles.fontFamily + ', ' + globalStyles.fontFallback }}
+            >
+              {EMAIL_SAFE_FONTS.map((f) => (
+                <option key={f.family} value={f.family} style={{ fontFamily: f.family + ', ' + f.fallback }}>{f.label}</option>
+              ))}
+            </select>
+            <p className="text-[10px] text-surface-400 mt-1">Applies to entire email. Only email-safe fonts shown.</p>
+          </div>
+          <ColorField label="Link Color" value={globalStyles.defaultLinkColor || '#2563eb'} onChange={(v) => updateGlobalStyles({ defaultLinkColor: v })} brandColors={activeBrandKit?.colors} />
+          <NumberField label="Base Font Size" value={globalStyles.defaultFontSize || 16} onChange={(v) => updateGlobalStyles({ defaultFontSize: v })} min={12} max={20} />
         </PropertySection>
 
         {/* Padding section */}
@@ -403,6 +443,18 @@ function ContentProperties({ block, data, update, brandColors, brandLinks }: { b
         </PropertySection>
       );
 
+    case 'promo-bar':
+      return (
+        <PropertySection title="Promo Bar">
+          <TextField label="Text" value={data.text || ''} onChange={(v) => update('text', v)} />
+          <ColorField label="Background" value={data.backgroundColor || '#e63946'} onChange={(v) => update('backgroundColor', v)} brandColors={brandColors} />
+          <ColorField label="Text Color" value={data.textColor || '#ffffff'} onChange={(v) => update('textColor', v)} brandColors={brandColors} />
+          <NumberField label="Font Size" value={data.fontSize || 14} onChange={(v) => update('fontSize', v)} min={10} max={20} />
+          <TextField label="Link Label" value={data.linkLabel || ''} onChange={(v) => update('linkLabel', v)} placeholder="Learn More →" />
+          <UrlFieldWithLinks label="Link URL" value={data.linkUrl || ''} onChange={(v) => update('linkUrl', v)} brandLinks={brandLinks} />
+        </PropertySection>
+      );
+
     case 'numbered-steps': {
       const steps = data.steps || [];
       return (
@@ -703,8 +755,23 @@ function CheckboxField({ label, value, onChange }: { label: string; value: boole
 
 function ImageUrlField({ label, value, onChange, filterCategory }: { label: string; value: string; onChange: (v: string) => void; filterCategory?: 'logo' | 'photo' | 'floorplan' }) {
   const [showBrowser, setShowBrowser] = useState(false);
+  const [bgRemovalStatus, setBgRemovalStatus] = useState<BgRemovalStatus>('idle');
   const activeBrandKit = useEditorStore((s) => s.activeBrandKit);
   const storeAssets = useEditorStore((s) => s.assets);
+
+  const handleRemoveBg = async () => {
+    if (!value || bgRemovalStatus === 'loading-model' || bgRemovalStatus === 'processing') return;
+    try {
+      const resultUrl = await removeImageBackground(value, setBgRemovalStatus);
+      const dataUrl = await blobUrlToDataUrl(resultUrl);
+      URL.revokeObjectURL(resultUrl);
+      onChange(dataUrl);
+      setBgRemovalStatus('idle');
+    } catch (err) {
+      console.error('Background removal failed:', err);
+      setBgRemovalStatus('idle');
+    }
+  };
 
   // Prioritize brand kit assets filtered by category, then fall back to all store assets
   const getBrandKitAssets = (): Asset[] => {
@@ -742,8 +809,21 @@ function ImageUrlField({ label, value, onChange, filterCategory }: { label: stri
         </button>
       </div>
       {value && (
-        <div className="mt-1.5 rounded overflow-hidden border border-surface-200">
-          <img src={value} alt="Preview" className="w-full h-20 object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+        <div className="mt-1.5">
+          <div className="rounded overflow-hidden border border-surface-200">
+            <img src={value} alt="Preview" className="w-full h-20 object-cover" style={{ background: 'repeating-conic-gradient(#e5e7eb 0% 25%, transparent 0% 50%) 50% / 16px 16px' }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+          </div>
+          <button
+            onClick={handleRemoveBg}
+            disabled={bgRemovalStatus === 'loading-model' || bgRemovalStatus === 'processing'}
+            className="mt-1 w-full flex items-center justify-center gap-1.5 px-2 py-1.5 text-[11px] font-medium text-surface-600 bg-surface-50 border border-surface-200 rounded-md hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 disabled:opacity-50 disabled:cursor-wait transition-colors"
+            title="Remove image background using AI (runs in browser)"
+          >
+            {bgRemovalStatus === 'loading-model' ? '⏳ Loading AI model...' :
+             bgRemovalStatus === 'processing' ? '⏳ Removing background...' :
+             bgRemovalStatus === 'error' ? '❌ Failed — try again' :
+             '✨ Remove Background'}
+          </button>
         </div>
       )}
       {showBrowser && (

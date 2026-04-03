@@ -197,10 +197,29 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
   addBlock: (type, index) => {
     const state = get();
     state.pushHistory();
+    const data = JSON.parse(JSON.stringify(blockDefaults[type]));
+
+    // Auto-populate footer with active brand kit contact info
+    if (type === 'footer' && state.activeBrandKit) {
+      const kit = state.activeBrandKit;
+      if (kit.contactInfo?.phone) data.phone = kit.contactInfo.phone;
+      if (kit.contactInfo?.email) data.email = kit.contactInfo.email;
+      if (kit.contactInfo?.address) data.address = kit.contactInfo.address;
+      if (kit.contactInfo?.website) data.website = kit.contactInfo.website;
+      if (kit.propertyName) data.companyName = kit.propertyName;
+      if (kit.footerHtml) data.legalText = kit.footerHtml;
+    }
+
+    // Auto-populate header with active brand kit logo
+    if (type === 'header' && state.activeBrandKit?.logos?.[0]) {
+      data.logoUrl = state.activeBrandKit.logos[0].sourceUrl;
+      data.logoAlt = state.activeBrandKit.logos[0].altText || state.activeBrandKit.logos[0].name;
+    }
+
     const newBlock: EmailBlock = {
       id: `block-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       type,
-      data: JSON.parse(JSON.stringify(blockDefaults[type])),
+      data,
     };
     const blocks = [...state.blocks];
     if (index !== undefined && index >= 0) {

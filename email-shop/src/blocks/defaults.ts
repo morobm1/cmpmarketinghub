@@ -23,6 +23,7 @@ import type {
   ImageGalleryBlockData,
   EventDetailsBlockData,
   NumberedStepsBlockData,
+  PromoBarBlockData,
 } from '@/types';
 
 const baseStyle = {
@@ -280,4 +281,15 @@ export const blockDefaults: Record<EmailBlockType, BlockDataMap[EmailBlockType]>
     ],
     accentColor: '#2563eb',
   } satisfies NumberedStepsBlockData,
+
+  'promo-bar': {
+    style: { ...baseStyle, paddingTop: 10, paddingBottom: 10, paddingLeft: 16, paddingRight: 16 },
+    visible: true,
+    text: '🎉 Limited Time: Get $500 off your first month!',
+    backgroundColor: '#e63946',
+    textColor: '#ffffff',
+    fontSize: 14,
+    linkUrl: '#',
+    linkLabel: 'Learn More →',
+  } satisfies PromoBarBlockData,
 };

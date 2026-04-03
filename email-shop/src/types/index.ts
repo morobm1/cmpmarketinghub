@@ -117,7 +117,8 @@ export type EmailBlockType =
   | 'virtual-tour'
   | 'image-gallery'
   | 'event-details'
-  | 'numbered-steps';
+  | 'numbered-steps'
+  | 'promo-bar';
 
 export interface EmailBlockStyle {
   backgroundColor?: string;
@@ -351,6 +352,15 @@ export interface NumberedStepsBlockData extends BaseBlockData {
   accentColor: string;
 }
 
+export interface PromoBarBlockData extends BaseBlockData {
+  text: string;
+  backgroundColor: string;
+  textColor: string;
+  fontSize: number;
+  linkUrl?: string;
+  linkLabel?: string;
+}
+
 /** Map block type to its data type */
 export interface BlockDataMap {
   'header': HeaderBlockData;
@@ -375,6 +385,7 @@ export interface BlockDataMap {
   'image-gallery': ImageGalleryBlockData;
   'event-details': EventDetailsBlockData;
   'numbered-steps': NumberedStepsBlockData;
+  'promo-bar': PromoBarBlockData;
 }
 
 /** An email block instance placed in the canvas */

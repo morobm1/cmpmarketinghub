@@ -23,6 +23,7 @@ export default defineConfig({
         assetFileNames: 'assets/email-shop-[name][extname]',
         manualChunks: {
           xlsx: ['xlsx'],
+          'bg-removal': ['@imgly/background-removal'],
         },
       },
     },

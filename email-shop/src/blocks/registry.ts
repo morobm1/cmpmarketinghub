@@ -197,6 +197,14 @@ export const blockRegistry: BlockDefinition[] = [
     description: 'Numbered step-by-step process (move-in, apply, etc.)',
     defaultData: blockDefaults['numbered-steps'],
   },
+  {
+    type: 'promo-bar',
+    label: 'Promo Bar (Skinny)',
+    icon: 'Megaphone',
+    category: 'property',
+    description: 'Thin promotional strip — great for limited-time offers, one-liners',
+    defaultData: blockDefaults['promo-bar'],
+  },
 ];
 
 /** Get a block definition by type */

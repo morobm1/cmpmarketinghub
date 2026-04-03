@@ -24,6 +24,7 @@ import type {
   ImageGalleryBlockData,
   EventDetailsBlockData,
   NumberedStepsBlockData,
+  PromoBarBlockData,
 } from '@/types';
 
 /**
@@ -393,6 +394,13 @@ function renderNumberedSteps(data: NumberedStepsBlockData): string {
   return wrapRow(content, data);
 }
 
+function renderPromoBar(data: PromoBarBlockData): string {
+  const linkHtml = data.linkLabel && data.linkUrl
+    ? ` <a href="${data.linkUrl}" target="_blank" style="${ff()} color: ${data.textColor}; text-decoration: underline; font-weight: 600;">${data.linkLabel}</a>`
+    : '';
+  return `<tr><td style="${ff()} background-color: ${data.backgroundColor}; color: ${data.textColor}; padding: 10px 16px; text-align: center; font-size: ${data.fontSize || 14}px; font-weight: 600; line-height: 1.4;">${data.text}${linkHtml}</td></tr>`;
+}
+
 // ---- Main block renderer ----
 
 function renderBlock(block: EmailBlock): string {
@@ -421,6 +429,7 @@ function renderBlock(block: EmailBlock): string {
     case 'image-gallery': return renderImageGallery(block.data as ImageGalleryBlockData);
     case 'event-details': return renderEventDetails(block.data as EventDetailsBlockData);
     case 'numbered-steps': return renderNumberedSteps(block.data as NumberedStepsBlockData);
+    case 'promo-bar': return renderPromoBar(block.data as PromoBarBlockData);
     default: return '';
   }
 }

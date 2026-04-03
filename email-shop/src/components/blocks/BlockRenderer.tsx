@@ -22,6 +22,7 @@ import type {
   ImageGalleryBlockData,
   EventDetailsBlockData,
   NumberedStepsBlockData,
+  PromoBarBlockData,
 } from '@/types';
 import { ImageIcon, Star, AlertTriangle } from 'lucide-react';
 import { getSocialPlatform } from '@/blocks/socialIcons';
@@ -92,6 +93,8 @@ export function BlockRenderer({ block, isPreview }: BlockRendererProps) {
       return <EventDetailsPreview data={data as EventDetailsBlockData} style={style} />;
     case 'numbered-steps':
       return <NumberedStepsPreview data={data as NumberedStepsBlockData} style={style} />;
+    case 'promo-bar':
+      return <PromoBarPreview data={data as PromoBarBlockData} />;
     default:
       return <div style={style} className="text-surface-400 text-sm">Unknown block type</div>;
   }
@@ -598,6 +601,15 @@ function NumberedStepsPreview({ data, style }: { data: NumberedStepsBlockData; s
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+function PromoBarPreview({ data }: { data: PromoBarBlockData }) {
+  return (
+    <div style={{ backgroundColor: data.backgroundColor, color: data.textColor, padding: '10px 16px', textAlign: 'center', fontSize: data.fontSize || 14 }}>
+      <span style={{ fontWeight: 600 }}>{data.text}</span>
+      {data.linkLabel && <span style={{ marginLeft: 8, textDecoration: 'underline', opacity: 0.9 }}>{data.linkLabel}</span>}
     </div>
   );
 }
