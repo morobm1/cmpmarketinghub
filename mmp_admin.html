@@ -277,8 +277,9 @@
               <span style="font-size:18px">+</span> Add New User
             </button>
             <div style="display:flex;gap:6px;padding:10px 16px;border-top:1px solid var(--border)">
-              <button class="btn sm primary" id="bulkImportBtn" style="flex:1;padding:8px 10px;font-size:12px;font-weight:600;background:var(--brand-primary);color:#fff;border:none;border-radius:6px;cursor:pointer">📥 Bulk Import</button>
+              <button class="btn sm primary" id="bulkImportBtn" style="flex:1;padding:8px 10px;font-size:12px;font-weight:600;background:var(--brand-primary);color:#fff;border:none;border-radius:6px;cursor:pointer">📥 Import</button>
               <button class="btn sm" id="downloadTemplateBtn" style="flex:1;padding:8px 10px;font-size:12px;font-weight:600;background:#fff;color:var(--text);border:1px solid var(--border);border-radius:6px;cursor:pointer">📄 Template</button>
+              <button class="btn sm" id="auditExportBtn" style="flex:1;padding:8px 10px;font-size:12px;font-weight:600;background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;border-radius:6px;cursor:pointer">📊 Audit</button>
             </div>
           </div>
         </aside>
@@ -1584,6 +1585,24 @@ Capstone Management Partners`;
       if (e.dataTransfer.files[0]) parseImportFile(e.dataTransfer.files[0]);
     });
 
+    function matchPropertyNameToId(input) {
+      if (!input) return input;
+      const norm = input.toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (input === '*') return '*';
+      // Check if it's already a valid property ID
+      const exactId = properties.find(p => (typeof p === 'object' ? (p._id || p.id) : p) === input);
+      if (exactId) return input;
+      // Try matching by name
+      for (const p of properties) {
+        const name = typeof p === 'object' ? p.name : p;
+        const id = typeof p === 'object' ? (p._id || p.id) : p;
+        if (name.toLowerCase().replace(/[^a-z0-9]/g, '') === norm) return id;
+        if (name.toLowerCase().includes(input.toLowerCase())) return id;
+        if (id.toLowerCase() === norm) return id;
+      }
+      return input; // Return as-is if no match found
+    }
+
     function parseImportFile(file) {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -1591,14 +1610,19 @@ Capstone Management Partners`;
           const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
           const sheet = wb.Sheets[wb.SheetNames[0]];
           const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-          parsedImportUsers = rows.filter(r => r.username).map(r => ({
-            username: String(r.username || '').trim(),
-            password: String(r.password || '').trim(),
-            role: String(r.role || 'user').trim().toLowerCase(),
-            email: String(r.email || '').trim(),
-            properties: String(r.properties || '').split(',').map(p => p.trim()).filter(Boolean),
-            status: ''
-          }));
+          parsedImportUsers = rows.filter(r => r.username).map(r => {
+            const rawProps = String(r.properties || '').split(',').map(p => p.trim()).filter(Boolean);
+            const matchedProps = rawProps.map(p => ({ original: p, matched: matchPropertyNameToId(p) }));
+            return {
+              username: String(r.username || '').trim(),
+              password: String(r.password || '').trim(),
+              role: String(r.role || 'user').trim().toLowerCase(),
+              email: String(r.email || '').trim(),
+              properties: matchedProps.map(m => m.matched),
+              propertyMatches: matchedProps,
+              status: ''
+            };
+          });
           showImportPreview();
         } catch (err) {
           alert('Failed to parse file: ' + err.message);
@@ -1610,11 +1634,15 @@ Capstone Management Partners`;
     function showImportPreview() {
       document.getElementById('importUpload').style.display = 'none';
       document.getElementById('importPreview').style.display = '';
-      document.getElementById('importSummary').textContent = parsedImportUsers.length + ' user(s) found in the file.';
+      document.getElementById('importSummary').textContent = parsedImportUsers.length + ' user(s) found. Property names auto-matched to IDs where possible.';
       const tbody = document.getElementById('importTableBody');
       tbody.innerHTML = parsedImportUsers.map((u, i) => {
         const warn = !u.username || !u.password;
-        return `<tr style="${warn ? 'background:#fef2f2' : ''}"><td style="padding:6px 10px;border-bottom:1px solid var(--border)">${u.username || '<em style=color:red>missing</em>'}</td><td style="padding:6px 10px;border-bottom:1px solid var(--border)">${u.role}</td><td style="padding:6px 10px;border-bottom:1px solid var(--border);font-size:11px">${u.properties.join(', ') || 'none'}</td><td style="padding:6px 10px;border-bottom:1px solid var(--border)" id="importStatus${i}">Ready</td></tr>`;
+        const propHtml = u.propertyMatches.map(m => {
+          if (m.original === m.matched) return `<span style="color:var(--text)">${m.matched}</span>`;
+          return `<span style="color:#22c55e" title="Matched: ${m.original} → ${m.matched}">${m.original} → <strong>${m.matched}</strong></span>`;
+        }).join(', ') || '<em style="color:var(--subtext)">none</em>';
+        return `<tr style="${warn ? 'background:#fef2f2' : ''}"><td style="padding:6px 10px;border-bottom:1px solid var(--border)">${u.username || '<em style=color:red>missing</em>'}</td><td style="padding:6px 10px;border-bottom:1px solid var(--border)">${u.role}</td><td style="padding:6px 10px;border-bottom:1px solid var(--border);font-size:11px">${propHtml}</td><td style="padding:6px 10px;border-bottom:1px solid var(--border)" id="importStatus${i}">Ready</td></tr>`;
       }).join('');
     }
 
@@ -1649,12 +1677,36 @@ Capstone Management Partners`;
       document.getElementById('importModal').style.display = 'none';
     });
 
+    document.getElementById('auditExportBtn').addEventListener('click', () => {
+      if (users.length === 0) { alert('No users loaded.'); return; }
+      const rows = [['Username', 'Role', 'Properties', 'Property Names']];
+      users.forEach(u => {
+        const propIds = u.properties === '*' ? ['* (All)'] : (u.properties || []);
+        const propNames = u.properties === '*' ? ['All Properties'] : (u.properties || []).map(pid => {
+          const p = properties.find(pr => (typeof pr === 'object' ? (pr._id || pr.id) : pr) === pid);
+          return p ? (typeof p === 'object' ? p.name : p) : pid;
+        });
+        rows.push([u.username, u.role, propIds.join(', '), propNames.join(', ')]);
+      });
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols'] = [{ wch: 20 }, { wch: 10 }, { wch: 40 }, { wch: 40 }];
+      XLSX.utils.book_append_sheet(wb, ws, 'User Audit');
+      const date = new Date().toISOString().slice(0, 10);
+      XLSX.writeFile(wb, `User_Audit_${date}.xlsx`);
+    });
+
     document.getElementById('downloadTemplateBtn').addEventListener('click', () => {
       const wb = XLSX.utils.book_new();
-      const data = [['username', 'password', 'role', 'email', 'properties'], ['jdoe', 'TempPass123!', 'user', 'jdoe@example.com', 'parkview-tower,sunrise-lofts'], ['admin2', 'AdminPass!', 'admin', 'admin2@example.com', '*']];
+      const data = [['username', 'password', 'role', 'email', 'properties'], ['jdoe', 'TempPass123!', 'user', 'jdoe@example.com', 'Parkview Tower, Sunrise Lofts'], ['admin2', 'AdminPass!', 'admin', 'admin2@example.com', '*']];
       const ws = XLSX.utils.aoa_to_sheet(data);
-      ws['!cols'] = [{ wch: 18 }, { wch: 16 }, { wch: 8 }, { wch: 28 }, { wch: 35 }];
+      ws['!cols'] = [{ wch: 18 }, { wch: 16 }, { wch: 8 }, { wch: 28 }, { wch: 40 }];
       XLSX.utils.book_append_sheet(wb, ws, 'Users');
+      // Instructions sheet
+      const instrData = [['User Import Template — Instructions'], [''], ['Columns:'], ['• username — Required. Login username.'], ['• password — Required. Initial password.'], ['• role — "admin" or "user" (default: user)'], ['• email — Optional. Email address.'], ['• properties — Comma-separated. You can use property NAMES or IDs.'], ['  The system will auto-match names to IDs on import.'], ['  Use * for admin access to all properties.'], [''], ['Example properties: "Parkview Tower, Sunrise Lofts" or "parkview-tower, sunrise-lofts"']];
+      const instrWs = XLSX.utils.aoa_to_sheet(instrData);
+      instrWs['!cols'] = [{ wch: 70 }];
+      XLSX.utils.book_append_sheet(wb, instrWs, 'Instructions');
       XLSX.writeFile(wb, 'User_Import_Template.xlsx');
     });
 
