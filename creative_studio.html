@@ -3,32 +3,104 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Creative Studio • Marketing Hub</title>
+    <title>Creative Studio &bull; Marketing Hub</title>
+    <link rel="preconnect" href="https://use.typekit.net" crossorigin>
+    <link rel="preconnect" href="https://p.typekit.net" crossorigin>
+    <link rel="stylesheet" href="https://use.typekit.net/hqv8hwr.css">
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/email-shop/dist/assets/email-shop-index.css" />
     <style>
+      :root {
+        --brand-primary: #446472;
+        --brand-accent: #ffb732;
+        --brand-accent-2: #52d5ff;
+        --brand-gray: #929497;
+        --page-bg: #f1f5f9;
+        --text: #1f2937;
+        --subtext: #6b7280;
+        --border: #e5e7eb;
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; overflow: hidden; }
+      body { font-family: 'Open Sans', system-ui, -apple-system, sans-serif; background: var(--page-bg); color: var(--text); }
+
+      /* CMP Header */
+      .cmp-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        padding: 0 24px 0 256px;
+        border-bottom: 1px solid var(--border);
+        background: #ffffff;
+        z-index: 40;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+      }
+      .brand { display: flex; align-items: center; gap: 10px; }
+      .brand .logo-img { height: 28px; width: auto; display: block; }
+      .brand .title { color: #ffb732; font-family: zooja-pro, Arial, sans-serif; font-weight: 400; font-size: clamp(32px, 4vw, 48px); line-height: 1; }
+      .pill { border: 1px solid var(--border); background: #fff; border-radius: 999px; padding: 6px 10px; font-size: 12px; color: var(--subtext); display: flex; align-items: center; gap: 8px; }
+      .pill select { font-family: Roboto, Arial, sans-serif; background: #fff; border: 1px solid #d1d5db; border-radius: 8px; padding: 6px 8px; min-width: 180px; font-size: 12px; }
+      .pill button { font-family: Roboto, Arial, sans-serif; background: #fff; color: #111827; border: 1px solid #d1d5db; padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 12px; }
+      .pill button:hover { background: #f9fafb; }
+      .meta { color: var(--subtext); font-size: 13px; }
+
+      /* React app container - offset for sidebar + header */
+      #email-shop-root {
+        position: fixed;
+        top: 60px;
+        left: 240px;
+        right: 0;
+        bottom: 0;
+        overflow: hidden;
+      }
+
+      /* Override standard-nav.js .main-content wrapper since React root is position:fixed */
+      .main-content {
+        margin-left: 0 !important;
+        min-height: 0 !important;
+      }
+
+      @media(max-width: 1100px) {
+        .cmp-header { padding-left: 24px; }
+        #email-shop-root { left: 0; }
+      }
+
       /* Auth loading screen */
       .auth-loading {
         display: flex;
         align-items: center;
         justify-content: center;
-        height: 100vh;
+        height: 100%;
         color: #64748b;
         font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
         font-size: 16px;
-        background: #f1f5f9;
       }
     </style>
   </head>
-  <body class="antialiased">
+  <body>
+    <header class="cmp-header">
+      <div class="brand">
+        <img src="logo-main.svg" class="logo-img" alt="Capstone" />
+        <div class="title">Marketing Hub</div>
+      </div>
+      <div class="pill">
+        <button class="secondary" id="logoutBtn">Logout</button>
+        <button class="secondary" id="adminPageBtn" style="display:none">Admin</button>
+      </div>
+      <div class="meta">Capstone Management Partners</div>
+    </header>
     <div id="email-shop-root">
       <div class="auth-loading">Loading Creative Studio...</div>
     </div>
     <script>
       // Auth check — redirect to login if not authenticated
-      // This runs before the React app loads
       (function() {
         fetch('/.netlify/functions/me', { credentials: 'include' })
           .then(function(r) {
@@ -42,13 +114,29 @@
               properties: Array.isArray(userData.properties) ? userData.properties
                 : userData.properties === '*' ? ['*'] : []
             };
-            // Auth succeeded — React app will mount and replace the loading screen
+            // Show admin button if admin
+            if (userData.role === 'admin' || userData.properties === '*') {
+              var adminBtn = document.getElementById('adminPageBtn');
+              if (adminBtn) adminBtn.style.display = '';
+            }
           })
           .catch(function() {
             window.location.href = 'index.html';
           });
+
+        // Logout button
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+          fetch('/.netlify/functions/auth-logout', { method: 'POST', credentials: 'include' })
+            .finally(function() { window.location.href = 'index.html'; });
+        });
+
+        // Admin button
+        document.getElementById('adminPageBtn').addEventListener('click', function() {
+          window.location.href = 'mmp_admin.html';
+        });
       })();
     </script>
     <script type="module" src="/email-shop/dist/assets/email-shop.js"></script>
+    <script src="standard-nav.js"></script>
   </body>
 </html>

@@ -10,7 +10,8 @@ import {
   type PendingBrandKit,
   type KnownProperty,
 } from '@/services/bulkBrandKitService';
-import { ArrowLeft, Palette, Plus, Trash2, Edit3, Check, X, Copy, Loader2, ImageIcon, Eye, Download, Upload, FileSpreadsheet, AlertTriangle, CheckCircle2, Search, Link2 } from 'lucide-react';
+import { ArrowLeft, Palette, Plus, Trash2, Edit3, Check, X, Copy, Loader2, ImageIcon, Eye, Download, Upload, FileSpreadsheet, AlertTriangle, CheckCircle2, Search, Link2, Share2 } from 'lucide-react';
+import { ShareModal } from '@/components/sharing/ShareModal';
 import type { BrandKit, BrandColor, BrandFont, ButtonStyle, ContentSnippet, BrandLink, BrandLinkCategory, Asset, AssetCategory } from '@/types';
 
 // Tag presets for image management
@@ -56,6 +57,7 @@ export function BrandKitManager() {
   const [bulkResult, setBulkResult] = useState<{ success: number; errors: string[] } | null>(null);
   const [pendingKits, setPendingKits] = useState<PendingBrandKit[] | null>(null);
   const [knownProperties, setKnownProperties] = useState<KnownProperty[]>([]);
+  const [sharingKit, setSharingKit] = useState<BrandKit | null>(null);
 
   // Step 1: Parse Excel → show confirmation dialog
   const handleBulkImportFile = async (file: File) => {
@@ -226,10 +228,31 @@ export function BrandKitManager() {
               bulkImporting={bulkImporting}
               bulkResult={bulkResult}
               onDismissBulkResult={() => setBulkResult(null)}
+              onShare={(kit) => setSharingKit(kit)}
             />
           )}
         </div>
       </div>
+
+      {/* ── Share Brand Kit Modal ── */}
+      {sharingKit && (
+        <ShareModal
+          title="Share Brand Kit"
+          itemName={sharingKit.propertyName}
+          currentSharedWith={(sharingKit as any).sharedWith || []}
+          onClose={() => setSharingKit(null)}
+          onSave={async (sharedWith) => {
+            const updated = { ...sharingKit, sharedWith } as any;
+            try {
+              await brandKitService.save(updated);
+              updateBrandKit(updated);
+            } catch (err) {
+              console.error('Failed to update sharing:', err);
+            }
+            setSharingKit(null);
+          }}
+        />
+      )}
 
       {/* ── Bulk Import Confirmation Modal ── */}
       {pendingKits && (
@@ -417,7 +440,7 @@ function BulkImportConfirmDialog({
 
 // ---- Brand Kit List View ----
 function BrandKitList({
-  kits, activeKit, onSelect, onEdit, onDelete, onCreate, onBulkImport, bulkImporting, bulkResult, onDismissBulkResult,
+  kits, activeKit, onSelect, onEdit, onDelete, onCreate, onBulkImport, bulkImporting, bulkResult, onDismissBulkResult, onShare,
 }: {
   kits: BrandKit[];
   activeKit: BrandKit | null;
@@ -429,6 +452,7 @@ function BrandKitList({
   bulkImporting: boolean;
   bulkResult: { success: number; errors: string[] } | null;
   onDismissBulkResult: () => void;
+  onShare: (kit: BrandKit) => void;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const user = getAuthUser();
@@ -555,6 +579,9 @@ function BrandKitList({
                 </p>
               </div>
               <div className="flex gap-1">
+                <button onClick={() => onShare(kit)} className="p-1.5 rounded-md hover:bg-[#446472]/10 text-surface-400 hover:text-[#446472]" title="Share">
+                  <Share2 size={16} />
+                </button>
                 <button onClick={() => onEdit(kit)} className="p-1.5 rounded-md hover:bg-surface-100 text-surface-400 hover:text-primary-600" title="Edit">
                   <Edit3 size={16} />
                 </button>

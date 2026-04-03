@@ -1,5 +1,8 @@
+import { useState } from 'react';
 import { useEditorStore } from '@/store/useEditorStore';
-import { ArrowLeft, FolderOpen, Plus, Clock, Tag } from 'lucide-react';
+import { emailProjectService } from '@/services';
+import { ArrowLeft, FolderOpen, Plus, Clock, Tag, Share2 } from 'lucide-react';
+import { ShareModal } from '@/components/sharing/ShareModal';
 import type { EmailProject } from '@/types';
 
 const statusColors: Record<string, string> = {
@@ -17,6 +20,9 @@ export function ProjectsView() {
   const newProject = useEditorStore((s) => s.newProject);
   const propertyId = useEditorStore((s) => s.propertyId);
   const propertyName = useEditorStore((s) => s.propertyName);
+  const setProjects = useEditorStore((s) => s.setProjects);
+
+  const [sharingProject, setSharingProject] = useState<EmailProject | null>(null);
 
   const openProject = (project: EmailProject) => {
     setProject(project);
@@ -93,6 +99,13 @@ export function ProjectsView() {
                         ))}
                       </div>
                     )}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setSharingProject(project); }}
+                      className="p-1.5 rounded-md hover:bg-[#446472]/10 text-surface-400 hover:text-[#446472] transition-colors"
+                      title="Share project"
+                    >
+                      <Share2 size={16} />
+                    </button>
                   </div>
                 </div>
               ))}
@@ -100,6 +113,27 @@ export function ProjectsView() {
           )}
         </div>
       </div>
+
+      {/* Share Project Modal */}
+      {sharingProject && (
+        <ShareModal
+          title="Share Project"
+          itemName={sharingProject.name}
+          currentSharedWith={(sharingProject as any).sharedWith || []}
+          onClose={() => setSharingProject(null)}
+          onSave={async (sharedWith) => {
+            const updated = { ...sharingProject, sharedWith } as any;
+            try {
+              await emailProjectService.save(updated);
+              // Update in local store
+              setProjects(projects.map(p => p.id === updated.id ? updated : p));
+            } catch (err) {
+              console.error('Failed to update sharing:', err);
+            }
+            setSharingProject(null);
+          }}
+        />
+      )}
     </div>
   );
 }

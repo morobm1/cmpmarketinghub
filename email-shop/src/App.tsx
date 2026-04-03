@@ -52,12 +52,11 @@ export default function App() {
           assetLibraryService.getAll().catch(() => []),
         ]);
 
-        // Filter brand kits by user's assigned properties
+        // The API already filters brand kits by user's properties + shared access.
+        // No additional client-side filtering needed.
         const userProps = user?.properties || [];
         const isAdminUser = user?.role === 'admin' || userProps.includes('*');
-        const filteredKits = isAdminUser
-          ? apiKits
-          : apiKits.filter((kit) => userProps.includes(kit.propertyId));
+        const filteredKits = apiKits;
 
         setBrandKits(filteredKits);
 

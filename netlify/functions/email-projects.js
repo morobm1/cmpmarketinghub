@@ -52,11 +52,12 @@ export async function handler(event) {
       } else if (user.role === 'admin' || user.properties === '*') {
         // Admin sees all — no filter needed
       } else {
-        // User-scoped: show projects created by this user OR for their assigned properties
+        // User-scoped: show projects created by this user, for their assigned properties, or shared with them
         const allowed = Array.isArray(user.properties) ? user.properties : [];
         filter = { $or: [
           { createdBy: user.sub },
           ...(allowed.length > 0 ? [{ propertyId: { $in: allowed } }] : []),
+          { sharedWith: user.sub },
         ]};
       }
 

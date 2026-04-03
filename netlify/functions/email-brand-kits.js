@@ -53,11 +53,14 @@ export async function handler(event) {
         return json(doc);
       }
 
-      // List all for user's properties
+      // List all for user's properties + shared with this user
       let filter = {};
       if (user.role !== 'admin' && user.properties !== '*') {
         const allowed = Array.isArray(user.properties) ? user.properties : [];
-        filter = { propertyId: { $in: allowed } };
+        filter = { $or: [
+          ...(allowed.length > 0 ? [{ propertyId: { $in: allowed } }] : []),
+          { sharedWith: user.sub },
+        ]};
       }
       const docs = await col.find(filter).toArray();
       docs.forEach(d => { d.id = d.id || d._id.toString(); });
