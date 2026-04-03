@@ -2,8 +2,15 @@ import { useState, useRef } from 'react';
 import { useEditorStore } from '@/store/useEditorStore';
 import { brandKitService } from '@/services';
 import { getAuthUser } from '@/services/authContext';
-import { downloadBrandKitTemplate, parseExcelToBrandKits } from '@/services/bulkBrandKitService';
-import { ArrowLeft, Palette, Plus, Trash2, Edit3, Check, X, Copy, Loader2, ImageIcon, Eye, Download, Upload, FileSpreadsheet } from 'lucide-react';
+import {
+  downloadBrandKitTemplate,
+  parseExcelToPendingKits,
+  reassignPendingKit,
+  fetchProperties,
+  type PendingBrandKit,
+  type KnownProperty,
+} from '@/services/bulkBrandKitService';
+import { ArrowLeft, Palette, Plus, Trash2, Edit3, Check, X, Copy, Loader2, ImageIcon, Eye, Download, Upload, FileSpreadsheet, AlertTriangle, CheckCircle2, Search } from 'lucide-react';
 import type { BrandKit, BrandColor, BrandFont, ButtonStyle, ContentSnippet, Asset, AssetCategory } from '@/types';
 
 // Tag presets for image management
@@ -46,33 +53,62 @@ export function BrandKitManager() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [bulkImporting, setBulkImporting] = useState(false);
   const [bulkResult, setBulkResult] = useState<{ success: number; errors: string[] } | null>(null);
+  const [pendingKits, setPendingKits] = useState<PendingBrandKit[] | null>(null);
+  const [knownProperties, setKnownProperties] = useState<KnownProperty[]>([]);
 
-  const handleBulkImport = async (file: File) => {
+  // Step 1: Parse Excel → show confirmation dialog
+  const handleBulkImportFile = async (file: File) => {
     setBulkImporting(true);
     setBulkResult(null);
     try {
-      const kits = await parseExcelToBrandKits(file);
-      if (kits.length === 0) {
+      const props = await fetchProperties();
+      setKnownProperties(props);
+      const pending = await parseExcelToPendingKits(file, props);
+      if (pending.length === 0) {
         setBulkResult({ success: 0, errors: ['No valid brand kits found in the file.'] });
+        setBulkImporting(false);
         return;
       }
-      let success = 0;
-      const errors: string[] = [];
-      for (const kit of kits) {
-        try {
-          const saved = await brandKitService.save(kit);
-          addBrandKit(saved);
-          success++;
-        } catch (err) {
-          errors.push(`Failed to save "${kit.propertyName}": ${err instanceof Error ? err.message : String(err)}`);
-        }
-      }
-      setBulkResult({ success, errors });
+      setPendingKits(pending);
+      setBulkImporting(false);
     } catch (err) {
       setBulkResult({ success: 0, errors: [err instanceof Error ? err.message : 'Failed to parse file'] });
-    } finally {
       setBulkImporting(false);
     }
+  };
+
+  // Step 2: Admin confirms → save all kits
+  const handleConfirmImport = async () => {
+    if (!pendingKits) return;
+    setBulkImporting(true);
+    let success = 0;
+    const errors: string[] = [];
+    for (const pk of pendingKits) {
+      try {
+        const saved = await brandKitService.save(pk.brandKit);
+        addBrandKit(saved);
+        success++;
+      } catch (err) {
+        errors.push(`Failed to save "${pk.kitName}": ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+    setBulkResult({ success, errors });
+    setPendingKits(null);
+    setBulkImporting(false);
+  };
+
+  const handleCancelImport = () => {
+    setPendingKits(null);
+    setBulkImporting(false);
+  };
+
+  const handleReassignKit = (index: number, property: KnownProperty) => {
+    if (!pendingKits) return;
+    const updated = [...pendingKits];
+    const kit = updated[index];
+    if (!kit) return;
+    updated[index] = reassignPendingKit(kit, property);
+    setPendingKits(updated);
   };
 
   const handleCreate = () => {
@@ -161,12 +197,193 @@ export function BrandKitManager() {
               onEdit={handleEdit}
               onDelete={handleDelete}
               onCreate={handleCreate}
-              onBulkImport={handleBulkImport}
+              onBulkImport={handleBulkImportFile}
               bulkImporting={bulkImporting}
               bulkResult={bulkResult}
               onDismissBulkResult={() => setBulkResult(null)}
             />
           )}
+        </div>
+      </div>
+
+      {/* ── Bulk Import Confirmation Modal ── */}
+      {pendingKits && (
+        <BulkImportConfirmDialog
+          pendingKits={pendingKits}
+          knownProperties={knownProperties}
+          onReassign={handleReassignKit}
+          onConfirm={handleConfirmImport}
+          onCancel={handleCancelImport}
+          importing={bulkImporting}
+        />
+      )}
+    </div>
+  );
+}
+
+// ── Bulk Import Confirmation Dialog ──
+function BulkImportConfirmDialog({
+  pendingKits, knownProperties, onReassign, onConfirm, onCancel, importing,
+}: {
+  pendingKits: PendingBrandKit[];
+  knownProperties: KnownProperty[];
+  onReassign: (index: number, property: KnownProperty) => void;
+  onConfirm: () => void;
+  onCancel: () => void;
+  importing: boolean;
+}) {
+  const [searchTerms, setSearchTerms] = useState<Record<number, string>>({});
+  const [openDropdown, setOpenDropdown] = useState<number | null>(null);
+
+  const getFilteredProperties = (index: number) => {
+    const term = (searchTerms[index] || '').toLowerCase();
+    if (!term) return knownProperties;
+    return knownProperties.filter((p) => p.name.toLowerCase().includes(term));
+  };
+
+  const allMatched = pendingKits.every((pk) => pk.matchConfidence !== 'none');
+  const totalImages = pendingKits.reduce((sum, pk) =>
+    sum + pk.brandKit.logos.length + pk.brandKit.images.length + pk.brandKit.floorplans.length, 0);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col">
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-surface-200 flex items-center gap-3">
+          <FileSpreadsheet size={22} className="text-primary-600" />
+          <div>
+            <h2 className="text-lg font-bold text-surface-800">Confirm Brand Kit Import</h2>
+            <p className="text-sm text-surface-500">
+              {pendingKits.length} kit{pendingKits.length !== 1 ? 's' : ''} found
+              {totalImages > 0 && ` · ${totalImages} image${totalImages !== 1 ? 's' : ''}`}
+              {' — Review property matches below'}
+            </p>
+          </div>
+        </div>
+
+        {/* Kit list */}
+        <div className="flex-1 overflow-auto px-6 py-4 space-y-4">
+          {pendingKits.map((pk, idx) => (
+            <div key={idx} className={'rounded-xl border-2 p-4 transition-all ' + (
+              pk.matchConfidence === 'exact' ? 'border-emerald-200 bg-emerald-50/50' :
+              pk.matchConfidence === 'close' ? 'border-amber-200 bg-amber-50/50' :
+              'border-red-200 bg-red-50/50'
+            )}>
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-surface-800 truncate">{pk.kitName}</span>
+                    {pk.matchConfidence === 'exact' && <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />}
+                    {pk.matchConfidence === 'close' && <AlertTriangle size={16} className="text-amber-500 shrink-0" />}
+                    {pk.matchConfidence === 'none' && <AlertTriangle size={16} className="text-red-500 shrink-0" />}
+                  </div>
+
+                  {/* Stats row */}
+                  <div className="flex flex-wrap gap-2 text-xs text-surface-500 mb-2">
+                    {pk.brandKit.logos.length > 0 && <span className="px-2 py-0.5 bg-white rounded-full border border-surface-200">{pk.brandKit.logos.length} logos</span>}
+                    {pk.brandKit.images.length > 0 && <span className="px-2 py-0.5 bg-white rounded-full border border-surface-200">{pk.brandKit.images.length} photos</span>}
+                    {pk.brandKit.floorplans.length > 0 && <span className="px-2 py-0.5 bg-white rounded-full border border-surface-200">{pk.brandKit.floorplans.length} floorplans</span>}
+                    {pk.brandKit.colors.length > 0 && <span className="px-2 py-0.5 bg-white rounded-full border border-surface-200">{pk.brandKit.colors.length} colors</span>}
+                    {pk.brandKit.fonts.length > 0 && <span className="px-2 py-0.5 bg-white rounded-full border border-surface-200">{pk.brandKit.fonts.length} fonts</span>}
+                    {pk.brandKit.buttonStyles.length > 0 && <span className="px-2 py-0.5 bg-white rounded-full border border-surface-200">{pk.brandKit.buttonStyles.length} buttons</span>}
+                    {pk.brandKit.snippets.length > 0 && <span className="px-2 py-0.5 bg-white rounded-full border border-surface-200">{pk.brandKit.snippets.length} snippets</span>}
+                  </div>
+
+                  {/* Property match */}
+                  <div className="text-sm">
+                    <span className="text-surface-500">Excel name: </span>
+                    <span className="font-medium text-surface-700">"{pk.propertyNameFromExcel}"</span>
+                    <span className="text-surface-400 mx-1.5">→</span>
+                    {pk.matchConfidence === 'exact' && (
+                      <span className="text-emerald-700 font-medium">Matched to "{pk.matchedPropertyName}"</span>
+                    )}
+                    {pk.matchConfidence === 'close' && (
+                      <span className="text-amber-700 font-medium">Best match: "{pk.matchedPropertyName}" (confirm or change below)</span>
+                    )}
+                    {pk.matchConfidence === 'none' && (
+                      <span className="text-red-700 font-medium">No match found — select a property below</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Property selector for close/none matches */}
+              {pk.matchConfidence !== 'exact' && (
+                <div className="mt-3 relative">
+                  <div className="flex items-center gap-2">
+                    <Search size={14} className="text-surface-400 shrink-0" />
+                    <input
+                      type="text"
+                      value={searchTerms[idx] || ''}
+                      onChange={(e) => {
+                        setSearchTerms({ ...searchTerms, [idx]: e.target.value });
+                        setOpenDropdown(idx);
+                      }}
+                      onFocus={() => setOpenDropdown(idx)}
+                      placeholder="Search properties..."
+                      className="flex-1 px-3 py-1.5 text-sm border border-surface-300 rounded-lg focus:border-primary-400 focus:outline-none"
+                    />
+                    {pk.matchConfidence === 'close' && (
+                      <button
+                        onClick={() => {
+                          // Accept the close match as-is
+                          const matched = knownProperties.find((p) => p.id === pk.matchedPropertyId);
+                          if (matched) onReassign(idx, matched);
+                        }}
+                        className="px-3 py-1.5 text-xs bg-amber-100 text-amber-800 rounded-lg hover:bg-amber-200 font-medium whitespace-nowrap"
+                      >
+                        Accept "{pk.matchedPropertyName}"
+                      </button>
+                    )}
+                  </div>
+                  {openDropdown === idx && (
+                    <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white border border-surface-200 rounded-lg shadow-lg max-h-40 overflow-auto">
+                      {getFilteredProperties(idx).map((p) => (
+                        <button
+                          key={p.id}
+                          onClick={() => {
+                            onReassign(idx, p);
+                            setOpenDropdown(null);
+                            setSearchTerms({ ...searchTerms, [idx]: '' });
+                          }}
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-primary-50 transition-colors"
+                        >
+                          {p.name}
+                        </button>
+                      ))}
+                      {getFilteredProperties(idx).length === 0 && (
+                        <div className="px-3 py-2 text-sm text-surface-400">No properties found</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-surface-200 flex items-center justify-between">
+          <p className="text-xs text-surface-400">
+            Import is additive — existing brand kits will not be affected.
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={onCancel}
+              disabled={importing}
+              className="px-4 py-2 text-sm text-surface-600 bg-surface-100 rounded-lg hover:bg-surface-200 font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              disabled={importing || !allMatched}
+              className="px-5 py-2 text-sm text-white bg-emerald-600 rounded-lg hover:bg-emerald-500 font-medium disabled:opacity-50 flex items-center gap-2"
+            >
+              {importing ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+              {importing ? 'Importing...' : `Import ${pendingKits.length} Kit${pendingKits.length !== 1 ? 's' : ''}`}
+            </button>
+          </div>
         </div>
       </div>
     </div>
