@@ -1,8 +1,9 @@
 import { useEditorStore } from '@/store/useEditorStore';
 import { getBlockDefinition } from '@/blocks/registry';
-import { X, ChevronDown, ImageIcon, Plus, Trash2, Link2 } from 'lucide-react';
+import { X, ChevronDown, ImageIcon, Plus, Trash2, Link2, Sparkles, Search } from 'lucide-react';
 import { useState } from 'react';
 import type { EmailBlock, EmailBlockStyle, Asset, BrandLink } from '@/types';
+import { ctaLibrary, getEmailButtonCTAs, getTop25, searchCTAs, type CTACategory } from '@/data/ctaLibrary';
 import { amenityIcons, getIconsByCategory, recolorIcon } from '@/blocks/amenityIcons';
 import { socialPlatforms, getSocialPlatform } from '@/blocks/socialIcons';
 
@@ -114,7 +115,10 @@ function ContentProperties({ block, data, update, brandColors, brandLinks }: { b
     case 'button':
       return (
         <PropertySection title="Button">
-          <TextField label="Label" value={data.label || ''} onChange={(v) => update('label', v)} />
+          <div className="flex items-end gap-2">
+            <div className="flex-1"><TextField label="Label" value={data.label || ''} onChange={(v) => update('label', v)} /></div>
+            <CTAPickerButton onSelect={(cta) => update('label', cta)} />
+          </div>
           <UrlFieldWithLinks label="URL" value={data.url || ''} onChange={(v) => update('url', v)} brandLinks={brandLinks} />
           <ColorField label="Background" value={data.backgroundColor || ''} onChange={(v) => update('backgroundColor', v)} brandColors={brandColors} />
           <ColorField label="Text Color" value={data.textColor || ''} onChange={(v) => update('textColor', v)} brandColors={brandColors} />
@@ -220,7 +224,7 @@ function ContentProperties({ block, data, update, brandColors, brandLinks }: { b
           <NumberField label="Image Width %" value={data.imageWidth || 40} onChange={(v) => update('imageWidth', v)} min={20} max={80} />
           <TextField label="Heading" value={data.heading || ''} onChange={(v) => update('heading', v)} />
           <TextAreaField label="Body" value={data.body || ''} onChange={(v) => update('body', v)} />
-          <TextField label="Button Label" value={data.buttonLabel || ''} onChange={(v) => update('buttonLabel', v)} />
+          <div className="flex items-end gap-2"><div className="flex-1"><TextField label="Button Label" value={data.buttonLabel || ''} onChange={(v) => update('buttonLabel', v)} /></div><CTAPickerButton onSelect={(cta) => update('buttonLabel', cta)} /></div>
           <UrlFieldWithLinks label="Button URL" value={data.buttonUrl || ''} onChange={(v) => update('buttonUrl', v)} brandLinks={brandLinks} />
         </PropertySection>
       );
@@ -233,7 +237,7 @@ function ContentProperties({ block, data, update, brandColors, brandLinks }: { b
           <ColorField label="Background" value={data.backgroundColor || ''} onChange={(v) => update('backgroundColor', v)} brandColors={brandColors} />
           <ColorField label="Text Color" value={data.textColor || ''} onChange={(v) => update('textColor', v)} brandColors={brandColors} />
           <TextField label="BG Image URL" value={data.backgroundImageUrl || ''} onChange={(v) => update('backgroundImageUrl', v)} />
-          <TextField label="Button Label" value={data.buttonLabel || ''} onChange={(v) => update('buttonLabel', v)} />
+          <div className="flex items-end gap-2"><div className="flex-1"><TextField label="Button Label" value={data.buttonLabel || ''} onChange={(v) => update('buttonLabel', v)} /></div><CTAPickerButton onSelect={(cta) => update('buttonLabel', cta)} /></div>
           <UrlFieldWithLinks label="Button URL" value={data.buttonUrl || ''} onChange={(v) => update('buttonUrl', v)} brandLinks={brandLinks} />
         </PropertySection>
       );
@@ -282,7 +286,7 @@ function ContentProperties({ block, data, update, brandColors, brandLinks }: { b
           <TextField label="Beds/Baths" value={data.bedsBaths || ''} onChange={(v) => update('bedsBaths', v)} />
           <TextField label="Sq Ft" value={data.sqft || ''} onChange={(v) => update('sqft', v)} />
           <TextField label="Price" value={data.price || ''} onChange={(v) => update('price', v)} />
-          <TextField label="Button Label" value={data.buttonLabel || ''} onChange={(v) => update('buttonLabel', v)} />
+          <div className="flex items-end gap-2"><div className="flex-1"><TextField label="Button Label" value={data.buttonLabel || ''} onChange={(v) => update('buttonLabel', v)} /></div><CTAPickerButton onSelect={(cta) => update('buttonLabel', cta)} /></div>
           <UrlFieldWithLinks label="Button URL" value={data.buttonUrl || ''} onChange={(v) => update('buttonUrl', v)} brandLinks={brandLinks} />
         </PropertySection>
       );
@@ -332,7 +336,7 @@ function ContentProperties({ block, data, update, brandColors, brandLinks }: { b
           <TextField label="Thumbnail Alt" value={data.thumbnailAlt || ''} onChange={(v) => update('thumbnailAlt', v)} />
           <TextField label="Heading" value={data.heading || ''} onChange={(v) => update('heading', v)} />
           <TextAreaField label="Description" value={data.description || ''} onChange={(v) => update('description', v)} />
-          <TextField label="Button Label" value={data.buttonLabel || ''} onChange={(v) => update('buttonLabel', v)} />
+          <div className="flex items-end gap-2"><div className="flex-1"><TextField label="Button Label" value={data.buttonLabel || ''} onChange={(v) => update('buttonLabel', v)} /></div><CTAPickerButton onSelect={(cta) => update('buttonLabel', cta)} /></div>
           <ColorField label="Button Color" value={data.buttonColor || '#2563eb'} onChange={(v) => update('buttonColor', v)} brandColors={brandColors} />
           <NumberField label="Thumbnail Height" value={data.thumbnailHeight || 200} onChange={(v) => update('thumbnailHeight', v)} min={100} max={400} />
         </PropertySection>
@@ -447,6 +451,93 @@ function UrlFieldWithLinks({ label, value, onChange, brandLinks }: { label: stri
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function CTAPickerButton({ onSelect }: { onSelect: (cta: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [selectedCat, setSelectedCat] = useState<string | null>(null);
+
+  const top25 = getTop25();
+  const emailBtnCTAs = getEmailButtonCTAs();
+  const searchResults = search.length >= 2 ? searchCTAs(search) : [];
+
+  const activeCat = selectedCat ? ctaLibrary.categories.find((c) => c.id === selectedCat) : null;
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-violet-600 bg-violet-50 rounded-md hover:bg-violet-100 transition-colors"
+        title="Browse CTA suggestions"
+      >
+        <Sparkles size={12} />
+        CTA Library
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 w-72 bg-white border border-surface-200 rounded-xl shadow-2xl z-40 max-h-80 flex flex-col overflow-hidden">
+          <div className="px-3 py-2 border-b border-surface-100">
+            <div className="relative">
+              <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-surface-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setSelectedCat(null); }}
+                placeholder="Search CTAs..."
+                className="w-full pl-7 pr-2 py-1.5 text-xs border border-surface-200 rounded-md focus:outline-none focus:ring-1 focus:ring-violet-400"
+                autoFocus
+              />
+            </div>
+          </div>
+          <div className="flex-1 overflow-auto">
+            {search.length >= 2 ? (
+              <div className="p-2 space-y-0.5">
+                {searchResults.length === 0 && <p className="text-xs text-surface-400 px-2 py-3 text-center">No CTAs match "{search}"</p>}
+                {searchResults.slice(0, 20).map((r, i) => (
+                  <button key={i} onClick={() => { onSelect(r.cta); setOpen(false); setSearch(''); }} className="w-full text-left px-2.5 py-1.5 text-xs rounded-md hover:bg-violet-50 transition-colors">
+                    <span className="text-surface-800">{r.cta}</span>
+                    <span className="ml-1.5 text-[10px] text-surface-400">{r.category.name}</span>
+                  </button>
+                ))}
+              </div>
+            ) : selectedCat && activeCat ? (
+              <div>
+                <button onClick={() => setSelectedCat(null)} className="w-full text-left px-3 py-2 text-xs text-violet-600 hover:bg-violet-50 border-b border-surface-100 font-medium">← Back to categories</button>
+                <p className="px-3 py-1.5 text-[10px] text-surface-400">{activeCat.reason}</p>
+                <div className="p-2 space-y-0.5">
+                  {activeCat.ctas.map((cta, i) => (
+                    <button key={i} onClick={() => { onSelect(cta); setOpen(false); }} className="w-full text-left px-2.5 py-1.5 text-xs text-surface-800 rounded-md hover:bg-violet-50 transition-colors">{cta}</button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div className="px-3 py-2 border-b border-surface-100">
+                  <div className="text-[10px] font-semibold text-surface-400 uppercase mb-1.5">Top Email CTAs</div>
+                  <div className="flex flex-wrap gap-1">
+                    {emailBtnCTAs.slice(0, 8).map((cta, i) => (
+                      <button key={i} onClick={() => { onSelect(cta); setOpen(false); }} className="px-2 py-1 text-[11px] bg-violet-50 text-violet-700 rounded-full hover:bg-violet-100 transition-colors">{cta}</button>
+                    ))}
+                  </div>
+                </div>
+                <div className="p-2">
+                  <div className="text-[10px] font-semibold text-surface-400 uppercase px-1 mb-1">Browse by Category</div>
+                  <div className="space-y-0.5">
+                    {ctaLibrary.categories.map((cat) => (
+                      <button key={cat.id} onClick={() => setSelectedCat(cat.id)} className="w-full text-left px-2.5 py-1.5 text-xs text-surface-700 rounded-md hover:bg-surface-50 transition-colors flex items-center justify-between">
+                        <span>{cat.name}</span>
+                        <span className="text-[10px] text-surface-400">{cat.ctas.length}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
