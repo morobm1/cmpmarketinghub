@@ -155,7 +155,7 @@ function renderImageText(data: ImageTextBlockData): string {
   const textContent = [
     data.heading ? `<h2 style="margin: 0 0 8px; ${ff()} font-size: 20px; font-weight: 700; color: ${data.style.textColor || '#333333'};">${data.heading}</h2>` : '',
     `<p style="margin: 0 0 12px; ${ff()} font-size: 15px; line-height: 1.5; color: ${data.style.textColor || '#555555'};">${data.body}</p>`,
-    data.buttonLabel ? `<a href="${data.buttonUrl || '#'}" target="_blank" style="display: inline-block; ${ff()} background-color: #2563eb; color: #ffffff; padding: 10px 24px; border-radius: 4px; text-decoration: none; font-size: 14px; line-height: 14px; font-weight: 600;">${data.buttonLabel}</a>` : '',
+    data.buttonLabel ? `<a href="${data.buttonUrl || '#'}" target="_blank" style="display: inline-block; ${ff()} background-color: ${data.buttonStyle?.backgroundColor || '#2563eb'}; color: ${data.buttonStyle?.textColor || '#ffffff'}; padding: 10px 24px; border-radius: ${data.buttonStyle?.borderRadius ?? 4}px; text-decoration: none; font-size: 14px; line-height: 14px; font-weight: 600; mso-padding-alt: 0;">${data.buttonLabel}</a>` : '',
   ].join('\n');
   const textCell = `<td width="${textPercent}%" valign="top" style="${ff()} padding: 8px;">${textContent}</td>`;
   const cells = data.imagePosition === 'left' ? imgCell + textCell : textCell + imgCell;
@@ -214,18 +214,21 @@ function _autoMatchIcon(label: string): string | undefined {
 }
 
 function renderFloorplanSpotlight(data: FloorplanSpotlightBlockData): string {
+  const btnBg = data.buttonStyle?.backgroundColor || '#2563eb';
+  const btnText = data.buttonStyle?.textColor || '#ffffff';
+  const btnRadius = data.buttonStyle?.borderRadius ?? 4;
   const content = `<h2 style="margin: 0 0 16px; ${ff()} text-align: center; font-size: 22px; color: ${data.style.textColor || '#333'};">${data.heading}</h2>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
 <tr>
-  <td width="50%" valign="top" style="${ff()} padding: 8px;">
-    <img src="${data.floorplanImageUrl}" alt="${data.floorplanImageAlt}" width="100%" style="display: block; max-width: 100%; height: auto; border: 0;" />
+  <td width="45%" valign="middle" style="${ff()} padding: 8px;">
+    ${data.floorplanImageUrl ? `<img src="${data.floorplanImageUrl}" alt="${data.floorplanImageAlt}" width="260" style="display: block; width: 100%; max-width: 260px; height: auto; border: 0; margin: 0 auto;" />` : ''}
   </td>
-  <td width="50%" valign="top" style="${ff()} padding: 16px;">
-    <h3 style="margin: 0 0 8px; ${ff()} font-size: 18px;">${data.unitName}</h3>
-    <p style="margin: 0 0 4px; ${ff()} font-size: 14px; color: #666;">${data.bedsBaths}</p>
-    <p style="margin: 0 0 4px; ${ff()} font-size: 14px; color: #666;">${data.sqft} sq ft</p>
-    <p style="margin: 0 0 16px; ${ff()} font-size: 18px; font-weight: 700; color: #333;">${data.price}</p>
-    <a href="${data.buttonUrl}" target="_blank" style="display: inline-block; ${ff()} background-color: #2563eb; color: #fff; padding: 10px 24px; border-radius: 4px; text-decoration: none; font-size: 14px; line-height: 14px; font-weight: 600;">${data.buttonLabel}</a>
+  <td width="55%" valign="middle" style="${ff()} padding: 16px;">
+    <h3 style="margin: 0 0 8px; ${ff()} font-size: 18px; color: ${data.style.textColor || '#333'};">${data.unitName}</h3>
+    <p style="margin: 0 0 4px; ${ff()} font-size: 14px; line-height: 1.4; color: #666;">${data.bedsBaths}</p>
+    <p style="margin: 0 0 4px; ${ff()} font-size: 14px; line-height: 1.4; color: #666;">${data.sqft} sq ft</p>
+    <p style="margin: 0 0 16px; ${ff()} font-size: 18px; font-weight: 700; color: ${data.style.textColor || '#333'};">${data.price}</p>
+    <a href="${data.buttonUrl}" target="_blank" style="display: inline-block; ${ff()} background-color: ${btnBg}; color: ${btnText}; padding: 10px 24px; border-radius: ${btnRadius}px; text-decoration: none; font-size: 14px; line-height: 14px; font-weight: 600; mso-padding-alt: 0;">${data.buttonLabel}</a>
   </td>
 </tr>
 </table>`;
@@ -462,10 +465,19 @@ body, table, td, p, a, span {font-family: ${fontFamily}, sans-serif !important;}
 <![endif]-->
 <style type="text/css">
   body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
-  table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
-  img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
-  body { margin: 0; padding: 0; width: 100% !important; height: 100% !important; }
+  table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-collapse: collapse; }
+  img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; display: block; }
+  body { margin: 0; padding: 0; width: 100% !important; height: 100% !important; -webkit-font-smoothing: antialiased; }
+  p { margin: 0; padding: 0; }
   a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !important; font-size: inherit !important; font-family: inherit !important; font-weight: inherit !important; line-height: inherit !important; }
+  #MessageViewBody a { color: inherit; text-decoration: none; }
+  .ExternalClass { width: 100%; }
+  .ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font, .ExternalClass td, .ExternalClass div { line-height: 100%; }
+  @media only screen and (max-width: 620px) {
+    table.email-container { width: 100% !important; }
+    td.stack-column { display: block !important; width: 100% !important; }
+    img.fluid { width: 100% !important; max-width: 100% !important; height: auto !important; }
+  }
 </style>
 </head>
 <body style="margin: 0; padding: 0; background-color: ${bodyBackgroundColor}; ${ff()} color: ${defaultTextColor};">

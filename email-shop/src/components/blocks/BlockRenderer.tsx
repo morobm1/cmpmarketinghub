@@ -305,23 +305,28 @@ function AmenitiesPreview({ data, style }: { data: AmenitiesBlockData; style: Re
 }
 
 function FloorplanPreview({ data, style }: { data: FloorplanSpotlightBlockData; style: React.CSSProperties }) {
+  const btnBg = data.buttonStyle?.backgroundColor || '#2563eb';
+  const btnText = data.buttonStyle?.textColor || '#ffffff';
   return (
     <div style={style}>
       <h3 className="text-xl font-bold text-center mb-4">{data.heading}</h3>
-      <div className="flex gap-4">
-        <div className="w-1/2">
+      <div className="flex gap-4 items-center">
+        <div className="w-5/12 shrink-0">
           {data.floorplanImageUrl ? (
-            <img src={data.floorplanImageUrl} alt={data.floorplanImageAlt} className="w-full rounded" />
+            <img src={data.floorplanImageUrl} alt={data.floorplanImageAlt} className="w-full h-auto rounded object-contain" style={{ maxHeight: 220 }} />
           ) : (
             <ImagePlaceholder alt="Floor plan" className="h-40 rounded" />
           )}
         </div>
-        <div className="w-1/2">
+        <div className="flex-1">
           <h4 className="font-bold text-lg">{data.unitName}</h4>
           <p className="text-sm text-surface-500">{data.bedsBaths}</p>
           <p className="text-sm text-surface-500">{data.sqft} sq ft</p>
           <p className="text-lg font-bold mt-2">{data.price}</p>
-          <span className="inline-block mt-3 px-4 py-2 bg-primary-600 text-white text-sm rounded font-medium">
+          <span
+            className="inline-block mt-3 px-4 py-2 text-sm rounded font-medium"
+            style={{ backgroundColor: btnBg, color: btnText }}
+          >
             {data.buttonLabel}
           </span>
         </div>

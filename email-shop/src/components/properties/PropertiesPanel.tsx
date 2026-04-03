@@ -226,6 +226,8 @@ function ContentProperties({ block, data, update, brandColors, brandLinks }: { b
           <TextAreaField label="Body" value={data.body || ''} onChange={(v) => update('body', v)} />
           <div className="flex items-end gap-2"><div className="flex-1"><TextField label="Button Label" value={data.buttonLabel || ''} onChange={(v) => update('buttonLabel', v)} /></div><CTAPickerButton onSelect={(cta) => update('buttonLabel', cta)} /></div>
           <UrlFieldWithLinks label="Button URL" value={data.buttonUrl || ''} onChange={(v) => update('buttonUrl', v)} brandLinks={brandLinks} />
+          <ColorField label="Button BG" value={data.buttonStyle?.backgroundColor || '#2563eb'} onChange={(v) => update('buttonStyle', { ...data.buttonStyle, backgroundColor: v })} brandColors={brandColors} />
+          <ColorField label="Button Text" value={data.buttonStyle?.textColor || '#ffffff'} onChange={(v) => update('buttonStyle', { ...data.buttonStyle, textColor: v })} brandColors={brandColors} />
         </PropertySection>
       );
 
@@ -288,6 +290,8 @@ function ContentProperties({ block, data, update, brandColors, brandLinks }: { b
           <TextField label="Price" value={data.price || ''} onChange={(v) => update('price', v)} />
           <div className="flex items-end gap-2"><div className="flex-1"><TextField label="Button Label" value={data.buttonLabel || ''} onChange={(v) => update('buttonLabel', v)} /></div><CTAPickerButton onSelect={(cta) => update('buttonLabel', cta)} /></div>
           <UrlFieldWithLinks label="Button URL" value={data.buttonUrl || ''} onChange={(v) => update('buttonUrl', v)} brandLinks={brandLinks} />
+          <ColorField label="Button BG" value={data.buttonStyle?.backgroundColor || '#2563eb'} onChange={(v) => update('buttonStyle', { ...data.buttonStyle, backgroundColor: v })} brandColors={brandColors} />
+          <ColorField label="Button Text" value={data.buttonStyle?.textColor || '#ffffff'} onChange={(v) => update('buttonStyle', { ...data.buttonStyle, textColor: v })} brandColors={brandColors} />
         </PropertySection>
       );
 
