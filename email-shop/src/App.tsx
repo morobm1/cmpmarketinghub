@@ -103,7 +103,7 @@ export default function App() {
   }, [setBrandKits, setActiveBrandKit, setTemplates, setProjects, setAssets]);
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-surface-100 flex flex-col">
+    <div className="h-full w-full overflow-hidden bg-surface-100 flex flex-col">
       {currentView === 'builder' && <EditorLayout />}
       {currentView === 'brand-kit' && <BrandKitManager />}
       {currentView === 'assets' && <AssetLibraryView />}
