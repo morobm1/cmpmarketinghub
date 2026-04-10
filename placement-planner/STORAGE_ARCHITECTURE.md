@@ -47,7 +47,18 @@ a warning banner and operates in offline/read-only-cache mode.
 ## Multi-User Synchronization
 
 - All users share the **same MongoDB document** — no user-scoped namespaces
-- Last-write-wins: the most recent `persistProject()` call overwrites the shared doc
+- **Optimistic concurrency control** via `_rev` counter prevents stale overwrites:
+  - Every save increments `_rev` in MongoDB
+  - Clients track the `_rev` they last loaded/saved
+  - On save, the client sends its `_rev`; the server **rejects** the write with
+    `409 Conflict` if the server `_rev` has advanced (another user saved)
+  - On conflict, the client **fetches the latest server data and merges** it with
+    local changes (union of residents, bank entries, scholarships, etc.)
+  - After merging, the client re-saves with the updated `_rev`
+- **Background sync polling** (every 30 seconds + on tab visibility change):
+  - Client GETs the API and compares `_rev` with its local `_rev`
+  - If the server is ahead, the client merges server data into local state
+  - Users see a notification: "Another user saved changes — merged automatically"
 - `updatedAt` and `updatedBy` fields track who last modified the data
 - `localStorage` is a per-browser cache only; it never overrides API data
 - If the API is unreachable, a warning banner is shown and edits are blocked
@@ -79,6 +90,49 @@ being saved to the shared backend.
 4. **Added `updatedAt` display**: the last-saved timestamp is shown so users can
    verify data freshness
 5. **Added retry logic**: failed API persists are retried up to 2 times
+
+---
+
+## Audit: "Stale Cache Overwrites Other User's Data" (Fixed 2026-04-10)
+
+### Problem
+User A adds residents and saves. User B had the planner open with OLD data (loaded
+before User A's changes). When User B makes any edit, `persistProject()` blindly
+overwrites the API with User B's stale data, wiping User A's residents.
+
+This is the classic **last-write-wins race condition**: the system had no mechanism
+to detect that another user had modified the shared document since User B loaded it.
+
+### Root Cause
+The POST `/api/placement-planner` endpoint accepted any save unconditionally —
+it had no revision tracking or conflict detection. Whichever client called POST
+last would overwrite the entire shared document, regardless of whether it had
+seen the latest version.
+
+### Fix Applied
+1. **Server-side optimistic concurrency control** (`_rev` counter):
+   - MongoDB document now includes a `_rev` field that increments on every save
+   - POST endpoint requires the client to send its known `_rev`
+   - If the server `_rev` is ahead (another user saved), the POST returns **409 Conflict**
+     with the current server data so the client can merge
+   - Legacy clients without `_rev` still work (blind overwrite, but `_rev` is initialized)
+
+2. **Client-side conflict detection and merge**:
+   - Client tracks `_serverRev` from the last load/save
+   - On 409, `_handleSaveConflict()` merges server data with local changes:
+     - Inventory: uses whichever is larger (more complete import)
+     - Residents: union by unit key (both server and local placements preserved)
+     - Waiting bank / scholarships: union by `_id` or name (deduplicated)
+     - Scholarship reserved units: union (server base, local additions preserved)
+   - After merging, the client re-saves with the updated `_rev`
+
+3. **Background sync polling** (every 30 seconds + tab visibility):
+   - Client periodically checks if `_rev` has advanced on the server
+   - If another user saved, the client auto-merges without waiting for a save attempt
+   - User sees a notification: "Another user saved changes — merged automatically"
+
+4. **User notifications**: merge events are shown as warning toasts so users
+   know when their data was combined with another user's changes
 
 ---
 

@@ -96,6 +96,14 @@ var _lastUpdatedBy = null;
 var _persistFailCount = 0;
 var _MAX_PERSIST_RETRIES = 2;
 
+/** Revision counter for optimistic concurrency control.
+ *  Tracks the _rev from the server so we can detect stale overwrites.
+ *  null = never loaded from server (legacy/first-time) */
+var _serverRev = null;
+
+/** Flag: true while a conflict-resolution reload is in progress */
+var _conflictReloading = false;
+
 /**
  * Build a serializable project object from current AppState.
  */
@@ -159,24 +167,51 @@ function persistProject() {
 
 /**
  * Send current project data to the API.
+ * Uses optimistic concurrency control: sends _rev so the server can
+ * reject stale writes (409 Conflict). On conflict, fetches the latest
+ * server data and merges it with local changes instead of overwriting.
+ *
  * Shows a user-visible notification on failure and retries up to
  * _MAX_PERSIST_RETRIES times before giving up.
  */
 function _persistProjectToApi() {
+  if (_conflictReloading) return; // Don't save while resolving a conflict
+
   var data = buildProjectData();
+  var payload = { project: data };
+
+  // Send _rev for optimistic concurrency control
+  if (_serverRev !== null) {
+    payload._rev = _serverRev;
+  }
+
   fetch(API_BASE, {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ project: data }),
+    body: JSON.stringify(payload),
   }).then(function (res) {
+    if (res.status === 409) {
+      // Conflict: another user saved while we had stale data
+      return res.json().then(function (conflict) {
+        _handleSaveConflict(conflict);
+      });
+    }
     if (!res.ok) {
       throw new Error('HTTP ' + res.status);
     }
-    _persistFailCount = 0;
-    _setApiConnected(true);
-    _lastUpdatedAt = new Date().toISOString();
-    _renderSyncStatus();
+    return res.json().then(function (json) {
+      _persistFailCount = 0;
+      _setApiConnected(true);
+      _lastUpdatedAt = new Date().toISOString();
+
+      // Update our _rev to the new server revision
+      if (typeof json._rev === 'number') {
+        _serverRev = json._rev;
+      }
+
+      _renderSyncStatus();
+    });
   }).catch(function (err) {
     console.warn('API persist error:', err);
     _persistFailCount++;
@@ -197,6 +232,141 @@ function _persistProjectToApi() {
       _persistFailCount = 0; // Reset for next save attempt
     }
   });
+}
+
+/**
+ * Handle a 409 Conflict from the server. The server returns the current
+ * server-side project data so we can merge instead of blindly overwriting.
+ *
+ * Strategy: Fetch the latest server data and merge it with local changes.
+ * - Inventory: use whichever is larger (more units = more complete)
+ * - Residents: union by unit key (server wins on duplicates, local adds preserved)
+ * - Waiting bank: union by _id or name (deduplicated)
+ * - Scholarships: union by _id or name (deduplicated)
+ * - Scholarship reserved units: union (server wins on same unit key)
+ *
+ * After merging, re-persist with the fresh _rev from the server.
+ */
+function _handleSaveConflict(conflict) {
+  console.warn('Save conflict detected — merging with server data from ' +
+    (conflict.updatedBy || 'unknown') + ' at ' + (conflict.updatedAt || '?'));
+
+  _conflictReloading = true;
+
+  // Update our _rev to match the server's current revision
+  _serverRev = (typeof conflict.serverRev === 'number') ? conflict.serverRev : null;
+  _lastUpdatedAt = conflict.updatedAt || null;
+  _lastUpdatedBy = conflict.updatedBy || null;
+
+  var serverProject = conflict.project;
+  if (!serverProject || typeof serverProject !== 'object') {
+    // No valid server data — just re-persist with updated _rev
+    _conflictReloading = false;
+    showNotification('Sync conflict detected — retrying save...', 'warning');
+    _persistProjectToApi();
+    return;
+  }
+
+  // Build arrays from current local state for merging
+  var localData = buildProjectData();
+
+  // --- MERGE INVENTORY ---
+  // Use whichever inventory is larger (more complete import)
+  var mergedInventory = localData.inventory || [];
+  var serverInventory = serverProject.inventory || [];
+  if (serverInventory.length > mergedInventory.length) {
+    mergedInventory = serverInventory;
+  }
+
+  // --- MERGE RESIDENTS ---
+  // Union: server entries as base, overlay with local entries (local additions preserved)
+  var mergedResidents = new Map();
+  // First add all server residents
+  (serverProject.residents || []).forEach(function (r) {
+    var key = (r.Unit_Assigned || '').toUpperCase();
+    if (key) mergedResidents.set(key, r);
+  });
+  // Then add local residents (new placements from this session are preserved)
+  (localData.residents || []).forEach(function (r) {
+    var key = (r.Unit_Assigned || '').toUpperCase();
+    if (key) mergedResidents.set(key, r);
+  });
+  var mergedResidentsArr = [];
+  mergedResidents.forEach(function (r) { mergedResidentsArr.push(r); });
+
+  // --- MERGE WAITING BANK ---
+  var mergedBank = _mergeArrayByKey(
+    serverProject.waitingBank || [],
+    localData.waitingBank || [],
+    function (item) { return item._id || item.name || JSON.stringify(item); }
+  );
+
+  // --- MERGE UNASSIGNED SCHOLARSHIPS ---
+  var mergedScholarships = _mergeArrayByKey(
+    serverProject.unassignedScholarships || [],
+    localData.unassignedScholarships || [],
+    function (item) { return item._id || item.name || JSON.stringify(item); }
+  );
+
+  // --- MERGE SCHOLARSHIP RESERVED UNITS ---
+  var mergedReserved = new Map();
+  (serverProject.scholarshipReservedUnits || []).forEach(function (entry) {
+    if (entry.unitKey && entry.scholarship) {
+      mergedReserved.set(entry.unitKey.toUpperCase(), entry.scholarship);
+    }
+  });
+  (localData.scholarshipReservedUnits || []).forEach(function (entry) {
+    if (entry.unitKey && entry.scholarship) {
+      mergedReserved.set(entry.unitKey.toUpperCase(), entry.scholarship);
+    }
+  });
+
+  // Apply merged data to AppState
+  AppState.inventory = buildMasterInventory(mergedInventory);
+  AppState.residents = new Map();
+  mergedResidentsArr.forEach(function (r) {
+    var key = (r.Unit_Assigned || '').toUpperCase();
+    if (key) AppState.residents.set(key, r);
+  });
+  AppState.waitingBank = mergedBank;
+  AppState.unassignedScholarships = mergedScholarships;
+  AppState.scholarshipReservedUnits = mergedReserved;
+
+  // Update localStorage cache
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(buildProjectData()));
+  } catch (e) { /* ignore */ }
+
+  // Refresh all UI
+  if (typeof refreshAllAfterImport === 'function') {
+    refreshAllAfterImport();
+  }
+
+  _conflictReloading = false;
+
+  // Show a user-friendly notification
+  showNotification(
+    'Another user (' + (conflict.updatedBy || 'unknown') + ') saved changes while you were editing. ' +
+    'Your changes have been merged with theirs automatically.',
+    'warning'
+  );
+
+  // Re-persist the merged result with the current server _rev
+  _persistProjectToApi();
+}
+
+/**
+ * Merge two arrays, deduplicating by a key function.
+ * Items from arrayB (local) override items from arrayA (server) with the same key.
+ * Items unique to either array are included.
+ */
+function _mergeArrayByKey(arrayA, arrayB, keyFn) {
+  var map = new Map();
+  arrayA.forEach(function (item) { map.set(keyFn(item), item); });
+  arrayB.forEach(function (item) { map.set(keyFn(item), item); });
+  var result = [];
+  map.forEach(function (item) { result.push(item); });
+  return result;
 }
 
 function persistResidents() {
@@ -227,6 +397,9 @@ async function loadPersistedProject() {
           } catch (e) { /* ignore cache write failure */ }
           _apiLoadComplete = true;
           _setApiConnected(true);
+
+          // Track server revision for optimistic concurrency control
+          _serverRev = (typeof json._rev === 'number') ? json._rev : null;
 
           // Track shared document metadata from API response
           _lastUpdatedAt = json.updatedAt || json.project.savedAt || null;
@@ -435,6 +608,9 @@ function clearPersistedState() {
     console.warn('Failed to clear persisted state:', e);
   }
 
+  // Reset revision tracking
+  _serverRev = null;
+
   // Clear API data (shared document)
   fetch(API_BASE, {
     method: 'DELETE',
@@ -464,6 +640,70 @@ function sanitizePersistedState(data) {
 
   if (!data.settings || typeof data.settings !== 'object') data.settings = {};
   return data;
+}
+
+/* ------------------------------------------------------------------
+   BACKGROUND SYNC — Periodically check if the server _rev has
+   advanced (another user saved). If so, fetch latest data and merge
+   so that this client doesn't sit on stale data indefinitely.
+   Runs every 30 seconds when the tab is visible.
+   ------------------------------------------------------------------ */
+var _bgSyncInterval = null;
+var _BG_SYNC_MS = 30000; // 30 seconds
+
+function _startBackgroundSync() {
+  if (_bgSyncInterval) return;
+  _bgSyncInterval = setInterval(_backgroundSyncCheck, _BG_SYNC_MS);
+
+  // Also sync when tab becomes visible again (user switched back)
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) {
+      _backgroundSyncCheck();
+    }
+  });
+}
+
+function _backgroundSyncCheck() {
+  if (_conflictReloading) return; // Skip if already resolving a conflict
+  if (!_apiLoadComplete) return;  // Skip if initial load hasn't finished
+
+  fetch(API_BASE, { credentials: 'include' })
+    .then(function (res) {
+      if (!res.ok) return null;
+      return res.json();
+    })
+    .then(function (json) {
+      if (!json) return;
+      _setApiConnected(true);
+
+      var serverRev = (typeof json._rev === 'number') ? json._rev : null;
+
+      // If server _rev is ahead of ours, another user saved
+      if (serverRev !== null && _serverRev !== null && serverRev > _serverRev) {
+        console.info('Background sync: server _rev ' + serverRev + ' > local _rev ' + _serverRev +
+          ' (updated by ' + (json.updatedBy || '?') + ')');
+
+        // Merge server data with our local state
+        _handleSaveConflict({
+          serverRev: serverRev,
+          updatedBy: json.updatedBy || null,
+          updatedAt: json.updatedAt || null,
+          project: json.project || null,
+        });
+      } else if (serverRev !== null && _serverRev === null) {
+        // First time seeing a _rev from the server — just track it
+        _serverRev = serverRev;
+      }
+
+      // Update metadata
+      _lastUpdatedAt = json.updatedAt || _lastUpdatedAt;
+      _lastUpdatedBy = json.updatedBy || _lastUpdatedBy;
+      _renderSyncStatus();
+    })
+    .catch(function (err) {
+      // Silently ignore background sync failures — don't spam the user
+      console.warn('Background sync check failed:', err);
+    });
 }
 
 /* ------------------------------------------------------------------
@@ -561,6 +801,424 @@ function reapplyViewerRestrictions() {
 }
 
 /* ------------------------------------------------------------------
+   VIEW MODE — Admin View vs Staff View
+   Admins default to Admin View but can toggle to Staff View.
+   Non-admin users always see Staff View (read-only, polished).
+   ------------------------------------------------------------------ */
+var AppViewMode = 'admin'; // 'admin' or 'staff'
+
+/**
+ * Switch between Admin and Staff view modes.
+ * @param {'admin'|'staff'} mode
+ */
+function switchViewMode(mode) {
+  AppViewMode = mode;
+  var workbench = document.getElementById('workbench');
+  var staffView = document.getElementById('staff-view');
+  var toggleBtn = document.getElementById('view-mode-toggle');
+
+  if (mode === 'staff') {
+    if (workbench) workbench.style.display = 'none';
+    if (staffView) staffView.style.display = 'flex';
+    if (toggleBtn) {
+      toggleBtn.classList.add('active-staff');
+      var icon = document.getElementById('view-mode-icon');
+      var label = document.getElementById('view-mode-label');
+      if (icon) icon.textContent = '⚙️';
+      if (label) label.textContent = 'Admin View';
+    }
+    _initStaffView();
+  } else {
+    if (workbench) workbench.style.display = 'flex';
+    if (staffView) staffView.style.display = 'none';
+    if (toggleBtn) {
+      toggleBtn.classList.remove('active-staff');
+      var icon = document.getElementById('view-mode-icon');
+      var label = document.getElementById('view-mode-label');
+      if (icon) icon.textContent = '👤';
+      if (label) label.textContent = 'Staff View';
+    }
+  }
+}
+
+/** Initialize the staff view: populate selectors, stats, legend, wire events */
+var _staffViewInitialized = false;
+function _initStaffView() {
+  _renderStaffStats();
+  _renderStaffLegend();
+  _renderStaffMap();
+
+  if (_staffViewInitialized) return;
+  _staffViewInitialized = true;
+
+  // Wire building/floor selectors
+  var bldgSel = document.getElementById('sv-view-building-selector');
+  var floorSel = document.getElementById('sv-view-floor-selector');
+
+  if (bldgSel) {
+    // Populate buildings
+    var buildings = getRegisteredBuildings();
+    bldgSel.innerHTML = '';
+    buildings.forEach(function (b) {
+      var opt = document.createElement('option');
+      opt.value = b;
+      opt.textContent = b.replace(/-/g, ' ');
+      bldgSel.appendChild(opt);
+    });
+    if (AppState.selectedBuilding) bldgSel.value = AppState.selectedBuilding;
+
+    bldgSel.addEventListener('change', function () {
+      AppState.selectedBuilding = bldgSel.value;
+      _populateStaffFloorSelector();
+      var floors = getFloorsForBuilding(AppState.selectedBuilding);
+      if (floors.length > 0) {
+        AppState.selectedFloor = floors[0];
+        if (floorSel) floorSel.value = floors[0];
+      }
+      _renderStaffMap();
+    });
+  }
+
+  if (floorSel) {
+    _populateStaffFloorSelector();
+    if (AppState.selectedFloor != null) floorSel.value = AppState.selectedFloor;
+
+    floorSel.addEventListener('change', function () {
+      AppState.selectedFloor = isNaN(floorSel.value) ? floorSel.value : Number(floorSel.value);
+      _renderStaffMap();
+    });
+  }
+
+  // Wire display toggles
+  var toggleNames = document.getElementById('sv-toggle-names');
+  var toggleScholar = document.getElementById('sv-toggle-scholarship');
+  if (toggleNames) {
+    toggleNames.checked = AppState.showNames;
+    toggleNames.addEventListener('change', function () {
+      AppState.showNames = toggleNames.checked;
+      _renderStaffMap();
+    });
+  }
+  if (toggleScholar) {
+    toggleScholar.checked = AppState.scholarshipOnly;
+    toggleScholar.addEventListener('change', function () {
+      AppState.scholarshipOnly = toggleScholar.checked;
+      _renderStaffMap();
+    });
+  }
+
+  // Wire search
+  _initStaffSearch();
+
+  // Wire card close button
+  var closeBtn = document.getElementById('sv-card-close');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', function () {
+      document.getElementById('sv-resident-card').style.display = 'none';
+      document.getElementById('sv-resident-placeholder').style.display = 'block';
+    });
+  }
+}
+
+function _populateStaffFloorSelector() {
+  var floorSel = document.getElementById('sv-view-floor-selector');
+  if (!floorSel) return;
+  var floors = getFloorsForBuilding(AppState.selectedBuilding);
+  floorSel.innerHTML = '';
+  floors.forEach(function (f) {
+    var opt = document.createElement('option');
+    opt.value = f;
+    opt.textContent = isNaN(f) ? f : 'Floor ' + f;
+    floorSel.appendChild(opt);
+  });
+}
+
+/** Render occupancy stats in the staff view header */
+function _renderStaffStats() {
+  var row = document.getElementById('sv-stats-row');
+  if (!row) return;
+
+  var inventory = AppState.inventory || [];
+  var residents = AppState.residents || new Map();
+  var totalUnits = inventory.length;
+  var occupied = 0;
+  var vacant = 0;
+  var scholarshipCount = 0;
+
+  inventory.forEach(function (unit) {
+    var key = (unit.unitNumber || '').toUpperCase();
+    var r = residents.get(key);
+    if (r) {
+      occupied++;
+      if (r.Scholarship && r.Scholarship !== 'NONE' && r.Scholarship !== '') {
+        scholarshipCount++;
+      }
+    } else {
+      vacant++;
+    }
+  });
+
+  var pct = totalUnits > 0 ? Math.round((occupied / totalUnits) * 100) : 0;
+
+  row.innerHTML =
+    '<div class="sv-stat-card">' +
+      '<div class="sv-stat-value">' + totalUnits + '</div>' +
+      '<div class="sv-stat-label">Total Units</div>' +
+    '</div>' +
+    '<div class="sv-stat-card sv-stat-success">' +
+      '<div class="sv-stat-value">' + occupied + '</div>' +
+      '<div class="sv-stat-label">Occupied</div>' +
+    '</div>' +
+    '<div class="sv-stat-card sv-stat-warning">' +
+      '<div class="sv-stat-value">' + vacant + '</div>' +
+      '<div class="sv-stat-label">Vacant</div>' +
+    '</div>' +
+    '<div class="sv-stat-card sv-stat-accent">' +
+      '<div class="sv-stat-value">' + pct + '%</div>' +
+      '<div class="sv-stat-label">Occupancy</div>' +
+    '</div>' +
+    '<div class="sv-stat-card">' +
+      '<div class="sv-stat-value">' + scholarshipCount + '</div>' +
+      '<div class="sv-stat-label">Scholarships</div>' +
+    '</div>';
+}
+
+/** Render the legend in the staff view sidebar */
+function _renderStaffLegend() {
+  var container = document.getElementById('sv-legend');
+  if (!container) return;
+
+  // Re-use the same legend rendering as the admin view
+  var legendEl = document.getElementById('map-legend');
+  if (legendEl) {
+    container.innerHTML = legendEl.innerHTML;
+  }
+}
+
+/** Load and render the map in the staff view */
+async function _renderStaffMap() {
+  var container = document.getElementById('sv-map-viewer');
+  if (!container) return;
+
+  if (!AppState.selectedBuilding || AppState.selectedFloor == null) {
+    container.innerHTML = '<p class="placeholder-text">Select a building and floor to view the map</p>';
+    return;
+  }
+
+  // Re-use the existing map loading system
+  var cacheKey = AppState.selectedBuilding + ':' + AppState.selectedFloor;
+  var cached = AppState.mapCache.get(cacheKey);
+
+  if (cached) {
+    container.innerHTML = '';
+    var clone = cached.cloneNode(true);
+    container.appendChild(clone);
+    colorizeMapUnits(clone);
+  } else {
+    container.innerHTML = '<p class="placeholder-text">Loading map...</p>';
+    try {
+      var svg = await loadMapSVG(AppState.selectedBuilding, AppState.selectedFloor);
+      if (svg) {
+        AppState.mapCache.set(cacheKey, svg);
+        container.innerHTML = '';
+        var clone = svg.cloneNode(true);
+        container.appendChild(clone);
+        colorizeMapUnits(clone);
+      } else {
+        container.innerHTML = '<p class="placeholder-text">No map available for this floor</p>';
+      }
+    } catch (e) {
+      container.innerHTML = '<p class="placeholder-text">Error loading map</p>';
+    }
+  }
+}
+
+/** Initialize the staff view search functionality */
+function _initStaffSearch() {
+  var input = document.getElementById('sv-lookup-input');
+  var dropdown = document.getElementById('sv-lookup-results');
+  if (!input || !dropdown) return;
+
+  var debounceTimer = null;
+
+  input.addEventListener('input', function () {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(function () {
+      var query = input.value.trim();
+      if (query.length < 2) {
+        dropdown.classList.remove('visible');
+        dropdown.innerHTML = '';
+        return;
+      }
+
+      var results = searchResidents(AppState.residents, AppState.waitingBank, query, AppState.inventory);
+      if (results.length === 0) {
+        dropdown.innerHTML = '<div style="padding:12px 16px;color:var(--text-muted);font-size:0.85rem">No results found</div>';
+        dropdown.classList.add('visible');
+        return;
+      }
+
+      var html = '';
+      results.forEach(function (r, idx) {
+        var initials = _getInitials(r.name);
+        var avatarClass = r.source === 'bank' ? 'sv-result-avatar bank' : 'sv-result-avatar';
+        var badgeClass = r.source === 'bank' ? 'sv-result-badge bank' : 'sv-result-badge placed';
+        var badgeText = r.source === 'bank' ? 'Bank' : 'Placed';
+        var meta = r.unit ? 'Unit ' + r.unit : (r.floorplan || 'Unassigned');
+
+        html += '<div class="sv-search-result-item" data-idx="' + idx + '">' +
+          '<div class="' + avatarClass + '">' + initials + '</div>' +
+          '<div class="sv-result-info">' +
+            '<div class="sv-result-name">' + _escHtml(r.name) + '</div>' +
+            '<div class="sv-result-meta">' + _escHtml(meta) + (r.floorplan ? ' · ' + _escHtml(r.floorplan) : '') + '</div>' +
+          '</div>' +
+          '<span class="' + badgeClass + '">' + badgeText + '</span>' +
+        '</div>';
+      });
+
+      dropdown.innerHTML = html;
+      dropdown.classList.add('visible');
+
+      // Wire click on results
+      dropdown.querySelectorAll('.sv-search-result-item').forEach(function (item) {
+        item.addEventListener('click', function () {
+          var idx = parseInt(item.getAttribute('data-idx'), 10);
+          var selected = results[idx];
+          if (selected) _showStaffResidentCard(selected);
+          dropdown.classList.remove('visible');
+          input.value = selected.name;
+        });
+      });
+    }, 200);
+  });
+
+  // Close dropdown on click outside
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.sv-search-box')) {
+      dropdown.classList.remove('visible');
+    }
+  });
+
+  // Close dropdown on Escape
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      dropdown.classList.remove('visible');
+    }
+  });
+}
+
+/** Show the resident detail card in staff view */
+function _showStaffResidentCard(result) {
+  var card = document.getElementById('sv-resident-card');
+  var placeholder = document.getElementById('sv-resident-placeholder');
+  if (!card) return;
+
+  card.style.display = 'block';
+  if (placeholder) placeholder.style.display = 'none';
+
+  var initials = _getInitials(result.name);
+  document.getElementById('sv-card-avatar').textContent = initials;
+  document.getElementById('sv-card-name').textContent = result.name || '—';
+  document.getElementById('sv-card-subtitle').textContent = result.source === 'bank' ? 'Waiting Bank' : 'Placed Resident';
+
+  document.getElementById('sv-card-unit').textContent = result.unit || '—';
+  document.getElementById('sv-card-building').textContent = result.building ? result.building.replace(/-/g, ' ') : '—';
+  document.getElementById('sv-card-floor').textContent = result.floor != null ? result.floor : '—';
+  document.getElementById('sv-card-floorplan').textContent = result.floorplan || '—';
+
+  // Get full resident data for extra fields
+  var fullResident = null;
+  if (result.unit && AppState.residents) {
+    fullResident = AppState.residents.get(result.unit.toUpperCase());
+  }
+
+  document.getElementById('sv-card-lease').textContent = (fullResident && fullResident.Lease_Status) || '—';
+  document.getElementById('sv-card-scholarship').textContent = (result.scholarship && result.scholarship !== 'NONE') ? result.scholarship : '—';
+  document.getElementById('sv-card-status').textContent = result.source === 'bank' ? 'In Waiting Bank' : 'Assigned to Unit';
+
+  // Wire "Show on Map" button
+  var locateBtn = document.getElementById('sv-card-locate-btn');
+  if (locateBtn) {
+    // Remove old listeners by cloning
+    var newBtn = locateBtn.cloneNode(true);
+    locateBtn.parentNode.replaceChild(newBtn, locateBtn);
+
+    if (result.building && result.floor != null) {
+      newBtn.disabled = false;
+      newBtn.textContent = 'Show on Map';
+      newBtn.addEventListener('click', function () {
+        _staffLocateUnit(result);
+      });
+    } else {
+      newBtn.disabled = true;
+      newBtn.textContent = result.source === 'bank' ? 'Not Yet Placed' : 'Location Unknown';
+    }
+  }
+}
+
+/** Navigate the staff view map to highlight a resident's unit */
+async function _staffLocateUnit(result) {
+  if (!result.building || result.floor == null) return;
+
+  // Switch building/floor selectors
+  var bldgSel = document.getElementById('sv-view-building-selector');
+  var floorSel = document.getElementById('sv-view-floor-selector');
+
+  AppState.selectedBuilding = result.building;
+  AppState.selectedFloor = result.floor;
+
+  if (bldgSel) bldgSel.value = result.building;
+  _populateStaffFloorSelector();
+  if (floorSel) floorSel.value = result.floor;
+
+  await _renderStaffMap();
+
+  // Highlight the unit on the map
+  if (result.unit) {
+    var container = document.getElementById('sv-map-viewer');
+    if (container) {
+      var svg = container.querySelector('svg');
+      if (svg) {
+        // Remove any existing highlights
+        svg.querySelectorAll('.sv-unit-highlight').forEach(function (el) {
+          el.classList.remove('sv-unit-highlight');
+        });
+
+        // Find the unit element and highlight it
+        var unitKey = result.unit.toUpperCase();
+        var unitEl = svg.querySelector('[data-unit="' + unitKey + '"]') ||
+                     svg.querySelector('[id="' + unitKey + '"]') ||
+                     svg.querySelector('[id="' + result.unit + '"]');
+        if (unitEl) {
+          unitEl.classList.add('sv-unit-highlight');
+          // Scroll into view if needed
+          unitEl.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+        }
+      }
+    }
+  }
+}
+
+/** Get initials from a name string */
+function _getInitials(name) {
+  if (!name) return '?';
+  var parts = name.trim().split(/[\s,]+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+  // Handle "LAST, FIRST" format
+  if (name.indexOf(',') !== -1) {
+    return (parts[1].charAt(0) + parts[0].charAt(0)).toUpperCase();
+  }
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+}
+
+/** Escape HTML entities */
+function _escHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/* ------------------------------------------------------------------
    INITIALIZATION
    ------------------------------------------------------------------ */
 document.addEventListener('DOMContentLoaded', async function () {
@@ -645,8 +1303,12 @@ document.addEventListener('DOMContentLoaded', async function () {
   // Refresh reserved units
   refreshReservedUnits();
 
-  // Apply role-based restrictions (hide edit controls for viewers)
+  // Apply role-based restrictions and set view mode
   applyRoleRestrictions();
+  _initViewModeToggle();
+
+  // Start background sync to detect changes from other users
+  _startBackgroundSync();
 });
 
 /* ------------------------------------------------------------------

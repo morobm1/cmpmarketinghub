@@ -69,7 +69,7 @@ export async function handler(event) {
         return {
           statusCode: 200,
           headers,
-          body: JSON.stringify({ project: null, colors: null }),
+          body: JSON.stringify({ project: null, colors: null, _rev: 0 }),
         };
       }
 
@@ -81,12 +81,18 @@ export async function handler(event) {
           colors: doc.colors || null,
           updatedAt: doc.updatedAt || null,
           updatedBy: doc.updatedBy || null,
+          _rev: doc._rev || 0,
         }),
       };
     }
 
     // ──────────────────────────────────────────────
     // POST / — Save shared project data
+    // Uses optimistic concurrency control via _rev.
+    // Client must send _rev from its last load/save.
+    // If the server _rev has advanced, the save is
+    // rejected with 409 so the client can re-fetch
+    // and merge instead of blindly overwriting.
     // ──────────────────────────────────────────────
     if (event.httpMethod === 'POST' && segments.length === 0) {
       const body = JSON.parse(event.body || '{}');
@@ -99,14 +105,82 @@ export async function handler(event) {
         };
       }
 
+      const clientRev = typeof body._rev === 'number' ? body._rev : null;
+      const now = new Date().toISOString();
+
+      // If the client supplied a _rev, enforce optimistic concurrency
+      if (clientRev !== null) {
+        // Attempt atomic update only if _rev matches (or document doesn't exist yet)
+        const result = await collection.updateOne(
+          { _key: SHARED_KEY, $or: [{ _rev: clientRev }, { _rev: { $exists: false } }] },
+          {
+            $set: {
+              _key: SHARED_KEY,
+              project: body.project,
+              updatedAt: now,
+              updatedBy: username,
+            },
+            $inc: { _rev: 1 },
+          },
+          { upsert: false }
+        );
+
+        if (result.matchedCount === 0) {
+          // No document matched — either the doc doesn't exist yet, or _rev is stale
+          const existing = await collection.findOne({ _key: SHARED_KEY });
+          if (!existing) {
+            // First-time creation: insert with _rev = 1
+            await collection.insertOne({
+              _key: SHARED_KEY,
+              project: body.project,
+              updatedAt: now,
+              updatedBy: username,
+              _rev: 1,
+            });
+            return {
+              statusCode: 200,
+              headers,
+              body: JSON.stringify({ success: true, _rev: 1 }),
+            };
+          }
+
+          // Conflict: server _rev is ahead of client _rev
+          return {
+            statusCode: 409,
+            headers,
+            body: JSON.stringify({
+              error: 'Conflict: data was modified by another user',
+              serverRev: existing._rev || 0,
+              updatedBy: existing.updatedBy || null,
+              updatedAt: existing.updatedAt || null,
+              project: existing.project || null,
+            }),
+          };
+        }
+
+        // Success — return new _rev
+        const newRev = clientRev + 1;
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({ success: true, _rev: newRev }),
+        };
+      }
+
+      // Legacy path: no _rev supplied — behave as before (blind overwrite)
+      // but initialize _rev so future saves use concurrency control
+      const existing = await collection.findOne({ _key: SHARED_KEY });
+      const nextRev = (existing && typeof existing._rev === 'number') ? existing._rev + 1 : 1;
+
       await collection.updateOne(
         { _key: SHARED_KEY },
         {
           $set: {
             _key: SHARED_KEY,
             project: body.project,
-            updatedAt: new Date().toISOString(),
+            updatedAt: now,
             updatedBy: username,
+            _rev: nextRev,
           },
         },
         { upsert: true }
@@ -115,7 +189,7 @@ export async function handler(event) {
       return {
         statusCode: 200,
         headers,
-        body: JSON.stringify({ success: true }),
+        body: JSON.stringify({ success: true, _rev: nextRev }),
       };
     }
 
