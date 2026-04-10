@@ -1250,12 +1250,13 @@ function searchResidents(residents, bankList, query, inventory) {
   const results = [];
   const MAX_RESULTS = 20;
 
-  // Search placed residents
+  // Search placed residents (by name OR unit number)
   if (residents && residents.size > 0) {
     residents.forEach((r) => {
       if (results.length >= MAX_RESULTS) return;
       const nameUpper = (r.Resident_Name || '').toUpperCase();
-      if (nameUpper.includes(q)) {
+      const unitUpper = (r.Unit_Assigned || '').toUpperCase();
+      if (nameUpper.includes(q) || unitUpper.includes(q)) {
         const parsed = parseUnitId(r.Unit_Assigned);
         results.push({
           name: r.Resident_Name,

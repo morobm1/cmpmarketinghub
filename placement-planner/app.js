@@ -749,10 +749,12 @@ async function initAuth() {
 function applyRoleRestrictions() {
   if (AppUserRole === 'admin') return; // Admins have full access
 
-  // Hide/disable edit controls for viewers
+  // Non-admins get the Staff View by default (handled in _initViewModeToggle).
+  // The admin workbench edit controls are also disabled as a safety net.
   var editElements = [
     '#import-section',
     '#add-resident-btn',
+    '#swap-unit-btn',
     '.sidebar-footer',
     '#restore-section',
   ];
@@ -777,15 +779,6 @@ function applyRoleRestrictions() {
     btn.style.cursor = 'not-allowed';
     btn.title = 'View-only mode';
   });
-
-  // Add a viewer badge to the header
-  var header = document.getElementById('app-header');
-  if (header) {
-    var badge = document.createElement('span');
-    badge.style.cssText = 'font-size:0.68rem;color:rgba(255,255,255,0.5);padding:2px 8px;border:1px solid rgba(255,255,255,0.2);border-radius:4px;white-space:nowrap;';
-    badge.textContent = 'View Only';
-    header.appendChild(badge);
-  }
 }
 
 // Re-apply restrictions after dynamic content renders
@@ -838,6 +831,36 @@ function switchViewMode(mode) {
       if (icon) icon.textContent = '👤';
       if (label) label.textContent = 'Staff View';
     }
+  }
+}
+
+/**
+ * Initialize the view mode toggle button and set initial view based on role.
+ * - Admins: show toggle button, default to admin view
+ * - Non-admins: hide toggle, always show staff view
+ */
+function _initViewModeToggle() {
+  var toggleBtn = document.getElementById('view-mode-toggle');
+
+  if (AppUserRole === 'admin') {
+    // Show the toggle button for admins
+    if (toggleBtn) {
+      toggleBtn.style.display = 'flex';
+      toggleBtn.addEventListener('click', function () {
+        switchViewMode(AppViewMode === 'admin' ? 'staff' : 'admin');
+      });
+    }
+    // Admins start in admin view (default)
+    switchViewMode('admin');
+  } else {
+    // Non-admin users always see staff view
+    if (toggleBtn) toggleBtn.style.display = 'none';
+    // Hide backup/restore buttons for non-admins
+    var backupBtn = document.getElementById('backup-btn');
+    var restoreBtn = document.getElementById('restore-btn');
+    if (backupBtn) backupBtn.style.display = 'none';
+    if (restoreBtn) restoreBtn.style.display = 'none';
+    switchViewMode('staff');
   }
 }
 
