@@ -238,8 +238,10 @@ function parseBankSpreadsheet(file) {
           seenKeys.add(dupKey);
 
           idCounter++;
+          // Generate a stable _id based on content so re-imports don't create duplicates
+          var stableKey = (name + '|' + unitType + '|' + leaseStatus).toLowerCase().replace(/[^a-z0-9|]/g, '_');
           entries.push({
-            _id: 'bank_' + idCounter + '_' + Date.now(),
+            _id: 'bank_' + stableKey,
             unitType: unitType,
             name: name,
             leaseStatus: leaseStatus,
@@ -590,8 +592,10 @@ function parsePreleaseReport(file) {
           if (isApprovedBankUnitType(normalizedUnitType)) {
             bankIdCounter++;
             bankCount++;
+            // Stable _id based on content for dedup across re-imports
+            var bankStableKey = (transformedName + '|' + normalizedUnitType + '|' + mappedStatus).toLowerCase().replace(/[^a-z0-9|]/g, '_');
             bank.push({
-              _id: 'prelease_bank_' + bankIdCounter + '_' + Date.now(),
+              _id: 'prelease_bank_' + bankStableKey,
               unitType: normalizedUnitType,
               name: transformedName,
               leaseStatus: mappedStatus,

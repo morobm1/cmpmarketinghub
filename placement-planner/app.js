@@ -140,6 +140,120 @@ function buildProjectData() {
   };
 }
 
+/* ------------------------------------------------------------------
+   STATE RECONCILIATION — Single source of truth enforcement
+   ─────────────────────────────────────────────────────────────────
+   Called after every import, merge, restore, and before every save.
+   Ensures:
+     1. No bank entry references a resident already placed in a unit
+     2. No duplicate bank entries (by normalized name + unitType)
+     3. Bank entries have stable _id values
+     4. Placed residents map is clean (no empty keys)
+   ------------------------------------------------------------------ */
+
+/**
+ * Normalize a name for dedup comparison.
+ * Strips whitespace, lowercases, and removes punctuation.
+ */
+function _normalizeName(name) {
+  if (!name) return '';
+  return name.trim().toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ');
+}
+
+/**
+ * Generate a stable dedup key for a bank entry based on name + unitType.
+ * Used to detect duplicates regardless of _id differences.
+ */
+function _bankDedupKey(entry) {
+  var name = _normalizeName(entry.name || '');
+  var unitType = (entry.unitType || '').trim().toUpperCase();
+  return name + '|' + unitType;
+}
+
+/**
+ * Reconcile AppState to enforce consistency between placed residents
+ * and the waiting bank. This is the core guardrail against ghost entries.
+ *
+ * @param {object} [opts] - Options
+ * @param {boolean} [opts.silent] - If true, don't log reconciliation actions
+ * @returns {{ removedFromBank: number, dedupedBank: number, cleanedResidents: number }}
+ */
+function _reconcileState(opts) {
+  opts = opts || {};
+  var stats = { removedFromBank: 0, dedupedBank: 0, cleanedResidents: 0 };
+
+  var residents = AppState.residents || new Map();
+  var bank = AppState.waitingBank || [];
+
+  // --- 1. Build a set of normalized names of all placed residents ---
+  var placedNames = new Set();
+  residents.forEach(function (r) {
+    var norm = _normalizeName(r.Resident_Name);
+    if (norm) placedNames.add(norm);
+  });
+
+  // --- 2. Remove bank entries whose name matches a placed resident ---
+  var cleanedBank = [];
+  for (var i = 0; i < bank.length; i++) {
+    var entry = bank[i];
+    var normName = _normalizeName(entry.name);
+    if (normName && placedNames.has(normName)) {
+      stats.removedFromBank++;
+      if (!opts.silent) {
+        console.info('[Reconcile] Removed "' + entry.name + '" from bank — already placed in a unit.');
+      }
+      continue;
+    }
+    cleanedBank.push(entry);
+  }
+
+  // --- 3. Deduplicate bank entries by normalized name + unitType ---
+  var seenKeys = new Set();
+  var dedupedBank = [];
+  for (var j = 0; j < cleanedBank.length; j++) {
+    var entry = cleanedBank[j];
+    var key = _bankDedupKey(entry);
+
+    if (seenKeys.has(key)) {
+      stats.dedupedBank++;
+      if (!opts.silent) {
+        console.info('[Reconcile] Removed duplicate bank entry: "' + entry.name + '" / "' + entry.unitType + '"');
+      }
+      continue;
+    }
+    seenKeys.add(key);
+
+    // Ensure entry has a stable _id
+    if (!entry._id) {
+      entry._id = 'bank_' + key.replace(/[^a-z0-9]/g, '_') + '_' + Date.now();
+    }
+
+    dedupedBank.push(entry);
+  }
+
+  AppState.waitingBank = dedupedBank;
+
+  // --- 4. Clean placed residents map (remove empty keys) ---
+  if (residents.size > 0) {
+    var keysToRemove = [];
+    residents.forEach(function (r, unitKey) {
+      if (!unitKey || !r || !r.Resident_Name) {
+        keysToRemove.push(unitKey);
+      }
+    });
+    keysToRemove.forEach(function (k) {
+      residents.delete(k);
+      stats.cleanedResidents++;
+    });
+  }
+
+  if (!opts.silent && (stats.removedFromBank > 0 || stats.dedupedBank > 0 || stats.cleanedResidents > 0)) {
+    console.info('[Reconcile] Summary:', stats);
+  }
+
+  return stats;
+}
+
 /**
  * Persist project to API (primary) and localStorage (cache).
  * Uses debounce internally so rapid calls don't flood the server.
@@ -150,6 +264,9 @@ function buildProjectData() {
  */
 var _persistTimer = null;
 function persistProject() {
+  // Reconcile state before every save to prevent persisting inconsistent data
+  _reconcileState({ silent: true });
+
   // Always write to localStorage immediately (fast cache)
   try {
     var data = buildProjectData();
@@ -331,6 +448,10 @@ function _handleSaveConflict(conflict) {
   AppState.waitingBank = mergedBank;
   AppState.unassignedScholarships = mergedScholarships;
   AppState.scholarshipReservedUnits = mergedReserved;
+
+  // CRITICAL: Reconcile after merge to remove bank entries for placed residents
+  // and deduplicate any entries that both server and local had
+  _reconcileState({ silent: false });
 
   // Update localStorage cache
   try {
@@ -579,6 +700,10 @@ function restoreProjectData(data) {
       AppState.currentView = data.settings.currentView;
     }
   }
+
+  // Reconcile state after every restore to fix any inconsistencies
+  // (e.g., bank entries for residents who are already placed)
+  _reconcileState({ silent: false });
 
   return true;
 }
@@ -868,7 +993,7 @@ function _initViewModeToggle() {
 var _staffViewInitialized = false;
 function _initStaffView() {
   _renderStaffStats();
-  _renderStaffLegend();
+  _renderStaffVacantUnits();
   _renderStaffMap();
 
   if (_staffViewInitialized) return;
@@ -1006,19 +1131,113 @@ function _renderStaffStats() {
     '</div>';
 }
 
-/** Render the legend in the staff view sidebar */
-function _renderStaffLegend() {
-  var container = document.getElementById('sv-legend');
+/** Render the vacant units list organized by floorplan */
+function _renderStaffVacantUnits() {
+  var container = document.getElementById('sv-vacant-list');
   if (!container) return;
 
-  // Re-use the same legend rendering as the admin view
-  var legendEl = document.getElementById('map-legend');
-  if (legendEl) {
-    container.innerHTML = legendEl.innerHTML;
+  var inventory = AppState.inventory || [];
+  var residents = AppState.residents || new Map();
+
+  if (inventory.length === 0) {
+    container.innerHTML = '<p class="sv-vacant-none">No inventory loaded</p>';
+    return;
   }
+
+  // Build list of vacant units grouped by floorplan
+  var groups = {}; // floorplan -> [{unitNumber, building, floor}]
+
+  inventory.forEach(function (unit) {
+    var key = (unit.unitNumber || '').toUpperCase();
+    if (!key) return;
+    if (residents.has(key)) return; // occupied
+
+    // Also skip scholarship-reserved units
+    if (AppState.scholarshipReservedUnits && AppState.scholarshipReservedUnits.has(key)) return;
+
+    var fp = unit.unitType || 'Unknown';
+    if (!groups[fp]) groups[fp] = [];
+
+    var parsed = parseUnitId(unit.unitNumber);
+    groups[fp].push({
+      unitNumber: unit.unitNumber,
+      building: parsed.ambiguous ? null : parsed.building,
+      floor: parsed.ambiguous ? null : parsed.floor,
+    });
+  });
+
+  var fpNames = Object.keys(groups).sort();
+
+  if (fpNames.length === 0) {
+    container.innerHTML = '<p class="sv-vacant-none">No vacant units — all units are occupied!</p>';
+    return;
+  }
+
+  var totalVacant = 0;
+  fpNames.forEach(function (fp) { totalVacant += groups[fp].length; });
+
+  var html = '';
+  fpNames.forEach(function (fp) {
+    var units = groups[fp];
+    // Sort units naturally
+    units.sort(function (a, b) {
+      return (a.unitNumber || '').localeCompare(b.unitNumber || '', undefined, { numeric: true });
+    });
+
+    html += '<div class="sv-vacant-group">' +
+      '<div class="sv-vacant-group-header" data-fp="' + _escHtml(fp) + '">' +
+        '<span class="sv-vacant-fp-name">' + _escHtml(fp) + '</span>' +
+        '<span class="sv-vacant-count">' + units.length + '</span>' +
+      '</div>' +
+      '<div class="sv-vacant-units">';
+
+    units.forEach(function (u) {
+      html += '<span class="sv-vacant-unit-chip" ' +
+        'data-unit="' + _escHtml(u.unitNumber) + '" ' +
+        (u.building ? 'data-building="' + _escHtml(u.building) + '" ' : '') +
+        (u.floor != null ? 'data-floor="' + u.floor + '" ' : '') +
+        'title="Click to view on map">' +
+        _escHtml(u.unitNumber) +
+      '</span>';
+    });
+
+    html += '</div></div>';
+  });
+
+  container.innerHTML = html;
+
+  // Wire click on unit chips to navigate the map
+  container.querySelectorAll('.sv-vacant-unit-chip').forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      var unit = chip.getAttribute('data-unit');
+      var building = chip.getAttribute('data-building');
+      var floor = chip.getAttribute('data-floor');
+
+      if (building && floor != null) {
+        _staffLocateUnit({
+          unit: unit,
+          building: building,
+          floor: isNaN(floor) ? floor : Number(floor),
+          name: 'Vacant Unit',
+          source: 'vacant',
+        });
+      }
+    });
+  });
+
+  // Wire floorplan group headers to toggle collapse
+  container.querySelectorAll('.sv-vacant-group-header').forEach(function (header) {
+    header.addEventListener('click', function () {
+      var unitsDiv = header.nextElementSibling;
+      if (unitsDiv) {
+        unitsDiv.style.display = unitsDiv.style.display === 'none' ? 'flex' : 'none';
+      }
+    });
+  });
 }
 
-/** Load and render the map in the staff view */
+/** Load and render the map in the staff view using the same
+ *  loadMapFromRegistry / renderMapIntoContainer pipeline as the admin view. */
 async function _renderStaffMap() {
   var container = document.getElementById('sv-map-viewer');
   if (!container) return;
@@ -1028,32 +1247,53 @@ async function _renderStaffMap() {
     return;
   }
 
-  // Re-use the existing map loading system
-  var cacheKey = AppState.selectedBuilding + ':' + AppState.selectedFloor;
-  var cached = AppState.mapCache.get(cacheKey);
+  var key = mapCacheKey(AppState.selectedBuilding, AppState.selectedFloor);
 
-  if (cached) {
-    container.innerHTML = '';
-    var clone = cached.cloneNode(true);
-    container.appendChild(clone);
-    colorizeMapUnits(clone);
-  } else {
-    container.innerHTML = '<p class="placeholder-text">Loading map...</p>';
-    try {
-      var svg = await loadMapSVG(AppState.selectedBuilding, AppState.selectedFloor);
-      if (svg) {
-        AppState.mapCache.set(cacheKey, svg);
-        container.innerHTML = '';
-        var clone = svg.cloneNode(true);
-        container.appendChild(clone);
-        colorizeMapUnits(clone);
-      } else {
-        container.innerHTML = '<p class="placeholder-text">No map available for this floor</p>';
-      }
-    } catch (e) {
-      container.innerHTML = '<p class="placeholder-text">Error loading map</p>';
+  // Load into cache if not already loaded
+  if (!AppState.mapCache.has(key)) {
+    var entry = getRegistryEntry(AppState.selectedBuilding, AppState.selectedFloor);
+    if (!entry) {
+      container.innerHTML = '<p class="placeholder-text">No map registered for this floor</p>';
+      return;
     }
+    container.innerHTML = '<p class="placeholder-text">Loading map...</p>';
+    var result = await loadMapFromRegistry(AppState.selectedBuilding, AppState.selectedFloor);
+    if (!result) {
+      container.innerHTML = '<p class="placeholder-text">Failed to load map</p>';
+      return;
+    }
+    AppState.mapCache.set(key, result);
   }
+
+  var mapData = AppState.mapCache.get(key);
+  if (!mapData || !mapData.svgElement) {
+    container.innerHTML = '<p class="placeholder-text">Map not available</p>';
+    return;
+  }
+
+  // Render using the shared renderMapIntoContainer function
+  var residents = AppState.residents || new Map();
+  renderMapIntoContainer(container, mapData.svgElement, residents, {
+    showNames: AppState.showNames,
+    scholarshipOnly: AppState.scholarshipOnly,
+    inventory: AppState.inventory,
+    onUnitClick: function (unitKey) {
+      // Show unit detail in the staff card when clicking a map unit
+      var r = residents.get(unitKey.toUpperCase());
+      if (r) {
+        var parsed = parseUnitId(r.Unit_Assigned);
+        _showStaffResidentCard({
+          name: r.Resident_Name,
+          unit: r.Unit_Assigned || '',
+          building: parsed.ambiguous ? null : parsed.building,
+          floor: parsed.ambiguous ? null : parsed.floor,
+          floorplan: getResidentFloorplanType(r, AppState.inventory) || '',
+          source: 'placed',
+          scholarship: r.Scholarship || '',
+        });
+      }
+    },
+  });
 }
 
 /** Initialize the staff view search functionality */
@@ -1207,15 +1447,16 @@ async function _staffLocateUnit(result) {
           el.classList.remove('sv-unit-highlight');
         });
 
-        // Find the unit element and highlight it
+        // Find the unit element — renderMapIntoContainer sets data-unit on elements
         var unitKey = result.unit.toUpperCase();
-        var unitEl = svg.querySelector('[data-unit="' + unitKey + '"]') ||
+        var unitEl = svg.querySelector('[data-unit="' + result.unit + '"]') ||
+                     svg.querySelector('[data-unit="' + unitKey + '"]') ||
                      svg.querySelector('[id="' + unitKey + '"]') ||
                      svg.querySelector('[id="' + result.unit + '"]');
         if (unitEl) {
           unitEl.classList.add('sv-unit-highlight');
-          // Scroll into view if needed
-          unitEl.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+          // Scroll the map container so the unit is visible
+          try { unitEl.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' }); } catch(e) {}
         }
       }
     }
@@ -2429,18 +2670,56 @@ async function handlePreleaseImport(file) {
       placedAdded++;
     }
 
-    // Add bank residents to waiting bank
+    // Add bank residents to waiting bank (with dedup against placed + existing bank)
     var bankAdded = 0;
+    var bankSkippedPlaced = 0;
+    var bankSkippedDup = 0;
+
+    // Build sets for dedup
+    var placedNamesSet = new Set();
+    AppState.residents.forEach(function (r) {
+      var norm = _normalizeName(r.Resident_Name);
+      if (norm) placedNamesSet.add(norm);
+    });
+    var existingBankKeys = new Set();
+    AppState.waitingBank.forEach(function (entry) {
+      existingBankKeys.add(_bankDedupKey(entry));
+    });
+
     for (var i = 0; i < bank.length; i++) {
-      AppState.waitingBank.push(bank[i]);
+      var bankEntry = bank[i];
+      var normName = _normalizeName(bankEntry.name);
+
+      // Skip if this person is already placed in a unit
+      if (normName && placedNamesSet.has(normName)) {
+        bankSkippedPlaced++;
+        warnings.push('Bank: "' + bankEntry.name + '" skipped — already placed in a unit.');
+        continue;
+      }
+
+      // Skip if duplicate of existing bank entry
+      var dedupKey = _bankDedupKey(bankEntry);
+      if (existingBankKeys.has(dedupKey)) {
+        bankSkippedDup++;
+        warnings.push('Bank: "' + bankEntry.name + '" / "' + bankEntry.unitType + '" skipped — already in bank.');
+        continue;
+      }
+
+      existingBankKeys.add(dedupKey);
+      AppState.waitingBank.push(bankEntry);
       bankAdded++;
     }
+
+    // Final reconciliation after import
+    _reconcileState({ silent: false });
 
     // Status message
     var parts = [];
     if (placedAdded > 0) parts.push(placedAdded + ' placed');
     if (bankAdded > 0) parts.push(bankAdded + ' to bank');
     if (placedDuplicates > 0) parts.push(placedDuplicates + ' duplicate(s) skipped');
+    if (bankSkippedPlaced > 0) parts.push(bankSkippedPlaced + ' bank skipped (already placed)');
+    if (bankSkippedDup > 0) parts.push(bankSkippedDup + ' bank skipped (duplicate)');
     var statusText = 'Prelease imported: ' + parts.join(', ') + ' from ' + file.name;
     setUploadStatus('entrata', statusText, 'success');
 
@@ -2477,6 +2756,9 @@ async function handleSpreadsheetUpload(file) {
   try {
     var result = await parseSpreadsheet(file);
     AppState.residents = result.residents;
+
+    // Reconcile: remove bank entries for residents that are now placed
+    _reconcileState({ silent: false });
 
     var count = result.residents.size;
     setUploadStatus('residents', 'Loaded ' + count + ' resident' + (count !== 1 ? 's' : '') + ' from ' + file.name, 'success');
@@ -2516,9 +2798,12 @@ async function handleBankUpload(file) {
 
     AppState.waitingBank = result.entries;
 
+    // Reconcile: remove any bank entries for residents already placed
+    _reconcileState({ silent: false });
+
     setUploadStatus(
       'bank',
-      'Loaded ' + result.entries.length + ' resident(s) into waiting bank from ' + file.name,
+      'Loaded ' + AppState.waitingBank.length + ' resident(s) into waiting bank from ' + file.name,
       'success'
     );
 
@@ -2766,6 +3051,10 @@ function importResidentMasterListFromXlsx(file) {
       // Overwrite residents and bank
       AppState.residents = newResidents;
       AppState.waitingBank = newBank;
+
+      // Reconcile after import
+      _reconcileState({ silent: false });
+
       persistProject();
       refreshAllAfterImport();
 
@@ -3509,7 +3798,22 @@ function _completeBankAssignment(bankEntry, selectedUnit, unitKey, scholarship) 
     Scholarship: scholarship || 'NONE',
   });
 
+  // Remove from bank by _id
+  var prevLength = AppState.waitingBank.length;
   AppState.waitingBank = AppState.waitingBank.filter(function (entry) { return entry._id !== bankEntry._id; });
+
+  // Safety: also remove any other bank entries with the same normalized name
+  // (handles edge case where the same person exists under different _ids)
+  var normName = _normalizeName(bankEntry.name);
+  if (normName) {
+    AppState.waitingBank = AppState.waitingBank.filter(function (entry) {
+      return _normalizeName(entry.name) !== normName;
+    });
+  }
+
+  var removed = prevLength - AppState.waitingBank.length;
+  console.info('[BankAssign] Placed "' + bankEntry.name + '" into ' + selectedUnit +
+    ', removed ' + removed + ' bank entry(ies)');
 
   persistProject();
   refreshBank();
