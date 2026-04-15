@@ -245,6 +245,13 @@ header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;p
 .step-card .step-image-preview{margin-top:8px;border-radius:8px;overflow:hidden;border:1px solid var(--border);background:#f8fafc}
 .step-card .step-image-preview img{max-width:100%;max-height:240px;display:block}
 .step-card .step-image-label{font-size:11px;color:var(--subtext);font-weight:600;display:flex;align-items:center;gap:4px;margin-top:10px;margin-bottom:4px}
+.step-card .step-image-actions{display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap}
+.step-card .btn-paste-img,.step-card .btn-browse-img{padding:6px 12px;border:1px dashed var(--border);border-radius:6px;background:#fff;color:var(--brand-primary);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s}
+.step-card .btn-paste-img:hover,.step-card .btn-browse-img:hover{border-color:var(--brand-accent-2);background:#f0faff}
+.step-card .upload-status{font-size:11px;color:var(--subtext);font-style:italic}
+.doc-card .btn-upload-doc{padding:6px 12px;border:1px dashed var(--border);border-radius:6px;background:#fff;color:var(--brand-primary);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;flex-shrink:0;white-space:nowrap}
+.doc-card .btn-upload-doc:hover{border-color:var(--brand-accent-2);background:#f0faff}
+.doc-card .or-text{font-size:11px;color:var(--subtext);flex-shrink:0}
 
 .add-step-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border:2px dashed var(--border);border-radius:8px;background:#fff;color:var(--brand-primary);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;width:auto;margin-bottom:14px}
 .add-step-btn:hover{border-color:var(--brand-accent-2);background:#f0f9ff}
@@ -919,9 +926,15 @@ function renderSteps() {
       </div>
       <textarea class="step-desc" placeholder="Describe this step in detail…&#10;Use • or - at the start of a line for bullet points" data-field="description" data-idx="${i}">${escHtml(step.description)}</textarea>
       <div class="step-desc-hint">Tip: Start lines with • or - for bullet points</div>
-      <div class="step-image-label">🖼️ Screenshot / Image URL <span style="font-weight:400;color:#94a3b8">(optional)</span></div>
+      <div class="step-image-label">🖼️ Screenshot / Image <span style="font-weight:400;color:#94a3b8">(optional)</span></div>
       <div class="step-image-row">
-        <input class="step-image-input" type="text" placeholder="Paste image URL (e.g., https://i.imgur.com/screenshot.png)" value="${escHtml(step.imageUrl)}" data-idx="${i}" />
+        <input class="step-image-input" type="text" placeholder="Paste image URL or use buttons below…" value="${escHtml(step.imageUrl)}" data-idx="${i}" />
+      </div>
+      <div class="step-image-actions">
+        <button type="button" class="btn-paste-img" data-idx="${i}" title="Click then Ctrl+V to paste a screenshot from clipboard">📋 Paste from Clipboard</button>
+        <button type="button" class="btn-browse-img" data-idx="${i}" title="Browse for an image file">📁 Browse Image</button>
+        <input type="file" class="step-file-input" data-idx="${i}" accept="image/*" style="display:none" />
+        <span class="upload-status" id="stepUploadStatus_${i}"></span>
       </div>
       <div class="step-image-preview" id="stepImgPreview_${i}" style="${step.imageUrl ? '' : 'display:none'}">
         ${step.imageUrl ? '<img src="' + escHtml(step.imageUrl) + '" alt="Step ' + (i+1) + ' screenshot" onerror="this.parentElement.innerHTML=\'<div style=padding:12px;font-size:12px;color:#ef4444>Image failed to load</div>\'" />' : ''}
@@ -942,7 +955,7 @@ function renderSteps() {
       modalSteps[idx].imageUrl = el.value.trim();
       updateStepImagePreview(idx);
     });
-    // Also update preview on paste
+    // Also update preview on paste (text URL paste)
     el.addEventListener('paste', () => {
       setTimeout(() => {
         const idx = parseInt(el.dataset.idx);
@@ -950,6 +963,97 @@ function renderSteps() {
         updateStepImagePreview(idx);
       }, 50);
     });
+  });
+
+  // Browse image file button
+  container.querySelectorAll('.btn-browse-img').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.idx);
+      container.querySelector('.step-file-input[data-idx="' + idx + '"]').click();
+    });
+  });
+
+  // File input change handler
+  container.querySelectorAll('.step-file-input').forEach(input => {
+    input.addEventListener('change', async () => {
+      const idx = parseInt(input.dataset.idx);
+      const file = input.files[0];
+      if (!file) return;
+      await uploadStepImage(idx, file);
+    });
+  });
+
+  // Paste from clipboard button
+  container.querySelectorAll('.btn-paste-img').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const idx = parseInt(btn.dataset.idx);
+      try {
+        const items = await navigator.clipboard.read();
+        let imageBlob = null;
+        for (const item of items) {
+          const imageType = item.types.find(t => t.startsWith('image/'));
+          if (imageType) {
+            imageBlob = await item.getType(imageType);
+            break;
+          }
+        }
+        if (!imageBlob) {
+          alert('No image found in clipboard. Copy a screenshot first (e.g., Snipping Tool, Print Screen) then click this button.');
+          return;
+        }
+        const ext = imageBlob.type.split('/')[1] || 'png';
+        const file = new File([imageBlob], 'screenshot_step' + (idx + 1) + '.' + ext, { type: imageBlob.type });
+        await uploadStepImage(idx, file);
+      } catch (e) {
+        if (e.name === 'NotAllowedError') {
+          alert('Clipboard access denied. Please allow clipboard permissions or use the Browse button instead.');
+        } else {
+          alert('Could not read clipboard: ' + e.message);
+        }
+      }
+    });
+  });
+}
+
+async function uploadStepImage(idx, file) {
+  const status = document.getElementById('stepUploadStatus_' + idx);
+  const urlInput = document.querySelector('.step-image-input[data-idx="' + idx + '"]');
+  status.textContent = 'Uploading…';
+  try {
+    const result = await uploadSopFile(file);
+    modalSteps[idx].imageUrl = result.url;
+    if (urlInput) urlInput.value = result.url;
+    updateStepImagePreview(idx);
+    status.textContent = '✓ Uploaded!';
+    setTimeout(() => { status.textContent = ''; }, 3000);
+  } catch (e) {
+    status.textContent = '✗ Upload failed: ' + e.message;
+  }
+}
+
+// ===== SOP FILE UPLOAD HELPER =====
+async function uploadSopFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = async function() {
+      const base64 = reader.result.split(',')[1]; // remove data:... prefix
+      try {
+        const res = await apiFetch('/sop-files', {
+          method: 'POST',
+          body: JSON.stringify({
+            filename: file.name,
+            contentType: file.type,
+            data: base64
+          })
+        });
+        const result = await res.json();
+        resolve(result); // { id, filename, contentType, size, url }
+      } catch (e) {
+        reject(e);
+      }
+    };
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
   });
 }
 
@@ -971,7 +1075,10 @@ function renderDocs() {
   container.innerHTML = modalDocs.map((doc, i) => `
     <div class="doc-card" data-idx="${i}">
       <input class="doc-name" type="text" placeholder="Document name (e.g., Renewal Tracker)" value="${escHtml(doc.name)}" data-idx="${i}" />
-      <input class="doc-url" type="text" placeholder="URL (e.g., https://docs.google.com/spreadsheets/d/...)" value="${escHtml(doc.url)}" data-idx="${i}" />
+      <input class="doc-url" type="text" placeholder="URL (e.g., https://docs.google.com/...)" value="${escHtml(doc.url)}" data-idx="${i}" />
+      <span class="or-text">or</span>
+      <button type="button" class="btn-upload-doc" data-idx="${i}">📁 Upload</button>
+      <input type="file" class="doc-file-input" data-idx="${i}" style="display:none" />
       <button type="button" class="doc-remove" onclick="removeDoc(${i})" title="Remove document">&times;</button>
     </div>
   `).join('');
@@ -981,6 +1088,40 @@ function renderDocs() {
   });
   container.querySelectorAll('.doc-url').forEach(el => {
     el.addEventListener('input', () => { modalDocs[parseInt(el.dataset.idx)].url = el.value.trim(); });
+  });
+
+  // Upload file button
+  container.querySelectorAll('.btn-upload-doc').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.idx);
+      container.querySelector('.doc-file-input[data-idx="' + idx + '"]').click();
+    });
+  });
+
+  // File input change handler
+  container.querySelectorAll('.doc-file-input').forEach(input => {
+    input.addEventListener('change', async () => {
+      const idx = parseInt(input.dataset.idx);
+      const file = input.files[0];
+      if (!file) return;
+      const btn = container.querySelector('.btn-upload-doc[data-idx="' + idx + '"]');
+      const origText = btn.textContent;
+      btn.textContent = 'Uploading…';
+      btn.disabled = true;
+      try {
+        const result = await uploadSopFile(file);
+        modalDocs[idx].url = result.url;
+        // Auto-fill name if empty
+        if (!modalDocs[idx].name) {
+          modalDocs[idx].name = file.name.replace(/\.[^/.]+$/, ''); // strip extension
+        }
+        renderDocs(); // re-render to show updated values
+      } catch (e) {
+        alert('Upload failed: ' + e.message);
+        btn.textContent = origText;
+        btn.disabled = false;
+      }
+    });
   });
 }
 
