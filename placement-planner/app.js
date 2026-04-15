@@ -104,6 +104,9 @@ var _serverRev = null;
 /** Flag: true while a conflict-resolution reload is in progress */
 var _conflictReloading = false;
 
+/** Flag: true while an API save is in-flight (prevents background sync interference) */
+var _savingInProgress = false;
+
 /**
  * Build a serializable project object from current AppState.
  */
@@ -233,7 +236,46 @@ function _reconcileState(opts) {
 
   AppState.waitingBank = dedupedBank;
 
-  // --- 4. Clean placed residents map (remove empty keys) ---
+  // --- 4. Deduplicate placed residents (same person at multiple units) ---
+  // If the same person is placed at two different unit keys, keep only the
+  // most recently placed one (the one whose unit key matches their Unit_Assigned).
+  if (residents.size > 0) {
+    var nameToUnits = new Map(); // normName → [unitKey, ...]
+    residents.forEach(function (r, unitKey) {
+      var normName = _normalizeName(r.Resident_Name);
+      if (!normName) return;
+      if (!nameToUnits.has(normName)) nameToUnits.set(normName, []);
+      nameToUnits.get(normName).push(unitKey);
+    });
+
+    nameToUnits.forEach(function (units, normName) {
+      if (units.length <= 1) return; // No duplicate
+      // Same person at multiple units — keep the one where unitKey matches Unit_Assigned
+      var keepKey = null;
+      for (var u = 0; u < units.length; u++) {
+        var r = residents.get(units[u]);
+        if (r && r.Unit_Assigned && r.Unit_Assigned.toUpperCase() === units[u]) {
+          keepKey = units[u];
+        }
+      }
+      // If no clear match, keep the last one (most recent edit)
+      if (!keepKey) keepKey = units[units.length - 1];
+
+      for (var u = 0; u < units.length; u++) {
+        if (units[u] !== keepKey) {
+          if (!opts.silent) {
+            console.info('[Reconcile] Removed duplicate placement for "' +
+              residents.get(units[u]).Resident_Name + '" at ' + units[u] +
+              ' (keeping ' + keepKey + ')');
+          }
+          residents.delete(units[u]);
+          stats.cleanedResidents++;
+        }
+      }
+    });
+  }
+
+  // --- 5. Clean placed residents map (remove empty keys) ---
   if (residents.size > 0) {
     var keysToRemove = [];
     residents.forEach(function (r, unitKey) {
@@ -294,6 +336,7 @@ function persistProject() {
 function _persistProjectToApi() {
   if (_conflictReloading) return; // Don't save while resolving a conflict
 
+  _savingInProgress = true;
   var data = buildProjectData();
   var payload = { project: data };
 
@@ -311,6 +354,7 @@ function _persistProjectToApi() {
     if (res.status === 409) {
       // Conflict: another user saved while we had stale data
       return res.json().then(function (conflict) {
+        _savingInProgress = false;
         _handleSaveConflict(conflict);
       });
     }
@@ -319,6 +363,7 @@ function _persistProjectToApi() {
     }
     return res.json().then(function (json) {
       _persistFailCount = 0;
+      _savingInProgress = false;
       _setApiConnected(true);
       _lastUpdatedAt = new Date().toISOString();
 
@@ -330,6 +375,7 @@ function _persistProjectToApi() {
       _renderSyncStatus();
     });
   }).catch(function (err) {
+    _savingInProgress = false;
     console.warn('API persist error:', err);
     _persistFailCount++;
     _setApiConnected(false);
@@ -396,18 +442,43 @@ function _handleSaveConflict(conflict) {
   }
 
   // --- MERGE RESIDENTS ---
-  // Union: server entries as base, overlay with local entries (local additions preserved)
+  // Smart merge: detects MOVES (same person at different units) to avoid duplicates.
+  // Local edits win because the local user just made them intentionally.
   var mergedResidents = new Map();
-  // First add all server residents
+
+  // Build name→unitKey maps for both sides to detect moves
+  var serverByName = new Map(); // normName → { unitKey, resident }
+  var localByName = new Map();
+
   (serverProject.residents || []).forEach(function (r) {
     var key = (r.Unit_Assigned || '').toUpperCase();
-    if (key) mergedResidents.set(key, r);
+    var normName = _normalizeName(r.Resident_Name);
+    if (key) {
+      mergedResidents.set(key, r);
+      if (normName) serverByName.set(normName, { unitKey: key, resident: r });
+    }
   });
-  // Then add local residents (new placements from this session are preserved)
+
   (localData.residents || []).forEach(function (r) {
     var key = (r.Unit_Assigned || '').toUpperCase();
-    if (key) mergedResidents.set(key, r);
+    var normName = _normalizeName(r.Resident_Name);
+    if (key) {
+      // Check if this person exists on the server at a DIFFERENT unit (= MOVE)
+      if (normName) {
+        var serverEntry = serverByName.get(normName);
+        if (serverEntry && serverEntry.unitKey !== key) {
+          // This is a MOVE: local says unit B, server says unit A.
+          // Remove the server's stale placement at the old unit.
+          mergedResidents.delete(serverEntry.unitKey);
+          console.info('[Merge] Detected move: "' + r.Resident_Name + '" moved from ' +
+            serverEntry.unitKey + ' → ' + key + ' (local edit wins)');
+        }
+        localByName.set(normName, { unitKey: key, resident: r });
+      }
+      mergedResidents.set(key, r);
+    }
   });
+
   var mergedResidentsArr = [];
   mergedResidents.forEach(function (r) { mergedResidentsArr.push(r); });
 
@@ -774,7 +845,7 @@ function sanitizePersistedState(data) {
    Runs every 30 seconds when the tab is visible.
    ------------------------------------------------------------------ */
 var _bgSyncInterval = null;
-var _BG_SYNC_MS = 30000; // 30 seconds
+var _BG_SYNC_MS = 10000; // 10 seconds — more responsive multi-user sync
 
 function _startBackgroundSync() {
   if (_bgSyncInterval) return;
@@ -791,6 +862,8 @@ function _startBackgroundSync() {
 function _backgroundSyncCheck() {
   if (_conflictReloading) return; // Skip if already resolving a conflict
   if (!_apiLoadComplete) return;  // Skip if initial load hasn't finished
+  if (_persistTimer) return;      // Skip if a save is pending (debounce in-flight)
+  if (_savingInProgress) return;  // Skip if an API save is actively in-flight
 
   fetch(API_BASE, { credentials: 'include' })
     .then(function (res) {
