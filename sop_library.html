@@ -11,6 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <meta name="description" content="Standard Operating Procedures library for Capstone Management Partners" />
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <style>
 :root{
   --brand-primary:#446472;
@@ -94,6 +95,32 @@ header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;p
 .sidebar-actions{padding:12px 16px;border-top:1px solid var(--border);background:#fff}
 .sidebar-actions button{width:100%;padding:10px;border-radius:8px;border:none;background:var(--brand-primary);color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s}
 .sidebar-actions button:hover{background:#3b5561}
+.sidebar-actions .btn-upload-excel{background:#fff;color:var(--brand-primary);border:1.5px solid var(--brand-primary);margin-top:8px}
+.sidebar-actions .btn-upload-excel:hover{background:#f0f7fa}
+
+/* Excel Upload Modal */
+.upload-zone{border:2px dashed var(--border);border-radius:12px;padding:32px 20px;text-align:center;cursor:pointer;transition:all .2s;background:#f8fafc;margin-bottom:16px}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--brand-accent-2);background:#f0faff}
+.upload-zone .upload-icon{font-size:36px;margin-bottom:8px}
+.upload-zone p{font-size:13px;color:var(--subtext);margin:4px 0}
+.upload-zone .upload-hint{font-size:11px;color:#94a3b8}
+.upload-file-name{font-size:13px;font-weight:600;color:var(--brand-primary);margin:8px 0}
+.upload-progress{margin:16px 0}
+.upload-progress .prog-bar{height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden}
+.upload-progress .prog-fill{height:100%;background:var(--brand-accent-2);border-radius:3px;transition:width .3s}
+.upload-progress .prog-text{font-size:12px;color:var(--subtext);margin-top:6px}
+.upload-results{max-height:200px;overflow-y:auto;font-size:12px;margin-top:12px;border:1px solid var(--border);border-radius:8px;padding:10px}
+.upload-results .res-ok{color:#16a34a}
+.upload-results .res-err{color:#ef4444}
+.upload-results div{padding:3px 0;border-bottom:1px solid #f1f5f9}
+.upload-template-section{background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px}
+.upload-template-section h4{margin:0 0 8px;font-size:14px;font-weight:700}
+.upload-template-section p{font-size:12px;color:var(--subtext);margin:4px 0}
+.upload-template-section .col-list{display:grid;grid-template-columns:1fr 1fr;gap:2px 16px;margin:10px 0;font-size:12px}
+.upload-template-section .col-list .req{font-weight:700;color:var(--text)}
+.upload-template-section .col-list .opt{color:var(--subtext)}
+.btn-dl-template{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:1px solid var(--brand-primary);border-radius:6px;background:#fff;color:var(--brand-primary);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;margin-top:8px}
+.btn-dl-template:hover{background:var(--brand-primary);color:#fff}
 
 /* ===== CONTENT AREA ===== */
 .content-area{overflow-y:auto;padding:32px;background:#f8fafc}
@@ -346,6 +373,7 @@ header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;p
     <!-- Admin: create new SOP -->
     <div class="sidebar-actions" id="sidebarActions" style="display:none">
       <button id="createSopBtn">+ Create New SOP</button>
+      <button class="btn-upload-excel" id="uploadExcelBtn" onclick="openUploadModal()">📤 Upload Excel</button>
     </div>
   </aside>
 
@@ -2198,6 +2226,291 @@ const _origViewSopToolbar = _origViewSopForAck;
     </div>
   </div>
 </div>
+
+<!-- Excel Upload Modal -->
+<div class="modal-backdrop" id="uploadModal">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-header">
+      <h3>📤 Upload SOPs from Excel</h3>
+      <button class="close-btn" onclick="closeUploadModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Template info -->
+      <div class="upload-template-section">
+        <h4>Excel Format Requirements</h4>
+        <p>Each row in the spreadsheet becomes one SOP. Use these column headers (first row):</p>
+        <div class="col-list">
+          <span class="req">title *</span><span class="opt">purpose</span>
+          <span class="req">sopType *</span><span class="opt">whenToUse</span>
+          <span class="opt">property</span><span class="opt">expectedResults</span>
+          <span class="opt">category</span><span class="opt">bestPractices</span>
+          <span class="opt">department</span><span class="opt">trainingUrl</span>
+          <span class="opt">system</span><span class="opt">step1Title … step10Title</span>
+          <span></span><span class="opt">step1Description … step10Description</span>
+        </div>
+        <p><strong>sopType</strong> must be <code>company</code> or <code>site</code>. If <code>site</code>, <strong>property</strong> is required.</p>
+        <p>Steps columns: <code>step1Title</code>, <code>step1Description</code>, <code>step2Title</code>, <code>step2Description</code>, etc. (up to 10).</p>
+        <button class="btn-dl-template" onclick="downloadSopTemplate()">⬇ Download Template (.xlsx)</button>
+      </div>
+
+      <!-- Drop zone -->
+      <div class="upload-zone" id="uploadZone" onclick="document.getElementById('excelFileInput').click()">
+        <div class="upload-icon">📁</div>
+        <p><strong>Click to browse</strong> or drag & drop an Excel file here</p>
+        <p class="upload-hint">Accepts .xlsx and .xls files</p>
+      </div>
+      <input type="file" id="excelFileInput" accept=".xlsx,.xls" style="display:none" onchange="handleExcelFile(this.files[0])" />
+      <div class="upload-file-name" id="uploadFileName" style="display:none"></div>
+
+      <!-- Progress -->
+      <div class="upload-progress" id="uploadProgress" style="display:none">
+        <div class="prog-bar"><div class="prog-fill" id="uploadProgFill" style="width:0%"></div></div>
+        <div class="prog-text" id="uploadProgText">Preparing…</div>
+      </div>
+
+      <!-- Results -->
+      <div class="upload-results" id="uploadResults" style="display:none"></div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeUploadModal()">Close</button>
+      <button class="btn-save" id="uploadStartBtn" onclick="startExcelUpload()" style="display:none">Upload SOPs</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== EXCEL UPLOAD FUNCTIONALITY =====
+let uploadedRows = [];
+
+function openUploadModal() {
+  uploadedRows = [];
+  document.getElementById('uploadFileName').style.display = 'none';
+  document.getElementById('uploadProgress').style.display = 'none';
+  document.getElementById('uploadResults').style.display = 'none';
+  document.getElementById('uploadResults').innerHTML = '';
+  document.getElementById('uploadStartBtn').style.display = 'none';
+  document.getElementById('excelFileInput').value = '';
+  document.getElementById('uploadModal').classList.add('open');
+}
+
+function closeUploadModal() {
+  document.getElementById('uploadModal').classList.remove('open');
+}
+
+// Drag & drop
+(function() {
+  document.addEventListener('DOMContentLoaded', function() {
+    const zone = document.getElementById('uploadZone');
+    if (!zone) return;
+    zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', function() { zone.classList.remove('drag-over'); });
+    zone.addEventListener('drop', function(e) {
+      e.preventDefault();
+      zone.classList.remove('drag-over');
+      const f = e.dataTransfer.files[0];
+      if (f) handleExcelFile(f);
+    });
+  });
+})();
+
+function handleExcelFile(file) {
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (!['xlsx', 'xls'].includes(ext)) {
+    alert('Please select an .xlsx or .xls file.');
+    return;
+  }
+
+  document.getElementById('uploadFileName').textContent = '📎 ' + file.name;
+  document.getElementById('uploadFileName').style.display = 'block';
+  document.getElementById('uploadResults').style.display = 'none';
+  document.getElementById('uploadResults').innerHTML = '';
+  document.getElementById('uploadProgress').style.display = 'none';
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const raw = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+      if (!raw.length) { alert('The spreadsheet is empty.'); return; }
+
+      // Normalize headers (lowercase, trim)
+      uploadedRows = raw.map(row => {
+        const norm = {};
+        Object.keys(row).forEach(k => { norm[k.trim().toLowerCase()] = String(row[k]).trim(); });
+        return norm;
+      });
+
+      // Validate
+      const errors = [];
+      uploadedRows.forEach((r, i) => {
+        if (!r.title) errors.push('Row ' + (i + 2) + ': missing title');
+        if (!r.soptype || !['company', 'site'].includes(r.soptype.toLowerCase()))
+          errors.push('Row ' + (i + 2) + ': sopType must be "company" or "site"');
+        if (r.soptype && r.soptype.toLowerCase() === 'site' && !r.property)
+          errors.push('Row ' + (i + 2) + ': property is required for site SOPs');
+      });
+
+      if (errors.length) {
+        const res = document.getElementById('uploadResults');
+        res.style.display = 'block';
+        res.innerHTML = '<div style="font-weight:700;color:#ef4444;margin-bottom:8px">Validation Errors (' + errors.length + ')</div>' +
+          errors.map(e => '<div class="res-err">❌ ' + escHtml(e) + '</div>').join('');
+        document.getElementById('uploadStartBtn').style.display = 'none';
+        return;
+      }
+
+      // Show preview
+      const res = document.getElementById('uploadResults');
+      res.style.display = 'block';
+      res.innerHTML = '<div style="font-weight:600;color:#16a34a;margin-bottom:6px">✓ ' + uploadedRows.length + ' SOP(s) found and validated</div>' +
+        uploadedRows.map((r, i) => '<div>📄 <strong>' + escHtml(r.title) + '</strong> — ' + escHtml(r.soptype) +
+          (r.property ? ' / ' + escHtml(r.property) : '') + '</div>').join('');
+      document.getElementById('uploadStartBtn').style.display = '';
+
+    } catch (err) {
+      alert('Error reading Excel file: ' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// Parse step columns from a row
+function parseStepsFromRow(row) {
+  const steps = [];
+  for (let i = 1; i <= 10; i++) {
+    const t = row['step' + i + 'title'] || '';
+    const d = row['step' + i + 'description'] || '';
+    if (t || d) steps.push({ title: t, description: d });
+  }
+  return steps;
+}
+
+async function startExcelUpload() {
+  if (!uploadedRows.length) return;
+
+  const btn = document.getElementById('uploadStartBtn');
+  btn.disabled = true;
+  btn.textContent = 'Uploading…';
+
+  const prog = document.getElementById('uploadProgress');
+  const fill = document.getElementById('uploadProgFill');
+  const text = document.getElementById('uploadProgText');
+  prog.style.display = 'block';
+
+  const results = [];
+  const total = uploadedRows.length;
+
+  for (let i = 0; i < total; i++) {
+    const row = uploadedRows[i];
+    fill.style.width = Math.round(((i + 1) / total) * 100) + '%';
+    text.textContent = 'Uploading ' + (i + 1) + ' of ' + total + '…';
+
+    const sopType = (row.soptype || 'company').toLowerCase();
+    const property = sopType === 'site' ? (row.property || null) : null;
+    const title = row.title || '';
+    const category = row.category || 'General';
+    const department = row.department || '';
+    const system = row.system || '';
+    const trainingUrl = row.trainingurl || '';
+    const purpose = row.purpose || '';
+    const whenToUse = row.whentouse || '';
+    const expectedResults = row.expectedresults || '';
+    const bestPractices = row.bestpractices || '';
+    const stepsData = parseStepsFromRow(row);
+
+    // Build HTML content using same function as manual entry
+    const content = buildContentHtml({
+      title, property, system, category, department,
+      purpose, whenToUse, stepsData, expectedResults, bestPractices, trainingUrl
+    });
+
+    const payload = {
+      sopType, property, title, category, department, system, content,
+      purpose, whenToUse, stepsData, expectedResults, bestPractices, trainingUrl,
+      steps: '', resources: '', owner: '', lastReviewed: ''
+    };
+
+    try {
+      await apiFetch('/sops', { method: 'POST', body: JSON.stringify(payload) });
+      results.push({ ok: true, title });
+    } catch (e) {
+      results.push({ ok: false, title, err: e.message });
+    }
+  }
+
+  // Show results
+  text.textContent = 'Complete!';
+  const okCount = results.filter(r => r.ok).length;
+  const errCount = results.filter(r => !r.ok).length;
+
+  const res = document.getElementById('uploadResults');
+  res.style.display = 'block';
+  res.innerHTML = '<div style="font-weight:700;margin-bottom:8px">' +
+    (okCount ? '<span class="res-ok">✓ ' + okCount + ' created</span>' : '') +
+    (errCount ? ' <span class="res-err">✗ ' + errCount + ' failed</span>' : '') + '</div>' +
+    results.map(r => r.ok
+      ? '<div class="res-ok">✓ ' + escHtml(r.title) + '</div>'
+      : '<div class="res-err">✗ ' + escHtml(r.title) + ' — ' + escHtml(r.err) + '</div>'
+    ).join('');
+
+  btn.textContent = 'Upload SOPs';
+  btn.disabled = false;
+  uploadedRows = [];
+  document.getElementById('uploadStartBtn').style.display = 'none';
+
+  // Refresh SOP list
+  await loadAllSops();
+  renderNav();
+}
+
+// Download template .xlsx
+function downloadSopTemplate() {
+  const headers = [
+    'title', 'sopType', 'property', 'category', 'department', 'system',
+    'purpose', 'whenToUse', 'expectedResults', 'bestPractices', 'trainingUrl',
+    'step1Title', 'step1Description', 'step2Title', 'step2Description',
+    'step3Title', 'step3Description', 'step4Title', 'step4Description',
+    'step5Title', 'step5Description'
+  ];
+
+  const example = {
+    title: 'Example: Sending a Renewal Email',
+    sopType: 'site',
+    property: 'Ivory University House',
+    category: 'Leasing',
+    department: 'Leasing Staff',
+    system: 'Entrata',
+    purpose: 'This SOP outlines the process for sending renewal emails to residents.',
+    whenToUse: 'After a resident renews their lease.',
+    expectedResults: 'The resident receives the renewal email in their inbox.',
+    bestPractices: '• Always verify the resident has renewed\n• Use the template instead of typing manually\n• Review the email before sending',
+    trainingUrl: '',
+    step1Title: 'Log into Entrata',
+    step1Description: 'Open your browser and navigate to the Entrata login page.',
+    step2Title: 'Search for the Resident',
+    step2Description: 'Use the search bar to find the resident by name.',
+    step3Title: 'Open Email Composer',
+    step3Description: 'Click the Email button on the resident profile.',
+    step4Title: 'Select Template',
+    step4Description: 'Choose the renewal email template from Responses.',
+    step5Title: 'Review and Send',
+    step5Description: 'Verify all fields and click Send.'
+  };
+
+  const ws = XLSX.utils.json_to_sheet([example], { header: headers });
+  // Set column widths
+  ws['!cols'] = headers.map(h => ({ wch: h.length < 12 ? 16 : 30 }));
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'SOPs');
+  XLSX.writeFile(wb, 'SOP_Upload_Template.xlsx');
+}
+</script>
 
 <script src="standard-nav.js"></script>
 </body>
