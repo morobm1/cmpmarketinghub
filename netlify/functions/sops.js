@@ -212,7 +212,7 @@ export async function handler(event) {
       if (user.role !== 'admin') return { statusCode: 403, body: 'Admin only' };
 
       const body = JSON.parse(event.body || '{}');
-      const { sopType, property, title, category, department, system, content, purpose, whenToUse, stepsData, expectedResults, bestPractices, trainingUrl, steps, resources, owner, lastReviewed } = body;
+      const { sopType, property, title, category, department, system, content, purpose, whenToUse, stepsData, expectedResults, bestPractices, trainingUrl, relatedDocs, steps, resources, owner, lastReviewed } = body;
 
       if (!title) return { statusCode: 400, body: 'Title is required' };
       if (!sopType || !['company', 'site'].includes(sopType)) {
@@ -233,6 +233,7 @@ export async function handler(event) {
         purpose: (purpose || '').trim(),
         whenToUse: (whenToUse || '').trim(),
         stepsData: stepsData || [],
+        relatedDocs: relatedDocs || [],
         expectedResults: (expectedResults || '').trim(),
         bestPractices: (bestPractices || '').trim(),
         trainingUrl: (trainingUrl || '').trim(),
@@ -256,7 +257,7 @@ export async function handler(event) {
       if (user.role !== 'admin') return { statusCode: 403, body: 'Admin only' };
 
       const body = JSON.parse(event.body || '{}');
-      const { id, sopType, property, title, category, department, system, content, purpose, whenToUse, stepsData, expectedResults, bestPractices, trainingUrl, steps, resources, owner, lastReviewed } = body;
+      const { id, sopType, property, title, category, department, system, content, purpose, whenToUse, stepsData, expectedResults, bestPractices, trainingUrl, relatedDocs, steps, resources, owner, lastReviewed } = body;
 
       if (!id) return { statusCode: 400, body: 'id is required' };
       if (!title) return { statusCode: 400, body: 'Title is required' };
@@ -270,6 +271,7 @@ export async function handler(event) {
         purpose: (purpose || '').trim(),
         whenToUse: (whenToUse || '').trim(),
         stepsData: stepsData || [],
+        relatedDocs: relatedDocs || [],
         expectedResults: (expectedResults || '').trim(),
         bestPractices: (bestPractices || '').trim(),
         trainingUrl: (trainingUrl || '').trim(),

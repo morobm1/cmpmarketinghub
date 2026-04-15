@@ -122,6 +122,21 @@ header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;p
 .btn-dl-template{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:1px solid var(--brand-primary);border-radius:6px;background:#fff;color:var(--brand-primary);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;margin-top:8px}
 .btn-dl-template:hover{background:var(--brand-primary);color:#fff}
 
+/* Related Documents */
+.doc-card{display:flex;gap:8px;align-items:center;margin-bottom:8px;padding:10px;border:1px solid var(--border);border-radius:8px;background:#fafbfc}
+.doc-card input{flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px}
+.doc-card input:focus{outline:none;border-color:var(--brand-accent-2);box-shadow:0 0 0 3px rgba(82,213,255,.15)}
+.doc-card .doc-name{flex:1;min-width:120px}
+.doc-card .doc-url{flex:2}
+.doc-card .doc-remove{background:none;border:none;color:#ef4444;font-size:16px;cursor:pointer;padding:4px 8px;border-radius:4px;flex-shrink:0;width:auto;margin:0}
+.doc-card .doc-remove:hover{background:#fef2f2}
+.add-doc-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1px dashed var(--border);border-radius:6px;background:#fff;color:var(--brand-primary);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;margin-top:4px}
+.add-doc-btn:hover{border-color:var(--brand-accent-2);background:#f0faff}
+.related-docs-view{background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:16px 20px;margin:16px 0}
+.related-docs-view h4{margin:0 0 10px;font-size:14px;font-weight:700;color:#0c4a6e;display:flex;align-items:center;gap:8px}
+.related-docs-view a{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:#fff;border:1px solid #bae6fd;border-radius:6px;color:#0369a1;font-size:13px;font-weight:600;text-decoration:none;margin:4px 6px 4px 0;transition:all .15s}
+.related-docs-view a:hover{background:#e0f2fe;border-color:#7dd3fc}
+
 /* ===== CONTENT AREA ===== */
 .content-area{overflow-y:auto;padding:32px;background:#f8fafc}
 .content-wrapper{max-width:900px;margin:0 auto;background:#fff;border:1px solid var(--border);border-radius:14px;padding:40px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
@@ -224,6 +239,12 @@ header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;p
 .step-card .step-desc{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;min-height:70px;resize:vertical;font-family:inherit}
 .step-card .step-desc:focus{outline:none;border-color:var(--brand-accent-2);box-shadow:0 0 0 3px rgba(82,213,255,.15)}
 .step-card .step-desc-hint{font-size:11px;color:var(--subtext);margin-top:4px}
+.step-card .step-image-row{margin-top:10px;display:flex;gap:8px;align-items:flex-start}
+.step-card .step-image-input{flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px}
+.step-card .step-image-input:focus{outline:none;border-color:var(--brand-accent-2);box-shadow:0 0 0 3px rgba(82,213,255,.15)}
+.step-card .step-image-preview{margin-top:8px;border-radius:8px;overflow:hidden;border:1px solid var(--border);background:#f8fafc}
+.step-card .step-image-preview img{max-width:100%;max-height:240px;display:block}
+.step-card .step-image-label{font-size:11px;color:var(--subtext);font-weight:600;display:flex;align-items:center;gap:4px;margin-top:10px;margin-bottom:4px}
 
 .add-step-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border:2px dashed var(--border);border-radius:8px;background:#fff;color:var(--brand-primary);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;width:auto;margin-bottom:14px}
 .add-step-btn:hover{border-color:var(--brand-accent-2);background:#f0f9ff}
@@ -474,6 +495,12 @@ header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;p
       <label for="fTrainingUrl">Video or Image URL</label>
       <input id="fTrainingUrl" type="text" placeholder="Paste a YouTube, Loom, Google Drive, or image URL…" />
       <div class="hint">Supports: YouTube, Loom, Vimeo, Google Drive video links, or direct image URLs (.jpg, .png, .gif, .webp)</div>
+
+      <!-- Related Documents -->
+      <div class="form-section-head" style="margin-top:24px">Related Documents & Templates <span class="optional-tag">Optional</span></div>
+      <div class="hint" style="margin:0 0 10px">Add links to Google Sheets, templates, forms, or any documents referenced in this SOP. Document names will be auto-linked in the step descriptions.</div>
+      <div id="docsContainer"></div>
+      <button type="button" class="add-doc-btn" id="addDocBtn">+ Add Document</button>
 
       <!-- Section 1 – Purpose -->
       <div class="form-section-head" style="margin-top:24px">Section 1 – Purpose</div>
@@ -853,16 +880,32 @@ function showWelcome() {
 }
 
 // ===== STEP MANAGEMENT =====
-let modalSteps = []; // array of { title, description }
+let modalSteps = []; // array of { title, description, imageUrl }
 
-function addStep(title, description) {
-  modalSteps.push({ title: title || '', description: description || '' });
+function addStep(title, description, imageUrl) {
+  modalSteps.push({ title: title || '', description: description || '', imageUrl: imageUrl || '' });
   renderSteps();
 }
 
 function removeStep(idx) {
   modalSteps.splice(idx, 1);
   renderSteps();
+}
+
+function updateStepImagePreview(idx) {
+  const url = modalSteps[idx].imageUrl || '';
+  const previewEl = document.getElementById('stepImgPreview_' + idx);
+  if (!previewEl) return;
+  if (url && /\.(jpg|jpeg|png|gif|webp|svg|bmp)(\?|$)/i.test(url)) {
+    previewEl.innerHTML = '<img src="' + escHtml(url) + '" alt="Step ' + (idx+1) + ' screenshot" onerror="this.parentElement.innerHTML=\'<div style=padding:12px;font-size:12px;color:#ef4444>Image failed to load</div>\'" />';
+    previewEl.style.display = 'block';
+  } else if (url) {
+    previewEl.innerHTML = '<img src="' + escHtml(url) + '" alt="Step ' + (idx+1) + ' screenshot" onerror="this.parentElement.innerHTML=\'<div style=padding:12px;font-size:12px;color:#ef4444>Image failed to load</div>\'" />';
+    previewEl.style.display = 'block';
+  } else {
+    previewEl.innerHTML = '';
+    previewEl.style.display = 'none';
+  }
 }
 
 function renderSteps() {
@@ -876,6 +919,13 @@ function renderSteps() {
       </div>
       <textarea class="step-desc" placeholder="Describe this step in detail…&#10;Use • or - at the start of a line for bullet points" data-field="description" data-idx="${i}">${escHtml(step.description)}</textarea>
       <div class="step-desc-hint">Tip: Start lines with • or - for bullet points</div>
+      <div class="step-image-label">🖼️ Screenshot / Image URL <span style="font-weight:400;color:#94a3b8">(optional)</span></div>
+      <div class="step-image-row">
+        <input class="step-image-input" type="text" placeholder="Paste image URL (e.g., https://i.imgur.com/screenshot.png)" value="${escHtml(step.imageUrl)}" data-idx="${i}" />
+      </div>
+      <div class="step-image-preview" id="stepImgPreview_${i}" style="${step.imageUrl ? '' : 'display:none'}">
+        ${step.imageUrl ? '<img src="' + escHtml(step.imageUrl) + '" alt="Step ' + (i+1) + ' screenshot" onerror="this.parentElement.innerHTML=\'<div style=padding:12px;font-size:12px;color:#ef4444>Image failed to load</div>\'" />' : ''}
+      </div>
     </div>
   `).join('');
 
@@ -885,6 +935,52 @@ function renderSteps() {
   });
   container.querySelectorAll('.step-desc').forEach(el => {
     el.addEventListener('input', () => { modalSteps[parseInt(el.dataset.idx)].description = el.value; });
+  });
+  container.querySelectorAll('.step-image-input').forEach(el => {
+    el.addEventListener('input', () => {
+      const idx = parseInt(el.dataset.idx);
+      modalSteps[idx].imageUrl = el.value.trim();
+      updateStepImagePreview(idx);
+    });
+    // Also update preview on paste
+    el.addEventListener('paste', () => {
+      setTimeout(() => {
+        const idx = parseInt(el.dataset.idx);
+        modalSteps[idx].imageUrl = el.value.trim();
+        updateStepImagePreview(idx);
+      }, 50);
+    });
+  });
+}
+
+// ===== RELATED DOCUMENTS MANAGEMENT =====
+let modalDocs = []; // array of { name, url }
+
+function addDoc(name, url) {
+  modalDocs.push({ name: name || '', url: url || '' });
+  renderDocs();
+}
+
+function removeDoc(idx) {
+  modalDocs.splice(idx, 1);
+  renderDocs();
+}
+
+function renderDocs() {
+  const container = document.getElementById('docsContainer');
+  container.innerHTML = modalDocs.map((doc, i) => `
+    <div class="doc-card" data-idx="${i}">
+      <input class="doc-name" type="text" placeholder="Document name (e.g., Renewal Tracker)" value="${escHtml(doc.name)}" data-idx="${i}" />
+      <input class="doc-url" type="text" placeholder="URL (e.g., https://docs.google.com/spreadsheets/d/...)" value="${escHtml(doc.url)}" data-idx="${i}" />
+      <button type="button" class="doc-remove" onclick="removeDoc(${i})" title="Remove document">&times;</button>
+    </div>
+  `).join('');
+
+  container.querySelectorAll('.doc-name').forEach(el => {
+    el.addEventListener('input', () => { modalDocs[parseInt(el.dataset.idx)].name = el.value; });
+  });
+  container.querySelectorAll('.doc-url').forEach(el => {
+    el.addEventListener('input', () => { modalDocs[parseInt(el.dataset.idx)].url = el.value.trim(); });
   });
 }
 
@@ -993,7 +1089,7 @@ function buildTrainingEmbed(url) {
 
 // ===== GENERATE HTML CONTENT FROM FORM =====
 function buildContentHtml(data) {
-  const { title, property, system, category, department, purpose, whenToUse, stepsData, expectedResults, bestPractices, trainingUrl } = data;
+  const { title, property, system, category, department, purpose, whenToUse, stepsData, expectedResults, bestPractices, trainingUrl, relatedDocs } = data;
 
   let html = '';
 
@@ -1016,16 +1112,41 @@ function buildContentHtml(data) {
   // Training video/image
   if (trainingUrl) html += buildTrainingEmbed(trainingUrl);
 
+  // Related Documents section
+  if (relatedDocs && relatedDocs.length > 0) {
+    html += `\n<div class="related-docs-view">\n`;
+    html += `<h4>📎 Related Documents & Templates</h4>\n`;
+    relatedDocs.forEach(d => {
+      html += `<a href="${escHtml(d.url)}" target="_blank" rel="noopener noreferrer">📄 ${escHtml(d.name)}</a>\n`;
+    });
+    html += `</div>\n`;
+  }
+
+  // Helper: replace document names in text with hyperlinks
+  function linkifyDocNames(text) {
+    if (!relatedDocs || !relatedDocs.length) return text;
+    let result = text;
+    // Sort by name length descending to match longer names first
+    const sorted = relatedDocs.slice().sort((a, b) => b.name.length - a.name.length);
+    sorted.forEach(d => {
+      if (!d.name || !d.url) return;
+      const escaped = d.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const re = new RegExp('(?!<[^>]*?)\\b(' + escaped + ')\\b(?![^<]*?>)', 'gi');
+      result = result.replace(re, '<a href="' + escHtml(d.url) + '" target="_blank" rel="noopener noreferrer" style="color:#0369a1;font-weight:600;text-decoration:underline">$1</a>');
+    });
+    return result;
+  }
+
   // Section 1 – Purpose
   if (purpose) {
     html += `\n<h2>Section 1 – Purpose</h2>\n`;
-    html += textToBulletHtml(purpose);
+    html += linkifyDocNames(textToBulletHtml(purpose));
   }
 
   // Section 2 – When to Use
   if (whenToUse) {
     html += `\n<h2>Section 2 – When to Use This Process</h2>\n`;
-    html += textToBulletHtml(whenToUse);
+    html += linkifyDocNames(textToBulletHtml(whenToUse));
   }
 
   // Section 3 – Steps
@@ -1033,9 +1154,12 @@ function buildContentHtml(data) {
     html += `\n<h2>Section 3 – Step-by-Step Instructions</h2>\n`;
     stepsData.forEach((step, i) => {
       if (!step.title && !step.description) return;
-      html += `\n<h3><span class="step-number">${i + 1}</span> ${escHtml(step.title)}</h3>\n`;
+      html += `\n<h3><span class="step-number">${i + 1}</span> ${linkifyDocNames(escHtml(step.title))}</h3>\n`;
       if (step.description) {
-        html += textToBulletHtml(step.description);
+        html += linkifyDocNames(textToBulletHtml(step.description));
+      }
+      if (step.imageUrl) {
+        html += `<div style="margin:12px 0 20px;text-align:center"><img src="${escHtml(step.imageUrl)}" alt="Step ${i + 1} screenshot" style="max-width:100%;border-radius:8px;border:1px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,.08)" /></div>\n`;
       }
     });
   }
@@ -1086,7 +1210,9 @@ function openCreateModal() {
   document.getElementById('fLastUpdated').value = 'Will be set on save';
   setSystemValue('');
   modalSteps = [];
-  addStep('', ''); // start with one empty step
+  modalDocs = [];
+  renderDocs();
+  addStep('', '', ''); // start with one empty step
   updatePropertyDropdown();
   togglePropertyField();
   document.getElementById('sopModal').classList.add('open');
@@ -1116,10 +1242,16 @@ function openEditModal(id) {
     document.getElementById('fLastUpdated').value = '—';
   }
 
+  // Related Documents
+  modalDocs = Array.isArray(sop.relatedDocs) && sop.relatedDocs.length > 0
+    ? sop.relatedDocs.map(d => ({ name: d.name || '', url: d.url || '' }))
+    : [];
+  renderDocs();
+
   // Steps
   modalSteps = Array.isArray(sop.stepsData) && sop.stepsData.length > 0
-    ? sop.stepsData.map(s => ({ title: s.title || '', description: s.description || '' }))
-    : [{ title: '', description: '' }];
+    ? sop.stepsData.map(s => ({ title: s.title || '', description: s.description || '', imageUrl: s.imageUrl || '' }))
+    : [{ title: '', description: '', imageUrl: '' }];
   renderSteps();
 
   updatePropertyDropdown();
@@ -1158,17 +1290,19 @@ async function saveSopFromModal() {
 
   // Filter out empty steps
   const stepsData = modalSteps.filter(s => s.title.trim() || s.description.trim());
+  // Filter out empty docs
+  const relatedDocs = modalDocs.filter(d => d.name.trim() && d.url.trim());
 
   if (!title) { alert('Title is required.'); return; }
   if (sopType === 'site' && !property) { alert('Select a property for site-specific SOPs.'); return; }
 
   // Auto-generate HTML content from structured fields
-  const content = buildContentHtml({ title, property, system, category, department, purpose, whenToUse, stepsData, expectedResults, bestPractices, trainingUrl });
+  const content = buildContentHtml({ title, property, system, category, department, purpose, whenToUse, stepsData, expectedResults, bestPractices, trainingUrl, relatedDocs });
 
   const payload = {
     sopType, property, title, category, department, system, content,
     purpose, whenToUse, stepsData, expectedResults, bestPractices,
-    trainingUrl,
+    trainingUrl, relatedDocs,
     steps: '', resources: '', owner: '', lastReviewed: ''
   };
 
@@ -1625,7 +1759,8 @@ document.getElementById('fCategory').addEventListener('change', function() {
 document.getElementById('fDepartment').addEventListener('change', function() {
   document.getElementById('fDepartmentVendor').style.display = this.value === '__vendor__' ? '' : 'none';
 });
-document.getElementById('addStepBtn').addEventListener('click', () => addStep('', ''));
+document.getElementById('addStepBtn').addEventListener('click', () => addStep('', '', ''));
+document.getElementById('addDocBtn').addEventListener('click', () => addDoc('', ''));
 document.getElementById('searchInput').addEventListener('input', renderNav);
 
 // ===== ACKNOWLEDGEMENT FEATURE =====
