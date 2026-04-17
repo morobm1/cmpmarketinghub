@@ -605,8 +605,44 @@ async function fetchXlsx(url,label){
     if(!r.ok)throw new Error('HTTP '+r.status+' for '+label);
     const buf=await r.arrayBuffer();
     const wb=XLSX.read(buf,{type:'array',cellDates:true});
-    return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+    return smartParse(wb.Sheets[wb.SheetNames[0]]);
   }catch(e){console.warn('Failed:',label,e);return null;}
+}
+
+/* Smart parse: detect when header row is a title and actual column names are in the first data row */
+function smartParse(ws){
+  const raw=XLSX.utils.sheet_to_json(ws,{defval:'',header:1});
+  if(!raw.length)return[];
+  // Find the row that looks like column headers (contains known keys)
+  const knownKeys=['Banner ID','BannerID','Name','Room','Room:','First Name','Last Name','Email','Timestamp','Full Name','Admit Term'];
+  let headerIdx=0;
+  for(let i=0;i<Math.min(5,raw.length);i++){
+    const row=raw[i];
+    if(Array.isArray(row)){
+      const vals=row.map(v=>(v||'').toString().trim());
+      const matches=vals.filter(v=>knownKeys.some(k=>v.toLowerCase().includes(k.toLowerCase())));
+      if(matches.length>=1){headerIdx=i;break;}
+    }
+  }
+  // Use headerIdx row as column names
+  const headers=raw[headerIdx].map((h,i)=>{
+    const s=(h||'').toString().trim();
+    return s||('col_'+i);
+  });
+  const data=[];
+  for(let i=headerIdx+1;i<raw.length;i++){
+    const row=raw[i];
+    if(!row||!row.length)continue;
+    const obj={};
+    let hasData=false;
+    headers.forEach((h,j)=>{
+      const v=row[j]!==undefined?row[j]:'';
+      obj[h]=v;
+      if(v!==''&&v!==null&&v!==undefined)hasData=true;
+    });
+    if(hasData)data.push(obj);
+  }
+  return data;
 }
 
 function filePick(){
@@ -616,25 +652,39 @@ function filePick(){
 async function parseFile(file){
   const buf=await file.arrayBuffer();
   const wb=XLSX.read(buf,{type:'array',cellDates:true});
-  return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+  return smartParse(wb.Sheets[wb.SheetNames[0]]);
+}
+
+/* Fuzzy column finder: match by substring (case-insensitive) */
+function col(r,/*...keywords*/){
+  const keys=Object.keys(r);
+  for(let i=1;i<arguments.length;i++){
+    const kw=arguments[i].toLowerCase();
+    // Exact match first
+    if(r[arguments[i]]!==undefined&&r[arguments[i]]!=='')return(r[arguments[i]]||'').toString().trim();
+    // Substring match
+    const found=keys.find(k=>k.toLowerCase().includes(kw));
+    if(found&&r[found]!==undefined&&r[found]!=='')return(r[found]||'').toString().trim();
+  }
+  return'';
 }
 
 /* Map renewal row */
 function mapRenewalRow(r,existing){
   return{
     _id:(existing&&existing._id)||uid(),recordType:'Renewal',
-    fullName:r['Full Name']||r['Name']||'',
-    bannerId:N(r['Banner ID']||r['BannerID']||r['Banner_ID']||''),
-    email:r['Email Address']||r['Email']||'',
-    programType:r['Program type']||r['Program Type']||r['Program']||'',
-    majorConcentration:r['Major / concentration']||r['Major']||'',
-    currentProgramYear:r['Current program year']||'',
-    currentUnit:r['Current unit / bed space']||r['Current Unit']||'',
-    renewalInterest:r['Renewal interest']||r['Renewal Interest']||'',
-    parkingInterest:r['Parking interest']||r['Parking']||'',
-    sameUnitInterest:r['Same unit interest']||'',
-    transferPreferences:r['Transfer preferences']||'',
-    preferredRoommate:r['Preferred roommate names']||r['Preferred Roommate']||'',
+    fullName:col(r,'Full Name','Name'),
+    bannerId:N(col(r,'Banner ID','BannerID','Banner_ID')),
+    email:col(r,'Email Address','Email'),
+    programType:col(r,'program are you enrolled','Program type','Program Type','Program'),
+    majorConcentration:col(r,'major concentration','Major / concentration','Major'),
+    currentProgramYear:col(r,'year of your program','Current program year'),
+    currentUnit:col(r,'Current Unit Number','Current unit','Current Unit'),
+    renewalInterest:col(r,'interested in renewing','Renewal interest','Renewal Interest'),
+    parkingInterest:col(r,'parking space','Parking interest','Parking'),
+    sameUnitInterest:col(r,'staying in your same unit','Same unit interest'),
+    transferPreferences:col(r,'rank the unit types','Transfer preferences'),
+    preferredRoommate:col(r,'preferred roommate','Preferred Roommate'),
     verificationStatus:(existing&&existing.verificationStatus)||'Not Verified',
     status:(existing&&existing.status)||'Waitlist',
     assignedUnit:(existing&&existing.assignedUnit)||'',
@@ -648,29 +698,29 @@ function mapRenewalRow(r,existing){
 
 /* Map new waitlist row */
 function mapNewRow(r,existing){
-  const fn=r['First Name']||r['FirstName']||'';
-  const ln=r['Last Name']||r['LastName']||'';
-  const fullName=(fn+' '+ln).trim()||r['Name']||'';
+  const fn=col(r,'First Name','FirstName');
+  const ln=col(r,'Last Name','LastName');
+  const fullName=(fn+' '+ln).trim()||col(r,'Name');
   return{
     _id:(existing&&existing._id)||uid(),recordType:'New Lease',fullName,firstName:fn,lastName:ln,
-    bannerId:N(r['Brown Banner ID']||r['Banner ID']||r['BannerID']||''),
-    email:r['Preferred Email Address']||r['Email']||'',
-    phone:r['Phone Number']||'',
-    gender:r['Gender Identity']||r['Gender']||'',
-    programType:r['Program Type']||r['Program']||'',
-    majorConcentration:r['Major or Concentration']||r['Major']||'',
-    incomingFirstYear:r['Incoming first-year grad/med flag']||'',
-    floorplanPref1:r['Floorplan preferences 1']||r['Floorplan Pref 1']||r['Floorplan preference 1']||'',
-    floorplanPref2:r['Floorplan preferences 2']||r['Floorplan Pref 2']||r['Floorplan preference 2']||'',
-    floorplanPref3:r['Floorplan preferences 3']||r['Floorplan Pref 3']||'',
-    floorplanPref4:r['Floorplan preferences 4']||r['Floorplan Pref 4']||'',
-    desiredStartMonth:r['Desired start month']||r['Start Month']||'',
-    parkingNeed:r['Parking need']||r['Parking']||'',
-    preferredRoommate:r['Preferred roommate']||r['Roommate']||'',
-    esaFlag:r['ESA flag']||r['ESA']||'',
-    okWithPets:r['Ok living with pets']||'',
-    enteredEntrata:r['Entered in Entrata']||'',
-    confirmationSent:r['Confirmation email sent']||'',
+    bannerId:N(col(r,'Banner ID','BannerID','Banner_ID')),
+    email:col(r,'Preferred Email','Email Address','Email'),
+    phone:col(r,'Phone Number','Phone'),
+    gender:col(r,'Gender Identity','Gender'),
+    programType:col(r,'Program Type','Program'),
+    majorConcentration:col(r,'Major or Concentration','Major'),
+    incomingFirstYear:col(r,'incoming First Year','first-year grad'),
+    floorplanPref1:col(r,'First Choice','Floorplan preference 1','Floorplan Pref 1'),
+    floorplanPref2:col(r,'Second Choice','Floorplan preference 2','Floorplan Pref 2'),
+    floorplanPref3:col(r,'Third Choice','Floorplan preference 3','Floorplan Pref 3'),
+    floorplanPref4:col(r,'Fourth Choice','Floorplan preference 4','Floorplan Pref 4'),
+    desiredStartMonth:col(r,'Desired Start Month','Start Month'),
+    parkingNeed:col(r,'need of parking','Parking need','Parking'),
+    preferredRoommate:col(r,'Preferred Roommate','Roommate'),
+    esaFlag:col(r,'bringing an ESA','ESA flag','ESA'),
+    okWithPets:col(r,'living with pets','Ok living'),
+    enteredEntrata:col(r,'Entered in Entrata'),
+    confirmationSent:col(r,'Confirmation email','Confirmation sent'),
     verificationStatus:(existing&&existing.verificationStatus)||'Not Verified',
     status:(existing&&existing.status)||'Waitlist',
     assignedUnit:(existing&&existing.assignedUnit)||'',
@@ -683,9 +733,12 @@ function mapNewRow(r,existing){
 
 /* Map directory row */
 function mapDirRow(r,existing){
-  const room=(r['Room']||r['Unit']||r['Room Number']||'').toString().trim();
-  const resident=(r['Resident']||r['Name']||'').toString().trim();
-  const idNum=(r['ID Number']||r['Banner ID']||r['ID']||'').toString().trim();
+  const room=(r['Room:']||r['Room']||r['Unit']||r['Room Number']||'').toString().trim();
+  // For __EMPTY columns, only use if they have real content (not empty string)
+  const resRaw=r['Resident']||r['Name']||(r['__EMPTY']&&r['__EMPTY'].toString().trim())||'';
+  const resident=resRaw.toString().trim();
+  const idRaw=r['ID Number']||r['Banner ID']||r['ID']||(r['__EMPTY_1']&&r['__EMPTY_1'].toString().trim())||'';
+  const idNum=idRaw.toString().trim();
   let gr='';
   if(resident==='M'||resident==='F')gr=resident;
   if(existing&&existing.genderRestriction)gr=existing.genderRestriction;
@@ -716,7 +769,7 @@ async function loadAllSources(){
   const ren=await fetchXlsx(S.settings.srcRenewals,'Renewals');
   if(ren){
     const mapped=ren.map(r=>{
-      const bid=N(r['Banner ID']||r['BannerID']||r['Banner_ID']||'');
+      const bid=N(col(r,'Banner ID','BannerID','Banner_ID'));
       const ex=bid?S.renewalWaitlist.find(w=>w.bannerId===bid):null;
       return mapRenewalRow(r,ex);
     });
@@ -727,9 +780,9 @@ async function loadAllSources(){
   const nw=await fetchXlsx(S.settings.srcNewWaitlist,'New Waitlist');
   if(nw){
     const mapped=nw.map(r=>{
-      const fn=r['First Name']||r['FirstName']||'';const ln=r['Last Name']||r['LastName']||'';
-      const full=(fn+' '+ln).trim()||r['Name']||'';
-      const bid=N(r['Brown Banner ID']||r['Banner ID']||r['BannerID']||'');
+      const fn=col(r,'First Name','FirstName');const ln=col(r,'Last Name','LastName');
+      const full=(fn+' '+ln).trim()||col(r,'Name');
+      const bid=N(col(r,'Banner ID','BannerID'));
       const ex=bid?S.newWaitlist.find(w=>w.bannerId===bid):S.newWaitlist.find(w=>N(w.fullName)===N(full));
       return mapNewRow(r,ex);
     });
@@ -739,20 +792,20 @@ async function loadAllSources(){
   // 3. Renewal verification
   const vr=await fetchXlsx(S.settings.srcVerifRenewal,'Renewal Verif');
   if(vr){
-    S.verificationRenewals=vr.map(r=>({bannerId:N(r['Banner ID']||r['BannerID']||r['Banner_ID']||''),name:(r['Name']||r['Full Name']||'').toString().trim(),studentLevel:r['Student Level']||'',studentPopulation:r['Student population description']||r['Student Population']||'',programCode:r['Program code']||r['Program Code']||'',program:r['Program']||'',graduationTerm:r['Graduation intended term']||r['Graduation Term']||''}));ok++;
+    S.verificationRenewals=vr.map(r=>({bannerId:N(col(r,'Banner ID','BannerID')),name:col(r,'Name','Full Name'),studentLevel:col(r,'Student Level'),studentPopulation:col(r,'STUDENT_POPULATION','Student population','Student Population'),programCode:col(r,'Program code','Program Code'),program:col(r,'Program'),graduationTerm:col(r,'Graduation intended','Graduation Term')}));ok++;
   }else fail++;
 
   // 4. New verification
   const vn=await fetchXlsx(S.settings.srcVerifNew,'New Verif');
   if(vn){
-    S.verificationNew=vn.map(r=>({admitTerm:r['Admit Term']||'',bannerId:N(r['Banner ID']||r['BannerID']||r['Banner_ID']||''),lastName:(r['Last Name']||r['LastName']||'').trim(),firstName:(r['First Name']||r['FirstName']||'').trim(),confidentiality:r['Confidentiality indicator']||'',semesterLevel:r['Semester level']||r['Semester Level']||'',studentPopulation:r['Student population description']||r['Student Population']||'',program:r['Program']||'',programDescription:r['Program description']||r['Program Description']||'',expectedGraduation:r['Expected graduation term']||r['Expected Graduation']||''}));ok++;
+    S.verificationNew=vn.map(r=>({admitTerm:col(r,'Admit Term'),bannerId:N(col(r,'Banner ID','BannerID')),lastName:col(r,'Last Name','LastName'),firstName:col(r,'First Name','FirstName'),confidentiality:col(r,'Confidentiality'),semesterLevel:col(r,'Semester level','Semester Level'),studentPopulation:col(r,'STUDENT_POPULATION','Student population','Student Population'),program:col(r,'PROGRAM','Program'),programDescription:col(r,'PROGRAM_DESC','Program description','Program Description'),expectedGraduation:col(r,'Expected graduation','Graduation term')}));ok++;
   }else fail++;
 
   // 5. Directory
   const dr=await fetchXlsx(S.settings.srcDirectory,'Directory');
   if(dr){
     const mapped=dr.map(r=>{
-      const room=(r['Room']||r['Unit']||r['Room Number']||'').toString().trim();
+      const room=(r['Room:']||r['Room']||r['Unit']||r['Room Number']||'').toString().trim();
       const ex=S.unitDirectory.find(u=>N(u.room)===N(room));
       return mapDirRow(r,ex);
     });
@@ -774,21 +827,21 @@ async function loadAllSources(){
 async function importRenewals(){
   const f=await filePick();if(!f)return;
   const rows=await parseFile(f);
-  const mapped=rows.map(r=>{const bid=N(r['Banner ID']||r['BannerID']||r['Banner_ID']||'');const ex=bid?S.renewalWaitlist.find(w=>w.bannerId===bid):null;return mapRenewalRow(r,ex);});
+  const mapped=rows.map(r=>{const bid=N(col(r,'Banner ID','BannerID'));const ex=bid?S.renewalWaitlist.find(w=>w.bannerId===bid):null;return mapRenewalRow(r,ex);});
   S.renewalWaitlist=dedup(mapped.concat(S.renewalWaitlist));qSave();renderAll();
 }
 
 async function importNewWaitlist(){
   const f=await filePick();if(!f)return;
   const rows=await parseFile(f);
-  const mapped=rows.map(r=>{const fn=r['First Name']||'';const ln=r['Last Name']||'';const full=(fn+' '+ln).trim()||r['Name']||'';const bid=N(r['Brown Banner ID']||r['Banner ID']||'');const ex=bid?S.newWaitlist.find(w=>w.bannerId===bid):S.newWaitlist.find(w=>N(w.fullName)===N(full));return mapNewRow(r,ex);});
+  const mapped=rows.map(r=>{const fn=col(r,'First Name');const ln=col(r,'Last Name');const full=(fn+' '+ln).trim()||col(r,'Name');const bid=N(col(r,'Banner ID','BannerID'));const ex=bid?S.newWaitlist.find(w=>w.bannerId===bid):S.newWaitlist.find(w=>N(w.fullName)===N(full));return mapNewRow(r,ex);});
   S.newWaitlist=dedup(mapped.concat(S.newWaitlist));qSave();renderAll();
 }
 
 async function importDirectory(){
   const f=await filePick();if(!f)return;
   const rows=await parseFile(f);
-  const mapped=rows.map(r=>{const room=(r['Room']||r['Unit']||'').toString().trim();const ex=S.unitDirectory.find(u=>N(u.room)===N(room));return mapDirRow(r,ex);});
+  const mapped=rows.map(r=>{const room=(r['Room:']||r['Room']||r['Unit']||'').toString().trim();const ex=S.unitDirectory.find(u=>N(u.room)===N(room));return mapDirRow(r,ex);});
   const newR=new Set(mapped.map(m=>N(m.room)));
   const preserved=S.unitDirectory.filter(u=>!newR.has(N(u.room)));
   S.unitDirectory=mapped.concat(preserved);qSave();renderAll();
