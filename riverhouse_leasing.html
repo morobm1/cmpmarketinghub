@@ -808,7 +808,7 @@ async function loadAllSources(){
       const room=(r['Room:']||r['Room']||r['Unit']||r['Room Number']||'').toString().trim();
       const ex=S.unitDirectory.find(u=>N(u.room)===N(room));
       return mapDirRow(r,ex);
-    });
+    }).filter(u=>u.room);  // Remove entries with empty room numbers
     const newR=new Set(mapped.map(m=>N(m.room)));
     const preserved=S.unitDirectory.filter(u=>!newR.has(N(u.room)));
     S.unitDirectory=mapped.concat(preserved);ok++;
@@ -841,7 +841,7 @@ async function importNewWaitlist(){
 async function importDirectory(){
   const f=await filePick();if(!f)return;
   const rows=await parseFile(f);
-  const mapped=rows.map(r=>{const room=(r['Room:']||r['Room']||r['Unit']||'').toString().trim();const ex=S.unitDirectory.find(u=>N(u.room)===N(room));return mapDirRow(r,ex);});
+  const mapped=rows.map(r=>{const room=(r['Room:']||r['Room']||r['Unit']||'').toString().trim();const ex=S.unitDirectory.find(u=>N(u.room)===N(room));return mapDirRow(r,ex);}).filter(u=>u.room);
   const newR=new Set(mapped.map(m=>N(m.room)));
   const preserved=S.unitDirectory.filter(u=>!newR.has(N(u.room)));
   S.unitDirectory=mapped.concat(preserved);qSave();renderAll();
