@@ -447,9 +447,12 @@
               <button class="primary" onclick="RH.generateAgreement()">📝 Generate Placeholder Agreement</button>
             </div>
             <div id="agreementOutput" style="display:none;margin-top:20px">
-              <h4 style="margin-bottom:6px">Generated Placeholder Housing Agreement</h4>
-              <div class="copy-btn-wrap"><button class="sm good" onclick="RH.copyAgreement()">📋 Copy to Clipboard</button></div>
-              <div class="copy-output" id="agreementHTML"></div>
+              <h4 style="margin-bottom:6px">Generated Housing Agreement</h4>
+              <div class="copy-btn-wrap">
+                <button class="sm good" onclick="RH.printAgreement()">📄 Export as PDF (Print)</button>
+                <button class="sm" onclick="RH.copyAgreement()">📋 Copy HTML</button>
+              </div>
+              <div style="border:1px solid var(--border);border-radius:8px;padding:20px;background:#fff;max-height:600px;overflow:auto" id="agreementPreview"></div>
             </div>
           </div>
         </div>
@@ -1256,83 +1259,100 @@ function generateAgreement(){
   // Determine unit/bed type from floorplan: 2BR = By the Bed, Studio/1BR = By the Unit
   const isByBed=fp.startsWith('2BR');
   const unitBedType=isByBed?'By the Bed':'By the Unit';
-  const txt=agreementText({
-    date:new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}),
+  const html=agreementHTML({
+    date:new Date().toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}),
     name:p.fullName,type:residentType,unitBed:unitBedType,
     start:fmtDate(miD),end:fmtDate(moD),
+    startRaw:miD||'TBD',endRaw:moD||'05/31/2027',
     plan:fp,unit:unitNum,rent,deposit,
+    bannerId:p.bannerId||'',
   });
-  $('agreementHTML').textContent=txt;$('agreementOutput').style.display='';
+  $('agreementPreview').innerHTML=html;$('agreementOutput').style.display='';
   if(isRenewal){if(p.status==='Placement Assigned')p.status='Agreement Sent';}
   else{p.status='Placeholder Agreement Generated';}
   p.lastUpdated=new Date().toISOString();qSave();renderAll();
 }
 
-function agreementText(d){
-  return`════════════════════════════════════════════════════════════
-  BROWN UNIVERSITY — RIVER HOUSE HOUSING AGREEMENT (PLACEHOLDER)
-════════════════════════════════════════════════════════════
+function agreementHTML(d){
+  return`<div id="agreementPrint" style="font-family:'Times New Roman',Times,serif;font-size:14px;color:#000;max-width:700px;margin:0 auto;line-height:1.6;padding:40px;">
+<p style="text-align:center;font-weight:bold;font-size:16px;margin:0;">Brown University</p>
+<p style="text-align:center;font-weight:bold;font-size:16px;margin:0 0 24px;">River House Housing Agreement</p>
 
-Date Generated: ${d.date}
+<p style="text-align:justify;">This Housing Agreement (this "Agreement") is made and entered into on <u><strong>${d.date}</strong></u>, by and between <u><strong>${d.name}</strong></u> (the "Student") and Brown University ("Brown"), upon the terms and conditions stated herein, and is binding only when signed by Brown's authorized agent.</p>
 
-This Housing Agreement ("Agreement") is entered into between
-Brown University, acting through its Department of Residential
-Life ("University"), and the undersigned Resident(s).
+<hr style="border:none;border-top:2px solid #000;margin:24px 0;">
 
-RESIDENT INFORMATION
-─────────────────────
-Responsible Applicant: ${d.name}
-Resident Type:         ${d.type}
+<p style="font-weight:bold;font-size:15px;margin:0 0 16px;">SUMMARY OF HOUSING AGREEMENT TERMS:</p>
 
-UNIT INFORMATION
-─────────────────────
-Floor Plan:            ${d.plan}
-Unit / Bed Type:       ${d.unitBed}
-Unit Number:           ${d.unit}
+<p style="margin:12px 0;">Apartment Community (the "Property" or "Building"): River House, 1 Point Street, Providence, RI</p>
 
-LEASE TERMS
-─────────────────────
-Lease Start Date:      ${d.start}
-Lease End Date:        ${d.end}
-Monthly Installment:   $${d.rent}
-Security Deposit:      ${d.deposit}
+<p style="margin:12px 0;">Management Company: Capstone Management Partners</p>
 
-TERMS AND CONDITIONS
-─────────────────────
-1. OCCUPANCY: The Resident agrees to occupy the assigned unit
-   at River House for the term specified above.
+<table style="margin:16px 0;border-collapse:collapse;font-size:14px;">
+<tr><td style="padding:4px 24px 4px 0;font-weight:bold;">Resident Type:</td><td style="padding:4px 0;"><u>${d.type}</u></td></tr>
+<tr><td style="padding:4px 24px 4px 0;font-weight:bold;">Unit/Bed Type:</td><td style="padding:4px 0;"><u>${d.unitBed}</u></td></tr>
+</table>
 
-2. RENT: Monthly installments are due on the first of each month.
-   Late payments may incur additional fees.
+<p style="margin:16px 0;">Term (the "Term"): Start Date: <u><strong>${d.startRaw}</strong></u> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; End Date: <u><strong>${d.endRaw}</strong></u></p>
 
-3. SECURITY DEPOSIT: The deposit listed above will be held per
-   applicable state law and returned, less lawful deductions,
-   within 20 days after the lease ends.
+<p style="margin:16px 0;">Floor Plan Type: <u><strong>${d.plan}</strong></u></p>
 
-4. HOUSING RULES: The Resident agrees to comply with all River
-   House community policies and Brown University housing policies.
+<p style="margin:16px 0;">Premises: Apartment (the "Unit") &amp; Bedroom: <em><strong>(subject to final assignment; may be identified as "TBD")</strong></em> <u><strong>${d.unit}</strong></u></p>
 
-5. CANCELLATION: Subject to Brown University's published
-   cancellation policy and applicable fees.
+<p style="margin:16px 0;">Unit Charge: Monthly Installment Amount: <u><strong>$${d.rent}</strong></u></p>
 
-6. PLACEHOLDER NOTICE: This is a PLACEHOLDER housing agreement
-   and reserved space document. It confirms your placement and
-   lease terms but may be superseded by a final lease agreement
-   executed through Entrata.
+<p style="margin:16px 0;">Security Deposit: ${d.deposit}, to be paid to Management Company at time of lease execution or some mutually agreeable time prior to occupancy.</p>
 
-════════════════════════════════════════════════════════════
-Resident Signature: ________________________________________
+<hr style="border:none;border-top:1px solid #999;margin:24px 0;">
 
-Date: ________________
+<p style="margin:16px 0;text-align:justify;">By signing below, I indicate that I have carefully read, fully understand and voluntarily sign this Agreement. This is a legal document and is intended to be enforceable under its terms. I have had the opportunity to seek independent legal advice. I acknowledge that upon execution by Brown (through its authorized agent), this Agreement will be effective and binding upon me and all permitted successors.</p>
 
-University Representative: _________________________________
+<table style="width:100%;margin:32px 0;border-collapse:collapse;font-size:14px;">
+<tr>
+<td style="width:50%;padding:8px 0;"><strong>Student Signature:</strong></td>
+<td style="width:50%;padding:8px 0;"><strong>Date:</strong></td>
+</tr>
+<tr>
+<td style="padding:4px 0;border-bottom:1px solid #000;height:40px;"></td>
+<td style="padding:4px 0 4px 24px;border-bottom:1px solid #000;height:40px;"></td>
+</tr>
+<tr><td colspan="2" style="height:24px;"></td></tr>
+<tr>
+<td style="padding:8px 0;"><strong>Student Printed Name:</strong></td>
+<td style="padding:8px 0;"><strong>Brown ID#:</strong></td>
+</tr>
+<tr>
+<td style="padding:4px 0;border-bottom:1px solid #000;height:30px;">${d.name}</td>
+<td style="padding:4px 0 4px 24px;border-bottom:1px solid #000;height:30px;">${d.bannerId||''}</td>
+</tr>
+<tr><td colspan="2" style="height:24px;"></td></tr>
+<tr>
+<td style="padding:8px 0;" colspan="2"><strong>Brown University Authorized Agent:</strong></td>
+</tr>
+<tr>
+<td style="padding:4px 0;border-bottom:1px solid #000;height:40px;"></td>
+<td style="padding:4px 0 4px 24px;border-bottom:1px solid #000;height:40px;"></td>
+</tr>
+</table>
 
-Date: ________________
-════════════════════════════════════════════════════════════
-Brown University — River House — Providence, RI`;
+<p style="text-align:center;font-size:11px;color:#666;margin-top:32px;">Brown University — River House — 1 Point Street, Providence, RI</p>
+</div>`;
 }
 
-function copyAgreement(){navigator.clipboard.writeText($('agreementHTML').textContent).then(()=>alert('Copied!'));}
+function copyAgreement(){
+  const html=$('agreementPreview').innerHTML;
+  navigator.clipboard.writeText(html).then(()=>alert('Agreement HTML copied!'));
+}
+
+function printAgreement(){
+  const content=$('agreementPreview').innerHTML;
+  const win=window.open('','_blank','width=800,height=1000');
+  win.document.write(`<!DOCTYPE html><html><head><title>River House Housing Agreement</title>
+<style>@page{size:letter;margin:0.75in;}body{margin:0;padding:0;font-family:'Times New Roman',Times,serif;font-size:14px;color:#000;}</style>
+</head><body>${content}</body></html>`);
+  win.document.close();
+  setTimeout(()=>{win.focus();win.print();},500);
+}
 
 function fmtDate(v){
   if(!v)return'TBD';
@@ -1592,7 +1612,7 @@ return{
   openAssignModal,closeAssignModal,confirmAssignment,
   openEditModal,closeEditModal,saveEdit,editDirUnit,clearUnit,
   loadResidentForGen,generateOfferHTML,copyOffer,markOfferSent,
-  generateAgreement,copyAgreement,goOffer,renderGenDrop,onFloorplanChange,
+  generateAgreement,copyAgreement,printAgreement,goOffer,renderGenDrop,onFloorplanChange,
   onDragStart,onDragEnd,onDragOver,onDragLeave,onDrop,
   saveSettings,clearAllData,
 };
