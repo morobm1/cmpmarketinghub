@@ -369,16 +369,42 @@
           <h2>2️⃣ Lease Terms</h2>
           <div class="content">
             <div class="form-row">
-              <div class="form-group"><label>Floorplan Assigned</label><input type="text" id="genFloorplan" placeholder="e.g. 1BR/1BA"></div>
-              <div class="form-group"><label>Monthly Rent ($)</label><input type="text" id="genRent" placeholder="e.g. 1,650"></div>
+              <div class="form-group"><label>Floorplan Assigned</label><select id="genFloorplan" onchange="RH.onFloorplanChange()">
+  <option value="">— Select Floorplan —</option>
+  <option value="1BR/1BA - A1 Aerial" data-rate="2021">1BR/1BA - A1 Aerial ($2,021)</option>
+  <option value="1BR/1BA - A1 Terrace" data-rate="1995">1BR/1BA - A1 Terrace ($1,995)</option>
+  <option value="2BR/1BA - B1 Aerial, River View" data-rate="1076">2BR/1BA - B1 Aerial, River View ($1,076)</option>
+  <option value="2BR/1BA - B1 Terrace, River View" data-rate="1076">2BR/1BA - B1 Terrace, River View ($1,076)</option>
+  <option value="2BR/1BA - B2 Aerial" data-rate="1076">2BR/1BA - B2 Aerial ($1,076)</option>
+  <option value="2BR/1BA - B2 Terrace" data-rate="1076">2BR/1BA - B2 Terrace ($1,076)</option>
+  <option value="2BR/2BA - B3 Aerial" data-rate="1302">2BR/2BA - B3 Aerial ($1,302)</option>
+  <option value="2BR/2BA - B3 Aerial, River View" data-rate="1360">2BR/2BA - B3 Aerial, River View ($1,360)</option>
+  <option value="2BR/2BA - B3 Terrace" data-rate="1139">2BR/2BA - B3 Terrace ($1,139)</option>
+  <option value="2BR/2BA - B3 Terrace, River View" data-rate="1418">2BR/2BA - B3 Terrace, River View ($1,418)</option>
+  <option value="2BR/2BA - B4 Aerial" data-rate="1418">2BR/2BA - B4 Aerial ($1,418)</option>
+  <option value="2BR/2BA - B4 Aerial, River View" data-rate="1470">2BR/2BA - B4 Aerial, River View ($1,470)</option>
+  <option value="2BR/2BA - B4 Terrace" data-rate="1365">2BR/2BA - B4 Terrace ($1,365)</option>
+  <option value="2BR/2BA - B4 Terrace, River View" data-rate="1418">2BR/2BA - B4 Terrace, River View ($1,418)</option>
+  <option value="2BR/2BA - B5 Terrace, River View" data-rate="1586">2BR/2BA - B5 Terrace, River View ($1,586)</option>
+  <option value="Studio - S1 1F ADA River View" data-rate="1706">Studio - S1 1F ADA River View ($1,706)</option>
+  <option value="Studio - S1 Aerial" data-rate="1706">Studio - S1 Aerial ($1,706)</option>
+  <option value="Studio - S1 Terrace" data-rate="1628">Studio - S1 Terrace ($1,628)</option>
+</select></div>
+              <div class="form-group"><label>Monthly Rent ($)</label><input type="text" id="genRent" placeholder="Auto-fills from floorplan"></div>
             </div>
             <div class="form-row">
               <div class="form-group"><label>Agreement Length</label><input type="text" id="genLength" placeholder="e.g. 12 months" value="12 months"></div>
               <div class="form-group"><label>Parking</label><select id="genParking"><option value="No">No</option><option value="Yes">Yes</option></select></div>
             </div>
             <div class="form-row">
-              <div class="form-group"><label>Move-In Date</label><input type="date" id="genMoveIn"></div>
-              <div class="form-group"><label>Move-Out Date</label><input type="date" id="genMoveOut"></div>
+              <div class="form-group"><label>Move-In / Lease Start Date</label>
+                <select id="genMoveIn">
+                  <option value="">— Select Start Date —</option>
+                </select>
+              </div>
+              <div class="form-group"><label>Move-Out / Lease End Date</label>
+                <input type="text" id="genMoveOut" value="05/31/2027">
+              </div>
             </div>
           </div>
         </div>
@@ -1127,6 +1153,14 @@ function loadResidentForGen(){
   $('genFloorplan').value=p.floorplanAssigned||p.floorplanPref1||'';
   $('genParking').value=((p.parkingNeed||p.parkingInterest||'').toLowerCase().includes('yes'))?'Yes':'No';
 
+  // Populate start date dropdown based on record type
+  const startSel=$('genMoveIn');
+  const renewalDates=['06/01/2026','07/01/2026','08/01/2026','09/01/2026'];
+  const newDates=['06/01/2026','06/15/2026','07/01/2026','07/15/2026','08/01/2026','08/15/2026','09/01/2026'];
+  const dates=isRenewal?renewalDates:newDates;
+  const curVal=startSel.value;
+  startSel.innerHTML='<option value="">— Select Start Date —</option>'+dates.map(d=>`<option value="${d}"${d===curVal?' selected':''}>${d}</option>`).join('');
+
   // Show terms card for any verified resident
   const isVerified=p.verificationStatus==='Verified';
   $('termsCard').style.display=isVerified?'':'none';
@@ -1153,8 +1187,8 @@ function generateOfferHTML(){
   const d={
     resident_first_name:fn,floorplan_assigned:fp,monthly_installment:rent,
     parking_requested:$('genParking').value,agreement_length:$('genLength').value.trim()||'12 months',
-    move_in_date:$('genMoveIn').value?new Date($('genMoveIn').value+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):'TBD',
-    move_out_date:$('genMoveOut').value?new Date($('genMoveOut').value+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):'TBD',
+    move_in_date:fmtDate($('genMoveIn').value),
+    move_out_date:fmtDate($('genMoveOut').value),
     response_deadline_day_date:$('genDeadline').value.trim()||'TBD',
     accept_placement_url:$('genAcceptUrl').value.trim()||'#',
     deny_placement_url:$('genDenyUrl').value.trim()||'#',
@@ -1218,11 +1252,14 @@ function generateAgreement(){
   const fp=$('genFloorplan').value.trim()||p.floorplanAssigned||'TBD';
   const rent=$('genRent').value.trim()||'TBD';
   const miD=$('genMoveIn').value;const moD=$('genMoveOut').value;
+  const residentType=isRenewal?'Renewal':'New Lease';
+  // Determine unit/bed type from floorplan: 2BR = By the Bed, Studio/1BR = By the Unit
+  const isByBed=fp.startsWith('2BR');
+  const unitBedType=isByBed?'By the Bed':'By the Unit';
   const txt=agreementText({
     date:new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}),
-    name:p.fullName,type:classifyProg(p),unitBed:fp,
-    start:miD?new Date(miD+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):'TBD',
-    end:moD?new Date(moD+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):'TBD',
+    name:p.fullName,type:residentType,unitBed:unitBedType,
+    start:fmtDate(miD),end:fmtDate(moD),
     plan:fp,unit:unitNum,rent,deposit,
   });
   $('agreementHTML').textContent=txt;$('agreementOutput').style.display='';
@@ -1296,6 +1333,22 @@ Brown University — River House — Providence, RI`;
 }
 
 function copyAgreement(){navigator.clipboard.writeText($('agreementHTML').textContent).then(()=>alert('Copied!'));}
+
+function fmtDate(v){
+  if(!v)return'TBD';
+  // Handle MM/DD/YYYY or YYYY-MM-DD
+  const d=new Date(v.includes('/')?v:v+'T00:00:00');
+  if(isNaN(d))return v;
+  return d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+}
+
+function onFloorplanChange(){
+  const sel=$('genFloorplan');
+  const opt=sel.options[sel.selectedIndex];
+  if(opt&&opt.dataset.rate){
+    $('genRent').value=opt.dataset.rate;
+  }
+}
 
 /* ═══════════════════════════════════
    RENDERING
@@ -1539,7 +1592,7 @@ return{
   openAssignModal,closeAssignModal,confirmAssignment,
   openEditModal,closeEditModal,saveEdit,editDirUnit,clearUnit,
   loadResidentForGen,generateOfferHTML,copyOffer,markOfferSent,
-  generateAgreement,copyAgreement,goOffer,renderGenDrop,
+  generateAgreement,copyAgreement,goOffer,renderGenDrop,onFloorplanChange,
   onDragStart,onDragEnd,onDragOver,onDragLeave,onDrop,
   saveSettings,clearAllData,
 };
