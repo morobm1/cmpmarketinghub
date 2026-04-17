@@ -364,9 +364,9 @@
           </div>
         </div>
 
-        <!-- Step 2: Offer letter -->
-        <div class="card" id="offerCard" style="display:none">
-          <h2>2️⃣ New Lease Offer Letter (Entrata-Safe HTML)</h2>
+        <!-- Step 2: Shared Lease Terms (shown for BOTH renewal and new) -->
+        <div class="card" id="termsCard" style="display:none">
+          <h2>2️⃣ Lease Terms</h2>
           <div class="content">
             <div class="form-row">
               <div class="form-group"><label>Floorplan Assigned</label><input type="text" id="genFloorplan" placeholder="e.g. 1BR/1BA"></div>
@@ -380,6 +380,13 @@
               <div class="form-group"><label>Move-In Date</label><input type="date" id="genMoveIn"></div>
               <div class="form-group"><label>Move-Out Date</label><input type="date" id="genMoveOut"></div>
             </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Offer letter (NEW LEASE ONLY) -->
+        <div class="card" id="offerCard" style="display:none">
+          <h2>3️⃣ New Lease Offer Letter (Entrata-Safe HTML)</h2>
+          <div class="content">
             <div class="form-row">
               <div class="form-group"><label>Response Deadline</label><input type="text" id="genDeadline" placeholder="e.g. Friday, May 16, 2026"></div>
             </div>
@@ -401,11 +408,11 @@
           </div>
         </div>
 
-        <!-- Step 3: Agreement -->
+        <!-- Step 4: Agreement (BOTH renewal and new) -->
         <div class="card" id="agreementCard" style="display:none">
-          <h2>3️⃣ Placeholder Housing Agreement (Post-Acceptance)</h2>
+          <h2 id="agreementTitle">4️⃣ Placeholder Housing Agreement</h2>
           <div class="content">
-            <p style="color:var(--subtext);margin-bottom:12px;font-size:13px">Available after the student accepts the offer. This generates a placeholder reserved-space document.</p>
+            <p style="color:var(--subtext);margin-bottom:12px;font-size:13px">Generates a placeholder reserved-space document for both renewals and new leases.</p>
             <div class="form-row">
               <div class="form-group"><label>Unit Number (or TBD)</label><input type="text" id="agrUnit" placeholder="e.g. 305-A or TBD" value="TBD"></div>
               <div class="form-group"><label>Security Deposit</label><input type="text" id="agrDeposit" placeholder="e.g. $500.00" value="$500.00"></div>
@@ -1102,7 +1109,13 @@ function getGenPerson(){const pid=$('genResident').value;return pid?getGenList()
 
 function loadResidentForGen(){
   const p=getGenPerson();
-  if(!p){$('genResidentInfo').style.display='none';$('offerCard').style.display='none';$('agreementCard').style.display='none';return;}
+  if(!p){
+    $('genResidentInfo').style.display='none';
+    $('termsCard').style.display='none';
+    $('offerCard').style.display='none';
+    $('agreementCard').style.display='none';
+    return;
+  }
   const isRenewal=$('genType').value==='renewal';
   $('genResidentInfo').style.display='';
   let info=`<strong>${esc(p.fullName)}</strong> — ${esc(p.bannerId)}<br>`;
@@ -1114,13 +1127,20 @@ function loadResidentForGen(){
   $('genFloorplan').value=p.floorplanAssigned||p.floorplanPref1||'';
   $('genParking').value=((p.parkingNeed||p.parkingInterest||'').toLowerCase().includes('yes'))?'Yes':'No';
 
-  // Show offer card for new lease verified only
-  $('offerCard').style.display=(!isRenewal&&p.verificationStatus==='Verified')?'':'none';
+  // Show terms card for any verified resident
+  const isVerified=p.verificationStatus==='Verified';
+  $('termsCard').style.display=isVerified?'':'none';
 
-  // Show agreement card for renewals (Placement Assigned+) or new lease (Offer Accepted+)
-  const canAgrNew=['Offer Accepted','Placeholder Agreement Generated','Lease Signed','Confirmed Student'].includes(p.status);
-  const canAgrRenewal=isRenewal&&['Placement Assigned','Agreement Sent','Lease Signed','Confirmed Student'].includes(p.status);
+  // Show offer card for new lease verified only
+  $('offerCard').style.display=(!isRenewal&&isVerified)?'':'none';
+
+  // Show agreement card for:
+  // - Renewals: any verified renewal (they can generate agreement directly)
+  // - New lease: after offer accepted
+  const canAgrNew=!isRenewal&&['Offer Accepted','Placeholder Agreement Generated','Lease Signed','Confirmed Student'].includes(p.status);
+  const canAgrRenewal=isRenewal&&isVerified;
   $('agreementCard').style.display=(canAgrNew||canAgrRenewal)?'':'none';
+  $('agreementTitle').textContent=isRenewal?'3️⃣ Placeholder Housing Agreement (Renewal)':'4️⃣ Placeholder Housing Agreement (Post-Acceptance)';
   if(canAgrNew||canAgrRenewal)$('agrUnit').value=p.assignedUnit||'TBD';
 }
 
@@ -1188,10 +1208,11 @@ function generateAgreement(){
   const p=getGenPerson();
   if(!p){alert('Select resident.');return;}
   const isRenewal=$('genType').value==='renewal';
-  const validNew=['Offer Accepted','Placeholder Agreement Generated','Lease Signed','Confirmed Student'];
-  const validRenewal=['Placement Assigned','Agreement Sent','Lease Signed','Confirmed Student'];
-  const validStatuses=isRenewal?validRenewal:validNew;
-  if(!validStatuses.includes(p.status)){alert(isRenewal?'Renewal must be Placement Assigned or later.':'New lease must have accepted offer first.');return;}
+  if(!isRenewal){
+    const validNew=['Offer Accepted','Placeholder Agreement Generated','Lease Signed','Confirmed Student'];
+    if(!validNew.includes(p.status)){alert('New lease must have accepted offer first.');return;}
+  }
+  if(p.verificationStatus!=='Verified'){alert('Resident must be verified.');return;}
   const unitNum=$('agrUnit').value.trim()||'TBD';
   const deposit=$('agrDeposit').value.trim()||'$500.00';
   const fp=$('genFloorplan').value.trim()||p.floorplanAssigned||'TBD';
