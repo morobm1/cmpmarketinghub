@@ -343,11 +343,20 @@
         <div class="card">
           <h2>1️⃣ Select Resident</h2>
           <div class="content">
-            <div class="form-group">
-              <label>Search Verified New Lease Students</label>
-              <select id="genResident" onchange="RH.loadResidentForGen()" style="font-size:14px">
-                <option value="">— Select a verified resident —</option>
-              </select>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Record Type</label>
+                <select id="genType" onchange="RH.renderGenDrop();RH.loadResidentForGen()" style="font-size:14px">
+                  <option value="new">New Lease Waitlist</option>
+                  <option value="renewal">Renewal Waitlist</option>
+                </select>
+              </div>
+              <div class="form-group" style="flex:2">
+                <label>Select Verified Resident</label>
+                <select id="genResident" onchange="RH.loadResidentForGen()" style="font-size:14px">
+                  <option value="">— Select a verified resident —</option>
+                </select>
+              </div>
             </div>
             <div id="genResidentInfo" style="display:none;margin-top:12px;padding:14px;background:#f8fafc;border-radius:8px;border:1px solid var(--border)">
               <div id="genResidentDetails"></div>
@@ -792,15 +801,41 @@ function verifyAllRenewals(){
   if(!S.verificationRenewals.length){alert('No renewal verification data loaded. Load sources first.');return;}
   doVerifyRenewals();
 }
+function nameVariants(name){
+  // Generate matching variants: "First Last", "Last, First", "Last First"
+  const n=N(name);if(!n)return[];
+  const parts=n.split(/[\s,]+/).filter(Boolean);
+  if(parts.length<2)return[n];
+  const variants=[n];
+  // "First Last" -> also try "Last, First" and "Last First"
+  variants.push(parts[parts.length-1]+', '+parts.slice(0,-1).join(' '));
+  variants.push(parts[parts.length-1]+' '+parts.slice(0,-1).join(' '));
+  // "Last, First" -> also try "First Last"
+  if(n.includes(',')){
+    const cp=n.split(',').map(s=>s.trim());
+    if(cp.length>=2){variants.push(cp[1]+' '+cp[0]);variants.push(cp.slice(1).join(' ')+' '+cp[0]);}
+  }
+  return[...new Set(variants)];
+}
+function namesMatch(a,b){
+  const va=nameVariants(a),vb=nameVariants(b);
+  return va.some(x=>vb.includes(x));
+}
+
 function doVerifyRenewals(silent){
   let v=0,nv=0,rv=0;
   S.renewalWaitlist.forEach(r=>{
     if(r.bannerId){
       const m=S.verificationRenewals.find(x=>x.bannerId===r.bannerId);
       if(m){r.verificationStatus='Verified';if(r.status==='Waitlist')r.status='Verified';v++;}
-      else{r.verificationStatus='Not Verified';nv++;}
+      else{
+        // Fallback: try name match even if Banner ID exists but didn't match
+        const nm=S.verificationRenewals.find(x=>namesMatch(x.name,r.fullName));
+        if(nm){r.verificationStatus='Review Needed';rv++;}
+        else{r.verificationStatus='Not Verified';nv++;}
+      }
     }else{
-      const nm=S.verificationRenewals.find(x=>N(x.name)===N(r.fullName));
+      const nm=S.verificationRenewals.find(x=>namesMatch(x.name,r.fullName));
       if(nm){r.verificationStatus='Review Needed';rv++;}else{r.verificationStatus='Not Verified';nv++;}
     }
     r.lastUpdated=new Date().toISOString();
@@ -821,7 +856,7 @@ function doVerifyNew(silent){
       if(m){r.verificationStatus='Verified';if(r.status==='Waitlist')r.status='Verified';if(m.studentPopulation)r.studentPopulation=m.studentPopulation;if(m.program)r.programVerified=m.program;if(m.programDescription)r.programDescription=m.programDescription;v++;}
       else{r.verificationStatus='Not Verified';nv++;}
     }else{
-      const nm=S.verificationNew.find(x=>N(x.firstName+' '+x.lastName)===N(r.fullName)||N(x.lastName+', '+x.firstName)===N(r.fullName));
+      const nm=S.verificationNew.find(x=>namesMatch(x.firstName+' '+x.lastName,r.fullName)||namesMatch(x.lastName+', '+x.firstName,r.fullName));
       if(nm){r.verificationStatus='Review Needed';rv++;}else{r.verificationStatus='Not Verified';nv++;}
     }
     r.lastUpdated=new Date().toISOString();
@@ -1009,22 +1044,35 @@ function closeEditModal(){$('editModal').classList.remove('show');_editCtx=null;
 /* ═══════════════════════════════════
    OFFER LETTER GENERATION
    ═══════════════════════════════════ */
+function getGenList(){return $('genType').value==='renewal'?S.renewalWaitlist:S.newWaitlist;}
+function getGenPerson(){const pid=$('genResident').value;return pid?getGenList().find(r=>r._id===pid):null;}
+
 function loadResidentForGen(){
-  const pid=$('genResident').value;
-  if(!pid){$('genResidentInfo').style.display='none';$('offerCard').style.display='none';$('agreementCard').style.display='none';return;}
-  const p=S.newWaitlist.find(r=>r._id===pid);if(!p)return;
+  const p=getGenPerson();
+  if(!p){$('genResidentInfo').style.display='none';$('offerCard').style.display='none';$('agreementCard').style.display='none';return;}
+  const isRenewal=$('genType').value==='renewal';
   $('genResidentInfo').style.display='';
-  $('genResidentDetails').innerHTML=`<strong>${esc(p.fullName)}</strong> — ${esc(p.bannerId)}<br>Status: ${badgeS(p.status)} Verification: ${badgeV(p.verificationStatus)}<br>Program: ${esc(p.programType||'—')} | Gender: ${esc(p.gender||'—')} | Assigned: ${esc(p.assignedUnit||'None')}<br>Prefs: ${esc([p.floorplanPref1,p.floorplanPref2,p.floorplanPref3,p.floorplanPref4].filter(Boolean).join(', ')||'—')}`;
+  let info=`<strong>${esc(p.fullName)}</strong> — ${esc(p.bannerId)}<br>`;
+  info+=`Type: <strong>${isRenewal?'Renewal':'New Lease'}</strong> | Status: ${badgeS(p.status)} | Verification: ${badgeV(p.verificationStatus)}<br>`;
+  info+=`Program: ${esc(p.programType||'—')} | Gender: ${esc(p.gender||'—')} | Assigned: ${esc(p.assignedUnit||'None')}`;
+  if(!isRenewal)info+=`<br>Prefs: ${esc([p.floorplanPref1,p.floorplanPref2,p.floorplanPref3,p.floorplanPref4].filter(Boolean).join(', ')||'—')}`;
+  if(isRenewal)info+=`<br>Current Unit: ${esc(p.currentUnit||'—')} | Renewal Interest: ${esc(p.renewalInterest||'—')}`;
+  $('genResidentDetails').innerHTML=info;
   $('genFloorplan').value=p.floorplanAssigned||p.floorplanPref1||'';
-  $('genParking').value=(p.parkingNeed||'').toLowerCase().includes('yes')?'Yes':'No';
-  $('offerCard').style.display=p.verificationStatus==='Verified'?'':'none';
-  const canAgr=['Offer Accepted','Placeholder Agreement Generated','Lease Signed','Confirmed Student'].includes(p.status);
-  $('agreementCard').style.display=canAgr?'':'none';
-  if(canAgr)$('agrUnit').value=p.assignedUnit||'TBD';
+  $('genParking').value=((p.parkingNeed||p.parkingInterest||'').toLowerCase().includes('yes'))?'Yes':'No';
+
+  // Show offer card for new lease verified only
+  $('offerCard').style.display=(!isRenewal&&p.verificationStatus==='Verified')?'':'none';
+
+  // Show agreement card for renewals (Placement Assigned+) or new lease (Offer Accepted+)
+  const canAgrNew=['Offer Accepted','Placeholder Agreement Generated','Lease Signed','Confirmed Student'].includes(p.status);
+  const canAgrRenewal=isRenewal&&['Placement Assigned','Agreement Sent','Lease Signed','Confirmed Student'].includes(p.status);
+  $('agreementCard').style.display=(canAgrNew||canAgrRenewal)?'':'none';
+  if(canAgrNew||canAgrRenewal)$('agrUnit').value=p.assignedUnit||'TBD';
 }
 
 function generateOfferHTML(){
-  const pid=$('genResident').value;const p=S.newWaitlist.find(r=>r._id===pid);
+  const p=getGenPerson();
   if(!p){alert('Select a resident.');return;}if(p.verificationStatus!=='Verified'){alert('Must be verified.');return;}
   const fn=p.firstName||p.fullName.split(' ')[0]||'';
   const fp=$('genFloorplan').value.trim();const rent=$('genRent').value.trim();
@@ -1075,7 +1123,7 @@ function offerHTML(d){
 function copyOffer(){navigator.clipboard.writeText($('offerHTML').textContent).then(()=>alert('Copied!'));}
 
 function markOfferSent(){
-  const pid=$('genResident').value;const p=S.newWaitlist.find(r=>r._id===pid);if(!p)return;
+  const p=getGenPerson();if(!p)return;
   if(!['Offer Generated','Offer Ready','Verified'].includes(p.status)){alert('Generate offer first.');return;}
   p.status='Offer Sent';p.lastUpdated=new Date().toISOString();qSave();renderAll();loadResidentForGen();
 }
@@ -1084,9 +1132,13 @@ function markOfferSent(){
    AGREEMENT GENERATION
    ═══════════════════════════════════ */
 function generateAgreement(){
-  const pid=$('genResident').value;const p=S.newWaitlist.find(r=>r._id===pid);
+  const p=getGenPerson();
   if(!p){alert('Select resident.');return;}
-  if(!['Offer Accepted','Placeholder Agreement Generated','Lease Signed','Confirmed Student'].includes(p.status)){alert('Only after acceptance.');return;}
+  const isRenewal=$('genType').value==='renewal';
+  const validNew=['Offer Accepted','Placeholder Agreement Generated','Lease Signed','Confirmed Student'];
+  const validRenewal=['Placement Assigned','Agreement Sent','Lease Signed','Confirmed Student'];
+  const validStatuses=isRenewal?validRenewal:validNew;
+  if(!validStatuses.includes(p.status)){alert(isRenewal?'Renewal must be Placement Assigned or later.':'New lease must have accepted offer first.');return;}
   const unitNum=$('agrUnit').value.trim()||'TBD';
   const deposit=$('agrDeposit').value.trim()||'$500.00';
   const fp=$('genFloorplan').value.trim()||p.floorplanAssigned||'TBD';
@@ -1100,7 +1152,9 @@ function generateAgreement(){
     plan:fp,unit:unitNum,rent,deposit,
   });
   $('agreementHTML').textContent=txt;$('agreementOutput').style.display='';
-  p.status='Placeholder Agreement Generated';p.lastUpdated=new Date().toISOString();qSave();renderAll();
+  if(isRenewal){if(p.status==='Placement Assigned')p.status='Agreement Sent';}
+  else{p.status='Placeholder Agreement Generated';}
+  p.lastUpdated=new Date().toISOString();qSave();renderAll();
 }
 
 function agreementText(d){
@@ -1322,8 +1376,10 @@ function renderPersonBank(){
 
 function renderGenDrop(){
   const sel=$('genResident');const cv=sel.value;
-  const v=S.newWaitlist.filter(r=>r.verificationStatus==='Verified');
-  sel.innerHTML='<option value="">— Select verified resident —</option>'+v.map(r=>`<option value="${r._id}">${esc(r.fullName)} (${esc(r.bannerId)}) — ${r.status}</option>`).join('');
+  const lt=$('genType').value;
+  const list=lt==='renewal'?S.renewalWaitlist:S.newWaitlist;
+  const v=list.filter(r=>r.verificationStatus==='Verified');
+  sel.innerHTML='<option value="">— Select verified resident ('+v.length+') —</option>'+v.map(r=>`<option value="${r._id}">${esc(r.fullName)} (${esc(r.bannerId)}) — ${r.status}</option>`).join('');
   if(cv)sel.value=cv;
 }
 
@@ -1409,7 +1465,7 @@ return{
   openAssignModal,closeAssignModal,confirmAssignment,
   openEditModal,closeEditModal,saveEdit,editDirUnit,clearUnit,
   loadResidentForGen,generateOfferHTML,copyOffer,markOfferSent,
-  generateAgreement,copyAgreement,goOffer,
+  generateAgreement,copyAgreement,goOffer,renderGenDrop,
   onDragStart,onDragEnd,onDragOver,onDragLeave,onDrop,
   saveSettings,clearAllData,
 };
