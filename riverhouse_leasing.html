@@ -1898,7 +1898,176 @@ function loadSettingsUI(){
 }
 
 async function loadAllSources(){
-  alert('Use the import buttons on each tab to load source files from your computer. The file paths in settings are for reference/documentation.');
+  const status = {ok:0, fail:0, msgs:[]};
+  async function fetchAndParse(url, label){
+    try{
+      const res = await fetch(url);
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      const buf = await res.arrayBuffer();
+      const wb = XLSX.read(buf, {type:'array',cellDates:true});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {defval:''});
+      status.ok++;
+      return rows;
+    }catch(e){
+      status.fail++;
+      status.msgs.push(label+': '+e.message);
+      return null;
+    }
+  }
+
+  // Show loading state
+  $('apiBanner').className='api-banner synced';
+  $('apiBanner').textContent='Loading source files from server…';
+  $('apiBanner').style.display='block';
+
+  // 1. Renewal waitlist
+  const renewalRows = await fetchAndParse(_state.settings.srcRenewals, 'Renewal Waitlist');
+  if(renewalRows){
+    const mapped = renewalRows.map(r=>{
+      const existing = _state.renewalWaitlist.find(w=>w.bannerId && w.bannerId===norm(r['Banner ID']||r['BannerID']||r['Banner_ID']||''));
+      return {
+        _id: (existing&&existing._id)||uid(),
+        recordType:'Renewal',
+        fullName: r['Full Name']||r['Name']||'',
+        bannerId: norm(r['Banner ID']||r['BannerID']||r['Banner_ID']||''),
+        email: r['Email Address']||r['Email']||'',
+        programType: r['Program type']||r['Program Type']||r['Program']||'',
+        majorConcentration: r['Major / concentration']||r['Major']||'',
+        currentProgramYear: r['Current program year']||'',
+        currentUnit: r['Current unit / bed space']||r['Current Unit']||'',
+        renewalInterest: r['Renewal interest']||r['Renewal Interest']||'',
+        parkingInterest: r['Parking interest']||r['Parking']||'',
+        sameUnitInterest: r['Same unit interest']||'',
+        transferPreferences: r['Transfer preferences']||'',
+        preferredRoommate: r['Preferred roommate names']||r['Preferred Roommate']||'',
+        verificationStatus:(existing&&existing.verificationStatus)||'Not Verified',
+        status:(existing&&existing.status)||'Waitlist',
+        assignedUnit:(existing&&existing.assignedUnit)||'',
+        assignedBed:(existing&&existing.assignedBed)||'',
+        floorplanAssigned:(existing&&existing.floorplanAssigned)||'',
+        gender:(existing&&existing.gender)||'',
+        notes:(existing&&existing.notes)||'',
+        lastUpdated:new Date().toISOString(),
+      };
+    });
+    _state.renewalWaitlist = deduplicateById(mapped.concat(_state.renewalWaitlist));
+  }
+
+  // 2. New lease waitlist
+  const newRows = await fetchAndParse(_state.settings.srcNewWaitlist, 'New Waitlist');
+  if(newRows){
+    const mapped = newRows.map(r=>{
+      const fn=r['First Name']||r['FirstName']||'';
+      const ln=r['Last Name']||r['LastName']||'';
+      const fullName=(fn+' '+ln).trim()||r['Name']||'';
+      const bid=norm(r['Brown Banner ID']||r['Banner ID']||r['BannerID']||'');
+      const existing=_state.newWaitlist.find(w=>(bid&&w.bannerId===bid)||(!bid&&norm(w.fullName)===norm(fullName)));
+      return {
+        _id:(existing&&existing._id)||uid(),
+        recordType:'New Lease',fullName,firstName:fn,lastName:ln,
+        bannerId:bid,
+        email:r['Preferred Email Address']||r['Email']||'',
+        phone:r['Phone Number']||'',
+        gender:r['Gender Identity']||r['Gender']||'',
+        programType:r['Program Type']||r['Program']||'',
+        majorConcentration:r['Major or Concentration']||r['Major']||'',
+        incomingFirstYear:r['Incoming first-year grad/med flag']||'',
+        floorplanPref1:r['Floorplan preferences 1']||r['Floorplan Pref 1']||'',
+        floorplanPref2:r['Floorplan preferences 2']||r['Floorplan Pref 2']||'',
+        floorplanPref3:r['Floorplan preferences 3']||r['Floorplan Pref 3']||'',
+        floorplanPref4:r['Floorplan preferences 4']||r['Floorplan Pref 4']||'',
+        desiredStartMonth:r['Desired start month']||r['Start Month']||'',
+        parkingNeed:r['Parking need']||r['Parking']||'',
+        preferredRoommate:r['Preferred roommate']||r['Roommate']||'',
+        esaFlag:r['ESA flag']||r['ESA']||'',
+        okWithPets:r['Ok living with pets']||'',
+        enteredEntrata:r['Entered in Entrata']||'',
+        confirmationSent:r['Confirmation email sent']||'',
+        verificationStatus:(existing&&existing.verificationStatus)||'Not Verified',
+        status:(existing&&existing.status)||'Waitlist',
+        assignedUnit:(existing&&existing.assignedUnit)||'',
+        assignedBed:(existing&&existing.assignedBed)||'',
+        floorplanAssigned:(existing&&existing.floorplanAssigned)||'',
+        notes:(existing&&existing.notes)||'',
+        lastUpdated:new Date().toISOString(),
+      };
+    });
+    _state.newWaitlist = deduplicateById(mapped.concat(_state.newWaitlist));
+  }
+
+  // 3. Renewal verification
+  const verifRRows = await fetchAndParse(_state.settings.srcVerifRenewal, 'Renewal Verification');
+  if(verifRRows){
+    _state.verificationRenewals = verifRRows.map(r=>({
+      bannerId:norm(r['Banner ID']||r['BannerID']||r['Banner_ID']||''),
+      name:(r['Name']||r['Full Name']||'').toString().trim(),
+      studentLevel:r['Student Level']||'',
+      studentPopulation:r['Student population description']||r['Student Population']||'',
+      programCode:r['Program code']||r['Program Code']||'',
+      program:r['Program']||'',
+      graduationTerm:r['Graduation intended term']||r['Graduation Term']||'',
+    }));
+  }
+
+  // 4. New lease verification
+  const verifNRows = await fetchAndParse(_state.settings.srcVerifNew, 'New Verification');
+  if(verifNRows){
+    _state.verificationNew = verifNRows.map(r=>({
+      admitTerm:r['Admit Term']||'',
+      bannerId:norm(r['Banner ID']||r['BannerID']||r['Banner_ID']||''),
+      lastName:(r['Last Name']||r['LastName']||'').trim(),
+      firstName:(r['First Name']||r['FirstName']||'').trim(),
+      confidentiality:r['Confidentiality indicator']||'',
+      semesterLevel:r['Semester level']||r['Semester Level']||'',
+      studentPopulation:r['Student population description']||r['Student Population']||'',
+      program:r['Program']||'',
+      programDescription:r['Program description']||r['Program Description']||'',
+      expectedGraduation:r['Expected graduation term']||r['Expected Graduation']||'',
+    }));
+  }
+
+  // 5. Unit directory
+  const dirRows = await fetchAndParse(_state.settings.srcDirectory, 'Unit Directory');
+  if(dirRows){
+    const mapped = dirRows.map(r=>{
+      const room=(r['Room']||r['Unit']||r['Room Number']||'').toString().trim();
+      const existing=_state.unitDirectory.find(u=>norm(u.room)===norm(room));
+      const resident=(r['Resident']||r['Name']||'').toString().trim();
+      const idNum=(r['ID Number']||r['Banner ID']||r['ID']||'').toString().trim();
+      let genderRestriction='';
+      if(resident==='M'||resident==='F') genderRestriction=resident;
+      if(existing&&existing.genderRestriction) genderRestriction=existing.genderRestriction;
+      return {
+        _id:(existing&&existing._id)||uid(),
+        room,
+        resident:(genderRestriction&&resident===genderRestriction)?'':resident,
+        idNumber:norm(idNum),
+        leaseStart:r['Lease Start']||r['Lease_Start']||'',
+        moveInDate:r['Move In Date']||r['Move_In_Date']||'',
+        roomType:r['Type of Room']||r['Room Type']||r['Type']||'',
+        leaseStatus:r['Lease Status']||r['Status']||'',
+        genderRestriction,
+        unitLabel:(existing&&existing.unitLabel)||'',
+        notes:(existing&&existing.notes)||'',
+        lastUpdated:new Date().toISOString(),
+      };
+    });
+    const newRooms=new Set(mapped.map(m=>norm(m.room)));
+    const preserved=_state.unitDirectory.filter(u=>!newRooms.has(norm(u.room)));
+    _state.unitDirectory=mapped.concat(preserved);
+  }
+
+  scheduleSave();
+  renderAll();
+
+  // Report
+  let msg = `Source loading complete: ${status.ok} succeeded, ${status.fail} failed.`;
+  if(status.msgs.length) msg += '\n\nErrors:\n'+status.msgs.join('\n');
+  $('apiBanner').textContent = status.fail ? '⚠ Some sources failed to load' : '✓ All sources loaded successfully';
+  $('apiBanner').className = 'api-banner '+(status.fail?'offline':'synced');
+  setTimeout(()=>{$('apiBanner').style.display='none';},5000);
+  if(status.fail) alert(msg);
 }
 
 async function clearAllData(){
@@ -1965,6 +2134,17 @@ async function init(){
   await loadFromServer();
   loadSettingsUI();
   renderAll();
+
+  // Auto-load sources if no data exists yet
+  const hasData = _state.renewalWaitlist.length || _state.newWaitlist.length || _state.unitDirectory.length;
+  if(!hasData){
+    await loadAllSources();
+    // Auto-run verification after loading
+    if(_state.verificationRenewals.length && _state.renewalWaitlist.length) doVerifyRenewals();
+    if(_state.verificationNew.length && _state.newWaitlist.length) doVerifyNew();
+    renderAll();
+  }
+
   startBackgroundSync();
 }
 
