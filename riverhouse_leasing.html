@@ -49,7 +49,8 @@
     .container{padding:20px;max-width:1500px;margin:0 auto}
 
     /* Top tab bar - always visible */
-    .top-tabs{display:flex;gap:0;background:#fff;border-bottom:2px solid var(--border);padding:0 20px;position:sticky;top:60px;z-index:20;overflow-x:auto}
+    .top-tabs{display:flex;gap:0;background:#fff;border-bottom:2px solid var(--border);padding:0 20px;position:sticky;top:60px;z-index:20;overflow-x:auto;margin-left:220px}
+    @media(max-width:1100px){.top-tabs{margin-left:0}}
     .top-tab{padding:12px 20px;border:none;background:transparent;font-size:13px;font-weight:600;color:var(--subtext);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:all .15s;font-family:'Open Sans',sans-serif}
     .top-tab:hover{color:var(--text);background:#f8fafc}
     .top-tab.active{color:var(--brand-primary);border-bottom-color:var(--brand-accent-2);background:#fff}
@@ -1494,7 +1495,7 @@ function renderRenewals(){
     <td><strong>${esc(r.fullName)}</strong></td><td>${esc(r.bannerId)}</td><td>${badgeV(r.verificationStatus)}</td><td>${badgeS(r.status)}</td>
     <td>${esc(r.programType||'—')}</td><td>${esc(r.currentUnit||'—')}</td><td>${esc(r.renewalInterest||'—')}</td><td>${esc(r.parkingInterest||'—')}</td>
     <td>${esc(r.preferredRoommate||'—')}</td><td>${esc(r.assignedUnit||'—')}</td>
-    <td class="actions"><button class="sm primary" onclick="RH.openAssignModal('${r._id}','renewal')"${r.verificationStatus!=='Verified'?' disabled':''}>Assign</button><button class="sm" onclick="RH.openEditModal('${r._id}','renewal')">Edit</button></td>
+    <td class="actions"><button class="sm primary" onclick="RH.openAssignModal('${r._id}','renewal')"${r.verificationStatus!=='Verified'?' disabled':''}>Assign</button><button class="sm" onclick="RH.openEditModal('${r._id}','renewal')">Edit</button><button class="sm danger" onclick="RH.deleteRenewal('${r._id}')" title="Delete" style="padding:4px 8px">✕</button></td>
   </tr>`).join('');
 }
 
@@ -1510,7 +1511,7 @@ function renderNewWaitlist(){
     <td><strong>${esc(r.fullName)}</strong></td><td>${esc(r.bannerId)}</td><td>${badgeV(r.verificationStatus)}</td><td>${badgeS(r.status)}</td>
     <td>${esc(r.gender||'—')}</td><td>${esc(r.programType||'—')}</td><td>${esc([r.floorplanPref1,r.floorplanPref2].filter(Boolean).join(', ')||'—')}</td>
     <td>${esc(r.desiredStartMonth||'—')}</td><td>${esc(r.parkingNeed||'—')}</td><td>${esc(r.preferredRoommate||'—')}</td><td>${esc(r.assignedUnit||'—')}</td>
-    <td class="actions"><button class="sm primary" onclick="RH.openAssignModal('${r._id}','new')"${r.verificationStatus!=='Verified'?' disabled':''}>Assign</button><button class="sm warn" onclick="RH.goOffer('${r._id}')"${r.verificationStatus!=='Verified'?' disabled':''}>Offer</button><button class="sm" onclick="RH.openEditModal('${r._id}','new')">Edit</button></td>
+    <td class="actions"><button class="sm primary" onclick="RH.openAssignModal('${r._id}','new')"${r.verificationStatus!=='Verified'?' disabled':''}>Assign</button><button class="sm warn" onclick="RH.goOffer('${r._id}')"${r.verificationStatus!=='Verified'?' disabled':''}>Offer</button><button class="sm" onclick="RH.openEditModal('${r._id}','new')">Edit</button><button class="sm danger" onclick="RH.deleteNew('${r._id}')" title="Delete" style="padding:4px 8px">✕</button></td>
   </tr>`).join('');
 }
 
@@ -1539,7 +1540,7 @@ function renderDirectory(){
       <td>${esc(u.idNumber||'')}</td><td>${esc(u.roomType||'—')}</td><td>${gr}</td>
       <td>${esc(u.leaseStart||'—')}</td><td>${esc(u.moveInDate||'—')}</td>
       <td>${u.unitLabel?badgeS(u.unitLabel):(isOcc?'<span class="badge badge-placed">Placed</span>':'<span class="badge badge-verified">Open</span>')}</td>
-      <td class="actions"><button class="sm" onclick="RH.editDirUnit('${u._id}')">Edit</button>${isOcc?`<button class="sm danger" onclick="RH.clearUnit('${u._id}')">Clear</button>`:''}</td>
+      <td class="actions"><button class="sm" onclick="RH.editDirUnit('${u._id}')">Edit</button>${isOcc?`<button class="sm danger" onclick="RH.clearUnit('${u._id}')">Clear</button>`:''}<button class="sm danger" onclick="RH.deleteDirUnit('${u._id}')" title="Delete unit" style="padding:4px 8px">✕</button></td>
     </tr>`;
   }).join('');
 }
@@ -1623,6 +1624,22 @@ function printDoc(docId){
 </head><body>${doc.html}</body></html>`);
   win.document.close();
   setTimeout(()=>{win.focus();win.print();},500);
+}
+
+function deleteRenewal(pid){
+  if(!confirm('Delete this renewal record?'))return;
+  S.renewalWaitlist=S.renewalWaitlist.filter(r=>r._id!==pid);
+  qSave();renderAll();
+}
+function deleteNew(pid){
+  if(!confirm('Delete this new waitlist record?'))return;
+  S.newWaitlist=S.newWaitlist.filter(r=>r._id!==pid);
+  qSave();renderAll();
+}
+function deleteDirUnit(uid){
+  if(!confirm('Delete this unit from the directory?'))return;
+  S.unitDirectory=S.unitDirectory.filter(u=>u._id!==uid);
+  qSave();renderAll();
 }
 
 function deleteDoc(docId){
@@ -1722,6 +1739,7 @@ return{
   loadResidentForGen,generateOfferHTML,copyOffer,markOfferSent,
   generateAgreement,copyAgreement,printAgreement,goOffer,renderGenDrop,onFloorplanChange,
   renderDocHistory,viewDoc,printDoc,deleteDoc,
+  deleteRenewal,deleteNew,deleteDirUnit,
   onDragStart,onDragEnd,onDragOver,onDragLeave,onDrop,
   saveSettings,clearAllData,
 };
