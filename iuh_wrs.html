@@ -71,8 +71,8 @@
     .email-preview p{margin:0 0 12px 0}
     .email-preview ul{margin:0 0 12px 0; padding-left:20px}
     .email-preview li{margin-bottom:4px}
-    .email-preview table{border-collapse:collapse; width:100%; margin:12px 0}
-    .email-preview table td, .email-preview table th{border:1px solid #ccc; padding:8px; text-align:left}
+    .email-preview table{border-collapse:collapse; width:auto; margin:12px 0}
+    .email-preview table td, .email-preview table th{border:1px solid #ccc; padding:8px 16px; text-align:center}
     .email-preview table th{background:#f0f0f0; font-weight:700}
 
     /* Progress Steps */
@@ -1321,6 +1321,13 @@
       const intro = $('introNotes').value.trim();
       const leaseYear = vOr('leaseYear', '2026-2027');
 
+      // Shared table styling for Gmail compatibility
+      const tblStyle = 'border-collapse:collapse; width:auto; margin:12px 0; font-size:14px;';
+      const thStyle = 'border:1px solid #ccc; padding:8px 16px; text-align:center; font-weight:700; background:#f0f0f0;';
+      const tdStyle = 'border:1px solid #ccc; padding:8px 16px; text-align:center;';
+      const sectionHead = 'font-size:15px; font-weight:700; color:#8B0000; text-decoration:underline;';
+      const subHead = 'font-weight:700; text-decoration:underline;';
+
       let html = `<p>${esc(greeting)}</p>`;
 
       if (intro) {
@@ -1328,34 +1335,47 @@
       }
 
       // LEASING NUMBERS
-      html += `<p><strong style="font-size:15px;">LEASING NUMBERS</strong></p>`;
-      html += `<ul>`;
+      html += `<p style="${sectionHead}">LEASING NUMBERS</p>`;
+      html += `<ul style="list-style-type:disc; padding-left:28px; margin:8px 0 12px 0;">`;
       html += `<li><strong>${esc(leaseYear)} Pre-lease:</strong> ${esc(sanitizePercent($('preLeasePercent').value) || '[TBD]')}</li>`;
-      if ($('appsStarted').value) html += `<li><strong>Applications Started:</strong> ${esc($('appsStarted').value)}</li>`;
-      if ($('pendingLeases').value) html += `<li><strong>Pending Leases:</strong> ${esc($('pendingLeases').value)}</li>`;
+      if ($('appsStarted').value || $('pendingLeases').value) {
+        let appLine = '';
+        if ($('appsStarted').value) appLine += `<strong>Applications Started:</strong>&nbsp; ${esc($('appsStarted').value)}`;
+        if ($('appsStarted').value && $('pendingLeases').value) appLine += ` &nbsp;/ <strong>Pending Leases:</strong> ${esc($('pendingLeases').value)}`;
+        else if ($('pendingLeases').value) appLine += `<strong>Pending Leases:</strong> ${esc($('pendingLeases').value)}`;
+        html += `<li>${appLine}</li>`;
+      }
       if ($('yoyPreLease').value) html += `<li><strong>YOY Pre-lease:</strong> ${esc(sanitizePercent($('yoyPreLease').value))}</li>`;
-      if ($('yoyVariance').value) html += `<li><strong>YOY Pre-lease Variance:</strong> ${esc($('yoyVariance').value)}</li>`;
+      if ($('yoyVariance').value) html += `<li><strong>YOY Pre-lease variance:</strong> ${esc($('yoyVariance').value)}</li>`;
       html += `<li><strong>Current Occupancy:</strong> ${esc(sanitizePercent($('currentOccupancy').value) || '[TBD]')}</li>`;
-      if ($('totalRenewals').value) html += `<li><strong>Total Renewal Leases:</strong> ${esc($('totalRenewals').value)}</li>`;
-      if ($('totalNewLeases').value) html += `<li><strong>Total New Leases:</strong> ${esc($('totalNewLeases').value)}</li>`;
       html += `</ul>`;
+
+      // Total Leases Per Term table
+      if ($('totalRenewals').value || $('totalNewLeases').value) {
+        html += `<p style="${subHead}">Total Leases Per Term:</p>`;
+        html += `<table style="${tblStyle}">`;
+        html += `<tr><th style="${thStyle}">Total Renewal Leases:</th><th style="${thStyle}">Total New Leases:</th></tr>`;
+        html += `<tr><td style="${tdStyle}">${esc($('totalRenewals').value || '')}</td><td style="${tdStyle}">${esc($('totalNewLeases').value || '')}</td></tr>`;
+        html += `</table>`;
+      }
 
       // MARKETING AND EVENTS
       if (marketingEntries.length > 0) {
-        html += `<p><strong style="font-size:15px;">MARKETING AND EVENTS</strong></p>`;
-        html += `<ul>`;
+        html += `<p style="${sectionHead}">MARKETING AND EVENTS</p>`;
+        html += `<p style="${subHead}">Marketing Efforts This Week:</p>`;
+        html += `<ul style="list-style-type:disc; padding-left:28px; margin:8px 0 12px 0;">`;
         marketingEntries.forEach(e => {
           if (!e.title && !e.description) return;
           let bullet = '';
           if (e.title) bullet += `<strong>${esc(e.title)}</strong>`;
           if (e.date) bullet += ` (${esc(e.date)})`;
           if (e.important) bullet += ' &#9733;';
-          if (e.description) bullet += (e.title ? ' &mdash; ' : '') + esc(e.description);
+          if (e.description) bullet += (e.title ? ' &ndash; ' : '') + esc(e.description);
           html += `<li>${bullet}`;
           if (e.subBullets) {
             const subs = e.subBullets.split('\n').map(s => s.replace(/^[-*]\s*/, '').trim()).filter(Boolean);
             if (subs.length) {
-              html += `<ul>`;
+              html += `<ul style="list-style-type:disc; padding-left:20px; margin:4px 0;">`;
               subs.forEach(sub => html += `<li>${esc(sub)}</li>`);
               html += `</ul>`;
             }
@@ -1368,67 +1388,82 @@
       // LEAD DATA
       const hasLeadData = $('totalActiveLeads').value || leadSources.some(s => s.count) || leadEfforts.length > 0 || leadStatuses.some(s => s.count);
       if (hasLeadData) {
-        html += `<p><strong style="font-size:15px;">LEAD DATA</strong></p>`;
+        html += `<p style="${sectionHead}">LEAD DATA</p>`;
 
+        // Current Leads table
         if ($('totalActiveLeads').value || $('primaryMoveIn').value) {
-          html += `<ul>`;
-          if ($('totalActiveLeads').value) html += `<li><strong>Total Current Active Leads:</strong> ${esc($('totalActiveLeads').value)}</li>`;
-          if ($('primaryMoveIn').value) html += `<li><strong>Primary Move-In Date:</strong> ${esc($('primaryMoveIn').value)}</li>`;
-          html += `</ul>`;
+          html += `<p style="${subHead}">Current Leads:</p>`;
+          html += `<table style="${tblStyle}">`;
+          html += `<tr><th style="${thStyle}">Total Current Active:</th><th style="${thStyle}">Move In Date</th></tr>`;
+          html += `<tr><td style="${tdStyle}">${esc($('totalActiveLeads').value || '')}</td><td style="${tdStyle}">${esc($('primaryMoveIn').value || '')}</td></tr>`;
+          html += `</table>`;
         }
 
-        // Lead Sources
+        // Lead Sources table
         const activeSources = leadSources.filter(s => s.name && s.count);
         if (activeSources.length) {
-          html += `<p><strong>Lead Sources:</strong></p><ul>`;
-          activeSources.forEach(s => html += `<li>${esc(s.name)}: ${esc(s.count)}</li>`);
-          html += `</ul>`;
+          html += `<p style="${subHead}">Lead Sources:</p>`;
+          html += `<table style="${tblStyle}">`;
+          html += `<tr>`;
+          activeSources.forEach(s => html += `<th style="${thStyle}">${esc(s.name)}</th>`);
+          html += `</tr><tr>`;
+          activeSources.forEach(s => html += `<td style="${tdStyle}">${esc(s.count)}</td>`);
+          html += `</tr></table>`;
         }
 
         // Lead Efforts Table
         const activeEfforts = leadEfforts.filter(e => e.what);
         if (activeEfforts.length) {
-          html += `<p><strong>Lead Efforts:</strong></p>`;
-          html += `<table><tr><th>What</th><th>Where</th><th>How Many</th><th>Notes</th></tr>`;
+          html += `<p style="${subHead}">Lead Efforts:</p>`;
+          html += `<table style="${tblStyle}">`;
+          html += `<tr><th style="${thStyle}">What</th><th style="${thStyle}">Where</th><th style="${thStyle}">How Many</th><th style="${thStyle}">Notes</th></tr>`;
           activeEfforts.forEach(e => {
-            html += `<tr><td>${esc(e.what)}</td><td>${esc(e.where)}</td><td>${esc(e.howMany)}</td><td>${esc(e.notes)}</td></tr>`;
+            html += `<tr><td style="${tdStyle}">${esc(e.what)}</td><td style="${tdStyle}">${esc(e.where)}</td><td style="${tdStyle}">${esc(e.howMany)}</td><td style="${tdStyle}">${esc(e.notes)}</td></tr>`;
           });
           html += `</table>`;
         }
 
-        // Lead Status
+        // Lead Status table
         const activeStatuses = leadStatuses.filter(s => s.name && s.count);
         if (activeStatuses.length) {
-          html += `<p><strong>Lead Status:</strong></p><ul>`;
-          activeStatuses.forEach(s => html += `<li>${esc(s.name)}: ${esc(s.count)}</li>`);
-          html += `</ul>`;
+          html += `<p style="${subHead}">Lead Status:</p>`;
+          html += `<table style="${tblStyle}">`;
+          html += `<tr>`;
+          activeStatuses.forEach(s => html += `<th style="${thStyle}">${esc(s.name)}</th>`);
+          html += `</tr><tr>`;
+          activeStatuses.forEach(s => html += `<td style="${tdStyle}">${esc(s.count)}</td>`);
+          html += `</tr></table>`;
         }
       }
 
-      // LEADS TO LEASES
+      // LEADS TO LEASES table
       if ($('weeklyGoal').value || $('weeklyActual').value || $('totalLeasesCount').value || $('leasesToGo').value) {
-        html += `<p><strong style="font-size:15px;">LEADS TO LEASES</strong></p>`;
-        html += `<ul>`;
-        if ($('weeklyGoal').value) html += `<li><strong>Weekly Goal:</strong> ${esc($('weeklyGoal').value)}</li>`;
-        if ($('weeklyActual').value) html += `<li><strong>Actual:</strong> ${esc($('weeklyActual').value)}</li>`;
-        if ($('totalLeasesCount').value) html += `<li><strong>Total Leases:</strong> ${esc($('totalLeasesCount').value)}</li>`;
-        if ($('leasesToGo').value) html += `<li><strong>Leases to Go:</strong> ${esc($('leasesToGo').value)}</li>`;
-        html += `</ul>`;
+        html += `<p style="${subHead}">Leads to Leases:</p>`;
+        html += `<table style="${tblStyle}">`;
+        html += `<tr>`;
+        if ($('weeklyGoal').value) html += `<th style="${thStyle}">Weekly Goal</th>`;
+        if ($('weeklyActual').value) html += `<th style="${thStyle}">Actual</th>`;
+        if ($('totalLeasesCount').value) html += `<th style="${thStyle}">Total Leases</th>`;
+        if ($('leasesToGo').value) html += `<th style="${thStyle}">Leases to Go</th>`;
+        html += `</tr><tr>`;
+        if ($('weeklyGoal').value) html += `<td style="${tdStyle}">${esc($('weeklyGoal').value)}</td>`;
+        if ($('weeklyActual').value) html += `<td style="${tdStyle}">${esc($('weeklyActual').value)}</td>`;
+        if ($('totalLeasesCount').value) html += `<td style="${tdStyle}">${esc($('totalLeasesCount').value)}</td>`;
+        if ($('leasesToGo').value) html += `<td style="${tdStyle}">${esc($('leasesToGo').value)}</td>`;
+        html += `</tr></table>`;
       }
 
       // OTHER IMPORTANT NOTE
       if ($('otherNotes').value.trim()) {
-        html += `<p><strong style="font-size:15px;">OTHER IMPORTANT NOTE</strong></p>`;
+        html += `<br/><p style="${sectionHead}">OTHER IMPORTANT NOTE</p>`;
         html += `<p>${esc($('otherNotes').value.trim())}</p>`;
       }
 
       // ATTACHED WRS INDEX
       const checkedItems = wrsIndexItems.filter(i => i.checked && i.label);
       if (checkedItems.length) {
-        html += `<p><strong style="font-size:15px;">ATTACHED WRS INDEX</strong></p>`;
-        html += `<ol>`;
-        checkedItems.forEach(item => html += `<li>${esc(item.label)}</li>`);
-        html += `</ol>`;
+        html += `<p style="${sectionHead}">ATTACHED WRS INDEX</p>`;
+        checkedItems.forEach((item, idx) => html += `<p style="margin:4px 0;">${idx + 1}.) ${esc(item.label)}</p>`);
       }
 
       // Sign-off
