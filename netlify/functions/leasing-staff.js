@@ -1,6 +1,6 @@
 import { getDb, ObjectId } from './_db.js';
 import { verifyReqAuth } from './_auth.js';
-import { sendTaskAssignedNotification } from './_email.js';
+import { notifyNewAssigneesViaWebhook } from './_email.js';
 
 /**
  * Leasing Team Staff Board API — Multi-assignee + Email Notifications
@@ -72,27 +72,9 @@ function cors(body, sc = 200) {
   return { statusCode: sc, headers: { 'Content-Type': 'application/json' }, body: typeof body === 'string' ? body : JSON.stringify(body) };
 }
 
-// ─── Send notifications for newly added assignees ───
-async function notifyNewAssignees(db, task, newAssigneeUserIds, propertyName, groupName) {
-  if (!newAssigneeUserIds || !newAssigneeUserIds.length) return;
-  const staffCol = db.collection('leasingStaff');
-  const taskCol = db.collection('leasingBoardTasks');
-  const now = new Date().toISOString();
-
-  for (const userId of newAssigneeUserIds) {
-    const staffRecord = await staffCol.findOne({ _id: new ObjectId(userId) });
-    if (!staffRecord) continue;
-
-    const result = await sendTaskAssignedNotification(db, { staffRecord, task, propertyName, groupName });
-
-    // Mark notification sent on the assignee record in the task
-    if (result.success) {
-      await taskCol.updateOne(
-        { _id: task._id, 'assignees.userId': userId },
-        { $set: { 'assignees.$.notificationSentAt': now } }
-      );
-    }
-  }
+// ─── Send notifications for newly added assignees (via Google Apps Script webhook) ───
+async function notifyNewAssignees(db, task, newAssigneeUserIds, propertyName, groupName, assignedByUsername) {
+  return notifyNewAssigneesViaWebhook(db, task, newAssigneeUserIds, propertyName, groupName, assignedByUsername);
 }
 
 export async function handler(event) {
@@ -170,9 +152,8 @@ export async function handler(event) {
     if (event.httpMethod === 'POST') {
       const body = JSON.parse(event.body || '{}');
 
-      // ─── Staff CRUD ───
+      // ─── Staff CRUD (all authenticated users with property access) ───
       if (action === 'staff') {
-        if (user.role !== 'admin') return cors('Forbidden', 403);
         const { id, propertyId, employeeName, role, username, email, isActive } = body;
         if (!propertyId || !employeeName) return cors('Missing fields', 400);
         const now = new Date().toISOString();
@@ -242,7 +223,7 @@ export async function handler(event) {
               if (p) propName = p.name;
             } catch (e) {}
             const grp = GROUPS.find(g => g.id === (updatedTask.groupId || existing.groupId));
-            notifyNewAssignees(db, updatedTask, newAssigneeIds, propName, grp ? grp.name : '').catch(e => console.error('[Email] notify error:', e));
+            notifyNewAssignees(db, updatedTask, newAssigneeIds, propName, grp ? grp.name : '', user.sub).catch(e => console.error('[Email] notify error:', e));
           }
 
           return cors({ success: true });
@@ -276,7 +257,7 @@ export async function handler(event) {
             if (p) propName = p.name;
           } catch (e) {}
           const grp = GROUPS.find(g => g.id === doc.groupId);
-          notifyNewAssignees(db, doc, taskAssignees.map(a => a.userId), propName, grp ? grp.name : '').catch(e => console.error('[Email] notify error:', e));
+          notifyNewAssignees(db, doc, taskAssignees.map(a => a.userId), propName, grp ? grp.name : '', user.sub).catch(e => console.error('[Email] notify error:', e));
         }
 
         return cors(doc, 201);
@@ -309,16 +290,20 @@ export async function handler(event) {
         }));
         const res = await taskCol.insertMany(docs);
 
-        // Notify assignees (send one email per person, not per task)
-        if (taskAssignees.length > 0) {
+        // Notify assignees via Google Apps Script webhook (one email per person for the batch)
+        if (taskAssignees.length > 0 && docs.length > 0) {
           const grp = GROUPS.find(g => g.id === (groupId || 'misc'));
-          for (const a of taskAssignees) {
-            const staffRecord = await staffCol.findOne({ _id: new ObjectId(a.userId) });
-            if (staffRecord && staffRecord.email) {
-              const summaryTask = { label: `${items.length} tasks from template`, date: d, status: 'Not Started', notes: items.slice(0, 5).map(t => typeof t === 'string' ? t : t.label).join(', ') + (items.length > 5 ? '...' : ''), _id: null };
-              sendTaskAssignedNotification(db, { staffRecord, task: summaryTask, propertyName: '', groupName: grp ? grp.name : '' }).catch(e => console.error('[Email]', e));
-            }
-          }
+          let propName = '';
+          try {
+            const allProps = await db.collection('properties').find({}).toArray();
+            const p = allProps.find(x => x._id.toString() === propertyId);
+            if (p) propName = p.name;
+          } catch (e) {}
+          // Use the first inserted doc as the representative task for notification
+          const summaryDoc = docs[0];
+          summaryDoc.label = `${items.length} tasks from template`;
+          summaryDoc.notes = items.slice(0, 5).map(t => typeof t === 'string' ? t : t.label).join(', ') + (items.length > 5 ? '...' : '');
+          notifyNewAssignees(db, summaryDoc, taskAssignees.map(a => a.userId), propName, grp ? grp.name : '', user.sub).catch(e => console.error('[Email] batch notify error:', e));
         }
 
         return cors({ success: true, count: res.insertedCount });
@@ -385,7 +370,6 @@ export async function handler(event) {
       const body = JSON.parse(event.body || '{}');
 
       if (action === 'staff') {
-        if (user.role !== 'admin') return cors('Forbidden', 403);
         await staffCol.updateOne({ _id: new ObjectId(body.id) }, { $set: { isActive: false, updatedAt: new Date().toISOString() } });
         return cors({ success: true });
       }

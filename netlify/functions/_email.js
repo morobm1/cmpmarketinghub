@@ -1,194 +1,197 @@
+import { ObjectId } from './_db.js';
+
 /**
- * Reusable Email Module for Marketing Hub
- * 
- * Supports: Resend (primary), SendGrid, SMTP fallback
- * Configure via environment variables:
- *   EMAIL_PROVIDER=resend|sendgrid|smtp  (default: resend)
- *   EMAIL_FROM=noreply@yourdomain.com
- *   RESEND_API_KEY=re_...
- *   SENDGRID_API_KEY=SG....
- *   SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS
- *   APP_BASE_URL=https://cmpmarketinghub.netlify.app
+ * CMP Marketing Hub — Google Apps Script Email Webhook Helper
+ *
+ * Replaces the previous Resend/SendGrid/SMTP email module.
+ * All email notifications are now sent via a Google Apps Script Web App
+ * deployed from the company's Google Workspace account.
+ *
+ * Backend-only environment variables:
+ *   GOOGLE_SCRIPT_WEB_APP_URL  — The deployed Apps Script Web App URL
+ *   CMPTASK — Shared secret for request validation
+ *   APP_BASE_URL — Base URL of the app (default: https://cmpmarketinghub.netlify.app)
  */
 
-const EMAIL_PROVIDER = process.env.EMAIL_PROVIDER || 'resend';
-const EMAIL_FROM = process.env.EMAIL_FROM || 'noreply@cmpmarketinghub.netlify.app';
 const APP_BASE_URL = process.env.APP_BASE_URL || 'https://cmpmarketinghub.netlify.app';
 
-// ─── Provider: Resend ───
-async function sendViaResend(to, subject, html) {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) throw new Error('RESEND_API_KEY not configured');
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-    body: JSON.stringify({ from: EMAIL_FROM, to: Array.isArray(to) ? to : [to], subject, html }),
-  });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error('Resend error: ' + err);
-  }
-  return await res.json();
+// ─── Determine whether an assignment email should fire ───
+export function shouldSendTaskAssignmentEmail(previousTask, newTask) {
+  if (!newTask) return false;
+  if (newTask.deleted || newTask.isDeleted || newTask.archived || newTask.isArchived) return false;
+  if (newTask.isTemplate || newTask.template || newTask.isDraft) return false;
+
+  // For multi-assignee model: compare assignee sets
+  const newIds = (newTask.assignees || []).map(a => a.userId).filter(Boolean).sort();
+  const oldIds = previousTask
+    ? (previousTask.assignees || []).map(a => a.userId).filter(Boolean).sort()
+    : [];
+
+  if (newIds.length === 0) return false;
+
+  // Find truly new assignees (added but not present before)
+  const added = newIds.filter(id => !oldIds.includes(id));
+  return added.length > 0;
 }
 
-// ─── Provider: SendGrid ───
-async function sendViaSendGrid(to, subject, html) {
-  const apiKey = process.env.SENDGRID_API_KEY;
-  if (!apiKey) throw new Error('SENDGRID_API_KEY not configured');
-  const res = await fetch('https://api.sendgrid.com/v3/mail/send', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      personalizations: [{ to: (Array.isArray(to) ? to : [to]).map(e => ({ email: e })) }],
-      from: { email: EMAIL_FROM },
-      subject,
-      content: [{ type: 'text/html', value: html }],
-    }),
-  });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error('SendGrid error: ' + err);
-  }
-  return { provider: 'sendgrid', status: 'sent' };
+// ─── Get only the newly-added assignee user IDs ───
+export function getNewAssigneeIds(previousTask, newTask) {
+  const newIds = (newTask.assignees || []).map(a => a.userId).filter(Boolean);
+  const oldIds = previousTask
+    ? (previousTask.assignees || []).map(a => a.userId).filter(Boolean)
+    : [];
+  return newIds.filter(id => !oldIds.includes(id));
 }
 
-// ─── Provider: SMTP (basic via nodemailer-like fetch) ───
-// Note: True SMTP requires nodemailer. This is a placeholder that logs a warning.
-async function sendViaSMTP(to, subject, html) {
-  console.warn('[Email] SMTP provider selected but native SMTP requires nodemailer. Logging email instead.');
-  console.log(`[Email][SMTP-LOG] To: ${to}, Subject: ${subject}`);
-  return { provider: 'smtp', status: 'logged_only', note: 'Add nodemailer for real SMTP' };
+// ─── Build a direct task URL ───
+export function buildTaskUrl(task) {
+  const taskId = task._id ? task._id.toString() : (task.id || '');
+  if (!taskId) return APP_BASE_URL + '/leasing_staff_list.html';
+  return `${APP_BASE_URL}/leasing_staff_list.html?taskId=${encodeURIComponent(taskId)}`;
 }
 
-// ─── Main Send Function ───
-export async function sendEmail({ to, subject, html }) {
-  if (!to || !subject) {
-    console.warn('[Email] Missing to or subject, skipping');
-    return { success: false, error: 'Missing to or subject' };
+// ─── Send the webhook to Google Apps Script ───
+export async function sendTaskAssignmentEmailWebhook({ task, assignedUser, assignedByUser, propertyName, groupName }) {
+  const webhookUrl = process.env.GOOGLE_SCRIPT_WEB_APP_URL;
+  const secret = process.env.CMPTASK;
+
+  if (!webhookUrl || !secret) {
+    console.warn('[Email] Google Script email webhook is not configured. Skipping.');
+    return { success: false, skipped: true, reason: 'missing_config' };
   }
+
+  if (!assignedUser || !(assignedUser.email || assignedUser.workEmail)) {
+    console.warn(`[Email] Task assignment email skipped — assigned user has no email.`);
+    return { success: false, skipped: true, reason: 'missing_assignee_email' };
+  }
+
+  const payload = {
+    secret,
+    eventType: 'task_assigned',
+    taskId: task._id ? task._id.toString() : (task.id || ''),
+    taskTitle: task.label || task.title || task.name || 'Task',
+    taskDescription: task.notes || task.description || '',
+    propertyName: propertyName || task.propertyName || task.property || '',
+    priority: task.priority || '',
+    status: task.status || '',
+    dueDate: task.date || task.dueDate || '',
+    assignedToName: assignedUser.employeeName || assignedUser.name || assignedUser.fullName || assignedUser.displayName || '',
+    assignedToEmail: assignedUser.email || assignedUser.workEmail || '',
+    assignedByName: assignedByUser?.employeeName || assignedByUser?.name || assignedByUser?.fullName || assignedByUser?.displayName || '',
+    assignedByEmail: assignedByUser?.email || assignedByUser?.workEmail || '',
+    groupName: groupName || '',
+    taskUrl: buildTaskUrl(task),
+  };
 
   try {
-    let result;
-    switch (EMAIL_PROVIDER) {
-      case 'sendgrid':
-        result = await sendViaSendGrid(to, subject, html);
-        break;
-      case 'smtp':
-        result = await sendViaSMTP(to, subject, html);
-        break;
-      case 'resend':
-      default:
-        result = await sendViaResend(to, subject, html);
-        break;
-    }
-    console.log(`[Email] Sent via ${EMAIL_PROVIDER} to ${to}: ${subject}`);
-    return { success: true, provider: EMAIL_PROVIDER, result };
-  } catch (e) {
-    console.error(`[Email] Failed via ${EMAIL_PROVIDER}:`, e.message);
-    return { success: false, provider: EMAIL_PROVIDER, error: e.message };
-  }
-}
-
-// ─── Notification Log Helper ───
-export async function logNotification(db, { type, taskId, userId, provider, status, error }) {
-  try {
-    await db.collection('notificationLog').insertOne({
-      type: type || 'task_assigned',
-      relatedTaskId: taskId || null,
-      relatedUserId: userId || null,
-      provider: provider || EMAIL_PROVIDER,
-      status: status || 'sent',
-      errorMessage: error || null,
-      sentAt: new Date().toISOString(),
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
     });
-  } catch (e) {
-    console.error('[Email] Failed to log notification:', e.message);
+
+    const resultText = await response.text();
+
+    if (!response.ok) {
+      console.error('[Email] Google Script webhook failed:', response.status, resultText);
+      return { success: false, error: resultText };
+    }
+
+    let result;
+    try { result = JSON.parse(resultText); } catch { result = { raw: resultText }; }
+
+    if (result && result.success === false) {
+      console.error('[Email] Google Script webhook returned failure:', result);
+      return { success: false, error: result.error || 'Unknown Apps Script error' };
+    }
+
+    console.log('[Email] Task assignment email sent via Google Apps Script to', payload.assignedToEmail);
+    return { success: true, result };
+
+  } catch (error) {
+    console.error('[Email] Google Script webhook error:', error);
+    return { success: false, error: error.message };
   }
 }
 
-// ─── Email Templates ───
+// ─── High-level: notify newly-added assignees via Google Apps Script ───
+export async function notifyNewAssigneesViaWebhook(db, task, newAssigneeUserIds, propertyName, groupName, assignedByUsername) {
+  if (!newAssigneeUserIds || !newAssigneeUserIds.length) return;
 
-export function taskAssignedEmailHTML({ staffName, propertyName, taskTitle, groupName, dueDate, status, notes, myTasksUrl }) {
-  return `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
-<body style="margin:0;padding:0;background:#f8fafc;font-family:'Segoe UI',Arial,sans-serif">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;padding:32px 16px">
-<tr><td align="center">
-<table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#fff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden">
-  <tr><td style="background:#446472;padding:24px 32px">
-    <h1 style="margin:0;color:#fff;font-size:20px;font-weight:700">New Task Assigned</h1>
-    <p style="margin:4px 0 0;color:rgba(255,255,255,.8);font-size:13px">${esc(propertyName)}</p>
-  </td></tr>
-  <tr><td style="padding:32px">
-    <p style="margin:0 0 20px;font-size:15px;color:#1e293b">Hello <strong>${esc(staffName)}</strong>,</p>
-    <p style="margin:0 0 20px;font-size:14px;color:#475569">A new task has been assigned to you:</p>
-    <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-bottom:24px">
-      <tr><td style="padding:12px 16px;background:#f8fafc;font-size:12px;font-weight:700;color:#64748b;border-bottom:1px solid #e2e8f0;width:120px">Task</td>
-          <td style="padding:12px 16px;font-size:14px;color:#1e293b;border-bottom:1px solid #e2e8f0;font-weight:600">${esc(taskTitle)}</td></tr>
-      <tr><td style="padding:12px 16px;background:#f8fafc;font-size:12px;font-weight:700;color:#64748b;border-bottom:1px solid #e2e8f0">Category</td>
-          <td style="padding:12px 16px;font-size:14px;color:#1e293b;border-bottom:1px solid #e2e8f0">${esc(groupName || '—')}</td></tr>
-      <tr><td style="padding:12px 16px;background:#f8fafc;font-size:12px;font-weight:700;color:#64748b;border-bottom:1px solid #e2e8f0">Due Date</td>
-          <td style="padding:12px 16px;font-size:14px;color:#1e293b;border-bottom:1px solid #e2e8f0">${dueDate ? esc(dueDate) : 'Not set'}</td></tr>
-      <tr><td style="padding:12px 16px;background:#f8fafc;font-size:12px;font-weight:700;color:#64748b;border-bottom:1px solid #e2e8f0">Status</td>
-          <td style="padding:12px 16px;font-size:14px;color:#1e293b;border-bottom:1px solid #e2e8f0">${esc(status || 'Not Started')}</td></tr>
-      ${notes ? `<tr><td style="padding:12px 16px;background:#f8fafc;font-size:12px;font-weight:700;color:#64748b">Notes</td>
-          <td style="padding:12px 16px;font-size:14px;color:#1e293b">${esc(notes)}</td></tr>` : ''}
-    </table>
-    <p style="margin:0 0 24px;font-size:14px;color:#475569">Please log in to review and update your task.</p>
-    <a href="${esc(myTasksUrl)}" style="display:inline-block;padding:12px 28px;background:#446472;color:#fff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600">Open My Tasks</a>
-  </td></tr>
-  <tr><td style="padding:20px 32px;background:#f8fafc;border-top:1px solid #e2e8f0">
-    <p style="margin:0;font-size:11px;color:#94a3b8;text-align:center">Capstone Management Partners &middot; Marketing Hub</p>
-  </td></tr>
-</table>
-</td></tr>
-</table>
-</body>
-</html>`;
-}
+  const staffCol = db.collection('leasingStaff');
+  const taskCol = db.collection('leasingBoardTasks');
+  const now = new Date().toISOString();
 
-function esc(t) {
-  if (!t) return '';
-  return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-// ─── High-level: Send Task Assigned Notification ───
-export async function sendTaskAssignedNotification(db, { staffRecord, task, propertyName, groupName }) {
-  if (!staffRecord || !staffRecord.email) {
-    console.warn(`[Email] No email for staff ${staffRecord?.employeeName}, skipping notification`);
-    return { success: false, error: 'No email address' };
+  // Resolve the assigning user (the person who saved the task)
+  let assignedByUser = null;
+  if (assignedByUsername) {
+    // Try to find them in the users collection first
+    try {
+      assignedByUser = await db.collection('users').findOne({ username: assignedByUsername });
+    } catch (e) {}
+    // Fallback: try staff collection
+    if (!assignedByUser) {
+      try {
+        assignedByUser = await staffCol.findOne({ username: assignedByUsername });
+      } catch (e) {}
+    }
   }
 
-  const myTasksUrl = `${APP_BASE_URL}/my_tasks.html?staff=${staffRecord._id}`;
-  const html = taskAssignedEmailHTML({
-    staffName: staffRecord.employeeName,
-    propertyName: propertyName || 'Your Property',
-    taskTitle: task.label || task.title || 'New Task',
-    groupName,
-    dueDate: task.date || task.dueDate,
-    status: task.status || 'Not Started',
-    notes: task.notes || task.description || '',
-    myTasksUrl,
-  });
+  for (const userId of newAssigneeUserIds) {
+    try {
+      const staffRecord = await staffCol.findOne({ _id: new ObjectId(userId) });
+      if (!staffRecord) continue;
+      if (!staffRecord.email) {
+        console.warn(`[Email] Skipping notification for staff ${staffRecord.employeeName} — no email.`);
+        continue;
+      }
 
-  const result = await sendEmail({
-    to: staffRecord.email,
-    subject: `New Task Assigned: ${task.label || task.title || 'Task'}`,
-    html,
-  });
+      // Check duplicate: skip if we already notified this person for this task
+      const taskDoc = await taskCol.findOne({ _id: task._id });
+      if (taskDoc) {
+        const assigneeRecord = (taskDoc.assignees || []).find(a => a.userId === userId);
+        if (assigneeRecord && assigneeRecord.notificationSentAt) {
+          console.log(`[Email] Already notified ${staffRecord.employeeName} for task ${task._id}. Skipping.`);
+          continue;
+        }
+      }
 
-  await logNotification(db, {
-    type: 'task_assigned',
-    taskId: task._id ? task._id.toString() : null,
-    userId: staffRecord._id ? staffRecord._id.toString() : null,
-    provider: result.provider,
-    status: result.success ? 'sent' : 'failed',
-    error: result.error || null,
-  });
+      const result = await sendTaskAssignmentEmailWebhook({
+        task,
+        assignedUser: staffRecord,
+        assignedByUser,
+        propertyName,
+        groupName,
+      });
 
-  return result;
+      // Mark notification sent on the assignee record
+      if (result.success) {
+        await taskCol.updateOne(
+          { _id: task._id, 'assignees.userId': userId },
+          { $set: { 'assignees.$.notificationSentAt': now } }
+        );
+      }
+
+      // Log to notification collection
+      try {
+        await db.collection('notificationLog').insertOne({
+          type: 'task_assigned',
+          relatedTaskId: task._id ? task._id.toString() : null,
+          relatedUserId: userId,
+          provider: 'google_apps_script',
+          status: result.success ? 'sent' : (result.skipped ? 'skipped' : 'failed'),
+          reason: result.reason || null,
+          errorMessage: result.error || null,
+          sentAt: now,
+        });
+      } catch (logErr) {
+        console.error('[Email] Failed to log notification:', logErr.message);
+      }
+
+    } catch (err) {
+      console.error(`[Email] Error notifying userId ${userId}:`, err.message);
+    }
+  }
 }
 
 export { APP_BASE_URL };
