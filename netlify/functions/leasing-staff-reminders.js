@@ -84,11 +84,21 @@ export async function handler(event) {
           dashboardUrl: APP_BASE_URL + '/leasing_staff_list.html',
         };
 
-        const response = await fetch(CMP_SCRIPT_URL, {
+        const bodyStr = JSON.stringify(payload);
+        // Use redirect:'manual' to preserve POST body through Google's 302 redirects
+        let response = await fetch(CMP_SCRIPT_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
+          body: bodyStr,
+          redirect: 'manual',
         });
+        let redir = 0;
+        while (response.status >= 300 && response.status < 400 && redir < 5) {
+          const loc = response.headers.get('location');
+          if (!loc) break;
+          response = await fetch(loc, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: bodyStr, redirect: 'manual' });
+          redir++;
+        }
 
         if (response.ok) {
           const result = await response.json();
