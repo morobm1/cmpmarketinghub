@@ -39,35 +39,62 @@ function doPost(e) {
       return jsonResponse({ success: false, error: 'Unauthorized' });
     }
 
-    if (data.eventType !== 'task_assigned') {
+    if (data.eventType !== 'task_assigned' && data.eventType !== 'task_overdue_reminder') {
       return jsonResponse({ success: false, error: 'Unsupported event type' });
     }
 
-    if (!isValidEmail(data.assignedToEmail)) {
-      return jsonResponse({ success: false, error: 'Missing or invalid assignedToEmail' });
+    // ── task_assigned ──
+    if (data.eventType === 'task_assigned') {
+      if (!isValidEmail(data.assignedToEmail)) {
+        return jsonResponse({ success: false, error: 'Missing or invalid assignedToEmail' });
+      }
+
+      var taskTitle = data.taskTitle || 'Task';
+      var subject = 'New Task Assigned: ' + taskTitle;
+
+      var mailOptions = {
+        to: data.assignedToEmail,
+        subject: subject,
+        body: buildPlainTextBody(data),
+        htmlBody: buildTaskAssignedEmailHtml(data),
+        name: 'CMP Marketing Hub'
+      };
+
+      if (isValidEmail(data.assignedByEmail)) {
+        mailOptions.replyTo = data.assignedByEmail;
+      }
+
+      MailApp.sendEmail(mailOptions);
+
+      return jsonResponse({
+        success: true,
+        message: 'Task assignment email sent to ' + data.assignedToEmail
+      });
     }
 
-    var taskTitle = data.taskTitle || 'Task';
-    var subject = 'New Task Assigned: ' + taskTitle;
+    // ── task_overdue_reminder ──
+    if (data.eventType === 'task_overdue_reminder') {
+      if (!isValidEmail(data.assignedToEmail)) {
+        return jsonResponse({ success: false, error: 'Missing or invalid assignedToEmail' });
+      }
 
-    var mailOptions = {
-      to: data.assignedToEmail,
-      subject: subject,
-      body: buildPlainTextBody(data),
-      htmlBody: buildTaskAssignedEmailHtml(data),
-      name: 'CMP Marketing Hub'
-    };
+      var overdueSubject = 'Overdue Tasks Reminder: ' + (data.totalOverdue || 0) + ' task(s) need attention';
 
-    if (isValidEmail(data.assignedByEmail)) {
-      mailOptions.replyTo = data.assignedByEmail;
+      var overdueMailOptions = {
+        to: data.assignedToEmail,
+        subject: overdueSubject,
+        body: buildOverdueReminderPlainText(data),
+        htmlBody: buildOverdueReminderHtml(data),
+        name: 'CMP Marketing Hub'
+      };
+
+      MailApp.sendEmail(overdueMailOptions);
+
+      return jsonResponse({
+        success: true,
+        message: 'Overdue reminder email sent to ' + data.assignedToEmail
+      });
     }
-
-    MailApp.sendEmail(mailOptions);
-
-    return jsonResponse({
-      success: true,
-      message: 'Task assignment email sent to ' + data.assignedToEmail
-    });
 
   } catch (err) {
     return jsonResponse({
@@ -209,6 +236,97 @@ function jsonResponse(payload) {
   return ContentService
     .createTextOutput(JSON.stringify(payload))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// OVERDUE REMINDER HTML TEMPLATE
+// ═══════════════════════════════════════════════════════════════
+
+function buildOverdueReminderHtml(data) {
+  var brandColor = '#8B1E2D';
+  var name = escapeHtml(data.assignedToName || 'there');
+  var total = data.totalOverdue || 0;
+  var tasks = data.overdueTasks || [];
+  var dashboardUrl = String(data.dashboardUrl || '').trim();
+
+  var taskRows = '';
+  for (var i = 0; i < tasks.length; i++) {
+    var t = tasks[i];
+    var prColor = t.priority === 'Critical' ? '#dc2626' : t.priority === 'High' ? '#ea580c' : t.priority === 'Medium' ? '#d97706' : '#64748b';
+    taskRows += ''
+      + '<tr>'
+      + '<td style="padding:10px 12px;border-bottom:1px solid #eeeeee;font-size:13px;color:#222222;font-weight:600;">'
+      + (t.taskUrl ? '<a href="' + escapeHtml(t.taskUrl) + '" style="color:#222222;text-decoration:none;">' + escapeHtml(t.title) + '</a>' : escapeHtml(t.title))
+      + '</td>'
+      + '<td style="padding:10px 12px;border-bottom:1px solid #eeeeee;font-size:12px;color:' + brandColor + ';font-weight:700;">' + escapeHtml(t.dueDate) + '</td>'
+      + '<td style="padding:10px 12px;border-bottom:1px solid #eeeeee;font-size:12px;color:#475569;">' + escapeHtml(t.propertyName) + '</td>'
+      + '<td style="padding:10px 12px;border-bottom:1px solid #eeeeee;font-size:11px;font-weight:700;color:' + prColor + ';">' + escapeHtml(t.priority || '—') + '</td>'
+      + '</tr>';
+  }
+
+  var ctaBlock = dashboardUrl
+    ? '<div style="text-align:center;margin-top:28px;">'
+      + '<a href="' + escapeHtml(dashboardUrl) + '" style="display:inline-block;background:' + brandColor + ';color:#ffffff;text-decoration:none;padding:14px 24px;border-radius:8px;font-size:16px;font-weight:bold;">Open Task Board</a>'
+      + '</div>'
+    : '';
+
+  return ''
+    + '<div style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,Helvetica,sans-serif;">'
+    + '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f5f5;padding:24px 0;">'
+    + '<tr><td align="center">'
+    + '<table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="width:600px;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e5e5e5;">'
+    + '<tr><td style="background:' + brandColor + ';color:#ffffff;padding:24px;text-align:center;">'
+    + '<h1 style="margin:0;font-size:22px;line-height:28px;color:#ffffff;">⏰ Overdue Tasks Reminder</h1>'
+    + '<p style="margin:8px 0 0;font-size:14px;line-height:20px;color:#ffffff;">CMP Marketing Hub</p>'
+    + '</td></tr>'
+    + '<tr><td style="padding:28px;">'
+    + '<p style="font-size:16px;line-height:24px;color:#222222;margin:0 0 16px;">Hi ' + name + ',</p>'
+    + '<p style="font-size:16px;line-height:24px;color:#222222;margin:0 0 24px;">You have <strong style="color:' + brandColor + ';">' + total + ' overdue task' + (total !== 1 ? 's' : '') + '</strong> that need your attention:</p>'
+    + '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse;border:1px solid #eeeeee;border-radius:10px;overflow:hidden;">'
+    + '<tr style="background:#f8f8f8;">'
+    + '<th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:800;color:#666666;border-bottom:2px solid #eeeeee;">Task</th>'
+    + '<th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:800;color:#666666;border-bottom:2px solid #eeeeee;">Due Date</th>'
+    + '<th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:800;color:#666666;border-bottom:2px solid #eeeeee;">Property</th>'
+    + '<th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:800;color:#666666;border-bottom:2px solid #eeeeee;">Priority</th>'
+    + '</tr>'
+    + taskRows
+    + '</table>'
+    + ctaBlock
+    + '<p style="font-size:12px;line-height:18px;color:#777777;margin:28px 0 0;text-align:center;">This weekly reminder was sent from the CMP Marketing Hub.</p>'
+    + '</td></tr>'
+    + '</table>'
+    + '</td></tr>'
+    + '</table>'
+    + '</div>';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// OVERDUE REMINDER PLAIN TEXT FALLBACK
+// ═══════════════════════════════════════════════════════════════
+
+function buildOverdueReminderPlainText(data) {
+  var lines = [
+    'Hi ' + (data.assignedToName || 'there') + ',',
+    '',
+    'You have ' + (data.totalOverdue || 0) + ' overdue task(s) that need your attention:',
+    ''
+  ];
+
+  var tasks = data.overdueTasks || [];
+  for (var i = 0; i < tasks.length; i++) {
+    var t = tasks[i];
+    lines.push((i + 1) + '. ' + (t.title || 'Task') + ' (Due: ' + (t.dueDate || '?') + ')' + (t.propertyName ? ' — ' + t.propertyName : ''));
+  }
+
+  if (data.dashboardUrl) {
+    lines.push('');
+    lines.push('Open Task Board: ' + data.dashboardUrl);
+  }
+
+  lines.push('');
+  lines.push('— CMP Marketing Hub');
+
+  return lines.join('\n');
 }
 
 // ═══════════════════════════════════════════════════════════════

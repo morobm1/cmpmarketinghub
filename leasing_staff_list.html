@@ -19,7 +19,7 @@
   --good:#16a34a;--warn:#d97706;--bad:#dc2626;--purple:#7c3aed;
   --row-hover:#f1f5f9;--grp-bg:#f8fafc;
   /* ═══ SHARED COLUMN GRID ═══ */
-  --board-cols: 40px 4px minmax(200px,1fr) 150px 120px 100px 100px 150px 80px 60px 64px;
+  --board-cols: 40px 4px minmax(180px,1fr) 130px 130px 120px 100px 100px 130px 70px 50px 80px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
@@ -90,7 +90,7 @@ select:focus,input[type=date]:focus{outline:none;border-color:var(--acc2);box-sh
 
 /* Task row */
 .board-row.task{border-bottom:1px solid var(--bdr-l);transition:background .08s}
-.board-row.task:hover{background:var(--row-hover)}
+.board-row.task:hover{background:#dbeafe;cursor:pointer}
 .board-row.task.done{opacity:.5}
 .board-row.task .c-accent{padding:0}
 .board-row.task .c-task{font-weight:600}
@@ -180,7 +180,7 @@ textarea{min-height:50px;resize:vertical}
   .board-container{border:2px solid #333}.board-row.hdr{position:static}
   .grp-title-row,.board-row.footer,.st-pill,.pr-pill,.owner-pill,.owner-pill .oi,.grp-color-bar{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
-@media(max-width:768px){.fr,.fr3{grid-template-columns:1fr}:root{--board-cols:40px 4px minmax(140px,1fr) 100px 90px 80px 80px 100px 60px 50px 40px}}
+@media(max-width:768px){.fr,.fr3{grid-template-columns:1fr}:root{--board-cols:40px 4px minmax(120px,1fr) 90px 90px 80px 70px 70px 90px 50px 40px 60px}}
 </style>
 </head>
 <body>
@@ -213,6 +213,12 @@ textarea{min-height:50px;resize:vertical}
           </div>
           <select id="bProp" style="display:none"><option value="">— Select —</option></select>
         </div>
+        <div class="fg"><label>View</label>
+          <div style="display:flex;gap:0">
+            <button class="sm" id="viewDay" onclick="setDateMode('day')" style="border-radius:7px 0 0 7px;font-size:11px;padding:8px 12px">Day</button>
+            <button class="sm" id="viewMonth" onclick="setDateMode('month')" style="border-radius:0 7px 7px 0;font-size:11px;padding:8px 12px">Month</button>
+          </div>
+        </div>
         <div class="fg"><label>Date</label><input type="date" id="bDate"/></div>
         <div class="fg"><label>Person</label><select id="bPerson" style="min-width:140px"><option value="">Everyone</option></select></div>
         <div class="fg"><label>Status</label><select id="bStatus" style="min-width:120px"><option value="">All</option><option>Not Started</option><option>Working on It</option><option>Done</option><option>On Hold</option></select></div>
@@ -233,6 +239,7 @@ textarea{min-height:50px;resize:vertical}
               <div><!-- accent --></div>
               <div>Task</div>
               <div>Owner</div>
+              <div>Responsible</div>
               <div>Status</div>
               <div>Due date</div>
               <div>Priority</div>
@@ -270,15 +277,24 @@ textarea{min-height:50px;resize:vertical}
   <!-- TASK MODAL -->
   <div class="modal-bg" id="taskMod">
     <div class="modal">
-      <div class="modal-hd"><h3 id="taskModTitle">Add Task</h3><button class="x-btn" onclick="closeM('taskMod')">&times;</button></div>
+      <div class="modal-hd"><h3 id="taskModTitle">Add Task</h3><div style="display:flex;gap:6px;align-items:center"><button class="xs" id="historyBtn" onclick="showTaskHistory()" title="History" style="display:none">📋 History</button><button class="x-btn" onclick="closeM('taskMod')">&times;</button></div></div>
       <div class="modal-bd">
         <form id="taskForm">
           <input type="hidden" id="tfId"/>
           <div class="fg"><label>Task *</label><input type="text" id="tfLabel" required placeholder="Enter task name..."/></div>
           <div class="fr"><div class="fg"><label>Group</label><select id="tfGroup"></select></div><div class="fg"><label>Status</label><select id="tfStatus"><option>Not Started</option><option>Working on It</option><option>Done</option><option>On Hold</option></select></div></div>
           <div class="fg"><label>Assign To</label><div class="ms-list" id="tfAssignees"></div></div>
+          <div class="fg"><label>Responsible Users</label><div class="ms-list" id="tfResponsible"></div></div>
           <div class="fr3"><div class="fg"><label>Due Date</label><input type="date" id="tfDate"/></div><div class="fg"><label>Priority</label><select id="tfPriority"><option value="">None</option><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select></div><div class="fg"><label>Budget</label><input type="number" id="tfBudget" placeholder="0.00" step="0.01"/></div></div>
           <div class="fg"><label>Notes</label><textarea id="tfNotes" rows="2" placeholder="Optional notes..."></textarea></div>
+          <div class="fg" id="tfFilesSection" style="display:none">
+            <label>Files</label>
+            <div id="tfFileList" style="margin-bottom:8px"></div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="file" id="tfFileInput" style="font-size:12px" multiple/>
+              <button type="button" class="xs acc" onclick="uploadTaskFiles()">Upload</button>
+            </div>
+          </div>
           <div class="fa"><button type="button" onclick="closeM('taskMod')">Cancel</button><button type="submit" class="pri">Save Task</button></div>
         </form>
       </div>
@@ -333,10 +349,21 @@ textarea{min-height:50px;resize:vertical}
   <div class="pop" id="statusPop"></div>
   <div class="pop" id="priorityPop"></div>
 
+  <!-- HISTORY MODAL -->
+  <div class="modal-bg" id="historyMod">
+    <div class="modal" style="max-width:560px">
+      <div class="modal-hd"><h3>Task History</h3><button class="x-btn" onclick="closeM('historyMod')">&times;</button></div>
+      <div class="modal-bd" id="historyBody" style="max-height:400px;overflow:auto">
+        <div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">Loading...</div>
+      </div>
+    </div>
+  </div>
+
 <script>
 /* ═══ STATE ═══ */
 let me=null,isAdmin=false,properties=[],groups=[],staff=[],tasks=[],templates=[];
 let propId='',boardDate='',pollTimer=null,viewMode='active'; // 'active' or 'completed'
+let dateMode='day'; // 'day' or 'month'
 const $=id=>document.getElementById(id);
 function esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML;}
 function today(){return new Date().toISOString().slice(0,10);}
@@ -358,8 +385,19 @@ function boot(){
   if(isAdmin)$('uBadge').classList.add('admin');
   // Staff tab visible to all users (admin and non-admin)
   $('bDate').value=today();boardDate=today();
+  setDateMode('day');
   loadAll();
 }
+
+function setDateMode(mode){
+  dateMode=mode;
+  $('viewDay').style.background=mode==='day'?'var(--pri)':'';
+  $('viewDay').style.color=mode==='day'?'#fff':'';
+  $('viewMonth').style.background=mode==='month'?'var(--pri)':'';
+  $('viewMonth').style.color=mode==='month'?'#fff':'';
+  if(propId)loadBoard();
+}
+window.setDateMode=setDateMode;
 
 /* ═══ TABS ═══ */
 $('mainTabs').addEventListener('click',e=>{const t=e.target.closest('.tab');if(!t)return;document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));document.querySelectorAll('.pane').forEach(x=>x.classList.remove('on'));t.classList.add('on');$('p-'+t.dataset.t).classList.add('on');});
@@ -415,7 +453,7 @@ function fillGroupSelects(){const o=groups.map(g=>`<option value="${g.id}">${esc
 
 /* ═══ POLLING ═══ */
 function startPolling(){if(pollTimer)clearInterval(pollTimer);pollTimer=setInterval(()=>{if(propId)silentReload();},30000);}
-async function silentReload(){try{const r=await api('/leasing-staff?action=tasks&propertyId='+propId+'&date='+boardDate);const f=await r.json();if(JSON.stringify(f.map(t=>t._id+t.updatedAt))!==JSON.stringify(tasks.map(t=>t._id+t.updatedAt))){tasks=f;renderBoard();}}catch(e){}}
+async function silentReload(){try{let taskUrl='/leasing-staff?action=tasks&propertyId='+propId;if(dateMode==='day'){taskUrl+='&date='+boardDate;}const r=await api(taskUrl);const f=await r.json();if(JSON.stringify(f.map(t=>t._id+t.updatedAt))!==JSON.stringify(tasks.map(t=>t._id+t.updatedAt))){tasks=f;renderBoard();}}catch(e){}}
 
 /* ═══ MULTI-SELECT ═══ */
 function buildMS(cid){$(cid).innerHTML=staff.map(s=>`<label class="ms-item" data-uid="${s._id}"><input type="checkbox" value="${s._id}" data-name="${esc(s.employeeName)}" data-email="${esc(s.email||'')}"/> ${esc(s.employeeName)}${s.role?'<span style="color:var(--muted);margin-left:auto;font-size:10px">'+esc(s.role)+'</span>':''}</label>`).join('')||'<div style="padding:10px;color:var(--muted);font-size:11px">No staff yet.</div>';$(cid).querySelectorAll('.ms-item').forEach(it=>{const cb=it.querySelector('input');cb.addEventListener('change',()=>it.classList.toggle('checked',cb.checked));});}
@@ -426,9 +464,11 @@ function setMS(cid,ids){$(cid).querySelectorAll('input[type=checkbox]').forEach(
 async function loadBoard(){
   if(!propId){$('boardEmpty').style.display='';$('boardWrap').style.display='none';return;}
   showSave('saving');
-  const [sR,tR]=await Promise.all([api('/leasing-staff?action=staff&propertyId='+propId),api('/leasing-staff?action=tasks&propertyId='+propId+'&date='+boardDate)]);
+  let taskUrl='/leasing-staff?action=tasks&propertyId='+propId;
+  if(dateMode==='day'){taskUrl+='&date='+boardDate;}
+  const [sR,tR]=await Promise.all([api('/leasing-staff?action=staff&propertyId='+propId),api(taskUrl)]);
   staff=await sR.json();tasks=await tR.json();
-  fillPersonFilter();buildMS('tfAssignees');buildMS('tpAssignees');
+  fillPersonFilter();buildMS('tfAssignees');buildMS('tpAssignees');buildMS('tfResponsible');
   renderBoard();showSave('saved');
 }
 function fillPersonFilter(){$('bPerson').innerHTML='<option value="">Everyone</option>'+staff.map(s=>`<option value="${s._id}">${esc(s.employeeName)}</option>`).join('');}
@@ -452,6 +492,7 @@ window.toggleBoardView=toggleBoardView;
 function renderBoard(){
   const pf=$('bPerson').value,sf=$('bStatus').value;
   let filtered=tasks;
+  if(dateMode==='month'&&boardDate){const ym=boardDate.slice(0,7);filtered=filtered.filter(t=>(t.date||'').startsWith(ym));}
   if(pf)filtered=filtered.filter(t=>(t.assignees||[]).some(a=>a.userId===pf));
   if(sf)filtered=filtered.filter(t=>t.status===sf);
   if(filtered.length===0&&staff.length===0){$('boardEmpty').innerHTML='<h3>No Tasks Yet</h3><p>Add tasks or load a template.</p>';$('boardEmpty').style.display='';$('boardWrap').style.display='none';return;}
@@ -475,20 +516,26 @@ function renderBoard(){
     const prC=PR_CLS[t.priority||'']||'pr-none';
     const owners=(t.assignees||[]);
     const ownerHtml=owners.length?owners.map(a=>{const ini=(a.userName||'').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);return `<span class="owner-pill"><span class="oi">${ini}</span>${esc(a.userName)}</span>`;}).join(''):'<span style="color:var(--muted);font-size:11px">—</span>';
+    const respUsers=(t.responsibleUsers||[]);
+    const respHtml=respUsers.length?respUsers.map(r=>{const ini=(r.userName||'').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);return `<span class="owner-pill" style="background:#fef3c7;color:#92400e;border-color:#fcd34d"><span class="oi" style="background:#d97706">${ini}</span>${esc(r.userName)}</span>`;}).join(''):'<span style="color:var(--muted);font-size:11px">—</span>';
     const budgetStr=t.budget?'$'+Number(t.budget).toLocaleString('en-US',{minimumFractionDigits:2}):'';
     const filesCount=(t.files||[]).length;
-    return `<div class="board-row task${done?' done':''}" data-tid="${t._id}">
+    return `<div class="board-row task${done?' done':''}" data-tid="${t._id}" onclick="editTask('${t._id}')">
       <div><div class="chk${done?' on':''}" data-tid="${t._id}"></div></div>
       <div class="c-accent" style="background:${color};opacity:.15"></div>
       <div class="c-task">${esc(t.label)}</div>
       <div><div class="owner-pills">${ownerHtml}</div></div>
+      <div><div class="owner-pills">${respHtml}</div></div>
       <div><span class="st-pill ${stC}" data-tid="${t._id}">${esc(t.status)}</span></div>
       <div style="font-size:12px;font-weight:600;color:var(--sub)">${t.date||'—'}</div>
       <div><span class="pr-pill ${prC}" data-tid="${t._id}">${esc(t.priority||'—')}</span></div>
       <div style="font-size:12px;color:var(--sub)" title="${esc(t.notes||'')}">${esc(t.notes||'')}</div>
       <div style="font-size:12px;font-weight:600">${budgetStr||'—'}</div>
       <div style="text-align:center;font-size:12px;color:var(--sub)">${filesCount?'📎'+filesCount:'—'}</div>
-      <div style="text-align:center"><button class="xs" onclick="editTask('${t._id}')" title="Edit">✎</button><button class="xs bad" onclick="delTask('${t._id}')" title="Delete" style="margin-left:2px">✕</button></div>
+      <div style="text-align:center;display:flex;gap:2px;justify-content:center">
+        <button class="xs" onclick="event.stopPropagation();sendManualReminder('${t._id}')" title="Send Reminder">✉</button>
+        <button class="xs bad" onclick="event.stopPropagation();delTask('${t._id}')" title="Delete">✕</button>
+      </div>
     </div>`;
   }
 
@@ -532,7 +579,7 @@ function renderBoard(){
       const totalFiles=items.reduce((s,t)=>s+(t.files||[]).length,0);
       const nearestDate=items.filter(t=>t.date).map(t=>t.date).sort()[0]||'';
       const highPri=items.filter(t=>t.priority==='High'||t.priority==='Critical').length;
-      html+=`<div class="board-row footer"><div></div><div></div><div>${items.length} ${isCompleted?'completed':'active'}</div><div></div><div></div><div style="font-size:10px">${nearestDate&&!isCompleted?'Next: '+nearestDate:''}</div><div>${highPri?'<span style="color:var(--bad)">'+highPri+' high</span>':''}</div><div></div><div style="font-size:11px;font-weight:700">${totalBudget?'$'+totalBudget.toLocaleString('en-US',{minimumFractionDigits:2}):''}</div><div style="text-align:center">${totalFiles?'📎'+totalFiles:''}</div><div></div></div>`;
+      html+=`<div class="board-row footer"><div></div><div></div><div>${items.length} ${isCompleted?'completed':'active'}</div><div></div><div></div><div></div><div style="font-size:10px">${nearestDate&&!isCompleted?'Next: '+nearestDate:''}</div><div>${highPri?'<span style="color:var(--bad)">'+highPri+' high</span>':''}</div><div></div><div style="font-size:11px;font-weight:700">${totalBudget?'$'+totalBudget.toLocaleString('en-US',{minimumFractionDigits:2}):''}</div><div style="text-align:center">${totalFiles?'📎'+totalFiles:''}</div><div></div></div>`;
     }
     html+=`</div>`;
   });
@@ -540,7 +587,7 @@ function renderBoard(){
   $('groupsArea').innerHTML=html;
 
   // Event: checkboxes
-  $('groupsArea').querySelectorAll('.chk').forEach(el=>{el.addEventListener('click',async()=>{const tid=el.dataset.tid;const t=tasks.find(x=>x._id===tid);if(!t)return;showSave('saving');try{await api('/leasing-staff?action=completeTask',{method:'POST',body:JSON.stringify({id:tid,completed:!t.completed})});await loadBoard();}catch(e){alert(e.message);showSave('saved');}});});
+  $('groupsArea').querySelectorAll('.chk').forEach(el=>{el.addEventListener('click',async(e)=>{e.stopPropagation();const tid=el.dataset.tid;const t=tasks.find(x=>x._id===tid);if(!t)return;showSave('saving');try{await api('/leasing-staff?action=completeTask',{method:'POST',body:JSON.stringify({id:tid,completed:!t.completed})});await loadBoard();}catch(e2){alert(e2.message);showSave('saved');}});});
   // Event: status pills
   $('groupsArea').querySelectorAll('.st-pill').forEach(el=>{el.addEventListener('click',e=>{e.stopPropagation();showPop('statusPop',el,el.dataset.tid,'status');});});
   // Event: priority pills
@@ -566,12 +613,12 @@ function showPop(popId,el,tid,type){popTid=tid;const pop=$(popId);
 document.addEventListener('click',e=>{if(!e.target.closest('.pop')&&!e.target.closest('.st-pill')&&!e.target.closest('.pr-pill')){$('statusPop').style.display='none';$('priorityPop').style.display='none';}});
 
 /* ═══ TASK CRUD ═══ */
-$('addTaskBtn').addEventListener('click',()=>{if(!propId){alert('Select a property first');return;}$('tfId').value='';$('tfLabel').value='';$('tfGroup').value='opening';$('tfStatus').value='Not Started';$('tfDate').value=boardDate;$('tfNotes').value='';$('tfPriority').value='';$('tfBudget').value='';setMS('tfAssignees',[]);$('taskModTitle').textContent='Add Task';openM('taskMod');});
-function editTask(tid){const t=tasks.find(x=>x._id===tid);if(!t)return;$('tfId').value=t._id;$('tfLabel').value=t.label;$('tfGroup').value=t.groupId;$('tfStatus').value=t.status;$('tfDate').value=t.date||'';$('tfNotes').value=t.notes||'';$('tfPriority').value=t.priority||'';$('tfBudget').value=t.budget||'';setMS('tfAssignees',(t.assignees||[]).map(a=>a.userId));$('taskModTitle').textContent='Edit Task';openM('taskMod');}
+$('addTaskBtn').addEventListener('click',()=>{if(!propId){alert('Select a property first');return;}$('tfId').value='';$('tfLabel').value='';$('tfGroup').value='opening';$('tfStatus').value='Not Started';$('tfDate').value=boardDate;$('tfNotes').value='';$('tfPriority').value='';$('tfBudget').value='';setMS('tfAssignees',[]);setMS('tfResponsible',[]);$('taskModTitle').textContent='Add Task';$('historyBtn').style.display='none';$('tfFilesSection').style.display='none';openM('taskMod');});
+function editTask(tid){const t=tasks.find(x=>x._id===tid);if(!t)return;$('tfId').value=t._id;$('tfLabel').value=t.label;$('tfGroup').value=t.groupId;$('tfStatus').value=t.status;$('tfDate').value=t.date||'';$('tfNotes').value=t.notes||'';$('tfPriority').value=t.priority||'';$('tfBudget').value=t.budget||'';setMS('tfAssignees',(t.assignees||[]).map(a=>a.userId));setMS('tfResponsible',(t.responsibleUsers||[]).map(r=>r.userId));$('taskModTitle').textContent='Edit Task';$('historyBtn').style.display='';$('tfFilesSection').style.display='';renderTaskFiles(t._id,t.files||[]);openM('taskMod');}
 window.editTask=editTask;
 async function delTask(tid){if(!confirm('Delete this task?'))return;showSave('saving');try{await api('/leasing-staff?action=task',{method:'DELETE',body:JSON.stringify({id:tid})});await loadBoard();}catch(e){alert(e.message);showSave('saved');}}
 window.delTask=delTask;
-$('taskForm').addEventListener('submit',async e=>{e.preventDefault();const id=$('tfId').value;const data={id:id||undefined,propertyId:propId,label:$('tfLabel').value.trim(),groupId:$('tfGroup').value,assignees:getMS('tfAssignees'),status:$('tfStatus').value,date:$('tfDate').value||boardDate,notes:$('tfNotes').value.trim(),priority:$('tfPriority').value,budget:$('tfBudget').value?parseFloat($('tfBudget').value):null};showSave('saving');try{await api('/leasing-staff?action=task',{method:'POST',body:JSON.stringify(data)});closeM('taskMod');await loadBoard();}catch(e){alert(e.message);showSave('saved');}});
+$('taskForm').addEventListener('submit',async e=>{e.preventDefault();const id=$('tfId').value;const data={id:id||undefined,propertyId:propId,label:$('tfLabel').value.trim(),groupId:$('tfGroup').value,assignees:getMS('tfAssignees'),responsibleUsers:getMS('tfResponsible'),status:$('tfStatus').value,date:$('tfDate').value||boardDate,notes:$('tfNotes').value.trim(),priority:$('tfPriority').value,budget:$('tfBudget').value?parseFloat($('tfBudget').value):null};showSave('saving');try{await api('/leasing-staff?action=task',{method:'POST',body:JSON.stringify(data)});closeM('taskMod');await loadBoard();}catch(e){alert(e.message);showSave('saved');}});
 
 /* ═══ FROM TEMPLATE ═══ */
 $('addFromTplBtn').addEventListener('click',()=>{if(!propId){alert('Select a property first');return;}$('tpDate').value=boardDate;setMS('tpAssignees',[]);const sys=templates.filter(t=>t.type==='system'),cust=templates.filter(t=>t.type!=='system');let o='<option value="">— Choose —</option>';if(sys.length)o+=`<optgroup label="System Defaults">${sys.map(t=>`<option value="${t._id}">${esc(t.name)} (${(t.tasks||[]).length})</option>`).join('')}</optgroup>`;if(cust.length)o+=`<optgroup label="Custom">${cust.map(t=>`<option value="${t._id}">${esc(t.name)} (${(t.tasks||[]).length})</option>`).join('')}</optgroup>`;$('tpTemplate').innerHTML=o;$('tpPreview').style.display='none';openM('tplPickMod');});
@@ -609,7 +656,110 @@ $('bDate').addEventListener('change',()=>{boardDate=$('bDate').value;loadBoard()
 $('bPerson').addEventListener('change',renderBoard);
 $('bStatus').addEventListener('change',renderBoard);
 $('sProp').addEventListener('change',loadStaff);
-['taskMod','tplPickMod','staffMod','tplMod'].forEach(id=>$(id).addEventListener('click',e=>{if(e.target===$(id))closeM(id);}));
+['taskMod','tplPickMod','staffMod','tplMod','historyMod'].forEach(id=>$(id).addEventListener('click',e=>{if(e.target===$(id))closeM(id);}));
+
+/* ═══ MANUAL REMINDER ═══ */
+async function sendManualReminder(tid){
+  if(!confirm('Send email reminder to all assignees and responsible users?'))return;
+  showSave('saving');
+  try{
+    const r=await api('/leasing-staff?action=sendReminder',{method:'POST',body:JSON.stringify({taskId:tid})});
+    const result=await r.json();
+    if(result.success){alert('Reminder sent to '+result.sent+' recipient(s).'+(result.failed?' '+result.failed+' failed.':''));}
+    else{alert('Failed to send reminder: '+(result.error||'Unknown error'));}
+  }catch(e){alert('Error: '+e.message);}
+  showSave('saved');
+}
+window.sendManualReminder=sendManualReminder;
+
+/* ═══ TASK FILES ═══ */
+function renderTaskFiles(taskId,files){
+  if(!files||!files.length){$('tfFileList').innerHTML='<div style="color:var(--muted);font-size:11px">No files attached.</div>';return;}
+  $('tfFileList').innerHTML=files.map(f=>
+    `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--bdr-l)">
+      <span style="font-size:12px;font-weight:600">${esc(f.fileName)}</span>
+      <span style="font-size:10px;color:var(--muted)">${f.fileSize?(f.fileSize/1024).toFixed(1)+'KB':''}</span>
+      <a href="${esc(f.fileUrl)}" target="_blank" style="font-size:10px;color:var(--acc2);margin-left:auto">View</a>
+      <button class="xs bad" type="button" onclick="removeTaskFile('${taskId}','${f.id||f._id}')">✕</button>
+    </div>`
+  ).join('');
+}
+
+async function uploadTaskFiles(){
+  const taskId=$('tfId').value;
+  if(!taskId){alert('Save the task first before uploading files.');return;}
+  const input=$('tfFileInput');
+  if(!input.files.length)return;
+  showSave('saving');
+  for(const file of input.files){
+    try{
+      const buf=await file.arrayBuffer();
+      const b64=btoa(new Uint8Array(buf).reduce((d,b)=>d+String.fromCharCode(b),''));
+      const uploadRes=await fetch('/api/upload-file?property='+encodeURIComponent(propId)+'&filename='+encodeURIComponent(file.name),{
+        method:'POST',headers:{'Content-Type':file.type||'application/octet-stream'},body:b64,credentials:'include'
+      });
+      if(!uploadRes.ok)throw new Error('Upload failed');
+      const uploadResult=await uploadRes.json();
+      await api('/leasing-staff?action=addTaskFile',{method:'POST',body:JSON.stringify({
+        taskId,fileName:file.name,fileUrl:uploadResult.url||'',fileSize:file.size,fileType:file.type
+      })});
+    }catch(e){alert('Error uploading '+file.name+': '+e.message);}
+  }
+  input.value='';
+  try{const r=await api('/leasing-staff?action=taskFiles&taskId='+taskId);const files=await r.json();renderTaskFiles(taskId,files);}catch(e){}
+  showSave('saved');
+}
+window.uploadTaskFiles=uploadTaskFiles;
+
+async function removeTaskFile(taskId,fileId){
+  if(!confirm('Remove this file?'))return;
+  showSave('saving');
+  try{
+    await api('/leasing-staff?action=removeTaskFile',{method:'POST',body:JSON.stringify({taskId,fileId})});
+    const r=await api('/leasing-staff?action=taskFiles&taskId='+taskId);const files=await r.json();renderTaskFiles(taskId,files);
+  }catch(e){alert(e.message);}
+  showSave('saved');
+}
+window.removeTaskFile=removeTaskFile;
+
+/* ═══ TASK HISTORY ═══ */
+async function showTaskHistory(){
+  const taskId=$('tfId').value;
+  if(!taskId)return;
+  openM('historyMod');
+  $('historyBody').innerHTML='<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">Loading...</div>';
+  try{
+    const r=await api('/leasing-staff?action=taskHistory&taskId='+taskId);
+    const history=await r.json();
+    if(!history.length){$('historyBody').innerHTML='<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">No history yet.</div>';return;}
+    $('historyBody').innerHTML=history.map(h=>{
+      const dt=new Date(h.changedAt);
+      const timeStr=dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+' '+dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+      const actionLabel={'created':'🆕 Created','updated':'✏️ Updated','completed':'✅ Completed','uncompleted':'↩️ Uncompleted','status_changed':'🔄 Status Changed','deleted':'🗑️ Deleted','file_added':'📎 File Added','file_removed':'📎 File Removed','reminder_sent':'✉️ Reminder Sent'}[h.action]||h.action;
+      let changesHtml='';
+      if(h.changes&&typeof h.changes==='object'){
+        changesHtml=Object.entries(h.changes).map(([key,val])=>{
+          if(val&&typeof val==='object'&&'from' in val){
+            return `<div style="font-size:11px;color:var(--sub);padding:2px 0"><strong>${esc(key)}</strong>: <span style="text-decoration:line-through;color:var(--bad)">${esc(String(val.from||'—'))}</span> → <span style="color:var(--good)">${esc(String(val.to||'—'))}</span></div>`;
+          }
+          return `<div style="font-size:11px;color:var(--sub);padding:2px 0"><strong>${esc(key)}</strong>: ${esc(String(val))}</div>`;
+        }).join('');
+      }
+      return `<div style="border-bottom:1px solid var(--bdr-l);padding:10px 0">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:12px;font-weight:700">${actionLabel}</span>
+          <span style="font-size:10px;color:var(--muted)">${timeStr}</span>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">by ${esc(h.changedBy||'Unknown')}</div>
+        ${changesHtml}
+      </div>`;
+    }).join('');
+  }catch(e){
+    $('historyBody').innerHTML='<div style="color:var(--bad);font-size:12px;text-align:center;padding:20px">Error loading history.</div>';
+  }
+}
+window.showTaskHistory=showTaskHistory;
+
 init();
 </script>
 <script src="standard-nav.js"></script>

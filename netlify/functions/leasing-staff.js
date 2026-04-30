@@ -1,6 +1,6 @@
 import { getDb, ObjectId } from './_db.js';
 import { verifyReqAuth } from './_auth.js';
-import { notifyNewAssigneesViaWebhook } from './_email.js';
+import { notifyNewAssigneesViaWebhook, sendTaskAssignmentEmailWebhook } from './_email.js';
 
 /**
  * Leasing Team Staff Board API — Multi-assignee + Email Notifications
@@ -145,6 +145,21 @@ export async function handler(event) {
         return cors(await templateCol.find(filter).sort({ type: 1, name: 1 }).toArray());
       }
 
+      if (action === 'taskHistory') {
+        const taskId = qs.taskId;
+        if (!taskId) return cors('Missing taskId', 400);
+        const history = await db.collection('taskHistory').find({ taskId }).sort({ changedAt: -1 }).limit(100).toArray();
+        return cors(history);
+      }
+
+      if (action === 'taskFiles') {
+        const taskId = qs.taskId;
+        if (!taskId) return cors('Missing taskId', 400);
+        const task = await taskCol.findOne({ _id: new ObjectId(taskId) });
+        if (!task) return cors('Not found', 404);
+        return cors(task.files || []);
+      }
+
       return cors('Unknown GET action', 400);
     }
 
@@ -171,7 +186,7 @@ export async function handler(event) {
 
       // ─── Task CRUD (multi-assignee + priority/budget/files) ───
       if (action === 'task') {
-        const { id, propertyId, label, groupId, assignees, status, date, completed, notes, sortOrder, priority, budget, files } = body;
+        const { id, propertyId, label, groupId, assignees, responsibleUsers, status, date, completed, notes, sortOrder, priority, budget, files } = body;
         if (!id && (!propertyId || !label)) return cors('Missing fields', 400);
         if (propertyId && !canAccess(user, propertyId)) return cors('Forbidden', 403);
         const now = new Date().toISOString();
@@ -210,7 +225,46 @@ export async function handler(event) {
             newAssigneeIds = newAssignees.filter(a => !oldIds.includes(a.userId)).map(a => a.userId);
           }
 
+          // Responsible users update
+          if (responsibleUsers !== undefined) {
+            upd.responsibleUsers = (responsibleUsers || []).map(r => ({ userId: r.userId, userName: r.userName || '', userEmail: r.userEmail || '' }));
+          }
+
+          // Compute diff for task history
+          const changes = {};
+          if (label !== undefined && label !== existing.label) changes.label = { from: existing.label, to: label };
+          if (groupId !== undefined && groupId !== existing.groupId) changes.groupId = { from: existing.groupId, to: groupId };
+          if (status !== undefined && status !== existing.status) changes.status = { from: existing.status, to: status };
+          if (date !== undefined && date !== existing.date) changes.date = { from: existing.date, to: date };
+          if (notes !== undefined && notes !== existing.notes) changes.notes = { from: existing.notes, to: notes };
+          if (priority !== undefined && priority !== existing.priority) changes.priority = { from: existing.priority, to: priority };
+          if (budget !== undefined && budget !== existing.budget) changes.budget = { from: existing.budget, to: budget };
+          if (completed !== undefined && completed !== existing.completed) changes.completed = { from: existing.completed, to: completed };
+          if (assignees !== undefined) {
+            const oldNames = (existing.assignees || []).map(a => a.userName).sort().join(', ');
+            const newNames = (assignees || []).map(a => a.userName).sort().join(', ');
+            if (oldNames !== newNames) changes.assignees = { from: oldNames, to: newNames };
+          }
+          if (responsibleUsers !== undefined) {
+            const oldResp = (existing.responsibleUsers || []).map(r => r.userName).sort().join(', ');
+            const newResp = (responsibleUsers || []).map(r => r.userName).sort().join(', ');
+            if (oldResp !== newResp) changes.responsibleUsers = { from: oldResp, to: newResp };
+          }
+
           await taskCol.updateOne({ _id: new ObjectId(id) }, { $set: upd });
+
+          // Log task history for update
+          try {
+            if (Object.keys(changes).length > 0) {
+              await db.collection('taskHistory').insertOne({
+                taskId: id,
+                action: 'updated',
+                changes,
+                changedBy: user.sub,
+                changedAt: new Date().toISOString()
+              });
+            }
+          } catch (histErr) { console.error('[TaskHistory] update log error:', histErr); }
 
           // Email notifications for newly added assignees
           if (newAssigneeIds.length > 0) {
@@ -238,6 +292,7 @@ export async function handler(event) {
         const doc = {
           propertyId, label, groupId: groupId || 'misc',
           assignees: taskAssignees,
+          responsibleUsers: (responsibleUsers || []).map(r => ({ userId: r.userId, userName: r.userName || '', userEmail: r.userEmail || '' })),
           status: status || 'Not Started',
           date: date || new Date().toISOString().slice(0, 10),
           completed: false, completedAt: null, completedBy: null,
@@ -247,6 +302,17 @@ export async function handler(event) {
         };
         const res = await taskCol.insertOne(doc);
         doc._id = res.insertedId;
+
+        // Log task history for creation
+        try {
+          await db.collection('taskHistory').insertOne({
+            taskId: doc._id.toString(),
+            action: 'created',
+            changes: { label, groupId: groupId || 'misc', status: status || 'Not Started', date: doc.date, priority: priority || '', assignees: taskAssignees.map(a => a.userName) },
+            changedBy: user.sub,
+            changedAt: new Date().toISOString()
+          });
+        } catch (histErr) { console.error('[TaskHistory] create log error:', histErr); }
 
         // Send notifications
         if (taskAssignees.length > 0) {
@@ -321,6 +387,15 @@ export async function handler(event) {
           completed: !!completed, completedAt: completed ? now : null, completedBy: completed ? user.sub : null,
           status: completed ? 'Done' : 'Not Started', updatedAt: now, updatedBy: user.sub,
         }});
+        try {
+          await db.collection('taskHistory').insertOne({
+            taskId: id,
+            action: completed ? 'completed' : 'uncompleted',
+            changes: { completed: { from: !completed, to: !!completed } },
+            changedBy: user.sub,
+            changedAt: new Date().toISOString()
+          });
+        } catch (histErr) { console.error('[TaskHistory] complete log error:', histErr); }
         return cors({ success: true });
       }
 
@@ -337,7 +412,120 @@ export async function handler(event) {
         if (status === 'Done') { upd.completed = true; upd.completedAt = now; upd.completedBy = user.sub; }
         else { upd.completed = false; upd.completedAt = null; upd.completedBy = null; }
         await taskCol.updateOne({ _id: new ObjectId(id) }, { $set: upd });
+        try {
+          await db.collection('taskHistory').insertOne({
+            taskId: id,
+            action: 'status_changed',
+            changes: { status: { from: task.status, to: status } },
+            changedBy: user.sub,
+            changedAt: new Date().toISOString()
+          });
+        } catch (histErr) { console.error('[TaskHistory] status log error:', histErr); }
         return cors({ success: true });
+      }
+
+      // ─── File management ───
+      if (action === 'addTaskFile') {
+        const { taskId, fileName, fileUrl, fileSize, fileType } = body;
+        if (!taskId || !fileName || !fileUrl) return cors('Missing fields', 400);
+        const task = await taskCol.findOne({ _id: new ObjectId(taskId) });
+        if (!task) return cors('Not found', 404);
+        if (!canAccess(user, task.propertyId)) return cors('Forbidden', 403);
+        const fileDoc = {
+          id: new ObjectId().toString(),
+          fileName, fileUrl, fileSize: fileSize || 0, fileType: fileType || '',
+          uploadedBy: user.sub,
+          uploadedAt: new Date().toISOString()
+        };
+        await taskCol.updateOne({ _id: new ObjectId(taskId) }, { $push: { files: fileDoc }, $set: { updatedAt: new Date().toISOString(), updatedBy: user.sub } });
+        try {
+          await db.collection('taskHistory').insertOne({
+            taskId,
+            action: 'file_added',
+            changes: { fileName },
+            changedBy: user.sub,
+            changedAt: new Date().toISOString()
+          });
+        } catch (histErr) { console.error('[TaskHistory] file_added log error:', histErr); }
+        return cors(fileDoc, 201);
+      }
+
+      if (action === 'removeTaskFile') {
+        const { taskId, fileId } = body;
+        if (!taskId || !fileId) return cors('Missing fields', 400);
+        const task = await taskCol.findOne({ _id: new ObjectId(taskId) });
+        if (!task) return cors('Not found', 404);
+        if (!canAccess(user, task.propertyId)) return cors('Forbidden', 403);
+        const file = (task.files || []).find(f => f.id === fileId);
+        await taskCol.updateOne({ _id: new ObjectId(taskId) }, { $pull: { files: { id: fileId } }, $set: { updatedAt: new Date().toISOString(), updatedBy: user.sub } });
+        try {
+          await db.collection('taskHistory').insertOne({
+            taskId,
+            action: 'file_removed',
+            changes: { fileName: file ? file.fileName : fileId },
+            changedBy: user.sub,
+            changedAt: new Date().toISOString()
+          });
+        } catch (histErr) { console.error('[TaskHistory] file_removed log error:', histErr); }
+        return cors({ success: true });
+      }
+
+      // ─── Send reminder ───
+      if (action === 'sendReminder') {
+        const { taskId } = body;
+        if (!taskId) return cors('Missing taskId', 400);
+        const task = await taskCol.findOne({ _id: new ObjectId(taskId) });
+        if (!task) return cors('Not found', 404);
+        if (!canAccess(user, task.propertyId)) return cors('Forbidden', 403);
+
+        const allRecipientIds = [
+          ...((task.assignees || []).map(a => a.userId)),
+          ...((task.responsibleUsers || []).map(r => r.userId))
+        ].filter((v, i, a) => a.indexOf(v) === i);
+
+        if (allRecipientIds.length === 0) return cors({ success: false, error: 'No assignees or responsible users' });
+
+        let propName = '';
+        try {
+          const allProps = await db.collection('properties').find({}).toArray();
+          const p = allProps.find(x => x._id.toString() === task.propertyId);
+          if (p) propName = p.name;
+        } catch(e) {}
+
+        const grp = GROUPS.find(g => g.id === task.groupId);
+
+        let senderUser = null;
+        try { senderUser = await db.collection('users').findOne({ username: user.sub }); } catch(e) {}
+        if (!senderUser) try { senderUser = await staffCol.findOne({ username: user.sub }); } catch(e) {}
+
+        let sent = 0, failed = 0;
+        for (const userId of allRecipientIds) {
+          try {
+            const staffRecord = await staffCol.findOne({ _id: new ObjectId(userId) });
+            if (!staffRecord || !staffRecord.email) { failed++; continue; }
+            const result = await sendTaskAssignmentEmailWebhook({
+              task: { ...task, _id: task._id },
+              assignedUser: staffRecord,
+              assignedByUser: senderUser,
+              propertyName: propName,
+              groupName: grp ? grp.name : '',
+            });
+            if (result.success) sent++;
+            else failed++;
+          } catch(e) { failed++; }
+        }
+
+        try {
+          await db.collection('taskHistory').insertOne({
+            taskId,
+            action: 'reminder_sent',
+            changes: { recipientCount: allRecipientIds.length, sent, failed },
+            changedBy: user.sub,
+            changedAt: new Date().toISOString()
+          });
+        } catch (histErr) { console.error('[TaskHistory] reminder log error:', histErr); }
+
+        return cors({ success: true, sent, failed });
       }
 
       // ─── Template CRUD ───
@@ -379,6 +567,15 @@ export async function handler(event) {
         if (!task) return cors('Not found', 404);
         if (!canAccess(user, task.propertyId)) return cors('Forbidden', 403);
         await taskCol.deleteOne({ _id: new ObjectId(body.id) });
+        try {
+          await db.collection('taskHistory').insertOne({
+            taskId: body.id,
+            action: 'deleted',
+            changes: { label: task.label },
+            changedBy: user.sub,
+            changedAt: new Date().toISOString()
+          });
+        } catch (histErr) { console.error('[TaskHistory] delete log error:', histErr); }
         return cors({ success: true });
       }
 
