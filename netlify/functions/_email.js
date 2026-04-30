@@ -88,30 +88,12 @@ export async function sendTaskAssignmentEmailWebhook({ task, assignedUser, assig
     console.log('[Email] Sending webhook to:', webhookUrl.slice(0, 60) + '...');
     console.log('[Email] Payload assignedToEmail:', payload.assignedToEmail, 'eventType:', payload.eventType);
 
-    // Google Apps Script Web Apps return 302 redirects. Using redirect:'follow'
-    // converts POST→GET and loses the body. We MUST use redirect:'manual' and
-    // re-POST to the redirect URL to preserve the payload.
-    let response = await fetch(webhookUrl, {
+    // Google Apps Script: POST to /exec → 302 → GET response. Default redirect:'follow' is correct.
+    const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: bodyStr,
-      redirect: 'manual',
     });
-
-    // Follow redirects manually, preserving POST method and body
-    let redirectCount = 0;
-    while (response.status >= 300 && response.status < 400 && redirectCount < 5) {
-      const redirectUrl = response.headers.get('location');
-      if (!redirectUrl) break;
-      console.log('[Email] Following redirect #' + (redirectCount + 1) + ' to:', redirectUrl.slice(0, 100));
-      response = await fetch(redirectUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: bodyStr,
-        redirect: 'manual',
-      });
-      redirectCount++;
-    }
 
     const resultText = await response.text();
     console.log('[Email] Response status:', response.status, 'body preview:', resultText.slice(0, 200));

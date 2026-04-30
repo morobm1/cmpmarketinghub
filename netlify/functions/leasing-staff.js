@@ -152,6 +152,46 @@ export async function handler(event) {
         return cors(history);
       }
 
+      // ─── Diagnostic: test webhook connection (admin only) ───
+      if (action === 'testWebhook') {
+        if (user.role !== 'admin') return cors('Admin only', 403);
+        const url = process.env.CMP_SCRIPT_URL;
+        const secret = process.env.CMP_TASK_SECRET;
+        const diag = {
+          CMP_SCRIPT_URL_set: !!url,
+          CMP_SCRIPT_URL_preview: url ? url.slice(0, 50) + '...' : 'NOT SET',
+          CMP_TASK_SECRET_set: !!secret,
+          CMP_TASK_SECRET_length: secret ? secret.length : 0,
+          CMP_TASK_SECRET_preview: secret ? secret.slice(0, 3) + '***' : 'NOT SET',
+        };
+        if (!url || !secret) return cors({ diag, error: 'Missing env vars' });
+        try {
+          const testPayload = { secret, eventType: 'test_ping' };
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(testPayload),
+          });
+          const text = await res.text();
+          diag.responseStatus = res.status;
+          diag.responseBody = text.slice(0, 500);
+          diag.responseIsHTML = text.trim().startsWith('<');
+          // Now try with task_assigned event type
+          const testPayload2 = { secret, eventType: 'task_assigned', assignedToEmail: 'test@test.com', assignedToName: 'Test', taskTitle: 'Webhook Test' };
+          const res2 = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(testPayload2),
+          });
+          const text2 = await res2.text();
+          diag.testAssignedStatus = res2.status;
+          diag.testAssignedBody = text2.slice(0, 500);
+        } catch (e) {
+          diag.fetchError = e.message;
+        }
+        return cors(diag);
+      }
+
       if (action === 'taskFiles') {
         const taskId = qs.taskId;
         if (!taskId) return cors('Missing taskId', 400);
