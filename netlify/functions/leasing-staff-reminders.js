@@ -1,7 +1,7 @@
 import { getDb, ObjectId } from './_db.js';
 
-const GOOGLE_SCRIPT_WEB_APP_URL = process.env.GOOGLE_SCRIPT_WEB_APP_URL;
-const CMPTASK = process.env.CMPTASK;
+const CMP_SCRIPT_URL = process.env.CMP_SCRIPT_URL;
+const CMP_TASK_SECRET = process.env.CMP_TASK_SECRET;
 const APP_BASE_URL = process.env.APP_BASE_URL || 'https://cmpmarketinghub.netlify.app';
 
 export const config = {
@@ -11,7 +11,7 @@ export const config = {
 export async function handler(event) {
   console.log('[Reminders] Weekly overdue task reminder started');
   
-  if (!GOOGLE_SCRIPT_WEB_APP_URL || !CMPTASK) {
+  if (!CMP_SCRIPT_URL || !CMP_TASK_SECRET) {
     console.warn('[Reminders] Google Script webhook not configured. Skipping.');
     return { statusCode: 200, body: JSON.stringify({ skipped: true, reason: 'missing_config' }) };
   }
@@ -75,7 +75,7 @@ export async function handler(event) {
         }));
 
         const payload = {
-          secret: CMPTASK,
+          secret: CMP_TASK_SECRET,
           eventType: 'task_overdue_reminder',
           assignedToName: staffRecord.employeeName || '',
           assignedToEmail: staffRecord.email,
@@ -84,7 +84,7 @@ export async function handler(event) {
           dashboardUrl: APP_BASE_URL + '/leasing_staff_list.html',
         };
 
-        const response = await fetch(GOOGLE_SCRIPT_WEB_APP_URL, {
+        const response = await fetch(CMP_SCRIPT_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),

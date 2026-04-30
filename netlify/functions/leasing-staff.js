@@ -499,13 +499,13 @@ export async function handler(event) {
         if (!senderUser) try { senderUser = await staffCol.findOne({ username: user.sub }); } catch(e) {}
 
         // Pre-check: are email env vars configured?
-        const webhookConfigured = !!(process.env.GOOGLE_SCRIPT_WEB_APP_URL && process.env.CMPTASK);
+        const webhookConfigured = !!(process.env.CMP_SCRIPT_URL && process.env.CMP_TASK_SECRET);
         if (!webhookConfigured) {
           return cors({
             success: false,
             sent: 0,
             failed: allRecipientIds.length,
-            error: 'Email webhook is not configured (missing GOOGLE_SCRIPT_WEB_APP_URL or CMPTASK environment variables). Contact an administrator.',
+            error: 'Email webhook is not configured (missing CMP_SCRIPT_URL or CMP_TASK_SECRET environment variables). Contact an administrator.',
             failureReasons: allRecipientIds.map(id => ({ userId: id, reason: 'missing_config' })),
           });
         }

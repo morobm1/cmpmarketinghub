@@ -8,8 +8,8 @@ import { ObjectId } from './_db.js';
  * deployed from the company's Google Workspace account.
  *
  * Backend-only environment variables:
- *   GOOGLE_SCRIPT_WEB_APP_URL  — The deployed Apps Script Web App URL
- *   CMPTASK — Shared secret for request validation
+ *   CMP_SCRIPT_URL  — The deployed Apps Script Web App URL
+ *   CMP_TASK_SECRET — Shared secret for request validation
  *   APP_BASE_URL — Base URL of the app (default: https://cmpmarketinghub.netlify.app)
  */
 
@@ -52,8 +52,8 @@ export function buildTaskUrl(task) {
 
 // ─── Send the webhook to Google Apps Script ───
 export async function sendTaskAssignmentEmailWebhook({ task, assignedUser, assignedByUser, propertyName, groupName }) {
-  const webhookUrl = process.env.GOOGLE_SCRIPT_WEB_APP_URL;
-  const secret = process.env.CMPTASK;
+  const webhookUrl = process.env.CMP_SCRIPT_URL;
+  const secret = process.env.CMP_TASK_SECRET;
 
   if (!webhookUrl || !secret) {
     console.warn('[Email] Google Script email webhook is not configured. Skipping.');
@@ -93,8 +93,17 @@ export async function sendTaskAssignmentEmailWebhook({ task, assignedUser, assig
     const resultText = await response.text();
 
     if (!response.ok) {
-      console.error('[Email] Google Script webhook failed:', response.status, resultText);
-      return { success: false, error: resultText };
+      console.error('[Email] Google Script webhook failed:', response.status, resultText.slice(0, 200));
+      if (resultText.trim().startsWith('<!DOCTYPE') || resultText.trim().startsWith('<html') || resultText.trim().startsWith('<HTML')) {
+        return { success: false, error: 'Google Apps Script returned HTTP ' + response.status + '. The Web App URL may be wrong or the script is not deployed. Check CMP_SCRIPT_URL in Netlify environment variables.' };
+      }
+      return { success: false, error: 'Webhook HTTP ' + response.status + ': ' + resultText.slice(0, 200) };
+    }
+
+    // Even on 200, Google might return HTML if URL is wrong
+    if (resultText.trim().startsWith('<!DOCTYPE') || resultText.trim().startsWith('<html') || resultText.trim().startsWith('<HTML')) {
+      console.error('[Email] Google Script webhook returned HTML instead of JSON on 200. URL may be incorrect.');
+      return { success: false, error: 'Google Apps Script Web App URL appears invalid — received HTML instead of JSON. Verify the deployed Web App URL in CMP_SCRIPT_URL.' };
     }
 
     let result;

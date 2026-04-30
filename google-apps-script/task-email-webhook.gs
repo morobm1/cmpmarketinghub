@@ -11,7 +11,7 @@
  * 3.  Delete the default Code.gs content and paste this entire script.
  * 4.  Go to Project Settings (gear icon) > Script Properties.
  * 5.  Click "Add script property" and add:
- *       Property: CMPTASK
+ *       Property: CMP_TASK_SECRET
  *       Value:    <your private webhook secret — any strong random string>
  * 6.  Click Deploy > New deployment.
  * 7.  Select type: Web app.
@@ -19,8 +19,8 @@
  * 9.  Set "Who has access": Anyone (or "Anyone within <your org>" for tighter security).
  * 10. Click Deploy, then copy the Web App URL.
  * 11. In your Netlify backend environment variables, add:
- *       GOOGLE_SCRIPT_WEB_APP_URL = <the Web App URL from step 10>
- *       GOOGLE_SCRIPT_CMPTASK = <the same secret from step 5>
+ *       CMP_SCRIPT_URL = <the Web App URL from step 10>
+ *       CMP_TASK_SECRET = <the same secret from step 5>
  *
  * IMPORTANT:
  * - The email sender will be the Google Workspace account that deploys this script.
@@ -34,7 +34,7 @@ function doPost(e) {
     var raw = (e && e.postData && e.postData.contents) ? e.postData.contents : '{}';
     var data = JSON.parse(raw);
 
-    var expectedSecret = PropertiesService.getScriptProperties().getProperty('CMPTASK');
+    var expectedSecret = PropertiesService.getScriptProperties().getProperty('CMP_TASK_SECRET');
     if (!expectedSecret || data.secret !== expectedSecret) {
       return jsonResponse({ success: false, error: 'Unauthorized' });
     }
@@ -335,7 +335,7 @@ function buildOverdueReminderPlainText(data) {
 
 function testTaskAssignedEmail() {
   var testData = {
-    secret: PropertiesService.getScriptProperties().getProperty('CMPTASK'),
+    secret: PropertiesService.getScriptProperties().getProperty('CMP_TASK_SECRET'),
     eventType: 'task_assigned',
     taskId: 'TEST-123',
     taskTitle: 'Follow up with new leasing leads',
