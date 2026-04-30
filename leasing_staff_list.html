@@ -665,8 +665,16 @@ async function sendManualReminder(tid){
   try{
     const r=await api('/leasing-staff?action=sendReminder',{method:'POST',body:JSON.stringify({taskId:tid})});
     const result=await r.json();
-    if(result.success){alert('Reminder sent to '+result.sent+' recipient(s).'+(result.failed?' '+result.failed+' failed.':''));}
-    else{alert('Failed to send reminder: '+(result.error||'Unknown error'));}
+    if(result.sent>0&&!result.failed){alert('✅ Reminder sent to '+result.sent+' recipient(s).');}
+    else if(result.sent>0&&result.failed){
+      let msg='⚠️ Reminder sent to '+result.sent+' recipient(s). '+result.failed+' failed.';
+      if(result.failureReasons&&result.failureReasons.length){msg+='\n\nFailure details:\n'+result.failureReasons.map(f=>'• '+(f.userName||f.userId)+': '+(f.detail||f.reason)).join('\n');}
+      alert(msg);
+    }else{
+      let msg='❌ Failed to send reminder.'+(result.error?' '+result.error:'');
+      if(result.failureReasons&&result.failureReasons.length){msg+='\n\nDetails:\n'+result.failureReasons.map(f=>'• '+(f.userName||f.userId)+': '+(f.detail||f.reason)).join('\n');}
+      alert(msg);
+    }
   }catch(e){alert('Error: '+e.message);}
   showSave('saved');
 }

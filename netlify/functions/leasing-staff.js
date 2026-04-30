@@ -498,11 +498,33 @@ export async function handler(event) {
         try { senderUser = await db.collection('users').findOne({ username: user.sub }); } catch(e) {}
         if (!senderUser) try { senderUser = await staffCol.findOne({ username: user.sub }); } catch(e) {}
 
+        // Pre-check: are email env vars configured?
+        const webhookConfigured = !!(process.env.GOOGLE_SCRIPT_WEB_APP_URL && process.env.CMPTASK);
+        if (!webhookConfigured) {
+          return cors({
+            success: false,
+            sent: 0,
+            failed: allRecipientIds.length,
+            error: 'Email webhook is not configured (missing GOOGLE_SCRIPT_WEB_APP_URL or CMPTASK environment variables). Contact an administrator.',
+            failureReasons: allRecipientIds.map(id => ({ userId: id, reason: 'missing_config' })),
+          });
+        }
+
         let sent = 0, failed = 0;
+        const failureReasons = [];
         for (const userId of allRecipientIds) {
           try {
             const staffRecord = await staffCol.findOne({ _id: new ObjectId(userId) });
-            if (!staffRecord || !staffRecord.email) { failed++; continue; }
+            if (!staffRecord) {
+              failed++;
+              failureReasons.push({ userId, reason: 'staff_not_found', detail: 'No staff record found for this user ID' });
+              continue;
+            }
+            if (!staffRecord.email) {
+              failed++;
+              failureReasons.push({ userId, userName: staffRecord.employeeName, reason: 'missing_email', detail: `${staffRecord.employeeName} has no email address on file` });
+              continue;
+            }
             const result = await sendTaskAssignmentEmailWebhook({
               task: { ...task, _id: task._id },
               assignedUser: staffRecord,
@@ -510,22 +532,34 @@ export async function handler(event) {
               propertyName: propName,
               groupName: grp ? grp.name : '',
             });
-            if (result.success) sent++;
-            else failed++;
-          } catch(e) { failed++; }
+            if (result.success) {
+              sent++;
+            } else {
+              failed++;
+              failureReasons.push({
+                userId,
+                userName: staffRecord.employeeName,
+                reason: result.skipped ? result.reason : 'webhook_error',
+                detail: result.error || result.reason || 'Email webhook returned failure',
+              });
+            }
+          } catch(e) {
+            failed++;
+            failureReasons.push({ userId, reason: 'exception', detail: e.message });
+          }
         }
 
         try {
           await db.collection('taskHistory').insertOne({
             taskId,
             action: 'reminder_sent',
-            changes: { recipientCount: allRecipientIds.length, sent, failed },
+            changes: { recipientCount: allRecipientIds.length, sent, failed, failureReasons },
             changedBy: user.sub,
             changedAt: new Date().toISOString()
           });
         } catch (histErr) { console.error('[TaskHistory] reminder log error:', histErr); }
 
-        return cors({ success: true, sent, failed });
+        return cors({ success: sent > 0, sent, failed, failureReasons });
       }
 
       // ─── Template CRUD ───
