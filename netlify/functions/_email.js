@@ -84,13 +84,31 @@ export async function sendTaskAssignmentEmailWebhook({ task, assignedUser, assig
   };
 
   try {
-    const response = await fetch(webhookUrl, {
+    const bodyStr = JSON.stringify(payload);
+    console.log('[Email] Sending webhook to:', webhookUrl.slice(0, 60) + '...');
+    console.log('[Email] Payload assignedToEmail:', payload.assignedToEmail, 'eventType:', payload.eventType);
+
+    // Google Apps Script Web Apps redirect POST→GET (302). We must follow manually.
+    let response = await fetch(webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: bodyStr,
+      redirect: 'follow',
     });
 
+    // If Google returned a redirect, follow it manually with POST
+    if (response.status >= 300 && response.status < 400 && response.headers.get('location')) {
+      const redirectUrl = response.headers.get('location');
+      console.log('[Email] Following redirect to:', redirectUrl.slice(0, 80));
+      response = await fetch(redirectUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: bodyStr,
+      });
+    }
+
     const resultText = await response.text();
+    console.log('[Email] Response status:', response.status, 'body preview:', resultText.slice(0, 200));
 
     if (!response.ok) {
       console.error('[Email] Google Script webhook failed:', response.status, resultText.slice(0, 200));
