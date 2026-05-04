@@ -401,7 +401,8 @@ textarea{min-height:50px;resize:vertical}
       <div class="modal-bd">
         <form id="staffForm">
           <input type="hidden" id="sfId"/>
-          <div class="fr"><div class="fg"><label>Name *</label><input type="text" id="sfName" required/></div><div class="fg"><label>Role</label><input type="text" id="sfRole"/></div></div>
+          <div class="fg" id="sfUserPickWrap"><label>Select User</label><select id="sfUserPick" style="font-weight:600"><option value="">— Choose a user —</option></select><p style="font-size:10px;color:var(--muted);margin-top:4px">Users assigned to this property. Name, email, and username will auto-fill.</p></div>
+          <div class="fr"><div class="fg"><label>Name *</label><input type="text" id="sfName" required/></div><div class="fg"><label>Role / Position</label><input type="text" id="sfRole" placeholder="Enter their position"/></div></div>
           <div class="fr"><div class="fg"><label>Email</label><input type="email" id="sfEmail" placeholder="For notifications"/></div><div class="fg"><label>Username</label><input type="text" id="sfUser"/></div></div>
           <div class="fg"><label>Property *</label><select id="sfProp" required></select></div>
           <div class="fa"><button type="button" onclick="closeM('staffMod')">Cancel</button><button type="submit" class="pri">Save</button></div>
@@ -730,8 +731,56 @@ $('tplForm').addEventListener('submit',async e=>{e.preventDefault();const id=$('
 /* ═══ STAFF ═══ */
 async function loadStaff(){const pid=$('sProp').value||propId;if(!pid){$('staffEmpty').style.display='';$('staffWrap').style.display='none';return;}const r=await api('/leasing-staff?action=staff&propertyId='+pid+'&activeOnly=false');const all=await r.json();if(!all.length){$('staffEmpty').style.display='';$('staffWrap').style.display='none';return;}$('staffEmpty').style.display='none';$('staffWrap').style.display='';$('staffBody').innerHTML=all.map(s=>{const link=location.origin+'/my_tasks.html?staff='+s._id;const active=s.isActive!==false;return `<tr><td><strong>${esc(s.employeeName)}</strong></td><td>${esc(s.role||'—')}</td><td>${esc(s.email||'—')}</td><td>${esc(s.username||'—')}</td><td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${active?'var(--good)':'var(--bad)'};margin-right:4px"></span>${active?'Active':'Inactive'}</td><td style="font-size:10px;font-family:monospace;color:var(--sub)">${esc(link)} <button class="xs" onclick="copyTxt('${esc(link)}')">Copy</button></td><td><button class="xs" onclick="editStaff('${s._id}')">Edit</button> ${active?`<button class="xs bad" onclick="deactStaff('${s._id}','${esc(s.employeeName)}')">Remove</button>`:`<button class="xs acc" onclick="reactStaff('${s._id}')">Activate</button>`}</td></tr>`;}).join('');}
 function copyTxt(t){navigator.clipboard.writeText(t).then(()=>alert('Copied!')).catch(()=>prompt('Copy:',t));}window.copyTxt=copyTxt;
-$('addStaffBtn').addEventListener('click',()=>{$('sfId').value='';$('sfName').value='';$('sfRole').value='';$('sfEmail').value='';$('sfUser').value='';$('sfProp').value=propId||'';$('staffModTitle').textContent='Add Staff';openM('staffMod');});
-function editStaff(id){const s=staff.find(x=>x._id===id);if(!s)return;$('sfId').value=s._id;$('sfName').value=s.employeeName;$('sfRole').value=s.role||'';$('sfEmail').value=s.email||'';$('sfUser').value=s.username||'';$('sfProp').value=s.propertyId;$('staffModTitle').textContent='Edit Staff';openM('staffMod');}window.editStaff=editStaff;
+let propertyUsers=[];
+$('addStaffBtn').addEventListener('click',async()=>{
+  $('sfId').value='';$('sfName').value='';$('sfRole').value='';$('sfEmail').value='';$('sfUser').value='';
+  $('sfProp').value=propId||$('sProp').value||'';
+  $('staffModTitle').textContent='Add Staff';
+  $('sfUserPickWrap').style.display='';
+  $('sfName').readOnly=false;$('sfEmail').readOnly=false;$('sfUser').readOnly=false;
+  await loadPropertyUsersForStaff();
+  openM('staffMod');
+});
+
+async function loadPropertyUsersForStaff(){
+  const pid=$('sfProp').value;
+  $('sfUserPick').innerHTML='<option value="">— Choose a user —</option>';
+  if(!pid){propertyUsers=[];return;}
+  try{
+    const [uR,sR]=await Promise.all([
+      api('/leasing-staff?action=propertyUsers&propertyId='+pid),
+      api('/leasing-staff?action=staff&propertyId='+pid)
+    ]);
+    propertyUsers=await uR.json();
+    const propStaff=await sR.json();
+    const existingUsernames=propStaff.map(s=>(s.username||'').toLowerCase()).filter(Boolean);
+    const available=propertyUsers.filter(u=>!existingUsernames.includes(u.username.toLowerCase()));
+    if(!available.length){
+      $('sfUserPick').innerHTML='<option value="">No available users for this property</option>';
+      return;
+    }
+    $('sfUserPick').innerHTML='<option value="">— Choose a user —</option>'+available.map(u=>
+      `<option value="${esc(u.username)}" data-email="${esc(u.email||'')}">${esc(u.username)}${u.email?' ('+esc(u.email)+')':''}</option>`
+    ).join('');
+  }catch(e){console.error(e);propertyUsers=[];}
+}
+
+$('sfUserPick').addEventListener('change',()=>{
+  const uname=$('sfUserPick').value;
+  if(!uname){$('sfName').value='';$('sfEmail').value='';$('sfUser').value='';return;}
+  const u=propertyUsers.find(x=>x.username===uname);
+  if(u){
+    $('sfName').value=u.username;
+    $('sfEmail').value=u.email||'';
+    $('sfUser').value=u.username;
+  }
+});
+
+$('sfProp').addEventListener('change',()=>{
+  if(!$('sfId').value)loadPropertyUsersForStaff();
+});
+
+function editStaff(id){const s=staff.find(x=>x._id===id);if(!s)return;$('sfId').value=s._id;$('sfName').value=s.employeeName;$('sfRole').value=s.role||'';$('sfEmail').value=s.email||'';$('sfUser').value=s.username||'';$('sfProp').value=s.propertyId;$('staffModTitle').textContent='Edit Staff';$('sfUserPickWrap').style.display='none';$('sfName').readOnly=false;$('sfEmail').readOnly=false;$('sfUser').readOnly=false;openM('staffMod');}window.editStaff=editStaff;
 async function deactStaff(id,n){if(!confirm('Remove '+n+'?'))return;try{await api('/leasing-staff?action=staff',{method:'DELETE',body:JSON.stringify({id})});await loadStaff();await loadBoard();}catch(e){alert(e.message);}}window.deactStaff=deactStaff;
 async function reactStaff(id){try{await api('/leasing-staff?action=staff',{method:'POST',body:JSON.stringify({id,propertyId:'_',employeeName:'_',isActive:true})});await loadStaff();}catch(e){alert(e.message);}}window.reactStaff=reactStaff;
 $('staffForm').addEventListener('submit',async e=>{e.preventDefault();try{await api('/leasing-staff?action=staff',{method:'POST',body:JSON.stringify({id:$('sfId').value||undefined,propertyId:$('sfProp').value,employeeName:$('sfName').value.trim(),role:$('sfRole').value.trim(),email:$('sfEmail').value.trim(),username:$('sfUser').value.trim()})});closeM('staffMod');await loadStaff();await loadBoard();}catch(e){alert(e.message);}});

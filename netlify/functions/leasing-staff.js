@@ -99,6 +99,22 @@ export async function handler(event) {
 
       if (action === 'groups') return cors(GROUPS);
 
+      if (action === 'propertyUsers') {
+        const pid = qs.propertyId;
+        if (!pid) return cors('Missing propertyId', 400);
+        if (!canAccess(user, pid)) return cors('Forbidden', 403);
+        const usersCol = db.collection('users');
+        const allUsers = await usersCol.find({}, { projection: { _id: 0, passwordHash: 0 } }).toArray();
+        const prop = (await db.collection('properties').findOne({ id: pid })) || {};
+        const propName = prop.name || pid;
+        const matched = allUsers.filter(u => {
+          if (u.properties === '*') return true;
+          if (Array.isArray(u.properties)) return u.properties.includes(pid) || u.properties.includes(propName);
+          return u.properties === pid || u.properties === propName;
+        });
+        return cors(matched.map(u => ({ username: u.username, role: u.role, email: u.email || '' })));
+      }
+
       if (action === 'staff') {
         const pid = qs.propertyId;
         if (!pid) return cors('Missing propertyId', 400);
