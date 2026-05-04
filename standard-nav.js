@@ -38,7 +38,7 @@
   };
 
   // Navigation structure
-  var navStructure = {
+  var fullNavStructure = {
     main: [
       { href: 'mmp_calendar_app.html', label: 'Marketing Calendar' },
       { href: 'marketing_plans.html', label: 'Marketing Plans' },
@@ -59,6 +59,32 @@
       { href: 'sop_library.html', label: 'SOP Library' }
     ]
   };
+
+  // Pages allowed for the maintenance role
+  var maintenanceAllowedHrefs = [
+    'custom_tools.html',
+    'leasing_staff_list.html',
+    'sop_library.html'
+  ];
+
+  // Filter nav structure based on role
+  function getNavStructure(role) {
+    if (role !== 'maintenance') return fullNavStructure;
+    // Maintenance users only see Custom Tools, Project Management, SOP Library
+    function filterItems(items) {
+      return items.filter(function(item) {
+        return maintenanceAllowedHrefs.indexOf(item.href) !== -1;
+      });
+    }
+    var filtered = {
+      main: filterItems(fullNavStructure.main),
+      tools: filterItems(fullNavStructure.tools),
+      resources: filterItems(fullNavStructure.resources)
+    };
+    return filtered;
+  }
+
+  var navStructure = fullNavStructure; // default; updated after role fetch
 
   // Check initial state
   var isCollapsed = false;
@@ -257,6 +283,7 @@
     }
 
     function buildSection(title, items) {
+      if (!items || items.length === 0) return '';
       var itemsHTML = items.map(function(item) {
         var isActive = currentPage === item.href ? ' active' : '';
         return '<a href="' + item.href + '" class="nav-item' + isActive + '" data-label="' + item.label + '">' +
@@ -369,6 +396,27 @@
     body.appendChild(mainContent);
   }
 
+  // Rebuild sidebar after role is known
+  function rebuildNav() {
+    var existing = document.getElementById('sidebarNav');
+    if (existing) existing.remove();
+    var existingToggle = document.getElementById('navToggle');
+    if (existingToggle) existingToggle.remove();
+    injectNav();
+  }
+
+  // Enforce page-level access for maintenance role
+  function enforceMaintenanceAccess() {
+    var currentPage = window.location.pathname.split('/').pop() || 'index.html';
+    // Allow index.html (login) always
+    if (currentPage === 'index.html' || currentPage === '') return;
+    var isAllowed = maintenanceAllowedHrefs.indexOf(currentPage) !== -1;
+    if (!isAllowed) {
+      // Redirect maintenance users to their first allowed page
+      window.location.href = 'custom_tools.html';
+    }
+  }
+
   // Initialize
   function init() {
     if (document.readyState === 'loading') {
@@ -378,6 +426,19 @@
     injectCSS();
     injectNav();
     wrapContent();
+
+    // Fetch user role and update nav for role-based access
+    fetch('/api/me', { credentials: 'include' })
+      .then(function(res) { return res.ok ? res.json() : null; })
+      .then(function(user) {
+        if (!user) return;
+        if (user.role === 'maintenance') {
+          navStructure = getNavStructure('maintenance');
+          rebuildNav();
+          enforceMaintenanceAccess();
+        }
+      })
+      .catch(function() { /* not logged in or error – keep default nav */ });
   }
 
   init();

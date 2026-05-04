@@ -83,6 +83,7 @@
     .detail-header .role-badge{font-size:12px; padding:4px 12px; border-radius:999px; font-weight:600}
     .detail-header .role-badge.admin{background:#fff7e6; color:#8a5800; border:1px solid #fde68a}
     .detail-header .role-badge.user{background:#f0f9ff; color:#0369a1; border:1px solid #bae6fd}
+    .detail-header .role-badge.maintenance{background:#f0fdf4; color:#166534; border:1px solid #bbf7d0}
 
     .detail-body{padding:24px}
     
@@ -316,6 +317,7 @@
                       <select id="editRole">
                         <option value="user">User</option>
                         <option value="admin">Admin</option>
+                        <option value="maintenance">Maintenance</option>
                       </select>
                     </div>
                   </div>
@@ -818,7 +820,7 @@
             <div class="user-avatar ${u.role === 'admin' ? 'admin' : ''}">${getInitials(u.username)}</div>
             <div class="user-info">
               <div class="user-name">${u.username}</div>
-              <div class="user-role">${u.role === 'admin' ? 'Administrator' : 'User'}</div>
+              <div class="user-role">${u.role === 'admin' ? 'Administrator' : u.role === 'maintenance' ? 'Maintenance' : 'User'}</div>
             </div>
             <span class="user-props-count">${propsCount} props</span>
           </div>
@@ -865,7 +867,7 @@
       els.userDetail.classList.remove('hidden');
       
       els.detailUsername.textContent = user.username;
-      els.detailRoleBadge.textContent = user.role === 'admin' ? 'Admin' : 'User';
+      els.detailRoleBadge.textContent = user.role === 'admin' ? 'Admin' : user.role === 'maintenance' ? 'Maintenance' : 'User';
       els.detailRoleBadge.className = `role-badge ${user.role}`;
 
       els.editUsername.value = user.username;
@@ -1519,8 +1521,9 @@ Capstone Management Partners`;
     });
 
     els.editRole.addEventListener('change', () => {
-      els.detailRoleBadge.textContent = els.editRole.value === 'admin' ? 'Admin' : 'User';
-      els.detailRoleBadge.className = `role-badge ${els.editRole.value}`;
+      const rv = els.editRole.value;
+      els.detailRoleBadge.textContent = rv === 'admin' ? 'Admin' : rv === 'maintenance' ? 'Maintenance' : 'User';
+      els.detailRoleBadge.className = `role-badge ${rv}`;
     });
 
     els.toCalendarBtn.addEventListener('click', () => { location.href = 'mmp_calendar_app.html'; });
@@ -1703,7 +1706,7 @@ Capstone Management Partners`;
       ws['!cols'] = [{ wch: 18 }, { wch: 16 }, { wch: 8 }, { wch: 28 }, { wch: 40 }];
       XLSX.utils.book_append_sheet(wb, ws, 'Users');
       // Instructions sheet
-      const instrData = [['User Import Template — Instructions'], [''], ['Columns:'], ['• username — Required. Login username.'], ['• password — Required. Initial password.'], ['• role — "admin" or "user" (default: user)'], ['• email — Optional. Email address.'], ['• properties — Comma-separated. You can use property NAMES or IDs.'], ['  The system will auto-match names to IDs on import.'], ['  Use * for admin access to all properties.'], [''], ['Example properties: "Parkview Tower, Sunrise Lofts" or "parkview-tower, sunrise-lofts"']];
+      const instrData = [['User Import Template — Instructions'], [''], ['Columns:'], ['• username — Required. Login username.'], ['• password — Required. Initial password.'], ['• role — "admin", "user", or "maintenance" (default: user)'], ['• email — Optional. Email address.'], ['• properties — Comma-separated. You can use property NAMES or IDs.'], ['  The system will auto-match names to IDs on import.'], ['  Use * for admin access to all properties.'], [''], ['Example properties: "Parkview Tower, Sunrise Lofts" or "parkview-tower, sunrise-lofts"']];
       const instrWs = XLSX.utils.aoa_to_sheet(instrData);
       instrWs['!cols'] = [{ wch: 70 }];
       XLSX.utils.book_append_sheet(wb, instrWs, 'Instructions');
