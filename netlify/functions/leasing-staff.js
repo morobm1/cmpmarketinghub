@@ -105,12 +105,16 @@ export async function handler(event) {
         if (!canAccess(user, pid)) return cors('Forbidden', 403);
         const usersCol = db.collection('users');
         const allUsers = await usersCol.find({}, { projection: { passwordHash: 0 } }).toArray();
-        const prop = (await db.collection('properties').findOne({ _id: pid })) || {};
-        const propName = prop.name || pid;
+        const allProps = await db.collection('properties').find({}).toArray();
+        const prop = allProps.find(p => p._id === pid || p._id.toString() === pid) || {};
+        const propName = prop.name || '';
+        const matchValues = [pid, propName].filter(Boolean).map(v => v.toLowerCase());
         const matched = allUsers.filter(u => {
           if (u.properties === '*') return true;
-          if (Array.isArray(u.properties)) return u.properties.includes(pid) || u.properties.includes(propName);
-          return u.properties === pid || u.properties === propName;
+          if (Array.isArray(u.properties)) {
+            return u.properties.some(p => matchValues.includes(String(p).toLowerCase()));
+          }
+          return matchValues.includes(String(u.properties).toLowerCase());
         });
         return cors(matched.map(u => ({ username: u.username, role: u.role, email: u.email || '' })));
       }
