@@ -104,8 +104,8 @@ export async function handler(event) {
         if (!pid) return cors('Missing propertyId', 400);
         if (!canAccess(user, pid)) return cors('Forbidden', 403);
         const usersCol = db.collection('users');
-        const allUsers = await usersCol.find({}, { projection: { _id: 0, passwordHash: 0 } }).toArray();
-        const prop = (await db.collection('properties').findOne({ id: pid })) || {};
+        const allUsers = await usersCol.find({}, { projection: { passwordHash: 0 } }).toArray();
+        const prop = (await db.collection('properties').findOne({ _id: pid })) || {};
         const propName = prop.name || pid;
         const matched = allUsers.filter(u => {
           if (u.properties === '*') return true;
