@@ -197,9 +197,51 @@ textarea{min-height:50px;resize:vertical}
   <div class="container" id="app" style="display:none">
     <h1 style="font-size:22px;font-weight:900;color:var(--pri);margin-bottom:12px">Leasing Team Staff Board</h1>
     <div class="tabs" id="mainTabs">
+      <button class="tab" data-t="opentasks">Open Tasks</button>
       <button class="tab on" data-t="board">Board</button>
       <button class="tab" data-t="staff" id="staffTab">Staff</button>
       <button class="tab" data-t="templates">Templates</button>
+    </div>
+
+    <!-- OPEN TASKS -->
+    <div class="pane" id="p-opentasks">
+      <div class="toolbar">
+        <div class="fg"><label>Property</label>
+          <select id="otProp" style="min-width:220px"><option value="">— Select —</option></select>
+        </div>
+        <div class="fg"><label>Person</label><select id="otPerson" style="min-width:140px"><option value="">Everyone</option></select></div>
+        <div class="fg"><label>Status</label><select id="otStatus" style="min-width:120px"><option value="">All</option><option>Not Started</option><option>Working on It</option><option>On Hold</option></select></div>
+        <div class="fg"><label>Priority</label><select id="otPriority" style="min-width:100px"><option value="">All</option><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select></div>
+        <div class="spacer"></div>
+        <button class="sm" id="otRefreshBtn" onclick="loadOpenTasks()">↻ Refresh</button>
+      </div>
+      <div id="otArea">
+        <div class="empty" id="otEmpty"><h3>Select a Property</h3><p>Choose a property to view all open tasks.</p></div>
+        <div id="otWrap" style="display:none">
+          <div style="margin-bottom:10px;display:flex;align-items:center;gap:12px">
+            <span style="font-size:15px;font-weight:800;color:var(--pri)">All Open Tasks</span>
+            <span class="grp-count" id="otTotalCount">0</span>
+            <span style="font-size:11px;color:var(--muted)">Showing all incomplete tasks for this property — no date filter</span>
+          </div>
+          <div class="board-container" id="otContainer">
+            <div class="board-row hdr">
+              <div><!-- chk --></div>
+              <div><!-- accent --></div>
+              <div>Task</div>
+              <div>Owner</div>
+              <div>Responsible</div>
+              <div>Status</div>
+              <div>Due date</div>
+              <div>Priority</div>
+              <div>Notes</div>
+              <div>Budget</div>
+              <div>Files</div>
+              <div><!-- act --></div>
+            </div>
+            <div id="otGroupsArea"></div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- BOARD -->
@@ -385,7 +427,7 @@ function boot(){
   if(isAdmin)$('uBadge').classList.add('admin');
   // Staff tab visible to all users (admin and non-admin)
   $('bDate').value=today();boardDate=today();
-  setDateMode('day');
+  setDateMode('month');
   loadAll();
 }
 
@@ -408,7 +450,7 @@ async function loadAll(){
   properties=await pR.json();groups=await gR.json();
   fillPropSelects();fillGroupSelects();await loadTemplates();
   const allowed=isAdmin?properties:properties.filter(p=>{if(me.properties==='*')return true;if(Array.isArray(me.properties))return me.properties.includes(p.id)||me.properties.includes(p.name);return me.properties===p.id||me.properties===p.name;});
-  if(!isAdmin&&allowed.length===1){$('bProp').value=allowed[0].id;$('sProp').value=allowed[0].id;propId=allowed[0].id;loadBoard();loadStaff();}
+  if(!isAdmin&&allowed.length===1){$('bProp').value=allowed[0].id;$('sProp').value=allowed[0].id;$('otProp').value=allowed[0].id;propId=allowed[0].id;loadBoard();loadStaff();loadOpenTasks();}
   startPolling();
 }
 let allowedProps=[];
@@ -418,6 +460,8 @@ function fillPropSelects(){
   ['bProp','sProp','sfProp'].forEach(id=>{const el=$(id);const f=el.querySelector('option');el.innerHTML=(f?f.outerHTML:'')+o;});
   // Init searchable property dropdown
   initPropSearch();
+  // Init open tasks tab
+  initOpenTasks();
 }
 
 function initPropSearch(){
@@ -438,7 +482,7 @@ function initPropSearch(){
         e.preventDefault();
         const id=item.dataset.id;
         const p=allowedProps.find(x=>x.id===id);
-        if(p){input.value=p.name;sel.value=id;propId=id;dd.style.display='none';loadBoard();loadTemplates();}
+        if(p){input.value=p.name;sel.value=id;propId=id;dd.style.display='none';$('otProp').value=id;loadBoard();loadTemplates();loadOpenTasks();}
       });
     });
   }
@@ -651,7 +695,7 @@ $('exportBtn').addEventListener('click',()=>{if(!propId){alert('Select a propert
 
 /* ═══ EVENTS ═══ */
 $('logoutBtn').addEventListener('click',async()=>{try{await fetch('/api/auth-logout',{method:'POST',credentials:'include'});}catch(e){}location.href='index.html';});
-$('bProp').addEventListener('change',()=>{propId=$('bProp').value;loadBoard();loadTemplates();});
+$('bProp').addEventListener('change',()=>{propId=$('bProp').value;$('otProp').value=propId;loadBoard();loadTemplates();loadOpenTasks();});
 $('bDate').addEventListener('change',()=>{boardDate=$('bDate').value;loadBoard();});
 $('bPerson').addEventListener('change',renderBoard);
 $('bStatus').addEventListener('change',renderBoard);
@@ -729,6 +773,121 @@ async function removeTaskFile(taskId,fileId){
   showSave('saved');
 }
 window.removeTaskFile=removeTaskFile;
+
+/* ═══ OPEN TASKS ═══ */
+let otTasks=[];
+let otPropId='';
+async function loadOpenTasks(){
+  otPropId=$('otProp').value||propId;
+  if(!otPropId){$('otEmpty').style.display='';$('otWrap').style.display='none';return;}
+  showSave('saving');
+  try{
+    // Load ALL tasks for property (no date filter) that are not completed
+    const [sR,tR]=await Promise.all([api('/leasing-staff?action=staff&propertyId='+otPropId),api('/leasing-staff?action=tasks&propertyId='+otPropId)]);
+    const otStaff=await sR.json();otTasks=await tR.json();
+    // Fill person filter for open tasks
+    $('otPerson').innerHTML='<option value="">Everyone</option>'+otStaff.map(s=>`<option value="${s._id}">${esc(s.employeeName)}</option>`).join('');
+    renderOpenTasks();
+  }catch(e){console.error(e);}
+  showSave('saved');
+}
+window.loadOpenTasks=loadOpenTasks;
+
+function renderOpenTasks(){
+  const pf=$('otPerson').value,sf=$('otStatus').value,prf=$('otPriority').value;
+  // Only show incomplete tasks
+  let filtered=otTasks.filter(t=>!t.completed);
+  if(pf)filtered=filtered.filter(t=>(t.assignees||[]).some(a=>a.userId===pf));
+  if(sf)filtered=filtered.filter(t=>t.status===sf);
+  if(prf)filtered=filtered.filter(t=>t.priority===prf);
+  // Sort by due date ascending (soonest first), then by group
+  filtered.sort((a,b)=>{
+    const da=a.date||'9999';const db=b.date||'9999';
+    if(da!==db)return da.localeCompare(db);
+    return (a.groupId||'').localeCompare(b.groupId||'');
+  });
+  if(filtered.length===0){$('otEmpty').innerHTML='<h3>No Open Tasks</h3><p>All tasks are completed or none exist for this property.</p>';$('otEmpty').style.display='';$('otWrap').style.display='none';return;}
+  $('otEmpty').style.display='none';$('otWrap').style.display='';
+  $('otTotalCount').textContent=filtered.length;
+
+  // Group by group
+  const byG={};filtered.forEach(t=>{const g=t.groupId||'misc';if(!byG[g])byG[g]=[];byG[g].push(t);});
+  let html='';
+
+  function otTaskRow(t,color){
+    const stC=ST_CLS[t.status]||'st-ns';
+    const prC=PR_CLS[t.priority||'']||'pr-none';
+    const owners=(t.assignees||[]);
+    const ownerHtml=owners.length?owners.map(a=>{const ini=(a.userName||'').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);return `<span class="owner-pill"><span class="oi">${ini}</span>${esc(a.userName)}</span>`;}).join(''):'<span style="color:var(--muted);font-size:11px">—</span>';
+    const respUsers=(t.responsibleUsers||[]);
+    const respHtml=respUsers.length?respUsers.map(r=>{const ini=(r.userName||'').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);return `<span class="owner-pill" style="background:#fef3c7;color:#92400e;border-color:#fcd34d"><span class="oi" style="background:#d97706">${ini}</span>${esc(r.userName)}</span>`;}).join(''):'<span style="color:var(--muted);font-size:11px">—</span>';
+    const budgetStr=t.budget?'$'+Number(t.budget).toLocaleString('en-US',{minimumFractionDigits:2}):'';
+    const filesCount=(t.files||[]).length;
+    // Highlight overdue tasks
+    const isOverdue=t.date&&t.date<today()&&t.status!=='Done';
+    const dateStyle=isOverdue?'font-size:12px;font-weight:700;color:var(--bad)':'font-size:12px;font-weight:600;color:var(--sub)';
+    return `<div class="board-row task" data-tid="${t._id}" onclick="editTask('${t._id}')">
+      <div><div class="chk" data-tid="${t._id}" data-src="ot"></div></div>
+      <div class="c-accent" style="background:${color};opacity:.15"></div>
+      <div class="c-task">${esc(t.label)}</div>
+      <div><div class="owner-pills">${ownerHtml}</div></div>
+      <div><div class="owner-pills">${respHtml}</div></div>
+      <div><span class="st-pill ${stC}" data-tid="${t._id}" data-src="ot">${esc(t.status)}</span></div>
+      <div style="${dateStyle}">${t.date||'—'}${isOverdue?' ⚠':''}</div>
+      <div><span class="pr-pill ${prC}" data-tid="${t._id}" data-src="ot">${esc(t.priority||'—')}</span></div>
+      <div style="font-size:12px;color:var(--sub)" title="${esc(t.notes||'')}">${esc(t.notes||'')}</div>
+      <div style="font-size:12px;font-weight:600">${budgetStr||'—'}</div>
+      <div style="text-align:center;font-size:12px;color:var(--sub)">${filesCount?'📎'+filesCount:'—'}</div>
+      <div style="text-align:center;display:flex;gap:2px;justify-content:center">
+        <button class="xs" onclick="event.stopPropagation();sendManualReminder('${t._id}')" title="Send Reminder">✉</button>
+      </div>
+    </div>`;
+  }
+
+  groups.forEach(g=>{
+    const items=byG[g.id]||[];
+    if(items.length===0)return;
+    html+=`<div class="grp-title-row" onclick="toggleOtGrp('${g.id}')">
+      <div class="grp-color-bar" style="background:${g.color}"></div>
+      <span class="grp-chevron" id="ot-chev-${g.id}">▾</span>
+      <span>${esc(g.name)}</span>
+      <span class="grp-count">${items.length}</span>
+    </div>`;
+    html+=`<div class="grp-body open" id="ot-gbody-${g.id}">`;
+    items.forEach(t=>html+=otTaskRow(t,g.color));
+    // Footer
+    const totalBudget=items.reduce((s,t)=>s+(Number(t.budget)||0),0);
+    const nearestDate=items.filter(t=>t.date).map(t=>t.date).sort()[0]||'';
+    const highPri=items.filter(t=>t.priority==='High'||t.priority==='Critical').length;
+    const overdueCount=items.filter(t=>t.date&&t.date<today()).length;
+    html+=`<div class="board-row footer"><div></div><div></div><div>${items.length} task${items.length!==1?'s':''}</div><div></div><div></div><div></div><div style="font-size:10px">${overdueCount?'<span style="color:var(--bad)">'+overdueCount+' overdue</span>':nearestDate?'Next: '+nearestDate:''}</div><div>${highPri?'<span style="color:var(--bad)">'+highPri+' high</span>':''}</div><div></div><div style="font-size:11px;font-weight:700">${totalBudget?'$'+totalBudget.toLocaleString('en-US',{minimumFractionDigits:2}):''}</div><div></div><div></div></div>`;
+    html+=`</div>`;
+  });
+
+  $('otGroupsArea').innerHTML=html;
+
+  // Event: checkboxes in open tasks
+  $('otGroupsArea').querySelectorAll('.chk').forEach(el=>{el.addEventListener('click',async(e)=>{e.stopPropagation();const tid=el.dataset.tid;const t=otTasks.find(x=>x._id===tid);if(!t)return;showSave('saving');try{await api('/leasing-staff?action=completeTask',{method:'POST',body:JSON.stringify({id:tid,completed:!t.completed})});await loadOpenTasks();if(propId)loadBoard();}catch(e2){alert(e2.message);showSave('saved');}});});
+  // Event: status pills in open tasks
+  $('otGroupsArea').querySelectorAll('.st-pill').forEach(el=>{el.addEventListener('click',e=>{e.stopPropagation();showPop('statusPop',el,el.dataset.tid,'status');});});
+  // Event: priority pills in open tasks
+  $('otGroupsArea').querySelectorAll('.pr-pill').forEach(el=>{el.addEventListener('click',e=>{e.stopPropagation();showPop('priorityPop',el,el.dataset.tid,'priority');});});
+}
+
+const otCollapsed=new Set();
+function toggleOtGrp(gid){if(otCollapsed.has(gid))otCollapsed.delete(gid);else otCollapsed.add(gid);const b=$('ot-gbody-'+gid);if(b)b.classList.toggle('open',!otCollapsed.has(gid));const c=$('ot-chev-'+gid);if(c)c.classList.toggle('collapsed',otCollapsed.has(gid));}
+window.toggleOtGrp=toggleOtGrp;
+
+// Fill open tasks property dropdown and wire events
+function initOpenTasks(){
+  const o=allowedProps.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('');
+  $('otProp').innerHTML='<option value="">— Select —</option>'+o;
+  if(propId)$('otProp').value=propId;
+  $('otProp').addEventListener('change',()=>{otPropId=$('otProp').value;loadOpenTasks();});
+  $('otPerson').addEventListener('change',renderOpenTasks);
+  $('otStatus').addEventListener('change',renderOpenTasks);
+  $('otPriority').addEventListener('change',renderOpenTasks);
+}
 
 /* ═══ TASK HISTORY ═══ */
 async function showTaskHistory(){

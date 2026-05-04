@@ -1,6 +1,6 @@
 import { getDb, ObjectId } from './_db.js';
 import { verifyReqAuth } from './_auth.js';
-import { notifyNewAssigneesViaWebhook, sendTaskAssignmentEmailWebhook } from './_email.js';
+import { notifyNewAssigneesViaWebhook, sendTaskAssignmentEmailWebhook, notifyTaskUpdateViaWebhook } from './_email.js';
 
 /**
  * Leasing Team Staff Board API — Multi-assignee + Email Notifications
@@ -320,6 +320,21 @@ export async function handler(event) {
             notifyNewAssignees(db, updatedTask, newAssigneeIds, propName, grp ? grp.name : '', user.sub).catch(e => console.error('[Email] notify error:', e));
           }
 
+          // Email notifications for task updates (status change or any field change)
+          if (Object.keys(changes).length > 0) {
+            const updatedTaskForNotify = await taskCol.findOne({ _id: new ObjectId(id) });
+            const oldSt = changes.status ? changes.status.from : existing.status;
+            const newSt = changes.status ? changes.status.to : existing.status;
+            let propNameForNotify = '';
+            try {
+              const allPropsN = await db.collection('properties').find({}).toArray();
+              const pN = allPropsN.find(x => x._id.toString() === (updatedTaskForNotify.propertyId || existing.propertyId));
+              if (pN) propNameForNotify = pN.name;
+            } catch (e) {}
+            const grpN = GROUPS.find(g => g.id === (updatedTaskForNotify.groupId || existing.groupId));
+            notifyTaskUpdateViaWebhook(db, updatedTaskForNotify, propNameForNotify, grpN ? grpN.name : '', user.sub, oldSt, newSt, changes).catch(e => console.error('[Email] task update notify error:', e));
+          }
+
           return cors({ success: true });
         }
 
@@ -447,6 +462,7 @@ export async function handler(event) {
         const task = await taskCol.findOne({ _id: new ObjectId(id) });
         if (!task) return cors('Not found', 404);
         if (!canAccess(user, task.propertyId)) return cors('Forbidden', 403);
+        const oldStatus = task.status;
         const now = new Date().toISOString();
         const upd = { status, updatedAt: now, updatedBy: user.sub };
         if (status === 'Done') { upd.completed = true; upd.completedAt = now; upd.completedBy = user.sub; }
@@ -456,11 +472,25 @@ export async function handler(event) {
           await db.collection('taskHistory').insertOne({
             taskId: id,
             action: 'status_changed',
-            changes: { status: { from: task.status, to: status } },
+            changes: { status: { from: oldStatus, to: status } },
             changedBy: user.sub,
             changedAt: new Date().toISOString()
           });
         } catch (histErr) { console.error('[TaskHistory] status log error:', histErr); }
+
+        // Send status change email to all assignees & responsible users
+        if (oldStatus !== status) {
+          const updatedTask = await taskCol.findOne({ _id: new ObjectId(id) });
+          let propName = '';
+          try {
+            const allProps = await db.collection('properties').find({}).toArray();
+            const p = allProps.find(x => x._id.toString() === task.propertyId);
+            if (p) propName = p.name;
+          } catch (e) {}
+          const grp = GROUPS.find(g => g.id === task.groupId);
+          notifyTaskUpdateViaWebhook(db, updatedTask, propName, grp ? grp.name : '', user.sub, oldStatus, status, { status: { from: oldStatus, to: status } }).catch(e => console.error('[Email] status change notify error:', e));
+        }
+
         return cors({ success: true });
       }
 
