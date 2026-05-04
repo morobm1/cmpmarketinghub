@@ -488,6 +488,18 @@ export async function handler(event) {
             changedAt: new Date().toISOString()
           });
         } catch (histErr) { console.error('[TaskHistory] complete log error:', histErr); }
+        const oldSt = task.status || 'Not Started';
+        const newSt = completed ? 'Done' : 'Not Started';
+        if (oldSt !== newSt) {
+          try {
+            const allProps = await db.collection('properties').find({}).toArray();
+            const p = allProps.find(x => x._id.toString() === task.propertyId);
+            const propName = p ? p.name : '';
+            const grp = GROUPS.find(g => g.id === task.groupId);
+            const updatedTask = { ...task, completed: !!completed, status: newSt, completedAt: completed ? now : null };
+            notifyTaskUpdateViaWebhook(db, updatedTask, propName, grp ? grp.name : '', user.sub, oldSt, newSt, { status: { from: oldSt, to: newSt } }).catch(e => console.error('[Email] complete notify error:', e));
+          } catch (notifyErr) { console.error('[Email] complete notify setup error:', notifyErr); }
+        }
         return cors({ success: true });
       }
 

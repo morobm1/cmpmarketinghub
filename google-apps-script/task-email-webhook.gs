@@ -305,7 +305,7 @@ function buildOverdueReminderHtml(data) {
     + '<tr><td align="center">'
     + '<table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="width:600px;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e5e5e5;">'
     + '<tr><td style="background:' + brandColor + ';color:#ffffff;padding:24px;text-align:center;">'
-    + '<h1 style="margin:0;font-size:22px;line-height:28px;color:#ffffff;">⏰ Overdue Tasks Reminder</h1>'
+    + '<h1 style="margin:0;font-size:22px;line-height:28px;color:#ffffff;">Overdue Tasks Reminder</h1>'
     + '<p style="margin:8px 0 0;font-size:14px;line-height:20px;color:#ffffff;">CMP Marketing Hub</p>'
     + '</td></tr>'
     + '<tr><td style="padding:28px;">'
@@ -429,7 +429,7 @@ function buildStatusChangeEmailHtml(data) {
 
     // Header banner
     + '<tr><td style="background:' + brandColor + ';color:#ffffff;padding:24px;text-align:center;">'
-    + '<h1 style="margin:0;font-size:22px;line-height:28px;color:#ffffff;">🔄 Status Change</h1>'
+    + '<h1 style="margin:0;font-size:22px;line-height:28px;color:#ffffff;">Task Status Update</h1>'
     + '<p style="margin:8px 0 0;font-size:14px;line-height:20px;color:#ffffff;">CMP Marketing Hub</p>'
     + '</td></tr>'
 

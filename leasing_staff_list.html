@@ -270,7 +270,7 @@ textarea{min-height:50px;resize:vertical}
         <div class="fg"><label>Person</label><select id="bPerson" style="min-width:140px"><option value="">Everyone</option></select></div>
         <div class="fg"><label>Status</label><select id="bStatus" style="min-width:120px"><option value="">All</option><option>Not Started</option><option>Working on It</option><option>Done</option><option>On Hold</option></select></div>
         <div class="spacer"></div>
-        <button class="sm" id="viewToggleBtn" onclick="toggleBoardView()" style="border-color:var(--good);color:var(--good);font-weight:700">✓ Completed Tasks</button>
+        <button class="sm" id="viewToggleBtn" onclick="toggleBoardView()" style="border-color:var(--good);color:var(--good);font-weight:700">Completed Tasks</button>
         <button class="acc sm" id="addFromTplBtn">+ From Template</button>
         <button class="pri sm" id="addTaskBtn">+ Add Task</button>
         <button class="sm" id="exportBtn">Export</button>
@@ -357,7 +357,7 @@ textarea{min-height:50px;resize:vertical}
   <!-- TASK MODAL -->
   <div class="modal-bg" id="taskMod">
     <div class="modal">
-      <div class="modal-hd"><h3 id="taskModTitle">Add Task</h3><div style="display:flex;gap:6px;align-items:center"><button class="xs" id="historyBtn" onclick="showTaskHistory()" title="History" style="display:none">📋 History</button><button class="x-btn" onclick="closeM('taskMod')">&times;</button></div></div>
+      <div class="modal-hd"><h3 id="taskModTitle">Add Task</h3><div style="display:flex;gap:6px;align-items:center"><button class="xs" id="historyBtn" onclick="showTaskHistory()" title="History" style="display:none">History</button><button class="x-btn" onclick="closeM('taskMod')">&times;</button></div></div>
       <div class="modal-bd">
         <form id="taskForm">
           <input type="hidden" id="tfId"/>
@@ -468,14 +468,49 @@ async function init(){
   try{const r=await fetch('/api/me',{credentials:'include'});if(r.ok){me=await r.json();isAdmin=me.role==='admin';boot();return;}}catch(e){console.error(e);}
   location.href='index.html?redirect='+encodeURIComponent(location.pathname+location.search);
 }
+const urlParams=new URLSearchParams(location.search);
 function boot(){
   $('boot').style.display='none';$('hdr').style.display='';$('app').style.display='';
   $('uBadge').textContent=me.username+(isAdmin?' (Admin)':'');
   if(isAdmin)$('uBadge').classList.add('admin');
-  // Staff tab visible to all users (admin and non-admin)
-  $('bDate').value=today();boardDate=today();
+  const linkDate=urlParams.get('date');
+  if(linkDate){$('bDate').value=linkDate;boardDate=linkDate;}
+  else{$('bDate').value=today();boardDate=today();}
   setDateMode('month');
   loadAll();
+}
+
+async function handleDeepLink(){
+  const linkPropId=urlParams.get('propertyId');
+  const linkTaskId=urlParams.get('taskId');
+  if(!linkPropId&&!linkTaskId)return;
+  if(linkPropId){
+    propId=linkPropId;
+    $('bProp').value=linkPropId;
+    $('otProp').value=linkPropId;
+    if(isAdmin&&$('dtProp'))$('dtProp').value=linkPropId;
+    const p=allowedProps.find(x=>x.id===linkPropId);
+    if(p&&$('bPropSearch'))$('bPropSearch').value=p.name;
+    await loadBoard();
+    loadTemplates();
+    loadOpenTasks();
+    if(isAdmin)loadDeletedTasks();
+  }
+  if(linkTaskId){
+    setTimeout(()=>{
+      const t=tasks.find(x=>x._id===linkTaskId);
+      if(t){editTask(linkTaskId);}
+      else if(linkTaskId){
+        const allMatch=tasks.find(x=>(x._id||'').toString()===linkTaskId);
+        if(allMatch)editTask(allMatch._id);
+      }
+    },300);
+  }
+  const u=new URL(location);
+  u.searchParams.delete('taskId');
+  u.searchParams.delete('propertyId');
+  u.searchParams.delete('date');
+  history.replaceState(null,'',u);
 }
 
 function setDateMode(mode){
@@ -484,6 +519,14 @@ function setDateMode(mode){
   $('viewDay').style.color=mode==='day'?'#fff':'';
   $('viewMonth').style.background=mode==='month'?'var(--pri)':'';
   $('viewMonth').style.color=mode==='month'?'#fff':'';
+  const dateEl=$('bDate');
+  if(mode==='month'){
+    dateEl.type='month';
+    dateEl.value=boardDate.slice(0,7);
+  } else {
+    dateEl.type='date';
+    dateEl.value=boardDate;
+  }
   if(propId)loadBoard();
 }
 window.setDateMode=setDateMode;
@@ -500,6 +543,7 @@ async function loadAll(){
   if(!isAdmin&&allowed.length===1){$('bProp').value=allowed[0].id;$('sProp').value=allowed[0].id;$('otProp').value=allowed[0].id;propId=allowed[0].id;loadBoard();loadStaff();loadOpenTasks();}
   if(isAdmin&&allowed.length===1){$('dtProp').value=allowed[0].id;loadDeletedTasks();}
   startPolling();
+  if(urlParams.get('taskId')||urlParams.get('propertyId'))handleDeepLink();
 }
 let allowedProps=[];
 function fillPropSelects(){
@@ -529,15 +573,14 @@ function initPropSearch(){
         e.preventDefault();
         const id=item.dataset.id;
         const p=allowedProps.find(x=>x.id===id);
-        if(p){input.value=p.name;sel.value=id;propId=id;dd.style.display='none';$('otProp').value=id;if(isAdmin)$('dtProp').value=id;loadBoard();loadTemplates();loadOpenTasks();if(isAdmin)loadDeletedTasks();}
+        if(p){input.value=p.name;sel.value=id;propId=id;dd.style.display='none';$('sProp').value=id;$('otProp').value=id;if(isAdmin)$('dtProp').value=id;loadBoard();loadStaff();loadTemplates();loadOpenTasks();if(isAdmin)loadDeletedTasks();}
       });
     });
   }
 
-  input.addEventListener('focus',()=>renderDD(input.value));
+  input.addEventListener('focus',()=>{input.select();renderDD('');});
   input.addEventListener('input',()=>renderDD(input.value));
-  input.addEventListener('blur',()=>{setTimeout(()=>dd.style.display='none',200);});
-  // If property already selected, show its name
+  input.addEventListener('blur',()=>{setTimeout(()=>{dd.style.display='none';if(propId){const p=allowedProps.find(x=>x.id===propId);if(p)input.value=p.name;}},200);});
   if(propId){const p=allowedProps.find(x=>x.id===propId);if(p)input.value=p.name;}
 }
 function fillGroupSelects(){const o=groups.map(g=>`<option value="${g.id}">${esc(g.name)}</option>`).join('');['tfGroup','tpfGroup'].forEach(id=>$(id).innerHTML=o);}
@@ -572,7 +615,7 @@ function toggleBoardView(){
     btn.style.borderColor='var(--pri)';btn.style.color='var(--pri)';btn.style.background='#e0f2fe';
     $('addFromTplBtn').style.display='none';$('addTaskBtn').style.display='none';
   } else {
-    btn.textContent='✓ Completed Tasks';
+    btn.textContent='Completed Tasks';
     btn.style.borderColor='var(--good)';btn.style.color='var(--good)';btn.style.background='';
     $('addFromTplBtn').style.display='';$('addTaskBtn').style.display='';
   }
@@ -595,7 +638,7 @@ function renderBoard(){
 
   // Update toggle button count
   const completedCount=filtered.filter(t=>t.completed).length;
-  if(viewMode==='active') $('viewToggleBtn').textContent='✓ Completed Tasks'+(completedCount?' ('+completedCount+')':'');
+  if(viewMode==='active') $('viewToggleBtn').textContent='Completed Tasks'+(completedCount?' ('+completedCount+')':'');
 
   const byG={};viewTasks.forEach(t=>{const g=t.groupId||'misc';if(!byG[g])byG[g]=[];byG[g].push(t);});
   let html='';
@@ -622,10 +665,10 @@ function renderBoard(){
       <div><span class="pr-pill ${prC}" data-tid="${t._id}">${esc(t.priority||'—')}</span></div>
       <div style="font-size:12px;color:var(--sub)" title="${esc(t.notes||'')}">${esc(t.notes||'')}</div>
       <div style="font-size:12px;font-weight:600">${budgetStr||'—'}</div>
-      <div style="text-align:center;font-size:12px;color:var(--sub)">${filesCount?'📎'+filesCount:'—'}</div>
+      <div style="text-align:center;font-size:12px;color:var(--sub)">${filesCount||'—'}</div>
       <div style="text-align:center;display:flex;gap:2px;justify-content:center">
-        <button class="xs" onclick="event.stopPropagation();sendManualReminder('${t._id}')" title="Send Reminder">✉</button>
-        <button class="xs bad" onclick="event.stopPropagation();delTask('${t._id}')" title="Delete">✕</button>
+        <button class="xs" onclick="event.stopPropagation();sendManualReminder('${t._id}')" title="Send Reminder">Notify</button>
+        <button class="xs bad" onclick="event.stopPropagation();delTask('${t._id}')" title="Delete">X</button>
       </div>
     </div>`;
   }
@@ -633,7 +676,7 @@ function renderBoard(){
   // View title banner for completed view
   if(isCompleted){
     html+=`<div style="padding:12px 16px;background:#f0fdf4;border-bottom:2px solid #86efac;display:flex;align-items:center;gap:10px">
-      <span style="font-size:18px">✓</span>
+      <span style="font-size:15px;font-weight:800;color:#166534">&#10003;</span>
       <span style="font-size:15px;font-weight:800;color:#166534">Completed Tasks</span>
       <span class="grp-count" style="background:#dcfce7;color:#166534">${viewTasks.length}</span>
       <span style="font-size:12px;color:var(--muted);margin-left:8px">Uncheck a task to move it back to the active board</span>
@@ -670,7 +713,7 @@ function renderBoard(){
       const totalFiles=items.reduce((s,t)=>s+(t.files||[]).length,0);
       const nearestDate=items.filter(t=>t.date).map(t=>t.date).sort()[0]||'';
       const highPri=items.filter(t=>t.priority==='High'||t.priority==='Critical').length;
-      html+=`<div class="board-row footer"><div></div><div></div><div>${items.length} ${isCompleted?'completed':'active'}</div><div></div><div></div><div></div><div style="font-size:10px">${nearestDate&&!isCompleted?'Next: '+nearestDate:''}</div><div>${highPri?'<span style="color:var(--bad)">'+highPri+' high</span>':''}</div><div></div><div style="font-size:11px;font-weight:700">${totalBudget?'$'+totalBudget.toLocaleString('en-US',{minimumFractionDigits:2}):''}</div><div style="text-align:center">${totalFiles?'📎'+totalFiles:''}</div><div></div></div>`;
+      html+=`<div class="board-row footer"><div></div><div></div><div>${items.length} ${isCompleted?'completed':'active'}</div><div></div><div></div><div></div><div style="font-size:10px">${nearestDate&&!isCompleted?'Next: '+nearestDate:''}</div><div>${highPri?'<span style="color:var(--bad)">'+highPri+' high</span>':''}</div><div></div><div style="font-size:11px;font-weight:700">${totalBudget?'$'+totalBudget.toLocaleString('en-US',{minimumFractionDigits:2}):''}</div><div style="text-align:center">${totalFiles||''}</div><div></div></div>`;
     }
     html+=`</div>`;
   });
@@ -790,11 +833,11 @@ $('exportBtn').addEventListener('click',()=>{if(!propId){alert('Select a propert
 
 /* ═══ EVENTS ═══ */
 $('logoutBtn').addEventListener('click',async()=>{try{await fetch('/api/auth-logout',{method:'POST',credentials:'include'});}catch(e){}location.href='index.html';});
-$('bProp').addEventListener('change',()=>{propId=$('bProp').value;$('otProp').value=propId;if(isAdmin)$('dtProp').value=propId;loadBoard();loadTemplates();loadOpenTasks();if(isAdmin)loadDeletedTasks();});
-$('bDate').addEventListener('change',()=>{boardDate=$('bDate').value;loadBoard();});
+$('bProp').addEventListener('change',()=>{propId=$('bProp').value;$('sProp').value=propId;$('otProp').value=propId;if(isAdmin)$('dtProp').value=propId;const p=allowedProps.find(x=>x.id===propId);if(p&&$('bPropSearch'))$('bPropSearch').value=p.name;loadBoard();loadStaff();loadTemplates();loadOpenTasks();if(isAdmin)loadDeletedTasks();});
+$('bDate').addEventListener('change',()=>{const v=$('bDate').value;if(dateMode==='month'&&v.length===7){boardDate=v+'-01';}else{boardDate=v;}loadBoard();});
 $('bPerson').addEventListener('change',renderBoard);
 $('bStatus').addEventListener('change',renderBoard);
-$('sProp').addEventListener('change',loadStaff);
+$('sProp').addEventListener('change',()=>{const pid=$('sProp').value;if(pid){propId=pid;$('bProp').value=pid;$('otProp').value=pid;if(isAdmin)$('dtProp').value=pid;const p=allowedProps.find(x=>x.id===pid);if(p&&$('bPropSearch'))$('bPropSearch').value=p.name;}loadStaff();});
 ['taskMod','tplPickMod','tplMod','historyMod','viewDelMod'].forEach(id=>$(id).addEventListener('click',e=>{if(e.target===$(id))closeM(id);}));
 
 /* ═══ MANUAL REMINDER ═══ */
@@ -804,13 +847,13 @@ async function sendManualReminder(tid){
   try{
     const r=await api('/leasing-staff?action=sendReminder',{method:'POST',body:JSON.stringify({taskId:tid})});
     const result=await r.json();
-    if(result.sent>0&&!result.failed){alert('✅ Reminder sent to '+result.sent+' recipient(s).');}
+    if(result.sent>0&&!result.failed){alert('Reminder sent to '+result.sent+' recipient(s).');}
     else if(result.sent>0&&result.failed){
-      let msg='⚠️ Reminder sent to '+result.sent+' recipient(s). '+result.failed+' failed.';
+      let msg='Reminder sent to '+result.sent+' recipient(s). '+result.failed+' failed.';
       if(result.failureReasons&&result.failureReasons.length){msg+='\n\nFailure details:\n'+result.failureReasons.map(f=>'• '+(f.userName||f.userId)+': '+(f.detail||f.reason)).join('\n');}
       alert(msg);
     }else{
-      let msg='❌ Failed to send reminder.'+(result.error?' '+result.error:'');
+      let msg='Failed to send reminder.'+(result.error?' '+result.error:'');
       if(result.failureReasons&&result.failureReasons.length){msg+='\n\nDetails:\n'+result.failureReasons.map(f=>'• '+(f.userName||f.userId)+': '+(f.detail||f.reason)).join('\n');}
       alert(msg);
     }
@@ -827,7 +870,7 @@ function renderTaskFiles(taskId,files){
       <span style="font-size:12px;font-weight:600">${esc(f.fileName)}</span>
       <span style="font-size:10px;color:var(--muted)">${f.fileSize?(f.fileSize/1024).toFixed(1)+'KB':''}</span>
       <a href="${esc(f.fileUrl)}" target="_blank" style="font-size:10px;color:var(--acc2);margin-left:auto">View</a>
-      <button class="xs bad" type="button" onclick="removeTaskFile('${taskId}','${f.id||f._id}')">✕</button>
+      <button class="xs bad" type="button" onclick="removeTaskFile('${taskId}','${f.id||f._id}')">X</button>
     </div>`
   ).join('');
 }
@@ -928,13 +971,13 @@ function renderOpenTasks(){
       <div><div class="owner-pills">${ownerHtml}</div></div>
       <div><div class="owner-pills">${respHtml}</div></div>
       <div><span class="st-pill ${stC}" data-tid="${t._id}" data-src="ot">${esc(t.status)}</span></div>
-      <div style="${dateStyle}">${t.date||'—'}${isOverdue?' ⚠':''}</div>
+      <div style="${dateStyle}">${t.date||'—'}${isOverdue?' (overdue)':''}</div>
       <div><span class="pr-pill ${prC}" data-tid="${t._id}" data-src="ot">${esc(t.priority||'—')}</span></div>
       <div style="font-size:12px;color:var(--sub)" title="${esc(t.notes||'')}">${esc(t.notes||'')}</div>
       <div style="font-size:12px;font-weight:600">${budgetStr||'—'}</div>
-      <div style="text-align:center;font-size:12px;color:var(--sub)">${filesCount?'📎'+filesCount:'—'}</div>
+      <div style="text-align:center;font-size:12px;color:var(--sub)">${filesCount||'—'}</div>
       <div style="text-align:center;display:flex;gap:2px;justify-content:center">
-        <button class="xs" onclick="event.stopPropagation();sendManualReminder('${t._id}')" title="Send Reminder">✉</button>
+        <button class="xs" onclick="event.stopPropagation();sendManualReminder('${t._id}')" title="Send Reminder">Notify</button>
       </div>
     </div>`;
   }
@@ -978,7 +1021,7 @@ function initOpenTasks(){
   const o=allowedProps.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('');
   $('otProp').innerHTML='<option value="">— Select —</option>'+o;
   if(propId)$('otProp').value=propId;
-  $('otProp').addEventListener('change',()=>{otPropId=$('otProp').value;loadOpenTasks();});
+  $('otProp').addEventListener('change',()=>{otPropId=$('otProp').value;if(otPropId){propId=otPropId;$('bProp').value=otPropId;$('sProp').value=otPropId;if(isAdmin)$('dtProp').value=otPropId;const p=allowedProps.find(x=>x.id===otPropId);if(p&&$('bPropSearch'))$('bPropSearch').value=p.name;}loadOpenTasks();});
   $('otPerson').addEventListener('change',renderOpenTasks);
   $('otStatus').addEventListener('change',renderOpenTasks);
   $('otPriority').addEventListener('change',renderOpenTasks);
@@ -997,7 +1040,7 @@ async function showTaskHistory(){
     $('historyBody').innerHTML=history.map(h=>{
       const dt=new Date(h.changedAt);
       const timeStr=dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+' '+dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
-      const actionLabel={'created':'🆕 Created','updated':'✏️ Updated','completed':'✅ Completed','uncompleted':'↩️ Uncompleted','status_changed':'🔄 Status Changed','deleted':'🗑️ Deleted','file_added':'📎 File Added','file_removed':'📎 File Removed','reminder_sent':'✉️ Reminder Sent'}[h.action]||h.action;
+      const actionLabel={'created':'Created','updated':'Updated','completed':'Completed','uncompleted':'Uncompleted','status_changed':'Status Changed','deleted':'Deleted','file_added':'File Added','file_removed':'File Removed','reminder_sent':'Reminder Sent','reopened':'Reopened'}[h.action]||h.action;
       let changesHtml='';
       if(h.changes&&typeof h.changes==='object'){
         changesHtml=Object.entries(h.changes).map(([key,val])=>{

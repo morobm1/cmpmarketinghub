@@ -43,11 +43,13 @@ export function getNewAssigneeIds(previousTask, newTask) {
   return newIds.filter(id => !oldIds.includes(id));
 }
 
-// ─── Build a direct task URL ───
 export function buildTaskUrl(task) {
   const taskId = task._id ? task._id.toString() : (task.id || '');
   if (!taskId) return APP_BASE_URL + '/leasing_staff_list.html';
-  return `${APP_BASE_URL}/leasing_staff_list.html?taskId=${encodeURIComponent(taskId)}`;
+  const params = [`taskId=${encodeURIComponent(taskId)}`];
+  if (task.propertyId) params.push(`propertyId=${encodeURIComponent(task.propertyId)}`);
+  if (task.date) params.push(`date=${encodeURIComponent(task.date)}`);
+  return `${APP_BASE_URL}/leasing_staff_list.html?${params.join('&')}`;
 }
 
 // ─── Send the webhook to Google Apps Script ───
