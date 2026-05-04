@@ -155,13 +155,22 @@ export async function handler(event) {
           staffRecord = await staffCol.findOne({ username: user.sub, isActive: { $ne: false } });
         }
         if (!staffRecord) return cors({ staff: null, tasks: [] });
+        const mode = qs.mode || 'day';
         const date = qs.date || new Date().toISOString().slice(0, 10);
-        const tasks = await taskCol.find({
+        const filter = {
           'assignees.userId': staffRecord._id.toString(),
-          date,
           deleted: { $ne: true },
-        }).sort({ groupId: 1, sortOrder: 1 }).toArray();
-        return cors({ staff: staffRecord, tasks, date });
+        };
+        if (mode === 'day') {
+          filter.date = date;
+        } else if (mode === 'month') {
+          const ym = date.slice(0, 7);
+          filter.date = { $regex: '^' + ym };
+        } else if (mode === 'open') {
+          filter.completed = { $ne: true };
+        }
+        const tasks = await taskCol.find(filter).sort({ groupId: 1, sortOrder: 1 }).toArray();
+        return cors({ staff: staffRecord, tasks, date, mode });
       }
 
       if (action === 'templates') {
