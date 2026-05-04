@@ -405,6 +405,7 @@ textarea{min-height:50px;resize:vertical}
           <div class="fr"><div class="fg"><label>Name *</label><input type="text" id="sfName" required/></div><div class="fg"><label>Role / Position</label><input type="text" id="sfRole" placeholder="Enter their position"/></div></div>
           <div class="fr"><div class="fg"><label>Email</label><input type="email" id="sfEmail" placeholder="For notifications"/></div><div class="fg"><label>Username</label><input type="text" id="sfUser"/></div></div>
           <div class="fg"><label>Property *</label><select id="sfProp" required></select></div>
+          <div class="fg" id="sfAllPropsWrap" style="display:none"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;color:var(--pri)"><input type="checkbox" id="sfAllProps" style="width:18px;height:18px;accent-color:var(--pri)"/> Add to all assigned properties</label><p style="font-size:10px;color:var(--muted);margin-top:4px" id="sfAllPropsHint"></p></div>
           <div class="fa"><button type="button" onclick="closeM('staffMod')">Cancel</button><button type="submit" class="pri">Save</button></div>
         </form>
       </div>
@@ -721,7 +722,7 @@ function renderBoard(){
   $('groupsArea').innerHTML=html;
 
   // Event: checkboxes
-  $('groupsArea').querySelectorAll('.chk').forEach(el=>{el.addEventListener('click',async(e)=>{e.stopPropagation();const tid=el.dataset.tid;const t=tasks.find(x=>x._id===tid);if(!t)return;showSave('saving');try{await api('/leasing-staff?action=completeTask',{method:'POST',body:JSON.stringify({id:tid,completed:!t.completed})});await loadBoard();}catch(e2){alert(e2.message);showSave('saved');}});});
+  $('groupsArea').querySelectorAll('.chk').forEach(el=>{el.addEventListener('click',async(e)=>{e.stopPropagation();const tid=el.dataset.tid;const t=tasks.find(x=>x._id===tid);if(!t)return;showSave('saving');try{await api('/leasing-staff?action=completeTask',{method:'POST',body:JSON.stringify({id:tid,completed:!t.completed})});await loadBoard();loadOpenTasks();}catch(e2){alert(e2.message);showSave('saved');}});});
   // Event: status pills
   $('groupsArea').querySelectorAll('.st-pill').forEach(el=>{el.addEventListener('click',e=>{e.stopPropagation();showPop('statusPop',el,el.dataset.tid,'status');});});
   // Event: priority pills
@@ -734,7 +735,7 @@ function toggleGrp(gid){if(collapsedGroups.has(gid))collapsedGroups.delete(gid);
 window.toggleGrp=toggleGrp;
 
 /* ═══ QUICK ADD ═══ */
-async function quickAdd(input,gid){const label=input.value.trim();if(!label)return;showSave('saving');try{await api('/leasing-staff?action=task',{method:'POST',body:JSON.stringify({propertyId:propId,label,groupId:gid,date:boardDate,assignees:[]})});input.value='';await loadBoard();}catch(e){alert(e.message);showSave('saved');}}
+async function quickAdd(input,gid){const label=input.value.trim();if(!label)return;showSave('saving');try{await api('/leasing-staff?action=task',{method:'POST',body:JSON.stringify({propertyId:propId,label,groupId:gid,date:boardDate,assignees:[]})});input.value='';await loadBoard();loadOpenTasks();}catch(e){alert(e.message);showSave('saved');}}
 window.quickAdd=quickAdd;
 
 /* ═══ POPUPS ═══ */
@@ -742,7 +743,7 @@ let popTid=null;
 function showPop(popId,el,tid,type){popTid=tid;const pop=$(popId);
   if(type==='status')pop.innerHTML=['Not Started','Working on It','Done','On Hold'].map(s=>`<div class="pop-opt" data-v="${s}"><span class="st-pill ${ST_CLS[s]}">${s}</span></div>`).join('');
   else pop.innerHTML=['','Low','Medium','High','Critical'].map(p=>`<div class="pop-opt" data-v="${p}"><span class="pr-pill ${PR_CLS[p]||'pr-none'}">${p||'None'}</span></div>`).join('');
-  pop.querySelectorAll('.pop-opt').forEach(o=>{o.addEventListener('click',async()=>{pop.style.display='none';if(!popTid)return;showSave('saving');try{if(type==='status')await api('/leasing-staff?action=updateStatus',{method:'POST',body:JSON.stringify({id:popTid,status:o.dataset.v})});else await api('/leasing-staff?action=task',{method:'POST',body:JSON.stringify({id:popTid,priority:o.dataset.v})});await loadBoard();}catch(e){alert(e.message);showSave('saved');}});});
+  pop.querySelectorAll('.pop-opt').forEach(o=>{o.addEventListener('click',async()=>{pop.style.display='none';if(!popTid)return;showSave('saving');try{if(type==='status')await api('/leasing-staff?action=updateStatus',{method:'POST',body:JSON.stringify({id:popTid,status:o.dataset.v})});else await api('/leasing-staff?action=task',{method:'POST',body:JSON.stringify({id:popTid,priority:o.dataset.v})});await loadBoard();loadOpenTasks();}catch(e){alert(e.message);showSave('saved');}});});
   const r=el.getBoundingClientRect();pop.style.top=(r.bottom+4)+'px';pop.style.left=Math.min(r.left,window.innerWidth-170)+'px';pop.style.display='block';}
 document.addEventListener('click',e=>{if(!e.target.closest('.pop')&&!e.target.closest('.st-pill')&&!e.target.closest('.pr-pill')){$('statusPop').style.display='none';$('priorityPop').style.display='none';}});
 
@@ -752,12 +753,12 @@ function editTask(tid){const t=tasks.find(x=>x._id===tid)||otTasks.find(x=>x._id
 window.editTask=editTask;
 async function delTask(tid){if(!confirm('Delete this task?'))return;showSave('saving');try{await api('/leasing-staff?action=task',{method:'DELETE',body:JSON.stringify({id:tid})});await loadBoard();if(isAdmin&&$('dtProp').value)loadDeletedTasks();}catch(e){alert(e.message);showSave('saved');}}
 window.delTask=delTask;
-$('taskForm').addEventListener('submit',async e=>{e.preventDefault();const id=$('tfId').value;const data={id:id||undefined,propertyId:propId,label:$('tfLabel').value.trim(),groupId:$('tfGroup').value,assignees:getMS('tfAssignees'),responsibleUsers:getMS('tfResponsible'),status:$('tfStatus').value,date:$('tfDate').value||boardDate,notes:$('tfNotes').value.trim(),priority:$('tfPriority').value,budget:$('tfBudget').value?parseFloat($('tfBudget').value):null};showSave('saving');try{await api('/leasing-staff?action=task',{method:'POST',body:JSON.stringify(data)});closeM('taskMod');await loadBoard();}catch(e){alert(e.message);showSave('saved');}});
+$('taskForm').addEventListener('submit',async e=>{e.preventDefault();const id=$('tfId').value;const data={id:id||undefined,propertyId:propId,label:$('tfLabel').value.trim(),groupId:$('tfGroup').value,assignees:getMS('tfAssignees'),responsibleUsers:getMS('tfResponsible'),status:$('tfStatus').value,date:$('tfDate').value||boardDate,notes:$('tfNotes').value.trim(),priority:$('tfPriority').value,budget:$('tfBudget').value?parseFloat($('tfBudget').value):null};showSave('saving');try{await api('/leasing-staff?action=task',{method:'POST',body:JSON.stringify(data)});closeM('taskMod');await loadBoard();loadOpenTasks();}catch(e){alert(e.message);showSave('saved');}});
 
 /* ═══ FROM TEMPLATE ═══ */
 $('addFromTplBtn').addEventListener('click',()=>{if(!propId){alert('Select a property first');return;}$('tpDate').value=boardDate;setMS('tpAssignees',[]);const sys=templates.filter(t=>t.type==='system'),cust=templates.filter(t=>t.type!=='system');let o='<option value="">— Choose —</option>';if(sys.length)o+=`<optgroup label="System Defaults">${sys.map(t=>`<option value="${t._id}">${esc(t.name)} (${(t.tasks||[]).length})</option>`).join('')}</optgroup>`;if(cust.length)o+=`<optgroup label="Custom">${cust.map(t=>`<option value="${t._id}">${esc(t.name)} (${(t.tasks||[]).length})</option>`).join('')}</optgroup>`;$('tpTemplate').innerHTML=o;$('tpPreview').style.display='none';openM('tplPickMod');});
 $('tpTemplate').addEventListener('change',()=>{const tid=$('tpTemplate').value;const t=templates.find(x=>x._id===tid);if(!t){$('tpPreview').style.display='none';return;}$('tpPreview').style.display='';const g=groups.find(x=>x.id===t.defaultGroupId);$('tpPreview').innerHTML=`<strong>${esc(t.name)}</strong><br><span style="font-size:10px;font-weight:700">Group: ${g?esc(g.name):'Misc'} · ${(t.tasks||[]).length} tasks</span><br>${(t.tasks||[]).map((x,i)=>`${i+1}. ${esc(typeof x==='string'?x:x.label)}`).join('<br>')}`;});
-$('tpLoadBtn').addEventListener('click',async()=>{const tid=$('tpTemplate').value;if(!tid){alert('Select a template');return;}const t=templates.find(x=>x._id===tid);if(!t)return;showSave('saving');try{await api('/leasing-staff?action=taskBatch',{method:'POST',body:JSON.stringify({propertyId:propId,templateId:t._id,groupId:t.defaultGroupId,assignees:getMS('tpAssignees'),date:$('tpDate').value||boardDate,tasks:t.tasks})});closeM('tplPickMod');await loadBoard();}catch(e){alert(e.message);showSave('saved');}});
+$('tpLoadBtn').addEventListener('click',async()=>{const tid=$('tpTemplate').value;if(!tid){alert('Select a template');return;}const t=templates.find(x=>x._id===tid);if(!t)return;showSave('saving');try{await api('/leasing-staff?action=taskBatch',{method:'POST',body:JSON.stringify({propertyId:propId,templateId:t._id,groupId:t.defaultGroupId,assignees:getMS('tpAssignees'),date:$('tpDate').value||boardDate,tasks:t.tasks})});closeM('tplPickMod');await loadBoard();loadOpenTasks();}catch(e){alert(e.message);showSave('saved');}});
 
 /* ═══ TEMPLATES ═══ */
 async function loadTemplates(){const r=await api('/leasing-staff?action=templates'+(propId?'&propertyId='+propId:''));templates=await r.json();renderTemplates();}
@@ -780,6 +781,8 @@ $('addStaffBtn').addEventListener('click',async()=>{
   $('sfProp').value=propId||$('sProp').value||'';
   $('staffModTitle').textContent='Add Staff';
   $('sfUserPickWrap').style.display='';
+  $('sfAllPropsWrap').style.display='none';
+  $('sfAllProps').checked=false;
   $('sfName').readOnly=false;$('sfEmail').readOnly=false;$('sfUser').readOnly=false;
   await loadPropertyUsersForStaff();
   openM('staffMod');
@@ -810,12 +813,22 @@ async function loadPropertyUsersForStaff(){
 
 $('sfUserPick').addEventListener('change',()=>{
   const uname=$('sfUserPick').value;
+  $('sfAllPropsWrap').style.display='none';
+  $('sfAllProps').checked=false;
   if(!uname){$('sfName').value='';$('sfEmail').value='';$('sfUser').value='';return;}
   const u=propertyUsers.find(x=>x.username===uname);
   if(u){
     $('sfName').value=u.username;
     $('sfEmail').value=u.email||'';
     $('sfUser').value=u.username;
+    if(isAdmin&&u.properties){
+      const userProps=u.properties==='*'?allowedProps.map(p=>p.name):Array.isArray(u.properties)?u.properties:[];
+      const matchedProps=allowedProps.filter(p=>userProps.some(up=>up.toLowerCase()===p.name.toLowerCase()||up.toLowerCase()===p.id.toLowerCase()));
+      if(matchedProps.length>1){
+        $('sfAllPropsWrap').style.display='';
+        $('sfAllPropsHint').textContent='Will add to '+matchedProps.length+' properties: '+matchedProps.map(p=>p.name).join(', ');
+      }
+    }
   }
 });
 
@@ -823,10 +836,30 @@ $('sfProp').addEventListener('change',()=>{
   if(!$('sfId').value)loadPropertyUsersForStaff();
 });
 
-function editStaff(id){const s=staff.find(x=>x._id===id);if(!s)return;$('sfId').value=s._id;$('sfName').value=s.employeeName;$('sfRole').value=s.role||'';$('sfEmail').value=s.email||'';$('sfUser').value=s.username||'';$('sfProp').value=s.propertyId;$('staffModTitle').textContent='Edit Staff';$('sfUserPickWrap').style.display='none';$('sfName').readOnly=false;$('sfEmail').readOnly=false;$('sfUser').readOnly=false;openM('staffMod');}window.editStaff=editStaff;
+function editStaff(id){const s=staff.find(x=>x._id===id);if(!s)return;$('sfId').value=s._id;$('sfName').value=s.employeeName;$('sfRole').value=s.role||'';$('sfEmail').value=s.email||'';$('sfUser').value=s.username||'';$('sfProp').value=s.propertyId;$('staffModTitle').textContent='Edit Staff';$('sfUserPickWrap').style.display='none';$('sfAllPropsWrap').style.display='none';$('sfAllProps').checked=false;$('sfName').readOnly=false;$('sfEmail').readOnly=false;$('sfUser').readOnly=false;openM('staffMod');}window.editStaff=editStaff;
 async function deactStaff(id,n){if(!confirm('Remove '+n+'?'))return;try{await api('/leasing-staff?action=staff',{method:'DELETE',body:JSON.stringify({id})});await loadStaff();await loadBoard();}catch(e){alert(e.message);}}window.deactStaff=deactStaff;
 async function reactStaff(id){try{await api('/leasing-staff?action=staff',{method:'POST',body:JSON.stringify({id,propertyId:'_',employeeName:'_',isActive:true})});await loadStaff();}catch(e){alert(e.message);}}window.reactStaff=reactStaff;
-$('staffForm').addEventListener('submit',async e=>{e.preventDefault();try{await api('/leasing-staff?action=staff',{method:'POST',body:JSON.stringify({id:$('sfId').value||undefined,propertyId:$('sfProp').value,employeeName:$('sfName').value.trim(),role:$('sfRole').value.trim(),email:$('sfEmail').value.trim(),username:$('sfUser').value.trim()})});closeM('staffMod');await loadStaff();await loadBoard();}catch(e){alert(e.message);}});
+$('staffForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const staffData={id:$('sfId').value||undefined,propertyId:$('sfProp').value,employeeName:$('sfName').value.trim(),role:$('sfRole').value.trim(),email:$('sfEmail').value.trim(),username:$('sfUser').value.trim()};
+  try{
+    if(isAdmin&&!staffData.id&&$('sfAllProps').checked&&$('sfUserPick').value){
+      const u=propertyUsers.find(x=>x.username===$('sfUserPick').value);
+      if(u&&u.properties){
+        const userProps=u.properties==='*'?allowedProps.map(p=>p.name):Array.isArray(u.properties)?u.properties:[];
+        const matchedProps=allowedProps.filter(p=>userProps.some(up=>up.toLowerCase()===p.name.toLowerCase()||up.toLowerCase()===p.id.toLowerCase()));
+        let added=0;
+        for(const p of matchedProps){
+          try{await api('/leasing-staff?action=staff',{method:'POST',body:JSON.stringify({...staffData,propertyId:p.id})});added++;}catch(err){console.error('Failed for '+p.name,err);}
+        }
+        alert('Added to '+added+' of '+matchedProps.length+' properties.');
+      }
+    } else {
+      await api('/leasing-staff?action=staff',{method:'POST',body:JSON.stringify(staffData)});
+    }
+    closeM('staffMod');await loadStaff();await loadBoard();
+  }catch(e){alert(e.message);}
+});
 
 /* ═══ EXPORT ═══ */
 $('exportBtn').addEventListener('click',()=>{if(!propId){alert('Select a property');return;}if(typeof XLSX==='undefined')return;const pn=(properties.find(p=>p.id===propId)||{}).name||'board';const rows=tasks.map(t=>{const g=groups.find(x=>x.id===t.groupId);return{Group:g?g.name:'',Task:t.label,Owner:(t.assignees||[]).map(a=>a.userName).join(', ')||'',Status:t.status,DueDate:t.date||'',Priority:t.priority||'',Notes:t.notes||'',Budget:t.budget||'',Files:(t.files||[]).length,Completed:t.completed?'Yes':'No'};});if(!rows.length){alert('No tasks');return;}const ws=XLSX.utils.json_to_sheet(rows);ws['!cols']=Object.keys(rows[0]).map(k=>({wch:Math.max(k.length,...rows.map(r=>String(r[k]||'').length))+2}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Board');XLSX.writeFile(wb,`staff_board_${pn.replace(/\s+/g,'_')}_${boardDate}.xlsx`);});

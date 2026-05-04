@@ -116,7 +116,7 @@ export async function handler(event) {
           }
           return matchValues.includes(String(u.properties).toLowerCase());
         });
-        return cors(matched.map(u => ({ username: u.username, role: u.role, email: u.email || '' })));
+        return cors(matched.map(u => ({ username: u.username, role: u.role, email: u.email || '', properties: u.properties || [] })));
       }
 
       if (action === 'staff') {
