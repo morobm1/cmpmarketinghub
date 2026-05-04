@@ -60,17 +60,14 @@
     ]
   };
 
-  // Pages allowed for the maintenance role
   var maintenanceAllowedHrefs = [
     'custom_tools.html',
     'leasing_staff_list.html',
     'sop_library.html'
   ];
 
-  // Filter nav structure based on role
   function getNavStructure(role) {
     if (role !== 'maintenance') return fullNavStructure;
-    // Maintenance users only see Custom Tools, Project Management, SOP Library
     function filterItems(items) {
       return items.filter(function(item) {
         return maintenanceAllowedHrefs.indexOf(item.href) !== -1;
@@ -84,7 +81,7 @@
     return filtered;
   }
 
-  var navStructure = fullNavStructure; // default; updated after role fetch
+  var navStructure = fullNavStructure;
 
   // Check initial state
   var isCollapsed = false;
@@ -396,7 +393,6 @@
     body.appendChild(mainContent);
   }
 
-  // Rebuild sidebar after role is known
   function rebuildNav() {
     var existing = document.getElementById('sidebarNav');
     if (existing) existing.remove();
@@ -405,14 +401,11 @@
     injectNav();
   }
 
-  // Enforce page-level access for maintenance role
   function enforceMaintenanceAccess() {
     var currentPage = window.location.pathname.split('/').pop() || 'index.html';
-    // Allow index.html (login) always
     if (currentPage === 'index.html' || currentPage === '') return;
     var isAllowed = maintenanceAllowedHrefs.indexOf(currentPage) !== -1;
     if (!isAllowed) {
-      // Redirect maintenance users to their first allowed page
       window.location.href = 'custom_tools.html';
     }
   }
@@ -427,7 +420,6 @@
     injectNav();
     wrapContent();
 
-    // Fetch user role and update nav for role-based access
     fetch('/api/me', { credentials: 'include' })
       .then(function(res) { return res.ok ? res.json() : null; })
       .then(function(user) {
@@ -438,7 +430,7 @@
           enforceMaintenanceAccess();
         }
       })
-      .catch(function() { /* not logged in or error – keep default nav */ });
+      .catch(function() {});
   }
 
   init();

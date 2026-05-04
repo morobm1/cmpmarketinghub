@@ -112,12 +112,19 @@ export async function handler(event) {
         const pid = qs.propertyId;
         if (!pid) return cors('Missing propertyId', 400);
         if (!canAccess(user, pid)) return cors('Forbidden', 403);
-        const filter = { propertyId: pid };
+        const filter = { propertyId: pid, deleted: { $ne: true } };
         if (qs.date) filter.date = qs.date;
         if (qs.groupId) filter.groupId = qs.groupId;
-        // Multi-assignee filter: find tasks where any assignee matches
         if (qs.assignedTo) filter['assignees.userId'] = qs.assignedTo;
         return cors(await taskCol.find(filter).sort({ groupId: 1, sortOrder: 1, label: 1 }).toArray());
+      }
+
+      if (action === 'deletedTasks') {
+        const pid = qs.propertyId;
+        if (!pid) return cors('Missing propertyId', 400);
+        if (!canAccess(user, pid)) return cors('Forbidden', 403);
+        if (user.role !== 'admin') return cors('Admin only', 403);
+        return cors(await taskCol.find({ propertyId: pid, deleted: true }).sort({ deletedAt: -1 }).toArray());
       }
 
       if (action === 'myTasks') {
@@ -132,6 +139,7 @@ export async function handler(event) {
         const tasks = await taskCol.find({
           'assignees.userId': staffRecord._id.toString(),
           date,
+          deleted: { $ne: true },
         }).sort({ groupId: 1, sortOrder: 1 }).toArray();
         return cors({ staff: staffRecord, tasks, date });
       }
@@ -454,7 +462,23 @@ export async function handler(event) {
         return cors({ success: true });
       }
 
-      // ─── Update status ───
+      if (action === 'reopenTask') {
+        const { id } = body;
+        if (!id) return cors('Missing id', 400);
+        if (user.role !== 'admin') return cors('Admin only', 403);
+        const task = await taskCol.findOne({ _id: new ObjectId(id) });
+        if (!task) return cors('Not found', 404);
+        if (!canAccess(user, task.propertyId)) return cors('Forbidden', 403);
+        const now = new Date().toISOString();
+        await taskCol.updateOne({ _id: new ObjectId(id) }, { $set: { deleted: false, deletedAt: null, deletedBy: null, reopenedAt: now, reopenedBy: user.sub, updatedAt: now, updatedBy: user.sub } });
+        try {
+          await db.collection('taskHistory').insertOne({
+            taskId: id, action: 'reopened', changes: { label: task.label }, changedBy: user.sub, changedAt: now
+          });
+        } catch (histErr) { console.error('[TaskHistory] reopen log error:', histErr); }
+        return cors({ success: true });
+      }
+
       if (action === 'updateStatus') {
         const { id, status } = body;
         if (!id || !status) return cors('Missing fields', 400);
@@ -670,14 +694,15 @@ export async function handler(event) {
         const task = await taskCol.findOne({ _id: new ObjectId(body.id) });
         if (!task) return cors('Not found', 404);
         if (!canAccess(user, task.propertyId)) return cors('Forbidden', 403);
-        await taskCol.deleteOne({ _id: new ObjectId(body.id) });
+        const now = new Date().toISOString();
+        await taskCol.updateOne({ _id: new ObjectId(body.id) }, { $set: { deleted: true, deletedAt: now, deletedBy: user.sub } });
         try {
           await db.collection('taskHistory').insertOne({
             taskId: body.id,
             action: 'deleted',
             changes: { label: task.label },
             changedBy: user.sub,
-            changedAt: new Date().toISOString()
+            changedAt: now
           });
         } catch (histErr) { console.error('[TaskHistory] delete log error:', histErr); }
         return cors({ success: true });

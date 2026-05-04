@@ -174,6 +174,10 @@ textarea{min-height:50px;resize:vertical}
 .pop{position:fixed;display:none;z-index:200;background:#fff;border:2px solid var(--bdr);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.15);padding:5px;min-width:150px}
 .pop .pop-opt{padding:6px 10px;border-radius:6px;cursor:pointer}.pop .pop-opt:hover{background:var(--grp-bg)}
 
+/* Deleted tasks grid */
+#dtContainer .board-row{grid-template-columns:minmax(180px,1.5fr) 120px 130px 100px 100px 120px 140px 140px}
+#dtContainer .board-row>div{font-size:12px}
+
 @media print{
   header,.sidebar-nav,.nav-toggle,.toolbar,.tabs,.hdr-right,.board-row.add-row,.col-act,.save-ind{display:none!important}
   .main-content{margin-left:0!important}body{background:#fff;font-size:11px}
@@ -201,6 +205,7 @@ textarea{min-height:50px;resize:vertical}
       <button class="tab on" data-t="board">Board</button>
       <button class="tab" data-t="staff" id="staffTab">Staff</button>
       <button class="tab" data-t="templates">Templates</button>
+      <button class="tab" data-t="deleted" id="deletedTab" style="display:none">Deleted Tasks</button>
     </div>
 
     <!-- OPEN TASKS -->
@@ -314,6 +319,39 @@ textarea{min-height:50px;resize:vertical}
       <div class="toolbar"><div class="spacer"></div><button class="acc sm" id="newTplBtn">+ New Template</button></div>
       <div id="tplArea"></div>
     </div>
+
+    <!-- DELETED TASKS (admin only) -->
+    <div class="pane" id="p-deleted">
+      <div class="toolbar">
+        <div class="fg"><label>Property</label>
+          <select id="dtProp" style="min-width:220px"><option value="">— Select —</option></select>
+        </div>
+        <div class="spacer"></div>
+        <button class="sm" onclick="loadDeletedTasks()">Refresh</button>
+      </div>
+      <div id="dtArea">
+        <div class="empty" id="dtEmpty"><h3>Select a Property</h3><p>Choose a property to view deleted tasks.</p></div>
+        <div id="dtWrap" style="display:none">
+          <div style="margin-bottom:10px;display:flex;align-items:center;gap:12px">
+            <span style="font-size:15px;font-weight:800;color:var(--bad)">Deleted Tasks</span>
+            <span class="grp-count" id="dtTotalCount">0</span>
+          </div>
+          <div class="board-container" id="dtContainer">
+            <div class="board-row hdr">
+              <div>Task</div>
+              <div>Group</div>
+              <div>Owner</div>
+              <div>Status</div>
+              <div>Due Date</div>
+              <div>Deleted By</div>
+              <div>Deleted At</div>
+              <div>Actions</div>
+            </div>
+            <div id="dtBody"></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- TASK MODAL -->
@@ -337,7 +375,7 @@ textarea{min-height:50px;resize:vertical}
               <button type="button" class="xs acc" onclick="uploadTaskFiles()">Upload</button>
             </div>
           </div>
-          <div class="fa"><button type="button" onclick="closeM('taskMod')">Cancel</button><button type="submit" class="pri">Save Task</button></div>
+          <div class="fa"><button type="button" id="tfDeleteBtn" class="bad" style="margin-right:auto;display:none" onclick="deleteFromModal()">Delete Task</button><button type="button" onclick="closeM('taskMod')">Cancel</button><button type="submit" class="pri">Save Task</button></div>
         </form>
       </div>
     </div>
@@ -401,6 +439,14 @@ textarea{min-height:50px;resize:vertical}
     </div>
   </div>
 
+  <!-- VIEW DELETED TASK MODAL -->
+  <div class="modal-bg" id="viewDelMod">
+    <div class="modal" style="max-width:560px">
+      <div class="modal-hd"><h3>Deleted Task Details</h3><button class="x-btn" onclick="closeM('viewDelMod')">&times;</button></div>
+      <div class="modal-bd" id="viewDelBody"></div>
+    </div>
+  </div>
+
 <script>
 /* ═══ STATE ═══ */
 let me=null,isAdmin=false,properties=[],groups=[],staff=[],tasks=[],templates=[];
@@ -451,6 +497,7 @@ async function loadAll(){
   fillPropSelects();fillGroupSelects();await loadTemplates();
   const allowed=isAdmin?properties:properties.filter(p=>{if(me.properties==='*')return true;if(Array.isArray(me.properties))return me.properties.includes(p.id)||me.properties.includes(p.name);return me.properties===p.id||me.properties===p.name;});
   if(!isAdmin&&allowed.length===1){$('bProp').value=allowed[0].id;$('sProp').value=allowed[0].id;$('otProp').value=allowed[0].id;propId=allowed[0].id;loadBoard();loadStaff();loadOpenTasks();}
+  if(isAdmin&&allowed.length===1){$('dtProp').value=allowed[0].id;loadDeletedTasks();}
   startPolling();
 }
 let allowedProps=[];
@@ -458,10 +505,9 @@ function fillPropSelects(){
   allowedProps=isAdmin?properties:properties.filter(p=>{if(me.properties==='*')return true;if(Array.isArray(me.properties))return me.properties.includes(p.id)||me.properties.includes(p.name);return me.properties===p.id||me.properties===p.name;});
   const o=allowedProps.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('');
   ['bProp','sProp','sfProp'].forEach(id=>{const el=$(id);const f=el.querySelector('option');el.innerHTML=(f?f.outerHTML:'')+o;});
-  // Init searchable property dropdown
   initPropSearch();
-  // Init open tasks tab
   initOpenTasks();
+  initDeletedTab();
 }
 
 function initPropSearch(){
@@ -482,7 +528,7 @@ function initPropSearch(){
         e.preventDefault();
         const id=item.dataset.id;
         const p=allowedProps.find(x=>x.id===id);
-        if(p){input.value=p.name;sel.value=id;propId=id;dd.style.display='none';$('otProp').value=id;loadBoard();loadTemplates();loadOpenTasks();}
+        if(p){input.value=p.name;sel.value=id;propId=id;dd.style.display='none';$('otProp').value=id;if(isAdmin)$('dtProp').value=id;loadBoard();loadTemplates();loadOpenTasks();if(isAdmin)loadDeletedTasks();}
       });
     });
   }
@@ -657,10 +703,10 @@ function showPop(popId,el,tid,type){popTid=tid;const pop=$(popId);
 document.addEventListener('click',e=>{if(!e.target.closest('.pop')&&!e.target.closest('.st-pill')&&!e.target.closest('.pr-pill')){$('statusPop').style.display='none';$('priorityPop').style.display='none';}});
 
 /* ═══ TASK CRUD ═══ */
-$('addTaskBtn').addEventListener('click',()=>{if(!propId){alert('Select a property first');return;}$('tfId').value='';$('tfLabel').value='';$('tfGroup').value='opening';$('tfStatus').value='Not Started';$('tfDate').value=boardDate;$('tfNotes').value='';$('tfPriority').value='';$('tfBudget').value='';setMS('tfAssignees',[]);setMS('tfResponsible',[]);$('taskModTitle').textContent='Add Task';$('historyBtn').style.display='none';$('tfFilesSection').style.display='none';openM('taskMod');});
-function editTask(tid){const t=tasks.find(x=>x._id===tid);if(!t)return;$('tfId').value=t._id;$('tfLabel').value=t.label;$('tfGroup').value=t.groupId;$('tfStatus').value=t.status;$('tfDate').value=t.date||'';$('tfNotes').value=t.notes||'';$('tfPriority').value=t.priority||'';$('tfBudget').value=t.budget||'';setMS('tfAssignees',(t.assignees||[]).map(a=>a.userId));setMS('tfResponsible',(t.responsibleUsers||[]).map(r=>r.userId));$('taskModTitle').textContent='Edit Task';$('historyBtn').style.display='';$('tfFilesSection').style.display='';renderTaskFiles(t._id,t.files||[]);openM('taskMod');}
+$('addTaskBtn').addEventListener('click',()=>{if(!propId){alert('Select a property first');return;}$('tfId').value='';$('tfLabel').value='';$('tfGroup').value='opening';$('tfStatus').value='Not Started';$('tfDate').value=boardDate;$('tfNotes').value='';$('tfPriority').value='';$('tfBudget').value='';setMS('tfAssignees',[]);setMS('tfResponsible',[]);$('taskModTitle').textContent='Add Task';$('historyBtn').style.display='none';$('tfDeleteBtn').style.display='none';$('tfFilesSection').style.display='none';openM('taskMod');});
+function editTask(tid){const t=tasks.find(x=>x._id===tid)||otTasks.find(x=>x._id===tid);if(!t)return;$('tfId').value=t._id;$('tfLabel').value=t.label;$('tfGroup').value=t.groupId;$('tfStatus').value=t.status;$('tfDate').value=t.date||'';$('tfNotes').value=t.notes||'';$('tfPriority').value=t.priority||'';$('tfBudget').value=t.budget||'';setMS('tfAssignees',(t.assignees||[]).map(a=>a.userId));setMS('tfResponsible',(t.responsibleUsers||[]).map(r=>r.userId));$('taskModTitle').textContent='Edit Task';$('historyBtn').style.display='';$('tfDeleteBtn').style.display='';$('tfFilesSection').style.display='';renderTaskFiles(t._id,t.files||[]);openM('taskMod');}
 window.editTask=editTask;
-async function delTask(tid){if(!confirm('Delete this task?'))return;showSave('saving');try{await api('/leasing-staff?action=task',{method:'DELETE',body:JSON.stringify({id:tid})});await loadBoard();}catch(e){alert(e.message);showSave('saved');}}
+async function delTask(tid){if(!confirm('Delete this task?'))return;showSave('saving');try{await api('/leasing-staff?action=task',{method:'DELETE',body:JSON.stringify({id:tid})});await loadBoard();if(isAdmin&&$('dtProp').value)loadDeletedTasks();}catch(e){alert(e.message);showSave('saved');}}
 window.delTask=delTask;
 $('taskForm').addEventListener('submit',async e=>{e.preventDefault();const id=$('tfId').value;const data={id:id||undefined,propertyId:propId,label:$('tfLabel').value.trim(),groupId:$('tfGroup').value,assignees:getMS('tfAssignees'),responsibleUsers:getMS('tfResponsible'),status:$('tfStatus').value,date:$('tfDate').value||boardDate,notes:$('tfNotes').value.trim(),priority:$('tfPriority').value,budget:$('tfBudget').value?parseFloat($('tfBudget').value):null};showSave('saving');try{await api('/leasing-staff?action=task',{method:'POST',body:JSON.stringify(data)});closeM('taskMod');await loadBoard();}catch(e){alert(e.message);showSave('saved');}});
 
@@ -695,12 +741,12 @@ $('exportBtn').addEventListener('click',()=>{if(!propId){alert('Select a propert
 
 /* ═══ EVENTS ═══ */
 $('logoutBtn').addEventListener('click',async()=>{try{await fetch('/api/auth-logout',{method:'POST',credentials:'include'});}catch(e){}location.href='index.html';});
-$('bProp').addEventListener('change',()=>{propId=$('bProp').value;$('otProp').value=propId;loadBoard();loadTemplates();loadOpenTasks();});
+$('bProp').addEventListener('change',()=>{propId=$('bProp').value;$('otProp').value=propId;if(isAdmin)$('dtProp').value=propId;loadBoard();loadTemplates();loadOpenTasks();if(isAdmin)loadDeletedTasks();});
 $('bDate').addEventListener('change',()=>{boardDate=$('bDate').value;loadBoard();});
 $('bPerson').addEventListener('change',renderBoard);
 $('bStatus').addEventListener('change',renderBoard);
 $('sProp').addEventListener('change',loadStaff);
-['taskMod','tplPickMod','staffMod','tplMod','historyMod'].forEach(id=>$(id).addEventListener('click',e=>{if(e.target===$(id))closeM(id);}));
+['taskMod','tplPickMod','staffMod','tplMod','historyMod','viewDelMod'].forEach(id=>$(id).addEventListener('click',e=>{if(e.target===$(id))closeM(id);}));
 
 /* ═══ MANUAL REMINDER ═══ */
 async function sendManualReminder(tid){
@@ -926,6 +972,117 @@ async function showTaskHistory(){
   }
 }
 window.showTaskHistory=showTaskHistory;
+
+/* deleteFromModal */
+async function deleteFromModal(){
+  const tid=$('tfId').value;
+  if(!tid)return;
+  if(!confirm('Delete this task?'))return;
+  showSave('saving');
+  try{
+    await api('/leasing-staff?action=task',{method:'DELETE',body:JSON.stringify({id:tid})});
+    closeM('taskMod');
+    await loadBoard();
+    if(otPropId)loadOpenTasks();
+    if(isAdmin)loadDeletedTasks();
+  }catch(e){alert(e.message);showSave('saved');}
+}
+window.deleteFromModal=deleteFromModal;
+
+/* Deleted Tasks (admin) */
+let deletedTasks=[];
+async function loadDeletedTasks(){
+  const pid=$('dtProp').value||propId;
+  if(!pid){$('dtEmpty').style.display='';$('dtWrap').style.display='none';return;}
+  showSave('saving');
+  try{
+    const r=await api('/leasing-staff?action=deletedTasks&propertyId='+pid);
+    deletedTasks=await r.json();
+    renderDeletedTasks();
+  }catch(e){console.error(e);}
+  showSave('saved');
+}
+window.loadDeletedTasks=loadDeletedTasks;
+
+function renderDeletedTasks(){
+  if(!deletedTasks.length){
+    $('dtEmpty').innerHTML='<h3>No Deleted Tasks</h3><p>No tasks have been deleted for this property.</p>';
+    $('dtEmpty').style.display='';$('dtWrap').style.display='none';return;
+  }
+  $('dtEmpty').style.display='none';$('dtWrap').style.display='';
+  $('dtTotalCount').textContent=deletedTasks.length;
+  $('dtBody').innerHTML=deletedTasks.map(t=>{
+    const g=groups.find(x=>x.id===t.groupId);
+    const stC=ST_CLS[t.status]||'st-ns';
+    const owners=(t.assignees||[]).map(a=>a.userName).join(', ')||'—';
+    const delDate=t.deletedAt?new Date(t.deletedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}):'—';
+    return `<div class="board-row task" style="opacity:1;cursor:default">
+      <div style="font-weight:600">${esc(t.label)}</div>
+      <div>${g?esc(g.name):'—'}</div>
+      <div>${esc(owners)}</div>
+      <div><span class="st-pill ${stC}">${esc(t.status)}</span></div>
+      <div>${t.date||'—'}</div>
+      <div style="font-weight:600">${esc(t.deletedBy||'—')}</div>
+      <div style="font-size:11px">${delDate}</div>
+      <div style="display:flex;gap:4px"><button class="xs pri" onclick="viewDeletedTask('${t._id}')">View</button><button class="xs acc" onclick="reopenTask('${t._id}')">Reopen</button></div>
+    </div>`;
+  }).join('');
+}
+
+async function reopenTask(tid){
+  if(!confirm('Reopen this task? It will be restored to the board.'))return;
+  showSave('saving');
+  try{
+    await api('/leasing-staff?action=reopenTask',{method:'POST',body:JSON.stringify({id:tid})});
+    await loadDeletedTasks();
+    if(propId)loadBoard();
+  }catch(e){alert(e.message);}
+  showSave('saved');
+}
+window.reopenTask=reopenTask;
+
+function viewDeletedTask(tid){
+  const t=deletedTasks.find(x=>x._id===tid);
+  if(!t)return;
+  const g=groups.find(x=>x.id===t.groupId);
+  const owners=(t.assignees||[]).map(a=>a.userName).join(', ')||'None';
+  const resp=(t.responsibleUsers||[]).map(r=>r.userName).join(', ')||'None';
+  const delDate=t.deletedAt?new Date(t.deletedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}):'—';
+  const html=`
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div><label style="font-size:11px;color:var(--muted)">Task</label><div style="font-size:15px;font-weight:800">${esc(t.label)}</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div><label style="font-size:11px;color:var(--muted)">Group</label><div>${g?esc(g.name):'—'}</div></div>
+        <div><label style="font-size:11px;color:var(--muted)">Status</label><div>${esc(t.status)}</div></div>
+        <div><label style="font-size:11px;color:var(--muted)">Due Date</label><div>${t.date||'—'}</div></div>
+        <div><label style="font-size:11px;color:var(--muted)">Priority</label><div>${esc(t.priority||'None')}</div></div>
+        <div><label style="font-size:11px;color:var(--muted)">Owner</label><div>${esc(owners)}</div></div>
+        <div><label style="font-size:11px;color:var(--muted)">Responsible</label><div>${esc(resp)}</div></div>
+        <div><label style="font-size:11px;color:var(--muted)">Budget</label><div>${t.budget?'$'+Number(t.budget).toFixed(2):'—'}</div></div>
+      </div>
+      ${t.notes?'<div><label style="font-size:11px;color:var(--muted)">Notes</label><div style="font-size:13px">'+esc(t.notes)+'</div></div>':''}
+      <div style="border-top:2px solid var(--bdr-l);padding-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div><label style="font-size:11px;color:var(--bad)">Deleted By</label><div style="font-weight:700">${esc(t.deletedBy||'—')}</div></div>
+        <div><label style="font-size:11px;color:var(--bad)">Deleted At</label><div style="font-weight:700">${delDate}</div></div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+        <button onclick="closeM('viewDelMod')">Close</button>
+        <button class="acc" onclick="closeM('viewDelMod');reopenTask('${t._id}')">Reopen Task</button>
+      </div>
+    </div>`;
+  $('viewDelBody').innerHTML=html;
+  openM('viewDelMod');
+}
+window.viewDeletedTask=viewDeletedTask;
+
+function initDeletedTab(){
+  if(!isAdmin)return;
+  $('deletedTab').style.display='';
+  const o=allowedProps.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('');
+  $('dtProp').innerHTML='<option value="">— Select —</option>'+o;
+  if(propId)$('dtProp').value=propId;
+  $('dtProp').addEventListener('change',loadDeletedTasks);
+}
 
 init();
 </script>

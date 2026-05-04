@@ -61,7 +61,6 @@
           try{localStorage.setItem('mmp_last_activity',Date.now().toString())}catch(e){}
           const redir=new URLSearchParams(window.location.search).get('redirect');
           if (redir) { window.location.href = redir; return; }
-          // Check role to determine default landing page
           try {
             const data = await res.json();
             if (data.user && data.user.role === 'maintenance') { window.location.href = 'custom_tools.html'; return; }
@@ -88,7 +87,6 @@
     els.loginBtn.addEventListener('click', doLogin);
     document.addEventListener('keydown', (e)=>{ if (e.key === 'Enter') doLogin(); });
 
-    // If already logged in via cookie, redirect to app
     (async function(){
       try{
         const me = await fetch('/api/me', { credentials:'include' });
