@@ -161,7 +161,6 @@ export async function handler(event) {
       if (action === 'deletedTasks') {
         const pid = qs.propertyId;
         if (!pid) return cors('Missing propertyId', 400);
-        if (!canAccessSync(user, pid, propsMap)) return cors('Forbidden', 403);
         if (user.role !== 'admin') return cors('Admin only', 403);
         return cors(await taskCol.find({ propertyId: pid, deleted: true }).sort({ deletedAt: -1 }).toArray());
       }
@@ -528,7 +527,7 @@ export async function handler(event) {
         if (user.role !== 'admin') return cors('Admin only', 403);
         const task = await taskCol.findOne({ _id: new ObjectId(id) });
         if (!task) return cors('Not found', 404);
-        if (!canAccessSync(user, task.propertyId, propsMap)) return cors('Forbidden', 403);
+
         const now = new Date().toISOString();
         await taskCol.updateOne({ _id: new ObjectId(id) }, { $set: { deleted: false, deletedAt: null, deletedBy: null, reopenedAt: now, reopenedBy: user.sub, updatedAt: now, updatedBy: user.sub } });
         try {
@@ -631,7 +630,6 @@ export async function handler(event) {
         const task = await taskCol.findOne({ _id: new ObjectId(taskId) });
         if (!task) return cors('Not found', 404);
         if (!canAccessSync(user, task.propertyId, propsMap)) return cors('Forbidden', 403);
-
         const allRecipientIds = [
           ...((task.assignees || []).map(a => a.userId)),
           ...((task.responsibleUsers || []).map(r => r.userId))
