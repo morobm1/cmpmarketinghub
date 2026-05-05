@@ -61,11 +61,29 @@ async function ensureSystemTemplates(db) {
   }
 }
 
-function canAccess(user, pid) {
+let _propsCache = null;
+let _propsCacheTime = 0;
+async function getPropsMap(db) {
+  if (_propsCache && Date.now() - _propsCacheTime < 60000) return _propsCache;
+  const docs = await db.collection('properties').find({}).toArray();
+  _propsCache = {};
+  for (const d of docs) { _propsCache[d._id] = d.name; _propsCache[d.name] = d._id; }
+  _propsCacheTime = Date.now();
+  return _propsCache;
+}
+
+function canAccessSync(user, pid, propsMap) {
   if (user.role === 'admin') return true;
   if (user.properties === '*') return true;
-  if (Array.isArray(user.properties)) return user.properties.includes(pid);
-  return user.properties === pid;
+  const propName = (propsMap && propsMap[pid]) || '';
+  if (Array.isArray(user.properties)) {
+    return user.properties.some(p => {
+      const pl = String(p).toLowerCase();
+      return pl === pid.toLowerCase() || (propName && pl === propName.toLowerCase());
+    });
+  }
+  const up = String(user.properties).toLowerCase();
+  return up === pid.toLowerCase() || (propName && up === propName.toLowerCase());
 }
 
 function cors(body, sc = 200) {
@@ -86,6 +104,7 @@ export async function handler(event) {
   if (!user) return cors('Unauthorized', 401);
 
   const db = await getDb();
+  const propsMap = await getPropsMap(db);
   const staffCol = db.collection('leasingStaff');
   const taskCol = db.collection('leasingBoardTasks');
   const templateCol = db.collection('leasingTemplates');
@@ -102,7 +121,7 @@ export async function handler(event) {
       if (action === 'propertyUsers') {
         const pid = qs.propertyId;
         if (!pid) return cors('Missing propertyId', 400);
-        if (!canAccess(user, pid)) return cors('Forbidden', 403);
+        if (!canAccessSync(user, pid, propsMap)) return cors('Forbidden', 403);
         const usersCol = db.collection('users');
         const allUsers = await usersCol.find({}, { projection: { passwordHash: 0 } }).toArray();
         const allProps = await db.collection('properties').find({}).toArray();
@@ -122,7 +141,7 @@ export async function handler(event) {
       if (action === 'staff') {
         const pid = qs.propertyId;
         if (!pid) return cors('Missing propertyId', 400);
-        if (!canAccess(user, pid)) return cors('Forbidden', 403);
+        if (!canAccessSync(user, pid, propsMap)) return cors('Forbidden', 403);
         const filter = { propertyId: pid };
         if (qs.activeOnly !== 'false') filter.isActive = { $ne: false };
         return cors(await staffCol.find(filter).sort({ employeeName: 1 }).toArray());
@@ -131,7 +150,7 @@ export async function handler(event) {
       if (action === 'tasks') {
         const pid = qs.propertyId;
         if (!pid) return cors('Missing propertyId', 400);
-        if (!canAccess(user, pid)) return cors('Forbidden', 403);
+        if (!canAccessSync(user, pid, propsMap)) return cors('Forbidden', 403);
         const filter = { propertyId: pid, deleted: { $ne: true } };
         if (qs.date) filter.date = qs.date;
         if (qs.groupId) filter.groupId = qs.groupId;
@@ -142,7 +161,7 @@ export async function handler(event) {
       if (action === 'deletedTasks') {
         const pid = qs.propertyId;
         if (!pid) return cors('Missing propertyId', 400);
-        if (!canAccess(user, pid)) return cors('Forbidden', 403);
+        if (!canAccessSync(user, pid, propsMap)) return cors('Forbidden', 403);
         if (user.role !== 'admin') return cors('Admin only', 403);
         return cors(await taskCol.find({ propertyId: pid, deleted: true }).sort({ deletedAt: -1 }).toArray());
       }
@@ -265,7 +284,7 @@ export async function handler(event) {
       if (action === 'task') {
         const { id, propertyId, label, groupId, assignees, responsibleUsers, status, date, completed, notes, sortOrder, priority, budget, files } = body;
         if (!id && (!propertyId || !label)) return cors('Missing fields', 400);
-        if (propertyId && !canAccess(user, propertyId)) return cors('Forbidden', 403);
+        if (propertyId && !canAccessSync(user, propertyId, propsMap)) return cors('Forbidden', 403);
         const now = new Date().toISOString();
 
         if (id) {
@@ -425,7 +444,7 @@ export async function handler(event) {
       if (action === 'taskBatch') {
         const { propertyId, tasks: items, assignees, date, groupId, templateId } = body;
         if (!propertyId || !items || !items.length) return cors('Missing fields', 400);
-        if (!canAccess(user, propertyId)) return cors('Forbidden', 403);
+        if (!canAccessSync(user, propertyId, propsMap)) return cors('Forbidden', 403);
         const now = new Date().toISOString();
         const d = date || new Date().toISOString().slice(0, 10);
         const taskAssignees = (assignees || []).map(a => ({
@@ -473,7 +492,7 @@ export async function handler(event) {
         if (!id) return cors('Missing id', 400);
         const task = await taskCol.findOne({ _id: new ObjectId(id) });
         if (!task) return cors('Not found', 404);
-        if (!canAccess(user, task.propertyId)) return cors('Forbidden', 403);
+        if (!canAccessSync(user, task.propertyId, propsMap)) return cors('Forbidden', 403);
         const now = new Date().toISOString();
         await taskCol.updateOne({ _id: new ObjectId(id) }, { $set: {
           completed: !!completed, completedAt: completed ? now : null, completedBy: completed ? user.sub : null,
@@ -509,7 +528,7 @@ export async function handler(event) {
         if (user.role !== 'admin') return cors('Admin only', 403);
         const task = await taskCol.findOne({ _id: new ObjectId(id) });
         if (!task) return cors('Not found', 404);
-        if (!canAccess(user, task.propertyId)) return cors('Forbidden', 403);
+        if (!canAccessSync(user, task.propertyId, propsMap)) return cors('Forbidden', 403);
         const now = new Date().toISOString();
         await taskCol.updateOne({ _id: new ObjectId(id) }, { $set: { deleted: false, deletedAt: null, deletedBy: null, reopenedAt: now, reopenedBy: user.sub, updatedAt: now, updatedBy: user.sub } });
         try {
@@ -526,7 +545,7 @@ export async function handler(event) {
         if (!STATUSES.includes(status)) return cors('Invalid status', 400);
         const task = await taskCol.findOne({ _id: new ObjectId(id) });
         if (!task) return cors('Not found', 404);
-        if (!canAccess(user, task.propertyId)) return cors('Forbidden', 403);
+        if (!canAccessSync(user, task.propertyId, propsMap)) return cors('Forbidden', 403);
         const oldStatus = task.status;
         const now = new Date().toISOString();
         const upd = { status, updatedAt: now, updatedBy: user.sub };
@@ -565,7 +584,7 @@ export async function handler(event) {
         if (!taskId || !fileName || !fileUrl) return cors('Missing fields', 400);
         const task = await taskCol.findOne({ _id: new ObjectId(taskId) });
         if (!task) return cors('Not found', 404);
-        if (!canAccess(user, task.propertyId)) return cors('Forbidden', 403);
+        if (!canAccessSync(user, task.propertyId, propsMap)) return cors('Forbidden', 403);
         const fileDoc = {
           id: new ObjectId().toString(),
           fileName, fileUrl, fileSize: fileSize || 0, fileType: fileType || '',
@@ -590,7 +609,7 @@ export async function handler(event) {
         if (!taskId || !fileId) return cors('Missing fields', 400);
         const task = await taskCol.findOne({ _id: new ObjectId(taskId) });
         if (!task) return cors('Not found', 404);
-        if (!canAccess(user, task.propertyId)) return cors('Forbidden', 403);
+        if (!canAccessSync(user, task.propertyId, propsMap)) return cors('Forbidden', 403);
         const file = (task.files || []).find(f => f.id === fileId);
         await taskCol.updateOne({ _id: new ObjectId(taskId) }, { $pull: { files: { id: fileId } }, $set: { updatedAt: new Date().toISOString(), updatedBy: user.sub } });
         try {
@@ -611,7 +630,7 @@ export async function handler(event) {
         if (!taskId) return cors('Missing taskId', 400);
         const task = await taskCol.findOne({ _id: new ObjectId(taskId) });
         if (!task) return cors('Not found', 404);
-        if (!canAccess(user, task.propertyId)) return cors('Forbidden', 403);
+        if (!canAccessSync(user, task.propertyId, propsMap)) return cors('Forbidden', 403);
 
         const allRecipientIds = [
           ...((task.assignees || []).map(a => a.userId)),
@@ -734,7 +753,7 @@ export async function handler(event) {
       if (action === 'task') {
         const task = await taskCol.findOne({ _id: new ObjectId(body.id) });
         if (!task) return cors('Not found', 404);
-        if (!canAccess(user, task.propertyId)) return cors('Forbidden', 403);
+        if (!canAccessSync(user, task.propertyId, propsMap)) return cors('Forbidden', 403);
         const now = new Date().toISOString();
         await taskCol.updateOne({ _id: new ObjectId(body.id) }, { $set: { deleted: true, deletedAt: now, deletedBy: user.sub } });
         try {

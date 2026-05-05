@@ -540,7 +540,7 @@ async function loadAll(){
   const [pR,gR]=await Promise.all([api('/properties'),api('/leasing-staff?action=groups')]);
   properties=await pR.json();groups=await gR.json();
   fillPropSelects();fillGroupSelects();await loadTemplates();
-  const allowed=isAdmin?properties:properties.filter(p=>{if(me.properties==='*')return true;if(Array.isArray(me.properties))return me.properties.includes(p.id)||me.properties.includes(p.name);return me.properties===p.id||me.properties===p.name;});
+  const allowed=isAdmin?properties:properties.filter(p=>{if(me.properties==='*')return true;if(Array.isArray(me.properties))return me.properties.some(up=>{const upl=String(up).toLowerCase();return upl===p.id.toLowerCase()||upl===p.name.toLowerCase();});const upl=String(me.properties).toLowerCase();return upl===p.id.toLowerCase()||upl===p.name.toLowerCase();});
   if(!isAdmin&&allowed.length===1){$('bProp').value=allowed[0].id;$('sProp').value=allowed[0].id;$('otProp').value=allowed[0].id;propId=allowed[0].id;loadBoard();loadStaff();loadOpenTasks();}
   if(isAdmin&&allowed.length===1){$('dtProp').value=allowed[0].id;loadDeletedTasks();}
   startPolling();
@@ -548,7 +548,7 @@ async function loadAll(){
 }
 let allowedProps=[];
 function fillPropSelects(){
-  allowedProps=isAdmin?properties:properties.filter(p=>{if(me.properties==='*')return true;if(Array.isArray(me.properties))return me.properties.includes(p.id)||me.properties.includes(p.name);return me.properties===p.id||me.properties===p.name;});
+  allowedProps=isAdmin?properties:properties.filter(p=>{if(me.properties==='*')return true;if(Array.isArray(me.properties))return me.properties.some(up=>{const upl=String(up).toLowerCase();return upl===p.id.toLowerCase()||upl===p.name.toLowerCase();});const upl=String(me.properties).toLowerCase();return upl===p.id.toLowerCase()||upl===p.name.toLowerCase();});
   const o=allowedProps.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('');
   ['bProp','sProp','sfProp'].forEach(id=>{const el=$(id);const f=el.querySelector('option');el.innerHTML=(f?f.outerHTML:'')+o;});
   initPropSearch();
@@ -722,7 +722,7 @@ function renderBoard(){
   $('groupsArea').innerHTML=html;
 
   // Event: checkboxes
-  $('groupsArea').querySelectorAll('.chk').forEach(el=>{el.addEventListener('click',async(e)=>{e.stopPropagation();const tid=el.dataset.tid;const t=tasks.find(x=>x._id===tid);if(!t)return;showSave('saving');try{await api('/leasing-staff?action=completeTask',{method:'POST',body:JSON.stringify({id:tid,completed:!t.completed})});await loadBoard();loadOpenTasks();}catch(e2){alert(e2.message);showSave('saved');}});});
+  $('groupsArea').querySelectorAll('.chk').forEach(el=>{el.addEventListener('click',async(e)=>{e.stopPropagation();const tid=el.dataset.tid;const t=tasks.find(x=>x._id===tid);if(!t)return;if(!t.completed&&!confirm('Are you sure this task is ready to be marked complete?'))return;showSave('saving');try{await api('/leasing-staff?action=completeTask',{method:'POST',body:JSON.stringify({id:tid,completed:!t.completed})});await loadBoard();loadOpenTasks();}catch(e2){alert(e2.message);showSave('saved');}});});
   // Event: status pills
   $('groupsArea').querySelectorAll('.st-pill').forEach(el=>{el.addEventListener('click',e=>{e.stopPropagation();showPop('statusPop',el,el.dataset.tid,'status');});});
   // Event: priority pills
@@ -1038,7 +1038,7 @@ function renderOpenTasks(){
   $('otGroupsArea').innerHTML=html;
 
   // Event: checkboxes in open tasks
-  $('otGroupsArea').querySelectorAll('.chk').forEach(el=>{el.addEventListener('click',async(e)=>{e.stopPropagation();const tid=el.dataset.tid;const t=otTasks.find(x=>x._id===tid);if(!t)return;showSave('saving');try{await api('/leasing-staff?action=completeTask',{method:'POST',body:JSON.stringify({id:tid,completed:!t.completed})});await loadOpenTasks();if(propId)loadBoard();}catch(e2){alert(e2.message);showSave('saved');}});});
+  $('otGroupsArea').querySelectorAll('.chk').forEach(el=>{el.addEventListener('click',async(e)=>{e.stopPropagation();const tid=el.dataset.tid;const t=otTasks.find(x=>x._id===tid);if(!t)return;if(!t.completed&&!confirm('Are you sure this task is ready to be marked complete?'))return;showSave('saving');try{await api('/leasing-staff?action=completeTask',{method:'POST',body:JSON.stringify({id:tid,completed:!t.completed})});await loadOpenTasks();if(propId)loadBoard();}catch(e2){alert(e2.message);showSave('saved');}});});
   // Event: status pills in open tasks
   $('otGroupsArea').querySelectorAll('.st-pill').forEach(el=>{el.addEventListener('click',e=>{e.stopPropagation();showPop('statusPop',el,el.dataset.tid,'status');});});
   // Event: priority pills in open tasks

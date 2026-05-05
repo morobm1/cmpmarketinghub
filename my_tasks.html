@@ -262,6 +262,7 @@ function render(){
       const tid=row.dataset.tid;
       const t=myTasks.find(x=>(x._id||'').toString()===tid);if(!t)return;
       const nv=!t.completed;
+      if(nv&&!confirm('Are you sure this task is ready to be marked complete?'))return;
       t.completed=nv;t.completedAt=nv?new Date().toISOString():null;t.status=nv?'Done':'Not Started';
       render();
       try{await fetch('/api/leasing-staff?action=completeTask',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:tid,completed:nv})});}
