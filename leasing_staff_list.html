@@ -19,7 +19,7 @@
   --good:#16a34a;--warn:#d97706;--bad:#dc2626;--purple:#7c3aed;
   --row-hover:#f1f5f9;--grp-bg:#f8fafc;
   /* ═══ SHARED COLUMN GRID ═══ */
-  --board-cols: 40px 4px minmax(180px,1fr) 130px 130px 120px 100px 100px 130px 70px 50px 80px;
+  --board-cols: 40px 4px minmax(180px,1fr) 130px 130px 120px 100px 100px 130px 70px 80px 50px 80px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
@@ -184,7 +184,7 @@ textarea{min-height:50px;resize:vertical}
   .board-container{border:2px solid #333}.board-row.hdr{position:static}
   .grp-title-row,.board-row.footer,.st-pill,.pr-pill,.owner-pill,.owner-pill .oi,.grp-color-bar{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
-@media(max-width:768px){.fr,.fr3{grid-template-columns:1fr}:root{--board-cols:40px 4px minmax(120px,1fr) 90px 90px 80px 70px 70px 90px 50px 40px 60px}}
+@media(max-width:768px){.fr,.fr3{grid-template-columns:1fr}:root{--board-cols:40px 4px minmax(120px,1fr) 90px 90px 80px 70px 70px 90px 50px 60px 40px 60px}}
 </style>
 </head>
 <body>
@@ -240,6 +240,7 @@ textarea{min-height:50px;resize:vertical}
               <div>Priority</div>
               <div>Notes</div>
               <div>Budget</div>
+              <div>Actual</div>
               <div>Files</div>
               <div><!-- act --></div>
             </div>
@@ -273,6 +274,7 @@ textarea{min-height:50px;resize:vertical}
         <button class="sm" id="viewToggleBtn" onclick="toggleBoardView()" style="border-color:var(--good);color:var(--good);font-weight:700">Completed Tasks</button>
         <button class="acc sm" id="addFromTplBtn">+ From Template</button>
         <button class="pri sm" id="addTaskBtn">+ Add Task</button>
+        <button class="sm" id="bulkTaskBtn" style="display:none;background:#fef3c7;border-color:#fcd34d;color:#92400e;font-weight:700">+ Bulk Task</button>
         <button class="sm" id="exportBtn">Export</button>
         <button class="sm" onclick="window.print()">Print</button>
       </div>
@@ -292,6 +294,7 @@ textarea{min-height:50px;resize:vertical}
               <div>Priority</div>
               <div>Notes</div>
               <div>Budget</div>
+              <div>Actual</div>
               <div>Files</div>
               <div><!-- act --></div>
             </div>
@@ -366,7 +369,15 @@ textarea{min-height:50px;resize:vertical}
           <div class="fg"><label>Assign To</label><div class="ms-list" id="tfAssignees"></div></div>
           <div class="fg"><label>Responsible Users</label><div class="ms-list" id="tfResponsible"></div></div>
           <div class="fr3"><div class="fg"><label>Due Date</label><input type="date" id="tfDate"/></div><div class="fg"><label>Priority</label><select id="tfPriority"><option value="">None</option><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select></div><div class="fg"><label>Budget</label><input type="number" id="tfBudget" placeholder="0.00" step="0.01"/></div></div>
-          <div class="fg"><label>Notes</label><textarea id="tfNotes" rows="2" placeholder="Optional notes..."></textarea></div>
+          <div class="fr"><div class="fg"><label>Actual Spend</label><input type="number" id="tfActualSpend" placeholder="0.00" step="0.01"/></div><div class="fg"></div></div>
+          <div class="fg" id="tfNotesSection">
+            <label>Notes</label>
+            <div id="tfNotesList" style="max-height:160px;overflow:auto;border:1px solid var(--bdr-l);border-radius:7px;margin-bottom:8px"></div>
+            <div style="display:flex;gap:8px">
+              <input type="text" id="tfNewNote" placeholder="Add a note..." style="flex:1"/>
+              <button type="button" class="xs acc" onclick="addTaskNote()">Add Note</button>
+            </div>
+          </div>
           <div class="fg" id="tfFilesSection" style="display:none">
             <label>Files</label>
             <div id="tfFileList" style="margin-bottom:8px"></div>
@@ -449,6 +460,30 @@ textarea{min-height:50px;resize:vertical}
     </div>
   </div>
 
+  <!-- BULK TASK MODAL -->
+  <div class="modal-bg" id="bulkMod">
+    <div class="modal" style="max-width:700px">
+      <div class="modal-hd"><h3 id="bulkModTitle">Add Bulk Task</h3><button class="x-btn" onclick="closeM('bulkMod')">&times;</button></div>
+      <div class="modal-bd">
+        <div id="bulkStep1">
+          <div class="fg"><label>Task Name *</label><input type="text" id="bkLabel" required placeholder="Enter task name..."/></div>
+          <div class="fr"><div class="fg"><label>Group</label><select id="bkGroup"></select></div><div class="fg"><label>Status</label><select id="bkStatus"><option>Not Started</option><option>Working on It</option><option>Done</option><option>On Hold</option></select></div></div>
+          <div class="fr3"><div class="fg"><label>Due Date</label><input type="date" id="bkDate"/></div><div class="fg"><label>Priority</label><select id="bkPriority"><option value="">None</option><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select></div><div class="fg"><label>Budget</label><input type="number" id="bkBudget" placeholder="0.00" step="0.01"/></div></div>
+          <div class="fr"><div class="fg"><label>Actual Spend</label><input type="number" id="bkActualSpend" placeholder="0.00" step="0.01"/></div><div class="fg"></div></div>
+          <div class="fg" style="margin-top:16px"><label>Select Properties *</label>
+            <div id="bkPropList" style="max-height:200px;overflow:auto;border:1px solid var(--bdr);border-radius:7px;padding:4px"></div>
+          </div>
+          <div class="fa"><button type="button" onclick="closeM('bulkMod')">Cancel</button><button type="button" class="pri" onclick="bulkStep2()">Next</button></div>
+        </div>
+        <div id="bulkStep2" style="display:none">
+          <div style="margin-bottom:12px;font-size:14px;font-weight:700;color:var(--pri)">Assign staff for each property</div>
+          <div id="bkAssignArea" style="max-height:400px;overflow:auto"></div>
+          <div class="fa"><button type="button" onclick="bulkBack()">Back</button><button type="button" class="pri" onclick="bulkSave()">Create Tasks</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 <script>
 /* ═══ STATE ═══ */
 let me=null,isAdmin=false,properties=[],groups=[],staff=[],tasks=[],templates=[];
@@ -478,6 +513,7 @@ function boot(){
   if(linkDate){$('bDate').value=linkDate;boardDate=linkDate;}
   else{$('bDate').value=today();boardDate=today();}
   setDateMode('month');
+  initBulkBtn();
   loadAll();
 }
 
@@ -654,7 +690,10 @@ function renderBoard(){
     const respUsers=(t.responsibleUsers||[]);
     const respHtml=respUsers.length?respUsers.map(r=>{const ini=(r.userName||'').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);return `<span class="owner-pill" style="background:#fef3c7;color:#92400e;border-color:#fcd34d"><span class="oi" style="background:#d97706">${ini}</span>${esc(r.userName)}</span>`;}).join(''):'<span style="color:var(--muted);font-size:11px">—</span>';
     const budgetStr=t.budget?'$'+Number(t.budget).toLocaleString('en-US',{minimumFractionDigits:2}):'';
+    const actualStr=t.actualSpend?'$'+Number(t.actualSpend).toLocaleString('en-US',{minimumFractionDigits:2}):'';
     const filesCount=(t.files||[]).length;
+    const notesArr=Array.isArray(t.notes)?t.notes:(t.notes?[{text:t.notes}]:[]);
+    const latestNote=notesArr.filter(n=>!n.resolved).slice(-1)[0];
     return `<div class="board-row task${done?' done':''}" data-tid="${t._id}" onclick="editTask('${t._id}')">
       <div><div class="chk${done?' on':''}" data-tid="${t._id}"></div></div>
       <div class="c-accent" style="background:${color};opacity:.15"></div>
@@ -664,8 +703,9 @@ function renderBoard(){
       <div><span class="st-pill ${stC}" data-tid="${t._id}">${esc(t.status)}</span></div>
       <div style="font-size:12px;font-weight:600;color:var(--sub)">${t.date||'—'}</div>
       <div><span class="pr-pill ${prC}" data-tid="${t._id}">${esc(t.priority||'—')}</span></div>
-      <div style="font-size:12px;color:var(--sub)" title="${esc(t.notes||'')}">${esc(t.notes||'')}</div>
+      <div style="font-size:12px;color:var(--sub)" title="${latestNote?esc(latestNote.text):''}">${latestNote?esc(latestNote.text):'—'}${notesArr.length>1?'<span style="color:var(--muted);font-size:10px"> +'+notesArr.length+'</span>':''}</div>
       <div style="font-size:12px;font-weight:600">${budgetStr||'—'}</div>
+      <div style="font-size:12px;font-weight:600">${actualStr||'—'}</div>
       <div style="text-align:center;font-size:12px;color:var(--sub)">${filesCount||'—'}</div>
       <div style="text-align:center;display:flex;gap:2px;justify-content:center">
         <button class="xs" onclick="event.stopPropagation();sendManualReminder('${t._id}')" title="Send Reminder">Notify</button>
@@ -711,10 +751,11 @@ function renderBoard(){
     // Footer
     if(items.length>0){
       const totalBudget=items.reduce((s,t)=>s+(Number(t.budget)||0),0);
+      const totalActual=items.reduce((s,t)=>s+(Number(t.actualSpend)||0),0);
       const totalFiles=items.reduce((s,t)=>s+(t.files||[]).length,0);
       const nearestDate=items.filter(t=>t.date).map(t=>t.date).sort()[0]||'';
       const highPri=items.filter(t=>t.priority==='High'||t.priority==='Critical').length;
-      html+=`<div class="board-row footer"><div></div><div></div><div>${items.length} ${isCompleted?'completed':'active'}</div><div></div><div></div><div></div><div style="font-size:10px">${nearestDate&&!isCompleted?'Next: '+nearestDate:''}</div><div>${highPri?'<span style="color:var(--bad)">'+highPri+' high</span>':''}</div><div></div><div style="font-size:11px;font-weight:700">${totalBudget?'$'+totalBudget.toLocaleString('en-US',{minimumFractionDigits:2}):''}</div><div style="text-align:center">${totalFiles||''}</div><div></div></div>`;
+      html+=`<div class="board-row footer"><div></div><div></div><div>${items.length} ${isCompleted?'completed':'active'}</div><div></div><div></div><div></div><div style="font-size:10px">${nearestDate&&!isCompleted?'Next: '+nearestDate:''}</div><div>${highPri?'<span style="color:var(--bad)">'+highPri+' high</span>':''}</div><div></div><div style="font-size:11px;font-weight:700">${totalBudget?'$'+totalBudget.toLocaleString('en-US',{minimumFractionDigits:2}):''}</div><div style="font-size:11px;font-weight:700">${totalActual?'$'+totalActual.toLocaleString('en-US',{minimumFractionDigits:2}):''}</div><div style="text-align:center">${totalFiles||''}</div><div></div></div>`;
     }
     html+=`</div>`;
   });
@@ -748,12 +789,12 @@ function showPop(popId,el,tid,type){popTid=tid;const pop=$(popId);
 document.addEventListener('click',e=>{if(!e.target.closest('.pop')&&!e.target.closest('.st-pill')&&!e.target.closest('.pr-pill')){$('statusPop').style.display='none';$('priorityPop').style.display='none';}});
 
 /* ═══ TASK CRUD ═══ */
-$('addTaskBtn').addEventListener('click',async()=>{if(!propId){alert('Select a property first');return;}try{const sR=await api('/leasing-staff?action=staff&propertyId='+propId);staff=await sR.json();}catch(e){}buildMS('tfAssignees');buildMS('tpAssignees');buildMS('tfResponsible');$('tfId').value='';$('tfLabel').value='';$('tfGroup').value='opening';$('tfStatus').value='Not Started';$('tfDate').value=boardDate;$('tfNotes').value='';$('tfPriority').value='';$('tfBudget').value='';setMS('tfAssignees',[]);setMS('tfResponsible',[]);$('taskModTitle').textContent='Add Task';$('historyBtn').style.display='none';$('tfDeleteBtn').style.display='none';$('tfFilesSection').style.display='none';openM('taskMod');});
-async function editTask(tid){const t=tasks.find(x=>x._id===tid)||otTasks.find(x=>x._id===tid);if(!t)return;const taskPropId=t.propertyId||propId;if(taskPropId){try{const sR=await api('/leasing-staff?action=staff&propertyId='+taskPropId);staff=await sR.json();}catch(e){}}buildMS('tfAssignees');buildMS('tpAssignees');buildMS('tfResponsible');$('tfId').value=t._id;$('tfLabel').value=t.label;$('tfGroup').value=t.groupId;$('tfStatus').value=t.status;$('tfDate').value=t.date||'';$('tfNotes').value=t.notes||'';$('tfPriority').value=t.priority||'';$('tfBudget').value=t.budget||'';setMS('tfAssignees',(t.assignees||[]).map(a=>a.userId));setMS('tfResponsible',(t.responsibleUsers||[]).map(r=>r.userId));$('taskModTitle').textContent='Edit Task';$('historyBtn').style.display='';$('tfDeleteBtn').style.display='';$('tfFilesSection').style.display='';renderTaskFiles(t._id,t.files||[]);openM('taskMod');}
+$('addTaskBtn').addEventListener('click',async()=>{if(!propId){alert('Select a property first');return;}try{const sR=await api('/leasing-staff?action=staff&propertyId='+propId);staff=await sR.json();}catch(e){}buildMS('tfAssignees');buildMS('tpAssignees');buildMS('tfResponsible');$('tfId').value='';$('tfLabel').value='';$('tfGroup').value='opening';$('tfStatus').value='Not Started';$('tfDate').value=boardDate;$('tfPriority').value='';$('tfBudget').value='';$('tfActualSpend').value='';setMS('tfAssignees',[]);setMS('tfResponsible',[]);$('taskModTitle').textContent='Add Task';$('historyBtn').style.display='none';$('tfDeleteBtn').style.display='none';$('tfFilesSection').style.display='none';$('tfNotesList').innerHTML='<div style="padding:10px;color:var(--muted);font-size:11px">No notes yet.</div>';$('tfNewNote').value='';$('tfNotesSection').style.display='none';openM('taskMod');});
+async function editTask(tid){const t=tasks.find(x=>x._id===tid)||otTasks.find(x=>x._id===tid);if(!t)return;const taskPropId=t.propertyId||propId;if(taskPropId){try{const sR=await api('/leasing-staff?action=staff&propertyId='+taskPropId);staff=await sR.json();}catch(e){}}buildMS('tfAssignees');buildMS('tpAssignees');buildMS('tfResponsible');$('tfId').value=t._id;$('tfLabel').value=t.label;$('tfGroup').value=t.groupId;$('tfStatus').value=t.status;$('tfDate').value=t.date||'';$('tfPriority').value=t.priority||'';$('tfBudget').value=t.budget||'';$('tfActualSpend').value=t.actualSpend||'';setMS('tfAssignees',(t.assignees||[]).map(a=>a.userId));setMS('tfResponsible',(t.responsibleUsers||[]).map(r=>r.userId));$('taskModTitle').textContent='Edit Task';$('historyBtn').style.display='';$('tfDeleteBtn').style.display='';$('tfFilesSection').style.display='';$('tfNotesSection').style.display='';renderTaskNotes(t);$('tfNewNote').value='';renderTaskFiles(t._id,t.files||[]);openM('taskMod');}
 window.editTask=editTask;
 async function delTask(tid){if(!confirm('Delete this task?'))return;showSave('saving');try{await api('/leasing-staff?action=task',{method:'DELETE',body:JSON.stringify({id:tid})});await loadBoard();if(isAdmin&&$('dtProp').value)loadDeletedTasks();}catch(e){alert(e.message);showSave('saved');}}
 window.delTask=delTask;
-$('taskForm').addEventListener('submit',async e=>{e.preventDefault();const id=$('tfId').value;const data={id:id||undefined,propertyId:propId,label:$('tfLabel').value.trim(),groupId:$('tfGroup').value,assignees:getMS('tfAssignees'),responsibleUsers:getMS('tfResponsible'),status:$('tfStatus').value,date:$('tfDate').value||boardDate,notes:$('tfNotes').value.trim(),priority:$('tfPriority').value,budget:$('tfBudget').value?parseFloat($('tfBudget').value):null};showSave('saving');try{await api('/leasing-staff?action=task',{method:'POST',body:JSON.stringify(data)});closeM('taskMod');await loadBoard();loadOpenTasks();}catch(e){alert(e.message);showSave('saved');}});
+$('taskForm').addEventListener('submit',async e=>{e.preventDefault();const id=$('tfId').value;const data={id:id||undefined,propertyId:propId,label:$('tfLabel').value.trim(),groupId:$('tfGroup').value,assignees:getMS('tfAssignees'),responsibleUsers:getMS('tfResponsible'),status:$('tfStatus').value,date:$('tfDate').value||boardDate,priority:$('tfPriority').value,budget:$('tfBudget').value?parseFloat($('tfBudget').value):null,actualSpend:$('tfActualSpend').value?parseFloat($('tfActualSpend').value):null};showSave('saving');try{await api('/leasing-staff?action=task',{method:'POST',body:JSON.stringify(data)});closeM('taskMod');await loadBoard();loadOpenTasks();}catch(e){alert(e.message);showSave('saved');}});
 
 /* ═══ FROM TEMPLATE ═══ */
 $('addFromTplBtn').addEventListener('click',()=>{if(!propId){alert('Select a property first');return;}$('tpDate').value=boardDate;setMS('tpAssignees',[]);const sys=templates.filter(t=>t.type==='system'),cust=templates.filter(t=>t.type!=='system');let o='<option value="">— Choose —</option>';if(sys.length)o+=`<optgroup label="System Defaults">${sys.map(t=>`<option value="${t._id}">${esc(t.name)} (${(t.tasks||[]).length})</option>`).join('')}</optgroup>`;if(cust.length)o+=`<optgroup label="Custom">${cust.map(t=>`<option value="${t._id}">${esc(t.name)} (${(t.tasks||[]).length})</option>`).join('')}</optgroup>`;$('tpTemplate').innerHTML=o;$('tpPreview').style.display='none';openM('tplPickMod');});
@@ -862,7 +903,7 @@ $('staffForm').addEventListener('submit',async e=>{
 });
 
 /* ═══ EXPORT ═══ */
-$('exportBtn').addEventListener('click',()=>{if(!propId){alert('Select a property');return;}if(typeof XLSX==='undefined')return;const pn=(properties.find(p=>p.id===propId)||{}).name||'board';const rows=tasks.map(t=>{const g=groups.find(x=>x.id===t.groupId);return{Group:g?g.name:'',Task:t.label,Owner:(t.assignees||[]).map(a=>a.userName).join(', ')||'',Status:t.status,DueDate:t.date||'',Priority:t.priority||'',Notes:t.notes||'',Budget:t.budget||'',Files:(t.files||[]).length,Completed:t.completed?'Yes':'No'};});if(!rows.length){alert('No tasks');return;}const ws=XLSX.utils.json_to_sheet(rows);ws['!cols']=Object.keys(rows[0]).map(k=>({wch:Math.max(k.length,...rows.map(r=>String(r[k]||'').length))+2}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Board');XLSX.writeFile(wb,`staff_board_${pn.replace(/\s+/g,'_')}_${boardDate}.xlsx`);});
+$('exportBtn').addEventListener('click',()=>{if(!propId){alert('Select a property');return;}if(typeof XLSX==='undefined')return;const pn=(properties.find(p=>p.id===propId)||{}).name||'board';const rows=tasks.map(t=>{const g=groups.find(x=>x.id===t.groupId);const notesText=Array.isArray(t.notes)?t.notes.map(n=>n.text).join('; '):(t.notes||'');return{Group:g?g.name:'',Task:t.label,Owner:(t.assignees||[]).map(a=>a.userName).join(', ')||'',Status:t.status,DueDate:t.date||'',Priority:t.priority||'',Notes:notesText,Budget:t.budget||'',ActualSpend:t.actualSpend||'',Files:(t.files||[]).length,Completed:t.completed?'Yes':'No'};});if(!rows.length){alert('No tasks');return;}const ws=XLSX.utils.json_to_sheet(rows);ws['!cols']=Object.keys(rows[0]).map(k=>({wch:Math.max(k.length,...rows.map(r=>String(r[k]||'').length))+2}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Board');XLSX.writeFile(wb,`staff_board_${pn.replace(/\s+/g,'_')}_${boardDate}.xlsx`);});
 
 /* ═══ EVENTS ═══ */
 $('logoutBtn').addEventListener('click',async()=>{try{await fetch('/api/auth-logout',{method:'POST',credentials:'include'});}catch(e){}location.href='index.html';});
@@ -871,7 +912,7 @@ $('bDate').addEventListener('change',()=>{const v=$('bDate').value;if(dateMode==
 $('bPerson').addEventListener('change',renderBoard);
 $('bStatus').addEventListener('change',renderBoard);
 $('sProp').addEventListener('change',()=>{const pid=$('sProp').value;if(pid){propId=pid;$('bProp').value=pid;$('otProp').value=pid;if(isAdmin)$('dtProp').value=pid;const p=allowedProps.find(x=>x.id===pid);if(p&&$('bPropSearch'))$('bPropSearch').value=p.name;}loadStaff();});
-['taskMod','tplPickMod','tplMod','historyMod','viewDelMod'].forEach(id=>$(id).addEventListener('click',e=>{if(e.target===$(id))closeM(id);}));
+['taskMod','tplPickMod','tplMod','historyMod','viewDelMod','bulkMod'].forEach(id=>$(id).addEventListener('click',e=>{if(e.target===$(id))closeM(id);}));
 
 /* ═══ MANUAL REMINDER ═══ */
 async function sendManualReminder(tid){
@@ -993,8 +1034,10 @@ function renderOpenTasks(){
     const respUsers=(t.responsibleUsers||[]);
     const respHtml=respUsers.length?respUsers.map(r=>{const ini=(r.userName||'').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);return `<span class="owner-pill" style="background:#fef3c7;color:#92400e;border-color:#fcd34d"><span class="oi" style="background:#d97706">${ini}</span>${esc(r.userName)}</span>`;}).join(''):'<span style="color:var(--muted);font-size:11px">—</span>';
     const budgetStr=t.budget?'$'+Number(t.budget).toLocaleString('en-US',{minimumFractionDigits:2}):'';
+    const actualStr=t.actualSpend?'$'+Number(t.actualSpend).toLocaleString('en-US',{minimumFractionDigits:2}):'';
     const filesCount=(t.files||[]).length;
-    // Highlight overdue tasks
+    const notesArr=Array.isArray(t.notes)?t.notes:(t.notes?[{text:t.notes}]:[]);
+    const latestNote=notesArr.filter(n=>!n.resolved).slice(-1)[0];
     const isOverdue=t.date&&t.date<today()&&t.status!=='Done';
     const dateStyle=isOverdue?'font-size:12px;font-weight:700;color:var(--bad)':'font-size:12px;font-weight:600;color:var(--sub)';
     return `<div class="board-row task" data-tid="${t._id}" onclick="editTask('${t._id}')">
@@ -1006,8 +1049,9 @@ function renderOpenTasks(){
       <div><span class="st-pill ${stC}" data-tid="${t._id}" data-src="ot">${esc(t.status)}</span></div>
       <div style="${dateStyle}">${t.date||'—'}${isOverdue?' (overdue)':''}</div>
       <div><span class="pr-pill ${prC}" data-tid="${t._id}" data-src="ot">${esc(t.priority||'—')}</span></div>
-      <div style="font-size:12px;color:var(--sub)" title="${esc(t.notes||'')}">${esc(t.notes||'')}</div>
+      <div style="font-size:12px;color:var(--sub)" title="${latestNote?esc(latestNote.text):''}">${latestNote?esc(latestNote.text):'—'}${notesArr.length>1?'<span style="color:var(--muted);font-size:10px"> +'+notesArr.length+'</span>':''}</div>
       <div style="font-size:12px;font-weight:600">${budgetStr||'—'}</div>
+      <div style="font-size:12px;font-weight:600">${actualStr||'—'}</div>
       <div style="text-align:center;font-size:12px;color:var(--sub)">${filesCount||'—'}</div>
       <div style="text-align:center;display:flex;gap:2px;justify-content:center">
         <button class="xs" onclick="event.stopPropagation();sendManualReminder('${t._id}')" title="Send Reminder">Notify</button>
@@ -1028,10 +1072,11 @@ function renderOpenTasks(){
     items.forEach(t=>html+=otTaskRow(t,g.color));
     // Footer
     const totalBudget=items.reduce((s,t)=>s+(Number(t.budget)||0),0);
+    const totalActual=items.reduce((s,t)=>s+(Number(t.actualSpend)||0),0);
     const nearestDate=items.filter(t=>t.date).map(t=>t.date).sort()[0]||'';
     const highPri=items.filter(t=>t.priority==='High'||t.priority==='Critical').length;
     const overdueCount=items.filter(t=>t.date&&t.date<today()).length;
-    html+=`<div class="board-row footer"><div></div><div></div><div>${items.length} task${items.length!==1?'s':''}</div><div></div><div></div><div></div><div style="font-size:10px">${overdueCount?'<span style="color:var(--bad)">'+overdueCount+' overdue</span>':nearestDate?'Next: '+nearestDate:''}</div><div>${highPri?'<span style="color:var(--bad)">'+highPri+' high</span>':''}</div><div></div><div style="font-size:11px;font-weight:700">${totalBudget?'$'+totalBudget.toLocaleString('en-US',{minimumFractionDigits:2}):''}</div><div></div><div></div></div>`;
+    html+=`<div class="board-row footer"><div></div><div></div><div>${items.length} task${items.length!==1?'s':''}</div><div></div><div></div><div></div><div style="font-size:10px">${overdueCount?'<span style="color:var(--bad)">'+overdueCount+' overdue</span>':nearestDate?'Next: '+nearestDate:''}</div><div>${highPri?'<span style="color:var(--bad)">'+highPri+' high</span>':''}</div><div></div><div style="font-size:11px;font-weight:700">${totalBudget?'$'+totalBudget.toLocaleString('en-US',{minimumFractionDigits:2}):''}</div><div style="font-size:11px;font-weight:700">${totalActual?'$'+totalActual.toLocaleString('en-US',{minimumFractionDigits:2}):''}</div><div></div><div></div></div>`;
     html+=`</div>`;
   });
 
@@ -1207,6 +1252,119 @@ function initDeletedTab(){
   $('dtProp').innerHTML='<option value="">— Select —</option>'+o;
   if(propId)$('dtProp').value=propId;
   $('dtProp').addEventListener('change',loadDeletedTasks);
+}
+
+function renderTaskNotes(t){
+  const notes=Array.isArray(t.notes)?t.notes:(t.notes?[{id:'legacy',text:t.notes,author:'system',createdAt:t.createdAt||'',resolved:false}]:[]);
+  if(!notes.length){$('tfNotesList').innerHTML='<div style="padding:10px;color:var(--muted);font-size:11px">No notes yet.</div>';return;}
+  $('tfNotesList').innerHTML=notes.map(n=>{
+    const dt=n.createdAt?new Date(n.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
+    return `<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-bottom:1px solid var(--bdr-l);${n.resolved?'opacity:.5':''}">
+      <input type="checkbox" ${n.resolved?'checked':''} onchange="toggleNote('${t._id}','${n.id}',this.checked)" style="margin-top:3px;width:16px;height:16px;accent-color:var(--pri);flex-shrink:0"/>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;${n.resolved?'text-decoration:line-through;color:var(--muted)':''}">${esc(n.text)}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">${esc(n.author||'')} ${dt?'- '+dt:''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function addTaskNote(){
+  const tid=$('tfId').value;
+  const text=$('tfNewNote').value.trim();
+  if(!text)return;
+  if(!tid){alert('Save the task first before adding notes.');return;}
+  try{
+    const r=await api('/leasing-staff?action=addNote',{method:'POST',body:JSON.stringify({taskId:tid,text})});
+    const result=await r.json();
+    const t=tasks.find(x=>x._id===tid)||otTasks.find(x=>x._id===tid);
+    if(t)t.notes=result.notes;
+    renderTaskNotes({_id:tid,notes:result.notes,createdAt:t?t.createdAt:''});
+    $('tfNewNote').value='';
+  }catch(e){alert(e.message);}
+}
+window.addTaskNote=addTaskNote;
+
+async function toggleNote(tid,noteId,resolved){
+  try{
+    const r=await api('/leasing-staff?action=resolveNote',{method:'POST',body:JSON.stringify({taskId:tid,noteId,resolved})});
+    const result=await r.json();
+    const t=tasks.find(x=>x._id===tid)||otTasks.find(x=>x._id===tid);
+    if(t)t.notes=result.notes;
+    renderTaskNotes({_id:tid,notes:result.notes,createdAt:t?t.createdAt:''});
+  }catch(e){alert(e.message);}
+}
+window.toggleNote=toggleNote;
+
+let bulkSelectedProps=[];
+let bulkStaffByProp={};
+
+$('bulkTaskBtn').addEventListener('click',()=>{
+  $('bkLabel').value='';$('bkStatus').value='Not Started';$('bkDate').value=boardDate;$('bkPriority').value='';$('bkBudget').value='';$('bkActualSpend').value='';
+  $('bkGroup').innerHTML=groups.map(g=>`<option value="${g.id}">${esc(g.name)}</option>`).join('');
+  $('bkPropList').innerHTML=allowedProps.map(p=>`<label class="ms-item" data-pid="${p.id}"><input type="checkbox" value="${p.id}"/> ${esc(p.name)}</label>`).join('');
+  $('bkPropList').querySelectorAll('.ms-item').forEach(it=>{const cb=it.querySelector('input');cb.addEventListener('change',()=>it.classList.toggle('checked',cb.checked));});
+  $('bulkStep1').style.display='';$('bulkStep2').style.display='none';
+  $('bulkModTitle').textContent='Add Bulk Task - Details';
+  openM('bulkMod');
+});
+
+async function bulkStep2(){
+  const label=$('bkLabel').value.trim();
+  if(!label){alert('Task name is required.');return;}
+  bulkSelectedProps=Array.from($('bkPropList').querySelectorAll('input:checked')).map(cb=>cb.value);
+  if(!bulkSelectedProps.length){alert('Select at least one property.');return;}
+  $('bulkStep1').style.display='none';$('bulkStep2').style.display='';
+  $('bulkModTitle').textContent='Add Bulk Task - Assign Staff ('+bulkSelectedProps.length+' properties)';
+  bulkStaffByProp={};
+  let html='';
+  for(const pid of bulkSelectedProps){
+    const p=allowedProps.find(x=>x.id===pid);
+    const pName=p?p.name:pid;
+    let propStaff=[];
+    try{const r=await api('/leasing-staff?action=staff&propertyId='+pid);propStaff=await r.json();}catch(e){}
+    bulkStaffByProp[pid]=propStaff;
+    const staffOpts=propStaff.map(s=>`<label class="ms-item" data-uid="${s._id}"><input type="checkbox" value="${s._id}" data-name="${esc(s.employeeName)}" data-email="${esc(s.email||'')}"/> ${esc(s.employeeName)}${s.role?'<span style="color:var(--muted);margin-left:auto;font-size:10px">'+esc(s.role)+'</span>':''}</label>`).join('')||'<div style="padding:8px;color:var(--muted);font-size:11px">No staff for this property.</div>';
+    html+=`<div style="border:2px solid var(--bdr);border-radius:10px;padding:14px;margin-bottom:12px">
+      <div style="font-size:14px;font-weight:800;color:var(--pri);margin-bottom:10px">${esc(pName)}</div>
+      <div class="fg"><label>Assign To</label><div class="ms-list" id="bkAssign_${pid}">${staffOpts}</div></div>
+      <div class="fg"><label>Responsible</label><div class="ms-list" id="bkResp_${pid}">${staffOpts}</div></div>
+    </div>`;
+  }
+  $('bkAssignArea').innerHTML=html;
+  $('bkAssignArea').querySelectorAll('.ms-item').forEach(it=>{const cb=it.querySelector('input');cb.addEventListener('change',()=>it.classList.toggle('checked',cb.checked));});
+}
+window.bulkStep2=bulkStep2;
+
+function bulkBack(){$('bulkStep1').style.display='';$('bulkStep2').style.display='none';$('bulkModTitle').textContent='Add Bulk Task - Details';}
+window.bulkBack=bulkBack;
+
+async function bulkSave(){
+  const label=$('bkLabel').value.trim();
+  const propertyAssignments=bulkSelectedProps.map(pid=>{
+    const assignees=Array.from(($('bkAssign_'+pid)||{querySelectorAll:()=>[]}).querySelectorAll('input:checked')).map(cb=>({userId:cb.value,userName:cb.dataset.name,userEmail:cb.dataset.email}));
+    const responsibleUsers=Array.from(($('bkResp_'+pid)||{querySelectorAll:()=>[]}).querySelectorAll('input:checked')).map(cb=>({userId:cb.value,userName:cb.dataset.name,userEmail:cb.dataset.email}));
+    return {propertyId:pid,assignees,responsibleUsers};
+  });
+  showSave('saving');
+  try{
+    await api('/leasing-staff?action=bulkCreateTasks',{method:'POST',body:JSON.stringify({
+      label,groupId:$('bkGroup').value,status:$('bkStatus').value,date:$('bkDate').value||boardDate,
+      priority:$('bkPriority').value,budget:$('bkBudget').value?parseFloat($('bkBudget').value):null,
+      actualSpend:$('bkActualSpend').value?parseFloat($('bkActualSpend').value):null,
+      propertyAssignments
+    })});
+    closeM('bulkMod');
+    alert('Tasks created for '+bulkSelectedProps.length+' properties.');
+    if(propId)loadBoard();
+    loadOpenTasks();
+  }catch(e){alert(e.message);}
+  showSave('saved');
+}
+window.bulkSave=bulkSave;
+
+function initBulkBtn(){
+  if(isAdmin)$('bulkTaskBtn').style.display='';
 }
 
 init();

@@ -281,7 +281,7 @@ export async function handler(event) {
 
       // ─── Task CRUD (multi-assignee + priority/budget/files) ───
       if (action === 'task') {
-        const { id, propertyId, label, groupId, assignees, responsibleUsers, status, date, completed, notes, sortOrder, priority, budget, files } = body;
+        const { id, propertyId, label, groupId, assignees, responsibleUsers, status, date, completed, notes, sortOrder, priority, budget, actualSpend, files } = body;
         if (!id && (!propertyId || !label)) return cors('Missing fields', 400);
         if (propertyId && !canAccessSync(user, propertyId, propsMap)) return cors('Forbidden', 403);
         const now = new Date().toISOString();
@@ -298,6 +298,7 @@ export async function handler(event) {
           if (sortOrder !== undefined) upd.sortOrder = sortOrder;
           if (priority !== undefined) upd.priority = priority;
           if (budget !== undefined) upd.budget = budget;
+          if (actualSpend !== undefined) upd.actualSpend = actualSpend;
           if (files !== undefined) upd.files = files;
           if (completed !== undefined) {
             upd.completed = completed;
@@ -334,6 +335,7 @@ export async function handler(event) {
           if (notes !== undefined && notes !== existing.notes) changes.notes = { from: existing.notes, to: notes };
           if (priority !== undefined && priority !== existing.priority) changes.priority = { from: existing.priority, to: priority };
           if (budget !== undefined && budget !== existing.budget) changes.budget = { from: existing.budget, to: budget };
+          if (actualSpend !== undefined && actualSpend !== existing.actualSpend) changes.actualSpend = { from: existing.actualSpend, to: actualSpend };
           if (completed !== undefined && completed !== existing.completed) changes.completed = { from: existing.completed, to: completed };
           if (assignees !== undefined) {
             const oldNames = (existing.assignees || []).map(a => a.userName).sort().join(', ');
@@ -406,8 +408,8 @@ export async function handler(event) {
           status: status || 'Not Started',
           date: date || new Date().toISOString().slice(0, 10),
           completed: false, completedAt: null, completedBy: null,
-          notes: notes || '', sortOrder: sortOrder || 0,
-          priority: priority || '', budget: budget || null, files: files || [],
+          notes: Array.isArray(notes) ? notes : [], sortOrder: sortOrder || 0,
+          priority: priority || '', budget: budget || null, actualSpend: actualSpend || null, files: files || [],
           createdAt: now, createdBy: user.sub, updatedAt: now, updatedBy: user.sub,
         };
         const res = await taskCol.insertOne(doc);
@@ -439,7 +441,62 @@ export async function handler(event) {
         return cors(doc, 201);
       }
 
-      // ─── Batch create (from template) ───
+      if (action === 'addNote') {
+        const { taskId, text } = body;
+        if (!taskId || !text) return cors('Missing fields', 400);
+        const task = await taskCol.findOne({ _id: new ObjectId(taskId) });
+        if (!task) return cors('Not found', 404);
+        if (!canAccessSync(user, task.propertyId, propsMap)) return cors('Forbidden', 403);
+        const note = { id: new ObjectId().toString(), text, author: user.sub, createdAt: new Date().toISOString(), resolved: false };
+        const existingNotes = Array.isArray(task.notes) ? task.notes : (task.notes ? [{ id: new ObjectId().toString(), text: task.notes, author: 'system', createdAt: task.createdAt || new Date().toISOString(), resolved: false }] : []);
+        existingNotes.push(note);
+        await taskCol.updateOne({ _id: new ObjectId(taskId) }, { $set: { notes: existingNotes, updatedAt: new Date().toISOString(), updatedBy: user.sub } });
+        return cors({ success: true, notes: existingNotes });
+      }
+
+      if (action === 'resolveNote') {
+        const { taskId, noteId, resolved } = body;
+        if (!taskId || !noteId) return cors('Missing fields', 400);
+        const task = await taskCol.findOne({ _id: new ObjectId(taskId) });
+        if (!task) return cors('Not found', 404);
+        if (!canAccessSync(user, task.propertyId, propsMap)) return cors('Forbidden', 403);
+        const notes = Array.isArray(task.notes) ? task.notes : [];
+        const n = notes.find(x => x.id === noteId);
+        if (n) n.resolved = !!resolved;
+        await taskCol.updateOne({ _id: new ObjectId(taskId) }, { $set: { notes, updatedAt: new Date().toISOString(), updatedBy: user.sub } });
+        return cors({ success: true, notes });
+      }
+
+      if (action === 'bulkCreateTasks') {
+        if (user.role !== 'admin') return cors('Admin only', 403);
+        const { label, groupId, status, date, priority, budget, actualSpend, propertyAssignments } = body;
+        if (!label || !propertyAssignments || !propertyAssignments.length) return cors('Missing fields', 400);
+        const now = new Date().toISOString();
+        const created = [];
+        for (const pa of propertyAssignments) {
+          const doc = {
+            propertyId: pa.propertyId, label, groupId: groupId || 'misc',
+            assignees: (pa.assignees || []).map(a => ({ userId: a.userId, userName: a.userName || '', userEmail: a.userEmail || '', assignedAt: now, assignedBy: user.sub, notificationSentAt: null })),
+            responsibleUsers: (pa.responsibleUsers || []).map(r => ({ userId: r.userId, userName: r.userName || '', userEmail: r.userEmail || '' })),
+            status: status || 'Not Started', date: date || now.slice(0, 10),
+            completed: false, completedAt: null, completedBy: null,
+            notes: [], sortOrder: 0, priority: priority || '',
+            budget: budget || null, actualSpend: actualSpend || null, files: [],
+            createdAt: now, createdBy: user.sub, updatedAt: now, updatedBy: user.sub,
+          };
+          const res = await taskCol.insertOne(doc);
+          doc._id = res.insertedId;
+          created.push(doc);
+          try { await db.collection('taskHistory').insertOne({ taskId: doc._id.toString(), action: 'created', changes: { label, propertyId: pa.propertyId }, changedBy: user.sub, changedAt: now }); } catch (e) {}
+          if (doc.assignees.length > 0) {
+            let propName = propsMap[pa.propertyId] || '';
+            const grp = GROUPS.find(g => g.id === doc.groupId);
+            notifyNewAssignees(db, doc, doc.assignees.map(a => a.userId), propName, grp ? grp.name : '', user.sub).catch(() => {});
+          }
+        }
+        return cors({ success: true, count: created.length });
+      }
+
       if (action === 'taskBatch') {
         const { propertyId, tasks: items, assignees, date, groupId, templateId } = body;
         if (!propertyId || !items || !items.length) return cors('Missing fields', 400);
