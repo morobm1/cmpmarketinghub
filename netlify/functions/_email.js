@@ -72,7 +72,7 @@ export async function sendTaskAssignmentEmailWebhook({ task, assignedUser, assig
     eventType: 'task_assigned',
     taskId: task._id ? task._id.toString() : (task.id || ''),
     taskTitle: task.label || task.title || task.name || 'Task',
-    taskDescription: task.notes || task.description || '',
+    taskDescription: (Array.isArray(task.notes) ? task.notes.filter(n => !n.resolved).map(n => n.text).join('; ') : (task.notes || task.description || '')),
     propertyName: propertyName || task.propertyName || task.property || '',
     priority: task.priority || '',
     status: task.status || '',
@@ -156,8 +156,15 @@ export async function notifyNewAssigneesViaWebhook(db, task, newAssigneeUserIds,
 
   for (const userId of newAssigneeUserIds) {
     try {
-      const staffRecord = await staffCol.findOne({ _id: new ObjectId(userId) });
-      if (!staffRecord) continue;
+      let staffRecord = null;
+      try { staffRecord = await staffCol.findOne({ _id: new ObjectId(userId) }); } catch (e) { console.warn('[Email] Invalid userId ObjectId:', userId); continue; }
+      if (!staffRecord) { console.warn('[Email] Staff not found for userId:', userId); continue; }
+      if (!staffRecord.email && staffRecord.username) {
+        try {
+          const userDoc = await db.collection('users').findOne({ username: staffRecord.username });
+          if (userDoc && userDoc.email) staffRecord.email = userDoc.email;
+        } catch (e) {}
+      }
       if (!staffRecord.email) {
         console.warn(`[Email] Skipping notification for staff ${staffRecord.employeeName} — no email.`);
         continue;
@@ -231,7 +238,7 @@ export async function sendTaskStatusChangeEmailWebhook({ task, recipientUser, ch
     eventType: 'task_status_change',
     taskId: task._id ? task._id.toString() : (task.id || ''),
     taskTitle: task.label || task.title || task.name || 'Task',
-    taskDescription: task.notes || task.description || '',
+    taskDescription: (Array.isArray(task.notes) ? task.notes.filter(n => !n.resolved).map(n => n.text).join('; ') : (task.notes || task.description || '')),
     propertyName: propertyName || task.propertyName || task.property || '',
     priority: task.priority || '',
     oldStatus: oldStatus || '',
@@ -310,10 +317,17 @@ export async function notifyTaskUpdateViaWebhook(db, task, propertyName, groupNa
 
   for (const userId of allRecipientIds) {
     try {
-      const staffRecord = await staffCol.findOne({ _id: new ObjectId(userId) });
-      if (!staffRecord) continue;
+      let staffRecord = null;
+      try { staffRecord = await staffCol.findOne({ _id: new ObjectId(userId) }); } catch (e) { console.warn('[Email] Invalid userId ObjectId:', userId); continue; }
+      if (!staffRecord) { console.warn('[Email] Staff record not found for userId:', userId); continue; }
+      if (!staffRecord.email && staffRecord.username) {
+        try {
+          const userDoc = await db.collection('users').findOne({ username: staffRecord.username });
+          if (userDoc && userDoc.email) staffRecord.email = userDoc.email;
+        } catch (e) {}
+      }
       if (!staffRecord.email) {
-        console.warn(`[Email] Skipping status change notification for staff ${staffRecord.employeeName} — no email.`);
+        console.warn(`[Email] Skipping notification for staff ${staffRecord.employeeName} — no email.`);
         continue;
       }
 

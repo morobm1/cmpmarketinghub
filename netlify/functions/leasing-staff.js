@@ -565,16 +565,12 @@ export async function handler(event) {
         } catch (histErr) { console.error('[TaskHistory] complete log error:', histErr); }
         const oldSt = task.status || 'Not Started';
         const newSt = completed ? 'Done' : 'Not Started';
-        if (oldSt !== newSt) {
-          try {
-            const allProps = await db.collection('properties').find({}).toArray();
-            const p = allProps.find(x => x._id.toString() === task.propertyId);
-            const propName = p ? p.name : '';
-            const grp = GROUPS.find(g => g.id === task.groupId);
-            const updatedTask = { ...task, completed: !!completed, status: newSt, completedAt: completed ? now : null };
-            notifyTaskUpdateViaWebhook(db, updatedTask, propName, grp ? grp.name : '', user.sub, oldSt, newSt, { status: { from: oldSt, to: newSt } }).catch(e => console.error('[Email] complete notify error:', e));
-          } catch (notifyErr) { console.error('[Email] complete notify setup error:', notifyErr); }
-        }
+        try {
+          const propName = propsMap[task.propertyId] || '';
+          const grp = GROUPS.find(g => g.id === task.groupId);
+          const updatedTask = await taskCol.findOne({ _id: new ObjectId(id) });
+          notifyTaskUpdateViaWebhook(db, updatedTask, propName, grp ? grp.name : '', user.sub, oldSt, newSt, { status: { from: oldSt, to: newSt } }).catch(e => console.error('[Email] complete notify error:', e));
+        } catch (notifyErr) { console.error('[Email] complete notify setup error:', notifyErr); }
         return cors({ success: true });
       }
 
@@ -723,11 +719,15 @@ export async function handler(event) {
         const failureReasons = [];
         for (const userId of allRecipientIds) {
           try {
-            const staffRecord = await staffCol.findOne({ _id: new ObjectId(userId) });
+            let staffRecord = null;
+            try { staffRecord = await staffCol.findOne({ _id: new ObjectId(userId) }); } catch(e) {}
             if (!staffRecord) {
               failed++;
               failureReasons.push({ userId, reason: 'staff_not_found', detail: 'No staff record found for this user ID' });
               continue;
+            }
+            if (!staffRecord.email && staffRecord.username) {
+              try { const ud = await db.collection('users').findOne({ username: staffRecord.username }); if (ud && ud.email) staffRecord.email = ud.email; } catch(e) {}
             }
             if (!staffRecord.email) {
               failed++;
