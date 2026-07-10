@@ -1937,7 +1937,7 @@
       return fp.name || fp.bedsBaths || 'Unspecified';
     }
 
-    // ── Build rate comparison HTML grouped by bedroom type ──
+    // Build rate comparison HTML grouped by bedroom type with range and vs-subject arrows
     function buildRateCompareHTML(compCards) {
       var sc = subjectCard;
       var allCards = [];
@@ -1945,7 +1945,7 @@
       allCards = allCards.concat(compCards);
 
       // Group floorplans by bedroom type across all properties
-      var typeGroups = {}; // bedroomType -> { props: { ci: [rates] } }
+      var typeGroups = {}; // bedroomType -> { props: { ci: [fps] } }
       var typeOrder = ['Studio / Efficiency', '1 Bedroom / 1 Bath', '2 Bedroom / 2 Bath', '3 Bedroom', '4 Bedroom', '5 Bedroom'];
 
       allCards.forEach(function(c, ci) {
@@ -1976,94 +1976,106 @@
       });
 
       var html = '<table class="rate-compare-table" style="font-size:12px;">';
-      html += '<thead><tr><th style="min-width:120px;">Floorplan Type</th>';
+      html += '<thead><tr><th style="min-width:140px;">Floorplan Type</th>';
       allCards.forEach(function(c, i) {
         var cls = i === 0 && sc ? ' rc-our' : '';
         var label = i === 0 && sc ? 'OUR PROPERTY: ' + esc(subjectCard.competitorName || currentProperty) : esc(c.competitorName);
-        html += '<th class="rc-header' + cls + '">' + label + '</th>';
+        html += '<th class="rc-header' + cls + '" style="min-width:160px;">' + label + '</th>';
       });
       html += '</tr></thead><tbody>';
 
-      // Starting rate summary row
       html += '<tr class="rc-section"><td colspan="' + (allCards.length + 1) + '">Starting Rates by Bedroom Type</td></tr>';
+
+      function parseRateNum(rateStr) {
+        if (!rateStr) return 0;
+        return parseFloat(rateStr.replace(/[^0-9.]/g, '')) || 0;
+      }
+
+      function getSubjectRange(bt) {
+        if (!sc) return null;
+        var fps = (typeGroups[bt] && typeGroups[bt].props[0]) || [];
+        var nums = fps.map(function(fp) { return parseRateNum(fp.rate); }).filter(function(n) { return n > 0; });
+        if (nums.length === 0) return null;
+        return { min: Math.min.apply(null, nums), max: Math.max.apply(null, nums) };
+      }
 
       types.forEach(function(bt) {
         var grp = typeGroups[bt];
-        var rowRates = [];
-        var rowDetails = [];
+        var rowDisplay = [];
+        var rowNums = [];
+        var subjectRange = getSubjectRange(bt);
 
         allCards.forEach(function(c, ci) {
           var fps = grp.props[ci] || [];
           if (fps.length === 0) {
-            rowRates.push('');
-            rowDetails.push('');
+            rowDisplay.push('');
+            rowNums.push(0);
             return;
           }
-          // Find minimum rate for this type
-          var minRate = null;
-          var minFP = null;
-          fps.forEach(function(fp) {
-            var cleaned = parseFloat((fp.rate || '').replace(/[^0-9.]/g, '')) || 0;
-            if (cleaned > 0 && (minRate === null || cleaned < minRate)) {
-              minRate = cleaned;
-              minFP = fp;
-            }
-          });
-          if (minFP) {
-            rowRates.push(minFP.rate);
-            var detail = '';
-            if (minFP.name) detail += minFP.name;
-            if (minFP.sqft) detail += (detail ? ' | ' : '') + minFP.sqft + ' sqft';
-            rowDetails.push(detail);
-          } else {
-            rowRates.push(fps[0].rate || '');
-            rowDetails.push(fps[0].name || '');
+          var nums = fps.map(function(fp) { return parseRateNum(fp.rate); }).filter(function(n) { return n > 0; });
+          if (nums.length === 0) {
+            rowDisplay.push(fps[0].rate || '');
+            rowNums.push(0);
+            return;
           }
+          var minNum = Math.min.apply(null, nums);
+          var maxNum = Math.max.apply(null, nums);
+          rowNums.push(minNum);
+
+          var displayStr;
+          if (nums.length === 1) {
+            displayStr = fps[0].rate;
+          } else {
+            var fmtMin = '$' + minNum.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            var fmtMax = '$' + maxNum.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            displayStr = fmtMin + ' - ' + fmtMax;
+          }
+
+          // Add vs-subject arrow for competitor columns
+          if (subjectRange && ci > 0 && nums.length > 0) {
+            var compMin = minNum;
+            var subjMin = subjectRange.min;
+            var diff = compMin - subjMin;
+            var diffStr = '$' + Math.abs(diff).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+            if (diff < 0) {
+              // Competitor cheaper -> we are higher -> RED UP ARROW
+              displayStr += ' <span style="color:#dc2626;font-weight:700;font-size:13px;">↑ ' + diffStr + '</span>';
+            } else if (diff > 0) {
+              // Competitor more expensive -> we are lower -> GREEN DOWN ARROW
+              displayStr += ' <span style="color:#059669;font-weight:700;font-size:13px;">↓ ' + diffStr + '</span>';
+            } else {
+              displayStr += ' <span style="color:#6b7280;font-weight:500;font-size:11px;">equal</span>';
+            }
+          }
+
+          rowDisplay.push(displayStr);
         });
 
-        // Only show if at least one property has data for this type
-        var hasData = rowRates.some(function(r) { return r; });
+        var hasData = rowDisplay.some(function(d) { return d; });
         if (!hasData) return;
 
-        // Find min/max for highlighting
-        var nums = rowRates.map(function(r) {
-          if (!r) return 0;
-          return parseFloat(r.replace(/[^0-9.]/g, '')) || 0;
-        });
-        var min = Math.min.apply(null, nums.filter(function(n) { return n > 0; }));
-        var max = Math.max.apply(null, nums.filter(function(n) { return n > 0; }));
-        var hasMultiple = nums.filter(function(n) { return n > 0; }).length > 1;
+        var validNums = rowNums.filter(function(n) { return n > 0; });
+        var overallMin = validNums.length > 1 ? Math.min.apply(null, validNums) : null;
+        var overallMax = validNums.length > 1 ? Math.max.apply(null, validNums) : null;
 
         html += '<tr><td class="rc-fp-name">' + esc(bt) + '</td>';
-        rowRates.forEach(function(rate, ci) {
-          if (!rate) {
+        rowDisplay.forEach(function(display, ci) {
+          if (!display) {
             html += '<td class="rc-empty">--</td>';
             return;
           }
           var cls = 'rc-rate';
-          var cleaned = parseFloat(rate.replace(/[^0-9.]/g, '')) || 0;
-          if (hasMultiple && cleaned === min) cls += ' rc-lowest';
-          else if (hasMultiple && cleaned === max) cls += ' rc-highest';
-          html += '<td class="' + cls + '">' + esc(rate) + '</td>';
+          if (overallMin !== null && rowNums[ci] > 0 && rowNums[ci] === overallMin) cls += ' rc-lowest';
+          else if (overallMax !== null && rowNums[ci] > 0 && rowNums[ci] === overallMax) cls += ' rc-highest';
+          html += '<td class="' + cls + '">' + display + '</td>';
         });
         html += '</tr>';
-
-        // Detail sub-row with specific floorplan names
-        var hasAnyDetail = rowDetails.some(function(d) { return d; });
-        if (hasAnyDetail) {
-          html += '<tr style="font-size:11px;color:#9ca3af;"><td style="padding-left:20px;">Specific plans</td>';
-          rowDetails.forEach(function(detail) {
-            html += '<td>' + (detail ? esc(detail) : '<span style="color:#d1d5db;">--</span>') + '</td>';
-          });
-          html += '</tr>';
-        }
       });
 
       html += '</tbody></table>';
       return html;
-    }
-
-    // ── Build amenity cart HTML with grouped, cross-property comparison ──
+    }    // ── Build amenity cart HTML with grouped, cross-property comparison ──
     function buildAmenityCartHTML(compCards) {
       var sc = subjectCard;
       var allCards = [];
