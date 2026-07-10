@@ -57,14 +57,15 @@
     .page-toolbar .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
     /* Buttons */
-    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; border: 1px solid transparent; font-size: 13px; font-weight: 600; cursor: pointer; font-family: Roboto, Arial, sans-serif; transition: all 0.15s; text-decoration: none; color: var(--text); background: #f3f4f6; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 13px; font-weight: 600; cursor: pointer; font-family: Roboto, Arial, sans-serif; transition: all 0.15s; text-decoration: none; color: var(--text); background: #fff; }
+    .btn:hover { background: #f9fafb; }
     .btn-primary { background: var(--brand-primary); color: #fff; border-color: var(--brand-primary); }
     .btn-primary:hover { background: var(--card-navy-dark); }
-    .btn-success { background: #059669; color: #fff; }
+    .btn-success { background: #059669; color: #fff; border-color: #059669; }
     .btn-success:hover { background: #047857; }
     .btn-outline { background: #fff; color: var(--text); border-color: #d1d5db; }
     .btn-outline:hover { background: #f9fafb; }
-    .btn-accent { background: var(--brand-accent-2); color: #fff; border-color: var(--brand-accent-2); }
+    .btn-accent { background: var(--brand-accent-2); color: #1e293b; border-color: var(--brand-accent-2); }
     .btn-accent:hover { background: #3bc4ee; }
     .btn-warning { background: #d97706; color: #fff; border-color: #d97706; }
     .btn-warning:hover { background: #b45309; }
@@ -116,12 +117,12 @@
     .card-thumb .thumb-actions button.archive-btn { margin-left: auto; }
     .card-thumb .thumb-actions button.archive-btn:hover { color: #dc2626; background: #fef2f2; }
     /* Compare checkbox on card */
-    /* Report checkbox on card - stacked on top */
-    .card-thumb .report-check { position: absolute; bottom: 86px; left: 14px; z-index: 2; }
+    /* Report checkbox on card - left side */
+    .card-thumb .report-check { position: absolute; bottom: 58px; left: 14px; z-index: 2; }
     .card-thumb .report-check label { font-size: 11px; color: var(--subtext); display: flex; align-items: center; gap: 4px; cursor: pointer; background: #fff; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border); }
     .card-thumb .report-check input { accent-color: var(--brand-primary); }
-    /* Compare checkbox on card - stacked below report */
-    .card-thumb .compare-check { position: absolute; bottom: 58px; left: 14px; z-index: 2; }
+    /* Compare checkbox on card - right side */
+    .card-thumb .compare-check { position: absolute; bottom: 58px; right: 14px; z-index: 2; }
     .card-thumb .compare-check label { font-size: 11px; color: var(--subtext); display: flex; align-items: center; gap: 4px; cursor: pointer; background: #fff; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border); }
     .card-thumb .compare-check input { accent-color: var(--brand-accent-2); }
 
@@ -625,10 +626,13 @@
       var compareBtn = compareIds.length >= 1
         ? '<button class="btn btn-accent" id="compareBtn">' + icon('compare') + ' Compare (' + compareIds.length + ')</button>'
         : '';
+      
+      var reportCount = Object.keys(reportSelected).filter(function(k) { return reportSelected[k]; }).length;
+      var reportBtnText = reportCount > 0 ? ' Report Builder (' + reportCount + ')' : ' Report Builder';
 
       els.toolbarActions.innerHTML =
         compareBtn +
-        '<button class="btn btn-warning" id="reportBuilderBtn">' + icon('file') + ' Report Builder</button>' +
+        '<button class="btn btn-warning" id="reportBuilderBtn">' + icon('file') + reportBtnText + '</button>' +
         '<button class="btn btn-accent" id="rateCompareBtn">' + icon('compare') + ' Rate Compare</button>' +
         '<button class="btn btn-primary" id="newCardBtn">' + icon('plus') + ' New Competitor Card</button>';
       document.getElementById('newCardBtn').onclick = handleNewCard;
@@ -730,6 +734,15 @@
             var id = cb.getAttribute('data-report-id');
             if (cb.checked) reportSelected[id] = true;
             else delete reportSelected[id];
+            console.log('Report selected:', reportSelected);
+            var count = Object.keys(reportSelected).filter(function(k) { return reportSelected[k]; }).length;
+            console.log('Total selected for report:', count);
+            // Update Report Builder button text
+            var reportBtn = document.getElementById('reportBuilderBtn');
+            if (reportBtn) {
+              var btnText = count > 0 ? icon('file') + ' Report Builder (' + count + ')' : icon('file') + ' Report Builder';
+              reportBtn.innerHTML = btnText;
+            }
           };
         });
         // Attach compare checkboxes
