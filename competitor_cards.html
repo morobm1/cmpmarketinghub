@@ -118,12 +118,12 @@
     .card-thumb .thumb-actions button.archive-btn:hover { color: #dc2626; background: #fef2f2; }
     /* Compare checkbox on card */
     /* Report checkbox on card - left side */
-    .card-thumb .report-check { position: absolute; bottom: 58px; left: 14px; z-index: 2; }
-    .card-thumb .report-check label { font-size: 11px; color: var(--subtext); display: flex; align-items: center; gap: 4px; cursor: pointer; background: #fff; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border); }
+    .card-thumb .report-check { position: absolute; bottom: 95px; left: 14px; z-index: 2; }
+    .card-thumb .report-check label { font-size: 11px; color: var(--subtext); display: flex; align-items: center; gap: 4px; cursor: pointer; background: rgba(255,255,255,0.95); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border); backdrop-filter: blur(4px); }
     .card-thumb .report-check input { accent-color: var(--brand-primary); }
     /* Compare checkbox on card - right side */
-    .card-thumb .compare-check { position: absolute; bottom: 58px; right: 14px; z-index: 2; }
-    .card-thumb .compare-check label { font-size: 11px; color: var(--subtext); display: flex; align-items: center; gap: 4px; cursor: pointer; background: #fff; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border); }
+    .card-thumb .compare-check { position: absolute; bottom: 95px; right: 14px; z-index: 2; }
+    .card-thumb .compare-check label { font-size: 11px; color: var(--subtext); display: flex; align-items: center; gap: 4px; cursor: pointer; background: rgba(255,255,255,0.95); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border); backdrop-filter: blur(4px); }
     .card-thumb .compare-check input { accent-color: var(--brand-accent-2); }
 
     /* Badges */
@@ -1696,13 +1696,44 @@
         document.getElementById('prevStepBtn').onclick = function() { renderReportBuilder(wizardStep - 1); };
       }
       if (document.getElementById('previewReportBtn')) {
-        document.getElementById('previewReportBtn').onclick = function() { renderReportPreview(); };
+        document.getElementById('previewReportBtn').onclick = function() {
+          console.log('Preview button clicked');
+          console.log('reportSelected:', reportSelected);
+          
+          var count = Object.keys(reportSelected).filter(function(k) { return reportSelected[k]; }).length;
+          if (count === 0 && !subjectCard) {
+            alert('No competitors selected!\n\nPlease:\n1. Go back to Step 1\n2. Check the boxes next to competitors\n3. Or go to the gallery and check "Report" boxes first');
+            return;
+          }
+          
+          renderReportPreview();
+        };
       }
       if (document.getElementById('exportExcelBtn')) {
         document.getElementById('exportExcelBtn').onclick = function() { exportToExcel(); };
       }
       if (document.getElementById('printReportBtn')) {
-        document.getElementById('printReportBtn').onclick = function() { renderReportPreview(); setTimeout(function() { window.print(); }, 500); };
+        document.getElementById('printReportBtn').onclick = function() {
+          console.log('Print button clicked');
+          console.log('reportSelected:', reportSelected);
+          console.log('reportSections:', reportSections);
+          
+          // Ensure we have selections
+          var count = Object.keys(reportSelected).filter(function(k) { return reportSelected[k]; }).length;
+          if (count === 0) {
+            alert('Please select competitors in Step 1 before printing. Check the boxes next to competitors in the gallery first, or go back to Step 1.');
+            return;
+          }
+          
+          // Navigate to preview and wait for render
+          renderReportPreview();
+          
+          // Wait longer for content to fully render before printing
+          setTimeout(function() {
+            console.log('Opening print dialog');
+            window.print();
+          }, 1500);
+        };
       }
 
       // Wizard progress indicator
@@ -1946,6 +1977,12 @@
 
     // ── Render: Report Preview (horizontal slide deck) ──
     function renderReportPreview() {
+      console.log('=== renderReportPreview START ===');
+      console.log('reportSelected:', reportSelected);
+      console.log('reportSections:', reportSections);
+      console.log('subjectCard:', subjectCard);
+      console.log('cards.length:', cards.length);
+      
       currentView = 'reportPreview';
       viewingCard = null;
       currentCard = null;
@@ -1963,14 +2000,31 @@
 
       var reportCards = Object.keys(reportSelected).filter(function(id) { return reportSelected[id]; }).map(function(id) { return cards.find(function(c) { return c.id === id; }); }).filter(Boolean);
       
+      console.log('reportCards found:', reportCards.length);
+      reportCards.forEach(function(c) { console.log('  - ' + c.competitorName); });
+      
       // Validation: Check if any competitors are selected
       if (reportCards.length === 0 && (!subjectCard || !reportSections.subjectCard)) {
+        console.log('ERROR: No content to show in report!');
+        console.log('reportCards.length:', reportCards.length);
+        console.log('subjectCard:', subjectCard);
+        console.log('reportSections.subjectCard:', reportSections.subjectCard);
+        
         els.mainContent.innerHTML = 
-          '<div style="max-width:600px;margin:60px auto;text-align:center;padding:40px;background:#fff;border-radius:12px;border:1px solid var(--border);">' +
-            '<div style="font-size:48px;color:#d1d5db;margin-bottom:16px;">' + icon('alert') + '</div>' +
-            '<h3 style="font-size:20px;font-weight:700;color:var(--text);margin-bottom:12px;">No Competitors Selected</h3>' +
-            '<p style="font-size:14px;color:var(--subtext);margin-bottom:24px;">Please select at least one competitor in Step 1 to generate a report.</p>' +
-            '<button class="btn btn-primary" onclick="renderReportBuilder(1)">Go to Step 1</button>' +
+          '<div style="max-width:700px;margin:60px auto;text-align:center;padding:40px;background:#fff;border-radius:12px;border:1px solid var(--border);">' +
+            '<div style="font-size:48px;color:#dc2626;margin-bottom:16px;">' + icon('alert') + '</div>' +
+            '<h3 style="font-size:20px;font-weight:700;color:var(--text);margin-bottom:12px;">Cannot Generate Report - No Competitors Selected</h3>' +
+            '<p style="font-size:14px;color:var(--subtext);margin-bottom:16px;">No competitors were found in your selection.</p>' +
+            '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:16px;margin-bottom:24px;text-align:left;">' +
+              '<p style="font-size:13px;color:#991b1b;margin-bottom:12px;"><strong>To fix this:</strong></p>' +
+              '<ol style="font-size:13px;color:#991b1b;text-align:left;padding-left:20px;margin:0;">' +
+                '<li style="margin-bottom:8px;">Go back to the <strong>Competitor Cards gallery</strong></li>' +
+                '<li style="margin-bottom:8px;">Check the <strong>"Report" checkboxes</strong> on the cards you want to include</li>' +
+                '<li style="margin-bottom:8px;">Then click <strong>"Report Builder"</strong> button in the toolbar</li>' +
+                '<li>Proceed through the wizard and click Preview/Print</li>' +
+              '</ol>' +
+            '</div>' +
+            '<button class="btn btn-primary" onclick="renderGallery()">Go to Gallery</button>' +
           '</div>';
         return;
       }
