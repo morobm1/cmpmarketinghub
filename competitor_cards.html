@@ -1652,110 +1652,249 @@
     }
 
     // ── Render: Report Builder ──
-    function renderReportBuilder() {
+    function renderReportBuilder(wizardStep) {
       currentView = 'reportBuilder';
       viewingCard = null;
       currentCard = null;
+      
+      // Default to step 1 if not specified
+      if (!wizardStep) wizardStep = 1;
 
-      els.pageTitle.textContent = 'Report Builder';
+      els.pageTitle.textContent = 'Report Builder - Step ' + wizardStep + ' of 3';
       els.pageSubtitle.textContent = 'Build a market report with selected sections';
       els.pageSubtitle.style.display = '';
 
-      els.toolbarActions.innerHTML =
-        '<button class="btn btn-back" id="backBtn">' + icon('arrowLeft') + ' Back</button>' +
-        '<button class="btn btn-primary" id="previewReportBtn">' + icon('eye') + ' Preview Report</button>' +
-        '<button class="btn btn-success" id="printReportBtn">' + icon('printer') + ' Print / PDF</button>';
+      var backBtn = '<button class="btn btn-back" id="backBtn">' + icon('arrowLeft') + ' Back to Gallery</button>';
+      var nextBtn = wizardStep < 3 ? '<button class="btn btn-primary" id="nextStepBtn">Next Step ' + icon('arrowLeft').replace('arrowLeft', 'arrowRight').replace('19 12 5 12', '5 12 19 12').replace('12 19 5 12', '12 5 19 12') + '</button>' : '';
+      var prevBtn = wizardStep > 1 ? '<button class="btn btn-outline" id="prevStepBtn">' + icon('arrowLeft') + ' Previous</button>' : '';
+      var previewBtn = wizardStep === 3 ? '<button class="btn btn-primary" id="previewReportBtn">' + icon('eye') + ' Preview Report</button>' : '';
+      var printBtn = wizardStep === 3 ? '<button class="btn btn-success" id="printReportBtn" style="background:#059669;color:#fff;border-color:#059669;">' + icon('printer') + ' Print / PDF</button>' : '';
+
+      els.toolbarActions.innerHTML = backBtn + prevBtn + nextBtn + previewBtn + printBtn;
 
       document.getElementById('backBtn').onclick = function() { renderGallery(); };
-      document.getElementById('previewReportBtn').onclick = function() { renderReportPreview(); };
-      document.getElementById('printReportBtn').onclick = function() { window.print(); };
-
-      var subjectHTML = '';
-      if (subjectCard) {
-        subjectHTML = '<div class="report-card-item"><input type="checkbox" id="rptSubject" checked disabled><div class="rci-name">' + esc(subjectCard.competitorName || currentProperty) + '</div><div class="rci-type">Our Property</div></div>';
+      if (document.getElementById('nextStepBtn')) {
+        document.getElementById('nextStepBtn').onclick = function() { renderReportBuilder(wizardStep + 1); };
+      }
+      if (document.getElementById('prevStepBtn')) {
+        document.getElementById('prevStepBtn').onclick = function() { renderReportBuilder(wizardStep - 1); };
+      }
+      if (document.getElementById('previewReportBtn')) {
+        document.getElementById('previewReportBtn').onclick = function() { renderReportPreview(); };
+      }
+      if (document.getElementById('printReportBtn')) {
+        document.getElementById('printReportBtn').onclick = function() { renderReportPreview(); setTimeout(function() { window.print(); }, 500); };
       }
 
-      var compHTML = cards.filter(function(c) { return c.status !== 'archived'; }).map(function(c) {
-        var checked = reportSelected[c.id] ? ' checked' : '';
-        return '<div class="report-card-item"><input type="checkbox" data-rcard-id="' + esc(c.id) + '"' + checked + '><div class="rci-name">' + esc(c.competitorName || 'Untitled') + '</div><div class="rci-type">Competitor</div></div>';
-      }).join('');
+      // Wizard progress indicator
+      var wizardProgressHTML = '<div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:24px;padding:16px;background:#f8fafc;border-radius:10px;">';
+      for (var i = 1; i <= 3; i++) {
+        var active = i === wizardStep;
+        var complete = i < wizardStep;
+        var stepLabel = i === 1 ? 'Select Competitors' : i === 2 ? 'Choose Sections' : 'Preview & Generate';
+        var stepColor = active ? 'var(--brand-accent-2)' : complete ? '#059669' : '#d1d5db';
+        var textColor = active ? '#1e293b' : complete ? '#fff' : '#6b7280';
+        wizardProgressHTML += '<div style="display:flex;align-items:center;gap:8px;">';
+        wizardProgressHTML += '<div style="width:32px;height:32px;border-radius:50%;background:' + stepColor + ';color:' + textColor + ';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;border:2px solid ' + (active ? 'var(--brand-accent-2)' : complete ? '#059669' : '#d1d5db') + ';">';
+        wizardProgressHTML += complete ? '✓' : i;
+        wizardProgressHTML += '</div>';
+        wizardProgressHTML += '<span style="font-size:13px;font-weight:' + (active ? '700' : '500') + ';color:' + (active ? 'var(--text)' : '#9ca3af') + ';">' + stepLabel + '</span>';
+        wizardProgressHTML += '</div>';
+        if (i < 3) wizardProgressHTML += '<div style="width:40px;height:2px;background:' + (complete ? '#059669' : '#e5e7eb') + ';"></div>';
+      }
+      wizardProgressHTML += '</div>';
 
-      var allChecked = cards.filter(function(c) { return c.status !== 'archived'; }).every(function(c) { return reportSelected[c.id]; });
-      var allCheckedAttr = allChecked ? ' checked' : '';
+      var contentHTML = '';
 
-      els.mainContent.innerHTML =
-        '<div class="report-builder-bar">' +
-          '<div class="rb-info">' + icon('file') + ' Report Configuration</div>' +
-          '<div class="rb-actions">' +
-            '<span style="font-size:12px;opacity:0.8;">Toggle sections to include in the report</span>' +
-          '</div>' +
-        '</div>' +
+      // Step 1: Select Competitors
+      if (wizardStep === 1) {
+        var subjectHTML = '';
+        if (subjectCard) {
+          subjectHTML = '<div class="report-card-item"><input type="checkbox" id="rptSubject" checked disabled><div class="rci-name">' + esc(subjectCard.competitorName || currentProperty) + '</div><div class="rci-type" style="background:#52d5ff;color:#1e293b;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;">OUR PROPERTY</div></div>';
+        } else {
+          subjectHTML = '<div style="padding:16px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;margin-bottom:16px;color:#78350f;"><strong>Note:</strong> Set up your property card to include it in the report. <button class="btn btn-sm" style="margin-left:8px;background:#d97706;color:#fff;border-color:#d97706;" onclick="(function(){ currentCard = createEmptyCard(\'subject\'); currentCard.competitorName = currentProperty; renderEditor(); })()">Set Up Now</button></div>';
+        }
 
-        '<div class="report-sections-wrap">' +
-          '<div class="report-sections-title">Report Sections</div>' +
-          '<div class="report-section-toggle">' +
-            '<div><div class="rst-label">' + icon('building') + ' Subject Property Card</div><div class="rst-desc">Our property details at the top of the report</div></div>' +
-            '<input type="checkbox" id="rsec_subjectCard" ' + (reportSections.subjectCard ? 'checked' : '') + '>' +
-          '</div>' +
-          '<div class="report-section-toggle">' +
-            '<div><div class="rst-label">' + icon('eye') + ' Competitor Cards</div><div class="rst-desc">Full individual competitor profiles in the report</div></div>' +
-            '<input type="checkbox" id="rsec_competitorCards" ' + (reportSections.competitorCards ? 'checked' : '') + '>' +
-          '</div>' +
-          '<div class="report-section-toggle">' +
-            '<div><div class="rst-label">' + icon('compare') + ' Comparison Table</div><div class="rst-desc">Side-by-side comparison matrix of all selected properties</div></div>' +
-            '<input type="checkbox" id="rsec_comparisonTable" ' + (reportSections.comparisonTable ? 'checked' : '') + '>' +
-          '</div>' +
-          '<div class="report-section-toggle">' +
-            '<div><div class="rst-label">' + icon('tag') + ' Rate Comparison</div><div class="rst-desc">Floorplan-level rate comparison</div></div>' +
-            '<input type="checkbox" id="rsec_rateComparison" ' + (reportSections.rateComparison ? 'checked' : '') + '>' +
-          '</div>' +
-          '<div class="report-section-toggle">' +
-            '<div><div class="rst-label">' + icon('check') + ' Amenity Cart</div><div class="rst-desc">Amenity presence comparison across properties</div></div>' +
-            '<input type="checkbox" id="rsec_amenityCart" ' + (reportSections.amenityCart ? 'checked' : '') + '>' +
-          '</div>' +
-        '</div>' +
+        var compHTML = cards.filter(function(c) { return c.status !== 'archived'; }).map(function(c) {
+          var checked = reportSelected[c.id] ? ' checked' : '';
+          return '<div class="report-card-item"><input type="checkbox" data-rcard-id="' + esc(c.id) + '"' + checked + '><div class="rci-name">' + esc(c.competitorName || 'Untitled') + '</div><div class="rci-type">Competitor</div></div>';
+        }).join('');
 
-        '<div class="report-card-list">' +
-          '<div class="report-card-list-title">' +
-            '<span>Select Competitors to Include</span>' +
-            '<label class="report-select-all" style="display:inline-flex;align-items:center;gap:6px;padding:0;background:none;font-size:12px;font-weight:400;">' +
-              '<input type="checkbox" id="rptSelectAll"' + allCheckedAttr + '> Select All' +
-            '</label>' +
+        var allChecked = cards.filter(function(c) { return c.status !== 'archived'; }).every(function(c) { return reportSelected[c.id]; });
+        var allCheckedAttr = allChecked ? ' checked' : '';
+
+        var selectedCount = Object.keys(reportSelected).filter(function(k) { return reportSelected[k]; }).length;
+
+        contentHTML = '<div style="max-width:800px;margin:0 auto;">' +
+          '<h3 style="font-size:18px;font-weight:700;color:var(--card-navy);margin-bottom:8px;text-align:center;">Step 1: Select Competitors</h3>' +
+          '<p style="font-size:14px;color:var(--subtext);margin-bottom:24px;text-align:center;">Choose which competitors to include in your market analysis report</p>' +
+          '<div style="background:#e0f2fe;border:1px solid #52d5ff;border-radius:8px;padding:12px 16px;margin-bottom:16px;text-align:center;">' +
+            '<strong style="color:#1e293b;">' + selectedCount + ' competitor' + (selectedCount !== 1 ? 's' : '') + ' selected</strong>' +
           '</div>' +
-          subjectHTML +
-          compHTML +
+          '<div class="report-card-list">' +
+            '<div class="report-card-list-title">' +
+              '<span>Available Competitors</span>' +
+              '<label class="report-select-all" style="display:inline-flex;align-items:center;gap:6px;padding:0;background:none;font-size:12px;font-weight:400;color:#1e293b;">' +
+                '<input type="checkbox" id="rptSelectAll"' + allCheckedAttr + '> Select All' +
+              '</label>' +
+            '</div>' +
+            subjectHTML +
+            compHTML +
+          '</div>' +
+        '</div>';
+      }
+
+      // Step 2: Choose Sections
+      else if (wizardStep === 2) {
+        var selectedCount = Object.keys(reportSelected).filter(function(k) { return reportSelected[k]; }).length;
+        var sectionsCount = Object.keys(reportSections).filter(function(k) { return reportSections[k]; }).length;
+        
+        contentHTML = '<div style="max-width:800px;margin:0 auto;">' +
+          '<h3 style="font-size:18px;font-weight:700;color:var(--card-navy);margin-bottom:8px;text-align:center;">Step 2: Choose Report Sections</h3>' +
+          '<p style="font-size:14px;color:var(--subtext);margin-bottom:24px;text-align:center;">Select which sections to include in your report (' + selectedCount + ' competitors selected)</p>' +
+          '<div style="background:#e0f2fe;border:1px solid #52d5ff;border-radius:8px;padding:12px 16px;margin-bottom:16px;text-align:center;">' +
+            '<strong style="color:#1e293b;">' + sectionsCount + ' section' + (sectionsCount !== 1 ? 's' : '') + ' enabled</strong>' +
+          '</div>' +
+          '<div class="report-sections-wrap">' +
+            '<div class="report-section-toggle">' +
+              '<div><div class="rst-label">' + icon('building') + ' Subject Property Card</div><div class="rst-desc">Our property details at the top of the report</div></div>' +
+              '<input type="checkbox" id="rsec_subjectCard" ' + (reportSections.subjectCard ? 'checked' : '') + '>' +
+            '</div>' +
+            '<div class="report-section-toggle">' +
+              '<div><div class="rst-label">' + icon('eye') + ' Competitor Cards</div><div class="rst-desc">Full individual competitor profiles in the report</div></div>' +
+              '<input type="checkbox" id="rsec_competitorCards" ' + (reportSections.competitorCards ? 'checked' : '') + '>' +
+            '</div>' +
+            '<div class="report-section-toggle">' +
+              '<div><div class="rst-label">' + icon('compare') + ' Comparison Table</div><div class="rst-desc">Side-by-side comparison matrix of all selected properties</div></div>' +
+              '<input type="checkbox" id="rsec_comparisonTable" ' + (reportSections.comparisonTable ? 'checked' : '') + '>' +
+            '</div>' +
+            '<div class="report-section-toggle">' +
+              '<div><div class="rst-label">' + icon('tag') + ' Rate Comparison</div><div class="rst-desc">Floorplan-level rate comparison</div></div>' +
+              '<input type="checkbox" id="rsec_rateComparison" ' + (reportSections.rateComparison ? 'checked' : '') + '>' +
+            '</div>' +
+            '<div class="report-section-toggle">' +
+              '<div><div class="rst-label">' + icon('check') + ' Amenity Cart</div><div class="rst-desc">Amenity presence comparison across properties</div></div>' +
+              '<input type="checkbox" id="rsec_amenityCart" ' + (reportSections.amenityCart ? 'checked' : '') + '>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }
+
+      // Step 3: Preview & Generate
+      else if (wizardStep === 3) {
+        var selectedCount = Object.keys(reportSelected).filter(function(k) { return reportSelected[k]; }).length;
+        var sectionsCount = Object.keys(reportSections).filter(function(k) { return reportSections[k]; }).length;
+        var reportCards = Object.keys(reportSelected).filter(function(id) { return reportSelected[id]; }).map(function(id) { return cards.find(function(c) { return c.id === id; }); }).filter(Boolean);
+        
+        var summaryHTML = '<div style="background:#f8fafc;border-radius:10px;padding:20px;margin-bottom:20px;">' +
+          '<h4 style="font-size:14px;font-weight:700;color:var(--card-navy);margin-bottom:12px;">Report Summary</h4>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+            '<div style="background:#fff;padding:12px;border-radius:8px;border:1px solid var(--border);">' +
+              '<div style="font-size:24px;font-weight:800;color:var(--brand-accent-2);">' + selectedCount + '</div>' +
+              '<div style="font-size:12px;color:var(--subtext);">Competitors</div>' +
+            '</div>' +
+            '<div style="background:#fff;padding:12px;border-radius:8px;border:1px solid var(--border);">' +
+              '<div style="font-size:24px;font-weight:800;color:var(--brand-accent-2);">' + sectionsCount + '</div>' +
+              '<div style="font-size:12px;color:var(--subtext);">Sections</div>' +
+            '</div>' +
+          '</div>' +
         '</div>';
 
-      // Section toggle handlers
-      ['subjectCard', 'competitorCards', 'comparisonTable', 'rateComparison', 'amenityCart'].forEach(function(key) {
-        var el = document.getElementById('rsec_' + key);
-        if (el) {
+        var competitorListHTML = '<div style="background:#fff;border-radius:10px;padding:16px;border:1px solid var(--border);margin-bottom:16px;">' +
+          '<h4 style="font-size:13px;font-weight:700;color:var(--subtext);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">Included Competitors</h4>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:8px;">';
+        if (subjectCard && reportSections.subjectCard) {
+          competitorListHTML += '<span style="background:var(--brand-accent-2);color:#1e293b;padding:6px 12px;border-radius:6px;font-size:13px;font-weight:600;">' + esc(subjectCard.competitorName || currentProperty) + ' (Our Property)</span>';
+        }
+        reportCards.forEach(function(c) {
+          competitorListHTML += '<span style="background:#f1f5f9;padding:6px 12px;border-radius:6px;font-size:13px;font-weight:500;">' + esc(c.competitorName) + '</span>';
+        });
+        competitorListHTML += '</div></div>';
+
+        var sectionsListHTML = '<div style="background:#fff;border-radius:10px;padding:16px;border:1px solid var(--border);">' +
+          '<h4 style="font-size:13px;font-weight:700;color:var(--subtext);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">Report Sections</h4>' +
+          '<div style="display:flex;flex-direction:column;gap:8px;">';
+        var sectionLabels = {
+          subjectCard: 'Subject Property Card',
+          competitorCards: 'Competitor Cards',
+          comparisonTable: 'Comparison Table',
+          rateComparison: 'Rate Comparison',
+          amenityCart: 'Amenity Cart'
+        };
+        Object.keys(sectionLabels).forEach(function(key) {
+          if (reportSections[key]) {
+            sectionsListHTML += '<div style="display:flex;align-items:center;gap:8px;"><span style="color:#059669;font-size:18px;">✓</span><span style="font-size:14px;color:var(--text);">' + sectionLabels[key] + '</span></div>';
+          }
+        });
+        sectionsListHTML += '</div></div>';
+
+        contentHTML = '<div style="max-width:800px;margin:0 auto;">' +
+          '<h3 style="font-size:18px;font-weight:700;color:var(--card-navy);margin-bottom:8px;text-align:center;">Step 3: Preview & Generate</h3>' +
+          '<p style="font-size:14px;color:var(--subtext);margin-bottom:24px;text-align:center;">Review your selections and generate the report</p>' +
+          summaryHTML +
+          competitorListHTML +
+          sectionsListHTML +
+          '<div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:16px;margin-top:20px;text-align:center;">' +
+            '<p style="color:#065f46;font-size:14px;font-weight:500;margin-bottom:12px;">Your report is ready to preview or print!</p>' +
+            '<p style="color:#047857;font-size:13px;">Click "Preview Report" to see the full report, or "Print / PDF" to save or print directly.</p>' +
+          '</div>' +
+        '</div>';
+      }
+
+      els.mainContent.innerHTML = wizardProgressHTML + contentHTML;
+
+      // Section toggle handlers (Step 2)
+      if (wizardStep === 2) {
+        ['subjectCard', 'competitorCards', 'comparisonTable', 'rateComparison', 'amenityCart'].forEach(function(key) {
+          var el = document.getElementById('rsec_' + key);
+          if (el) {
+            el.onchange = function() {
+              reportSections[key] = el.checked;
+              // Update the count display
+              var sectionsCount = Object.keys(reportSections).filter(function(k) { return reportSections[k]; }).length;
+              var countEl = document.querySelector('[style*="background:#e0f2fe"]');
+              if (countEl) {
+                countEl.innerHTML = '<strong style="color:#1e293b;">' + sectionsCount + ' section' + (sectionsCount !== 1 ? 's' : '') + ' enabled</strong>';
+              }
+            };
+          }
+        });
+      }
+
+      // Card selection handlers (Step 1)
+      if (wizardStep === 1) {
+        document.querySelectorAll('[data-rcard-id]').forEach(function(el) {
           el.onchange = function() {
-            reportSections[key] = el.checked;
+            var id = el.getAttribute('data-rcard-id');
+            if (el.checked) reportSelected[id] = true;
+            else delete reportSelected[id];
+            // Update the count display
+            var selectedCount = Object.keys(reportSelected).filter(function(k) { return reportSelected[k]; }).length;
+            var countEl = document.querySelector('[style*="background:#e0f2fe"]');
+            if (countEl) {
+              countEl.innerHTML = '<strong style="color:#1e293b;">' + selectedCount + ' competitor' + (selectedCount !== 1 ? 's' : '') + ' selected</strong>';
+            }
+          };
+        });
+
+        var selectAll = document.getElementById('rptSelectAll');
+        if (selectAll) {
+          selectAll.onchange = function() {
+            var checked = selectAll.checked;
+            document.querySelectorAll('[data-rcard-id]').forEach(function(el) {
+              el.checked = checked;
+              var id = el.getAttribute('data-rcard-id');
+              if (checked) reportSelected[id] = true;
+              else delete reportSelected[id];
+            });
+            // Update the count display
+            var selectedCount = Object.keys(reportSelected).filter(function(k) { return reportSelected[k]; }).length;
+            var countEl = document.querySelector('[style*="background:#e0f2fe"]');
+            if (countEl) {
+              countEl.innerHTML = '<strong style="color:#1e293b;">' + selectedCount + ' competitor' + (selectedCount !== 1 ? 's' : '') + ' selected</strong>';
+            }
           };
         }
-      });
-
-      // Card selection handlers
-      document.querySelectorAll('[data-rcard-id]').forEach(function(el) {
-        el.onchange = function() {
-          var id = el.getAttribute('data-rcard-id');
-          if (el.checked) reportSelected[id] = true;
-          else delete reportSelected[id];
-        };
-      });
-
-      var selectAll = document.getElementById('rptSelectAll');
-      if (selectAll) {
-        selectAll.onchange = function() {
-          var checked = selectAll.checked;
-          document.querySelectorAll('[data-rcard-id]').forEach(function(el) {
-            el.checked = checked;
-            var id = el.getAttribute('data-rcard-id');
-            if (checked) reportSelected[id] = true;
-            else delete reportSelected[id];
-          });
-        };
       }
     }
 
@@ -1988,7 +2127,14 @@
 
       function parseRateNum(rateStr) {
         if (!rateStr) return 0;
-        return parseFloat(rateStr.replace(/[^0-9.]/g, '')) || 0;
+        var cleaned = rateStr.replace(/[^0-9.]/g, '');
+        var num = parseFloat(cleaned) || 0;
+        // Validate reasonable range (between $100 and $10,000 per month)
+        // If number is very small (< 50), might be in hundreds format (e.g., "8.5" meaning "$850")
+        if (num > 0 && num < 50) {
+          num = num * 100;
+        }
+        return num;
       }
 
       function getSubjectRange(bt) {
@@ -2032,20 +2178,28 @@
           }
 
           // Add vs-subject arrow for competitor columns
-          if (subjectRange && ci > 0 && nums.length > 0) {
-            var compMin = minNum;
-            var subjMin = subjectRange.min;
-            var diff = compMin - subjMin;
-            var diffStr = '$' + Math.abs(diff).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+          if (ci > 0 && nums.length > 0) {
+            if (subjectRange) {
+              var compMin = minNum;
+              var subjMin = subjectRange.min;
+              var diff = compMin - subjMin;
+              var diffStr = '$' + Math.abs(diff).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
-            if (diff < 0) {
-              // Competitor cheaper -> we are higher -> RED UP ARROW
-              displayStr += ' <span style="color:#dc2626;font-weight:700;font-size:13px;">↑ ' + diffStr + '</span>';
-            } else if (diff > 0) {
-              // Competitor more expensive -> we are lower -> GREEN DOWN ARROW
-              displayStr += ' <span style="color:#059669;font-weight:700;font-size:13px;">↓ ' + diffStr + '</span>';
+              var arrowHTML = '';
+              if (diff < 0) {
+                // Competitor cheaper -> we are higher -> RED UP ARROW
+                arrowHTML = '<span style="background:#fef2f2;color:#dc2626;padding:3px 8px;border-radius:4px;font-weight:700;font-size:14px;margin-left:6px;white-space:nowrap;">↑ ' + diffStr + '</span>';
+              } else if (diff > 0) {
+                // Competitor more expensive -> we are lower -> GREEN DOWN ARROW  
+                arrowHTML = '<span style="background:#ecfdf5;color:#059669;padding:3px 8px;border-radius:4px;font-weight:700;font-size:14px;margin-left:6px;white-space:nowrap;">↓ ' + diffStr + '</span>';
+              } else {
+                // Equal
+                arrowHTML = '<span style="color:#6b7280;font-weight:500;font-size:12px;margin-left:6px;">= Same</span>';
+              }
+              displayStr += arrowHTML;
             } else {
-              displayStr += ' <span style="color:#6b7280;font-weight:500;font-size:11px;">equal</span>';
+              // No comparable data in subject property for this bedroom type
+              displayStr += '<span style="color:#9ca3af;font-size:11px;margin-left:6px;font-style:italic;">(no comparable)</span>';
             }
           }
 
@@ -2311,13 +2465,35 @@
       document.getElementById('backBtn').onclick = function() { renderGallery(); };
       document.getElementById('printRCBtn').onclick = function() { window.print(); };
 
+      // Check if subject card exists and has data for validation warnings
+      var subjectValid = true;
+      var warningMessage = '';
+
+      if (!subjectCard) {
+        subjectValid = false;
+        warningMessage = '<div style="margin-bottom:16px;padding:12px 16px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#991b1b;">' +
+          '<strong>' + icon('alert') + ' Subject Property Not Set Up</strong><br>' +
+          'Set up your property card to see colored arrows comparing your rates to competitors. ' +
+          '<button class="btn btn-sm" style="margin-left:8px;background:#dc2626;color:#fff;border-color:#dc2626;" onclick="(function(){ currentCard = createEmptyCard(\'subject\'); currentCard.competitorName = currentProperty; renderEditor(); })()">Set Up Now</button>' +
+        '</div>';
+      } else if (!subjectCard.floorplanDetails || subjectCard.floorplanDetails.length === 0) {
+        subjectValid = false;
+        warningMessage = '<div style="margin-bottom:16px;padding:12px 16px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;color:#78350f;">' +
+          '<strong>' + icon('alert') + ' Missing Floorplan Data</strong><br>' +
+          'Add floorplan details to your property card to enable rate comparison arrows. ' +
+          '<button class="btn btn-sm" style="margin-left:8px;background:#d97706;color:#fff;border-color:#d97706;" onclick="(function(){ handleEditCard(subjectCard); })()">Edit Property Card</button>' +
+        '</div>';
+      }
+
       els.mainContent.innerHTML =
         '<div class="compare-bar">' +
           '<div class="compare-info">' + icon('compare') + ' <span style="background:var(--brand-accent-2);color:#1e293b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:2px 6px;border-radius:4px;font-size:11px;">OUR PROPERTY</span> ' + esc(currentProperty) + ' vs ' + compCards.length + ' competitors</div>' +
-          '<div class="compare-actions">' +
+          '<div class="compare-actions" style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;">' +
             '<span style="font-size:11px;opacity:0.8;"><span style="background:#ecfdf5;padding:2px 6px;border-radius:4px;margin-right:4px;">Lowest</span> <span style="background:#fef2f2;padding:2px 6px;border-radius:4px;">Highest</span></span>' +
+            '<span style="font-size:11px;opacity:0.9;"><span style="background:#fef2f2;color:#dc2626;padding:2px 6px;border-radius:4px;margin-right:4px;font-weight:600;">↑ We\'re Higher</span> <span style="background:#ecfdf5;color:#059669;padding:2px 6px;border-radius:4px;font-weight:600;">↓ We\'re Lower</span></span>' +
           '</div>' +
         '</div>' +
+        warningMessage +
         '<div class="rate-compare-wrap">' + buildRateCompareHTML(compCards) + '</div>';
 
       if (subjectCard) {
