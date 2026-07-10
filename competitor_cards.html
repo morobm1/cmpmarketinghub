@@ -339,6 +339,8 @@
       .main-content { margin-left: 0 !important; }
       body { background: #fff; }
       .cc-preview { box-shadow: none; border: none; }
+      .report-preview-section { page-break-inside: avoid; page-break-after: always; }
+      .report-preview-section:last-child { page-break-after: auto; }
     }
 
     /* Subject Property Card */
@@ -1070,7 +1072,7 @@
 
       els.mainContent.innerHTML =
         '<div class="compare-bar">' +
-          '<div class="compare-info">' + icon('compare') + ' Comparing ' + compCards.length + ' competitors against ' + esc(currentProperty) + '</div>' +
+          '<div class="compare-info">' + icon('compare') + ' <span style="background:var(--brand-accent-2);color:#1e293b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:2px 6px;border-radius:4px;font-size:11px;">OUR PROPERTY</span> ' + esc(currentProperty) + ' vs ' + compCards.length + ' competitors</div>' +
           '<div class="compare-actions">' +
             '<button class="btn btn-sm btn-outline" id="acBtn" style="color:#fff;border-color:rgba(255,255,255,0.3);">' + icon('check') + ' Amenity Cart</button>' +
             '<button class="btn btn-sm btn-outline" id="rcBtn" style="color:#fff;border-color:rgba(255,255,255,0.3);">' + icon('compare') + ' Rate Compare</button>' +
@@ -1757,7 +1759,7 @@
       }
     }
 
-    // ── Render: Report Preview ──
+    // ── Render: Report Preview (horizontal slide deck) ──
     function renderReportPreview() {
       currentView = 'reportPreview';
       viewingCard = null;
@@ -1775,55 +1777,85 @@
       document.getElementById('printReportBtn2').onclick = function() { window.print(); };
 
       var reportCards = Object.keys(reportSelected).filter(function(id) { return reportSelected[id]; }).map(function(id) { return cards.find(function(c) { return c.id === id; }); }).filter(Boolean);
-      var reportHTML = '';
-      var reportTitle = esc(currentProperty) + ' Market Analysis Report';
+      var reportTitle = esc(currentProperty) + ' Market Analysis';
       var reportDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
-      reportHTML += '<div style="padding:20px;">';
-      reportHTML += '<h2 style="font-size:22px;font-weight:800;color:var(--card-navy);margin-bottom:4px;">' + reportTitle + '</h2>';
-      reportHTML += '<p style="font-size:13px;color:#9ca3af;margin-bottom:20px;">Prepared: ' + reportDate + ' | ' + esc(currentProperty) + '</p>';
+      // Horizontal deck layout - each section is a "slide"
+      var deckHTML = '<div style="max-width:1100px;margin:0 auto;padding:10px 0;">';
 
-      // Section 1: Subject Property
+      // Cover slide
+      deckHTML += '<div class="report-preview-section" style="text-align:center;padding:60px 40px;">';
+      deckHTML += '<div style="font-size:48px;color:var(--brand-primary);margin-bottom:16px;">' + icon('building') + '</div>';
+      deckHTML += '<h2 style="font-size:28px;font-weight:800;color:var(--card-navy);margin-bottom:8px;">' + esc(currentProperty) + '</h2>';
+      deckHTML += '<h1 style="font-size:36px;font-weight:800;color:var(--brand-primary);margin-bottom:16px;">Market Analysis Report</h1>';
+      deckHTML += '<p style="font-size:14px;color:#9ca3af;">Prepared: ' + reportDate + '</p>';
+      deckHTML += '<p style="font-size:13px;color:#9ca3af;margin-top:4px;">Capstone Management Partners</p>';
+      // List included competitors
+      if (reportCards.length > 0) {
+        deckHTML += '<div style="margin-top:32px;border-top:1px solid var(--border);padding-top:24px;">';
+        deckHTML += '<p style="font-size:12px;font-weight:700;color:var(--subtext);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Competitors Analyzed</p>';
+        deckHTML += '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">';
+        reportCards.forEach(function(c) {
+          deckHTML += '<span style="background:#f1f5f9;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:600;color:var(--text);">' + esc(c.competitorName) + '</span>';
+        });
+        deckHTML += '</div></div>';
+      }
+      deckHTML += '</div>';
+
+      // Section 1: Subject Property slide
       if (reportSections.subjectCard && subjectCard) {
-        reportHTML += '<div class="report-preview-section"><div class="rps-title">' + icon('building') + ' Our Property: ' + esc(subjectCard.competitorName || currentProperty) + '</div><div class="rps-body">';
+        deckHTML += '<div class="report-preview-section">';
+        deckHTML += '<div class="rps-title" style="background:var(--brand-accent-2);color:#1e293b;">' + icon('building') + ' Our Property: ' + esc(subjectCard.competitorName || currentProperty) + '</div>';
+        deckHTML += '<div class="rps-body">';
         var sc = subjectCard;
-        reportHTML += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;">';
-        if (sc.startingRate) reportHTML += '<div style="background:#f8fafc;border-radius:8px;padding:10px 12px;border:1px solid #f1f5f9;"><div style="font-size:10px;font-weight:700;color:var(--subtext);text-transform:uppercase;">Starting Rate</div><div style="font-size:16px;font-weight:800;color:var(--card-navy);margin-top:2px;">' + esc(sc.startingRate) + '</div></div>';
-        if (sc.unitCount) reportHTML += '<div style="background:#f8fafc;border-radius:8px;padding:10px 12px;border:1px solid #f1f5f9;"><div style="font-size:10px;font-weight:700;color:var(--subtext);text-transform:uppercase;">Units</div><div style="font-size:16px;font-weight:800;color:var(--card-navy);margin-top:2px;">' + esc(sc.unitCount) + '</div></div>';
-        if (sc.currentOccupancy) reportHTML += '<div style="background:#f8fafc;border-radius:8px;padding:10px 12px;border:1px solid #f1f5f9;"><div style="font-size:10px;font-weight:700;color:var(--subtext);text-transform:uppercase;">Occupancy</div><div style="font-size:16px;font-weight:800;color:var(--card-navy);margin-top:2px;">' + esc(sc.currentOccupancy) + '</div></div>';
-        if (sc.topAmenities) reportHTML += '<div style="background:#f8fafc;border-radius:8px;padding:10px 12px;border:1px solid #f1f5f9;grid-column:1/-1;"><div style="font-size:10px;font-weight:700;color:var(--subtext);text-transform:uppercase;">Top Amenities</div><div style="font-size:13px;color:#475569;margin-top:2px;">' + esc(sc.topAmenities) + '</div></div>';
-        reportHTML += '</div></div></div>';
+        // Use the full card preview
+        var previewDiv = document.createElement('div');
+        renderPreview(sc, previewDiv);
+        deckHTML += '<div style="max-width:900px;margin:0 auto;">' + previewDiv.innerHTML + '</div>';
+        deckHTML += '</div></div>';
       }
 
-      // Section 2: Competitor Cards
+      // Section 2: Competitor Cards - horizontal scroll or column layout
       if (reportSections.competitorCards && reportCards.length > 0) {
-        reportHTML += '<div class="report-preview-section"><div class="rps-title">' + icon('eye') + ' Competitor Profiles</div><div class="rps-body">';
-        reportCards.forEach(function(c) {
-          var pano = document.createElement('div');
-          pano.innerHTML = renderPreviewHTML(c);
-          reportHTML += '<div style="margin-bottom:24px;page-break-inside:avoid;border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.06);">' +
-            pano.innerHTML + '</div>';
+        deckHTML += '<div class="report-preview-section">';
+        deckHTML += '<div class="rps-title" style="background:var(--card-navy);color:#fff;">' + icon('eye') + ' Competitor Profiles</div>';
+        deckHTML += '<div class="rps-body">';
+        // Show each card in a column, like a slide deck
+        reportCards.forEach(function(c, idx) {
+          if (idx > 0) deckHTML += '<div style="page-break-before:always;"></div>';
+          var previewDiv = document.createElement('div');
+          renderPreview(c, previewDiv);
+          deckHTML += '<div style="max-width:900px;margin:0 auto;">' + previewDiv.innerHTML + '</div>';
         });
-        reportHTML += '</div></div>';
+        deckHTML += '</div></div>';
       }
 
       // Section 3: Comparison Table
       if (reportSections.comparisonTable && reportCards.length > 0) {
-        reportHTML += '<div class="report-preview-section"><div class="rps-title">' + icon('compare') + ' Comparison Matrix</div><div class="rps-body">' + buildComparisonTableHTML(reportCards) + '</div></div>';
+        deckHTML += '<div class="report-preview-section">';
+        deckHTML += '<div class="rps-title" style="background:var(--card-navy);color:#fff;">' + icon('compare') + ' Comparison Matrix</div>';
+        deckHTML += '<div class="rps-body"><div style="max-width:100%;overflow-x:auto;">' + buildComparisonTableHTML(reportCards) + '</div></div>';
+        deckHTML += '</div>';
       }
 
       // Section 4: Rate Comparison
       if (reportSections.rateComparison && reportCards.length > 0) {
-        reportHTML += '<div class="report-preview-section"><div class="rps-title">' + icon('tag') + ' Rate Comparison</div><div class="rps-body">' + buildRateCompareHTML(reportCards) + '</div></div>';
+        deckHTML += '<div class="report-preview-section">';
+        deckHTML += '<div class="rps-title" style="background:var(--card-navy);color:#fff;">' + icon('tag') + ' Rate Comparison</div>';
+        deckHTML += '<div class="rps-body"><div style="max-width:100%;overflow-x:auto;">' + buildRateCompareHTML(reportCards) + '</div></div>';
+        deckHTML += '</div>';
       }
 
       // Section 5: Amenity Cart
       if (reportSections.amenityCart && reportCards.length > 0) {
-        reportHTML += '<div class="report-preview-section"><div class="rps-title">' + icon('check') + ' Amenity Cart</div><div class="rps-body">' + buildAmenityCartHTML(reportCards) + '</div></div>';
+        deckHTML += '<div class="report-preview-section">';
+        deckHTML += '<div class="rps-title" style="background:var(--card-navy);color:#fff;">' + icon('check') + ' Amenity Cart</div>';
+        deckHTML += '<div class="rps-body"><div style="max-width:100%;overflow-x:auto;">' + buildAmenityCartHTML(reportCards) + '</div></div>';
+        deckHTML += '</div>';
       }
 
-      reportHTML += '</div>';
-      els.mainContent.innerHTML = reportHTML;
+      deckHTML += '</div>';
+      els.mainContent.innerHTML = deckHTML;
     }
 
     // ── Render single card preview HTML (non-interactive) ──
@@ -1880,152 +1912,318 @@
       return html;
     }
 
-    // ── Build rate comparison HTML ──
+    // ── Extract bedroom type from floorplan name/bedsBaths ──
+    function extractBedroomType(fp) {
+      // Try to extract from bedsBaths first (e.g., "1/1", "2x2", "3BR/2BA", "Studio")
+      var txt = (fp.bedsBaths || fp.name || '').toLowerCase().trim();
+      // Studio / efficiency
+      if (txt.indexOf('studio') >= 0 || txt.indexOf('efficiency') >= 0 || txt.indexOf('eff') === 0 || txt === '0') return 'Studio / Efficiency';
+      // Pattern: "1x1", "1/1", "1br", "1x1.5" etc
+      var m = txt.match(/(\d+)\s*(?:x|\/|br|bd|bed|bath)?\s*(\d*)/);
+      if (m) {
+        var beds = parseInt(m[1]);
+        if (beds === 1) return '1 Bedroom / 1 Bath';
+        if (beds === 2) return '2 Bedroom / 2 Bath';
+        if (beds === 3) return '3 Bedroom';
+        if (beds === 4) return '4 Bedroom';
+        if (beds >= 5) return beds + ' Bedroom';
+      }
+      // Try name patterns
+      if (txt.indexOf('1br') >= 0 || txt.indexOf('1x1') >= 0 || txt.indexOf('1/1') >= 0) return '1 Bedroom / 1 Bath';
+      if (txt.indexOf('2br') >= 0 || txt.indexOf('2x2') >= 0 || txt.indexOf('2/2') >= 0) return '2 Bedroom / 2 Bath';
+      if (txt.indexOf('3br') >= 0 || txt.indexOf('3x3') >= 0 || txt.indexOf('3/3') >= 0) return '3 Bedroom';
+      if (txt.indexOf('4br') >= 0 || txt.indexOf('4x4') >= 0 || txt.indexOf('4/4') >= 0) return '4 Bedroom';
+      // Return the name as-is if no pattern matched
+      return fp.name || fp.bedsBaths || 'Unspecified';
+    }
+
+    // ── Build rate comparison HTML grouped by bedroom type ──
     function buildRateCompareHTML(compCards) {
       var sc = subjectCard;
       var allCards = [];
       if (sc) allCards.push(sc);
       allCards = allCards.concat(compCards);
 
-      // Collect all floorplan names across all properties
-      var allFPNames = [];
-      allCards.forEach(function(c) {
+      // Group floorplans by bedroom type across all properties
+      var typeGroups = {}; // bedroomType -> { props: { ci: [rates] } }
+      var typeOrder = ['Studio / Efficiency', '1 Bedroom / 1 Bath', '2 Bedroom / 2 Bath', '3 Bedroom', '4 Bedroom', '5 Bedroom'];
+
+      allCards.forEach(function(c, ci) {
         (c.floorplanDetails || []).forEach(function(fp) {
-          if (fp.name && allFPNames.indexOf(fp.name) < 0) allFPNames.push(fp.name);
+          var bt = extractBedroomType(fp);
+          if (!typeGroups[bt]) typeGroups[bt] = { props: {} };
+          if (!typeGroups[bt].props[ci]) typeGroups[bt].props[ci] = [];
+          typeGroups[bt].props[ci].push({
+            name: fp.name,
+            bedsBaths: fp.bedsBaths,
+            sqft: fp.sqft,
+            rate: fp.rate
+          });
         });
       });
 
-      if (allFPNames.length === 0) return '<p style="color:#9ca3af;">No floorplan data available for rate comparison.</p>';
+      var types = Object.keys(typeGroups);
+      if (types.length === 0) return '<p style="color:#9ca3af;">No floorplan data available for rate comparison.</p>';
+
+      // Sort types by the order array, with unknown types at the end
+      types.sort(function(a, b) {
+        var ia = typeOrder.indexOf(a);
+        var ib = typeOrder.indexOf(b);
+        if (ia >= 0 && ib >= 0) return ia - ib;
+        if (ia >= 0) return -1;
+        if (ib >= 0) return 1;
+        return a.localeCompare(b);
+      });
 
       var html = '<table class="rate-compare-table" style="font-size:12px;">';
-      html += '<thead><tr><th style="min-width:120px;">Floorplan</th>';
+      html += '<thead><tr><th style="min-width:120px;">Floorplan Type</th>';
       allCards.forEach(function(c, i) {
         var cls = i === 0 && sc ? ' rc-our' : '';
-        var name = i === 0 && sc ? (sc.competitorName || 'Our Property') : c.competitorName;
-        html += '<th class="rc-header' + cls + '">' + esc(name) + '</th>';
+        var label = i === 0 && sc ? 'OUR PROPERTY: ' + esc(subjectCard.competitorName || currentProperty) : esc(c.competitorName);
+        html += '<th class="rc-header' + cls + '">' + label + '</th>';
       });
       html += '</tr></thead><tbody>';
 
-      // Group by beds or general
-      var rows = [];
-      allFPNames.forEach(function(name) {
-        var row = { name: name, rates: [] };
-        allCards.forEach(function(c) {
-          var fp = (c.floorplanDetails || []).find(function(f) { return f.name === name; });
-          row.rates.push(fp ? fp.rate : '');
-        });
-        rows.push(row);
-      });
+      // Starting rate summary row
+      html += '<tr class="rc-section"><td colspan="' + (allCards.length + 1) + '">Starting Rates by Bedroom Type</td></tr>';
 
-      // Find min/max for each row to highlight
-      rows.forEach(function(row) {
-        var rates = row.rates.filter(function(r) { return r; });
-        if (rates.length < 2) return;
-        var nums = rates.map(function(r) {
-          var cleaned = r.replace(/[^0-9.]/g, '');
-          return parseFloat(cleaned) || 0;
-        });
-        if (nums.length < 2) return;
-        var min = Math.min.apply(null, nums);
-        var max = Math.max.apply(null, nums);
-        row.minVal = min;
-        row.maxVal = max;
-      });
+      types.forEach(function(bt) {
+        var grp = typeGroups[bt];
+        var rowRates = [];
+        var rowDetails = [];
 
-      rows.forEach(function(row) {
-        html += '<tr><td class="rc-fp-name">' + esc(row.name) + '</td>';
-        row.rates.forEach(function(rate, ci) {
+        allCards.forEach(function(c, ci) {
+          var fps = grp.props[ci] || [];
+          if (fps.length === 0) {
+            rowRates.push('');
+            rowDetails.push('');
+            return;
+          }
+          // Find minimum rate for this type
+          var minRate = null;
+          var minFP = null;
+          fps.forEach(function(fp) {
+            var cleaned = parseFloat((fp.rate || '').replace(/[^0-9.]/g, '')) || 0;
+            if (cleaned > 0 && (minRate === null || cleaned < minRate)) {
+              minRate = cleaned;
+              minFP = fp;
+            }
+          });
+          if (minFP) {
+            rowRates.push(minFP.rate);
+            var detail = '';
+            if (minFP.name) detail += minFP.name;
+            if (minFP.sqft) detail += (detail ? ' | ' : '') + minFP.sqft + ' sqft';
+            rowDetails.push(detail);
+          } else {
+            rowRates.push(fps[0].rate || '');
+            rowDetails.push(fps[0].name || '');
+          }
+        });
+
+        // Only show if at least one property has data for this type
+        var hasData = rowRates.some(function(r) { return r; });
+        if (!hasData) return;
+
+        // Find min/max for highlighting
+        var nums = rowRates.map(function(r) {
+          if (!r) return 0;
+          return parseFloat(r.replace(/[^0-9.]/g, '')) || 0;
+        });
+        var min = Math.min.apply(null, nums.filter(function(n) { return n > 0; }));
+        var max = Math.max.apply(null, nums.filter(function(n) { return n > 0; }));
+        var hasMultiple = nums.filter(function(n) { return n > 0; }).length > 1;
+
+        html += '<tr><td class="rc-fp-name">' + esc(bt) + '</td>';
+        rowRates.forEach(function(rate, ci) {
           if (!rate) {
             html += '<td class="rc-empty">--</td>';
             return;
           }
           var cls = 'rc-rate';
           var cleaned = parseFloat(rate.replace(/[^0-9.]/g, '')) || 0;
-          if (row.minVal !== undefined && cleaned === row.minVal) cls += ' rc-lowest';
-          else if (row.maxVal !== undefined && cleaned === row.maxVal) cls += ' rc-highest';
+          if (hasMultiple && cleaned === min) cls += ' rc-lowest';
+          else if (hasMultiple && cleaned === max) cls += ' rc-highest';
           html += '<td class="' + cls + '">' + esc(rate) + '</td>';
         });
         html += '</tr>';
+
+        // Detail sub-row with specific floorplan names
+        var hasAnyDetail = rowDetails.some(function(d) { return d; });
+        if (hasAnyDetail) {
+          html += '<tr style="font-size:11px;color:#9ca3af;"><td style="padding-left:20px;">Specific plans</td>';
+          rowDetails.forEach(function(detail) {
+            html += '<td>' + (detail ? esc(detail) : '<span style="color:#d1d5db;">--</span>') + '</td>';
+          });
+          html += '</tr>';
+        }
       });
 
       html += '</tbody></table>';
       return html;
     }
 
-    // ── Build amenity cart HTML ──
+    // ── Build amenity cart HTML with grouped, cross-property comparison ──
     function buildAmenityCartHTML(compCards) {
       var sc = subjectCard;
       var allCards = [];
       if (sc) allCards.push(sc);
       allCards = allCards.concat(compCards);
 
-      // Collect all unique amenities
-      var allAmenities = [];
-      var amenityMap = {};
+      // Collect all unique amenities across all properties
+      var rawAmenityMap = {}; // index -> array of raw items for each property
       allCards.forEach(function(c, ci) {
         var items = parseAmenities(c.topAmenities);
-        amenityMap[ci] = items;
-        items.forEach(function(a) {
-          var aLower = a.toLowerCase();
-          if (allAmenities.indexOf(aLower) < 0) allAmenities.push(aLower);
-        });
+        rawAmenityMap[ci] = items;
       });
 
-      if (allAmenities.length === 0) return '<p style="color:#9ca3af;">No amenity data available. Add amenities to the Top Amenities field in each card.</p>';
-
-      // Categorize amenities
-      var categories = {
-        'Fitness & Recreation': ['gym', 'fitness', 'pool', 'swimming', 'yoga', 'basketball', 'tennis', 'sports', 'rec room', 'game room', 'bocce', 'putting green', 'sauna', 'steam room', 'spa', 'hot tub', 'clubhouse'],
-        'Study & Work': ['study', 'library', 'computer lab', 'business center', 'conference', 'coworking', 'printing', 'tech', 'wifi', 'internet'],
-        'Social & Lounge': ['lounge', 'coffee', 'bar', 'rooftop', 'courtyard', 'fire pit', 'grill', 'bbq', 'patio', 'balcony', 'terrace', 'garden', 'clubroom', 'theater', 'media room'],
-        'Parking & Transportation': ['parking', 'garage', 'shuttle', 'bike', 'storage', 'transit', 'bus', 'ev charging', 'carport'],
-        'Pet & Lifestyle': ['pet', 'dog', 'cat', 'pet spa', 'pet wash', 'bark', 'laundry', 'valet', 'package', 'locker', 'concierge', 'mail'],
-        'Security & Access': ['security', 'gated', 'gate', 'controlled access', 'key', 'camera', 'alarm', 'lighting', 'safe'],
-        'Kitchen & Living': ['kitchen', 'stainless', 'granite', 'quartz', 'hardwood', 'carpet', 'washer', 'dryer', 'dishwasher', 'microwave', 'disposal', 'ac', 'air conditioning', 'balcony', 'walk-in closet', 'storage']
+      // Normalize amenities: map a standard name -> array of known variants
+      var AMENITY_GROUPS = {
+        'Pool': ['pool', 'swimming pool', 'swimming', 'lap pool', 'resort pool', 'saltwater pool', 'heated pool', 'indoor pool'],
+        'Fitness Center': ['gym', 'fitness center', 'fitness', 'fitness room', 'weight room', 'workout', 'exercise room', 'health club', 'training'],
+        'Yoga / Studio': ['yoga', 'pilates', 'studio', 'barre', 'stretch', 'meditation'],
+        'Basketball Court': ['basketball', 'half court', 'full court'],
+        'Tennis Court': ['tennis', 'pickleball', 'racquetball', 'squash'],
+        'Game / Rec Room': ['game room', 'rec room', 'billiards', 'pool table', 'foosball', 'ping pong', 'arcade', 'esports'],
+        'Sports Field': ['sports', 'field', 'soccer', 'volleyball', 'football', 'lawn games'],
+        'Study Lounge': ['study', 'study lounge', 'study room', 'quiet study', 'study area', 'library', 'reading room'],
+        'Computer Lab': ['computer lab', 'computer', 'tech lab', 'printing station'],
+        'Business Center': ['business center', 'conference room', 'conference', 'meeting room', 'coworking', 'board room', 'work lounge'],
+        'WiFi / Internet': ['wifi', 'wi-fi', 'internet', 'wireless', 'broadband', 'high-speed'],
+        'Lounge': ['lounge', 'resident lounge', 'club room', 'clubroom', 'great room', 'community room', 'social lounge', 'living room', 'common area'],
+        'Coffee Bar': ['coffee', 'coffee bar', 'cafe', 'espresso', 'coffee lounge', 'break bar'],
+        'Rooftop / Deck': ['rooftop', 'roof deck', 'sky deck', 'observation deck', 'skyline', 'sundeck', 'sun deck'],
+        'Courtyard': ['courtyard', 'plaza', 'quad', 'inner courtyard'],
+        'Fire Pit': ['fire pit', 'fireplace', 'fire table', 'outdoor fireplace', 'bonfire'],
+        'Grill / BBQ': ['grill', 'bbq', 'barbecue', 'grilling station', 'outdoor kitchen', 'grill area', 'charcoal'],
+        'Patio / Balcony': ['patio', 'private patio', 'private balcony', 'screened porch', 'lanai', 'outdoor seating', 'terrace'],
+        'Garden / Green Space': ['garden', 'green space', 'park', 'green area', 'community garden', 'organic garden', 'lawn', 'landscaped'],
+        'Theater / Media Room': ['theater', 'movie theater', 'media room', 'home theater', 'cinema', 'movie room', 'screening room', 'tv lounge'],
+        'Parking Garage': ['parking garage', 'garage parking', 'garage', 'covered parking', 'structured parking', 'car garage'],
+        'Surface Parking': ['parking lot', 'surface parking', 'uncovered parking', 'parking'],
+        'Bike Storage': ['bike storage', 'bike room', 'bicycle storage', 'bike rack', 'bicycle rack', 'bike repair'],
+        'Shuttle / Transit': ['shuttle', 'bus', 'transit', 'transportation', 'campus shuttle', 'town shuttle'],
+        'EV Charging': ['ev charging', 'electric vehicle', 'ev charger', 'charging station', 'tesla charger'],
+        'Storage': ['storage', 'extra storage', 'storage unit', 'storage space', 'personal storage', 'locker storage', 'package concierge'],
+        'Pet Friendly': ['pet friendly', 'pet', 'dog friendly', 'cat friendly', 'pets welcome', 'pet policy'],
+        'Pet Spa / Wash': ['pet spa', 'pet wash', 'dog wash', 'pet grooming', 'bathing station'],
+        'Dog Park': ['dog park', 'bark park', 'dog run', 'pet park', 'dog area'],
+        'Laundry': ['laundry', 'laundry room', 'washer dryer', 'washer/dryer', 'on-site laundry', 'laundry facility', 'laundry center'],
+        'Package Locker': ['package locker', 'package room', 'parcel pending', 'package receiving', 'amazon hub', 'package concierge', 'lockers'],
+        'Concierge': ['concierge', 'front desk', 'door staff', 'attendant'],
+        'Controlled Access': ['controlled access', 'gated', 'gate', 'security gate', 'key fob', 'keyless entry', 'key card', 'fob entry', 'access control'],
+        'Security System': ['security', 'security system', 'camera', 'surveillance', 'alarm', 'security patrol', 'security camera', 'video monitoring', 'lighting'],
+        'On-Site Maintenance': ['maintenance', 'on-site maintenance', 'maintenance team', 'repair service', 'handyman'],
+        'Furnished': ['furnished', 'fully furnished', 'furniture', 'furnished rooms'],
+        'Air Conditioning': ['ac', 'air conditioning', 'a/c', 'central air', 'hvac', 'cooling', 'climate control'],
+        'Dishwasher': ['dishwasher', 'dish washer'],
+        'Washer / Dryer': ['washer', 'dryer', 'washer/dryer', 'washer & dryer', 'in-unit laundry', 'in unit washer', 'w/d'],
+        'Microwave': ['microwave'],
+        'Hardwood Floors': ['hardwood', 'hardwood floor', 'hardwood flooring', 'wood floor', 'laminate'],
+        'Carpet': ['carpet', 'carpeting', 'carpeted'],
+        'Granite / Quartz': ['granite', 'quartz', 'stone countertop', 'countertop', 'marble'],
+        'Stainless Steel': ['stainless', 'stainless steel', 'stainless appliance'],
+        'Walk-In Closet': ['walk-in closet', 'walk in closet', 'large closet'],
+        'Private Bathroom': ['private bath', 'private bathroom', 'ensuite', 'in-room bath', 'private bath'],
+        'Furnished Rooms': ['furnished room', 'furnished bedroom', 'furnished', 'fully furnished'],
+        'Rooftop': ['rooftop', 'sky deck']
       };
       var defaultCat = 'Other Amenities';
 
-      var allCategories = Object.keys(categories);
-      var catMap = {};
-      allAmenities.forEach(function(a) {
-        var found = false;
-        for (var ci = 0; ci < allCategories.length; ci++) {
-          var cat = allCategories[ci];
-          var keywords = categories[cat];
-          for (var ki = 0; ki < keywords.length; ki++) {
-            if (a.indexOf(keywords[ki]) >= 0) {
-              if (!catMap[cat]) catMap[cat] = [];
-              catMap[cat].push(a);
-              found = true;
-              break;
-            }
-          }
-          if (found) break;
-        }
-        if (!found) {
-          if (!catMap[defaultCat]) catMap[defaultCat] = [];
-          catMap[defaultCat].push(a);
-        }
+      // Build a map of standard name -> category
+      var stdToCat = {};
+      var catKeys = Object.keys(categoriesAlias);
+      // We need a flat list of all standard names and their categories
+      // Actually let's build it inline
+      var categoriesAlias = {
+        'Fitness & Recreation': ['Pool', 'Fitness Center', 'Yoga / Studio', 'Basketball Court', 'Tennis Court', 'Game / Rec Room', 'Sports Field'],
+        'Study & Work': ['Study Lounge', 'Computer Lab', 'Business Center', 'WiFi / Internet'],
+        'Social & Lounge': ['Lounge', 'Coffee Bar', 'Rooftop / Deck', 'Courtyard', 'Fire Pit', 'Grill / BBQ', 'Patio / Balcony', 'Garden / Green Space', 'Theater / Media Room', 'Rooftop'],
+        'Parking & Transportation': ['Parking Garage', 'Surface Parking', 'Bike Storage', 'Shuttle / Transit', 'EV Charging', 'Storage'],
+        'Pet & Lifestyle': ['Pet Friendly', 'Pet Spa / Wash', 'Dog Park', 'Laundry', 'Package Locker', 'Concierge'],
+        'Security & Access': ['Controlled Access', 'Security System', 'On-Site Maintenance'],
+        'Kitchen & Living': ['Furnished', 'Air Conditioning', 'Dishwasher', 'Washer / Dryer', 'Microwave', 'Hardwood Floors', 'Carpet', 'Granite / Quartz', 'Stainless Steel', 'Walk-In Closet', 'Private Bathroom', 'Furnished Rooms']
+      };
+
+      // Reverse-map: standard amenity name -> category
+      var stdNameToCat = {};
+      Object.keys(categoriesAlias).forEach(function(cat) {
+        categoriesAlias[cat].forEach(function(stdName) {
+          stdNameToCat[stdName] = cat;
+        });
       });
 
+      // For each property, determine which standard amenities are present
+      var propAmenities = {}; // ci -> [stdName, ...]
+      allCards.forEach(function(c, ci) {
+        var items = rawAmenityMap[ci] || [];
+        var found = {};
+        items.forEach(function(item) {
+          var itemLower = item.toLowerCase();
+          Object.keys(AMENITY_GROUPS).forEach(function(stdName) {
+            var variants = AMENITY_GROUPS[stdName];
+            variants.forEach(function(variant) {
+              if (itemLower.indexOf(variant) >= 0 || variant.indexOf(itemLower) >= 0) {
+                found[stdName] = true;
+              }
+            });
+          });
+        });
+        propAmenities[ci] = Object.keys(found);
+      });
+
+      // Collect all unique standard amenities
+      var allStd = [];
+      Object.keys(propAmenities).forEach(function(ci) {
+        propAmenities[ci].forEach(function(stdName) {
+          if (allStd.indexOf(stdName) < 0) allStd.push(stdName);
+        });
+      });
+
+      if (allStd.length === 0) {
+        // Fallback: just list raw amenities
+        allCards.forEach(function(c, ci) {
+          (rawAmenityMap[ci] || []).forEach(function(item) {
+            var lower = item.toLowerCase();
+            if (allStd.indexOf(lower) < 0) allStd.push(lower);
+          });
+        });
+        if (allStd.length === 0) return '<p style="color:#9ca3af;">No amenity data available. Add amenities to the Top Amenities field in each card.</p>';
+        // Use raw mode
+        return buildRawAmenityCart(allCards, rawAmenityMap, allStd, sc);
+      }
+
+      // Sort standard amenities by category
+      var catSorted = {};
+      allStd.forEach(function(stdName) {
+        var cat = stdNameToCat[stdName] || defaultCat;
+        if (!catSorted[cat]) catSorted[cat] = [];
+        if (catSorted[cat].indexOf(stdName) < 0) catSorted[cat].push(stdName);
+      });
+
+      // Build table
       var html = '<table class="amenity-cart-table" style="font-size:12px;">';
       html += '<thead><tr><th style="min-width:120px;">Amenity</th>';
       allCards.forEach(function(c, i) {
         var cls = i === 0 && sc ? ' ac-our' : '';
-        var name = i === 0 && sc ? (sc.competitorName || 'Our Property') : c.competitorName;
-        html += '<th class="ac-header' + cls + '">' + esc(name) + '</th>';
+        var label = i === 0 && sc ? 'OUR PROPERTY: ' + esc(subjectCard.competitorName || currentProperty) : esc(c.competitorName);
+        html += '<th class="ac-header' + cls + '">' + label + '</th>';
       });
       html += '</tr></thead><tbody>';
 
-      var catKeys = Object.keys(catMap);
-      catKeys.forEach(function(cat) {
+      var catOrder = Object.keys(categoriesAlias);
+      // Add defaultCat at the end
+      var allCats = catOrder.concat([defaultCat]);
+
+      allCats.forEach(function(cat) {
+        var items = catSorted[cat];
+        if (!items || items.length === 0) return;
         html += '<tr class="ac-category"><td colspan="' + (allCards.length + 1) + '">' + esc(cat) + '</td></tr>';
-        catMap[cat].forEach(function(amenity) {
-          html += '<tr><td class="ac-amenity-name">' + esc(amenity.charAt(0).toUpperCase() + amenity.slice(1)) + '</td>';
+        items.forEach(function(stdName) {
+          html += '<tr><td class="ac-amenity-name">' + esc(stdName) + '</td>';
           allCards.forEach(function(c, ci) {
-            var items = amenityMap[ci] || [];
-            var found = items.some(function(item) { return item.toLowerCase().indexOf(amenity) >= 0 || amenity.indexOf(item.toLowerCase()) >= 0; });
-            html += '<td>' + (found ? '<span class="ac-present">' + icon('check') + ' Yes</span>' : '<span class="ac-missing">--</span>') + '</td>';
+            var present = (propAmenities[ci] || []).indexOf(stdName) >= 0;
+            html += '<td>' + (present ? '<span class="ac-present">' + icon('check') + ' Yes</span>' : '<span class="ac-missing">--</span>') + '</td>';
           });
           html += '</tr>';
         });
@@ -2033,13 +2231,47 @@
 
       // Summary row
       html += '<tr class="ac-category"><td colspan="' + (allCards.length + 1) + '">Total Amenities</td></tr>';
-      html += '<tr><td class="ac-amenity-name">Count</td>';
+      html += '<tr><td class="ac-amenity-name">Amenity Count</td>';
       allCards.forEach(function(c, ci) {
-        var items = amenityMap[ci] || [];
-        html += '<td style="font-weight:700;color:var(--card-navy);">' + items.length + '</td>';
+        var count = (propAmenities[ci] || []).length;
+        if (count === 0) {
+          count = (rawAmenityMap[ci] || []).length;
+        }
+        html += '<td style="font-weight:700;color:var(--card-navy);font-size:18px;text-align:center;">' + count + '</td>';
       });
       html += '</tr>';
 
+      html += '</tbody></table>';
+      return html;
+    }
+
+    // ── Fallback raw amenity cart ──
+    function buildRawAmenityCart(allCards, rawMap, allStd, sc) {
+      var html = '<table class="amenity-cart-table" style="font-size:12px;">';
+      html += '<thead><tr><th style="min-width:120px;">Amenity</th>';
+      allCards.forEach(function(c, i) {
+        var cls = i === 0 && sc ? ' ac-our' : '';
+        var label = i === 0 && sc ? 'OUR PROPERTY: ' + esc(subjectCard.competitorName || currentProperty) : esc(c.competitorName);
+        html += '<th class="ac-header' + cls + '">' + label + '</th>';
+      });
+      html += '</tr></thead><tbody>';
+
+      allStd.forEach(function(amenityLower) {
+        html += '<tr><td class="ac-amenity-name">' + esc(amenityLower.charAt(0).toUpperCase() + amenityLower.slice(1)) + '</td>';
+        allCards.forEach(function(c, ci) {
+          var items = rawMap[ci] || [];
+          var found = items.some(function(item) { return item.toLowerCase().indexOf(amenityLower) >= 0 || amenityLower.indexOf(item.toLowerCase()) >= 0; });
+          html += '<td>' + (found ? '<span class="ac-present">' + icon('check') + ' Yes</span>' : '<span class="ac-missing">--</span>') + '</td>';
+        });
+        html += '</tr>';
+      });
+
+      html += '<tr class="ac-category"><td colspan="' + (allCards.length + 1) + '">Total Amenities</td></tr>';
+      html += '<tr><td class="ac-amenity-name">Count</td>';
+      allCards.forEach(function(c, ci) {
+        html += '<td style="font-weight:700;color:var(--card-navy);font-size:18px;text-align:center;">' + (rawMap[ci] || []).length + '</td>';
+      });
+      html += '</tr>';
       html += '</tbody></table>';
       return html;
     }
@@ -2069,7 +2301,7 @@
 
       els.mainContent.innerHTML =
         '<div class="compare-bar">' +
-          '<div class="compare-info">' + icon('compare') + ' Rate Comparison: ' + compCards.length + ' competitors</div>' +
+          '<div class="compare-info">' + icon('compare') + ' <span style="background:var(--brand-accent-2);color:#1e293b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:2px 6px;border-radius:4px;font-size:11px;">OUR PROPERTY</span> ' + esc(currentProperty) + ' vs ' + compCards.length + ' competitors</div>' +
           '<div class="compare-actions">' +
             '<span style="font-size:11px;opacity:0.8;"><span style="background:#ecfdf5;padding:2px 6px;border-radius:4px;margin-right:4px;">Lowest</span> <span style="background:#fef2f2;padding:2px 6px;border-radius:4px;">Highest</span></span>' +
           '</div>' +
@@ -2077,7 +2309,7 @@
         '<div class="rate-compare-wrap">' + buildRateCompareHTML(compCards) + '</div>';
 
       if (subjectCard) {
-        var note = '<p style="font-size:12px;color:#9ca3af;margin-top:8px;">' + icon('building') + ' ' + esc(subjectCard.competitorName || currentProperty) + ' included as Our Property in the comparison.</p>';
+        var note = '<div style="margin-top:8px;padding:8px 14px;background:#f0faff;border-radius:8px;border:1px solid var(--brand-accent-2);display:flex;align-items:center;gap:8px;font-size:12px;color:#1e293b;"><span style="background:var(--brand-accent-2);color:#1e293b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:2px 8px;border-radius:4px;font-size:10px;">OUR PROPERTY</span> <span style="font-weight:600;">' + esc(subjectCard.competitorName || currentProperty) + '</span> included in the <strong>blue-highlighted column</strong>.</div>';
         els.mainContent.innerHTML += note;
       }
     }
@@ -2107,7 +2339,7 @@
 
       els.mainContent.innerHTML =
         '<div class="amenity-cart-bar">' +
-          '<div class="ac-info">' + icon('check') + ' Amenity Cart: ' + compCards.length + ' competitors compared</div>' +
+          '<div class="ac-info">' + icon('check') + ' <span style="background:var(--brand-accent-2);color:#1e293b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:2px 6px;border-radius:4px;font-size:11px;">OUR PROPERTY</span> ' + esc(currentProperty) + ' vs ' + compCards.length + ' competitors</div>' +
           '<div class="ac-actions">' +
             '<span style="font-size:11px;opacity:0.8;"><span style="background:#ecfdf5;padding:2px 6px;border-radius:4px;margin-right:4px;color:#059669;">Present</span></span>' +
           '</div>' +
@@ -2115,7 +2347,7 @@
         '<div class="amenity-cart-wrap">' + buildAmenityCartHTML(compCards) + '</div>';
 
       if (subjectCard) {
-        var note = '<p style="font-size:12px;color:#9ca3af;margin-top:8px;">' + icon('building') + ' ' + esc(subjectCard.competitorName || currentProperty) + ' included as Our Property.</p>';
+        var note = '<div style="margin-top:8px;padding:8px 14px;background:#f0faff;border-radius:8px;border:1px solid var(--brand-accent-2);display:flex;align-items:center;gap:8px;font-size:12px;color:#1e293b;"><span style="background:var(--brand-accent-2);color:#1e293b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:2px 8px;border-radius:4px;font-size:10px;">OUR PROPERTY</span> <span style="font-weight:600;">' + esc(subjectCard.competitorName || currentProperty) + '</span> included in the <strong>blue-highlighted column</strong>.</div>';
         els.mainContent.innerHTML += note;
       }
     }
