@@ -57,7 +57,7 @@
     .page-toolbar .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
     /* Buttons */
-    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; border: 1px solid transparent; font-size: 13px; font-weight: 600; cursor: pointer; font-family: Roboto, Arial, sans-serif; transition: all 0.15s; text-decoration: none; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; border: 1px solid transparent; font-size: 13px; font-weight: 600; cursor: pointer; font-family: Roboto, Arial, sans-serif; transition: all 0.15s; text-decoration: none; color: var(--text); background: #f3f4f6; }
     .btn-primary { background: var(--brand-primary); color: #fff; border-color: var(--brand-primary); }
     .btn-primary:hover { background: var(--card-navy-dark); }
     .btn-success { background: #059669; color: #fff; }
@@ -116,13 +116,14 @@
     .card-thumb .thumb-actions button.archive-btn { margin-left: auto; }
     .card-thumb .thumb-actions button.archive-btn:hover { color: #dc2626; background: #fef2f2; }
     /* Compare checkbox on card */
-    .card-thumb .compare-check { position: absolute; bottom: 58px; right: 14px; z-index: 2; }
-    .card-thumb .compare-check label { font-size: 11px; color: var(--subtext); display: flex; align-items: center; gap: 4px; cursor: pointer; background: #fff; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border); }
-    .card-thumb .compare-check input { accent-color: var(--brand-accent-2); }
-    /* Report checkbox on card */
-    .card-thumb .report-check { position: absolute; bottom: 58px; left: 14px; z-index: 2; }
+    /* Report checkbox on card - stacked on top */
+    .card-thumb .report-check { position: absolute; bottom: 86px; left: 14px; z-index: 2; }
     .card-thumb .report-check label { font-size: 11px; color: var(--subtext); display: flex; align-items: center; gap: 4px; cursor: pointer; background: #fff; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border); }
     .card-thumb .report-check input { accent-color: var(--brand-primary); }
+    /* Compare checkbox on card - stacked below report */
+    .card-thumb .compare-check { position: absolute; bottom: 58px; left: 14px; z-index: 2; }
+    .card-thumb .compare-check label { font-size: 11px; color: var(--subtext); display: flex; align-items: center; gap: 4px; cursor: pointer; background: #fff; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border); }
+    .card-thumb .compare-check input { accent-color: var(--brand-accent-2); }
 
     /* Badges */
     .badge { display: inline-flex; align-items: center; padding: 2px 10px; font-size: 11px; font-weight: 600; border-radius: 999px; border: 1px solid; white-space: nowrap; }
@@ -317,9 +318,9 @@
     .viewer-wrap { max-width: 900px; margin: 0 auto; }
 
     /* Comparison View */
-    .compare-bar { background: var(--brand-primary); color: #fff; padding: 10px 16px; border-radius: 10px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-    .compare-bar .compare-info { font-size: 13px; font-weight: 600; }
-    .compare-bar .compare-actions { display: flex; gap: 8px; }
+    .compare-bar { background: var(--brand-primary); color: #fff; padding: 12px 16px; border-radius: 10px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+    .compare-bar .compare-info { font-size: 13px; font-weight: 600; flex: 1; min-width: 250px; }
+    .compare-bar .compare-actions { display: flex; gap: 8px; flex-shrink: 0; align-items: flex-end; }
     .compare-table-wrap { overflow-x: auto; background: #fff; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
     .compare-table { width: 100%; border-collapse: collapse; font-size: 13px; }
     .compare-table th, .compare-table td { padding: 10px 14px; text-align: left; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
@@ -2815,17 +2816,23 @@
 
       els.mainContent.innerHTML =
         '<div class="compare-bar">' +
-          '<div class="compare-info">' + icon('compare') + ' <span style="background:var(--brand-accent-2);color:#1e293b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:2px 6px;border-radius:4px;font-size:11px;">OUR PROPERTY</span> ' + esc(currentProperty) + ' vs ' + compCards.length + ' competitors</div>' +
-          '<div class="compare-actions" style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;">' +
-            '<span style="font-size:11px;opacity:0.8;"><span style="background:#ecfdf5;padding:2px 6px;border-radius:4px;margin-right:4px;">Lowest</span> <span style="background:#fef2f2;padding:2px 6px;border-radius:4px;">Highest</span></span>' +
-            '<span style="font-size:11px;opacity:0.9;"><span style="background:#fef2f2;color:#dc2626;padding:2px 6px;border-radius:4px;margin-right:4px;font-weight:600;">↑ We\'re Higher</span> <span style="background:#ecfdf5;color:#059669;padding:2px 6px;border-radius:4px;font-weight:600;">↓ We\'re Lower</span></span>' +
+          '<div class="compare-info">' + icon('compare') + ' <span style="background:var(--brand-accent-2);color:#1e293b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:3px 8px;border-radius:4px;font-size:11px;">OUR PROPERTY</span> <span style="margin-left:4px;">' + esc(currentProperty) + ' vs ' + compCards.length + ' competitors</span></div>' +
+          '<div class="compare-actions" style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">' +
+            '<div style="display:flex;gap:6px;font-size:11px;opacity:0.85;white-space:nowrap;">' +
+              '<span style="background:#ecfdf5;color:#065f46;padding:3px 8px;border-radius:4px;font-weight:500;">Lowest</span>' +
+              '<span style="background:#fef2f2;color:#991b1b;padding:3px 8px;border-radius:4px;font-weight:500;">Highest</span>' +
+            '</div>' +
+            '<div style="display:flex;gap:6px;font-size:11px;white-space:nowrap;">' +
+              '<span style="background:#fef2f2;color:#dc2626;padding:3px 8px;border-radius:4px;font-weight:600;">↑ We\'re Higher</span>' +
+              '<span style="background:#ecfdf5;color:#059669;padding:3px 8px;border-radius:4px;font-weight:600;">↓ We\'re Lower</span>' +
+            '</div>' +
           '</div>' +
         '</div>' +
         warningMessage +
         '<div class="rate-compare-wrap">' + buildRateCompareHTML(compCards) + '</div>';
 
       if (subjectCard) {
-        var note = '<div style="margin-top:8px;padding:8px 14px;background:#f0faff;border-radius:8px;border:1px solid var(--brand-accent-2);display:flex;align-items:center;gap:8px;font-size:12px;color:#1e293b;"><span style="background:var(--brand-accent-2);color:#1e293b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:2px 8px;border-radius:4px;font-size:10px;">OUR PROPERTY</span> <span style="font-weight:600;">' + esc(subjectCard.competitorName || currentProperty) + '</span> included in the <strong>blue-highlighted column</strong>.</div>';
+        var note = '<div style="margin-top:8px;padding:10px 16px;background:#f0faff;border-radius:8px;border:1px solid var(--brand-accent-2);display:flex;align-items:center;gap:8px;font-size:13px;color:#1e293b;"><span style="background:var(--brand-accent-2);color:#1e293b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:3px 8px;border-radius:4px;font-size:10px;">OUR PROPERTY</span> <span style="font-weight:600;">' + esc(subjectCard.competitorName || currentProperty) + '</span> included in the <strong>blue-highlighted column</strong>.</div>';
         els.mainContent.innerHTML += note;
       }
     }
