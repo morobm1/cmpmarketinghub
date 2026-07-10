@@ -387,6 +387,16 @@
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 12px !important;
       }
+      
+      /* Hide amenity cart edit instructions when printing */
+      .amenity-cart-table + div[style*="background:#f0f9ff"] {
+        display: none !important;
+      }
+      
+      /* Remove click indicators when printing */
+      .ac-editable:hover::after {
+        display: none !important;
+      }
     }
 
     /* Subject Property Card */
@@ -461,6 +471,11 @@
     .amenity-cart-table .ac-present { color: #059669; font-weight: 600; }
     .amenity-cart-table .ac-missing { color: #d1d5db; }
     .amenity-cart-table .ac-amenity-name { font-weight: 500; color: #475569; }
+    .amenity-cart-table .ac-editable { cursor: pointer; transition: background 0.15s; position: relative; }
+    .amenity-cart-table .ac-editable:hover { background: #f0faff; }
+    .amenity-cart-table .ac-editable:hover::after { content: 'Click to toggle'; position: absolute; bottom: 2px; right: 4px; font-size: 8px; color: #0284c7; font-weight: 500; }
+    .amenity-cart-table .ac-manually-added { background: #dbeafe; }
+    .amenity-cart-table .ac-manually-removed { background: #fef2f2; }
     /* Report preview */
     .report-preview-section { background: #fff; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 20px; page-break-inside: avoid; }
     .report-preview-section .rps-title { padding: 14px 20px; background: var(--card-navy); color: #fff; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -567,6 +582,7 @@
     var compareSelected = {}; // id -> true
     var reportSelected = {}; // id -> true (cards to include in report)
     var reportSections = { 'subjectCard': true, 'competitorCards': true, 'rateComparison': true, 'amenityCart': true, 'comparisonTable': true };
+    var amenityOverrides = {}; // Manual amenity overrides: { cardIndex_amenityName: true/false }
 
     // ── DOM refs ──
     var els = {
@@ -2145,7 +2161,7 @@
         deckHTML += '<div class="report-preview-section">';
         deckHTML += '<div class="rps-title" style="background:var(--card-navy);color:#fff;">' + icon('check') + ' Amenity Cart</div>';
         try {
-          deckHTML += '<div class="rps-body"><div style="max-width:100%;overflow-x:auto;">' + buildAmenityCartHTML(reportCards) + '</div></div>';
+          deckHTML += '<div class="rps-body"><div style="max-width:100%;overflow-x:auto;">' + buildAmenityCartHTML(reportCards, true) + '</div></div>';
         } catch (e) {
           console.error('Amenity Cart Error:', e);
           deckHTML += '<div class="rps-body"><p style="color:#dc2626;padding:20px;">Amenity cart could not be generated. Error: ' + e.message + '</p></div>';
@@ -2155,6 +2171,13 @@
 
       deckHTML += '</div>';
       els.mainContent.innerHTML = deckHTML;
+      
+      // Attach amenity cart edit handlers if in editable mode
+      if (reportSections.amenityCart && reportCards.length > 0) {
+        setTimeout(function() {
+          attachAmenityCartHandlers(reportCards);
+        }, 100);
+      }
     }
 
     // ── Export to Excel ──
@@ -2688,7 +2711,8 @@
       html += '</tbody></table>';
       return html;
     }    // ── Build amenity cart HTML with grouped, cross-property comparison ──
-    function buildAmenityCartHTML(compCards) {
+    function buildAmenityCartHTML(compCards, editable) {
+      if (typeof editable === 'undefined') editable = false;
       try {
         console.log('buildAmenityCartHTML called with', compCards);
         
@@ -2920,8 +2944,24 @@
           items.forEach(function(stdName) {
             html += '<tr><td class="ac-amenity-name">' + esc(stdName) + '</td>';
             allCards.forEach(function(c, ci) {
-              var present = (propAmenities[ci] || []).indexOf(stdName) >= 0;
-              html += '<td>' + (present ? '<span class="ac-present">' + icon('check') + ' Yes</span>' : '<span class="ac-missing">--</span>') + '</td>';
+              var autoDetected = (propAmenities[ci] || []).indexOf(stdName) >= 0;
+              var overrideKey = ci + '_' + stdName;
+              var present = autoDetected;
+              var manualClass = '';
+              
+              // Check for manual override
+              if (amenityOverrides.hasOwnProperty(overrideKey)) {
+                present = amenityOverrides[overrideKey];
+                if (present && !autoDetected) manualClass = ' ac-manually-added';
+                else if (!present && autoDetected) manualClass = ' ac-manually-removed';
+              }
+              
+              var cellClass = editable ? 'ac-editable' + manualClass : manualClass;
+              var dataAttrs = editable ? ' data-card-idx="' + ci + '" data-amenity="' + esc(stdName) + '" data-override-key="' + overrideKey + '"' : '';
+              
+              html += '<td class="' + cellClass + '"' + dataAttrs + '>' + 
+                      (present ? '<span class="ac-present">' + icon('check') + ' Yes</span>' : '<span class="ac-missing">--</span>') + 
+                      '</td>';
             });
             html += '</tr>';
           });
@@ -2934,7 +2974,21 @@
       html += '<tr class="ac-category"><td colspan="' + (allCards.length + 1) + '">Total Amenities</td></tr>';
       html += '<tr><td class="ac-amenity-name">Amenity Count</td>';
       allCards.forEach(function(c, ci) {
-        var count = (propAmenities[ci] || []).length;
+        // Count amenities including manual overrides
+        var count = 0;
+        allStd.forEach(function(stdName) {
+          var overrideKey = ci + '_' + stdName;
+          var autoDetected = (propAmenities[ci] || []).indexOf(stdName) >= 0;
+          var present = autoDetected;
+          
+          // Check for manual override
+          if (amenityOverrides.hasOwnProperty(overrideKey)) {
+            present = amenityOverrides[overrideKey];
+          }
+          
+          if (present) count++;
+        });
+        
         if (count === 0) {
           count = (rawAmenityMap[ci] || []).length;
         }
@@ -2943,12 +2997,95 @@
       html += '</tr>';
 
       html += '</tbody></table>';
+      
+      // Add instructions if editable
+      if (editable) {
+        html += '<div style="margin-top:12px;padding:12px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;font-size:12px;color:#0c4a6e;">';
+        html += '<strong>Tip:</strong> Click on any cell to manually add or remove an amenity for that property. Blue cells = manually added, Pink cells = manually removed.';
+        html += ' <button id="resetAmenityOverrides" style="margin-left:12px;padding:4px 12px;background:#ef4444;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Reset All Manual Changes</button>';
+        html += '</div>';
+      }
+      
       return html;
       
       } catch (error) {
         console.error('buildAmenityCartHTML: Critical error:', error);
         console.error('Error stack:', error.stack);
         return '<p style="color:#dc2626;padding:20px;"><strong>Error generating amenity cart:</strong> ' + error.message + '</p>';
+      }
+    }
+    
+    // ── Attach amenity cart edit handlers ──
+    function attachAmenityCartHandlers(compCards) {
+      console.log('Attaching amenity cart handlers');
+      var editableCells = document.querySelectorAll('.ac-editable');
+      console.log('Found ' + editableCells.length + ' editable cells');
+      
+      editableCells.forEach(function(cell) {
+        cell.onclick = function() {
+          var overrideKey = cell.getAttribute('data-override-key');
+          var cardIdx = cell.getAttribute('data-card-idx');
+          var amenityName = cell.getAttribute('data-amenity');
+          
+          console.log('Cell clicked:', overrideKey, cardIdx, amenityName);
+          
+          // Toggle the override
+          if (amenityOverrides.hasOwnProperty(overrideKey)) {
+            // Cycle through: override true -> override false -> no override (auto)
+            if (amenityOverrides[overrideKey] === true) {
+              amenityOverrides[overrideKey] = false;
+            } else {
+              delete amenityOverrides[overrideKey];
+            }
+          } else {
+            // Set to opposite of auto-detected
+            var isAutoPresent = cell.querySelector('.ac-present') !== null;
+            amenityOverrides[overrideKey] = !isAutoPresent;
+          }
+          
+          console.log('amenityOverrides updated:', amenityOverrides);
+          
+          // Refresh the amenity cart section
+          refreshAmenityCartInPreview(compCards);
+        };
+      });
+      
+      // Reset button
+      var resetBtn = document.getElementById('resetAmenityOverrides');
+      if (resetBtn) {
+        resetBtn.onclick = function() {
+          if (confirm('Reset all manual amenity changes? This will restore auto-detection.')) {
+            amenityOverrides = {};
+            refreshAmenityCartInPreview(compCards);
+            showToast('Manual amenity changes reset');
+          }
+        };
+      }
+    }
+    
+    // ── Refresh amenity cart in preview ──
+    function refreshAmenityCartInPreview(compCards) {
+      var amenitySection = null;
+      var allSections = document.querySelectorAll('.report-preview-section');
+      allSections.forEach(function(section) {
+        var title = section.querySelector('.rps-title');
+        if (title && title.textContent.indexOf('Amenity Cart') >= 0) {
+          amenitySection = section;
+        }
+      });
+      
+      if (amenitySection) {
+        var body = amenitySection.querySelector('.rps-body > div');
+        if (body) {
+          try {
+            body.innerHTML = buildAmenityCartHTML(compCards, true);
+            setTimeout(function() {
+              attachAmenityCartHandlers(compCards);
+            }, 50);
+          } catch (e) {
+            console.error('Error refreshing amenity cart:', e);
+          }
+        }
       }
     }
 
@@ -3074,7 +3211,7 @@
 
       var amenityCartHTML = '';
       try {
-        amenityCartHTML = buildAmenityCartHTML(compCards);
+        amenityCartHTML = buildAmenityCartHTML(compCards, true);
       } catch (e) {
         console.error('Error rendering amenity cart:', e);
         amenityCartHTML = '<div style="padding:20px;color:#dc2626;"><strong>Error:</strong> ' + e.message + '<br><small>' + e.stack + '</small></div>';
@@ -3093,6 +3230,11 @@
         var note = '<div style="margin-top:8px;padding:8px 14px;background:#f0faff;border-radius:8px;border:1px solid var(--brand-accent-2);display:flex;align-items:center;gap:8px;font-size:12px;color:#1e293b;"><span style="background:var(--brand-accent-2);color:#1e293b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:2px 8px;border-radius:4px;font-size:10px;">OUR PROPERTY</span> <span style="font-weight:600;">' + esc(subjectCard.competitorName || currentProperty) + '</span> included in the <strong>blue-highlighted column</strong>.</div>';
         els.mainContent.innerHTML += note;
       }
+      
+      // Attach amenity cart edit handlers
+      setTimeout(function() {
+        attachAmenityCartHandlers(compCards);
+      }, 100);
     }
 
     // ── Init ──
