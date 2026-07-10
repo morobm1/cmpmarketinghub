@@ -2101,7 +2101,12 @@
       if (reportSections.amenityCart && reportCards.length > 0) {
         deckHTML += '<div class="report-preview-section">';
         deckHTML += '<div class="rps-title" style="background:var(--card-navy);color:#fff;">' + icon('check') + ' Amenity Cart</div>';
-        deckHTML += '<div class="rps-body"><div style="max-width:100%;overflow-x:auto;">' + buildAmenityCartHTML(reportCards) + '</div></div>';
+        try {
+          deckHTML += '<div class="rps-body"><div style="max-width:100%;overflow-x:auto;">' + buildAmenityCartHTML(reportCards) + '</div></div>';
+        } catch (e) {
+          console.error('Amenity Cart Error:', e);
+          deckHTML += '<div class="rps-body"><p style="color:#dc2626;padding:20px;">Amenity cart could not be generated. Error: ' + e.message + '</p></div>';
+        }
         deckHTML += '</div>';
       }
 
@@ -2627,17 +2632,43 @@
       return html;
     }    // ── Build amenity cart HTML with grouped, cross-property comparison ──
     function buildAmenityCartHTML(compCards) {
-      var sc = subjectCard;
-      var allCards = [];
-      if (sc) allCards.push(sc);
-      allCards = allCards.concat(compCards);
+      try {
+        console.log('buildAmenityCartHTML called with', compCards);
+        
+        // Safety check on input
+        if (!compCards) {
+          console.warn('buildAmenityCartHTML: compCards is null/undefined');
+          compCards = [];
+        }
+        if (!Array.isArray(compCards)) {
+          console.error('buildAmenityCartHTML: compCards is not an array:', compCards);
+          return '<p style="color:#dc2626;">Invalid data: compCards must be an array</p>';
+        }
+        
+        var sc = subjectCard;
+        var allCards = [];
+        if (sc) allCards.push(sc);
+        allCards = allCards.concat(compCards);
+        
+        console.log('allCards:', allCards);
+        
+        if (!allCards || allCards.length === 0) {
+          return '<p style="color:#9ca3af;">No properties to compare.</p>';
+        }
 
-      // Collect all unique amenities across all properties
-      var rawAmenityMap = {}; // index -> array of raw items for each property
-      allCards.forEach(function(c, ci) {
-        var items = parseAmenities(c.topAmenities);
-        rawAmenityMap[ci] = items;
-      });
+        // Collect all unique amenities across all properties
+        var rawAmenityMap = {}; // index -> array of raw items for each property
+        allCards.forEach(function(c, ci) {
+          if (!c) {
+            console.warn('Null card at index', ci);
+            rawAmenityMap[ci] = [];
+            return;
+          }
+          var items = parseAmenities(c.topAmenities);
+          rawAmenityMap[ci] = items || [];
+        });
+        
+        console.log('rawAmenityMap:', rawAmenityMap);
 
       // Normalize amenities: map a standard name -> array of known variants
       var AMENITY_GROUPS = {
@@ -2705,38 +2736,82 @@
 
       // Reverse-map: standard amenity name -> category
       var stdNameToCat = {};
-      Object.keys(categoriesAlias).forEach(function(cat) {
-        categoriesAlias[cat].forEach(function(stdName) {
-          stdNameToCat[stdName] = cat;
-        });
-      });
+      if (categoriesAlias && typeof categoriesAlias === 'object') {
+        try {
+          Object.keys(categoriesAlias).forEach(function(cat) {
+            if (categoriesAlias[cat] && Array.isArray(categoriesAlias[cat])) {
+              categoriesAlias[cat].forEach(function(stdName) {
+                if (stdName) stdNameToCat[stdName] = cat;
+              });
+            }
+          });
+        } catch (e) {
+          console.error('Error building stdNameToCat:', e);
+          return '<p style="color:#dc2626;">Error processing amenity categories: ' + e.message + '</p>';
+        }
+      } else {
+        console.error('categoriesAlias is not a valid object:', categoriesAlias);
+        return '<p style="color:#dc2626;">Amenity category data is invalid</p>';
+      }
 
       // For each property, determine which standard amenities are present
       var propAmenities = {}; // ci -> [stdName, ...]
+      if (!AMENITY_GROUPS || typeof AMENITY_GROUPS !== 'object') {
+        console.error('AMENITY_GROUPS is not a valid object:', AMENITY_GROUPS);
+        return '<p style="color:#dc2626;">Amenity group data is invalid</p>';
+      }
+      
       allCards.forEach(function(c, ci) {
         var items = rawAmenityMap[ci] || [];
         var found = {};
-        items.forEach(function(item) {
-          var itemLower = item.toLowerCase();
-          Object.keys(AMENITY_GROUPS).forEach(function(stdName) {
-            var variants = AMENITY_GROUPS[stdName];
-            variants.forEach(function(variant) {
-              if (itemLower.indexOf(variant) >= 0 || variant.indexOf(itemLower) >= 0) {
-                found[stdName] = true;
-              }
-            });
+        if (Array.isArray(items)) {
+          items.forEach(function(item) {
+            if (!item) return;
+            try {
+              var itemLower = String(item).toLowerCase();
+              Object.keys(AMENITY_GROUPS).forEach(function(stdName) {
+                var variants = AMENITY_GROUPS[stdName];
+                if (!variants || !Array.isArray(variants)) return;
+                variants.forEach(function(variant) {
+                  if (!variant) return;
+                  try {
+                    var variantStr = String(variant);
+                    if (itemLower.indexOf(variantStr) >= 0 || variantStr.indexOf(itemLower) >= 0) {
+                      found[stdName] = true;
+                    }
+                  } catch (e) {
+                    console.warn('Error comparing variant:', e);
+                  }
+                });
+              });
+            } catch (e) {
+              console.warn('Error processing item:', item, e);
+            }
           });
-        });
-        propAmenities[ci] = Object.keys(found);
+        }
+        propAmenities[ci] = Object.keys(found || {});
       });
+      
+      console.log('propAmenities:', propAmenities);
 
       // Collect all unique standard amenities
       var allStd = [];
-      Object.keys(propAmenities).forEach(function(ci) {
-        propAmenities[ci].forEach(function(stdName) {
-          if (allStd.indexOf(stdName) < 0) allStd.push(stdName);
-        });
-      });
+      if (propAmenities && typeof propAmenities === 'object') {
+        try {
+          Object.keys(propAmenities).forEach(function(ci) {
+            var amenitiesForCard = propAmenities[ci];
+            if (amenitiesForCard && Array.isArray(amenitiesForCard)) {
+              amenitiesForCard.forEach(function(stdName) {
+                if (stdName && allStd.indexOf(stdName) < 0) allStd.push(stdName);
+              });
+            }
+          });
+        } catch (e) {
+          console.error('Error collecting standard amenities:', e);
+        }
+      }
+      
+      console.log('allStd:', allStd);
 
       if (allStd.length === 0) {
         // Fallback: just list raw amenities
@@ -2764,27 +2839,38 @@
       html += '<thead><tr><th style="min-width:120px;">Amenity</th>';
       allCards.forEach(function(c, i) {
         var cls = i === 0 && sc ? ' ac-our' : '';
-        var label = i === 0 && sc ? 'OUR PROPERTY: ' + esc(subjectCard.competitorName || currentProperty) : esc(c.competitorName);
+        var label = i === 0 && sc ? 'OUR PROPERTY: ' + esc(subjectCard.competitorName || currentProperty) : esc(c ? c.competitorName : 'Unknown');
         html += '<th class="ac-header' + cls + '">' + label + '</th>';
       });
       html += '</tr></thead><tbody>';
 
-      var catOrder = Object.keys(categoriesAlias);
+      var catOrder = [];
+      try {
+        if (categoriesAlias && typeof categoriesAlias === 'object') {
+          catOrder = Object.keys(categoriesAlias);
+        }
+      } catch (e) {
+        console.error('Error getting category keys:', e);
+      }
       // Add defaultCat at the end
       var allCats = catOrder.concat([defaultCat]);
 
       allCats.forEach(function(cat) {
-        var items = catSorted[cat];
-        if (!items || items.length === 0) return;
-        html += '<tr class="ac-category"><td colspan="' + (allCards.length + 1) + '">' + esc(cat) + '</td></tr>';
-        items.forEach(function(stdName) {
-          html += '<tr><td class="ac-amenity-name">' + esc(stdName) + '</td>';
-          allCards.forEach(function(c, ci) {
-            var present = (propAmenities[ci] || []).indexOf(stdName) >= 0;
-            html += '<td>' + (present ? '<span class="ac-present">' + icon('check') + ' Yes</span>' : '<span class="ac-missing">--</span>') + '</td>';
+        try {
+          var items = catSorted[cat];
+          if (!items || items.length === 0) return;
+          html += '<tr class="ac-category"><td colspan="' + (allCards.length + 1) + '">' + esc(cat) + '</td></tr>';
+          items.forEach(function(stdName) {
+            html += '<tr><td class="ac-amenity-name">' + esc(stdName) + '</td>';
+            allCards.forEach(function(c, ci) {
+              var present = (propAmenities[ci] || []).indexOf(stdName) >= 0;
+              html += '<td>' + (present ? '<span class="ac-present">' + icon('check') + ' Yes</span>' : '<span class="ac-missing">--</span>') + '</td>';
+            });
+            html += '</tr>';
           });
-          html += '</tr>';
-        });
+        } catch (e) {
+          console.error('Error processing category ' + cat + ':', e);
+        }
       });
 
       // Summary row
@@ -2801,6 +2887,12 @@
 
       html += '</tbody></table>';
       return html;
+      
+      } catch (error) {
+        console.error('buildAmenityCartHTML: Critical error:', error);
+        console.error('Error stack:', error.stack);
+        return '<p style="color:#dc2626;padding:20px;"><strong>Error generating amenity cart:</strong> ' + error.message + '</p>';
+      }
     }
 
     // ── Fallback raw amenity cart ──
@@ -2923,6 +3015,14 @@
       document.getElementById('backBtn').onclick = function() { renderGallery(); };
       document.getElementById('printACBtn').onclick = function() { window.print(); };
 
+      var amenityCartHTML = '';
+      try {
+        amenityCartHTML = buildAmenityCartHTML(compCards);
+      } catch (e) {
+        console.error('Error rendering amenity cart:', e);
+        amenityCartHTML = '<div style="padding:20px;color:#dc2626;"><strong>Error:</strong> ' + e.message + '<br><small>' + e.stack + '</small></div>';
+      }
+      
       els.mainContent.innerHTML =
         '<div class="amenity-cart-bar">' +
           '<div class="ac-info">' + icon('check') + ' <span style="background:var(--brand-accent-2);color:#1e293b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:2px 6px;border-radius:4px;font-size:11px;">OUR PROPERTY</span> ' + esc(currentProperty) + ' vs ' + compCards.length + ' competitors</div>' +
@@ -2930,7 +3030,7 @@
             '<span style="font-size:11px;opacity:0.8;"><span style="background:#ecfdf5;padding:2px 6px;border-radius:4px;margin-right:4px;color:#059669;">Present</span></span>' +
           '</div>' +
         '</div>' +
-        '<div class="amenity-cart-wrap">' + buildAmenityCartHTML(compCards) + '</div>';
+        '<div class="amenity-cart-wrap">' + amenityCartHTML + '</div>';
 
       if (subjectCard) {
         var note = '<div style="margin-top:8px;padding:8px 14px;background:#f0faff;border-radius:8px;border:1px solid var(--brand-accent-2);display:flex;align-items:center;gap:8px;font-size:12px;color:#1e293b;"><span style="background:var(--brand-accent-2);color:#1e293b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:2px 8px;border-radius:4px;font-size:10px;">OUR PROPERTY</span> <span style="font-weight:600;">' + esc(subjectCard.competitorName || currentProperty) + '</span> included in the <strong>blue-highlighted column</strong>.</div>';
