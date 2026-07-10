@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
   <style>
     :root {
       --brand-primary: #446472;
@@ -1668,9 +1669,10 @@
       var nextBtn = wizardStep < 3 ? '<button class="btn btn-primary" id="nextStepBtn">Next Step ' + icon('arrowLeft').replace('arrowLeft', 'arrowRight').replace('19 12 5 12', '5 12 19 12').replace('12 19 5 12', '12 5 19 12') + '</button>' : '';
       var prevBtn = wizardStep > 1 ? '<button class="btn btn-outline" id="prevStepBtn">' + icon('arrowLeft') + ' Previous</button>' : '';
       var previewBtn = wizardStep === 3 ? '<button class="btn btn-primary" id="previewReportBtn">' + icon('eye') + ' Preview Report</button>' : '';
+      var excelBtn = wizardStep === 3 ? '<button class="btn btn-accent" id="exportExcelBtn" style="background:#059669;color:#fff;border-color:#059669;">' + icon('download') + ' Export to Excel</button>' : '';
       var printBtn = wizardStep === 3 ? '<button class="btn btn-success" id="printReportBtn" style="background:#059669;color:#fff;border-color:#059669;">' + icon('printer') + ' Print / PDF</button>' : '';
 
-      els.toolbarActions.innerHTML = backBtn + prevBtn + nextBtn + previewBtn + printBtn;
+      els.toolbarActions.innerHTML = backBtn + prevBtn + nextBtn + previewBtn + excelBtn + printBtn;
 
       document.getElementById('backBtn').onclick = function() { renderGallery(); };
       if (document.getElementById('nextStepBtn')) {
@@ -1681,6 +1683,9 @@
       }
       if (document.getElementById('previewReportBtn')) {
         document.getElementById('previewReportBtn').onclick = function() { renderReportPreview(); };
+      }
+      if (document.getElementById('exportExcelBtn')) {
+        document.getElementById('exportExcelBtn').onclick = function() { exportToExcel(); };
       }
       if (document.getElementById('printReportBtn')) {
         document.getElementById('printReportBtn').onclick = function() { renderReportPreview(); setTimeout(function() { window.print(); }, 500); };
@@ -1835,8 +1840,13 @@
           competitorListHTML +
           sectionsListHTML +
           '<div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:16px;margin-top:20px;text-align:center;">' +
-            '<p style="color:#065f46;font-size:14px;font-weight:500;margin-bottom:12px;">Your report is ready to preview or print!</p>' +
-            '<p style="color:#047857;font-size:13px;">Click "Preview Report" to see the full report, or "Print / PDF" to save or print directly.</p>' +
+            '<p style="color:#065f46;font-size:14px;font-weight:500;margin-bottom:12px;">Your report is ready!</p>' +
+            '<p style="color:#047857;font-size:13px;margin-bottom:8px;">Choose how you want to view or export your report:</p>' +
+            '<div style="display:flex;flex-direction:column;gap:6px;align-items:center;margin-top:12px;">' +
+              '<div style="display:flex;align-items:center;gap:8px;"><span style="color:#059669;">✓</span><span style="font-size:13px;color:#047857;"><strong>Preview Report:</strong> View the full formatted report</span></div>' +
+              '<div style="display:flex;align-items:center;gap:8px;"><span style="color:#059669;">✓</span><span style="font-size:13px;color:#047857;"><strong>Export to Excel:</strong> Download as a spreadsheet for analysis</span></div>' +
+              '<div style="display:flex;align-items:center;gap:8px;"><span style="color:#059669;">✓</span><span style="font-size:13px;color:#047857;"><strong>Print / PDF:</strong> Save or print as a professional document</span></div>' +
+            '</div>' +
           '</div>' +
         '</div>';
       }
@@ -1995,6 +2005,232 @@
 
       deckHTML += '</div>';
       els.mainContent.innerHTML = deckHTML;
+    }
+
+    // ── Export to Excel ──
+    function exportToExcel() {
+      var reportCards = Object.keys(reportSelected).filter(function(id) { return reportSelected[id]; }).map(function(id) { return cards.find(function(c) { return c.id === id; }); }).filter(Boolean);
+      
+      if (reportCards.length === 0) {
+        showToast('Please select at least one competitor to export');
+        return;
+      }
+
+      // Build the Excel data structure
+      var wb = XLSX.utils.book_new();
+      
+      // Create headers row - property names
+      var allCards = [];
+      if (subjectCard && reportSections.subjectCard) {
+        allCards.push(subjectCard);
+      }
+      allCards = allCards.concat(reportCards);
+
+      // Initialize the data array
+      var data = [];
+      
+      // Header row with property names
+      var headerRow = [''];
+      allCards.forEach(function(c) {
+        headerRow.push(c.competitorName || 'Untitled');
+      });
+      data.push(headerRow);
+
+      // Studios row
+      var studiosRow = ['Studios'];
+      allCards.forEach(function(c) {
+        var studioPlan = (c.floorplanDetails || []).find(function(fp) {
+          return (fp.name || '').toLowerCase().includes('studio') || 
+                 (fp.bedsBaths || '').toLowerCase().includes('studio') ||
+                 (fp.bedsBaths || '').toLowerCase().includes('0');
+        });
+        studiosRow.push(studioPlan ? studioPlan.rate : '-');
+      });
+      data.push(studiosRow);
+
+      // Studio Sq. Ft row
+      var studioSqFtRow = ['Studio Sq. Ft'];
+      allCards.forEach(function(c) {
+        var studioPlan = (c.floorplanDetails || []).find(function(fp) {
+          return (fp.name || '').toLowerCase().includes('studio') || 
+                 (fp.bedsBaths || '').toLowerCase().includes('studio') ||
+                 (fp.bedsBaths || '').toLowerCase().includes('0');
+        });
+        studioSqFtRow.push(studioPlan ? studioPlan.sqft : '-');
+      });
+      data.push(studioSqFtRow);
+
+      // 1BR row
+      var oneBrRow = ['1BR'];
+      allCards.forEach(function(c) {
+        var oneBedroomPlans = (c.floorplanDetails || []).filter(function(fp) {
+          var text = ((fp.name || '') + ' ' + (fp.bedsBaths || '')).toLowerCase();
+          return text.includes('1br') || text.includes('1 br') || text.includes('1bed') || 
+                 text.includes('1 bed') || text.match(/^1[\/x\s]/);
+        });
+        if (oneBedroomPlans.length === 0) {
+          oneBrRow.push('-');
+        } else if (oneBedroomPlans.length === 1) {
+          oneBrRow.push(oneBedroomPlans[0].rate);
+        } else {
+          var rates = oneBedroomPlans.map(function(fp) { 
+            var rate = fp.rate || '';
+            return parseFloat(rate.replace(/[^0-9.]/g, '')) || 0; 
+          }).filter(function(r) { return r > 0; });
+          if (rates.length > 0) {
+            var minRate = Math.min.apply(null, rates);
+            var maxRate = Math.max.apply(null, rates);
+            oneBrRow.push('$' + minRate + '-$' + maxRate);
+          } else {
+            oneBrRow.push(oneBedroomPlans[0].rate);
+          }
+        }
+      });
+      data.push(oneBrRow);
+
+      // 1BR Sq. FT row
+      var oneBrSqFtRow = ['1BR Sq. FT'];
+      allCards.forEach(function(c) {
+        var oneBedroomPlans = (c.floorplanDetails || []).filter(function(fp) {
+          var text = ((fp.name || '') + ' ' + (fp.bedsBaths || '')).toLowerCase();
+          return text.includes('1br') || text.includes('1 br') || text.includes('1bed') || 
+                 text.includes('1 bed') || text.match(/^1[\/x\s]/);
+        });
+        if (oneBedroomPlans.length === 0) {
+          oneBrSqFtRow.push('-');
+        } else if (oneBedroomPlans.length === 1) {
+          oneBrSqFtRow.push(oneBedroomPlans[0].sqft || '-');
+        } else {
+          var sqfts = oneBedroomPlans.map(function(fp) { 
+            return parseInt(fp.sqft || '0', 10); 
+          }).filter(function(s) { return s > 0; });
+          if (sqfts.length > 0) {
+            var minSqft = Math.min.apply(null, sqfts);
+            var maxSqft = Math.max.apply(null, sqfts);
+            oneBrSqFtRow.push(minSqft + '-' + maxSqft);
+          } else {
+            oneBrSqFtRow.push('-');
+          }
+        }
+      });
+      data.push(oneBrSqFtRow);
+
+      // 2BR row
+      var twoBrRow = ['2BR'];
+      allCards.forEach(function(c) {
+        var twoBedroomPlans = (c.floorplanDetails || []).filter(function(fp) {
+          var text = ((fp.name || '') + ' ' + (fp.bedsBaths || '')).toLowerCase();
+          return text.includes('2br') || text.includes('2 br') || text.includes('2bed') || 
+                 text.includes('2 bed') || text.match(/^2[\/x\s]/);
+        });
+        if (twoBedroomPlans.length === 0) {
+          twoBrRow.push('-');
+        } else if (twoBedroomPlans.length === 1) {
+          twoBrRow.push(twoBedroomPlans[0].rate);
+        } else {
+          var rates = twoBedroomPlans.map(function(fp) { 
+            var rate = fp.rate || '';
+            return parseFloat(rate.replace(/[^0-9.]/g, '')) || 0; 
+          }).filter(function(r) { return r > 0; });
+          if (rates.length > 0) {
+            var minRate = Math.min.apply(null, rates);
+            var maxRate = Math.max.apply(null, rates);
+            twoBrRow.push('$' + minRate + '-$' + maxRate);
+          } else {
+            twoBrRow.push(twoBedroomPlans[0].rate);
+          }
+        }
+      });
+      data.push(twoBrRow);
+
+      // 2BR Sq. FT row
+      var twoBrSqFtRow = ['2BR Sq. FT'];
+      allCards.forEach(function(c) {
+        var twoBedroomPlans = (c.floorplanDetails || []).filter(function(fp) {
+          var text = ((fp.name || '') + ' ' + (fp.bedsBaths || '')).toLowerCase();
+          return text.includes('2br') || text.includes('2 br') || text.includes('2bed') || 
+                 text.includes('2 bed') || text.match(/^2[\/x\s]/);
+        });
+        if (twoBedroomPlans.length === 0) {
+          twoBrSqFtRow.push('-');
+        } else if (twoBedroomPlans.length === 1) {
+          twoBrSqFtRow.push(twoBedroomPlans[0].sqft || '-');
+        } else {
+          var sqfts = twoBedroomPlans.map(function(fp) { 
+            return parseInt(fp.sqft || '0', 10); 
+          }).filter(function(s) { return s > 0; });
+          if (sqfts.length > 0) {
+            var minSqft = Math.min.apply(null, sqfts);
+            var maxSqft = Math.max.apply(null, sqfts);
+            twoBrSqFtRow.push(minSqft + '-' + maxSqft);
+          } else {
+            twoBrSqFtRow.push('-');
+          }
+        }
+      });
+      data.push(twoBrSqFtRow);
+
+      // Empty row
+      data.push(['']);
+
+      // Current specials row
+      var specialsRow = ['Current specials'];
+      allCards.forEach(function(c) {
+        specialsRow.push(c.currentSpecials || '-');
+      });
+      data.push(specialsRow);
+
+      // Empty row
+      data.push(['']);
+
+      // In Unit Amenities row
+      var inUnitRow = ['In Unit Amenities'];
+      allCards.forEach(function(c) {
+        var amenities = [];
+        if (c.furnished) amenities.push(FURNISHED_LABELS[c.furnished] || c.furnished);
+        if (c.topAmenities) amenities.push(c.topAmenities);
+        inUnitRow.push(amenities.join(', ') || '-');
+      });
+      data.push(inUnitRow);
+
+      // Community Amenities row
+      var communityRow = ['Community Amenities'];
+      allCards.forEach(function(c) {
+        communityRow.push(c.topAmenities || '-');
+      });
+      data.push(communityRow);
+
+      // Additional notes row
+      var notesRow = ['Additional notes'];
+      allCards.forEach(function(c) {
+        var notes = [];
+        if (c.competitiveTakeaway) notes.push(c.competitiveTakeaway);
+        if (c.notes) notes.push(c.notes);
+        notesRow.push(notes.join(' | ') || '-');
+      });
+      data.push(notesRow);
+
+      // Create worksheet
+      var ws = XLSX.utils.aoa_to_sheet(data);
+
+      // Set column widths
+      var colWidths = [{ wch: 20 }]; // First column
+      for (var i = 0; i < allCards.length; i++) {
+        colWidths.push({ wch: 25 });
+      }
+      ws['!cols'] = colWidths;
+
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(wb, ws, 'Competitor Comparison');
+
+      // Generate filename with date
+      var dateStr = new Date().toISOString().split('T')[0];
+      var filename = currentProperty.replace(/[^a-z0-9]/gi, '_') + '_Competitor_Comparison_' + dateStr + '.xlsx';
+
+      // Save file
+      XLSX.writeFile(wb, filename);
+      
+      showToast('Excel file exported successfully!');
     }
 
     // ── Render single card preview HTML (non-interactive) ──
