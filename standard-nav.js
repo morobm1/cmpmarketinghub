@@ -38,7 +38,7 @@
   };
 
   // Navigation structure
-  var navStructure = {
+  var fullNavStructure = {
     main: [
       { href: 'mmp_calendar_app.html', label: 'Marketing Calendar' },
       { href: 'marketing_plans.html', label: 'Marketing Plans' },
@@ -59,6 +59,29 @@
       { href: 'sop_library.html', label: 'SOP Library' }
     ]
   };
+
+  var maintenanceAllowedHrefs = [
+    'custom_tools.html',
+    'leasing_staff_list.html',
+    'sop_library.html'
+  ];
+
+  function getNavStructure(role) {
+    if (role !== 'maintenance') return fullNavStructure;
+    function filterItems(items) {
+      return items.filter(function(item) {
+        return maintenanceAllowedHrefs.indexOf(item.href) !== -1;
+      });
+    }
+    var filtered = {
+      main: filterItems(fullNavStructure.main),
+      tools: filterItems(fullNavStructure.tools),
+      resources: filterItems(fullNavStructure.resources)
+    };
+    return filtered;
+  }
+
+  var navStructure = fullNavStructure;
 
   // Check initial state
   var isCollapsed = false;
@@ -257,6 +280,7 @@
     }
 
     function buildSection(title, items) {
+      if (!items || items.length === 0) return '';
       var itemsHTML = items.map(function(item) {
         var isActive = currentPage === item.href ? ' active' : '';
         return '<a href="' + item.href + '" class="nav-item' + isActive + '" data-label="' + item.label + '">' +
@@ -369,6 +393,23 @@
     body.appendChild(mainContent);
   }
 
+  function rebuildNav() {
+    var existing = document.getElementById('sidebarNav');
+    if (existing) existing.remove();
+    var existingToggle = document.getElementById('navToggle');
+    if (existingToggle) existingToggle.remove();
+    injectNav();
+  }
+
+  function enforceMaintenanceAccess() {
+    var currentPage = window.location.pathname.split('/').pop() || 'index.html';
+    if (currentPage === 'index.html' || currentPage === '') return;
+    var isAllowed = maintenanceAllowedHrefs.indexOf(currentPage) !== -1;
+    if (!isAllowed) {
+      window.location.href = 'custom_tools.html';
+    }
+  }
+
   // Initialize
   function init() {
     if (document.readyState === 'loading') {
@@ -378,6 +419,18 @@
     injectCSS();
     injectNav();
     wrapContent();
+
+    fetch('/api/me', { credentials: 'include' })
+      .then(function(res) { return res.ok ? res.json() : null; })
+      .then(function(user) {
+        if (!user) return;
+        if (user.role === 'maintenance') {
+          navStructure = getNavStructure('maintenance');
+          rebuildNav();
+          enforceMaintenanceAccess();
+        }
+      })
+      .catch(function() {});
   }
 
   init();

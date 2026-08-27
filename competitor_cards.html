@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
   <style>
     :root {
       --brand-primary: #446472;
@@ -56,15 +57,18 @@
     .page-toolbar .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
     /* Buttons */
-    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; border: 1px solid transparent; font-size: 13px; font-weight: 600; cursor: pointer; font-family: Roboto, Arial, sans-serif; transition: all 0.15s; text-decoration: none; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 13px; font-weight: 600; cursor: pointer; font-family: Roboto, Arial, sans-serif; transition: all 0.15s; text-decoration: none; color: var(--text); background: #fff; }
+    .btn:hover { background: #f9fafb; }
     .btn-primary { background: var(--brand-primary); color: #fff; border-color: var(--brand-primary); }
     .btn-primary:hover { background: var(--card-navy-dark); }
-    .btn-success { background: #059669; color: #fff; }
+    .btn-success { background: #059669; color: #fff; border-color: #059669; }
     .btn-success:hover { background: #047857; }
     .btn-outline { background: #fff; color: var(--text); border-color: #d1d5db; }
     .btn-outline:hover { background: #f9fafb; }
-    .btn-accent { background: var(--brand-accent-2); color: #fff; border-color: var(--brand-accent-2); }
+    .btn-accent { background: var(--brand-accent-2); color: #1e293b; border-color: var(--brand-accent-2); }
     .btn-accent:hover { background: #3bc4ee; }
+    .btn-warning { background: #d97706; color: #fff; border-color: #d97706; }
+    .btn-warning:hover { background: #b45309; }
     .btn-sm { padding: 5px 10px; font-size: 12px; }
     .btn-back { background: none; border: none; color: var(--subtext); cursor: pointer; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; }
     .btn-back:hover { color: var(--text); background: #f3f4f6; }
@@ -113,12 +117,17 @@
     .card-thumb .thumb-actions button.archive-btn { margin-left: auto; }
     .card-thumb .thumb-actions button.archive-btn:hover { color: #dc2626; background: #fef2f2; }
     /* Compare checkbox on card */
-    .card-thumb .compare-check { position: absolute; bottom: 58px; right: 14px; z-index: 2; }
-    .card-thumb .compare-check label { font-size: 11px; color: var(--subtext); display: flex; align-items: center; gap: 4px; cursor: pointer; background: #fff; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border); }
+    /* Report checkbox on card - left side */
+    .card-thumb .report-check { position: absolute; bottom: 95px; left: 14px; z-index: 2; }
+    .card-thumb .report-check label { font-size: 11px; color: var(--subtext); display: flex; align-items: center; gap: 4px; cursor: pointer; background: rgba(255,255,255,0.95); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border); backdrop-filter: blur(4px); }
+    .card-thumb .report-check input { accent-color: var(--brand-primary); }
+    /* Compare checkbox on card - right side */
+    .card-thumb .compare-check { position: absolute; bottom: 95px; right: 14px; z-index: 2; }
+    .card-thumb .compare-check label { font-size: 11px; color: var(--subtext); display: flex; align-items: center; gap: 4px; cursor: pointer; background: rgba(255,255,255,0.95); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border); backdrop-filter: blur(4px); }
     .card-thumb .compare-check input { accent-color: var(--brand-accent-2); }
 
     /* Badges */
-    .badge { display: inline-flex; align-items: center; padding: 2px 10px; font-size: 11px; font-weight: 600; border-radius: 999px; border: 1px solid; white-space: nowrap; }
+    .badge { display: inline-flex; align-items: center; padding: 2px 10px; font-size: 11px; font-weight: 600; border-radius: 999px; border: 1px solid; white-space: nowrap; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .badge-impact-high { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
     .badge-impact-medium { background: #fffbeb; color: #b45309; border-color: #fde68a; }
     .badge-impact-low { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
@@ -182,7 +191,7 @@
     .cc-hero .gold-bar { position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: var(--brand-accent); z-index: 2; }
     .cc-hero img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .cc-hero .no-hero { width: 100%; height: 100%; min-height: 280px; background: linear-gradient(135deg, #d1d5db, #9ca3af); display: flex; align-items: center; justify-content: center; color: #6b7280; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-    .cc-navy { background: var(--card-navy); color: #fff; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; }
+    .cc-navy { background: var(--card-navy); color: #fff; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .cc-navy .badges-row { display: flex; gap: 8px; margin-bottom: 10px; }
     .cc-navy h2 { font-size: 24px; font-weight: 800; text-transform: uppercase; letter-spacing: -0.5px; line-height: 1.2; font-family: Roboto, Arial, sans-serif; }
     .cc-navy .website-link { color: var(--brand-accent); font-size: 13px; margin-top: 8px; display: inline-flex; align-items: center; gap: 4px; text-decoration: none; }
@@ -222,7 +231,7 @@
     .fp-table td.rate-cell { font-weight: 700; color: var(--card-navy); }
 
     /* Fees Panel */
-    .cc-fees { background: var(--card-navy); padding: 20px; display: flex; flex-direction: column; }
+    .cc-fees { background: var(--card-navy); padding: 20px; display: flex; flex-direction: column; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .cc-fees h4 { font-size: 11px; font-weight: 700; color: var(--brand-accent); text-transform: uppercase; letter-spacing: 2px; text-align: center; padding-bottom: 8px; border-bottom: 1px solid rgba(255,183,50,0.3); margin-bottom: 8px; }
     .cc-fees .fee-item { display: flex; justify-content: space-between; font-size: 12px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
     .cc-fees .fee-item:last-child { border-bottom: none; }
@@ -234,10 +243,10 @@
     .cc-fees .fee-total .total-value { font-size: 20px; font-weight: 700; color: var(--brand-accent); margin-top: 2px; }
 
     /* Specials */
-    .cc-specials { border-top: 1px solid var(--border); padding: 16px 24px; background: #fffdf7; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .cc-specials { border-top: 1px solid var(--border); padding: 16px 24px; background: #fffdf7; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     @media (max-width: 600px) { .cc-specials { grid-template-columns: 1fr; } }
     .cc-specials .special-active { display: flex; gap: 12px; }
-    .cc-specials .special-icon { width: 32px; height: 32px; background: var(--brand-accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; }
+    .cc-specials .special-icon { width: 32px; height: 32px; background: var(--brand-accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .cc-specials .special-label { font-size: 11px; font-weight: 700; color: #b45309; text-transform: uppercase; letter-spacing: 0.5px; }
     .cc-specials .special-text { font-size: 13px; color: #78350f; font-weight: 600; margin-top: 2px; }
     .cc-specials .special-exp { font-size: 11px; color: #b45309; margin-top: 2px; }
@@ -246,7 +255,7 @@
     .cc-specials .hist-note { font-size: 12px; color: #9ca3af; margin-top: 4px; font-style: italic; }
 
     /* Competitive Takeaway */
-    .cc-takeaway { border-top: 1px solid var(--border); background: linear-gradient(to right, var(--card-navy), #547a8a); padding: 20px 24px; color: #fff; display: flex; gap: 12px; }
+    .cc-takeaway { border-top: 1px solid var(--border); background: linear-gradient(to right, var(--card-navy), #547a8a); padding: 20px 24px; color: #fff; display: flex; gap: 12px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .cc-takeaway .takeaway-icon { color: var(--brand-accent); flex-shrink: 0; margin-top: 2px; }
     .cc-takeaway .takeaway-label { font-size: 11px; font-weight: 700; color: var(--brand-accent); text-transform: uppercase; letter-spacing: 1.5px; }
     .cc-takeaway .takeaway-text { font-size: 13px; line-height: 1.6; margin-top: 4px; font-weight: 500; }
@@ -310,9 +319,9 @@
     .viewer-wrap { max-width: 900px; margin: 0 auto; }
 
     /* Comparison View */
-    .compare-bar { background: var(--brand-primary); color: #fff; padding: 10px 16px; border-radius: 10px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-    .compare-bar .compare-info { font-size: 13px; font-weight: 600; }
-    .compare-bar .compare-actions { display: flex; gap: 8px; }
+    .compare-bar { background: var(--brand-primary); color: #fff; padding: 12px 16px; border-radius: 10px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+    .compare-bar .compare-info { font-size: 13px; font-weight: 600; flex: 1; min-width: 250px; }
+    .compare-bar .compare-actions { display: flex; gap: 8px; flex-shrink: 0; align-items: flex-end; }
     .compare-table-wrap { overflow-x: auto; background: #fff; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
     .compare-table { width: 100%; border-collapse: collapse; font-size: 13px; }
     .compare-table th, .compare-table td { padding: 10px 14px; text-align: left; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
@@ -329,10 +338,65 @@
 
     /* Print */
     @media print {
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
       .no-print, header, .sidebar-nav, .nav-toggle, .page-toolbar { display: none !important; }
       .main-content { margin-left: 0 !important; }
       body { background: #fff; }
       .cc-preview { box-shadow: none; border: none; }
+      .report-preview-section { page-break-inside: avoid; page-break-after: always; }
+      .report-preview-section:last-child { page-break-after: auto; }
+      
+      /* Force colors to print on all key elements */
+      .cc-navy, .rps-title, .compare-bar, .rate-compare-table .rc-header, 
+      .amenity-cart-table .ac-header, .badge, .ac-present, .ac-missing,
+      .rc-lowest, .rc-highest, .col-header, .cc-fees, .cc-specials,
+      .cc-takeaway, .amenity-cart-bar, .rate-compare-table .rc-section,
+      .amenity-cart-table .ac-category, [style*="background"] { 
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+      
+      /* Make tables more compact for print */
+      .rate-compare-table, .amenity-cart-table {
+        font-size: 9px !important;
+      }
+      .rate-compare-table th, .rate-compare-table td,
+      .amenity-cart-table th, .amenity-cart-table td {
+        padding: 4px 6px !important;
+        font-size: 9px !important;
+      }
+      .rate-compare-table .rc-header,
+      .amenity-cart-table .ac-header {
+        font-size: 9px !important;
+        padding: 6px 8px !important;
+      }
+      
+      /* Ensure arrows and icons print */
+      .icon-svg, span[style*="↑"], span[style*="↓"] {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      
+      /* Ensure comparison cards print nicely */
+      .rps-body > div[style*="display:grid"] {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+      }
+      
+      /* Hide amenity cart edit instructions when printing */
+      .amenity-cart-table + div[style*="background:#f0f9ff"] {
+        display: none !important;
+      }
+      
+      /* Remove click indicators when printing */
+      .ac-editable:hover::after {
+        display: none !important;
+      }
     }
 
     /* Subject Property Card */
@@ -356,6 +420,72 @@
     .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; z-index: 50; }
     .loading-overlay .spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top-color: var(--brand-accent-2); border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
+  
+    /* ===== REPORT BUILDER ===== */
+    .report-builder-bar { background: var(--brand-primary); color: #fff; padding: 12px 16px; border-radius: 10px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .report-builder-bar .rb-info { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .report-builder-bar .rb-actions { display: flex; gap: 8px; }
+    .report-sections-wrap { background: #fff; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+    .report-sections-title { background: #f1f5f9; padding: 10px 16px; font-size: 11px; font-weight: 700; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.5px; }
+    .report-section-toggle { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid #f1f5f9; }
+    .report-section-toggle:last-child { border-bottom: none; }
+    .report-section-toggle .rst-label { font-size: 13px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px; }
+    .report-section-toggle .rst-desc { font-size: 11px; color: #9ca3af; margin-left: 24px; }
+    .report-section-toggle input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--brand-primary); cursor: pointer; }
+    .report-select-all { display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-bottom: 1px solid #f1f5f9; background: #fafafa; font-size: 12px; font-weight: 600; color: var(--subtext); cursor: pointer; }
+    .report-select-all:hover { background: #f5f5f5; }
+    .report-select-all input { width: 16px; height: 16px; accent-color: var(--brand-primary); cursor: pointer; }
+    .report-card-list { background: #fff; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+    .report-card-list-title { background: #f1f5f9; padding: 10px 16px; font-size: 11px; font-weight: 700; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; justify-content: space-between; }
+    .report-card-item { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid #f1f5f9; }
+    .report-card-item:last-child { border-bottom: none; }
+    .report-card-item .rci-name { font-size: 13px; font-weight: 600; flex: 1; }
+    .report-card-item .rci-type { font-size: 11px; color: var(--subtext); }
+    .report-card-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--brand-primary); cursor: pointer; }
+    /* ===== RATE COMPARISON ===== */
+    .rate-compare-wrap { overflow-x: auto; background: #fff; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-bottom: 20px; }
+    .rate-compare-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .rate-compare-table th, .rate-compare-table td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+    .rate-compare-table th { font-size: 10px; font-weight: 700; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.5px; background: #f8fafc; min-width: 100px; }
+    .rate-compare-table td { min-width: 120px; font-size: 11px; }
+    .rate-compare-table .rc-header { background: var(--card-navy); color: #fff; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; text-align: center; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .rate-compare-table .rc-header.rc-our { background: var(--brand-accent-2); color: #1e293b; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .rate-compare-table .rc-fp-name { font-weight: 600; color: var(--card-navy); }
+    .rate-compare-table .rc-rate { font-weight: 700; color: #059669; }
+    .rate-compare-table .rc-section { background: #f1f5f9; font-weight: 700; color: var(--brand-primary); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; padding: 8px 10px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .rate-compare-table .rc-empty { color: #d1d5db; font-style: italic; }
+    .rate-compare-table .rc-lowest { background: #ecfdf5; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .rate-compare-table .rc-highest { background: #fef2f2; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    /* ===== AMENITY CART ===== */
+    .amenity-cart-bar { background: var(--brand-primary); color: #fff; padding: 10px 16px; border-radius: 10px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .amenity-cart-bar .ac-info { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .amenity-cart-bar .ac-actions { display: flex; gap: 8px; }
+    .amenity-cart-wrap { overflow-x: auto; background: #fff; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-bottom: 20px; }
+    .amenity-cart-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .amenity-cart-table th, .amenity-cart-table td { padding: 6px 10px; text-align: left; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .amenity-cart-table th { font-size: 10px; font-weight: 700; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.5px; background: #f8fafc; min-width: 100px; }
+    .amenity-cart-table td { min-width: 110px; font-size: 10px; }
+    .amenity-cart-table .ac-header { background: var(--card-navy); color: #fff; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; text-align: center; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .amenity-cart-table .ac-header.ac-our { background: var(--brand-accent-2); color: #1e293b; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .amenity-cart-table .ac-category { background: #f1f5f9; font-weight: 700; color: var(--brand-primary); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; padding: 6px 10px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .amenity-cart-table .ac-present { color: #059669; font-weight: 600; }
+    .amenity-cart-table .ac-missing { color: #d1d5db; }
+    .amenity-cart-table .ac-amenity-name { font-weight: 500; color: #475569; }
+    .amenity-cart-table .ac-editable { cursor: pointer; transition: background 0.15s; position: relative; }
+    .amenity-cart-table .ac-editable:hover { background: #f0faff; }
+    .amenity-cart-table .ac-editable:hover::after { content: 'Click to toggle'; position: absolute; bottom: 2px; right: 4px; font-size: 8px; color: #0284c7; font-weight: 500; }
+    .amenity-cart-table .ac-manually-added { background: #dbeafe; }
+    .amenity-cart-table .ac-manually-removed { background: #fef2f2; }
+    /* Report preview */
+    .report-preview-section { background: #fff; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 20px; page-break-inside: avoid; }
+    .report-preview-section .rps-title { padding: 14px 20px; background: var(--card-navy); color: #fff; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .report-preview-section .rps-subtitle { padding: 8px 20px; background: #f1f5f9; font-size: 11px; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.5px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .report-preview-section .rps-body { padding: 20px; }
+    .stat-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .stat-chip { display: inline-flex; align-items: center; gap: 4px; background: #f1f5f9; border-radius: 6px; padding: 4px 10px; font-size: 12px; color: #475569; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .stat-chip.ac-yes { background: #ecfdf5; color: #059669; font-weight: 600; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .stat-chip.ac-no { background: #fef2f2; color: #dc2626; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
   </style>
 </head>
 <body>
@@ -417,7 +547,10 @@
       clock: '<svg class="icon-svg sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
       file: '<svg class="icon-svg sm" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
       user: '<svg class="icon-svg sm" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
-      externalLink: '<svg class="icon-svg sm" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>'
+      externalLink: '<svg class="icon-svg sm" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>',
+      download: '<svg class="icon-svg" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
+      lists: '<svg class="icon-svg" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>',
+      grid: '<svg class="icon-svg" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>'
     };
 
     function icon(name) { return ICONS[name] || ''; }
@@ -447,6 +580,9 @@
     var viewingCard = null;
     var currentView = 'gallery';
     var compareSelected = {}; // id -> true
+    var reportSelected = {}; // id -> true (cards to include in report)
+    var reportSections = { 'subjectCard': true, 'competitorCards': true, 'rateComparison': true, 'amenityCart': true, 'comparisonTable': true };
+    var amenityOverrides = {}; // Manual amenity overrides: { cardIndex_amenityName: true/false }
 
     // ── DOM refs ──
     var els = {
@@ -549,11 +685,18 @@
       var compareBtn = compareIds.length >= 1
         ? '<button class="btn btn-accent" id="compareBtn">' + icon('compare') + ' Compare (' + compareIds.length + ')</button>'
         : '';
+      
+      var reportCount = Object.keys(reportSelected).filter(function(k) { return reportSelected[k]; }).length;
+      var reportBtnText = reportCount > 0 ? ' Report Builder (' + reportCount + ')' : ' Report Builder';
 
       els.toolbarActions.innerHTML =
         compareBtn +
+        '<button class="btn btn-warning" id="reportBuilderBtn">' + icon('file') + reportBtnText + '</button>' +
+        '<button class="btn btn-accent" id="rateCompareBtn">' + icon('compare') + ' Rate Compare</button>' +
         '<button class="btn btn-primary" id="newCardBtn">' + icon('plus') + ' New Competitor Card</button>';
       document.getElementById('newCardBtn').onclick = handleNewCard;
+      document.getElementById('reportBuilderBtn').onclick = function() { renderReportBuilder(); };
+      document.getElementById('rateCompareBtn').onclick = function() { renderRateComparison(); };
       if (document.getElementById('compareBtn')) {
         document.getElementById('compareBtn').onclick = function() { renderComparison(); };
       }
@@ -608,6 +751,7 @@
               '<div class="thumb-badges-right">' + (card.impactToProperty ? badgeHTML('impact', card.impactToProperty, IMPACT_LABELS[card.impactToProperty] + ' Impact') : '') + '</div>' +
               '<div class="thumb-view-overlay" data-action="view" data-id="' + esc(card.id) + '"><span class="thumb-view-label">' + icon('eye') + ' View Card</span></div>' +
             '</div>' +
+            '<div class="report-check"><label><input type="checkbox" data-report-id="' + esc(card.id) + '"' + (reportSelected[card.id] ? ' checked' : '') + '> Report</label></div>' +
             '<div class="compare-check"><label><input type="checkbox" data-compare-id="' + esc(card.id) + '"' + isChecked + '> Compare</label></div>' +
             '<div class="thumb-body">' +
               '<h3>' + esc(card.competitorName || 'Untitled') + '</h3>' +
@@ -643,6 +787,23 @@
           };
         });
 
+        // Attach report checkboxes
+        grid.querySelectorAll('[data-report-id]').forEach(function(cb) {
+          cb.onchange = function() {
+            var id = cb.getAttribute('data-report-id');
+            if (cb.checked) reportSelected[id] = true;
+            else delete reportSelected[id];
+            console.log('Report selected:', reportSelected);
+            var count = Object.keys(reportSelected).filter(function(k) { return reportSelected[k]; }).length;
+            console.log('Total selected for report:', count);
+            // Update Report Builder button text
+            var reportBtn = document.getElementById('reportBuilderBtn');
+            if (reportBtn) {
+              var btnText = count > 0 ? icon('file') + ' Report Builder (' + count + ')' : icon('file') + ' Report Builder';
+              reportBtn.innerHTML = btnText;
+            }
+          };
+        });
         // Attach compare checkboxes
         grid.querySelectorAll('[data-compare-id]').forEach(function(cb) {
           cb.onchange = function() {
@@ -985,13 +1146,19 @@
 
       els.mainContent.innerHTML =
         '<div class="compare-bar">' +
-          '<div class="compare-info">' + icon('compare') + ' Comparing ' + compCards.length + ' competitors against ' + esc(currentProperty) + '</div>' +
+          '<div class="compare-info">' + icon('compare') + ' <span style="background:var(--brand-accent-2);color:#1e293b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:2px 6px;border-radius:4px;font-size:11px;">OUR PROPERTY</span> ' + esc(currentProperty) + ' vs ' + compCards.length + ' competitors</div>' +
           '<div class="compare-actions">' +
+            '<button class="btn btn-sm btn-outline" id="acBtn" style="color:#fff;border-color:rgba(255,255,255,0.3);">' + icon('check') + ' Amenity Cart</button>' +
+            '<button class="btn btn-sm btn-outline" id="rcBtn" style="color:#fff;border-color:rgba(255,255,255,0.3);">' + icon('compare') + ' Rate Compare</button>' +
             '<button class="btn btn-sm btn-outline" id="clearCompareBtn" style="color:#fff;border-color:rgba(255,255,255,0.3);">Clear Selection</button>' +
           '</div>' +
         '</div>' +
         tableHTML;
 
+      var acBtn = document.getElementById('acBtn');
+      if (acBtn) acBtn.onclick = function() { renderAmenityCart(); };
+      var rcBtn = document.getElementById('rcBtn');
+      if (rcBtn) rcBtn.onclick = function() { renderRateComparison(); };
       document.getElementById('clearCompareBtn').onclick = function() {
         compareSelected = {};
         renderGallery();
@@ -1542,6 +1709,1532 @@
       }
       compareSelected = {};
       renderGallery();
+    }
+
+
+    // ── Parse amenities text into array ──
+    function parseAmenities(text) {
+      if (!text) return [];
+      // Split by comma, semicolon, or newline
+      var items = text.split(/[,;\n]+/);
+      var result = [];
+      items.forEach(function(item) {
+        var t = item.trim();
+        if (t) result.push(t);
+      });
+      return result;
+    }
+
+    // ── Render: Report Builder ──
+    function renderReportBuilder(wizardStep) {
+      currentView = 'reportBuilder';
+      viewingCard = null;
+      currentCard = null;
+      
+      // Default to step 1 if not specified
+      if (!wizardStep) wizardStep = 1;
+
+      els.pageTitle.textContent = 'Report Builder - Step ' + wizardStep + ' of 3';
+      els.pageSubtitle.textContent = 'Build a market report with selected sections';
+      els.pageSubtitle.style.display = '';
+
+      var backBtn = '<button class="btn btn-back" id="backBtn">' + icon('arrowLeft') + ' Back to Gallery</button>';
+      var nextBtn = wizardStep < 3 ? '<button class="btn btn-primary" id="nextStepBtn">Next Step ' + icon('arrowLeft').replace('arrowLeft', 'arrowRight').replace('19 12 5 12', '5 12 19 12').replace('12 19 5 12', '12 5 19 12') + '</button>' : '';
+      var prevBtn = wizardStep > 1 ? '<button class="btn btn-outline" id="prevStepBtn">' + icon('arrowLeft') + ' Previous</button>' : '';
+      var previewBtn = wizardStep === 3 ? '<button class="btn btn-primary" id="previewReportBtn">' + icon('eye') + ' Preview Report</button>' : '';
+      var excelBtn = wizardStep === 3 ? '<button class="btn btn-accent" id="exportExcelBtn" style="background:#059669;color:#fff;border-color:#059669;">' + icon('download') + ' Export to Excel</button>' : '';
+      var printBtn = wizardStep === 3 ? '<button class="btn btn-success" id="printReportBtn" style="background:#059669;color:#fff;border-color:#059669;">' + icon('printer') + ' Print / PDF</button>' : '';
+
+      els.toolbarActions.innerHTML = backBtn + prevBtn + nextBtn + previewBtn + excelBtn + printBtn;
+
+      document.getElementById('backBtn').onclick = function() { renderGallery(); };
+      if (document.getElementById('nextStepBtn')) {
+        document.getElementById('nextStepBtn').onclick = function() { renderReportBuilder(wizardStep + 1); };
+      }
+      if (document.getElementById('prevStepBtn')) {
+        document.getElementById('prevStepBtn').onclick = function() { renderReportBuilder(wizardStep - 1); };
+      }
+      if (document.getElementById('previewReportBtn')) {
+        document.getElementById('previewReportBtn').onclick = function() {
+          console.log('Preview button clicked');
+          console.log('reportSelected:', reportSelected);
+          
+          var count = Object.keys(reportSelected).filter(function(k) { return reportSelected[k]; }).length;
+          if (count === 0 && !subjectCard) {
+            alert('No competitors selected!\n\nPlease:\n1. Go back to Step 1\n2. Check the boxes next to competitors\n3. Or go to the gallery and check "Report" boxes first');
+            return;
+          }
+          
+          renderReportPreview();
+        };
+      }
+      if (document.getElementById('exportExcelBtn')) {
+        document.getElementById('exportExcelBtn').onclick = function() { exportToExcel(); };
+      }
+      if (document.getElementById('printReportBtn')) {
+        document.getElementById('printReportBtn').onclick = function() {
+          console.log('Print button clicked');
+          console.log('reportSelected:', reportSelected);
+          console.log('reportSections:', reportSections);
+          
+          // Ensure we have selections
+          var count = Object.keys(reportSelected).filter(function(k) { return reportSelected[k]; }).length;
+          if (count === 0) {
+            alert('Please select competitors in Step 1 before printing. Check the boxes next to competitors in the gallery first, or go back to Step 1.');
+            return;
+          }
+          
+          // Navigate to preview and wait for render
+          renderReportPreview();
+          
+          // Wait longer for content to fully render before printing
+          setTimeout(function() {
+            console.log('Opening print dialog');
+            window.print();
+          }, 1500);
+        };
+      }
+
+      // Wizard progress indicator
+      var wizardProgressHTML = '<div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:24px;padding:16px;background:#f8fafc;border-radius:10px;">';
+      for (var i = 1; i <= 3; i++) {
+        var active = i === wizardStep;
+        var complete = i < wizardStep;
+        var stepLabel = i === 1 ? 'Select Competitors' : i === 2 ? 'Choose Sections' : 'Preview & Generate';
+        var stepColor = active ? 'var(--brand-accent-2)' : complete ? '#059669' : '#d1d5db';
+        var textColor = active ? '#1e293b' : complete ? '#fff' : '#6b7280';
+        wizardProgressHTML += '<div style="display:flex;align-items:center;gap:8px;">';
+        wizardProgressHTML += '<div style="width:32px;height:32px;border-radius:50%;background:' + stepColor + ';color:' + textColor + ';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;border:2px solid ' + (active ? 'var(--brand-accent-2)' : complete ? '#059669' : '#d1d5db') + ';">';
+        wizardProgressHTML += complete ? '✓' : i;
+        wizardProgressHTML += '</div>';
+        wizardProgressHTML += '<span style="font-size:13px;font-weight:' + (active ? '700' : '500') + ';color:' + (active ? 'var(--text)' : '#9ca3af') + ';">' + stepLabel + '</span>';
+        wizardProgressHTML += '</div>';
+        if (i < 3) wizardProgressHTML += '<div style="width:40px;height:2px;background:' + (complete ? '#059669' : '#e5e7eb') + ';"></div>';
+      }
+      wizardProgressHTML += '</div>';
+
+      var contentHTML = '';
+
+      // Step 1: Select Competitors
+      if (wizardStep === 1) {
+        var subjectHTML = '';
+        if (subjectCard) {
+          subjectHTML = '<div class="report-card-item"><input type="checkbox" id="rptSubject" checked disabled><div class="rci-name">' + esc(subjectCard.competitorName || currentProperty) + '</div><div class="rci-type" style="background:#52d5ff;color:#1e293b;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;">OUR PROPERTY</div></div>';
+        } else {
+          subjectHTML = '<div style="padding:16px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;margin-bottom:16px;color:#78350f;"><strong>Note:</strong> Set up your property card to include it in the report. <button class="btn btn-sm" style="margin-left:8px;background:#d97706;color:#fff;border-color:#d97706;" onclick="(function(){ currentCard = createEmptyCard(\'subject\'); currentCard.competitorName = currentProperty; renderEditor(); })()">Set Up Now</button></div>';
+        }
+
+        var compHTML = cards.filter(function(c) { return c.status !== 'archived'; }).map(function(c) {
+          var checked = reportSelected[c.id] ? ' checked' : '';
+          return '<div class="report-card-item"><input type="checkbox" data-rcard-id="' + esc(c.id) + '"' + checked + '><div class="rci-name">' + esc(c.competitorName || 'Untitled') + '</div><div class="rci-type">Competitor</div></div>';
+        }).join('');
+
+        var allChecked = cards.filter(function(c) { return c.status !== 'archived'; }).every(function(c) { return reportSelected[c.id]; });
+        var allCheckedAttr = allChecked ? ' checked' : '';
+
+        var selectedCount = Object.keys(reportSelected).filter(function(k) { return reportSelected[k]; }).length;
+        
+        console.log('Step 1 - reportSelected:', reportSelected);
+        console.log('Step 1 - selectedCount:', selectedCount);
+        console.log('Step 1 - cards:', cards.filter(function(c) { return c.status !== 'archived'; }).length);
+
+        contentHTML = '<div style="max-width:800px;margin:0 auto;">' +
+          '<h3 style="font-size:18px;font-weight:700;color:var(--card-navy);margin-bottom:8px;text-align:center;">Step 1: Select Competitors</h3>' +
+          '<p style="font-size:14px;color:var(--subtext);margin-bottom:24px;text-align:center;">Choose which competitors to include in your market analysis report</p>' +
+          '<div style="background:#e0f2fe;border:1px solid #52d5ff;border-radius:8px;padding:12px 16px;margin-bottom:16px;text-align:center;">' +
+            '<strong style="color:#1e293b;">' + selectedCount + ' competitor' + (selectedCount !== 1 ? 's' : '') + ' selected</strong>' +
+          '</div>' +
+          '<div class="report-card-list">' +
+            '<div class="report-card-list-title">' +
+              '<span>Available Competitors</span>' +
+              '<label class="report-select-all" style="display:inline-flex;align-items:center;gap:6px;padding:0;background:none;font-size:12px;font-weight:400;color:#1e293b;">' +
+                '<input type="checkbox" id="rptSelectAll"' + allCheckedAttr + '> Select All' +
+              '</label>' +
+            '</div>' +
+            subjectHTML +
+            compHTML +
+          '</div>' +
+        '</div>';
+      }
+
+      // Step 2: Choose Sections
+      else if (wizardStep === 2) {
+        var selectedCount = Object.keys(reportSelected).filter(function(k) { return reportSelected[k]; }).length;
+        var sectionsCount = Object.keys(reportSections).filter(function(k) { return reportSections[k]; }).length;
+        
+        contentHTML = '<div style="max-width:800px;margin:0 auto;">' +
+          '<h3 style="font-size:18px;font-weight:700;color:var(--card-navy);margin-bottom:8px;text-align:center;">Step 2: Choose Report Sections</h3>' +
+          '<p style="font-size:14px;color:var(--subtext);margin-bottom:24px;text-align:center;">Select which sections to include in your report (' + selectedCount + ' competitors selected)</p>' +
+          '<div style="background:#e0f2fe;border:1px solid #52d5ff;border-radius:8px;padding:12px 16px;margin-bottom:16px;text-align:center;">' +
+            '<strong style="color:#1e293b;">' + sectionsCount + ' section' + (sectionsCount !== 1 ? 's' : '') + ' enabled</strong>' +
+          '</div>' +
+          '<div class="report-sections-wrap">' +
+            '<div class="report-section-toggle">' +
+              '<div><div class="rst-label">' + icon('building') + ' Subject Property Card</div><div class="rst-desc">Our property details at the top of the report</div></div>' +
+              '<input type="checkbox" id="rsec_subjectCard" ' + (reportSections.subjectCard ? 'checked' : '') + '>' +
+            '</div>' +
+            '<div class="report-section-toggle">' +
+              '<div><div class="rst-label">' + icon('eye') + ' Competitor Cards</div><div class="rst-desc">Full individual competitor profiles in the report</div></div>' +
+              '<input type="checkbox" id="rsec_competitorCards" ' + (reportSections.competitorCards ? 'checked' : '') + '>' +
+            '</div>' +
+            '<div class="report-section-toggle">' +
+              '<div><div class="rst-label">' + icon('compare') + ' Comparison Table</div><div class="rst-desc">Side-by-side comparison matrix of all selected properties</div></div>' +
+              '<input type="checkbox" id="rsec_comparisonTable" ' + (reportSections.comparisonTable ? 'checked' : '') + '>' +
+            '</div>' +
+            '<div class="report-section-toggle">' +
+              '<div><div class="rst-label">' + icon('tag') + ' Rate Comparison</div><div class="rst-desc">Floorplan-level rate comparison</div></div>' +
+              '<input type="checkbox" id="rsec_rateComparison" ' + (reportSections.rateComparison ? 'checked' : '') + '>' +
+            '</div>' +
+            '<div class="report-section-toggle">' +
+              '<div><div class="rst-label">' + icon('check') + ' Amenity Cart</div><div class="rst-desc">Amenity presence comparison across properties</div></div>' +
+              '<input type="checkbox" id="rsec_amenityCart" ' + (reportSections.amenityCart ? 'checked' : '') + '>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }
+
+      // Step 3: Preview & Generate
+      else if (wizardStep === 3) {
+        var selectedCount = Object.keys(reportSelected).filter(function(k) { return reportSelected[k]; }).length;
+        var sectionsCount = Object.keys(reportSections).filter(function(k) { return reportSections[k]; }).length;
+        var reportCards = Object.keys(reportSelected).filter(function(id) { return reportSelected[id]; }).map(function(id) { return cards.find(function(c) { return c.id === id; }); }).filter(Boolean);
+        
+        console.log('Step 3 - reportSelected:', reportSelected);
+        console.log('Step 3 - selectedCount:', selectedCount);
+        console.log('Step 3 - reportCards:', reportCards);
+        
+        // Warning if no competitors selected
+        if (selectedCount === 0 && (!subjectCard || !reportSections.subjectCard)) {
+          contentHTML = '<div style="max-width:800px;margin:0 auto;">' +
+            '<h3 style="font-size:18px;font-weight:700;color:var(--card-navy);margin-bottom:8px;text-align:center;">Step 3: Preview & Generate</h3>' +
+            '<p style="font-size:14px;color:var(--subtext);margin-bottom:24px;text-align:center;">Review your selections and generate the report</p>' +
+            '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:40px;text-align:center;">' +
+              '<div style="font-size:48px;color:#dc2626;margin-bottom:16px;">' + icon('alert') + '</div>' +
+              '<h4 style="font-size:18px;font-weight:700;color:#991b1b;margin-bottom:12px;">No Competitors Selected</h4>' +
+              '<p style="font-size:14px;color:#991b1b;margin-bottom:20px;">Please go back to Step 1 and select at least one competitor to include in your report.</p>' +
+              '<button class="btn btn-primary" onclick="renderReportBuilder(1)">Go Back to Step 1</button>' +
+            '</div>' +
+          '</div>';
+        } else {
+          var summaryHTML = '<div style="background:#f8fafc;border-radius:10px;padding:20px;margin-bottom:20px;">' +
+            '<h4 style="font-size:14px;font-weight:700;color:var(--card-navy);margin-bottom:12px;">Report Summary</h4>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+            '<div style="background:#fff;padding:12px;border-radius:8px;border:1px solid var(--border);">' +
+              '<div style="font-size:24px;font-weight:800;color:var(--brand-accent-2);">' + selectedCount + '</div>' +
+              '<div style="font-size:12px;color:var(--subtext);">Competitors</div>' +
+            '</div>' +
+            '<div style="background:#fff;padding:12px;border-radius:8px;border:1px solid var(--border);">' +
+              '<div style="font-size:24px;font-weight:800;color:var(--brand-accent-2);">' + sectionsCount + '</div>' +
+              '<div style="font-size:12px;color:var(--subtext);">Sections</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+
+        var competitorListHTML = '<div style="background:#fff;border-radius:10px;padding:16px;border:1px solid var(--border);margin-bottom:16px;">' +
+          '<h4 style="font-size:13px;font-weight:700;color:var(--subtext);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">Included Competitors</h4>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:8px;">';
+        if (subjectCard && reportSections.subjectCard) {
+          competitorListHTML += '<span style="background:var(--brand-accent-2);color:#1e293b;padding:6px 12px;border-radius:6px;font-size:13px;font-weight:600;">' + esc(subjectCard.competitorName || currentProperty) + ' (Our Property)</span>';
+        }
+        reportCards.forEach(function(c) {
+          competitorListHTML += '<span style="background:#f1f5f9;padding:6px 12px;border-radius:6px;font-size:13px;font-weight:500;">' + esc(c.competitorName) + '</span>';
+        });
+        competitorListHTML += '</div></div>';
+
+        var sectionsListHTML = '<div style="background:#fff;border-radius:10px;padding:16px;border:1px solid var(--border);">' +
+          '<h4 style="font-size:13px;font-weight:700;color:var(--subtext);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">Report Sections</h4>' +
+          '<div style="display:flex;flex-direction:column;gap:8px;">';
+        var sectionLabels = {
+          subjectCard: 'Subject Property Card',
+          competitorCards: 'Competitor Cards',
+          comparisonTable: 'Comparison Table',
+          rateComparison: 'Rate Comparison',
+          amenityCart: 'Amenity Cart'
+        };
+        Object.keys(sectionLabels).forEach(function(key) {
+          if (reportSections[key]) {
+            sectionsListHTML += '<div style="display:flex;align-items:center;gap:8px;"><span style="color:#059669;font-size:18px;">✓</span><span style="font-size:14px;color:var(--text);">' + sectionLabels[key] + '</span></div>';
+          }
+        });
+        sectionsListHTML += '</div></div>';
+
+        contentHTML = '<div style="max-width:800px;margin:0 auto;">' +
+          '<h3 style="font-size:18px;font-weight:700;color:var(--card-navy);margin-bottom:8px;text-align:center;">Step 3: Preview & Generate</h3>' +
+          '<p style="font-size:14px;color:var(--subtext);margin-bottom:24px;text-align:center;">Review your selections and generate the report</p>' +
+          summaryHTML +
+          competitorListHTML +
+          sectionsListHTML +
+            '<div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:16px;margin-top:20px;text-align:center;">' +
+              '<p style="color:#065f46;font-size:14px;font-weight:500;margin-bottom:12px;">Your report is ready!</p>' +
+              '<p style="color:#047857;font-size:13px;margin-bottom:8px;">Choose how you want to view or export your report:</p>' +
+              '<div style="display:flex;flex-direction:column;gap:6px;align-items:center;margin-top:12px;">' +
+                '<div style="display:flex;align-items:center;gap:8px;"><span style="color:#059669;">✓</span><span style="font-size:13px;color:#047857;"><strong>Preview Report:</strong> View the full formatted report</span></div>' +
+                '<div style="display:flex;align-items:center;gap:8px;"><span style="color:#059669;">✓</span><span style="font-size:13px;color:#047857;"><strong>Export to Excel:</strong> Download as a spreadsheet for analysis</span></div>' +
+                '<div style="display:flex;align-items:center;gap:8px;"><span style="color:#059669;">✓</span><span style="font-size:13px;color:#047857;"><strong>Print / PDF:</strong> Save or print as a professional document</span></div>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
+        }
+      }
+
+      els.mainContent.innerHTML = wizardProgressHTML + contentHTML;
+
+      // Section toggle handlers (Step 2)
+      if (wizardStep === 2) {
+        ['subjectCard', 'competitorCards', 'comparisonTable', 'rateComparison', 'amenityCart'].forEach(function(key) {
+          var el = document.getElementById('rsec_' + key);
+          if (el) {
+            el.onchange = function() {
+              reportSections[key] = el.checked;
+              // Update the count display
+              var sectionsCount = Object.keys(reportSections).filter(function(k) { return reportSections[k]; }).length;
+              var countEl = document.querySelector('[style*="background:#e0f2fe"]');
+              if (countEl) {
+                countEl.innerHTML = '<strong style="color:#1e293b;">' + sectionsCount + ' section' + (sectionsCount !== 1 ? 's' : '') + ' enabled</strong>';
+              }
+            };
+          }
+        });
+      }
+
+      // Card selection handlers (Step 1)
+      if (wizardStep === 1) {
+        document.querySelectorAll('[data-rcard-id]').forEach(function(el) {
+          el.onchange = function() {
+            var id = el.getAttribute('data-rcard-id');
+            if (el.checked) reportSelected[id] = true;
+            else delete reportSelected[id];
+            // Update the count display
+            var selectedCount = Object.keys(reportSelected).filter(function(k) { return reportSelected[k]; }).length;
+            var countEl = document.querySelector('[style*="background:#e0f2fe"]');
+            if (countEl) {
+              countEl.innerHTML = '<strong style="color:#1e293b;">' + selectedCount + ' competitor' + (selectedCount !== 1 ? 's' : '') + ' selected</strong>';
+            }
+          };
+        });
+
+        var selectAll = document.getElementById('rptSelectAll');
+        if (selectAll) {
+          selectAll.onchange = function() {
+            var checked = selectAll.checked;
+            document.querySelectorAll('[data-rcard-id]').forEach(function(el) {
+              el.checked = checked;
+              var id = el.getAttribute('data-rcard-id');
+              if (checked) reportSelected[id] = true;
+              else delete reportSelected[id];
+            });
+            // Update the count display
+            var selectedCount = Object.keys(reportSelected).filter(function(k) { return reportSelected[k]; }).length;
+            var countEl = document.querySelector('[style*="background:#e0f2fe"]');
+            if (countEl) {
+              countEl.innerHTML = '<strong style="color:#1e293b;">' + selectedCount + ' competitor' + (selectedCount !== 1 ? 's' : '') + ' selected</strong>';
+            }
+          };
+        }
+      }
+    }
+
+    // ── Render: Report Preview (horizontal slide deck) ──
+    function renderReportPreview() {
+      console.log('=== renderReportPreview START ===');
+      console.log('reportSelected:', reportSelected);
+      console.log('reportSections:', reportSections);
+      console.log('subjectCard:', subjectCard);
+      console.log('cards.length:', cards.length);
+      
+      currentView = 'reportPreview';
+      viewingCard = null;
+      currentCard = null;
+
+      els.pageTitle.textContent = 'Report Preview';
+      els.pageSubtitle.textContent = 'Market Analysis Report - ' + esc(currentProperty);
+      els.pageSubtitle.style.display = '';
+
+      els.toolbarActions.innerHTML =
+        '<button class="btn btn-back" id="backBtn">' + icon('arrowLeft') + ' Back to Builder</button>' +
+        '<button class="btn btn-success" id="printReportBtn2">' + icon('printer') + ' Print / PDF</button>';
+
+      document.getElementById('backBtn').onclick = function() { renderReportBuilder(3); };
+      document.getElementById('printReportBtn2').onclick = function() { window.print(); };
+
+      var reportCards = Object.keys(reportSelected).filter(function(id) { return reportSelected[id]; }).map(function(id) { return cards.find(function(c) { return c.id === id; }); }).filter(Boolean);
+      
+      console.log('reportCards found:', reportCards.length);
+      reportCards.forEach(function(c) { console.log('  - ' + c.competitorName); });
+      
+      // Validation: Check if any competitors are selected
+      if (reportCards.length === 0 && (!subjectCard || !reportSections.subjectCard)) {
+        console.log('ERROR: No content to show in report!');
+        console.log('reportCards.length:', reportCards.length);
+        console.log('subjectCard:', subjectCard);
+        console.log('reportSections.subjectCard:', reportSections.subjectCard);
+        
+        els.mainContent.innerHTML = 
+          '<div style="max-width:700px;margin:60px auto;text-align:center;padding:40px;background:#fff;border-radius:12px;border:1px solid var(--border);">' +
+            '<div style="font-size:48px;color:#dc2626;margin-bottom:16px;">' + icon('alert') + '</div>' +
+            '<h3 style="font-size:20px;font-weight:700;color:var(--text);margin-bottom:12px;">Cannot Generate Report - No Competitors Selected</h3>' +
+            '<p style="font-size:14px;color:var(--subtext);margin-bottom:16px;">No competitors were found in your selection.</p>' +
+            '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:16px;margin-bottom:24px;text-align:left;">' +
+              '<p style="font-size:13px;color:#991b1b;margin-bottom:12px;"><strong>To fix this:</strong></p>' +
+              '<ol style="font-size:13px;color:#991b1b;text-align:left;padding-left:20px;margin:0;">' +
+                '<li style="margin-bottom:8px;">Go back to the <strong>Competitor Cards gallery</strong></li>' +
+                '<li style="margin-bottom:8px;">Check the <strong>"Report" checkboxes</strong> on the cards you want to include</li>' +
+                '<li style="margin-bottom:8px;">Then click <strong>"Report Builder"</strong> button in the toolbar</li>' +
+                '<li>Proceed through the wizard and click Preview/Print</li>' +
+              '</ol>' +
+            '</div>' +
+            '<button class="btn btn-primary" onclick="renderGallery()">Go to Gallery</button>' +
+          '</div>';
+        return;
+      }
+      var reportTitle = esc(currentProperty) + ' Market Analysis';
+      var reportDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+      // Horizontal deck layout - each section is a "slide"
+      var deckHTML = '<div style="max-width:1100px;margin:0 auto;padding:10px 0;">';
+
+      // Cover slide
+      deckHTML += '<div class="report-preview-section" style="text-align:center;padding:60px 40px;">';
+      deckHTML += '<div style="font-size:48px;color:var(--brand-primary);margin-bottom:16px;">' + icon('building') + '</div>';
+      deckHTML += '<h2 style="font-size:28px;font-weight:800;color:var(--card-navy);margin-bottom:8px;">' + esc(currentProperty) + '</h2>';
+      deckHTML += '<h1 style="font-size:36px;font-weight:800;color:var(--brand-primary);margin-bottom:16px;">Market Analysis Report</h1>';
+      deckHTML += '<p style="font-size:14px;color:#9ca3af;">Prepared: ' + reportDate + '</p>';
+      deckHTML += '<p style="font-size:13px;color:#9ca3af;margin-top:4px;">Capstone Management Partners</p>';
+      // List included competitors
+      if (reportCards.length > 0) {
+        deckHTML += '<div style="margin-top:32px;border-top:1px solid var(--border);padding-top:24px;">';
+        deckHTML += '<p style="font-size:12px;font-weight:700;color:var(--subtext);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Competitors Analyzed</p>';
+        deckHTML += '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">';
+        reportCards.forEach(function(c) {
+          deckHTML += '<span style="background:#f1f5f9;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:600;color:var(--text);">' + esc(c.competitorName) + '</span>';
+        });
+        deckHTML += '</div></div>';
+      }
+      deckHTML += '</div>';
+
+      // Section 1: Subject Property slide
+      if (reportSections.subjectCard && subjectCard) {
+        deckHTML += '<div class="report-preview-section">';
+        deckHTML += '<div class="rps-title" style="background:var(--brand-accent-2);color:#1e293b;">' + icon('building') + ' Our Property: ' + esc(subjectCard.competitorName || currentProperty) + '</div>';
+        deckHTML += '<div class="rps-body">';
+        var sc = subjectCard;
+        // Use the full card preview
+        var previewDiv = document.createElement('div');
+        renderPreview(sc, previewDiv);
+        deckHTML += '<div style="max-width:900px;margin:0 auto;">' + previewDiv.innerHTML + '</div>';
+        deckHTML += '</div></div>';
+      }
+
+      // Section 2: Competitor Cards - horizontal scroll or column layout
+      if (reportSections.competitorCards && reportCards.length > 0) {
+        deckHTML += '<div class="report-preview-section">';
+        deckHTML += '<div class="rps-title" style="background:var(--card-navy);color:#fff;">' + icon('eye') + ' Competitor Profiles</div>';
+        deckHTML += '<div class="rps-body">';
+        // Show each card in a column, like a slide deck
+        reportCards.forEach(function(c, idx) {
+          if (idx > 0) deckHTML += '<div style="page-break-before:always;"></div>';
+          var previewDiv = document.createElement('div');
+          renderPreview(c, previewDiv);
+          deckHTML += '<div style="max-width:900px;margin:0 auto;">' + previewDiv.innerHTML + '</div>';
+        });
+        deckHTML += '</div></div>';
+      }
+
+      // Section 3: Comparison Table
+      if (reportSections.comparisonTable && reportCards.length > 0) {
+        deckHTML += '<div class="report-preview-section">';
+        deckHTML += '<div class="rps-title" style="background:var(--card-navy);color:#fff;">' + icon('compare') + ' Comparison Matrix</div>';
+        deckHTML += '<div class="rps-body"><div style="max-width:100%;overflow-x:auto;">' + buildComparisonTableHTML(reportCards) + '</div></div>';
+        deckHTML += '</div>';
+      }
+
+      // Section 4: Rate Comparison
+      if (reportSections.rateComparison && reportCards.length > 0) {
+        deckHTML += '<div class="report-preview-section">';
+        deckHTML += '<div class="rps-title" style="background:var(--card-navy);color:#fff;">' + icon('tag') + ' Rate Comparison</div>';
+        deckHTML += '<div class="rps-body"><div style="max-width:100%;overflow-x:auto;">' + buildRateCompareHTML(reportCards) + '</div></div>';
+        deckHTML += '</div>';
+      }
+
+      // Section 5: Amenity Cart
+      if (reportSections.amenityCart && reportCards.length > 0) {
+        deckHTML += '<div class="report-preview-section">';
+        deckHTML += '<div class="rps-title" style="background:var(--card-navy);color:#fff;">' + icon('check') + ' Amenity Cart</div>';
+        try {
+          deckHTML += '<div class="rps-body"><div style="max-width:100%;overflow-x:auto;">' + buildAmenityCartHTML(reportCards, true) + '</div></div>';
+        } catch (e) {
+          console.error('Amenity Cart Error:', e);
+          deckHTML += '<div class="rps-body"><p style="color:#dc2626;padding:20px;">Amenity cart could not be generated. Error: ' + e.message + '</p></div>';
+        }
+        deckHTML += '</div>';
+      }
+
+      deckHTML += '</div>';
+      els.mainContent.innerHTML = deckHTML;
+      
+      // Attach amenity cart edit handlers if in editable mode
+      if (reportSections.amenityCart && reportCards.length > 0) {
+        setTimeout(function() {
+          attachAmenityCartHandlers(reportCards);
+        }, 100);
+      }
+    }
+
+    // ── Export to Excel ──
+    function exportToExcel() {
+      console.log('Export to Excel - reportSelected:', reportSelected);
+      console.log('Export to Excel - cards:', cards);
+      
+      var reportCards = Object.keys(reportSelected).filter(function(id) { return reportSelected[id]; }).map(function(id) { return cards.find(function(c) { return c.id === id; }); }).filter(Boolean);
+      
+      console.log('Export to Excel - reportCards:', reportCards);
+      
+      if (reportCards.length === 0 && !subjectCard) {
+        showToast('Please select at least one competitor to export in Step 1');
+        renderReportBuilder(1);
+        return;
+      }
+
+      // Build the Excel data structure
+      var wb = XLSX.utils.book_new();
+      
+      // Create headers row - property names
+      var allCards = [];
+      if (subjectCard && reportSections.subjectCard) {
+        allCards.push(subjectCard);
+      }
+      allCards = allCards.concat(reportCards);
+
+      // Initialize the data array
+      var data = [];
+      
+      // Header row with property names
+      var headerRow = [''];
+      allCards.forEach(function(c) {
+        headerRow.push(c.competitorName || 'Untitled');
+      });
+      data.push(headerRow);
+
+      // Studios row
+      var studiosRow = ['Studios'];
+      allCards.forEach(function(c) {
+        var studioPlans = (c.floorplanDetails || []).filter(function(fp) {
+          return (fp.name || '').toLowerCase().includes('studio') || 
+                 (fp.bedsBaths || '').toLowerCase().includes('studio') ||
+                 (fp.bedsBaths || '').toLowerCase().includes('0');
+        });
+        if (studioPlans.length === 0) {
+          studiosRow.push('-');
+        } else if (studioPlans.length === 1) {
+          studiosRow.push(studioPlans[0].rate || '-');
+        } else {
+          // Keep original rate strings, parse only for comparison
+          var ratesWithStrings = studioPlans.map(function(fp) {
+            return {
+              original: fp.rate || '',
+              numeric: parseFloat((fp.rate || '').replace(/[^0-9.]/g, '')) || 0
+            };
+          }).filter(function(r) { return r.numeric > 0; });
+          
+          if (ratesWithStrings.length > 0) {
+            // Sort by numeric value
+            ratesWithStrings.sort(function(a, b) { return a.numeric - b.numeric; });
+            var minRateStr = ratesWithStrings[0].original;
+            var maxRateStr = ratesWithStrings[ratesWithStrings.length - 1].original;
+            // Show range with original formatting
+            studiosRow.push(minRateStr + '-' + maxRateStr);
+          } else {
+            studiosRow.push(studioPlans[0].rate || '-');
+          }
+        }
+      });
+      data.push(studiosRow);
+
+      // Studio Sq. Ft row
+      var studioSqFtRow = ['Studio Sq. Ft'];
+      allCards.forEach(function(c) {
+        var studioPlans = (c.floorplanDetails || []).filter(function(fp) {
+          return (fp.name || '').toLowerCase().includes('studio') || 
+                 (fp.bedsBaths || '').toLowerCase().includes('studio') ||
+                 (fp.bedsBaths || '').toLowerCase().includes('0');
+        });
+        if (studioPlans.length === 0) {
+          studioSqFtRow.push('-');
+        } else if (studioPlans.length === 1) {
+          studioSqFtRow.push(studioPlans[0].sqft || '-');
+        } else {
+          var sqfts = studioPlans.map(function(fp) { 
+            return parseInt(fp.sqft || '0', 10); 
+          }).filter(function(s) { return s > 0; });
+          if (sqfts.length > 0) {
+            var minSqft = Math.min.apply(null, sqfts);
+            var maxSqft = Math.max.apply(null, sqfts);
+            studioSqFtRow.push(minSqft + '-' + maxSqft);
+          } else {
+            studioSqFtRow.push('-');
+          }
+        }
+      });
+      data.push(studioSqFtRow);
+
+      // 1BR row
+      var oneBrRow = ['1BR'];
+      allCards.forEach(function(c) {
+        var oneBedroomPlans = (c.floorplanDetails || []).filter(function(fp) {
+          var text = ((fp.name || '') + ' ' + (fp.bedsBaths || '')).toLowerCase();
+          return text.includes('1br') || text.includes('1 br') || text.includes('1bed') || 
+                 text.includes('1 bed') || text.match(/^1[\/x\s]/);
+        });
+        if (oneBedroomPlans.length === 0) {
+          oneBrRow.push('-');
+        } else if (oneBedroomPlans.length === 1) {
+          oneBrRow.push(oneBedroomPlans[0].rate || '-');
+        } else {
+          // Keep original rate strings, parse only for comparison
+          var ratesWithStrings = oneBedroomPlans.map(function(fp) {
+            return {
+              original: fp.rate || '',
+              numeric: parseFloat((fp.rate || '').replace(/[^0-9.]/g, '')) || 0
+            };
+          }).filter(function(r) { return r.numeric > 0; });
+          
+          if (ratesWithStrings.length > 0) {
+            // Sort by numeric value
+            ratesWithStrings.sort(function(a, b) { return a.numeric - b.numeric; });
+            var minRateStr = ratesWithStrings[0].original;
+            var maxRateStr = ratesWithStrings[ratesWithStrings.length - 1].original;
+            // Show range with original formatting
+            oneBrRow.push(minRateStr + '-' + maxRateStr);
+          } else {
+            oneBrRow.push(oneBedroomPlans[0].rate || '-');
+          }
+        }
+      });
+      data.push(oneBrRow);
+
+      // 1BR Sq. FT row
+      var oneBrSqFtRow = ['1BR Sq. FT'];
+      allCards.forEach(function(c) {
+        var oneBedroomPlans = (c.floorplanDetails || []).filter(function(fp) {
+          var text = ((fp.name || '') + ' ' + (fp.bedsBaths || '')).toLowerCase();
+          return text.includes('1br') || text.includes('1 br') || text.includes('1bed') || 
+                 text.includes('1 bed') || text.match(/^1[\/x\s]/);
+        });
+        if (oneBedroomPlans.length === 0) {
+          oneBrSqFtRow.push('-');
+        } else if (oneBedroomPlans.length === 1) {
+          oneBrSqFtRow.push(oneBedroomPlans[0].sqft || '-');
+        } else {
+          var sqfts = oneBedroomPlans.map(function(fp) { 
+            return parseInt(fp.sqft || '0', 10); 
+          }).filter(function(s) { return s > 0; });
+          if (sqfts.length > 0) {
+            var minSqft = Math.min.apply(null, sqfts);
+            var maxSqft = Math.max.apply(null, sqfts);
+            oneBrSqFtRow.push(minSqft + '-' + maxSqft);
+          } else {
+            oneBrSqFtRow.push('-');
+          }
+        }
+      });
+      data.push(oneBrSqFtRow);
+
+      // 2BR row
+      var twoBrRow = ['2BR'];
+      allCards.forEach(function(c) {
+        var twoBedroomPlans = (c.floorplanDetails || []).filter(function(fp) {
+          var text = ((fp.name || '') + ' ' + (fp.bedsBaths || '')).toLowerCase();
+          return text.includes('2br') || text.includes('2 br') || text.includes('2bed') || 
+                 text.includes('2 bed') || text.match(/^2[\/x\s]/);
+        });
+        if (twoBedroomPlans.length === 0) {
+          twoBrRow.push('-');
+        } else if (twoBedroomPlans.length === 1) {
+          twoBrRow.push(twoBedroomPlans[0].rate || '-');
+        } else {
+          // Keep original rate strings, parse only for comparison
+          var ratesWithStrings = twoBedroomPlans.map(function(fp) {
+            return {
+              original: fp.rate || '',
+              numeric: parseFloat((fp.rate || '').replace(/[^0-9.]/g, '')) || 0
+            };
+          }).filter(function(r) { return r.numeric > 0; });
+          
+          if (ratesWithStrings.length > 0) {
+            // Sort by numeric value
+            ratesWithStrings.sort(function(a, b) { return a.numeric - b.numeric; });
+            var minRateStr = ratesWithStrings[0].original;
+            var maxRateStr = ratesWithStrings[ratesWithStrings.length - 1].original;
+            // Show range with original formatting
+            twoBrRow.push(minRateStr + '-' + maxRateStr);
+          } else {
+            twoBrRow.push(twoBedroomPlans[0].rate || '-');
+          }
+        }
+      });
+      data.push(twoBrRow);
+
+      // 2BR Sq. FT row
+      var twoBrSqFtRow = ['2BR Sq. FT'];
+      allCards.forEach(function(c) {
+        var twoBedroomPlans = (c.floorplanDetails || []).filter(function(fp) {
+          var text = ((fp.name || '') + ' ' + (fp.bedsBaths || '')).toLowerCase();
+          return text.includes('2br') || text.includes('2 br') || text.includes('2bed') || 
+                 text.includes('2 bed') || text.match(/^2[\/x\s]/);
+        });
+        if (twoBedroomPlans.length === 0) {
+          twoBrSqFtRow.push('-');
+        } else if (twoBedroomPlans.length === 1) {
+          twoBrSqFtRow.push(twoBedroomPlans[0].sqft || '-');
+        } else {
+          var sqfts = twoBedroomPlans.map(function(fp) { 
+            return parseInt(fp.sqft || '0', 10); 
+          }).filter(function(s) { return s > 0; });
+          if (sqfts.length > 0) {
+            var minSqft = Math.min.apply(null, sqfts);
+            var maxSqft = Math.max.apply(null, sqfts);
+            twoBrSqFtRow.push(minSqft + '-' + maxSqft);
+          } else {
+            twoBrSqFtRow.push('-');
+          }
+        }
+      });
+      data.push(twoBrSqFtRow);
+
+      // Empty row
+      data.push(['']);
+
+      // Current specials row
+      var specialsRow = ['Current specials'];
+      allCards.forEach(function(c) {
+        specialsRow.push(c.currentSpecials || '-');
+      });
+      data.push(specialsRow);
+
+      // Empty row
+      data.push(['']);
+
+      // In Unit Amenities row
+      var inUnitRow = ['In Unit Amenities'];
+      allCards.forEach(function(c) {
+        var amenities = [];
+        if (c.furnished) amenities.push(FURNISHED_LABELS[c.furnished] || c.furnished);
+        if (c.topAmenities) amenities.push(c.topAmenities);
+        inUnitRow.push(amenities.join(', ') || '-');
+      });
+      data.push(inUnitRow);
+
+      // Community Amenities row
+      var communityRow = ['Community Amenities'];
+      allCards.forEach(function(c) {
+        communityRow.push(c.topAmenities || '-');
+      });
+      data.push(communityRow);
+
+      // Additional notes row
+      var notesRow = ['Additional notes'];
+      allCards.forEach(function(c) {
+        var notes = [];
+        if (c.competitiveTakeaway) notes.push(c.competitiveTakeaway);
+        if (c.notes) notes.push(c.notes);
+        notesRow.push(notes.join(' | ') || '-');
+      });
+      data.push(notesRow);
+
+      // Create worksheet
+      var ws = XLSX.utils.aoa_to_sheet(data);
+
+      // Set column widths
+      var colWidths = [{ wch: 20 }]; // First column
+      for (var i = 0; i < allCards.length; i++) {
+        colWidths.push({ wch: 25 });
+      }
+      ws['!cols'] = colWidths;
+
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(wb, ws, 'Competitor Comparison');
+
+      // Generate filename with date
+      var dateStr = new Date().toISOString().split('T')[0];
+      var filename = currentProperty.replace(/[^a-z0-9]/gi, '_') + '_Competitor_Comparison_' + dateStr + '.xlsx';
+
+      // Save file
+      XLSX.writeFile(wb, filename);
+      
+      showToast('Excel file exported successfully!');
+    }
+
+    // ── Render single card preview HTML (non-interactive) ──
+    function renderPreviewHTML(c) {
+      if (!c || !(c.competitorName || '').trim()) {
+        return { innerHTML: '' };
+      }
+      var container = document.createElement('div');
+      renderPreview(c, container);
+      return container;
+    }
+
+    // ── Build comparison table HTML (for report) ──
+    function buildComparisonTableHTML(compCards) {
+      var sc = subjectCard;
+      if (!sc && compCards.length === 0) return '<p style="color:#9ca3af;">No data to compare.</p>';
+
+      var allCards = [];
+      if (sc) allCards.push(sc);
+      allCards = allCards.concat(compCards);
+
+      var rows = [
+        { label: 'Address', fn: function(c) { return c.address; } },
+        { label: 'Property Type', fn: function(c) { return PROPERTY_TYPE_LABELS[c.propertyType] || c.propertyType; } },
+        { label: 'Target Audience', fn: function(c) { return TARGET_AUDIENCE_LABELS[c.targetAudience] || c.targetAudience; } },
+        { label: 'Distance', fn: function(c) { return c.distanceFromCampus; } },
+        { label: 'Floorplans', fn: function(c) { return c.floorplans; } },
+        { label: 'Unit Count', fn: function(c) { return c.unitCount; } },
+        { label: 'Starting Rate', fn: function(c) { return c.startingRate; }, highlight: true },
+        { label: 'Occupancy', fn: function(c) { return c.currentOccupancy; }, highlight: true },
+        { label: 'Top Amenities', fn: function(c) { return c.topAmenities; } },
+        { label: 'Specials', fn: function(c) { return c.currentSpecials; } },
+        { label: 'Takeaway', fn: function(c) { return c.competitiveTakeaway; } }
+      ];
+
+      // Use card layout for better readability with multiple properties
+      var html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin:0;">';
+      
+      allCards.forEach(function(c, i) {
+        var isOurs = i === 0 && sc;
+        var headerBg = isOurs ? 'var(--brand-accent-2)' : 'var(--card-navy)';
+        var headerColor = isOurs ? '#1e293b' : '#fff';
+        var name = isOurs ? (sc.competitorName || 'Our Property') : c.competitorName;
+        
+        html += '<div style="background:#fff;border:2px solid ' + (isOurs ? 'var(--brand-accent-2)' : 'var(--border)') + ';border-radius:12px;overflow:hidden;page-break-inside:avoid;">';
+        html += '<div style="background:' + headerBg + ';color:' + headerColor + ';padding:12px 16px;font-weight:700;font-size:14px;text-align:center;text-transform:uppercase;letter-spacing:0.5px;">';
+        html += (isOurs ? icon('building') + ' ' : '') + esc(name);
+        html += '</div>';
+        html += '<div style="padding:12px;">';
+        
+        rows.forEach(function(r) {
+          var val = r.fn(c);
+          if (!val) return; // Skip empty fields in card view
+          var labelColor = r.highlight ? '#059669' : '#6b7280';
+          var valueColor = r.highlight ? '#065f46' : '#1f2937';
+          var valueBg = r.highlight ? '#ecfdf5' : 'transparent';
+          
+          html += '<div style="margin-bottom:10px;padding:8px;background:' + valueBg + ';border-radius:6px;">';
+          html += '<div style="font-size:10px;font-weight:700;color:' + labelColor + ';text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">' + r.label + '</div>';
+          html += '<div style="font-size:13px;color:' + valueColor + ';font-weight:' + (r.highlight ? '700' : '400') + ';line-height:1.4;">' + esc(val) + '</div>';
+          html += '</div>';
+        });
+        
+        html += '</div></div>';
+      });
+      
+      html += '</div>';
+      return html;
+    }
+
+    // ── Extract bedroom type from floorplan name/bedsBaths ──
+    function extractBedroomType(fp) {
+      // Try to extract from bedsBaths first (e.g., "1/1", "2x2", "3BR/2BA", "Studio")
+      var txt = (fp.bedsBaths || fp.name || '').toLowerCase().trim();
+      // Studio / efficiency
+      if (txt.indexOf('studio') >= 0 || txt.indexOf('efficiency') >= 0 || txt.indexOf('eff') === 0 || txt === '0') return 'Studio / Efficiency';
+      // Pattern: "1x1", "1/1", "1br", "1x1.5" etc
+      var m = txt.match(/(\d+)\s*(?:x|\/|br|bd|bed|bath)?\s*(\d*)/);
+      if (m) {
+        var beds = parseInt(m[1]);
+        if (beds === 1) return '1 Bedroom / 1 Bath';
+        if (beds === 2) return '2 Bedroom / 2 Bath';
+        if (beds === 3) return '3 Bedroom';
+        if (beds === 4) return '4 Bedroom';
+        if (beds >= 5) return beds + ' Bedroom';
+      }
+      // Try name patterns
+      if (txt.indexOf('1br') >= 0 || txt.indexOf('1x1') >= 0 || txt.indexOf('1/1') >= 0) return '1 Bedroom / 1 Bath';
+      if (txt.indexOf('2br') >= 0 || txt.indexOf('2x2') >= 0 || txt.indexOf('2/2') >= 0) return '2 Bedroom / 2 Bath';
+      if (txt.indexOf('3br') >= 0 || txt.indexOf('3x3') >= 0 || txt.indexOf('3/3') >= 0) return '3 Bedroom';
+      if (txt.indexOf('4br') >= 0 || txt.indexOf('4x4') >= 0 || txt.indexOf('4/4') >= 0) return '4 Bedroom';
+      // Return the name as-is if no pattern matched
+      return fp.name || fp.bedsBaths || 'Unspecified';
+    }
+
+    // Build rate comparison HTML grouped by bedroom type with range and vs-subject arrows
+    function buildRateCompareHTML(compCards) {
+      var sc = subjectCard;
+      var allCards = [];
+      if (sc) allCards.push(sc);
+      allCards = allCards.concat(compCards);
+
+      // Group floorplans by bedroom type across all properties
+      var typeGroups = {}; // bedroomType -> { props: { ci: [fps] } }
+      var typeOrder = ['Studio / Efficiency', '1 Bedroom / 1 Bath', '2 Bedroom / 2 Bath', '3 Bedroom', '4 Bedroom', '5 Bedroom'];
+
+      allCards.forEach(function(c, ci) {
+        (c.floorplanDetails || []).forEach(function(fp) {
+          var bt = extractBedroomType(fp);
+          if (!typeGroups[bt]) typeGroups[bt] = { props: {} };
+          if (!typeGroups[bt].props[ci]) typeGroups[bt].props[ci] = [];
+          typeGroups[bt].props[ci].push({
+            name: fp.name,
+            bedsBaths: fp.bedsBaths,
+            sqft: fp.sqft,
+            rate: fp.rate
+          });
+        });
+      });
+
+      var types = Object.keys(typeGroups);
+      if (types.length === 0) return '<p style="color:#9ca3af;">No floorplan data available for rate comparison.</p>';
+
+      // Sort types by the order array, with unknown types at the end
+      types.sort(function(a, b) {
+        var ia = typeOrder.indexOf(a);
+        var ib = typeOrder.indexOf(b);
+        if (ia >= 0 && ib >= 0) return ia - ib;
+        if (ia >= 0) return -1;
+        if (ib >= 0) return 1;
+        return a.localeCompare(b);
+      });
+
+      var html = '<table class="rate-compare-table" style="font-size:12px;">';
+      html += '<thead><tr><th style="min-width:140px;">Floorplan Type</th>';
+      allCards.forEach(function(c, i) {
+        var cls = i === 0 && sc ? ' rc-our' : '';
+        var label = i === 0 && sc ? 'OUR PROPERTY: ' + esc(subjectCard.competitorName || currentProperty) : esc(c.competitorName);
+        html += '<th class="rc-header' + cls + '" style="min-width:160px;">' + label + '</th>';
+      });
+      html += '</tr></thead><tbody>';
+
+      html += '<tr class="rc-section"><td colspan="' + (allCards.length + 1) + '">Starting Rates by Bedroom Type</td></tr>';
+
+      function parseRateNum(rateStr) {
+        if (!rateStr) return 0;
+        var cleaned = rateStr.replace(/[^0-9.]/g, '');
+        var num = parseFloat(cleaned) || 0;
+        // Validate reasonable range (between $100 and $10,000 per month)
+        // If number is very small (< 50), might be in hundreds format (e.g., "8.5" meaning "$850")
+        if (num > 0 && num < 50) {
+          num = num * 100;
+        }
+        return num;
+      }
+
+      function getSubjectRange(bt) {
+        if (!sc) return null;
+        var fps = (typeGroups[bt] && typeGroups[bt].props[0]) || [];
+        var nums = fps.map(function(fp) { return parseRateNum(fp.rate); }).filter(function(n) { return n > 0; });
+        if (nums.length === 0) return null;
+        return { min: Math.min.apply(null, nums), max: Math.max.apply(null, nums) };
+      }
+
+      types.forEach(function(bt) {
+        var grp = typeGroups[bt];
+        var rowDisplay = [];
+        var rowNums = [];
+        var subjectRange = getSubjectRange(bt);
+
+        allCards.forEach(function(c, ci) {
+          var fps = grp.props[ci] || [];
+          if (fps.length === 0) {
+            rowDisplay.push('');
+            rowNums.push(0);
+            return;
+          }
+          var nums = fps.map(function(fp) { return parseRateNum(fp.rate); }).filter(function(n) { return n > 0; });
+          if (nums.length === 0) {
+            rowDisplay.push(fps[0].rate || '');
+            rowNums.push(0);
+            return;
+          }
+          var minNum = Math.min.apply(null, nums);
+          var maxNum = Math.max.apply(null, nums);
+          rowNums.push(minNum);
+
+          var displayStr;
+          if (nums.length === 1) {
+            displayStr = fps[0].rate;
+          } else {
+            var fmtMin = '$' + minNum.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            var fmtMax = '$' + maxNum.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            displayStr = fmtMin + ' - ' + fmtMax;
+          }
+
+          // Add vs-subject arrow for competitor columns
+          if (ci > 0 && nums.length > 0) {
+            if (subjectRange) {
+              var compMin = minNum;
+              var subjMin = subjectRange.min;
+              var diff = compMin - subjMin;
+              var diffStr = '$' + Math.abs(diff).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+              var arrowHTML = '';
+              if (diff < 0) {
+                // Competitor cheaper -> we are higher -> RED UP ARROW
+                arrowHTML = '<span style="background:#fef2f2;color:#dc2626;padding:3px 8px;border-radius:4px;font-weight:700;font-size:14px;margin-left:6px;white-space:nowrap;">↑ ' + diffStr + '</span>';
+              } else if (diff > 0) {
+                // Competitor more expensive -> we are lower -> GREEN DOWN ARROW  
+                arrowHTML = '<span style="background:#ecfdf5;color:#059669;padding:3px 8px;border-radius:4px;font-weight:700;font-size:14px;margin-left:6px;white-space:nowrap;">↓ ' + diffStr + '</span>';
+              } else {
+                // Equal
+                arrowHTML = '<span style="color:#6b7280;font-weight:500;font-size:12px;margin-left:6px;">= Same</span>';
+              }
+              displayStr += arrowHTML;
+            } else {
+              // No comparable data in subject property for this bedroom type
+              displayStr += '<span style="color:#9ca3af;font-size:11px;margin-left:6px;font-style:italic;">(no comparable)</span>';
+            }
+          }
+
+          rowDisplay.push(displayStr);
+        });
+
+        var hasData = rowDisplay.some(function(d) { return d; });
+        if (!hasData) return;
+
+        var validNums = rowNums.filter(function(n) { return n > 0; });
+        var overallMin = validNums.length > 1 ? Math.min.apply(null, validNums) : null;
+        var overallMax = validNums.length > 1 ? Math.max.apply(null, validNums) : null;
+
+        html += '<tr><td class="rc-fp-name">' + esc(bt) + '</td>';
+        rowDisplay.forEach(function(display, ci) {
+          if (!display) {
+            html += '<td class="rc-empty">--</td>';
+            return;
+          }
+          var cls = 'rc-rate';
+          if (overallMin !== null && rowNums[ci] > 0 && rowNums[ci] === overallMin) cls += ' rc-lowest';
+          else if (overallMax !== null && rowNums[ci] > 0 && rowNums[ci] === overallMax) cls += ' rc-highest';
+          html += '<td class="' + cls + '">' + display + '</td>';
+        });
+        html += '</tr>';
+      });
+
+      html += '</tbody></table>';
+      return html;
+    }    // ── Build amenity cart HTML with grouped, cross-property comparison ──
+    function buildAmenityCartHTML(compCards, editable) {
+      if (typeof editable === 'undefined') editable = false;
+      try {
+        console.log('buildAmenityCartHTML called with', compCards);
+        
+        // Safety check on input
+        if (!compCards) {
+          console.warn('buildAmenityCartHTML: compCards is null/undefined');
+          compCards = [];
+        }
+        if (!Array.isArray(compCards)) {
+          console.error('buildAmenityCartHTML: compCards is not an array:', compCards);
+          return '<p style="color:#dc2626;">Invalid data: compCards must be an array</p>';
+        }
+        
+        var sc = subjectCard;
+        var allCards = [];
+        if (sc) allCards.push(sc);
+        allCards = allCards.concat(compCards);
+        
+        console.log('allCards:', allCards);
+        
+        if (!allCards || allCards.length === 0) {
+          return '<p style="color:#9ca3af;">No properties to compare.</p>';
+        }
+
+        // Collect all unique amenities across all properties
+        var rawAmenityMap = {}; // index -> array of raw items for each property
+        allCards.forEach(function(c, ci) {
+          if (!c) {
+            console.warn('Null card at index', ci);
+            rawAmenityMap[ci] = [];
+            return;
+          }
+          var items = parseAmenities(c.topAmenities);
+          rawAmenityMap[ci] = items || [];
+        });
+        
+        console.log('rawAmenityMap:', rawAmenityMap);
+
+      // Normalize amenities: map a standard name -> array of known variants
+      var AMENITY_GROUPS = {
+        'Pool': ['pool', 'swimming pool', 'swimming', 'lap pool', 'resort pool', 'saltwater pool', 'heated pool', 'indoor pool'],
+        'Fitness Center': ['gym', 'fitness center', 'fitness', 'fitness room', 'weight room', 'workout', 'exercise room', 'health club', 'training'],
+        'Yoga / Studio': ['yoga', 'pilates', 'studio', 'barre', 'stretch', 'meditation'],
+        'Basketball Court': ['basketball', 'half court', 'full court'],
+        'Tennis Court': ['tennis', 'pickleball', 'racquetball', 'squash'],
+        'Game / Rec Room': ['game room', 'rec room', 'billiards', 'pool table', 'foosball', 'ping pong', 'arcade', 'esports'],
+        'Sports Field': ['sports', 'field', 'soccer', 'volleyball', 'football', 'lawn games'],
+        'Study Lounge': ['study', 'study lounge', 'study room', 'quiet study', 'study area', 'library', 'reading room'],
+        'Computer Lab': ['computer lab', 'computer', 'tech lab', 'printing station'],
+        'Business Center': ['business center', 'conference room', 'conference', 'meeting room', 'coworking', 'board room', 'work lounge'],
+        'WiFi / Internet': ['wifi', 'wi-fi', 'internet', 'wireless', 'broadband', 'high-speed'],
+        'Lounge': ['lounge', 'resident lounge', 'club room', 'clubroom', 'great room', 'community room', 'social lounge', 'living room', 'common area'],
+        'Coffee Bar': ['coffee', 'coffee bar', 'cafe', 'espresso', 'coffee lounge', 'break bar'],
+        'Rooftop / Deck': ['rooftop', 'roof deck', 'sky deck', 'observation deck', 'skyline', 'sundeck', 'sun deck'],
+        'Courtyard': ['courtyard', 'plaza', 'quad', 'inner courtyard'],
+        'Fire Pit': ['fire pit', 'fireplace', 'fire table', 'outdoor fireplace', 'bonfire'],
+        'Grill / BBQ': ['grill', 'bbq', 'barbecue', 'grilling station', 'outdoor kitchen', 'grill area', 'charcoal'],
+        'Patio / Balcony': ['patio', 'private patio', 'private balcony', 'screened porch', 'lanai', 'outdoor seating', 'terrace'],
+        'Garden / Green Space': ['garden', 'green space', 'park', 'green area', 'community garden', 'organic garden', 'lawn', 'landscaped'],
+        'Theater / Media Room': ['theater', 'movie theater', 'media room', 'home theater', 'cinema', 'movie room', 'screening room', 'tv lounge'],
+        'Parking Garage': ['parking garage', 'garage parking', 'garage', 'covered parking', 'structured parking', 'car garage'],
+        'Surface Parking': ['parking lot', 'surface parking', 'uncovered parking', 'parking'],
+        'Bike Storage': ['bike storage', 'bike room', 'bicycle storage', 'bike rack', 'bicycle rack', 'bike repair'],
+        'Shuttle / Transit': ['shuttle', 'bus', 'transit', 'transportation', 'campus shuttle', 'town shuttle'],
+        'EV Charging': ['ev charging', 'electric vehicle', 'ev charger', 'charging station', 'tesla charger'],
+        'Storage': ['storage', 'extra storage', 'storage unit', 'storage space', 'personal storage', 'locker storage', 'package concierge'],
+        'Pet Friendly': ['pet friendly', 'pet', 'dog friendly', 'cat friendly', 'pets welcome', 'pet policy'],
+        'Pet Spa / Wash': ['pet spa', 'pet wash', 'dog wash', 'pet grooming', 'bathing station'],
+        'Dog Park': ['dog park', 'bark park', 'dog run', 'pet park', 'dog area'],
+        'Laundry': ['laundry', 'laundry room', 'washer dryer', 'washer/dryer', 'on-site laundry', 'laundry facility', 'laundry center'],
+        'Package Locker': ['package locker', 'package room', 'parcel pending', 'package receiving', 'amazon hub', 'package concierge', 'lockers'],
+        'Concierge': ['concierge', 'front desk', 'door staff', 'attendant'],
+        'Controlled Access': ['controlled access', 'gated', 'gate', 'security gate', 'key fob', 'keyless entry', 'key card', 'fob entry', 'access control'],
+        'Security System': ['security', 'security system', 'camera', 'surveillance', 'alarm', 'security patrol', 'security camera', 'video monitoring', 'lighting'],
+        'On-Site Maintenance': ['maintenance', 'on-site maintenance', 'maintenance team', 'repair service', 'handyman'],
+        'Furnished': ['furnished', 'fully furnished', 'furniture', 'furnished rooms'],
+        'Air Conditioning': ['ac', 'air conditioning', 'a/c', 'central air', 'hvac', 'cooling', 'climate control'],
+        'Dishwasher': ['dishwasher', 'dish washer'],
+        'Washer / Dryer': ['washer', 'dryer', 'washer/dryer', 'washer & dryer', 'in-unit laundry', 'in unit washer', 'w/d'],
+        'Microwave': ['microwave'],
+        'Hardwood Floors': ['hardwood', 'hardwood floor', 'hardwood flooring', 'wood floor', 'laminate'],
+        'Carpet': ['carpet', 'carpeting', 'carpeted'],
+        'Granite / Quartz': ['granite', 'quartz', 'stone countertop', 'countertop', 'marble'],
+        'Stainless Steel': ['stainless', 'stainless steel', 'stainless appliance'],
+        'Walk-In Closet': ['walk-in closet', 'walk in closet', 'large closet'],
+        'Private Bathroom': ['private bath', 'private bathroom', 'ensuite', 'in-room bath', 'private bath'],
+        'Furnished Rooms': ['furnished room', 'furnished bedroom', 'furnished', 'fully furnished'],
+        'Rooftop': ['rooftop', 'sky deck']
+      };
+      var defaultCat = 'Other Amenities';
+
+      // Build a map of standard name -> category
+      var categoriesAlias = {
+        'Fitness & Recreation': ['Pool', 'Fitness Center', 'Yoga / Studio', 'Basketball Court', 'Tennis Court', 'Game / Rec Room', 'Sports Field'],
+        'Study & Work': ['Study Lounge', 'Computer Lab', 'Business Center', 'WiFi / Internet'],
+        'Social & Lounge': ['Lounge', 'Coffee Bar', 'Rooftop / Deck', 'Courtyard', 'Fire Pit', 'Grill / BBQ', 'Patio / Balcony', 'Garden / Green Space', 'Theater / Media Room', 'Rooftop'],
+        'Parking & Transportation': ['Parking Garage', 'Surface Parking', 'Bike Storage', 'Shuttle / Transit', 'EV Charging', 'Storage'],
+        'Pet & Lifestyle': ['Pet Friendly', 'Pet Spa / Wash', 'Dog Park', 'Laundry', 'Package Locker', 'Concierge'],
+        'Security & Access': ['Controlled Access', 'Security System', 'On-Site Maintenance'],
+        'Kitchen & Living': ['Furnished', 'Air Conditioning', 'Dishwasher', 'Washer / Dryer', 'Microwave', 'Hardwood Floors', 'Carpet', 'Granite / Quartz', 'Stainless Steel', 'Walk-In Closet', 'Private Bathroom', 'Furnished Rooms']
+      };
+
+      // Reverse-map: standard amenity name -> category
+      var stdNameToCat = {};
+      if (categoriesAlias && typeof categoriesAlias === 'object') {
+        try {
+          Object.keys(categoriesAlias).forEach(function(cat) {
+            if (categoriesAlias[cat] && Array.isArray(categoriesAlias[cat])) {
+              categoriesAlias[cat].forEach(function(stdName) {
+                if (stdName) stdNameToCat[stdName] = cat;
+              });
+            }
+          });
+        } catch (e) {
+          console.error('Error building stdNameToCat:', e);
+          return '<p style="color:#dc2626;">Error processing amenity categories: ' + e.message + '</p>';
+        }
+      } else {
+        console.error('categoriesAlias is not a valid object:', categoriesAlias);
+        return '<p style="color:#dc2626;">Amenity category data is invalid</p>';
+      }
+
+      // For each property, determine which standard amenities are present
+      var propAmenities = {}; // ci -> [stdName, ...]
+      if (!AMENITY_GROUPS || typeof AMENITY_GROUPS !== 'object') {
+        console.error('AMENITY_GROUPS is not a valid object:', AMENITY_GROUPS);
+        return '<p style="color:#dc2626;">Amenity group data is invalid</p>';
+      }
+      
+      allCards.forEach(function(c, ci) {
+        var items = rawAmenityMap[ci] || [];
+        var found = {};
+        if (Array.isArray(items)) {
+          items.forEach(function(item) {
+            if (!item) return;
+            try {
+              var itemLower = String(item).toLowerCase();
+              Object.keys(AMENITY_GROUPS).forEach(function(stdName) {
+                var variants = AMENITY_GROUPS[stdName];
+                if (!variants || !Array.isArray(variants)) return;
+                variants.forEach(function(variant) {
+                  if (!variant) return;
+                  try {
+                    var variantStr = String(variant);
+                    if (itemLower.indexOf(variantStr) >= 0 || variantStr.indexOf(itemLower) >= 0) {
+                      found[stdName] = true;
+                    }
+                  } catch (e) {
+                    console.warn('Error comparing variant:', e);
+                  }
+                });
+              });
+            } catch (e) {
+              console.warn('Error processing item:', item, e);
+            }
+          });
+        }
+        propAmenities[ci] = Object.keys(found || {});
+      });
+      
+      console.log('propAmenities:', propAmenities);
+
+      // Collect all unique standard amenities
+      var allStd = [];
+      if (propAmenities && typeof propAmenities === 'object') {
+        try {
+          Object.keys(propAmenities).forEach(function(ci) {
+            var amenitiesForCard = propAmenities[ci];
+            if (amenitiesForCard && Array.isArray(amenitiesForCard)) {
+              amenitiesForCard.forEach(function(stdName) {
+                if (stdName && allStd.indexOf(stdName) < 0) allStd.push(stdName);
+              });
+            }
+          });
+        } catch (e) {
+          console.error('Error collecting standard amenities:', e);
+        }
+      }
+      
+      console.log('allStd:', allStd);
+
+      if (allStd.length === 0) {
+        // Fallback: just list raw amenities
+        allCards.forEach(function(c, ci) {
+          (rawAmenityMap[ci] || []).forEach(function(item) {
+            var lower = item.toLowerCase();
+            if (allStd.indexOf(lower) < 0) allStd.push(lower);
+          });
+        });
+        if (allStd.length === 0) return '<p style="color:#9ca3af;">No amenity data available. Add amenities to the Top Amenities field in each card.</p>';
+        // Use raw mode
+        return buildRawAmenityCart(allCards, rawAmenityMap, allStd, sc);
+      }
+
+      // Sort standard amenities by category
+      var catSorted = {};
+      allStd.forEach(function(stdName) {
+        var cat = stdNameToCat[stdName] || defaultCat;
+        if (!catSorted[cat]) catSorted[cat] = [];
+        if (catSorted[cat].indexOf(stdName) < 0) catSorted[cat].push(stdName);
+      });
+
+      // Build table
+      var html = '<table class="amenity-cart-table" style="font-size:12px;">';
+      html += '<thead><tr><th style="min-width:120px;">Amenity</th>';
+      allCards.forEach(function(c, i) {
+        var cls = i === 0 && sc ? ' ac-our' : '';
+        var label = i === 0 && sc ? 'OUR PROPERTY: ' + esc(subjectCard.competitorName || currentProperty) : esc(c ? c.competitorName : 'Unknown');
+        html += '<th class="ac-header' + cls + '">' + label + '</th>';
+      });
+      html += '</tr></thead><tbody>';
+
+      var catOrder = [];
+      try {
+        if (categoriesAlias && typeof categoriesAlias === 'object') {
+          catOrder = Object.keys(categoriesAlias);
+        }
+      } catch (e) {
+        console.error('Error getting category keys:', e);
+      }
+      // Add defaultCat at the end
+      var allCats = catOrder.concat([defaultCat]);
+
+      allCats.forEach(function(cat) {
+        try {
+          var items = catSorted[cat];
+          if (!items || items.length === 0) return;
+          html += '<tr class="ac-category"><td colspan="' + (allCards.length + 1) + '">' + esc(cat) + '</td></tr>';
+          items.forEach(function(stdName) {
+            html += '<tr><td class="ac-amenity-name">' + esc(stdName) + '</td>';
+            allCards.forEach(function(c, ci) {
+              var autoDetected = (propAmenities[ci] || []).indexOf(stdName) >= 0;
+              var overrideKey = ci + '_' + stdName;
+              var present = autoDetected;
+              var manualClass = '';
+              
+              // Check for manual override
+              if (amenityOverrides.hasOwnProperty(overrideKey)) {
+                present = amenityOverrides[overrideKey];
+                if (present && !autoDetected) manualClass = ' ac-manually-added';
+                else if (!present && autoDetected) manualClass = ' ac-manually-removed';
+              }
+              
+              var cellClass = editable ? 'ac-editable' + manualClass : manualClass;
+              var dataAttrs = editable ? ' data-card-idx="' + ci + '" data-amenity="' + esc(stdName) + '" data-override-key="' + overrideKey + '"' : '';
+              
+              html += '<td class="' + cellClass + '"' + dataAttrs + '>' + 
+                      (present ? '<span class="ac-present">' + icon('check') + ' Yes</span>' : '<span class="ac-missing">--</span>') + 
+                      '</td>';
+            });
+            html += '</tr>';
+          });
+        } catch (e) {
+          console.error('Error processing category ' + cat + ':', e);
+        }
+      });
+
+      // Summary row
+      html += '<tr class="ac-category"><td colspan="' + (allCards.length + 1) + '">Total Amenities</td></tr>';
+      html += '<tr><td class="ac-amenity-name">Amenity Count</td>';
+      allCards.forEach(function(c, ci) {
+        // Count amenities including manual overrides
+        var count = 0;
+        allStd.forEach(function(stdName) {
+          var overrideKey = ci + '_' + stdName;
+          var autoDetected = (propAmenities[ci] || []).indexOf(stdName) >= 0;
+          var present = autoDetected;
+          
+          // Check for manual override
+          if (amenityOverrides.hasOwnProperty(overrideKey)) {
+            present = amenityOverrides[overrideKey];
+          }
+          
+          if (present) count++;
+        });
+        
+        if (count === 0) {
+          count = (rawAmenityMap[ci] || []).length;
+        }
+        html += '<td style="font-weight:700;color:var(--card-navy);font-size:18px;text-align:center;">' + count + '</td>';
+      });
+      html += '</tr>';
+
+      html += '</tbody></table>';
+      
+      // Add instructions if editable
+      if (editable) {
+        html += '<div style="margin-top:12px;padding:12px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;font-size:12px;color:#0c4a6e;">';
+        html += '<strong>Tip:</strong> Click on any cell to manually add or remove an amenity for that property. Blue cells = manually added, Pink cells = manually removed.';
+        html += ' <button id="resetAmenityOverrides" style="margin-left:12px;padding:4px 12px;background:#ef4444;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Reset All Manual Changes</button>';
+        html += '</div>';
+      }
+      
+      return html;
+      
+      } catch (error) {
+        console.error('buildAmenityCartHTML: Critical error:', error);
+        console.error('Error stack:', error.stack);
+        return '<p style="color:#dc2626;padding:20px;"><strong>Error generating amenity cart:</strong> ' + error.message + '</p>';
+      }
+    }
+    
+    // ── Attach amenity cart edit handlers ──
+    function attachAmenityCartHandlers(compCards) {
+      console.log('Attaching amenity cart handlers');
+      var editableCells = document.querySelectorAll('.ac-editable');
+      console.log('Found ' + editableCells.length + ' editable cells');
+      
+      editableCells.forEach(function(cell) {
+        cell.onclick = function() {
+          var overrideKey = cell.getAttribute('data-override-key');
+          var cardIdx = cell.getAttribute('data-card-idx');
+          var amenityName = cell.getAttribute('data-amenity');
+          
+          console.log('Cell clicked:', overrideKey, cardIdx, amenityName);
+          
+          // Toggle the override
+          if (amenityOverrides.hasOwnProperty(overrideKey)) {
+            // Cycle through: override true -> override false -> no override (auto)
+            if (amenityOverrides[overrideKey] === true) {
+              amenityOverrides[overrideKey] = false;
+            } else {
+              delete amenityOverrides[overrideKey];
+            }
+          } else {
+            // Set to opposite of auto-detected
+            var isAutoPresent = cell.querySelector('.ac-present') !== null;
+            amenityOverrides[overrideKey] = !isAutoPresent;
+          }
+          
+          console.log('amenityOverrides updated:', amenityOverrides);
+          
+          // Refresh the amenity cart section
+          refreshAmenityCartInPreview(compCards);
+        };
+      });
+      
+      // Reset button
+      var resetBtn = document.getElementById('resetAmenityOverrides');
+      if (resetBtn) {
+        resetBtn.onclick = function() {
+          if (confirm('Reset all manual amenity changes? This will restore auto-detection.')) {
+            amenityOverrides = {};
+            refreshAmenityCartInPreview(compCards);
+            showToast('Manual amenity changes reset');
+          }
+        };
+      }
+    }
+    
+    // ── Refresh amenity cart in preview ──
+    function refreshAmenityCartInPreview(compCards) {
+      var amenitySection = null;
+      var allSections = document.querySelectorAll('.report-preview-section');
+      allSections.forEach(function(section) {
+        var title = section.querySelector('.rps-title');
+        if (title && title.textContent.indexOf('Amenity Cart') >= 0) {
+          amenitySection = section;
+        }
+      });
+      
+      if (amenitySection) {
+        var body = amenitySection.querySelector('.rps-body > div');
+        if (body) {
+          try {
+            body.innerHTML = buildAmenityCartHTML(compCards, true);
+            setTimeout(function() {
+              attachAmenityCartHandlers(compCards);
+            }, 50);
+          } catch (e) {
+            console.error('Error refreshing amenity cart:', e);
+          }
+        }
+      }
+    }
+
+    // ── Fallback raw amenity cart ──
+    function buildRawAmenityCart(allCards, rawMap, allStd, sc) {
+      var html = '<table class="amenity-cart-table" style="font-size:12px;">';
+      html += '<thead><tr><th style="min-width:120px;">Amenity</th>';
+      allCards.forEach(function(c, i) {
+        var cls = i === 0 && sc ? ' ac-our' : '';
+        var label = i === 0 && sc ? 'OUR PROPERTY: ' + esc(subjectCard.competitorName || currentProperty) : esc(c.competitorName);
+        html += '<th class="ac-header' + cls + '">' + label + '</th>';
+      });
+      html += '</tr></thead><tbody>';
+
+      allStd.forEach(function(amenityLower) {
+        html += '<tr><td class="ac-amenity-name">' + esc(amenityLower.charAt(0).toUpperCase() + amenityLower.slice(1)) + '</td>';
+        allCards.forEach(function(c, ci) {
+          var items = rawMap[ci] || [];
+          var found = items.some(function(item) { return item.toLowerCase().indexOf(amenityLower) >= 0 || amenityLower.indexOf(item.toLowerCase()) >= 0; });
+          html += '<td>' + (found ? '<span class="ac-present">' + icon('check') + ' Yes</span>' : '<span class="ac-missing">--</span>') + '</td>';
+        });
+        html += '</tr>';
+      });
+
+      html += '<tr class="ac-category"><td colspan="' + (allCards.length + 1) + '">Total Amenities</td></tr>';
+      html += '<tr><td class="ac-amenity-name">Count</td>';
+      allCards.forEach(function(c, ci) {
+        html += '<td style="font-weight:700;color:var(--card-navy);font-size:18px;text-align:center;">' + (rawMap[ci] || []).length + '</td>';
+      });
+      html += '</tr>';
+      html += '</tbody></table>';
+      return html;
+    }
+
+    // ── Render: Rate Comparison standalone view ──
+    function renderRateComparison() {
+      currentView = 'rateCompare';
+
+      var ids = getCompareIds();
+      var compCards = ids.map(function(id) { return cards.find(function(c) { return c.id === id; }); }).filter(Boolean);
+
+      if (compCards.length < 1) {
+        showToast('Select at least 1 competitor to compare (use checkboxes on cards)');
+        return;
+      }
+
+      els.pageTitle.textContent = 'Rate Comparison';
+      els.pageSubtitle.textContent = 'Floorplan rate comparison for ' + esc(currentProperty);
+      els.pageSubtitle.style.display = '';
+
+      els.toolbarActions.innerHTML =
+        '<button class="btn btn-back" id="backBtn">' + icon('arrowLeft') + ' Back</button>' +
+        '<button class="btn btn-outline" id="printRCBtn">' + icon('printer') + ' Print</button>';
+
+      document.getElementById('backBtn').onclick = function() { renderGallery(); };
+      document.getElementById('printRCBtn').onclick = function() { window.print(); };
+
+      // Check if subject card exists and has data for validation warnings
+      var subjectValid = true;
+      var warningMessage = '';
+
+      if (!subjectCard) {
+        subjectValid = false;
+        warningMessage = '<div style="margin-bottom:16px;padding:12px 16px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#991b1b;">' +
+          '<strong>' + icon('alert') + ' Subject Property Not Set Up</strong><br>' +
+          'Set up your property card to see colored arrows comparing your rates to competitors. ' +
+          '<button class="btn btn-sm" style="margin-left:8px;background:#dc2626;color:#fff;border-color:#dc2626;" onclick="(function(){ currentCard = createEmptyCard(\'subject\'); currentCard.competitorName = currentProperty; renderEditor(); })()">Set Up Now</button>' +
+        '</div>';
+      } else if (!subjectCard.floorplanDetails || subjectCard.floorplanDetails.length === 0) {
+        subjectValid = false;
+        warningMessage = '<div style="margin-bottom:16px;padding:12px 16px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;color:#78350f;">' +
+          '<strong>' + icon('alert') + ' Missing Floorplan Data</strong><br>' +
+          'Add floorplan details to your property card to enable rate comparison arrows. ' +
+          '<button class="btn btn-sm" style="margin-left:8px;background:#d97706;color:#fff;border-color:#d97706;" onclick="(function(){ handleEditCard(subjectCard); })()">Edit Property Card</button>' +
+        '</div>';
+      }
+
+      els.mainContent.innerHTML =
+        '<div class="compare-bar">' +
+          '<div class="compare-info">' + icon('compare') + ' <span style="background:var(--brand-accent-2);color:#1e293b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:3px 8px;border-radius:4px;font-size:11px;">OUR PROPERTY</span> <span style="margin-left:4px;">' + esc(currentProperty) + ' vs ' + compCards.length + ' competitors</span></div>' +
+          '<div class="compare-actions" style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">' +
+            '<div style="display:flex;gap:6px;font-size:11px;opacity:0.85;white-space:nowrap;">' +
+              '<span style="background:#ecfdf5;color:#065f46;padding:3px 8px;border-radius:4px;font-weight:500;">Lowest</span>' +
+              '<span style="background:#fef2f2;color:#991b1b;padding:3px 8px;border-radius:4px;font-weight:500;">Highest</span>' +
+            '</div>' +
+            '<div style="display:flex;gap:6px;font-size:11px;white-space:nowrap;">' +
+              '<span style="background:#fef2f2;color:#dc2626;padding:3px 8px;border-radius:4px;font-weight:600;">↑ We\'re Higher</span>' +
+              '<span style="background:#ecfdf5;color:#059669;padding:3px 8px;border-radius:4px;font-weight:600;">↓ We\'re Lower</span>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        warningMessage +
+        '<div class="rate-compare-wrap">' + buildRateCompareHTML(compCards) + '</div>';
+
+      if (subjectCard) {
+        var note = '<div style="margin-top:8px;padding:10px 16px;background:#f0faff;border-radius:8px;border:1px solid var(--brand-accent-2);display:flex;align-items:center;gap:8px;font-size:13px;color:#1e293b;"><span style="background:var(--brand-accent-2);color:#1e293b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:3px 8px;border-radius:4px;font-size:10px;">OUR PROPERTY</span> <span style="font-weight:600;">' + esc(subjectCard.competitorName || currentProperty) + '</span> included in the <strong>blue-highlighted column</strong>.</div>';
+        els.mainContent.innerHTML += note;
+      }
+    }
+
+    // ── Render: Amenity Cart standalone view ──
+    function renderAmenityCart() {
+      currentView = 'amenityCart';
+
+      var ids = getCompareIds();
+      var compCards = ids.map(function(id) { return cards.find(function(c) { return c.id === id; }); }).filter(Boolean);
+
+      if (compCards.length < 1) {
+        showToast('Select at least 1 competitor to compare (use checkboxes on cards)');
+        return;
+      }
+
+      els.pageTitle.textContent = 'Amenity Cart';
+      els.pageSubtitle.textContent = 'Amenity comparison for ' + esc(currentProperty);
+      els.pageSubtitle.style.display = '';
+
+      els.toolbarActions.innerHTML =
+        '<button class="btn btn-back" id="backBtn">' + icon('arrowLeft') + ' Back</button>' +
+        '<button class="btn btn-outline" id="printACBtn">' + icon('printer') + ' Print</button>';
+
+      document.getElementById('backBtn').onclick = function() { renderGallery(); };
+      document.getElementById('printACBtn').onclick = function() { window.print(); };
+
+      var amenityCartHTML = '';
+      try {
+        amenityCartHTML = buildAmenityCartHTML(compCards, true);
+      } catch (e) {
+        console.error('Error rendering amenity cart:', e);
+        amenityCartHTML = '<div style="padding:20px;color:#dc2626;"><strong>Error:</strong> ' + e.message + '<br><small>' + e.stack + '</small></div>';
+      }
+      
+      els.mainContent.innerHTML =
+        '<div class="amenity-cart-bar">' +
+          '<div class="ac-info">' + icon('check') + ' <span style="background:var(--brand-accent-2);color:#1e293b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:2px 6px;border-radius:4px;font-size:11px;">OUR PROPERTY</span> ' + esc(currentProperty) + ' vs ' + compCards.length + ' competitors</div>' +
+          '<div class="ac-actions">' +
+            '<span style="font-size:11px;opacity:0.8;"><span style="background:#ecfdf5;padding:2px 6px;border-radius:4px;margin-right:4px;color:#059669;">Present</span></span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="amenity-cart-wrap">' + amenityCartHTML + '</div>';
+
+      if (subjectCard) {
+        var note = '<div style="margin-top:8px;padding:8px 14px;background:#f0faff;border-radius:8px;border:1px solid var(--brand-accent-2);display:flex;align-items:center;gap:8px;font-size:12px;color:#1e293b;"><span style="background:var(--brand-accent-2);color:#1e293b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:2px 8px;border-radius:4px;font-size:10px;">OUR PROPERTY</span> <span style="font-weight:600;">' + esc(subjectCard.competitorName || currentProperty) + '</span> included in the <strong>blue-highlighted column</strong>.</div>';
+        els.mainContent.innerHTML += note;
+      }
+      
+      // Attach amenity cart edit handlers
+      setTimeout(function() {
+        attachAmenityCartHandlers(compCards);
+      }, 100);
     }
 
     // ── Init ──

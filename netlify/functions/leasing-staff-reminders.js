@@ -71,7 +71,7 @@ export async function handler(event) {
           status: t.status || '',
           priority: t.priority || '',
           propertyName: propsMap[t.propertyId] || '',
-          taskUrl: `${APP_BASE_URL}/leasing_staff_list.html?taskId=${encodeURIComponent(t._id.toString())}`,
+          taskUrl: `${APP_BASE_URL}/leasing_staff_list.html?taskId=${encodeURIComponent(t._id.toString())}&propertyId=${encodeURIComponent(t.propertyId||'')}&date=${encodeURIComponent(t.date||'')}`,
         }));
 
         const payload = {

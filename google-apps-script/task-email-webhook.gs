@@ -39,7 +39,7 @@ function doPost(e) {
       return jsonResponse({ success: false, error: 'Unauthorized' });
     }
 
-    if (data.eventType !== 'task_assigned' && data.eventType !== 'task_overdue_reminder') {
+    if (data.eventType !== 'task_assigned' && data.eventType !== 'task_overdue_reminder' && data.eventType !== 'task_status_change') {
       return jsonResponse({ success: false, error: 'Unsupported event type' });
     }
 
@@ -93,6 +93,35 @@ function doPost(e) {
       return jsonResponse({
         success: true,
         message: 'Overdue reminder email sent to ' + data.assignedToEmail
+      });
+    }
+
+    // ── task_status_change ──
+    if (data.eventType === 'task_status_change') {
+      if (!isValidEmail(data.assignedToEmail)) {
+        return jsonResponse({ success: false, error: 'Missing or invalid assignedToEmail' });
+      }
+
+      var statusTaskTitle = data.taskTitle || 'Task';
+      var statusSubject = 'Status Change: ' + statusTaskTitle;
+
+      var statusMailOptions = {
+        to: data.assignedToEmail,
+        subject: statusSubject,
+        body: buildStatusChangePlainText(data),
+        htmlBody: buildStatusChangeEmailHtml(data),
+        name: 'CMP Marketing Hub'
+      };
+
+      if (isValidEmail(data.changedByEmail)) {
+        statusMailOptions.replyTo = data.changedByEmail;
+      }
+
+      MailApp.sendEmail(statusMailOptions);
+
+      return jsonResponse({
+        success: true,
+        message: 'Status change email sent to ' + data.assignedToEmail
       });
     }
 
@@ -276,7 +305,7 @@ function buildOverdueReminderHtml(data) {
     + '<tr><td align="center">'
     + '<table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="width:600px;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e5e5e5;">'
     + '<tr><td style="background:' + brandColor + ';color:#ffffff;padding:24px;text-align:center;">'
-    + '<h1 style="margin:0;font-size:22px;line-height:28px;color:#ffffff;">⏰ Overdue Tasks Reminder</h1>'
+    + '<h1 style="margin:0;font-size:22px;line-height:28px;color:#ffffff;">Overdue Tasks Reminder</h1>'
     + '<p style="margin:8px 0 0;font-size:14px;line-height:20px;color:#ffffff;">CMP Marketing Hub</p>'
     + '</td></tr>'
     + '<tr><td style="padding:28px;">'
@@ -321,6 +350,167 @@ function buildOverdueReminderPlainText(data) {
   if (data.dashboardUrl) {
     lines.push('');
     lines.push('Open Task Board: ' + data.dashboardUrl);
+  }
+
+  lines.push('');
+  lines.push('— CMP Marketing Hub');
+
+  return lines.join('\n');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STATUS CHANGE HTML EMAIL TEMPLATE
+// ═══════════════════════════════════════════════════════════════
+
+function buildStatusChangeEmailHtml(data) {
+  var brandColor = '#446472';
+  var taskTitle = escapeHtml(data.taskTitle || 'Task');
+  var recipientName = escapeHtml(data.assignedToName || 'there');
+  var changedByName = escapeHtml(data.changedByName || 'Someone');
+  var oldStatus = escapeHtml(data.oldStatus || '—');
+  var newStatus = escapeHtml(data.newStatus || '—');
+  var taskDescription = escapeHtml(data.taskDescription || '');
+  var groupName = escapeHtml(data.groupName || '');
+  var taskUrl = String(data.taskUrl || '').trim();
+
+  var descriptionBlock = taskDescription
+    ? '<p style="font-size:15px;line-height:22px;color:#333333;margin:18px 0 0;">' + taskDescription + '</p>'
+    : '';
+
+  var ctaBlock = taskUrl
+    ? '<div style="text-align:center;margin-top:28px;">'
+      + '<a href="' + escapeHtml(taskUrl) + '" style="display:inline-block;background:' + brandColor + ';color:#ffffff;text-decoration:none;padding:14px 24px;border-radius:8px;font-size:16px;font-weight:bold;">View Task</a>'
+      + '</div>'
+    : '';
+
+  // Status color mapping
+  var statusColors = {
+    'Not Started': '#94a3b8',
+    'Working on It': '#d97706',
+    'Done': '#16a34a',
+    'On Hold': '#7c3aed'
+  };
+  var oldColor = statusColors[data.oldStatus] || '#94a3b8';
+  var newColor = statusColors[data.newStatus] || '#94a3b8';
+
+  var changesHtml = '';
+  if (data.changedFields) {
+    try {
+      var fields = typeof data.changedFields === 'string' ? JSON.parse(data.changedFields) : data.changedFields;
+      if (fields && typeof fields === 'object') {
+        for (var key in fields) {
+          if (fields.hasOwnProperty(key)) {
+            var val = fields[key];
+            if (val && typeof val === 'object' && 'from' in val) {
+              changesHtml += '<tr>'
+                + '<td style="padding:8px 12px;border-bottom:1px solid #eeeeee;font-size:13px;color:#666666;width:140px;text-transform:capitalize;">' + escapeHtml(key) + '</td>'
+                + '<td style="padding:8px 12px;border-bottom:1px solid #eeeeee;font-size:13px;">'
+                + '<span style="text-decoration:line-through;color:#999;">' + escapeHtml(String(val.from || '—')) + '</span>'
+                + ' → <strong style="color:' + brandColor + ';">' + escapeHtml(String(val.to || '—')) + '</strong>'
+                + '</td></tr>';
+            }
+          }
+        }
+      }
+    } catch(e) {}
+  }
+
+  var changesBlock = changesHtml
+    ? '<div style="margin-top:18px;"><h3 style="font-size:14px;color:#222222;margin:0 0 8px;">What Changed</h3>'
+      + '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse;border:1px solid #eeeeee;border-radius:8px;overflow:hidden;">'
+      + changesHtml + '</table></div>'
+    : '';
+
+  return ''
+    + '<div style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,Helvetica,sans-serif;">'
+    + '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f5f5;padding:24px 0;">'
+    + '<tr><td align="center">'
+    + '<table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="width:600px;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e5e5e5;">'
+
+    // Header banner
+    + '<tr><td style="background:' + brandColor + ';color:#ffffff;padding:24px;text-align:center;">'
+    + '<h1 style="margin:0;font-size:22px;line-height:28px;color:#ffffff;">Task Status Update</h1>'
+    + '<p style="margin:8px 0 0;font-size:14px;line-height:20px;color:#ffffff;">CMP Marketing Hub</p>'
+    + '</td></tr>'
+
+    // Body
+    + '<tr><td style="padding:28px;">'
+    + '<p style="font-size:16px;line-height:24px;color:#222222;margin:0 0 16px;">Hi ' + recipientName + ',</p>'
+    + '<p style="font-size:16px;line-height:24px;color:#222222;margin:0 0 24px;"><strong>' + changedByName + '</strong> updated a task you are assigned to.</p>'
+
+    // Task card
+    + '<div style="background:#fafafa;border:1px solid #eeeeee;border-radius:10px;padding:18px;margin-bottom:22px;">'
+    + '<h2 style="font-size:20px;line-height:26px;color:#222222;margin:0;">' + taskTitle + '</h2>'
+    + descriptionBlock
+    + '<div style="margin-top:14px;display:flex;align-items:center;gap:8px;">'
+    + '<span style="display:inline-block;padding:5px 14px;border-radius:999px;font-size:13px;font-weight:700;background:#f1f5f9;color:' + oldColor + ';border:1px solid #e2e8f0;text-decoration:line-through;">' + oldStatus + '</span>'
+    + '<span style="font-size:16px;color:#999;">→</span>'
+    + '<span style="display:inline-block;padding:5px 14px;border-radius:999px;font-size:13px;font-weight:700;background:#f0fdf4;color:' + newColor + ';border:1px solid #bbf7d0;">' + newStatus + '</span>'
+    + '</div>'
+    + '</div>'
+
+    // Detail rows
+    + '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse;">'
+    + taskRow('Property', data.propertyName)
+    + taskRow('Category', groupName)
+    + taskRow('Priority', data.priority)
+    + taskRow('Due Date', data.dueDate)
+    + '</table>'
+
+    + changesBlock
+    + ctaBlock
+
+    // Footer
+    + '<p style="font-size:12px;line-height:18px;color:#777777;margin:28px 0 0;text-align:center;">This notification was sent from the CMP Marketing Hub.</p>'
+    + '</td></tr>'
+
+    + '</table>'
+    + '</td></tr>'
+    + '</table>'
+    + '</div>';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STATUS CHANGE PLAIN TEXT FALLBACK
+// ═══════════════════════════════════════════════════════════════
+
+function buildStatusChangePlainText(data) {
+  var lines = [
+    'Hi ' + (data.assignedToName || 'there') + ',',
+    '',
+    (data.changedByName || 'Someone') + ' updated a task you are assigned to.',
+    '',
+    'Task: ' + (data.taskTitle || 'Task'),
+    'Status: ' + (data.oldStatus || '—') + ' → ' + (data.newStatus || '—')
+  ];
+
+  if (data.taskDescription) lines.push('Description: ' + data.taskDescription);
+  if (data.propertyName) lines.push('Property: ' + data.propertyName);
+  if (data.groupName) lines.push('Category: ' + data.groupName);
+  if (data.priority) lines.push('Priority: ' + data.priority);
+  if (data.dueDate) lines.push('Due Date: ' + data.dueDate);
+
+  if (data.changedFields) {
+    try {
+      var fields = typeof data.changedFields === 'string' ? JSON.parse(data.changedFields) : data.changedFields;
+      if (fields && typeof fields === 'object') {
+        lines.push('');
+        lines.push('Changes:');
+        for (var key in fields) {
+          if (fields.hasOwnProperty(key)) {
+            var val = fields[key];
+            if (val && typeof val === 'object' && 'from' in val) {
+              lines.push('  ' + key + ': ' + (val.from || '—') + ' → ' + (val.to || '—'));
+            }
+          }
+        }
+      }
+    } catch(e) {}
+  }
+
+  if (data.taskUrl) {
+    lines.push('');
+    lines.push('View Task: ' + data.taskUrl);
   }
 
   lines.push('');

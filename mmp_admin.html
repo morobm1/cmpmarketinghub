@@ -83,6 +83,7 @@
     .detail-header .role-badge{font-size:12px; padding:4px 12px; border-radius:999px; font-weight:600}
     .detail-header .role-badge.admin{background:#fff7e6; color:#8a5800; border:1px solid #fde68a}
     .detail-header .role-badge.user{background:#f0f9ff; color:#0369a1; border:1px solid #bae6fd}
+    .detail-header .role-badge.maintenance{background:#f0fdf4; color:#166534; border:1px solid #bbf7d0}
 
     .detail-body{padding:24px}
     
@@ -249,11 +250,11 @@
   <main id="appContainer" class="container hidden">
     <!-- Tabs Navigation -->
     <div class="tabs">
-      <button class="tab-btn active" data-tab="users">👤 User Management</button>
-      <button class="tab-btn" data-tab="properties">🏢 Properties</button>
+      <button class="tab-btn active" data-tab="users">User Management</button>
+      <button class="tab-btn" data-tab="properties">Properties</button>
       <button class="tab-btn" data-tab="catalog">Uniform Catalog</button>
       <button class="tab-btn" onclick="location.href='cmpfont.html'">CMP Font</button>
-      <button class="tab-btn" onclick="location.href='calendar_test.html'" style="background:#fef3c7;border-color:#fcd34d;color:#92400e">🧪 Calendar UX Test</button>
+      <button class="tab-btn" onclick="location.href='calendar_test.html'" style="background:#fef3c7;border-color:#fcd34d;color:#92400e">Calendar UX Test</button>
     </div>
 
     <!-- User Management Tab - New Two Column Layout -->
@@ -277,9 +278,9 @@
               <span style="font-size:18px">+</span> Add New User
             </button>
             <div style="display:flex;gap:6px;padding:10px 16px;border-top:1px solid var(--border)">
-              <button class="btn sm primary" id="bulkImportBtn" style="flex:1;padding:8px 10px;font-size:12px;font-weight:600;background:var(--brand-primary);color:#fff;border:none;border-radius:6px;cursor:pointer">📥 Import</button>
-              <button class="btn sm" id="downloadTemplateBtn" style="flex:1;padding:8px 10px;font-size:12px;font-weight:600;background:#fff;color:var(--text);border:1px solid var(--border);border-radius:6px;cursor:pointer">📄 Template</button>
-              <button class="btn sm" id="auditExportBtn" style="flex:1;padding:8px 10px;font-size:12px;font-weight:600;background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;border-radius:6px;cursor:pointer">📊 Audit</button>
+              <button class="btn sm primary" id="bulkImportBtn" style="flex:1;padding:8px 10px;font-size:12px;font-weight:600;background:var(--brand-primary);color:#fff;border:none;border-radius:6px;cursor:pointer">Import</button>
+              <button class="btn sm" id="downloadTemplateBtn" style="flex:1;padding:8px 10px;font-size:12px;font-weight:600;background:#fff;color:var(--text);border:1px solid var(--border);border-radius:6px;cursor:pointer">Template</button>
+              <button class="btn sm" id="auditExportBtn" style="flex:1;padding:8px 10px;font-size:12px;font-weight:600;background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;border-radius:6px;cursor:pointer">Audit</button>
             </div>
           </div>
         </aside>
@@ -316,6 +317,7 @@
                       <select id="editRole">
                         <option value="user">User</option>
                         <option value="admin">Admin</option>
+                        <option value="maintenance">Maintenance</option>
                       </select>
                     </div>
                   </div>
@@ -382,7 +384,7 @@
     <div id="propertiesTab" class="tab-content">
       <section class="card" style="background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden">
         <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-          <h2 style="font-size:18px;font-weight:700;margin:0">🏢 Property Management</h2>
+          <h2 style="font-size:18px;font-weight:700;margin:0">Property Management</h2>
           <span style="font-size:12px;color:var(--subtext)" id="propCount">0 properties</span>
         </div>
         <div style="padding:24px">
@@ -403,7 +405,7 @@
     <div id="importModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center">
       <div style="background:#fff;border-radius:16px;max-width:640px;width:90%;max-height:85vh;overflow:auto;padding:24px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-          <h3 id="importTitle" style="font-size:18px;font-weight:700;margin:0">📥 Bulk Import Users</h3>
+          <h3 id="importTitle" style="font-size:18px;font-weight:700;margin:0">Bulk Import Users</h3>
           <button id="importCloseBtn" style="background:none;border:none;font-size:24px;cursor:pointer;color:#999">&times;</button>
         </div>
         <div id="importUpload">
@@ -631,7 +633,7 @@
   <div id="emailPreviewModal" class="modal-overlay email-preview-modal">
     <div class="modal">
       <div class="modal-header">
-        <h3>📧 Welcome Email Preview</h3>
+        <h3>Welcome Email Preview</h3>
         <button class="modal-close" id="closeEmailPreview">&times;</button>
       </div>
       <div class="modal-body">
@@ -640,8 +642,8 @@
           <iframe id="emailPreviewFrame" sandbox="allow-same-origin"></iframe>
         </div>
         <div class="email-actions">
-          <button class="btn success" id="emailOpenMailto" title="Open in your default email client">✉️ Open in Email Client</button>
-          <button class="btn" id="emailCopyHtml" title="Copy formatted email to clipboard">📋 Copy Email</button>
+          <button class="btn success" id="emailOpenMailto" title="Open in your default email client">Open in Email Client</button>
+          <button class="btn" id="emailCopyHtml" title="Copy formatted email to clipboard">Copy Email</button>
           <span class="email-status" id="emailCopyStatus">✓ Copied!</span>
         </div>
       </div>
@@ -818,7 +820,7 @@
             <div class="user-avatar ${u.role === 'admin' ? 'admin' : ''}">${getInitials(u.username)}</div>
             <div class="user-info">
               <div class="user-name">${u.username}</div>
-              <div class="user-role">${u.role === 'admin' ? 'Administrator' : 'User'}</div>
+              <div class="user-role">${u.role === 'admin' ? 'Administrator' : u.role === 'maintenance' ? 'Maintenance' : 'User'}</div>
             </div>
             <span class="user-props-count">${propsCount} props</span>
           </div>
@@ -865,7 +867,7 @@
       els.userDetail.classList.remove('hidden');
       
       els.detailUsername.textContent = user.username;
-      els.detailRoleBadge.textContent = user.role === 'admin' ? 'Admin' : 'User';
+      els.detailRoleBadge.textContent = user.role === 'admin' ? 'Admin' : user.role === 'maintenance' ? 'Maintenance' : 'User';
       els.detailRoleBadge.className = `role-badge ${user.role}`;
 
       els.editUsername.value = user.username;
@@ -1519,8 +1521,9 @@ Capstone Management Partners`;
     });
 
     els.editRole.addEventListener('change', () => {
-      els.detailRoleBadge.textContent = els.editRole.value === 'admin' ? 'Admin' : 'User';
-      els.detailRoleBadge.className = `role-badge ${els.editRole.value}`;
+      const rv = els.editRole.value;
+      els.detailRoleBadge.textContent = rv === 'admin' ? 'Admin' : rv === 'maintenance' ? 'Maintenance' : 'User';
+      els.detailRoleBadge.className = `role-badge ${rv}`;
     });
 
     els.toCalendarBtn.addEventListener('click', () => { location.href = 'mmp_calendar_app.html'; });
@@ -1657,19 +1660,19 @@ Capstone Management Partners`;
       for (let i = 0; i < parsedImportUsers.length; i++) {
         const u = parsedImportUsers[i];
         const statusEl = document.getElementById('importStatus' + i);
-        if (!u.username || !u.password) { statusEl.textContent = '⚠️ Skipped'; statusEl.style.color = '#f59e0b'; failed++; continue; }
-        statusEl.textContent = '⏳ Importing...';
+        if (!u.username || !u.password) { statusEl.textContent = 'Skipped'; statusEl.style.color = '#f59e0b'; failed++; continue; }
+        statusEl.textContent = 'Importing...';
         try {
           const res = await fetch('/.netlify/functions/auth-users', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: u.username, password: u.password, role: u.role, properties: u.properties }) });
           if (!res.ok) throw new Error(await res.text());
-          statusEl.textContent = '✅ Done'; statusEl.style.color = '#22c55e'; success++;
+          statusEl.textContent = 'Done'; statusEl.style.color = '#22c55e'; success++;
         } catch (err) {
-          statusEl.textContent = '❌ ' + (err.message || 'Failed'); statusEl.style.color = '#ef4444'; failed++;
+          statusEl.textContent = (err.message || 'Failed'); statusEl.style.color = '#ef4444'; failed++;
         }
       }
       document.getElementById('importPreview').style.display = 'none';
       document.getElementById('importResults').style.display = '';
-      document.getElementById('importResultsContent').innerHTML = `<div style="text-align:center;padding:16px"><p style="font-size:32px;margin-bottom:8px">${failed === 0 ? '🎉' : '⚠️'}</p><p style="font-size:16px;font-weight:700">${success} imported successfully</p>${failed > 0 ? `<p style="font-size:13px;color:#ef4444">${failed} failed or skipped</p>` : ''}</div>`;
+      document.getElementById('importResultsContent').innerHTML = `<div style="text-align:center;padding:16px"><p style="font-size:32px;margin-bottom:8px">${failed === 0 ? 'Success' : 'Warning'}</p><p style="font-size:16px;font-weight:700">${success} imported successfully</p>${failed > 0 ? `<p style="font-size:13px;color:#ef4444">${failed} failed or skipped</p>` : ''}</div>`;
       await fetchUsers(); await fetchProperties(); renderUserList();
     });
 
@@ -1703,7 +1706,7 @@ Capstone Management Partners`;
       ws['!cols'] = [{ wch: 18 }, { wch: 16 }, { wch: 8 }, { wch: 28 }, { wch: 40 }];
       XLSX.utils.book_append_sheet(wb, ws, 'Users');
       // Instructions sheet
-      const instrData = [['User Import Template — Instructions'], [''], ['Columns:'], ['• username — Required. Login username.'], ['• password — Required. Initial password.'], ['• role — "admin" or "user" (default: user)'], ['• email — Optional. Email address.'], ['• properties — Comma-separated. You can use property NAMES or IDs.'], ['  The system will auto-match names to IDs on import.'], ['  Use * for admin access to all properties.'], [''], ['Example properties: "Parkview Tower, Sunrise Lofts" or "parkview-tower, sunrise-lofts"']];
+      const instrData = [['User Import Template — Instructions'], [''], ['Columns:'], ['• username — Required. Login username.'], ['• password — Required. Initial password.'], ['• role — "admin", "user", or "maintenance" (default: user)'], ['• email — Optional. Email address.'], ['• properties — Comma-separated. You can use property NAMES or IDs.'], ['  The system will auto-match names to IDs on import.'], ['  Use * for admin access to all properties.'], [''], ['Example properties: "Parkview Tower, Sunrise Lofts" or "parkview-tower, sunrise-lofts"']];
       const instrWs = XLSX.utils.aoa_to_sheet(instrData);
       instrWs['!cols'] = [{ wch: 70 }];
       XLSX.utils.book_append_sheet(wb, instrWs, 'Instructions');
@@ -1721,7 +1724,7 @@ Capstone Management Partners`;
         return `<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:#fff;border:1px solid var(--border);border-radius:8px" data-propid="${id}">
           <span style="flex:1;font-weight:600;font-size:13px" class="prop-name-display">${name}</span>
           <code style="font-size:11px;color:var(--subtext);background:#f1f5f9;padding:3px 8px;border-radius:4px">${id}</code>
-          <button onclick="startRenameProp('${id}','${name.replace(/'/g, "\\'")}')" style="padding:4px 10px;font-size:11px;font-weight:600;background:#fff;border:1px solid var(--border);border-radius:6px;cursor:pointer">✏️ Rename</button>
+          <button onclick="startRenameProp('${id}','${name.replace(/'/g, "\\'")}')" style="padding:4px 10px;font-size:11px;font-weight:600;background:#fff;border:1px solid var(--border);border-radius:6px;cursor:pointer">Rename</button>
         </div>`;
       }).join('');
     }
