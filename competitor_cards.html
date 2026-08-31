@@ -486,6 +486,42 @@
     .stat-chip.ac-yes { background: #ecfdf5; color: #059669; font-weight: 600; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .stat-chip.ac-no { background: #fef2f2; color: #dc2626; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
+    /* Import from Excel */
+    .import-intro { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+    .import-intro h3 { font-size: 15px; margin-bottom: 6px; }
+    .import-intro p { font-size: 13px; color: var(--subtext); margin-bottom: 10px; line-height: 1.5; }
+    .import-dropzone { background: #fff; border: 2px dashed var(--border); border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.15s; }
+    .import-dropzone:hover, .import-dropzone.drag-over { border-color: var(--brand-accent-2); background: #f0faff; }
+    .import-dropzone .id-icon { width: 40px; height: 40px; margin: 0 auto 10px; color: #9ca3af; }
+    .import-dropzone p { font-size: 13px; color: var(--text); margin: 2px 0; }
+    .import-dropzone .id-hint { color: var(--subtext); font-size: 12px; }
+    .import-file-name { margin-top: 12px; font-size: 13px; font-weight: 600; color: var(--text); }
+    .import-summary { display: flex; gap: 16px; flex-wrap: wrap; margin: 16px 0; }
+    .import-summary .is-stat { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; }
+    .import-summary .is-stat .is-num { font-size: 20px; font-weight: 800; }
+    .import-summary .is-stat .is-label { font-size: 11px; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.5px; }
+    .import-summary .is-stat.is-ok .is-num { color: #059669; }
+    .import-summary .is-stat.is-warn .is-num { color: #d97706; }
+    .import-summary .is-stat.is-err .is-num { color: #dc2626; }
+    .import-preview-table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; font-size: 13px; }
+    .import-preview-table th { text-align: left; background: #f9fafb; padding: 8px 10px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--subtext); border-bottom: 1px solid var(--border); }
+    .import-preview-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .import-preview-table tr.ipt-error { background: #fef2f2; }
+    .import-preview-table tr.ipt-warning { background: #fffbeb; }
+    .import-preview-table .ipt-issue { font-size: 11px; display: block; }
+    .import-preview-table .ipt-issue.ipt-e { color: #dc2626; }
+    .import-preview-table .ipt-issue.ipt-w { color: #b45309; }
+    .import-badge-draft { background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+    .import-badge-complete { background: #ecfdf5; color: #059669; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+    .import-progress { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin: 16px 0; }
+    .import-progress .ip-bar { width: 100%; height: 8px; background: #f1f5f9; border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
+    .import-progress .ip-fill { height: 100%; background: var(--brand-accent-2); transition: width 0.2s; }
+    .import-progress .ip-text { font-size: 13px; color: var(--subtext); }
+    .import-results { margin-top: 12px; }
+    .import-results .ir-row { font-size: 13px; padding: 4px 0; }
+    .import-results .ir-ok { color: #059669; }
+    .import-results .ir-fail { color: #dc2626; }
+
   </style>
 </head>
 <body>
@@ -549,6 +585,7 @@
       user: '<svg class="icon-svg sm" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
       externalLink: '<svg class="icon-svg sm" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>',
       download: '<svg class="icon-svg" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
+      upload: '<svg class="icon-svg" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>',
       lists: '<svg class="icon-svg" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>',
       grid: '<svg class="icon-svg" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>'
     };
@@ -571,6 +608,39 @@
     var VELOCITY_LABELS = { 'strong': 'Strong', 'moderate': 'Moderate', 'soft': 'Soft' };
     var IMPACT_LABELS = { 'high': 'High', 'medium': 'Medium', 'low': 'Low' };
 
+    // ── Import from Excel: field mapping ──
+    var IMPORT_FLAT_FIELDS = [
+      'competitorName', 'heroImage', 'website', 'address',
+      'distanceFromCampus', 'driveTimeToCampus', 'propertyType', 'targetAudience',
+      'shortDescription', 'floorplans', 'unitCount', 'leaseStyle', 'furnished',
+      'utilityStructure', 'topAmenities', 'parkingType', 'petPolicy',
+      'startingRate', 'pricingNotes', 'applicationFee', 'adminFee', 'signingFee', 'deposit',
+      'estimatedCostAboveBase', 'currentSpecials', 'specialsExpiration', 'historicalSpecials', 'pastConcessionsNote',
+      'currentOccupancy', 'preleasedPercent', 'availabilitySummary', 'leasingVelocity', 'impactToProperty',
+      'impactExplanation', 'competitiveTakeaway',
+      'biggestStrengths', 'biggestWeaknesses', 'whoWeLoseTo', 'whoWeWinAgainst',
+      'closestComparableFloorplans', 'recommendedPositioning',
+      'surveyDate', 'sourceOfInformation', 'lastUpdatedDate', 'notes', 'analystName'
+    ];
+    var IMPORT_FEE_FIELDS = {
+      'fee_parking': 'parking', 'fee_petRent': 'petRent', 'fee_packageLocker': 'packageLocker',
+      'fee_valetTrash': 'valetTrash', 'fee_internetTechFee': 'internetTechFee',
+      'fee_utilityBillingFee': 'utilityBillingFee', 'fee_rentersInsurance': 'rentersInsurance',
+      'fee_otherRecurring': 'otherRecurring'
+    };
+    var IMPORT_FLOORPLAN_SLOTS = 6;
+    var IMPORT_URL_FIELDS = ['website', 'heroImage'];
+    var IMPORT_ENUM_FIELDS = {
+      propertyType: Object.keys(PROPERTY_TYPE_LABELS),
+      targetAudience: Object.keys(TARGET_AUDIENCE_LABELS),
+      leaseStyle: Object.keys(LEASE_STYLE_LABELS),
+      furnished: Object.keys(FURNISHED_LABELS),
+      utilityStructure: Object.keys(UTILITY_LABELS),
+      leasingVelocity: Object.keys(VELOCITY_LABELS),
+      impactToProperty: Object.keys(IMPACT_LABELS)
+    };
+    var IMPORT_MAX_ROWS = 200;
+
     // ── State ──
     var currentUser = null;
     var currentProperty = '';
@@ -583,6 +653,9 @@
     var reportSelected = {}; // id -> true (cards to include in report)
     var reportSections = { 'subjectCard': true, 'competitorCards': true, 'rateComparison': true, 'amenityCart': true, 'comparisonTable': true };
     var amenityOverrides = {}; // Manual amenity overrides: { cardIndex_amenityName: true/false }
+    var importStage = 'upload'; // 'upload' | 'preview' | 'importing' | 'done'
+    var importParsedRows = []; // [{ card, warnings: [], errors: [], included: bool }]
+    var importResults = []; // [{ ok, name, error }] after run
 
     // ── DOM refs ──
     var els = {
@@ -693,10 +766,12 @@
         compareBtn +
         '<button class="btn btn-warning" id="reportBuilderBtn">' + icon('file') + reportBtnText + '</button>' +
         '<button class="btn btn-accent" id="rateCompareBtn">' + icon('compare') + ' Rate Compare</button>' +
+        '<button class="btn btn-outline" id="importCardsBtn">' + icon('upload') + ' Import from Excel</button>' +
         '<button class="btn btn-primary" id="newCardBtn">' + icon('plus') + ' New Competitor Card</button>';
       document.getElementById('newCardBtn').onclick = handleNewCard;
       document.getElementById('reportBuilderBtn').onclick = function() { renderReportBuilder(); };
       document.getElementById('rateCompareBtn').onclick = function() { renderRateComparison(); };
+      document.getElementById('importCardsBtn').onclick = function() { renderImportView(); };
       if (document.getElementById('compareBtn')) {
         document.getElementById('compareBtn').onclick = function() { renderComparison(); };
       }
@@ -917,6 +992,449 @@
       }
 
       renderGrid();
+    }
+
+    // ── Import from Excel: helpers ──
+    function getRowVal(rowMap, field) {
+      var v = rowMap[field.toLowerCase()];
+      if (v === undefined || v === null) return '';
+      // Strip characters that can break out of HTML attributes downstream (defense-in-depth
+      // for imported free text, which is never manually reviewed the way single-row manual
+      // entry is).
+      return String(v).trim().replace(/["<>]/g, '');
+    }
+
+    function normalizeImportUrl(raw) {
+      if (!raw) return '';
+      try {
+        var u = new URL(raw);
+        if (u.protocol === 'http:' || u.protocol === 'https:') return u.href;
+      } catch (e) {
+        // not a valid absolute URL
+      }
+      return '';
+    }
+
+    function buildRowMap(rawRow) {
+      var map = {};
+      Object.keys(rawRow).forEach(function(k) {
+        var val = rawRow[k];
+        map[String(k).trim().toLowerCase()] = (val === null || val === undefined) ? '' : String(val).trim();
+      });
+      return map;
+    }
+
+    function normalizeEnumValue(raw, allowedKeys) {
+      var norm = String(raw).trim().toLowerCase().replace(/[\s_]+/g, '-');
+      for (var i = 0; i < allowedKeys.length; i++) {
+        if (allowedKeys[i].toLowerCase() === norm) return allowedKeys[i];
+      }
+      return '';
+    }
+
+    function buildImportRow(rowMap) {
+      var card = createEmptyCard('competitor');
+      card.property = currentProperty;
+      var warnings = [];
+      var errors = [];
+
+      IMPORT_FLAT_FIELDS.forEach(function(field) {
+        var raw = getRowVal(rowMap, field);
+        if (IMPORT_ENUM_FIELDS[field]) {
+          if (raw) {
+            var norm = normalizeEnumValue(raw, IMPORT_ENUM_FIELDS[field]);
+            if (norm) card[field] = norm;
+            else warnings.push(field + ': "' + raw + '" not recognized, left blank');
+          }
+        } else if (IMPORT_URL_FIELDS.indexOf(field) !== -1) {
+          if (raw) {
+            var safeUrl = normalizeImportUrl(raw);
+            if (safeUrl) card[field] = safeUrl;
+            else warnings.push(field + ': must be a valid http(s) URL, left blank');
+          }
+        } else {
+          card[field] = raw;
+        }
+      });
+
+      if (!card.competitorName) errors.push('Missing competitor name');
+
+      Object.keys(IMPORT_FEE_FIELDS).forEach(function(col) {
+        card.monthlyExtraFees[IMPORT_FEE_FIELDS[col]] = getRowVal(rowMap, col);
+      });
+
+      card.floorplanDetails = [];
+      for (var i = 1; i <= IMPORT_FLOORPLAN_SLOTS; i++) {
+        var name = getRowVal(rowMap, 'fp' + i + 'Name');
+        var bedsBaths = getRowVal(rowMap, 'fp' + i + 'BedsBaths');
+        var sqft = getRowVal(rowMap, 'fp' + i + 'Sqft');
+        var rate = getRowVal(rowMap, 'fp' + i + 'Rate');
+        if (name || bedsBaths || sqft || rate) {
+          card.floorplanDetails.push({ name: name, bedsBaths: bedsBaths, sqft: sqft, rate: rate });
+        }
+      }
+
+      // Matches the manual editor's own "Save Complete" rule (handleSaveComplete): a card is
+      // complete once it has a competitor name. startingRate is not required for completeness,
+      // consistent with the import instructions ("only competitorName is required").
+      card.status = card.competitorName ? 'complete' : 'draft';
+
+      if (card.competitorName) {
+        var nameLower = card.competitorName.trim().toLowerCase();
+        var dup = cards.some(function(c) { return (c.competitorName || '').trim().toLowerCase() === nameLower; });
+        if (dup) warnings.push('Possible duplicate \u2014 a card named "' + card.competitorName + '" already exists for this property');
+      }
+
+      return { card: card, warnings: warnings, errors: errors, included: errors.length === 0 };
+    }
+
+    function handleImportFile(file) {
+      if (!file) return;
+      var ext = file.name.split('.').pop().toLowerCase();
+      if (['xlsx', 'xls', 'csv'].indexOf(ext) === -1) {
+        alert('Please select an .xlsx, .xls, or .csv file.');
+        return;
+      }
+
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          var wb = XLSX.read(e.target.result, { type: 'array' });
+          var ws = wb.Sheets[wb.SheetNames[0]];
+          var raw = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+          if (!raw.length) { alert('The spreadsheet is empty or has no data rows.'); return; }
+
+          if (raw.length > IMPORT_MAX_ROWS) {
+            alert('Please import ' + IMPORT_MAX_ROWS + ' rows or fewer at a time. This file has ' + raw.length + ' rows.');
+            return;
+          }
+
+          var rowMaps = raw.map(buildRowMap);
+
+          var recognizedCols = IMPORT_FLAT_FIELDS.concat(Object.keys(IMPORT_FEE_FIELDS));
+          for (var i = 1; i <= IMPORT_FLOORPLAN_SLOTS; i++) {
+            ['Name', 'BedsBaths', 'Sqft', 'Rate'].forEach(function(s) { recognizedCols.push('fp' + i + s); });
+          }
+          var recognizedLower = recognizedCols.map(function(c) { return c.toLowerCase(); });
+          var anyRecognized = rowMaps.some(function(rm) {
+            return Object.keys(rm).some(function(k) { return recognizedLower.indexOf(k) !== -1; });
+          });
+          if (!anyRecognized) {
+            alert('No recognized competitor card columns found. Please use the template.');
+            return;
+          }
+
+          var hasNameColumn = rowMaps.some(function(rm) { return !!rm['competitorname']; });
+          if (!hasNameColumn) {
+            alert('No "competitorName" column with data was found. This column is required for every row \u2014 please check the template and try again.');
+            return;
+          }
+
+          importParsedRows = rowMaps.map(function(rm) { return buildImportRow(rm); });
+          importStage = 'preview';
+          renderImportView();
+        } catch (err) {
+          alert('Error reading file: ' + err.message);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function downloadCompetitorCardTemplate() {
+      var feeHeaders = Object.keys(IMPORT_FEE_FIELDS);
+      var fpHeaders = [];
+      for (var i = 1; i <= IMPORT_FLOORPLAN_SLOTS; i++) {
+        ['Name', 'BedsBaths', 'Sqft', 'Rate'].forEach(function(s) { fpHeaders.push('fp' + i + s); });
+      }
+      var headers = IMPORT_FLAT_FIELDS.concat(feeHeaders).concat(fpHeaders);
+
+      var example = {
+        competitorName: 'The Grove at University Park',
+        heroImage: '',
+        website: 'https://example.com',
+        address: '123 Campus Ave, College Town, ST 00000',
+        distanceFromCampus: '0.5 miles',
+        driveTimeToCampus: '3 min',
+        propertyType: 'student-housing',
+        targetAudience: 'undergraduate',
+        shortDescription: 'Modern student housing community with resort-style amenities.',
+        floorplans: 'Studio, 1x1, 2x2, 3x3',
+        unitCount: '312',
+        leaseStyle: 'by-bed',
+        furnished: 'furnished',
+        utilityStructure: 'partially-included',
+        topAmenities: 'Pool, Fitness Center, Study Lounge, Free Parking',
+        parkingType: 'Surface lot, included',
+        petPolicy: 'Cats and dogs allowed, $300 pet fee',
+        startingRate: '$879/bed',
+        pricingNotes: 'Rates increase $20/bed after March 1',
+        applicationFee: '$50',
+        adminFee: '$150',
+        signingFee: '$0',
+        deposit: '$200',
+        estimatedCostAboveBase: '$85/month',
+        currentSpecials: 'Waived admin fee for leases signed by 3/1',
+        specialsExpiration: '2026-03-01',
+        historicalSpecials: '$99 deposit special (Fall 2025)',
+        pastConcessionsNote: 'Offered 1 month free for 13-month leases last spring',
+        currentOccupancy: '97%',
+        preleasedPercent: '72%',
+        availabilitySummary: '2x2 and 3x3 units limited',
+        leasingVelocity: 'strong',
+        impactToProperty: 'high',
+        impactExplanation: 'Closest comparable price point and amenities',
+        competitiveTakeaway: 'Strongest competitor for the undergraduate segment',
+        biggestStrengths: 'Location, amenities, brand recognition',
+        biggestWeaknesses: 'Higher fees, limited parking',
+        whoWeLoseTo: 'Price-sensitive undergraduates',
+        whoWeWinAgainst: 'Residents wanting more privacy',
+        closestComparableFloorplans: '2x2 Classic',
+        recommendedPositioning: 'Emphasize larger unit sizes and included utilities',
+        surveyDate: '2026-08-01',
+        sourceOfInformation: 'Property website and phone shop',
+        lastUpdatedDate: '2026-08-01',
+        notes: 'Renovating clubhouse, expected completion fall 2026',
+        analystName: 'Jane Analyst',
+        fee_parking: '$0', fee_petRent: '$25', fee_packageLocker: '$0', fee_valetTrash: '$25',
+        fee_internetTechFee: '$40', fee_utilityBillingFee: '$15', fee_rentersInsurance: '$12', fee_otherRecurring: '',
+        fp1Name: 'Studio', fp1BedsBaths: '0x1', fp1Sqft: '450', fp1Rate: '$1050/unit',
+        fp2Name: '1x1 Classic', fp2BedsBaths: '1x1', fp2Sqft: '600', fp2Rate: '$1150/unit',
+        fp3Name: '2x2 Classic', fp3BedsBaths: '2x2', fp3Sqft: '950', fp3Rate: '$879/bed',
+        fp4Name: '3x3 Classic', fp4BedsBaths: '3x3', fp4Sqft: '1250', fp4Rate: '$829/bed',
+        fp5Name: '', fp5BedsBaths: '', fp5Sqft: '', fp5Rate: '',
+        fp6Name: '', fp6BedsBaths: '', fp6Sqft: '', fp6Rate: ''
+      };
+
+      var ws = XLSX.utils.json_to_sheet([example], { header: headers });
+      ws['!cols'] = headers.map(function(h) { return { wch: h.length < 12 ? 16 : 24 }; });
+
+      var wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Competitor Cards');
+
+      var legendRows = Object.keys(IMPORT_ENUM_FIELDS).map(function(field) {
+        return { Column: field, 'Allowed Values': IMPORT_ENUM_FIELDS[field].join(', ') };
+      });
+      var legendWs = XLSX.utils.json_to_sheet(legendRows, { header: ['Column', 'Allowed Values'] });
+      legendWs['!cols'] = [{ wch: 20 }, { wch: 60 }];
+      XLSX.utils.book_append_sheet(wb, legendWs, 'Allowed Values');
+
+      XLSX.writeFile(wb, 'Competitor_Card_Import_Template.xlsx');
+    }
+
+    // ── Render: Import from Excel ──
+    function renderImportView() {
+      currentView = 'import';
+      currentCard = null;
+      viewingCard = null;
+
+      els.pageTitle.textContent = 'Import Competitor Cards';
+      els.pageSubtitle.textContent = 'Bulk import competitor cards for ' + currentProperty + ' from an Excel or CSV file';
+      els.pageSubtitle.style.display = '';
+
+      // While an import is actively running, block navigation away from this view: runImport()
+      // keeps posting in the background and cannot be safely cancelled mid-flight, so leaving
+      // would strand the user on a stale gallery until the batch finishes.
+      var navLocked = importStage === 'importing';
+      els.toolbarActions.innerHTML = '<button class="btn btn-back" id="backBtn"' + (navLocked ? ' disabled style="opacity:0.5;cursor:not-allowed;"' : '') + '>' + icon('arrowLeft') + ' Back to Gallery</button>';
+      document.getElementById('backBtn').onclick = function() {
+        if (importStage === 'importing') return;
+        importStage = 'upload';
+        importParsedRows = [];
+        importResults = [];
+        renderGallery();
+      };
+
+      if (importStage === 'preview') { renderImportPreviewStage(); return; }
+      if (importStage === 'importing' || importStage === 'done') { renderImportProgressStage(); return; }
+      renderImportUploadStage();
+    }
+
+    function renderImportUploadStage() {
+      els.mainContent.innerHTML =
+        '<div class="import-intro">' +
+          '<h3>How it works</h3>' +
+          '<p>Download the template below, fill in one row per competitor (only <strong>competitorName</strong> is required \u2014 leave any other cell blank if you don\u2019t have the info yet), then upload the completed file. If you have a Google Sheet, use <strong>File &rarr; Download</strong> in Google Sheets to export it as .xlsx or .csv first, then upload that file here. All imported cards will be saved under <strong>' + esc(currentProperty) + '</strong>.</p>' +
+          '<button class="btn btn-outline" id="downloadTemplateBtn">' + icon('download') + ' Download Template (.xlsx)</button>' +
+        '</div>' +
+        '<div class="import-dropzone" id="importDropzone">' +
+          '<div class="id-icon">' + icon('upload') + '</div>' +
+          '<p><strong>Click to browse</strong> or drag &amp; drop a file here</p>' +
+          '<p class="id-hint">Accepts .xlsx, .xls, and .csv files</p>' +
+          '<div class="import-file-name" id="importFileName" style="display:none"></div>' +
+        '</div>' +
+        '<input type="file" id="importFileInput" accept=".xlsx,.xls,.csv" style="display:none">';
+
+      document.getElementById('downloadTemplateBtn').onclick = downloadCompetitorCardTemplate;
+
+      var zone = document.getElementById('importDropzone');
+      var input = document.getElementById('importFileInput');
+      zone.onclick = function() { input.click(); };
+      input.onchange = function() {
+        var f = input.files[0];
+        if (f) {
+          document.getElementById('importFileName').style.display = 'block';
+          document.getElementById('importFileName').textContent = '\ud83d\udcce ' + f.name;
+          handleImportFile(f);
+        }
+      };
+      zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('drag-over'); });
+      zone.addEventListener('dragleave', function() { zone.classList.remove('drag-over'); });
+      zone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        zone.classList.remove('drag-over');
+        var f = e.dataTransfer.files[0];
+        if (f) {
+          document.getElementById('importFileName').style.display = 'block';
+          document.getElementById('importFileName').textContent = '\ud83d\udcce ' + f.name;
+          handleImportFile(f);
+        }
+      });
+    }
+
+    function renderImportPreviewStage() {
+      var okCount = importParsedRows.filter(function(r) { return r.errors.length === 0 && r.warnings.length === 0; }).length;
+      var warnCount = importParsedRows.filter(function(r) { return r.errors.length === 0 && r.warnings.length > 0; }).length;
+      var errCount = importParsedRows.filter(function(r) { return r.errors.length > 0; }).length;
+      var includedCount = importParsedRows.filter(function(r) { return r.included; }).length;
+
+      var rowsHTML = importParsedRows.map(function(r, i) {
+        var rowClass = r.errors.length ? 'ipt-error' : (r.warnings.length ? 'ipt-warning' : '');
+        var issues = r.errors.map(function(e) { return '<span class="ipt-issue ipt-e">\u2717 ' + esc(e) + '</span>'; })
+          .concat(r.warnings.map(function(w) { return '<span class="ipt-issue ipt-w">\u26a0 ' + esc(w) + '</span>'; })).join('');
+        var statusBadge = r.card.status === 'complete' ? '<span class="import-badge-complete">Complete</span>' : '<span class="import-badge-draft">Draft</span>';
+        var disabled = r.errors.length ? ' disabled' : '';
+        var checked = r.included ? ' checked' : '';
+        return '<tr class="' + rowClass + '">' +
+          '<td>' + (i + 2) + '</td>' +
+          '<td><input type="checkbox" data-import-row="' + i + '"' + checked + disabled + '></td>' +
+          '<td>' + esc(r.card.competitorName || '(none)') + '</td>' +
+          '<td>' + esc(PROPERTY_TYPE_LABELS[r.card.propertyType] || r.card.propertyType || '') + '</td>' +
+          '<td>' + esc(r.card.startingRate || '') + '</td>' +
+          '<td>' + statusBadge + '</td>' +
+          '<td>' + (issues || '\u2014') + '</td>' +
+        '</tr>';
+      }).join('');
+
+      els.mainContent.innerHTML =
+        '<div class="import-summary">' +
+          '<div class="is-stat is-ok"><div class="is-num">' + importParsedRows.length + '</div><div class="is-label">Rows Found</div></div>' +
+          '<div class="is-stat is-ok"><div class="is-num">' + okCount + '</div><div class="is-label">Valid</div></div>' +
+          '<div class="is-stat is-warn"><div class="is-num">' + warnCount + '</div><div class="is-label">With Warnings</div></div>' +
+          '<div class="is-stat is-err"><div class="is-num">' + errCount + '</div><div class="is-label">Blocked</div></div>' +
+        '</div>' +
+        '<table class="import-preview-table">' +
+          '<thead><tr><th>Row</th><th>Include</th><th>Competitor Name</th><th>Property Type</th><th>Starting Rate</th><th>Status</th><th>Issues</th></tr></thead>' +
+          '<tbody id="importPreviewBody">' + rowsHTML + '</tbody>' +
+        '</table>' +
+        '<div style="display:flex;gap:10px;margin-top:16px;">' +
+          '<button class="btn btn-outline" id="importChooseDifferentBtn">Choose a Different File</button>' +
+          '<button class="btn btn-success" id="importStartBtn">' + icon('upload') + ' Import ' + includedCount + ' Card' + (includedCount !== 1 ? 's' : '') + '</button>' +
+        '</div>';
+
+      document.getElementById('importChooseDifferentBtn').onclick = function() {
+        importStage = 'upload';
+        importParsedRows = [];
+        renderImportView();
+      };
+      document.getElementById('importStartBtn').onclick = runImport;
+      document.querySelectorAll('[data-import-row]').forEach(function(cb) {
+        cb.onchange = function() {
+          var idx = parseInt(cb.getAttribute('data-import-row'), 10);
+          importParsedRows[idx].included = cb.checked;
+          var newIncluded = importParsedRows.filter(function(r) { return r.included; }).length;
+          var startBtn = document.getElementById('importStartBtn');
+          if (startBtn) startBtn.innerHTML = icon('upload') + ' Import ' + newIncluded + ' Card' + (newIncluded !== 1 ? 's' : '');
+        };
+      });
+    }
+
+    // Re-fetch cards from the server and update in-memory state without forcing any
+    // particular view to render. Used after a background import completes so the gallery
+    // is never stale, even if the user has already navigated away from the import view.
+    async function silentRefreshCards() {
+      try {
+        var allCards = await apiGet();
+        allCards.forEach(function(c) {
+          if (!c.floorplanDetails) c.floorplanDetails = [];
+          if (!c.monthlyExtraFees) c.monthlyExtraFees = {};
+          if (!c.cardType) c.cardType = 'competitor';
+        });
+        subjectCard = allCards.find(function(c) { return c.cardType === 'subject'; }) || null;
+        cards = allCards.filter(function(c) { return c.cardType !== 'subject'; });
+      } catch (e) {
+        console.error('Error refreshing cards after import:', e);
+      }
+    }
+
+    async function runImport() {
+      var toImport = importParsedRows.filter(function(r) { return r.included; });
+      if (!toImport.length) { showToast('No rows selected to import'); return; }
+
+      importStage = 'importing';
+      importResults = [];
+      renderImportView();
+
+      var fill = document.getElementById('importProgFill');
+      var text = document.getElementById('importProgText');
+
+      for (var i = 0; i < toImport.length; i++) {
+        var row = toImport[i];
+        if (fill) fill.style.width = Math.round(((i + 1) / toImport.length) * 100) + '%';
+        if (text) text.textContent = 'Importing ' + (i + 1) + ' of ' + toImport.length + '\u2026';
+        try {
+          await apiCreate(row.card);
+          importResults.push({ ok: true, name: row.card.competitorName });
+        } catch (e) {
+          importResults.push({ ok: false, name: row.card.competitorName, error: e.message });
+        }
+      }
+
+      // Refresh state as soon as the batch finishes, regardless of whether the user is still
+      // viewing the import screen (navigation away is blocked while importing, but this stays
+      // correct even if that ever changes).
+      await silentRefreshCards();
+      importStage = 'done';
+      if (currentView === 'import') {
+        renderImportView();
+      }
+    }
+
+    function renderImportProgressStage() {
+      if (importStage === 'importing') {
+        els.mainContent.innerHTML =
+          '<div class="import-progress">' +
+            '<div class="ip-bar"><div class="ip-fill" id="importProgFill" style="width:0%"></div></div>' +
+            '<div class="ip-text" id="importProgText">Preparing\u2026</div>' +
+          '</div>';
+        return;
+      }
+
+      var okCount = importResults.filter(function(r) { return r.ok; }).length;
+      var failCount = importResults.filter(function(r) { return !r.ok; }).length;
+      var resultsHTML = importResults.map(function(r) {
+        return r.ok
+          ? '<div class="ir-row ir-ok">\u2713 ' + esc(r.name || '(unnamed)') + '</div>'
+          : '<div class="ir-row ir-fail">\u2717 ' + esc(r.name || '(unnamed)') + ' \u2014 ' + esc(r.error) + '</div>';
+      }).join('');
+
+      els.mainContent.innerHTML =
+        '<div class="import-progress">' +
+          '<div class="ip-text"><strong>Import complete.</strong> ' + okCount + ' card(s) created' + (failCount ? ', ' + failCount + ' failed' : '') + '.</div>' +
+          '<div class="import-results">' + resultsHTML + '</div>' +
+          '<div style="margin-top:16px;">' +
+            '<button class="btn btn-primary" id="importDoneBtn">Done \u2014 View Gallery</button>' +
+          '</div>' +
+        '</div>';
+
+      document.getElementById('importDoneBtn').onclick = function() {
+        importStage = 'upload';
+        importParsedRows = [];
+        importResults = [];
+        // cards/subjectCard were already refreshed by silentRefreshCards() when the import
+        // finished, so just render the gallery instead of re-fetching again.
+        renderGallery();
+      };
     }
 
     // ── Render: Editor ──
