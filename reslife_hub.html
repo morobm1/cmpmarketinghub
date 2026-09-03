@@ -1,0 +1,1539 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Reslife Hub</title>
+  <meta name="description" content="Resident Life portal for RA, REC, and Reslife Admin credentials">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      /* Default theme: The Harbour at Occ (theharbourocc.com) reference palette.
+         Overridden at runtime per-property via the email_brand_kits system. */
+      --rl-primary:#002D6A;
+      --rl-primary-dark:#001B40;
+      --rl-secondary:#F99239;
+      --rl-on-primary:#FFFFFF;
+      --rl-bg:#f3f5f8;
+      --rl-panel:#ffffff;
+      --rl-border:#e2e8f0;
+      --rl-text:#101828;
+      --rl-subtext:#64748b;
+      --rl-danger:#d20000;
+      --rl-danger-bg:#fef2f2;
+      --rl-success:#16a34a;
+      --rl-success-bg:#f0fdf4;
+      --rl-warn:#F99239;
+      --rl-warn-bg:#fff7ed;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:'Montserrat',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--rl-bg);color:var(--rl-text);font-size:14px;line-height:1.5}
+    .hidden{display:none !important}
+    button{font-family:inherit}
+
+    a{color:var(--rl-primary)}
+
+    /* ===== Header ===== */
+    header.rl-header{
+      background:linear-gradient(180deg,var(--rl-primary),var(--rl-primary-dark));
+      color:var(--rl-on-primary);
+      padding:14px 24px;
+      display:flex;
+      align-items:center;
+      gap:18px;
+      flex-wrap:wrap;
+      position:sticky;top:0;z-index:40;
+      box-shadow:0 2px 10px rgba(0,0,0,.15);
+    }
+    .rl-brand{display:flex;align-items:center;gap:14px;min-width:0}
+    .rl-brand img{height:40px;width:auto;display:block}
+    .rl-brand-text{display:flex;flex-direction:column;line-height:1.15;min-width:0}
+    .rl-brand-name{font-weight:800;font-size:16px;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .rl-brand-sub{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--rl-secondary);font-weight:600}
+    .rl-header-right{display:flex;align-items:center;gap:14px;margin-left:auto;flex-wrap:wrap}
+    .rl-property-switcher{padding:7px 10px;border-radius:6px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.08);color:#fff;font-size:12px;font-weight:600}
+    .rl-property-switcher option{color:#111}
+    .rl-role-badge{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:5px 10px;border-radius:999px;background:var(--rl-secondary);color:#1a1000}
+    .rl-username{font-size:13px;font-weight:600;opacity:.9}
+    .rl-logout-btn{background:transparent;border:1.5px solid rgba(255,255,255,.6);color:#fff;padding:8px 16px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:all .15s}
+    .rl-logout-btn:hover{background:#fff;color:var(--rl-primary)}
+
+    /* ===== Nav tabs ===== */
+    nav.rl-tabs{background:#fff;border-bottom:1px solid var(--rl-border);padding:0 24px;display:flex;gap:4px;overflow-x:auto;position:sticky;top:68px;z-index:35}
+    .rl-tab-btn{background:none;border:none;border-bottom:3px solid transparent;padding:14px 16px;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--rl-subtext);cursor:pointer;white-space:nowrap;transition:all .15s}
+    .rl-tab-btn:hover{color:var(--rl-primary)}
+    .rl-tab-btn.active{color:var(--rl-primary);border-bottom-color:var(--rl-secondary)}
+
+    main{max-width:1180px;margin:0 auto;padding:24px}
+    .rl-tab-content{display:none}
+    .rl-tab-content.active{display:block}
+
+    .rl-panel{background:var(--rl-panel);border:1px solid var(--rl-border);border-radius:12px;overflow:hidden;margin-bottom:20px}
+    .rl-panel-header{padding:16px 20px;border-bottom:1px solid var(--rl-border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .rl-panel-header h2{font-size:16px;font-weight:800;margin:0;text-transform:uppercase;letter-spacing:.5px;color:var(--rl-primary)}
+    .rl-panel-body{padding:16px 20px}
+
+    .rl-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:6px;border:1px solid var(--rl-border);background:#fff;color:var(--rl-text);font-weight:700;font-size:12px;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:all .15s}
+    .rl-btn:hover{background:#f8fafc}
+    .rl-btn.primary{background:var(--rl-secondary);border-color:var(--rl-secondary);color:#1a1000}
+    .rl-btn.primary:hover{filter:brightness(1.05)}
+    .rl-btn.outline{background:transparent;border-color:var(--rl-primary);color:var(--rl-primary)}
+    .rl-btn.danger{background:var(--rl-danger-bg);border-color:#fecaca;color:var(--rl-danger)}
+    .rl-btn.success{background:var(--rl-success-bg);border-color:#bbf7d0;color:var(--rl-success)}
+    .rl-btn.sm{padding:5px 10px;font-size:11px}
+    .rl-btn:disabled{opacity:.5;cursor:not-allowed}
+
+    .rl-empty{padding:32px 16px;text-align:center;color:var(--rl-subtext);font-size:13px}
+
+    .rl-form{background:#f8fafc;border:1px solid var(--rl-border);border-radius:10px;padding:16px;margin-bottom:16px}
+    .rl-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .rl-form-grid.cols-3{grid-template-columns:1fr 1fr 1fr}
+    @media(max-width:640px){.rl-form-grid,.rl-form-grid.cols-3{grid-template-columns:1fr}}
+    .rl-field{display:flex;flex-direction:column;gap:5px}
+    .rl-field.full{grid-column:1 / -1}
+    .rl-field label{font-size:11px;font-weight:700;color:var(--rl-subtext);text-transform:uppercase;letter-spacing:.5px}
+    .rl-field input,.rl-field select,.rl-field textarea{padding:9px 10px;border:1px solid var(--rl-border);border-radius:6px;font-size:13px;font-family:inherit;color:var(--rl-text);background:#fff}
+    .rl-field textarea{resize:vertical;min-height:70px}
+    .rl-form-actions{display:flex;gap:8px;margin-top:14px;justify-content:flex-end}
+
+    .rl-item{border:1px solid var(--rl-border);border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+    .rl-item:last-child{margin-bottom:0}
+    .rl-item-main{flex:1;min-width:220px}
+    .rl-item-title{font-weight:700;font-size:14px;margin-bottom:3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .rl-item-meta{font-size:12px;color:var(--rl-subtext)}
+    .rl-item-body{font-size:13px;margin-top:6px;white-space:pre-wrap}
+    .rl-item-actions{display:flex;gap:6px;align-items:flex-start;flex-shrink:0}
+
+    .rl-pill{display:inline-flex;align-items:center;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;padding:3px 9px;border-radius:999px}
+    .rl-pill.pinned{background:var(--rl-warn-bg);color:var(--rl-warn)}
+    .rl-pill.open{background:var(--rl-warn-bg);color:#b45309}
+    .rl-pill.in-progress{background:#eff6ff;color:#1d4ed8}
+    .rl-pill.resolved{background:var(--rl-success-bg);color:var(--rl-success)}
+    .rl-pill.low{background:#f1f5f9;color:#475569}
+    .rl-pill.medium{background:var(--rl-warn-bg);color:#b45309}
+    .rl-pill.high{background:var(--rl-danger-bg);color:var(--rl-danger)}
+    .rl-pill.key{background:#eef2ff;color:#4338ca}
+    .rl-pill.maintenance{background:#ecfeff;color:#155e75}
+
+    .rl-loading{padding:24px;text-align:center;color:var(--rl-subtext);font-size:13px}
+    table.rl-table{width:100%;border-collapse:collapse;font-size:13px}
+    table.rl-table th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--rl-subtext);padding:8px 10px;border-bottom:1px solid var(--rl-border)}
+    table.rl-table td{padding:10px 10px;border-bottom:1px solid var(--rl-border);vertical-align:top}
+    table.rl-table tr:last-child td{border-bottom:none}
+
+    .rl-fullscreen-msg{display:flex;align-items:center;justify-content:center;height:100vh;font-size:14px;color:var(--rl-subtext)}
+  </style>
+</head>
+<body>
+
+  <div id="rlAuthGate" class="rl-fullscreen-msg">Loading Reslife Hub…</div>
+
+  <div id="rlApp" class="hidden">
+    <header class="rl-header">
+      <div class="rl-brand">
+        <img id="rlLogoImg" class="hidden" alt="Property logo" />
+        <div class="rl-brand-text">
+          <span class="rl-brand-name" id="rlPropertyName">Reslife Hub</span>
+          <span class="rl-brand-sub">Reslife Hub</span>
+        </div>
+      </div>
+      <div class="rl-header-right">
+        <select id="rlPropertySwitcher" class="rl-property-switcher hidden"></select>
+        <span class="rl-role-badge" id="rlRoleBadge">—</span>
+        <span class="rl-username" id="rlUsername"></span>
+        <button class="rl-logout-btn" id="rlLogoutBtn">Log Out</button>
+      </div>
+    </header>
+
+    <nav class="rl-tabs">
+      <button class="rl-tab-btn active" data-tab="announcements">Announcements</button>
+      <button class="rl-tab-btn" data-tab="programs">Program Proposals</button>
+      <button class="rl-tab-btn" data-tab="committees">Committees</button>
+      <button class="rl-tab-btn" data-tab="roster">Duty Roster</button>
+      <button class="rl-tab-btn" data-tab="incidents">Incident Reports</button>
+      <button class="rl-tab-btn" data-tab="maintenance">Maintenance &amp; Keys</button>
+      <button class="rl-tab-btn" data-tab="directory">Resident Directory</button>
+      <button class="rl-tab-btn" data-tab="contacts">Campus Contacts</button>
+      <button class="rl-tab-btn" data-tab="curriculum">Curriculum Tracker</button>
+      <button class="rl-tab-btn hidden" id="rlUsersTabBtn" data-tab="users">Manage Users</button>
+    </nav>
+
+    <main>
+      <!-- ================= ANNOUNCEMENTS ================= -->
+      <section class="rl-tab-content active" id="tab-announcements">
+        <div class="rl-panel">
+          <div class="rl-panel-header">
+            <h2>Announcements</h2>
+            <button class="rl-btn primary hidden" id="annAddBtn">+ Post Announcement</button>
+          </div>
+          <div class="rl-panel-body">
+            <div class="rl-form hidden" id="annForm">
+              <input type="hidden" id="annId" />
+              <div class="rl-form-grid">
+                <div class="rl-field full"><label>Title</label><input id="annTitle" maxlength="140" /></div>
+                <div class="rl-field full"><label>Message</label><textarea id="annMessage"></textarea></div>
+                <div class="rl-field"><label><input type="checkbox" id="annPinned" style="width:auto;margin-right:6px" />Pin to top</label></div>
+              </div>
+              <div class="rl-form-actions">
+                <button class="rl-btn" id="annCancelBtn">Cancel</button>
+                <button class="rl-btn primary" id="annSaveBtn">Save</button>
+              </div>
+            </div>
+            <div id="annList"><div class="rl-loading">Loading…</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= PROGRAM PROPOSALS ================= -->
+      <section class="rl-tab-content" id="tab-programs">
+        <div class="rl-panel">
+          <div class="rl-panel-header">
+            <h2>Active &amp; Passive Program Proposals</h2>
+            <button class="rl-btn primary" id="progAddBtn">+ New Program Proposal</button>
+          </div>
+          <div class="rl-panel-body">
+            <div class="rl-form hidden" id="progForm">
+              <input type="hidden" id="progId" />
+              <div class="rl-form-grid cols-3">
+                <div class="rl-field full"><label>Program Title</label><input id="progTitle" placeholder="e.g., Valentine's Day Craft Night" /></div>
+                <div class="rl-field"><label>Type</label>
+                  <select id="progType"><option value="active">Active</option><option value="passive">Passive</option></select>
+                </div>
+                <div class="rl-field"><label>Month</label><input id="progMonth" placeholder="e.g., February" /></div>
+                <div class="rl-field"><label>Event Date/Time</label><input id="progDate" type="datetime-local" /></div>
+                <div class="rl-field"><label>Location</label><input id="progLocation" placeholder="e.g., Building 2-4 Courtyard" /></div>
+                <div class="rl-field"><label>Budget ($)</label><input id="progBudget" type="number" step="0.01" placeholder="200" /></div>
+                <div class="rl-field full"><label>Description / Proposal</label><textarea id="progDescription" placeholder="Event concept, stations, campus collaborations, etc."></textarea></div>
+                <div class="rl-field full"><label>Stations &amp; Assignments (one per line, e.g. "Photo Booth - Sydney")</label><textarea id="progStations"></textarea></div>
+              </div>
+              <div class="rl-form-section-title" style="margin-top:14px;font-size:11px;font-weight:700;color:var(--rl-subtext);text-transform:uppercase;letter-spacing:.5px">Shopping / Action Item List</div>
+              <div id="progShoppingRows" style="margin-top:8px"></div>
+              <button class="rl-btn sm" id="progAddItemBtn" type="button" style="margin-top:8px">+ Add Item</button>
+              <div class="rl-form-actions">
+                <button class="rl-btn" id="progCancelBtn">Cancel</button>
+                <button class="rl-btn primary" id="progSaveBtn">Save</button>
+              </div>
+            </div>
+            <div id="progList"><div class="rl-loading">Loading…</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= COMMITTEES ================= -->
+      <section class="rl-tab-content" id="tab-committees">
+        <div class="rl-panel" id="commListPanel">
+          <div class="rl-panel-header">
+            <h2>Collateral Committees</h2>
+            <button class="rl-btn primary hidden" id="commAddBtn">+ Add Committee</button>
+          </div>
+          <div class="rl-panel-body">
+            <div class="rl-form hidden" id="commForm">
+              <input type="hidden" id="commId" />
+              <div class="rl-form-grid cols-3">
+                <div class="rl-field"><label>Committee Name</label><input id="commName" placeholder="e.g., Programming" /></div>
+                <div class="rl-field"><label>Advisors</label><input id="commAdvisors" placeholder="e.g., Chris, Martin" /></div>
+                <div class="rl-field"><label>Committee Lead</label><input id="commLead" placeholder="e.g., Atalay" /></div>
+                <div class="rl-field full"><label>Members (comma-separated)</label><input id="commMembers" placeholder="e.g., Amelia, Emily, Joanna" /></div>
+                <div class="rl-field full"><label>Meeting Cadence</label><input id="commCadence" placeholder="e.g., Every other week, 60 minutes" /></div>
+              </div>
+              <div class="rl-form-actions">
+                <button class="rl-btn" id="commCancelBtn">Cancel</button>
+                <button class="rl-btn primary" id="commSaveBtn">Save</button>
+              </div>
+            </div>
+            <div id="commList"><div class="rl-loading">Loading…</div></div>
+          </div>
+        </div>
+
+        <!-- Committee minutes viewer (shown after selecting a committee) -->
+        <div class="rl-panel hidden" id="commMinutesPanel">
+          <div class="rl-panel-header">
+            <h2 id="commMinutesTitle">Meeting Minutes</h2>
+            <div style="display:flex;gap:8px">
+              <button class="rl-btn" id="commMinutesBackBtn">&larr; Back to Committees</button>
+              <button class="rl-btn primary" id="minAddBtn">+ Add Meeting</button>
+            </div>
+          </div>
+          <div class="rl-panel-body">
+            <div class="rl-form hidden" id="minForm">
+              <input type="hidden" id="minId" />
+              <input type="hidden" id="minCommitteeId" />
+              <div class="rl-form-grid">
+                <div class="rl-field"><label>Meeting Date</label><input id="minDate" type="date" /></div>
+                <div class="rl-field full"><label>Agenda / Notes</label><textarea id="minAgenda" placeholder="Check-in, track updates, discussion notes..."></textarea></div>
+              </div>
+              <div class="rl-form-section-title" style="margin-top:14px;font-size:11px;font-weight:700;color:var(--rl-subtext);text-transform:uppercase;letter-spacing:.5px">Action Items</div>
+              <div id="minActionRows" style="margin-top:8px"></div>
+              <button class="rl-btn sm" id="minAddItemBtn" type="button" style="margin-top:8px">+ Add Action Item</button>
+              <div class="rl-form-actions">
+                <button class="rl-btn" id="minCancelBtn">Cancel</button>
+                <button class="rl-btn primary" id="minSaveBtn">Save</button>
+              </div>
+            </div>
+            <div id="minList"><div class="rl-loading">Loading…</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= DUTY ROSTER ================= -->
+      <section class="rl-tab-content" id="tab-roster">
+        <div class="rl-panel">
+          <div class="rl-panel-header">
+            <h2>Duty / On-Call Roster</h2>
+            <button class="rl-btn primary hidden" id="rosterAddBtn">+ Add Shift</button>
+          </div>
+          <div class="rl-panel-body">
+            <div class="rl-form hidden" id="rosterForm">
+              <input type="hidden" id="rosterId" />
+              <div class="rl-form-grid cols-3">
+                <div class="rl-field"><label>Assigned To</label><input id="rosterAssignedTo" placeholder="RA name" /></div>
+                <div class="rl-field"><label>Shift Start</label><input id="rosterStart" type="datetime-local" /></div>
+                <div class="rl-field"><label>Shift End</label><input id="rosterEnd" type="datetime-local" /></div>
+                <div class="rl-field full"><label>Notes</label><input id="rosterNotes" placeholder="Optional" /></div>
+              </div>
+              <div class="rl-form-actions">
+                <button class="rl-btn" id="rosterCancelBtn">Cancel</button>
+                <button class="rl-btn primary" id="rosterSaveBtn">Save</button>
+              </div>
+            </div>
+            <div id="rosterList"><div class="rl-loading">Loading…</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= INCIDENT REPORTS ================= -->
+      <section class="rl-tab-content" id="tab-incidents">
+        <div class="rl-panel">
+          <div class="rl-panel-header">
+            <h2>Incident Reports</h2>
+            <button class="rl-btn primary hidden" id="incAddBtn">+ New Incident Report</button>
+          </div>
+          <div class="rl-panel-body">
+            <div class="rl-form hidden" id="incForm">
+              <input type="hidden" id="incId" />
+              <div class="rl-form-grid cols-3">
+                <div class="rl-field"><label>Resident Name</label><input id="incResident" placeholder="Optional" /></div>
+                <div class="rl-field"><label>Room / Unit</label><input id="incRoom" placeholder="Optional" /></div>
+                <div class="rl-field"><label>Severity</label>
+                  <select id="incSeverity"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select>
+                </div>
+                <div class="rl-field full"><label>Description</label><textarea id="incDescription"></textarea></div>
+              </div>
+              <div class="rl-form-actions">
+                <button class="rl-btn" id="incCancelBtn">Cancel</button>
+                <button class="rl-btn primary" id="incSaveBtn">Save</button>
+              </div>
+            </div>
+            <div id="incList"><div class="rl-loading">Loading…</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= MAINTENANCE & KEYS ================= -->
+      <section class="rl-tab-content" id="tab-maintenance">
+        <div class="rl-panel">
+          <div class="rl-panel-header">
+            <h2>Maintenance &amp; Key Requests</h2>
+            <button class="rl-btn primary hidden" id="mrAddBtn">+ New Request</button>
+          </div>
+          <div class="rl-panel-body">
+            <div class="rl-form hidden" id="mrForm">
+              <input type="hidden" id="mrId" />
+              <div class="rl-form-grid cols-3">
+                <div class="rl-field"><label>Type</label>
+                  <select id="mrType"><option value="maintenance">Maintenance</option><option value="key">Key</option></select>
+                </div>
+                <div class="rl-field"><label>Location</label><input id="mrLocation" placeholder="Room / area" /></div>
+                <div class="rl-field full"><label>Description</label><textarea id="mrDescription"></textarea></div>
+              </div>
+              <div class="rl-form-actions">
+                <button class="rl-btn" id="mrCancelBtn">Cancel</button>
+                <button class="rl-btn primary" id="mrSaveBtn">Save</button>
+              </div>
+            </div>
+            <div id="mrList"><div class="rl-loading">Loading…</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= RESIDENT DIRECTORY ================= -->
+      <section class="rl-tab-content" id="tab-directory">
+        <div class="rl-panel">
+          <div class="rl-panel-header">
+            <h2>Resident Directory</h2>
+            <button class="rl-btn primary hidden" id="dirAddBtn">+ Add Resident</button>
+          </div>
+          <div class="rl-panel-body">
+            <div class="rl-form hidden" id="dirForm">
+              <input type="hidden" id="dirId" />
+              <div class="rl-form-grid cols-3">
+                <div class="rl-field"><label>Resident Name</label><input id="dirName" /></div>
+                <div class="rl-field"><label>Room</label><input id="dirRoom" /></div>
+                <div class="rl-field"><label>Unit</label><input id="dirUnit" /></div>
+                <div class="rl-field"><label>Phone</label><input id="dirPhone" /></div>
+                <div class="rl-field"><label>Email</label><input id="dirEmail" /></div>
+                <div class="rl-field full"><label>Notes</label><input id="dirNotes" /></div>
+              </div>
+              <div class="rl-form-actions">
+                <button class="rl-btn" id="dirCancelBtn">Cancel</button>
+                <button class="rl-btn primary" id="dirSaveBtn">Save</button>
+              </div>
+            </div>
+            <div id="dirList"><div class="rl-loading">Loading…</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= CAMPUS CONTACTS ================= -->
+      <section class="rl-tab-content" id="tab-contacts">
+        <div class="rl-panel">
+          <div class="rl-panel-header">
+            <h2>Campus Partner &amp; Department Contacts</h2>
+            <button class="rl-btn primary hidden" id="contactAddBtn">+ Add Contact</button>
+          </div>
+          <div class="rl-panel-body">
+            <div class="rl-form hidden" id="contactForm">
+              <input type="hidden" id="contactId" />
+              <div class="rl-form-grid cols-3">
+                <div class="rl-field"><label>Department / Org</label><input id="contactDept" placeholder="e.g., Financial Aid" /></div>
+                <div class="rl-field"><label>Contact Name</label><input id="contactName" placeholder="Optional" /></div>
+                <div class="rl-field"><label>Category</label>
+                  <select id="contactCategory">
+                    <option>Academic</option><option>Safety</option><option>Financial</option>
+                    <option>Health &amp; Wellness</option><option>Student Organizations</option><option>Other</option>
+                  </select>
+                </div>
+                <div class="rl-field"><label>Email</label><input id="contactEmail" type="email" /></div>
+                <div class="rl-field"><label>Phone</label><input id="contactPhone" placeholder="Optional" /></div>
+                <div class="rl-field full"><label>Notes</label><input id="contactNotes" placeholder="Optional" /></div>
+              </div>
+              <div class="rl-form-actions">
+                <button class="rl-btn" id="contactCancelBtn">Cancel</button>
+                <button class="rl-btn primary" id="contactSaveBtn">Save</button>
+              </div>
+            </div>
+            <div id="contactList"><div class="rl-loading">Loading…</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= CURRICULUM TRACKER ================= -->
+      <section class="rl-tab-content" id="tab-curriculum">
+        <div class="rl-panel">
+          <div class="rl-panel-header">
+            <h2>Curriculum Tracker</h2>
+            <button class="rl-btn primary hidden" id="curAddBtn">+ New Semester Tracker</button>
+          </div>
+          <div class="rl-panel-body">
+            <div class="rl-form hidden" id="curForm">
+              <div class="rl-form-grid">
+                <div class="rl-field"><label>Semester</label><input id="curSemester" placeholder="e.g., Fall 2026" /></div>
+                <div class="rl-field full"><label>RA Roster (one name per line)</label><textarea id="curRoster" placeholder="Amelia&#10;Atalay&#10;Emily"></textarea></div>
+                <div class="rl-field full"><label>Requirements (one per line: Name, Due Date)</label><textarea id="curRequirements" placeholder="Floor Meeting, 2026-09-15&#10;Roommate Agreement, 2026-09-30"></textarea></div>
+              </div>
+              <div class="rl-form-actions">
+                <button class="rl-btn" id="curCancelBtn">Cancel</button>
+                <button class="rl-btn primary" id="curSaveBtn">Create Tracker</button>
+              </div>
+            </div>
+            <div id="curSemesterPicker" style="margin-bottom:14px"></div>
+            <div id="curGrid"><div class="rl-loading">Loading…</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= MANAGE USERS (Reslife Admin only) ================= -->
+      <section class="rl-tab-content" id="tab-users">
+        <div class="rl-panel">
+          <div class="rl-panel-header">
+            <h2>Manage Reslife Users</h2>
+            <button class="rl-btn primary" id="userAddBtn">+ Add RA / REC</button>
+          </div>
+          <div class="rl-panel-body">
+            <p class="rl-item-meta" style="margin-bottom:12px">Create and manage Reslife - RA and Reslife - REC logins for the properties you are assigned to. Each account is locked to exactly one property.</p>
+            <div class="rl-form hidden" id="userForm">
+              <input type="hidden" id="userOrigUsername" />
+              <div class="rl-form-grid cols-3">
+                <div class="rl-field"><label>Username</label><input id="userUsername" autocomplete="off" /></div>
+                <div class="rl-field"><label>Password</label><input id="userPassword" type="password" autocomplete="new-password" /></div>
+                <div class="rl-field"><label>Role</label>
+                  <select id="userRole"><option value="reslife-ra">Reslife - RA</option><option value="reslife-rec">Reslife - REC</option></select>
+                </div>
+                <div class="rl-field full"><label>Property</label><select id="userProperty"></select></div>
+              </div>
+              <div class="rl-form-actions">
+                <button class="rl-btn" id="userCancelBtn">Cancel</button>
+                <button class="rl-btn primary" id="userSaveBtn">Save</button>
+              </div>
+            </div>
+            <div id="userList"><div class="rl-loading">Loading…</div></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    // ==================== STATE ====================
+    const RESLIFE_ROLES = ['reslife-ra', 'reslife-rec', 'reslife-admin'];
+    const ROLE_LABELS = { 'reslife-ra':'Reslife - RA', 'reslife-rec':'Reslife - REC', 'reslife-admin':'Reslife Admin', admin:'Site Admin' };
+    let me = null;                 // { username, role, properties }
+    let allProperties = [];        // [{id, name}] from /api/properties
+    let myProperties = [];         // property NAME strings this user may view
+    let currentProperty = null;    // property NAME string currently in view
+    let isManager = false;         // reslife-rec / reslife-admin / admin
+    let isAdminTier = false;       // reslife-admin / admin
+
+    const els = {
+      authGate: document.getElementById('rlAuthGate'),
+      app: document.getElementById('rlApp'),
+      logoImg: document.getElementById('rlLogoImg'),
+      propertyName: document.getElementById('rlPropertyName'),
+      propertySwitcher: document.getElementById('rlPropertySwitcher'),
+      roleBadge: document.getElementById('rlRoleBadge'),
+      username: document.getElementById('rlUsername'),
+      logoutBtn: document.getElementById('rlLogoutBtn'),
+      usersTabBtn: document.getElementById('rlUsersTabBtn'),
+    };
+
+    function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    function fmtDate(iso){ if(!iso) return ''; try{ return new Date(iso).toLocaleString([], { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }); }catch(e){ return iso; } }
+
+    async function apiFetch(path, opts = {}) {
+      const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+      const res = await fetch('/api' + path, Object.assign({ credentials: 'include' }, opts, { headers }));
+      if (!res.ok) {
+        let msg = 'Request failed';
+        try { msg = await res.text(); } catch (e) {}
+        throw new Error(msg || ('HTTP ' + res.status));
+      }
+      const text = await res.text();
+      return text ? JSON.parse(text) : null;
+    }
+
+    function propParam(){ return '?property=' + encodeURIComponent(currentProperty); }
+
+    // ==================== AUTH / INIT ====================
+    async function init(){
+      try {
+        const meRes = await fetch('/api/me', { credentials: 'include' });
+        if (!meRes.ok) { window.location.href = 'index.html?redirect=reslife_hub.html'; return; }
+        me = await meRes.json();
+      } catch (e) {
+        window.location.href = 'index.html?redirect=reslife_hub.html';
+        return;
+      }
+
+      const allowed = RESLIFE_ROLES.includes(me.role) || me.role === 'admin';
+      if (!allowed) { window.location.href = 'mmp_calendar_app.html'; return; }
+
+      isManager = me.role === 'admin' || me.role === 'reslife-rec' || me.role === 'reslife-admin';
+      isAdminTier = me.role === 'admin' || me.role === 'reslife-admin';
+
+      // Resolve which properties this user may view
+      try {
+        allProperties = await apiFetch('/properties');
+      } catch (e) { allProperties = []; }
+
+      if (me.role === 'admin' || me.properties === '*') {
+        myProperties = allProperties.map(p => p.name);
+      } else {
+        myProperties = Array.isArray(me.properties) ? me.properties.filter(p => allProperties.some(ap => ap.name === p)) : [];
+      }
+
+      if (myProperties.length === 0) {
+        els.authGate.textContent = 'Your account is not tied to a property yet. Contact your Reslife Admin.';
+        return;
+      }
+
+      currentProperty = (localStorage.getItem('reslife_current_property') || '');
+      if (!myProperties.includes(currentProperty)) currentProperty = myProperties[0];
+
+      renderPropertySwitcher();
+      renderHeaderIdentity();
+      await applyBrandTheme();
+
+      if (isAdminTier) els.usersTabBtn.classList.remove('hidden');
+      setupTabs();
+      setupPermissions();
+      bindAllForms();
+
+      els.authGate.classList.add('hidden');
+      els.app.classList.remove('hidden');
+
+      await loadCurrentTabData();
+    }
+
+    function renderHeaderIdentity(){
+      els.username.textContent = me.username;
+      els.roleBadge.textContent = ROLE_LABELS[me.role] || me.role;
+    }
+
+    function renderPropertySwitcher(){
+      if (myProperties.length <= 1) { els.propertySwitcher.classList.add('hidden'); return; }
+      els.propertySwitcher.innerHTML = myProperties.map(p => `<option value="${esc(p)}" ${p === currentProperty ? 'selected' : ''}>${esc(p)}</option>`).join('');
+      els.propertySwitcher.classList.remove('hidden');
+      els.propertySwitcher.addEventListener('change', async () => {
+        currentProperty = els.propertySwitcher.value;
+        try { localStorage.setItem('reslife_current_property', currentProperty); } catch (e) {}
+        await applyBrandTheme();
+        await loadCurrentTabData();
+      });
+    }
+
+    // ==================== BRANDING (per-property, via email_brand_kits) ====================
+    async function applyBrandTheme(){
+      els.propertyName.textContent = currentProperty;
+      els.logoImg.classList.add('hidden');
+
+      // Reset to Harbour-inspired defaults before attempting an override
+      const root = document.documentElement.style;
+      root.setProperty('--rl-primary', '#002D6A');
+      root.setProperty('--rl-primary-dark', '#001B40');
+      root.setProperty('--rl-secondary', '#F99239');
+
+      let kit = null;
+      try { kit = await apiFetch('/reslife-brand?property=' + encodeURIComponent(currentProperty)); } catch (e) { kit = null; }
+      if (!kit) return;
+
+      const colors = Array.isArray(kit.colors) ? kit.colors : [];
+      const findColor = (needle) => {
+        const hit = colors.find(c => (c.name || '').toLowerCase().includes(needle));
+        return hit ? hit.hex : null;
+      };
+      const primary = findColor('primary') || (colors[0] && colors[0].hex);
+      const secondary = findColor('secondary') || findColor('accent') || (colors[1] && colors[1].hex);
+      if (primary) { root.setProperty('--rl-primary', primary); root.setProperty('--rl-primary-dark', primary); }
+      if (secondary) root.setProperty('--rl-secondary', secondary);
+
+      const logos = Array.isArray(kit.logos) ? kit.logos : [];
+      if (logos.length > 0 && logos[0].sourceUrl) {
+        els.logoImg.src = logos[0].sourceUrl;
+        els.logoImg.classList.remove('hidden');
+      }
+    }
+
+    // ==================== TABS ====================
+    function setupTabs(){
+      document.querySelectorAll('.rl-tab-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          document.querySelectorAll('.rl-tab-btn').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.rl-tab-content').forEach(c => c.classList.remove('active'));
+          btn.classList.add('active');
+          const tab = btn.getAttribute('data-tab');
+          document.getElementById('tab-' + tab).classList.add('active');
+          await loadTabData(tab);
+        });
+      });
+    }
+
+    function activeTabKey(){
+      const btn = document.querySelector('.rl-tab-btn.active');
+      return btn ? btn.getAttribute('data-tab') : 'announcements';
+    }
+
+    async function loadCurrentTabData(){ await loadTabData(activeTabKey()); }
+
+    async function loadTabData(tab){
+      if (tab === 'announcements') return loadAnnouncements();
+      if (tab === 'programs') return loadPrograms();
+      if (tab === 'committees') return loadCommittees();
+      if (tab === 'roster') return loadRoster();
+      if (tab === 'incidents') return loadIncidents();
+      if (tab === 'maintenance') return loadMaintenance();
+      if (tab === 'directory') return loadDirectory();
+      if (tab === 'contacts') return loadContacts();
+      if (tab === 'curriculum') return loadCurriculum();
+      if (tab === 'users') return loadReslifeUsers();
+    }
+
+    function setupPermissions(){
+      if (isManager) {
+        document.getElementById('annAddBtn').classList.remove('hidden');
+        document.getElementById('rosterAddBtn').classList.remove('hidden');
+        document.getElementById('commAddBtn').classList.remove('hidden');
+        document.getElementById('curAddBtn').classList.remove('hidden');
+      }
+      // Incident + maintenance + program proposal "add" is available to every Reslife role + admin
+      document.getElementById('incAddBtn').classList.remove('hidden');
+      document.getElementById('mrAddBtn').classList.remove('hidden');
+      if (isAdminTier) {
+        document.getElementById('dirAddBtn').classList.remove('hidden');
+        document.getElementById('contactAddBtn').classList.remove('hidden');
+      }
+    }
+
+    function toggleForm(id, show){ document.getElementById(id).classList.toggle('hidden', !show); }
+
+    // ==================== ANNOUNCEMENTS ====================
+    async function loadAnnouncements(){
+      const list = document.getElementById('annList');
+      list.innerHTML = '<div class="rl-loading">Loading…</div>';
+      let docs = [];
+      try { docs = await apiFetch('/reslife-announcements' + propParam()); } catch (e) { list.innerHTML = '<div class="rl-empty">Failed to load announcements.</div>'; return; }
+      if (docs.length === 0) { list.innerHTML = '<div class="rl-empty">No announcements yet.</div>'; return; }
+      list.innerHTML = docs.map(a => `
+        <div class="rl-item">
+          <div class="rl-item-main">
+            <div class="rl-item-title">${a.pinned ? '<span class="rl-pill pinned">Pinned</span>' : ''}${esc(a.title)}</div>
+            <div class="rl-item-meta">By ${esc(a.createdBy)} · ${fmtDate(a.createdAt)}</div>
+            <div class="rl-item-body">${esc(a.message)}</div>
+          </div>
+          ${isManager ? `<div class="rl-item-actions">
+            <button class="rl-btn sm" data-ann-edit="${a.id}">Edit</button>
+            <button class="rl-btn sm danger" data-ann-del="${a.id}">Delete</button>
+          </div>` : ''}
+        </div>
+      `).join('');
+      list.querySelectorAll('[data-ann-edit]').forEach(btn => btn.addEventListener('click', () => {
+        const a = docs.find(x => x.id === btn.getAttribute('data-ann-edit'));
+        if (a) openAnnouncementForm(a);
+      }));
+      list.querySelectorAll('[data-ann-del]').forEach(btn => btn.addEventListener('click', async () => {
+        if (!confirm('Delete this announcement?')) return;
+        try { await apiFetch('/reslife-announcements?id=' + btn.getAttribute('data-ann-del') + '&property=' + encodeURIComponent(currentProperty), { method: 'DELETE' }); await loadAnnouncements(); }
+        catch (e) { alert('Failed to delete: ' + e.message); }
+      }));
+    }
+
+    function openAnnouncementForm(a){
+      document.getElementById('annId').value = a ? a.id : '';
+      document.getElementById('annTitle').value = a ? a.title : '';
+      document.getElementById('annMessage').value = a ? a.message : '';
+      document.getElementById('annPinned').checked = a ? !!a.pinned : false;
+      toggleForm('annForm', true);
+    }
+
+    function bindAnnouncementForm(){
+      document.getElementById('annAddBtn').addEventListener('click', () => openAnnouncementForm(null));
+      document.getElementById('annCancelBtn').addEventListener('click', () => toggleForm('annForm', false));
+      document.getElementById('annSaveBtn').addEventListener('click', async () => {
+        const id = document.getElementById('annId').value;
+        const title = document.getElementById('annTitle').value.trim();
+        const message = document.getElementById('annMessage').value.trim();
+        const pinned = document.getElementById('annPinned').checked;
+        if (!title || !message) { alert('Title and message are required'); return; }
+        try {
+          if (id) await apiFetch('/reslife-announcements', { method: 'PUT', body: JSON.stringify({ id, property: currentProperty, title, message, pinned }) });
+          else await apiFetch('/reslife-announcements', { method: 'POST', body: JSON.stringify({ property: currentProperty, title, message, pinned }) });
+          toggleForm('annForm', false);
+          await loadAnnouncements();
+        } catch (e) { alert('Save failed: ' + e.message); }
+      });
+    }
+
+    // ==================== DUTY ROSTER ====================
+    async function loadRoster(){
+      const list = document.getElementById('rosterList');
+      list.innerHTML = '<div class="rl-loading">Loading…</div>';
+      let docs = [];
+      try { docs = await apiFetch('/reslife-roster' + propParam()); } catch (e) { list.innerHTML = '<div class="rl-empty">Failed to load roster.</div>'; return; }
+      if (docs.length === 0) { list.innerHTML = '<div class="rl-empty">No shifts scheduled yet.</div>'; return; }
+      list.innerHTML = `<table class="rl-table"><thead><tr><th>Assigned To</th><th>Start</th><th>End</th><th>Notes</th>${isManager ? '<th></th>' : ''}</tr></thead><tbody>` +
+        docs.map(r => `
+          <tr>
+            <td>${esc(r.assignedTo)}</td>
+            <td>${fmtDate(r.shiftStart)}</td>
+            <td>${fmtDate(r.shiftEnd)}</td>
+            <td>${esc(r.notes || '')}</td>
+            ${isManager ? `<td style="white-space:nowrap"><button class="rl-btn sm" data-roster-edit="${r.id}">Edit</button> <button class="rl-btn sm danger" data-roster-del="${r.id}">Delete</button></td>` : ''}
+          </tr>
+        `).join('') + '</tbody></table>';
+      list.querySelectorAll('[data-roster-edit]').forEach(btn => btn.addEventListener('click', () => {
+        const r = docs.find(x => x.id === btn.getAttribute('data-roster-edit'));
+        if (r) openRosterForm(r);
+      }));
+      list.querySelectorAll('[data-roster-del]').forEach(btn => btn.addEventListener('click', async () => {
+        if (!confirm('Delete this shift?')) return;
+        try { await apiFetch('/reslife-roster?id=' + btn.getAttribute('data-roster-del') + '&property=' + encodeURIComponent(currentProperty), { method: 'DELETE' }); await loadRoster(); }
+        catch (e) { alert('Failed to delete: ' + e.message); }
+      }));
+    }
+
+    function toLocalInputValue(iso){
+      if (!iso) return '';
+      const d = new Date(iso);
+      if (isNaN(d)) return '';
+      const pad = n => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+
+    function openRosterForm(r){
+      document.getElementById('rosterId').value = r ? r.id : '';
+      document.getElementById('rosterAssignedTo').value = r ? r.assignedTo : '';
+      document.getElementById('rosterStart').value = r ? toLocalInputValue(r.shiftStart) : '';
+      document.getElementById('rosterEnd').value = r ? toLocalInputValue(r.shiftEnd) : '';
+      document.getElementById('rosterNotes').value = r ? (r.notes || '') : '';
+      toggleForm('rosterForm', true);
+    }
+
+    function bindRosterForm(){
+      document.getElementById('rosterAddBtn').addEventListener('click', () => openRosterForm(null));
+      document.getElementById('rosterCancelBtn').addEventListener('click', () => toggleForm('rosterForm', false));
+      document.getElementById('rosterSaveBtn').addEventListener('click', async () => {
+        const id = document.getElementById('rosterId').value;
+        const assignedTo = document.getElementById('rosterAssignedTo').value.trim();
+        const shiftStart = document.getElementById('rosterStart').value;
+        const shiftEnd = document.getElementById('rosterEnd').value;
+        const notes = document.getElementById('rosterNotes').value.trim();
+        if (!assignedTo || !shiftStart || !shiftEnd) { alert('Assigned To, Start, and End are required'); return; }
+        try {
+          const payload = { property: currentProperty, assignedTo, shiftStart: new Date(shiftStart).toISOString(), shiftEnd: new Date(shiftEnd).toISOString(), notes };
+          if (id) await apiFetch('/reslife-roster', { method: 'PUT', body: JSON.stringify(Object.assign({ id }, payload)) });
+          else await apiFetch('/reslife-roster', { method: 'POST', body: JSON.stringify(payload) });
+          toggleForm('rosterForm', false);
+          await loadRoster();
+        } catch (e) { alert('Save failed: ' + e.message); }
+      });
+    }
+
+    // ==================== INCIDENT REPORTS ====================
+    async function loadIncidents(){
+      const list = document.getElementById('incList');
+      list.innerHTML = '<div class="rl-loading">Loading…</div>';
+      let docs = [];
+      try { docs = await apiFetch('/reslife-incidents' + propParam()); } catch (e) { list.innerHTML = '<div class="rl-empty">Failed to load incident reports.</div>'; return; }
+      if (docs.length === 0) { list.innerHTML = '<div class="rl-empty">No incident reports yet.</div>'; return; }
+      list.innerHTML = docs.map(i => {
+        const canModify = isManager || i.reportedBy === me.username;
+        return `
+        <div class="rl-item">
+          <div class="rl-item-main">
+            <div class="rl-item-title">
+              <span class="rl-pill ${esc(i.severity)}">${esc(i.severity)}</span>
+              <span class="rl-pill ${esc(i.status)}">${esc(i.status)}</span>
+              ${esc(i.residentName || 'Unspecified resident')} ${i.room ? '· Room ' + esc(i.room) : ''}
+            </div>
+            <div class="rl-item-meta">Reported by ${esc(i.reportedBy)} · ${fmtDate(i.createdAt)}</div>
+            <div class="rl-item-body">${esc(i.description)}</div>
+          </div>
+          <div class="rl-item-actions">
+            ${isManager ? `<button class="rl-btn sm success" data-inc-resolve="${i.id}" data-status="${i.status === 'resolved' ? 'open' : 'resolved'}">${i.status === 'resolved' ? 'Reopen' : 'Resolve'}</button>` : ''}
+            ${canModify ? `<button class="rl-btn sm" data-inc-edit="${i.id}">Edit</button><button class="rl-btn sm danger" data-inc-del="${i.id}">Delete</button>` : ''}
+          </div>
+        </div>
+      `; }).join('');
+      list.querySelectorAll('[data-inc-edit]').forEach(btn => btn.addEventListener('click', () => {
+        const i = docs.find(x => x.id === btn.getAttribute('data-inc-edit'));
+        if (i) openIncidentForm(i);
+      }));
+      list.querySelectorAll('[data-inc-del]').forEach(btn => btn.addEventListener('click', async () => {
+        if (!confirm('Delete this incident report?')) return;
+        try { await apiFetch('/reslife-incidents?id=' + btn.getAttribute('data-inc-del') + '&property=' + encodeURIComponent(currentProperty), { method: 'DELETE' }); await loadIncidents(); }
+        catch (e) { alert('Failed to delete: ' + e.message); }
+      }));
+      list.querySelectorAll('[data-inc-resolve]').forEach(btn => btn.addEventListener('click', async () => {
+        try { await apiFetch('/reslife-incidents', { method: 'PUT', body: JSON.stringify({ id: btn.getAttribute('data-inc-resolve'), property: currentProperty, status: btn.getAttribute('data-status') }) }); await loadIncidents(); }
+        catch (e) { alert('Failed to update: ' + e.message); }
+      }));
+    }
+
+    function openIncidentForm(i){
+      document.getElementById('incId').value = i ? i.id : '';
+      document.getElementById('incResident').value = i ? (i.residentName || '') : '';
+      document.getElementById('incRoom').value = i ? (i.room || '') : '';
+      document.getElementById('incSeverity').value = i ? i.severity : 'low';
+      document.getElementById('incDescription').value = i ? i.description : '';
+      toggleForm('incForm', true);
+    }
+
+    function bindIncidentForm(){
+      document.getElementById('incAddBtn').addEventListener('click', () => openIncidentForm(null));
+      document.getElementById('incCancelBtn').addEventListener('click', () => toggleForm('incForm', false));
+      document.getElementById('incSaveBtn').addEventListener('click', async () => {
+        const id = document.getElementById('incId').value;
+        const residentName = document.getElementById('incResident').value.trim();
+        const room = document.getElementById('incRoom').value.trim();
+        const severity = document.getElementById('incSeverity').value;
+        const description = document.getElementById('incDescription').value.trim();
+        if (!description) { alert('Description is required'); return; }
+        try {
+          const payload = { property: currentProperty, residentName, room, severity, description };
+          if (id) await apiFetch('/reslife-incidents', { method: 'PUT', body: JSON.stringify(Object.assign({ id }, payload)) });
+          else await apiFetch('/reslife-incidents', { method: 'POST', body: JSON.stringify(payload) });
+          toggleForm('incForm', false);
+          await loadIncidents();
+        } catch (e) { alert('Save failed: ' + e.message); }
+      });
+    }
+
+    // ==================== MAINTENANCE & KEYS ====================
+    async function loadMaintenance(){
+      const list = document.getElementById('mrList');
+      list.innerHTML = '<div class="rl-loading">Loading…</div>';
+      let docs = [];
+      try { docs = await apiFetch('/reslife-maintenance' + propParam()); } catch (e) { list.innerHTML = '<div class="rl-empty">Failed to load requests.</div>'; return; }
+      if (docs.length === 0) { list.innerHTML = '<div class="rl-empty">No requests yet.</div>'; return; }
+      list.innerHTML = docs.map(m => {
+        const canModify = isManager || m.reportedBy === me.username;
+        const nextStatus = m.status === 'resolved' ? 'open' : (m.status === 'open' ? 'in-progress' : 'resolved');
+        return `
+        <div class="rl-item">
+          <div class="rl-item-main">
+            <div class="rl-item-title">
+              <span class="rl-pill ${esc(m.type)}">${esc(m.type)}</span>
+              <span class="rl-pill ${esc(m.status)}">${esc(m.status)}</span>
+              ${esc(m.location || 'Unspecified location')}
+            </div>
+            <div class="rl-item-meta">Reported by ${esc(m.reportedBy)} · ${fmtDate(m.createdAt)}</div>
+            <div class="rl-item-body">${esc(m.description)}</div>
+          </div>
+          <div class="rl-item-actions">
+            ${isManager ? `<button class="rl-btn sm success" data-mr-status="${m.id}" data-status="${nextStatus}">Mark ${esc(nextStatus)}</button>` : ''}
+            ${canModify ? `<button class="rl-btn sm" data-mr-edit="${m.id}">Edit</button><button class="rl-btn sm danger" data-mr-del="${m.id}">Delete</button>` : ''}
+          </div>
+        </div>
+      `; }).join('');
+      list.querySelectorAll('[data-mr-edit]').forEach(btn => btn.addEventListener('click', () => {
+        const m = docs.find(x => x.id === btn.getAttribute('data-mr-edit'));
+        if (m) openMaintenanceForm(m);
+      }));
+      list.querySelectorAll('[data-mr-del]').forEach(btn => btn.addEventListener('click', async () => {
+        if (!confirm('Delete this request?')) return;
+        try { await apiFetch('/reslife-maintenance?id=' + btn.getAttribute('data-mr-del') + '&property=' + encodeURIComponent(currentProperty), { method: 'DELETE' }); await loadMaintenance(); }
+        catch (e) { alert('Failed to delete: ' + e.message); }
+      }));
+      list.querySelectorAll('[data-mr-status]').forEach(btn => btn.addEventListener('click', async () => {
+        try { await apiFetch('/reslife-maintenance', { method: 'PUT', body: JSON.stringify({ id: btn.getAttribute('data-mr-status'), property: currentProperty, status: btn.getAttribute('data-status') }) }); await loadMaintenance(); }
+        catch (e) { alert('Failed to update: ' + e.message); }
+      }));
+    }
+
+    function openMaintenanceForm(m){
+      document.getElementById('mrId').value = m ? m.id : '';
+      document.getElementById('mrType').value = m ? m.type : 'maintenance';
+      document.getElementById('mrLocation').value = m ? (m.location || '') : '';
+      document.getElementById('mrDescription').value = m ? m.description : '';
+      toggleForm('mrForm', true);
+    }
+
+    function bindMaintenanceForm(){
+      document.getElementById('mrAddBtn').addEventListener('click', () => openMaintenanceForm(null));
+      document.getElementById('mrCancelBtn').addEventListener('click', () => toggleForm('mrForm', false));
+      document.getElementById('mrSaveBtn').addEventListener('click', async () => {
+        const id = document.getElementById('mrId').value;
+        const type = document.getElementById('mrType').value;
+        const location = document.getElementById('mrLocation').value.trim();
+        const description = document.getElementById('mrDescription').value.trim();
+        if (!description) { alert('Description is required'); return; }
+        try {
+          const payload = { property: currentProperty, type, location, description };
+          if (id) await apiFetch('/reslife-maintenance', { method: 'PUT', body: JSON.stringify(Object.assign({ id }, payload)) });
+          else await apiFetch('/reslife-maintenance', { method: 'POST', body: JSON.stringify(payload) });
+          toggleForm('mrForm', false);
+          await loadMaintenance();
+        } catch (e) { alert('Save failed: ' + e.message); }
+      });
+    }
+
+    // ==================== RESIDENT DIRECTORY ====================
+    async function loadDirectory(){
+      const list = document.getElementById('dirList');
+      list.innerHTML = '<div class="rl-loading">Loading…</div>';
+      let docs = [];
+      try { docs = await apiFetch('/reslife-directory' + propParam()); } catch (e) { list.innerHTML = '<div class="rl-empty">Failed to load directory.</div>'; return; }
+      if (docs.length === 0) { list.innerHTML = '<div class="rl-empty">No residents on file yet.</div>'; return; }
+      list.innerHTML = `<table class="rl-table"><thead><tr><th>Resident</th><th>Room</th><th>Unit</th><th>Phone</th><th>Email</th><th>Notes</th>${isAdminTier ? '<th></th>' : ''}</tr></thead><tbody>` +
+        docs.map(d => `
+          <tr>
+            <td>${esc(d.residentName)}</td>
+            <td>${esc(d.room || '')}</td>
+            <td>${esc(d.unit || '')}</td>
+            <td>${esc(d.phone || '')}</td>
+            <td>${esc(d.email || '')}</td>
+            <td>${esc(d.notes || '')}</td>
+            ${isAdminTier ? `<td style="white-space:nowrap"><button class="rl-btn sm" data-dir-edit="${d.id}">Edit</button> <button class="rl-btn sm danger" data-dir-del="${d.id}">Delete</button></td>` : ''}
+          </tr>
+        `).join('') + '</tbody></table>';
+      list.querySelectorAll('[data-dir-edit]').forEach(btn => btn.addEventListener('click', () => {
+        const d = docs.find(x => x.id === btn.getAttribute('data-dir-edit'));
+        if (d) openDirectoryForm(d);
+      }));
+      list.querySelectorAll('[data-dir-del]').forEach(btn => btn.addEventListener('click', async () => {
+        if (!confirm('Remove this resident?')) return;
+        try { await apiFetch('/reslife-directory?id=' + btn.getAttribute('data-dir-del') + '&property=' + encodeURIComponent(currentProperty), { method: 'DELETE' }); await loadDirectory(); }
+        catch (e) { alert('Failed to delete: ' + e.message); }
+      }));
+    }
+
+    function openDirectoryForm(d){
+      document.getElementById('dirId').value = d ? d.id : '';
+      document.getElementById('dirName').value = d ? d.residentName : '';
+      document.getElementById('dirRoom').value = d ? (d.room || '') : '';
+      document.getElementById('dirUnit').value = d ? (d.unit || '') : '';
+      document.getElementById('dirPhone').value = d ? (d.phone || '') : '';
+      document.getElementById('dirEmail').value = d ? (d.email || '') : '';
+      document.getElementById('dirNotes').value = d ? (d.notes || '') : '';
+      toggleForm('dirForm', true);
+    }
+
+    function bindDirectoryForm(){
+      document.getElementById('dirAddBtn').addEventListener('click', () => openDirectoryForm(null));
+      document.getElementById('dirCancelBtn').addEventListener('click', () => toggleForm('dirForm', false));
+      document.getElementById('dirSaveBtn').addEventListener('click', async () => {
+        const id = document.getElementById('dirId').value;
+        const residentName = document.getElementById('dirName').value.trim();
+        const room = document.getElementById('dirRoom').value.trim();
+        const unit = document.getElementById('dirUnit').value.trim();
+        const phone = document.getElementById('dirPhone').value.trim();
+        const email = document.getElementById('dirEmail').value.trim();
+        const notes = document.getElementById('dirNotes').value.trim();
+        if (!residentName) { alert('Resident name is required'); return; }
+        try {
+          const payload = { property: currentProperty, residentName, room, unit, phone, email, notes };
+          if (id) await apiFetch('/reslife-directory', { method: 'PUT', body: JSON.stringify(Object.assign({ id }, payload)) });
+          else await apiFetch('/reslife-directory', { method: 'POST', body: JSON.stringify(payload) });
+          toggleForm('dirForm', false);
+          await loadDirectory();
+        } catch (e) { alert('Save failed: ' + e.message); }
+      });
+    }
+
+    // ==================== PROGRAM PROPOSALS ====================
+    function shoppingRowHTML(it){
+      it = it || { item: '', vendor: '', link: '', price: '', qty: 1 };
+      return `<div class="rl-form-grid cols-3 shopping-row" style="margin-bottom:8px;align-items:end">
+        <div class="rl-field"><label>Item</label><input class="si-item" value="${esc(it.item)}" /></div>
+        <div class="rl-field"><label>Vendor</label><input class="si-vendor" value="${esc(it.vendor)}" /></div>
+        <div class="rl-field"><label>Link</label><input class="si-link" value="${esc(it.link)}" /></div>
+        <div class="rl-field"><label>Price ($)</label><input class="si-price" type="number" step="0.01" value="${esc(it.price)}" /></div>
+        <div class="rl-field"><label>Qty</label><input class="si-qty" type="number" value="${esc(it.qty || 1)}" /></div>
+        <div class="rl-field"><button class="rl-btn sm danger" type="button" data-remove-row>Remove</button></div>
+      </div>`;
+    }
+
+    function collectShoppingList(){
+      return Array.from(document.querySelectorAll('#progShoppingRows .shopping-row')).map(row => ({
+        item: row.querySelector('.si-item').value.trim(),
+        vendor: row.querySelector('.si-vendor').value.trim(),
+        link: row.querySelector('.si-link').value.trim(),
+        price: parseFloat(row.querySelector('.si-price').value) || 0,
+        qty: parseInt(row.querySelector('.si-qty').value, 10) || 1,
+      })).filter(r => r.item);
+    }
+
+    document.getElementById('progShoppingRows').addEventListener('click', (e) => {
+      if (e.target.hasAttribute('data-remove-row')) e.target.closest('.shopping-row').remove();
+    });
+    document.getElementById('progAddItemBtn').addEventListener('click', () => {
+      document.getElementById('progShoppingRows').insertAdjacentHTML('beforeend', shoppingRowHTML());
+    });
+
+    async function loadPrograms(){
+      const list = document.getElementById('progList');
+      list.innerHTML = '<div class="rl-loading">Loading…</div>';
+      let docs = [];
+      try { docs = await apiFetch('/reslife-programs' + propParam()); } catch (e) { list.innerHTML = '<div class="rl-empty">Failed to load program proposals.</div>'; return; }
+      if (docs.length === 0) { list.innerHTML = '<div class="rl-empty">No program proposals yet.</div>'; return; }
+      list.innerHTML = docs.map(p => {
+        const canModify = isManager || p.createdBy === me.username;
+        const total = (p.shoppingList || []).reduce((sum, r) => sum + (r.price || 0) * (r.qty || 1), 0);
+        const nextStatus = p.status === 'proposed' ? 'approved' : (p.status === 'approved' ? 'completed' : 'proposed');
+        return `
+        <div class="rl-item">
+          <div class="rl-item-main">
+            <div class="rl-item-title">
+              <span class="rl-pill ${p.type === 'active' ? 'maintenance' : 'key'}">${esc(p.type)}</span>
+              <span class="rl-pill ${p.status === 'completed' ? 'resolved' : (p.status === 'approved' ? 'in-progress' : 'open')}">${esc(p.status)}</span>
+              ${esc(p.title)}
+            </div>
+            <div class="rl-item-meta">
+              ${p.month ? esc(p.month) + ' · ' : ''}${p.eventDate ? fmtDate(p.eventDate) + ' · ' : ''}${p.location ? esc(p.location) + ' · ' : ''}Budget $${(p.budget || 0).toFixed(2)}
+              ${total > 0 ? ' · Shopping List Total $' + total.toFixed(2) : ''}
+            </div>
+            <div class="rl-item-meta">Proposed by ${esc(p.createdBy)} · ${fmtDate(p.createdAt)}</div>
+            ${p.description ? `<div class="rl-item-body">${esc(p.description)}</div>` : ''}
+            ${(p.stations || []).length ? `<div class="rl-item-body"><strong>Stations:</strong><br>${p.stations.map(s => esc(s)).join('<br>')}</div>` : ''}
+            ${(p.shoppingList || []).length ? `<div style="margin-top:8px;overflow-x:auto"><table class="rl-table"><thead><tr><th>Item</th><th>Vendor</th><th>Price</th><th>Qty</th><th>Link</th></tr></thead><tbody>${p.shoppingList.map(r => `<tr><td>${esc(r.item)}</td><td>${esc(r.vendor)}</td><td>$${(r.price||0).toFixed(2)}</td><td>${esc(r.qty)}</td><td>${r.link ? `<a href="${esc(r.link)}" target="_blank" rel="noopener">Link</a>` : ''}</td></tr>`).join('')}</tbody></table></div>` : ''}
+          </div>
+          <div class="rl-item-actions">
+            ${isManager ? `<button class="rl-btn sm success" data-prog-status="${p.id}" data-status="${nextStatus}">Mark ${esc(nextStatus)}</button>` : ''}
+            ${canModify ? `<button class="rl-btn sm" data-prog-edit="${p.id}">Edit</button><button class="rl-btn sm danger" data-prog-del="${p.id}">Delete</button>` : ''}
+          </div>
+        </div>
+      `; }).join('');
+      list.querySelectorAll('[data-prog-edit]').forEach(btn => btn.addEventListener('click', () => {
+        const p = docs.find(x => x.id === btn.getAttribute('data-prog-edit'));
+        if (p) openProgramForm(p);
+      }));
+      list.querySelectorAll('[data-prog-del]').forEach(btn => btn.addEventListener('click', async () => {
+        if (!confirm('Delete this program proposal?')) return;
+        try { await apiFetch('/reslife-programs?id=' + btn.getAttribute('data-prog-del') + '&property=' + encodeURIComponent(currentProperty), { method: 'DELETE' }); await loadPrograms(); }
+        catch (e) { alert('Failed to delete: ' + e.message); }
+      }));
+      list.querySelectorAll('[data-prog-status]').forEach(btn => btn.addEventListener('click', async () => {
+        try { await apiFetch('/reslife-programs', { method: 'PUT', body: JSON.stringify({ id: btn.getAttribute('data-prog-status'), property: currentProperty, status: btn.getAttribute('data-status') }) }); await loadPrograms(); }
+        catch (e) { alert('Failed to update: ' + e.message); }
+      }));
+    }
+
+    function openProgramForm(p){
+      document.getElementById('progId').value = p ? p.id : '';
+      document.getElementById('progTitle').value = p ? p.title : '';
+      document.getElementById('progType').value = p ? p.type : 'active';
+      document.getElementById('progMonth').value = p ? (p.month || '') : '';
+      document.getElementById('progDate').value = p ? toLocalInputValue(p.eventDate) : '';
+      document.getElementById('progLocation').value = p ? (p.location || '') : '';
+      document.getElementById('progBudget').value = p ? (p.budget || '') : '';
+      document.getElementById('progDescription').value = p ? (p.description || '') : '';
+      document.getElementById('progStations').value = p ? (p.stations || []).join('\n') : '';
+      document.getElementById('progShoppingRows').innerHTML = p && p.shoppingList && p.shoppingList.length
+        ? p.shoppingList.map(shoppingRowHTML).join('')
+        : shoppingRowHTML();
+      toggleForm('progForm', true);
+    }
+
+    function bindProgramForm(){
+      document.getElementById('progAddBtn').addEventListener('click', () => openProgramForm(null));
+      document.getElementById('progCancelBtn').addEventListener('click', () => toggleForm('progForm', false));
+      document.getElementById('progSaveBtn').addEventListener('click', async () => {
+        const id = document.getElementById('progId').value;
+        const title = document.getElementById('progTitle').value.trim();
+        const type = document.getElementById('progType').value;
+        const month = document.getElementById('progMonth').value.trim();
+        const eventDateRaw = document.getElementById('progDate').value;
+        const location = document.getElementById('progLocation').value.trim();
+        const budget = parseFloat(document.getElementById('progBudget').value) || 0;
+        const description = document.getElementById('progDescription').value.trim();
+        const stations = document.getElementById('progStations').value.split('\n').map(s => s.trim()).filter(Boolean);
+        const shoppingList = collectShoppingList();
+        if (!title) { alert('Program title is required'); return; }
+        try {
+          const payload = { property: currentProperty, title, type, month, eventDate: eventDateRaw ? new Date(eventDateRaw).toISOString() : null, location, budget, description, stations, shoppingList };
+          if (id) await apiFetch('/reslife-programs', { method: 'PUT', body: JSON.stringify(Object.assign({ id }, payload)) });
+          else await apiFetch('/reslife-programs', { method: 'POST', body: JSON.stringify(payload) });
+          toggleForm('progForm', false);
+          await loadPrograms();
+        } catch (e) { alert('Save failed: ' + e.message); }
+      });
+    }
+
+    // ==================== COMMITTEES ====================
+    let currentCommitteeId = null;
+
+    async function loadCommittees(){
+      const list = document.getElementById('commList');
+      list.innerHTML = '<div class="rl-loading">Loading…</div>';
+      let docs = [];
+      try { docs = await apiFetch('/reslife-committees' + propParam()); } catch (e) { list.innerHTML = '<div class="rl-empty">Failed to load committees.</div>'; return; }
+      if (docs.length === 0) { list.innerHTML = '<div class="rl-empty">No committees yet.</div>'; return; }
+      list.innerHTML = docs.map(c => `
+        <div class="rl-item">
+          <div class="rl-item-main">
+            <div class="rl-item-title">${esc(c.name)}</div>
+            <div class="rl-item-meta">Advisors: ${esc(c.advisors || '—')} · Lead: ${esc(c.lead || '—')} · ${esc(c.cadence || '')}</div>
+            <div class="rl-item-body">${(c.members || []).length ? 'Members: ' + esc(c.members.join(', ')) : ''}</div>
+          </div>
+          <div class="rl-item-actions">
+            <button class="rl-btn sm outline" data-comm-minutes="${c.id}" data-name="${esc(c.name)}">Meeting Minutes</button>
+            ${isManager ? `<button class="rl-btn sm" data-comm-edit="${c.id}">Edit</button><button class="rl-btn sm danger" data-comm-del="${c.id}">Delete</button>` : ''}
+          </div>
+        </div>
+      `).join('');
+      list.querySelectorAll('[data-comm-edit]').forEach(btn => btn.addEventListener('click', () => {
+        const c = docs.find(x => x.id === btn.getAttribute('data-comm-edit'));
+        if (c) openCommitteeForm(c);
+      }));
+      list.querySelectorAll('[data-comm-del]').forEach(btn => btn.addEventListener('click', async () => {
+        if (!confirm('Delete this committee and all of its meeting minutes?')) return;
+        try { await apiFetch('/reslife-committees?id=' + btn.getAttribute('data-comm-del') + '&property=' + encodeURIComponent(currentProperty), { method: 'DELETE' }); await loadCommittees(); }
+        catch (e) { alert('Failed to delete: ' + e.message); }
+      }));
+      list.querySelectorAll('[data-comm-minutes]').forEach(btn => btn.addEventListener('click', () => {
+        openCommitteeMinutes(btn.getAttribute('data-comm-minutes'), btn.getAttribute('data-name'));
+      }));
+    }
+
+    function openCommitteeForm(c){
+      document.getElementById('commId').value = c ? c.id : '';
+      document.getElementById('commName').value = c ? c.name : '';
+      document.getElementById('commAdvisors').value = c ? (c.advisors || '') : '';
+      document.getElementById('commLead').value = c ? (c.lead || '') : '';
+      document.getElementById('commMembers').value = c ? (c.members || []).join(', ') : '';
+      document.getElementById('commCadence').value = c ? (c.cadence || '') : '';
+      toggleForm('commForm', true);
+    }
+
+    function bindCommitteeForm(){
+      document.getElementById('commAddBtn').addEventListener('click', () => openCommitteeForm(null));
+      document.getElementById('commCancelBtn').addEventListener('click', () => toggleForm('commForm', false));
+      document.getElementById('commSaveBtn').addEventListener('click', async () => {
+        const id = document.getElementById('commId').value;
+        const name = document.getElementById('commName').value.trim();
+        const advisors = document.getElementById('commAdvisors').value.trim();
+        const lead = document.getElementById('commLead').value.trim();
+        const members = document.getElementById('commMembers').value.split(',').map(s => s.trim()).filter(Boolean);
+        const cadence = document.getElementById('commCadence').value.trim();
+        if (!name) { alert('Committee name is required'); return; }
+        try {
+          const payload = { property: currentProperty, name, advisors, lead, members, cadence };
+          if (id) await apiFetch('/reslife-committees', { method: 'PUT', body: JSON.stringify(Object.assign({ id }, payload)) });
+          else await apiFetch('/reslife-committees', { method: 'POST', body: JSON.stringify(payload) });
+          toggleForm('commForm', false);
+          await loadCommittees();
+        } catch (e) { alert('Save failed: ' + e.message); }
+      });
+    }
+
+    // ---- Committee meeting minutes ----
+    function actionRowHTML(it){
+      it = it || { task: '', assignedTo: '', dueDate: '' };
+      return `<div class="rl-form-grid cols-3 action-row" style="margin-bottom:8px;align-items:end">
+        <div class="rl-field"><label>Task</label><input class="ai-task" value="${esc(it.task)}" /></div>
+        <div class="rl-field"><label>Assigned To</label><input class="ai-assigned" value="${esc(it.assignedTo)}" /></div>
+        <div class="rl-field"><label>Due Date</label><input class="ai-due" type="date" value="${esc(it.dueDate || '')}" /></div>
+        <div class="rl-field"><button class="rl-btn sm danger" type="button" data-remove-action-row>Remove</button></div>
+      </div>`;
+    }
+
+    function collectActionItems(){
+      return Array.from(document.querySelectorAll('#minActionRows .action-row')).map(row => ({
+        task: row.querySelector('.ai-task').value.trim(),
+        assignedTo: row.querySelector('.ai-assigned').value.trim(),
+        dueDate: row.querySelector('.ai-due').value || null,
+      })).filter(r => r.task);
+    }
+
+    document.getElementById('minActionRows').addEventListener('click', (e) => {
+      if (e.target.hasAttribute('data-remove-action-row')) e.target.closest('.action-row').remove();
+    });
+    document.getElementById('minAddItemBtn').addEventListener('click', () => {
+      document.getElementById('minActionRows').insertAdjacentHTML('beforeend', actionRowHTML());
+    });
+
+    function openCommitteeMinutes(committeeId, name){
+      currentCommitteeId = committeeId;
+      document.getElementById('commMinutesTitle').textContent = 'Meeting Minutes — ' + name;
+      document.getElementById('commListPanel').classList.add('hidden');
+      document.getElementById('commMinutesPanel').classList.remove('hidden');
+      loadCommitteeMinutes();
+    }
+
+    async function loadCommitteeMinutes(){
+      const list = document.getElementById('minList');
+      list.innerHTML = '<div class="rl-loading">Loading…</div>';
+      let docs = [];
+      try { docs = await apiFetch('/reslife-committee-minutes?property=' + encodeURIComponent(currentProperty) + '&committeeId=' + encodeURIComponent(currentCommitteeId)); }
+      catch (e) { list.innerHTML = '<div class="rl-empty">Failed to load meeting minutes.</div>'; return; }
+      if (docs.length === 0) { list.innerHTML = '<div class="rl-empty">No meetings logged yet.</div>'; return; }
+      list.innerHTML = docs.map(m => {
+        const canModify = isManager || m.createdBy === me.username;
+        return `
+        <div class="rl-item">
+          <div class="rl-item-main">
+            <div class="rl-item-title">${fmtDate(m.meetingDate)}</div>
+            <div class="rl-item-meta">Logged by ${esc(m.createdBy)}</div>
+            <div class="rl-item-body">${esc(m.agenda)}</div>
+            ${(m.actionItems || []).length ? `<div style="margin-top:8px;overflow-x:auto"><table class="rl-table"><thead><tr><th>Task</th><th>Assigned To</th><th>Due</th></tr></thead><tbody>${m.actionItems.map(a => `<tr><td>${esc(a.task)}</td><td>${esc(a.assignedTo)}</td><td>${esc(a.dueDate || '')}</td></tr>`).join('')}</tbody></table></div>` : ''}
+          </div>
+          ${canModify ? `<div class="rl-item-actions"><button class="rl-btn sm" data-min-edit="${m.id}">Edit</button><button class="rl-btn sm danger" data-min-del="${m.id}">Delete</button></div>` : ''}
+        </div>
+      `; }).join('');
+      list.querySelectorAll('[data-min-edit]').forEach(btn => btn.addEventListener('click', () => {
+        const m = docs.find(x => x.id === btn.getAttribute('data-min-edit'));
+        if (m) openMinutesForm(m);
+      }));
+      list.querySelectorAll('[data-min-del]').forEach(btn => btn.addEventListener('click', async () => {
+        if (!confirm('Delete this meeting entry?')) return;
+        try { await apiFetch('/reslife-committee-minutes?id=' + btn.getAttribute('data-min-del') + '&property=' + encodeURIComponent(currentProperty), { method: 'DELETE' }); await loadCommitteeMinutes(); }
+        catch (e) { alert('Failed to delete: ' + e.message); }
+      }));
+    }
+
+    function openMinutesForm(m){
+      document.getElementById('minId').value = m ? m.id : '';
+      document.getElementById('minCommitteeId').value = currentCommitteeId;
+      document.getElementById('minDate').value = m && m.meetingDate ? String(m.meetingDate).slice(0, 10) : new Date().toISOString().slice(0, 10);
+      document.getElementById('minAgenda').value = m ? m.agenda : '';
+      document.getElementById('minActionRows').innerHTML = m && m.actionItems && m.actionItems.length ? m.actionItems.map(actionRowHTML).join('') : actionRowHTML();
+      toggleForm('minForm', true);
+    }
+
+    function bindMinutesForm(){
+      document.getElementById('minAddBtn').addEventListener('click', () => openMinutesForm(null));
+      document.getElementById('minCancelBtn').addEventListener('click', () => toggleForm('minForm', false));
+      document.getElementById('commMinutesBackBtn').addEventListener('click', () => {
+        document.getElementById('commMinutesPanel').classList.add('hidden');
+        document.getElementById('commListPanel').classList.remove('hidden');
+        toggleForm('minForm', false);
+      });
+      document.getElementById('minSaveBtn').addEventListener('click', async () => {
+        const id = document.getElementById('minId').value;
+        const meetingDate = document.getElementById('minDate').value;
+        const agenda = document.getElementById('minAgenda').value.trim();
+        const actionItems = collectActionItems();
+        if (!agenda) { alert('Agenda / notes is required'); return; }
+        try {
+          const payload = { property: currentProperty, committeeId: currentCommitteeId, meetingDate: meetingDate ? new Date(meetingDate).toISOString() : new Date().toISOString(), agenda, actionItems };
+          if (id) await apiFetch('/reslife-committee-minutes', { method: 'PUT', body: JSON.stringify(Object.assign({ id }, payload)) });
+          else await apiFetch('/reslife-committee-minutes', { method: 'POST', body: JSON.stringify(payload) });
+          toggleForm('minForm', false);
+          await loadCommitteeMinutes();
+        } catch (e) { alert('Save failed: ' + e.message); }
+      });
+    }
+
+    // ==================== CAMPUS CONTACTS ====================
+    async function loadContacts(){
+      const list = document.getElementById('contactList');
+      list.innerHTML = '<div class="rl-loading">Loading…</div>';
+      let docs = [];
+      try { docs = await apiFetch('/reslife-contacts' + propParam()); } catch (e) { list.innerHTML = '<div class="rl-empty">Failed to load contacts.</div>'; return; }
+      if (docs.length === 0) { list.innerHTML = '<div class="rl-empty">No campus contacts on file yet.</div>'; return; }
+      list.innerHTML = `<table class="rl-table"><thead><tr><th>Department</th><th>Contact</th><th>Category</th><th>Email</th><th>Phone</th><th>Notes</th>${isAdminTier ? '<th></th>' : ''}</tr></thead><tbody>` +
+        docs.map(c => `
+          <tr>
+            <td>${esc(c.department)}</td>
+            <td>${esc(c.contactName || '')}</td>
+            <td>${esc(c.category || '')}</td>
+            <td>${c.email ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : ''}</td>
+            <td>${esc(c.phone || '')}</td>
+            <td>${esc(c.notes || '')}</td>
+            ${isAdminTier ? `<td style="white-space:nowrap"><button class="rl-btn sm" data-contact-edit="${c.id}">Edit</button> <button class="rl-btn sm danger" data-contact-del="${c.id}">Delete</button></td>` : ''}
+          </tr>
+        `).join('') + '</tbody></table>';
+      list.querySelectorAll('[data-contact-edit]').forEach(btn => btn.addEventListener('click', () => {
+        const c = docs.find(x => x.id === btn.getAttribute('data-contact-edit'));
+        if (c) openContactForm(c);
+      }));
+      list.querySelectorAll('[data-contact-del]').forEach(btn => btn.addEventListener('click', async () => {
+        if (!confirm('Delete this contact?')) return;
+        try { await apiFetch('/reslife-contacts?id=' + btn.getAttribute('data-contact-del') + '&property=' + encodeURIComponent(currentProperty), { method: 'DELETE' }); await loadContacts(); }
+        catch (e) { alert('Failed to delete: ' + e.message); }
+      }));
+    }
+
+    function openContactForm(c){
+      document.getElementById('contactId').value = c ? c.id : '';
+      document.getElementById('contactDept').value = c ? c.department : '';
+      document.getElementById('contactName').value = c ? (c.contactName || '') : '';
+      document.getElementById('contactCategory').value = c ? (c.category || 'Other') : 'Other';
+      document.getElementById('contactEmail').value = c ? (c.email || '') : '';
+      document.getElementById('contactPhone').value = c ? (c.phone || '') : '';
+      document.getElementById('contactNotes').value = c ? (c.notes || '') : '';
+      toggleForm('contactForm', true);
+    }
+
+    function bindContactForm(){
+      document.getElementById('contactAddBtn').addEventListener('click', () => openContactForm(null));
+      document.getElementById('contactCancelBtn').addEventListener('click', () => toggleForm('contactForm', false));
+      document.getElementById('contactSaveBtn').addEventListener('click', async () => {
+        const id = document.getElementById('contactId').value;
+        const department = document.getElementById('contactDept').value.trim();
+        const contactName = document.getElementById('contactName').value.trim();
+        const category = document.getElementById('contactCategory').value;
+        const email = document.getElementById('contactEmail').value.trim();
+        const phone = document.getElementById('contactPhone').value.trim();
+        const notes = document.getElementById('contactNotes').value.trim();
+        if (!department) { alert('Department / org name is required'); return; }
+        try {
+          const payload = { property: currentProperty, department, contactName, category, email, phone, notes };
+          if (id) await apiFetch('/reslife-contacts', { method: 'PUT', body: JSON.stringify(Object.assign({ id }, payload)) });
+          else await apiFetch('/reslife-contacts', { method: 'POST', body: JSON.stringify(payload) });
+          toggleForm('contactForm', false);
+          await loadContacts();
+        } catch (e) { alert('Save failed: ' + e.message); }
+      });
+    }
+
+    // ==================== CURRICULUM TRACKER ====================
+    let curTrackers = [];
+    let curSelectedId = null;
+
+    async function loadCurriculum(){
+      const picker = document.getElementById('curSemesterPicker');
+      const grid = document.getElementById('curGrid');
+      grid.innerHTML = '<div class="rl-loading">Loading…</div>';
+      try { curTrackers = await apiFetch('/reslife-curriculum' + propParam()); } catch (e) { grid.innerHTML = '<div class="rl-empty">Failed to load curriculum tracker.</div>'; return; }
+      if (curTrackers.length === 0) { picker.innerHTML = ''; grid.innerHTML = '<div class="rl-empty">No curriculum tracker yet for this property.</div>'; return; }
+      if (!curSelectedId || !curTrackers.some(t => t.id === curSelectedId)) curSelectedId = curTrackers[0].id;
+
+      const selectHtml = curTrackers.length > 1
+        ? `<select id="curSemesterSelect" style="padding:8px 10px;border:1px solid var(--rl-border);border-radius:6px;font-size:13px">${curTrackers.map(t => `<option value="${t.id}" ${t.id === curSelectedId ? 'selected' : ''}>${esc(t.semester)}</option>`).join('')}</select>`
+        : `<strong>${esc(curTrackers[0].semester)}</strong>`;
+      picker.innerHTML = selectHtml + (isManager ? ' <button class="rl-btn sm danger" id="curDeleteBtn">Delete This Tracker</button>' : '');
+      const sel = document.getElementById('curSemesterSelect');
+      if (sel) sel.addEventListener('change', (e) => { curSelectedId = e.target.value; renderCurriculumGrid(); });
+      const delBtn = document.getElementById('curDeleteBtn');
+      if (delBtn) delBtn.addEventListener('click', async () => {
+        if (!confirm('Delete this semester tracker?')) return;
+        try { await apiFetch('/reslife-curriculum?id=' + curSelectedId + '&property=' + encodeURIComponent(currentProperty), { method: 'DELETE' }); curSelectedId = null; await loadCurriculum(); }
+        catch (e) { alert('Failed to delete: ' + e.message); }
+      });
+      renderCurriculumGrid();
+    }
+
+    function renderCurriculumGrid(){
+      const grid = document.getElementById('curGrid');
+      const t = curTrackers.find(x => x.id === curSelectedId);
+      if (!t) { grid.innerHTML = '<div class="rl-empty">Select a semester.</div>'; return; }
+      const reqs = t.requirements || [];
+      const roster = t.roster || [];
+      if (reqs.length === 0 || roster.length === 0) { grid.innerHTML = '<div class="rl-empty">This tracker has no roster or requirements yet — edit it to add some.</div>'; return; }
+      let html = '<div style="overflow-x:auto"><table class="rl-table"><thead><tr><th>RA</th>' +
+        reqs.map(r => `<th>${esc(r.name)}${r.dueDate ? `<br><span style="font-weight:400;text-transform:none;font-size:10px">Due ${esc(r.dueDate)}</span>` : ''}</th>`).join('') + '</tr></thead><tbody>';
+      roster.forEach(ra => {
+        html += `<tr><td>${esc(ra)}</td>` + reqs.map(r => {
+          const key = ra + '__' + r.id;
+          const done = t.completions && t.completions[key] && t.completions[key].done;
+          return `<td style="text-align:center"><input type="checkbox" ${done ? 'checked' : ''} ${isManager ? '' : 'disabled'} data-cur-toggle data-ra="${esc(ra)}" data-req="${esc(r.id)}" /></td>`;
+        }).join('') + '</tr>';
+      });
+      html += '</tbody></table></div>';
+      grid.innerHTML = html;
+      if (isManager) {
+        grid.querySelectorAll('[data-cur-toggle]').forEach(cb => cb.addEventListener('change', async () => {
+          const ra = cb.getAttribute('data-ra'); const reqId = cb.getAttribute('data-req');
+          const key = ra + '__' + reqId;
+          const completions = Object.assign({}, t.completions || {});
+          completions[key] = { done: cb.checked, date: cb.checked ? new Date().toISOString() : null };
+          try { await apiFetch('/reslife-curriculum', { method: 'PUT', body: JSON.stringify({ id: t.id, property: currentProperty, completions }) }); t.completions = completions; }
+          catch (e) { alert('Failed to update: ' + e.message); cb.checked = !cb.checked; }
+        }));
+      }
+    }
+
+    function bindCurriculumForm(){
+      document.getElementById('curAddBtn').addEventListener('click', () => toggleForm('curForm', true));
+      document.getElementById('curCancelBtn').addEventListener('click', () => toggleForm('curForm', false));
+      document.getElementById('curSaveBtn').addEventListener('click', async () => {
+        const semester = document.getElementById('curSemester').value.trim();
+        const roster = document.getElementById('curRoster').value.split('\n').map(s => s.trim()).filter(Boolean);
+        const requirements = document.getElementById('curRequirements').value.split('\n').map(s => s.trim()).filter(Boolean).map((line, i) => {
+          const parts = line.split(',').map(s => s.trim());
+          return { id: 'req-' + Date.now() + '-' + i, name: parts[0] || ('Requirement ' + (i + 1)), dueDate: parts[1] || null };
+        });
+        if (!semester) { alert('Semester name is required'); return; }
+        try {
+          await apiFetch('/reslife-curriculum', { method: 'POST', body: JSON.stringify({ property: currentProperty, semester, roster, requirements }) });
+          document.getElementById('curSemester').value = '';
+          document.getElementById('curRoster').value = '';
+          document.getElementById('curRequirements').value = '';
+          toggleForm('curForm', false);
+          curSelectedId = null;
+          await loadCurriculum();
+        } catch (e) { alert('Save failed: ' + e.message); }
+      });
+    }
+
+    // ==================== MANAGE RESLIFE USERS (Admin tier only) ====================
+    async function loadReslifeUsers(){
+      const list = document.getElementById('userList');
+      list.innerHTML = '<div class="rl-loading">Loading…</div>';
+      populateUserPropertyOptions();
+      let docs = [];
+      try { docs = await apiFetch('/reslife-users'); } catch (e) { list.innerHTML = '<div class="rl-empty">Failed to load users.</div>'; return; }
+      if (docs.length === 0) { list.innerHTML = '<div class="rl-empty">No RA / REC accounts yet.</div>'; return; }
+      list.innerHTML = `<table class="rl-table"><thead><tr><th>Username</th><th>Role</th><th>Property</th><th></th></tr></thead><tbody>` +
+        docs.map(u => `
+          <tr>
+            <td>${esc(u.username)}</td>
+            <td>${esc(ROLE_LABELS[u.role] || u.role)}</td>
+            <td>${esc((Array.isArray(u.properties) ? u.properties[0] : '') || '')}</td>
+            <td style="white-space:nowrap"><button class="rl-btn sm" data-user-edit="${esc(u.username)}">Edit</button> <button class="rl-btn sm danger" data-user-del="${esc(u.username)}">Delete</button></td>
+          </tr>
+        `).join('') + '</tbody></table>';
+      list.querySelectorAll('[data-user-edit]').forEach(btn => btn.addEventListener('click', () => {
+        const u = docs.find(x => x.username === btn.getAttribute('data-user-edit'));
+        if (u) openUserForm(u);
+      }));
+      list.querySelectorAll('[data-user-del]').forEach(btn => btn.addEventListener('click', async () => {
+        const username = btn.getAttribute('data-user-del');
+        if (!confirm(`Delete the account "${username}"?`)) return;
+        try { await apiFetch('/reslife-users', { method: 'DELETE', body: JSON.stringify({ username }) }); await loadReslifeUsers(); }
+        catch (e) { alert('Failed to delete: ' + e.message); }
+      }));
+    }
+
+    function populateUserPropertyOptions(){
+      const sel = document.getElementById('userProperty');
+      const scope = (me.role === 'admin') ? myProperties : myProperties; // reslife-admin's own assigned properties
+      sel.innerHTML = scope.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('');
+    }
+
+    function openUserForm(u){
+      document.getElementById('userOrigUsername').value = u ? u.username : '';
+      document.getElementById('userUsername').value = u ? u.username : '';
+      document.getElementById('userUsername').disabled = !!u;
+      document.getElementById('userPassword').value = '';
+      document.getElementById('userPassword').placeholder = u ? 'Leave blank to keep current password' : '';
+      document.getElementById('userRole').value = (u && u.role) || 'reslife-ra';
+      const propSel = document.getElementById('userProperty');
+      if (u && Array.isArray(u.properties) && u.properties[0]) propSel.value = u.properties[0];
+      toggleForm('userForm', true);
+    }
+
+    function bindUserForm(){
+      document.getElementById('userAddBtn').addEventListener('click', () => openUserForm(null));
+      document.getElementById('userCancelBtn').addEventListener('click', () => toggleForm('userForm', false));
+      document.getElementById('userSaveBtn').addEventListener('click', async () => {
+        const origUsername = document.getElementById('userOrigUsername').value;
+        const username = document.getElementById('userUsername').value.trim();
+        const password = document.getElementById('userPassword').value;
+        const role = document.getElementById('userRole').value;
+        const property = document.getElementById('userProperty').value;
+        if (!username) { alert('Username is required'); return; }
+        if (!property) { alert('Choose a property'); return; }
+        try {
+          if (origUsername) {
+            const updates = { role, property };
+            if (password) updates.password = password;
+            await apiFetch('/reslife-users', { method: 'PUT', body: JSON.stringify({ username: origUsername, updates }) });
+          } else {
+            if (!password) { alert('Password is required for new accounts'); return; }
+            await apiFetch('/reslife-users', { method: 'POST', body: JSON.stringify({ username, password, role, property }) });
+          }
+          toggleForm('userForm', false);
+          await loadReslifeUsers();
+        } catch (e) { alert('Save failed: ' + e.message); }
+      });
+    }
+
+    function bindAllForms(){
+      bindAnnouncementForm();
+      bindProgramForm();
+      bindCommitteeForm();
+      bindMinutesForm();
+      bindRosterForm();
+      bindIncidentForm();
+      bindMaintenanceForm();
+      bindDirectoryForm();
+      bindContactForm();
+      bindCurriculumForm();
+      if (isAdminTier) bindUserForm();
+    }
+
+    // ==================== LOGOUT / SESSION ====================
+    els.logoutBtn.addEventListener('click', async () => {
+      try { await fetch('/api/auth-logout', { method: 'POST', credentials: 'include' }); } catch (e) {}
+      window.location.href = 'index.html';
+    });
+
+    // 12h inactivity auto-logout (mirrors standard-nav.js behavior for the rest of the app)
+    (function () {
+      const INACTIVITY_MS = 12 * 60 * 60 * 1000;
+      const STORAGE_KEY = 'mmp_last_activity';
+      function updateActivity(){ try { localStorage.setItem(STORAGE_KEY, Date.now().toString()); } catch (e) {} }
+      function checkInactivity(){
+        try {
+          const last = parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10);
+          if (last && (Date.now() - last) > INACTIVITY_MS) {
+            localStorage.removeItem(STORAGE_KEY);
+            fetch('/api/auth-logout', { method: 'POST', credentials: 'include' }).catch(() => {});
+            window.location.href = 'index.html';
+          }
+        } catch (e) {}
+      }
+      updateActivity();
+      ['mousedown', 'keydown', 'scroll', 'touchstart', 'mousemove'].forEach(evt => document.addEventListener(evt, updateActivity, { passive: true }));
+      setInterval(checkInactivity, 60 * 1000);
+    })();
+
+    init();
+  </script>
+</body>
+</html>

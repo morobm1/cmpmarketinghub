@@ -84,6 +84,9 @@
     .detail-header .role-badge.admin{background:#fff7e6; color:#8a5800; border:1px solid #fde68a}
     .detail-header .role-badge.user{background:#f0f9ff; color:#0369a1; border:1px solid #bae6fd}
     .detail-header .role-badge.maintenance{background:#f0fdf4; color:#166534; border:1px solid #bbf7d0}
+    .detail-header .role-badge.reslife-ra{background:#eef2ff; color:#3730a3; border:1px solid #c7d2fe}
+    .detail-header .role-badge.reslife-rec{background:#ecfeff; color:#155e75; border:1px solid #a5f3fc}
+    .detail-header .role-badge.reslife-admin{background:#fff1f2; color:#9f1239; border:1px solid #fecdd3}
 
     .detail-body{padding:24px}
     
@@ -318,7 +321,11 @@
                         <option value="user">User</option>
                         <option value="admin">Admin</option>
                         <option value="maintenance">Maintenance</option>
+                        <option value="reslife-ra">Reslife - RA</option>
+                        <option value="reslife-rec">Reslife - REC</option>
+                        <option value="reslife-admin">Reslife Admin</option>
                       </select>
+                      <p class="hint" id="reslifeRoleHint" style="display:none">Reslife credentials redirect straight to the Reslife Hub on login and cannot access the rest of the Marketing Hub. Reslife - RA and Reslife - REC must be assigned exactly one property below; Reslife Admin may be assigned more than one.</p>
                     </div>
                   </div>
                   
@@ -712,6 +719,7 @@
       detailRoleBadge: document.getElementById('detailRoleBadge'),
       editUsername: document.getElementById('editUsername'),
       editRole: document.getElementById('editRole'),
+      reslifeRoleHint: document.getElementById('reslifeRoleHint'),
       editPassword: document.getElementById('editPassword'),
       passwordLabel: document.getElementById('passwordLabel'),
       passwordHint: document.getElementById('passwordHint'),
@@ -772,6 +780,9 @@
     function fmtMoney(n){ const v = parseFloat(n); if (!isFinite(v)) return '$0.00'; return '$'+v.toFixed(2); }
     function generateId(){ return 'item-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9); }
     function getInitials(name){ return name.substring(0, 2).toUpperCase(); }
+    const ROLE_LABELS = { admin:'Admin', maintenance:'Maintenance', 'reslife-ra':'Reslife - RA', 'reslife-rec':'Reslife - REC', 'reslife-admin':'Reslife Admin' };
+    function roleLabel(role){ return ROLE_LABELS[role] || 'User'; }
+    function isReslifeRole(role){ return role === 'reslife-ra' || role === 'reslife-rec' || role === 'reslife-admin'; }
 
     async function apiFetch(path, opts={}){
       const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers||{});
@@ -820,7 +831,7 @@
             <div class="user-avatar ${u.role === 'admin' ? 'admin' : ''}">${getInitials(u.username)}</div>
             <div class="user-info">
               <div class="user-name">${u.username}</div>
-              <div class="user-role">${u.role === 'admin' ? 'Administrator' : u.role === 'maintenance' ? 'Maintenance' : 'User'}</div>
+              <div class="user-role">${u.role === 'admin' ? 'Administrator' : roleLabel(u.role)}</div>
             </div>
             <span class="user-props-count">${propsCount} props</span>
           </div>
@@ -867,8 +878,9 @@
       els.userDetail.classList.remove('hidden');
       
       els.detailUsername.textContent = user.username;
-      els.detailRoleBadge.textContent = user.role === 'admin' ? 'Admin' : user.role === 'maintenance' ? 'Maintenance' : 'User';
+      els.detailRoleBadge.textContent = roleLabel(user.role);
       els.detailRoleBadge.className = `role-badge ${user.role}`;
+      if (els.reslifeRoleHint) els.reslifeRoleHint.style.display = isReslifeRole(user.role) ? '' : 'none';
 
       els.editUsername.value = user.username;
       els.editUsername.disabled = true;
@@ -950,6 +962,14 @@
 
       if (!username){ alert('Username is required'); return; }
       if (isNewUser && !password){ alert('Password is required for new users'); return; }
+      if ((role === 'reslife-ra' || role === 'reslife-rec') && selectedProps.length !== 1){
+        alert('Reslife - RA and Reslife - REC accounts must be assigned to exactly one property.');
+        return;
+      }
+      if (role === 'reslife-admin' && selectedProps.length < 1){
+        alert('Reslife Admin accounts must be assigned to at least one property.');
+        return;
+      }
 
       try {
         els.saveUserBtn.disabled = true;
@@ -1522,8 +1542,9 @@ Capstone Management Partners`;
 
     els.editRole.addEventListener('change', () => {
       const rv = els.editRole.value;
-      els.detailRoleBadge.textContent = rv === 'admin' ? 'Admin' : rv === 'maintenance' ? 'Maintenance' : 'User';
+      els.detailRoleBadge.textContent = roleLabel(rv);
       els.detailRoleBadge.className = `role-badge ${rv}`;
+      if (els.reslifeRoleHint) els.reslifeRoleHint.style.display = isReslifeRole(rv) ? '' : 'none';
     });
 
     els.toCalendarBtn.addEventListener('click', () => { location.href = 'mmp_calendar_app.html'; });
@@ -1706,7 +1727,7 @@ Capstone Management Partners`;
       ws['!cols'] = [{ wch: 18 }, { wch: 16 }, { wch: 8 }, { wch: 28 }, { wch: 40 }];
       XLSX.utils.book_append_sheet(wb, ws, 'Users');
       // Instructions sheet
-      const instrData = [['User Import Template — Instructions'], [''], ['Columns:'], ['• username — Required. Login username.'], ['• password — Required. Initial password.'], ['• role — "admin", "user", or "maintenance" (default: user)'], ['• email — Optional. Email address.'], ['• properties — Comma-separated. You can use property NAMES or IDs.'], ['  The system will auto-match names to IDs on import.'], ['  Use * for admin access to all properties.'], [''], ['Example properties: "Parkview Tower, Sunrise Lofts" or "parkview-tower, sunrise-lofts"']];
+      const instrData = [['User Import Template — Instructions'], [''], ['Columns:'], ['• username — Required. Login username.'], ['• password — Required. Initial password.'], ['• role — "admin", "user", "maintenance", "reslife-ra", "reslife-rec", or "reslife-admin" (default: user)'], ['• email — Optional. Email address.'], ['• properties — Comma-separated. You can use property NAMES or IDs.'], ['  The system will auto-match names to IDs on import.'], ['  Use * for admin access to all properties.'], [''], ['Example properties: "Parkview Tower, Sunrise Lofts" or "parkview-tower, sunrise-lofts"']];
       const instrWs = XLSX.utils.aoa_to_sheet(instrData);
       instrWs['!cols'] = [{ wch: 70 }];
       XLSX.utils.book_append_sheet(wb, instrWs, 'Instructions');

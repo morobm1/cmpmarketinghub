@@ -68,6 +68,10 @@
     'sop_library.html'
   ];
 
+  // Reslife credentials (Reslife - RA, Reslife - REC, Reslife Admin) are locked out
+  // of the entire Marketing Hub and belong only in the branded Reslife Hub.
+  var reslifeRoles = ['reslife-ra', 'reslife-rec', 'reslife-admin'];
+
   function getNavStructure(role) {
     if (role !== 'maintenance') return fullNavStructure;
     function filterItems(items) {
@@ -412,6 +416,13 @@
     }
   }
 
+  function enforceReslifeAccess() {
+    var currentPage = window.location.pathname.split('/').pop() || 'index.html';
+    if (currentPage === 'index.html' || currentPage === '') return;
+    // Reslife credentials have no access to any Marketing Hub page, including this one.
+    window.location.href = 'reslife_hub.html';
+  }
+
   // Initialize
   function init() {
     if (document.readyState === 'loading') {
@@ -426,6 +437,15 @@
       .then(function(res) { return res.ok ? res.json() : null; })
       .then(function(user) {
         if (!user) return;
+        if (reslifeRoles.indexOf(user.role) !== -1) {
+          // No Marketing Hub nav or content for Reslife credentials — redirect immediately.
+          var existingNav = document.getElementById('sidebarNav');
+          if (existingNav) existingNav.remove();
+          var existingToggle = document.getElementById('navToggle');
+          if (existingToggle) existingToggle.remove();
+          enforceReslifeAccess();
+          return;
+        }
         if (user.role === 'maintenance') {
           navStructure = getNavStructure('maintenance');
           rebuildNav();
