@@ -31,6 +31,13 @@ export async function handler(event) {
     return allowed.includes(propertyId);
   }
 
+  function canAccessProject(doc) {
+    if (!doc) return false;
+    if (doc.createdBy === user.sub) return true;
+    if (Array.isArray(doc.sharedWith) && doc.sharedWith.includes(user.sub)) return true;
+    return userCanAccessProperty(doc.propertyId);
+  }
+
   try {
     if (event.httpMethod === 'GET') {
       const id = params.get('id');
@@ -41,6 +48,7 @@ export async function handler(event) {
         try { query = { _id: new ObjectId(id) }; } catch { query = { id }; }
         const doc = await col.findOne(query);
         if (!doc) return { statusCode: 404, body: 'Not found' };
+        if (!canAccessProject(doc)) return { statusCode: 403, body: 'Access denied' };
         doc.id = doc.id || doc._id.toString();
         return json(doc);
       }
@@ -77,6 +85,7 @@ export async function handler(event) {
         try { query = { _id: new ObjectId(id) }; } catch { query = { id }; }
         const original = await col.findOne(query);
         if (!original) return { statusCode: 404, body: 'Project not found' };
+        if (!canAccessProject(original)) return { statusCode: 403, body: 'Access denied' };
 
         const now = new Date().toISOString();
         delete original._id;
@@ -124,6 +133,8 @@ export async function handler(event) {
       if (!id) return { statusCode: 400, body: 'id required' };
       let filter;
       try { filter = { _id: new ObjectId(id) }; } catch { filter = { id }; }
+      const existing = await col.findOne(filter);
+      if (existing && !canAccessProject(existing)) return { statusCode: 403, body: 'Access denied' };
       await col.deleteOne(filter);
       return json({ success: true });
     }

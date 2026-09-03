@@ -42,6 +42,26 @@ export async function handler(event) {
   const params = new URLSearchParams(event.rawQuery || '');
   const json = (data) => ({ statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
 
+  // Refresh properties/role from DB to avoid stale JWT claims
+  const freshUser = await db.collection('users').findOne({ username: user.sub });
+  if (freshUser) {
+    user.properties = freshUser.properties;
+    user.role = freshUser.role;
+  }
+
+  function userCanAccessProperty(propertyId) {
+    if (user.role === 'admin' || user.properties === '*') return true;
+    const allowed = Array.isArray(user.properties) ? user.properties : [];
+    return !!propertyId && allowed.includes(propertyId);
+  }
+
+  function canAccessTemplate(doc) {
+    if (!doc) return false;
+    if (doc.isDefault || !doc.propertyId) return true;
+    if (doc.createdBy === user.sub) return true;
+    return userCanAccessProperty(doc.propertyId);
+  }
+
   try {
     // Seed default templates on first access
     await ensureDefaults(col);
@@ -57,6 +77,7 @@ export async function handler(event) {
         try { query = { _id: new ObjectId(id) }; } catch { query = { id }; }
         const doc = await col.findOne(query);
         if (!doc) return { statusCode: 404, body: 'Not found' };
+        if (!canAccessTemplate(doc)) return { statusCode: 403, body: 'Access denied' };
         doc.id = doc.id || doc._id.toString();
         return json(doc);
       }
@@ -67,12 +88,24 @@ export async function handler(event) {
       } else if (category) {
         filter.category = category;
       } else if (propertyId) {
+        if (!userCanAccessProperty(propertyId)) return { statusCode: 403, body: 'Access denied' };
         filter.$or = [
           { propertyId: propertyId },
           { propertyId: { $exists: false } },
           { propertyId: null },
           { isDefault: true },
         ];
+      } else if (!(user.role === 'admin' || user.properties === '*')) {
+        // No explicit filter requested: scope to templates this user should actually see
+        // instead of every property's saved templates.
+        const allowed = Array.isArray(user.properties) ? user.properties : [];
+        filter = { $or: [
+          { isDefault: true },
+          { propertyId: { $exists: false } },
+          { propertyId: null },
+          { createdBy: user.sub },
+          ...(allowed.length > 0 ? [{ propertyId: { $in: allowed } }] : []),
+        ]};
       }
 
       const docs = await col.find(filter).sort({ isDefault: -1, name: 1 }).toArray();
@@ -87,13 +120,19 @@ export async function handler(event) {
       if (body.id || body._id) {
         const docId = body.id || body._id;
         delete body._id;
-        body.updatedAt = now;
         let filter;
         try { filter = { _id: new ObjectId(docId) }; } catch { filter = { id: docId }; }
+        const existing = await col.findOne(filter);
+        if (existing && !canAccessTemplate(existing) && existing.createdBy !== user.sub) {
+          return { statusCode: 403, body: 'Access denied' };
+        }
+        if (body.propertyId && !userCanAccessProperty(body.propertyId)) return { statusCode: 403, body: 'Access denied' };
+        body.updatedAt = now;
         await col.updateOne(filter, { $set: body }, { upsert: true });
         body.id = docId;
         return json(body);
       } else {
+        if (body.propertyId && !userCanAccessProperty(body.propertyId)) return { statusCode: 403, body: 'Access denied' };
         body.isDefault = false;
         body.createdBy = user.sub;
         body.createdAt = now;
@@ -108,11 +147,13 @@ export async function handler(event) {
       const id = params.get('id');
       if (!id) return { statusCode: 400, body: 'id required' };
 
-      // Prevent deleting default templates
       let query;
       try { query = { _id: new ObjectId(id) }; } catch { query = { id }; }
       const doc = await col.findOne(query);
       if (doc && doc.isDefault) return { statusCode: 403, body: 'Cannot delete default templates' };
+      if (doc && doc.createdBy !== user.sub && !userCanAccessProperty(doc.propertyId) && user.role !== 'admin') {
+        return { statusCode: 403, body: 'Access denied' };
+      }
 
       await col.deleteOne(query);
       return json({ success: true });

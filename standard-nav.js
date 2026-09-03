@@ -34,6 +34,7 @@
     'Project Management': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>',
     'Custom Tools': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
     'SOP Library': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
+    'Back to Reslife Hub': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>',
     'collapse': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/></svg>',
     'expand': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>',
   };
@@ -69,22 +70,38 @@
   ];
 
   // Reslife credentials (Reslife - RA, Reslife - REC, Reslife Admin) are locked out
-  // of the entire Marketing Hub and belong only in the branded Reslife Hub.
+  // of the entire Marketing Hub and belong only in the branded Reslife Hub, with two
+  // narrow exceptions: Creative Studio (email creator) and Creative Library, which they
+  // may use scoped to their own assigned property (same property ACL as every other role).
   var reslifeRoles = ['reslife-ra', 'reslife-rec', 'reslife-admin'];
+  var reslifeAllowedHrefs = ['creative_studio.html', 'creative_library.html'];
 
   function getNavStructure(role) {
-    if (role !== 'maintenance') return fullNavStructure;
-    function filterItems(items) {
-      return items.filter(function(item) {
-        return maintenanceAllowedHrefs.indexOf(item.href) !== -1;
-      });
+    if (role === 'maintenance') {
+      function filterMaintenanceItems(items) {
+        return items.filter(function(item) {
+          return maintenanceAllowedHrefs.indexOf(item.href) !== -1;
+        });
+      }
+      return {
+        main: filterMaintenanceItems(fullNavStructure.main),
+        tools: filterMaintenanceItems(fullNavStructure.tools),
+        resources: filterMaintenanceItems(fullNavStructure.resources)
+      };
     }
-    var filtered = {
-      main: filterItems(fullNavStructure.main),
-      tools: filterItems(fullNavStructure.tools),
-      resources: filterItems(fullNavStructure.resources)
-    };
-    return filtered;
+    if (reslifeRoles.indexOf(role) !== -1) {
+      function filterReslifeItems(items) {
+        return items.filter(function(item) {
+          return reslifeAllowedHrefs.indexOf(item.href) !== -1;
+        });
+      }
+      return {
+        main: [{ href: 'reslife_hub.html', label: 'Back to Reslife Hub' }],
+        tools: filterReslifeItems(fullNavStructure.tools),
+        resources: []
+      };
+    }
+    return fullNavStructure;
   }
 
   var navStructure = fullNavStructure;
@@ -419,7 +436,8 @@
   function enforceReslifeAccess() {
     var currentPage = window.location.pathname.split('/').pop() || 'index.html';
     if (currentPage === 'index.html' || currentPage === '') return;
-    // Reslife credentials have no access to any Marketing Hub page, including this one.
+    if (reslifeAllowedHrefs.indexOf(currentPage) !== -1) return; // Creative Studio / Creative Library are allowed
+    // Reslife credentials have no access to any other Marketing Hub page.
     window.location.href = 'reslife_hub.html';
   }
 
@@ -438,7 +456,16 @@
       .then(function(user) {
         if (!user) return;
         if (reslifeRoles.indexOf(user.role) !== -1) {
-          // No Marketing Hub nav or content for Reslife credentials — redirect immediately.
+          var currentPage = window.location.pathname.split('/').pop() || 'index.html';
+          if (reslifeAllowedHrefs.indexOf(currentPage) !== -1) {
+            // Creative Studio / Creative Library: show a minimal Reslife-scoped nav
+            // (just this page's siblings + a link back to the hub) instead of the
+            // full Marketing Hub sidebar.
+            navStructure = getNavStructure(user.role);
+            rebuildNav();
+            return;
+          }
+          // Every other Marketing Hub page: no nav or content for Reslife credentials — redirect immediately.
           var existingNav = document.getElementById('sidebarNav');
           if (existingNav) existingNav.remove();
           var existingToggle = document.getElementById('navToggle');

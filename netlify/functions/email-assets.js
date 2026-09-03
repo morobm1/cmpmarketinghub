@@ -44,6 +44,7 @@ export async function handler(event) {
         try { query = { _id: new ObjectId(id) }; } catch { query = { id }; }
         const doc = await col.findOne(query);
         if (!doc) return { statusCode: 404, body: 'Not found' };
+        if (!userCanAccessProperty(doc.propertyId)) return { statusCode: 403, body: 'Access denied' };
         doc.id = doc.id || doc._id.toString();
         return json(doc);
       }
@@ -98,6 +99,8 @@ export async function handler(event) {
       if (!id) return { statusCode: 400, body: 'id required' };
       let filter;
       try { filter = { _id: new ObjectId(id) }; } catch { filter = { id }; }
+      const existing = await col.findOne(filter);
+      if (existing && !userCanAccessProperty(existing.propertyId)) return { statusCode: 403, body: 'Access denied' };
       await col.deleteOne(filter);
       return json({ success: true });
     }

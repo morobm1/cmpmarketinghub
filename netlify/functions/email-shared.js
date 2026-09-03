@@ -20,10 +20,24 @@ export async function handler(event) {
   const params = new URLSearchParams(event.rawQuery || '');
   const json = (data) => ({ statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
 
+  // Refresh properties/role from DB to avoid stale JWT claims
+  const freshUser = await db.collection('users').findOne({ username: user.sub });
+  if (freshUser) {
+    user.properties = freshUser.properties;
+    user.role = freshUser.role;
+  }
+
   function userCanAccessProperty(propertyId) {
     if (user.role === 'admin' || user.properties === '*') return true;
     const allowed = Array.isArray(user.properties) ? user.properties : [];
     return allowed.includes(propertyId);
+  }
+
+  function canAccessShared(doc) {
+    if (!doc) return false;
+    if (doc.visibility === 'public') return true;
+    if (doc.sharedBy === user.sub) return true;
+    return userCanAccessProperty(doc.propertyId);
   }
 
   try {
@@ -38,6 +52,7 @@ export async function handler(event) {
         try { query = { _id: new ObjectId(id) }; } catch { query = { id }; }
         const doc = await col.findOne(query);
         if (!doc) return { statusCode: 404, body: 'Not found' };
+        if (!canAccessShared(doc)) return { statusCode: 403, body: 'Access denied' };
         doc.id = doc.id || doc._id.toString();
         return json(doc);
       }
@@ -95,6 +110,7 @@ export async function handler(event) {
         try { query = { _id: new ObjectId(id) }; } catch { query = { id }; }
         const original = await col.findOne(query);
         if (!original) return { statusCode: 404, body: 'Not found' };
+        if (!canAccessShared(original)) return { statusCode: 403, body: 'Access denied' };
 
         const now = new Date().toISOString();
         delete original._id;
@@ -133,6 +149,9 @@ export async function handler(event) {
 
       let query;
       try { query = { _id: new ObjectId(id) }; } catch { query = { id }; }
+      const existing = await col.findOne(query);
+      if (!existing) return { statusCode: 404, body: 'Not found' };
+      if (existing.sharedBy !== user.sub && user.role !== 'admin') return { statusCode: 403, body: 'Access denied' };
       const now = new Date().toISOString();
       await col.updateOne(query, { $set: { visibility, updatedAt: now } });
       const updated = await col.findOne(query);
@@ -145,6 +164,8 @@ export async function handler(event) {
       if (!id) return { statusCode: 400, body: 'id required' };
       let query;
       try { query = { _id: new ObjectId(id) }; } catch { query = { id }; }
+      const existing = await col.findOne(query);
+      if (existing && existing.sharedBy !== user.sub && user.role !== 'admin') return { statusCode: 403, body: 'Access denied' };
       await col.deleteOne(query);
       return json({ success: true });
     }
