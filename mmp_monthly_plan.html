@@ -1,0 +1,1035 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Monthly Marketing Plan • Marketing Hub</title>
+  <link rel="preconnect" href="https://use.typekit.net" crossorigin>
+  <link rel="preconnect" href="https://p.typekit.net" crossorigin>
+  <link rel="stylesheet" href="https://use.typekit.net/hqv8hwr.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <meta name="description" content="Plan, log, and track the full-year Monthly Marketing Plan (budgets, engagement requirements, and effort logs) per property." />
+  <style>
+    :root{ --brand-primary:#446472; --brand-accent:#ffb732; --brand-accent-2:#52d5ff; --brand-gray:#929497; --page-bg:#f8fafc; --bg:#ffffff; --panel:#ffffff; --text:#1e293b; --subtext:#64748b; --accent:var(--brand-accent-2); --border:#e2e8f0; --success:#22c55e; --warning:#f59e0b; --danger:#ef4444; }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{margin:0; font-family:'Open Sans',system-ui,-apple-system,sans-serif; background:var(--page-bg); color:var(--text);font-size:14px;line-height:1.5}
+
+    /* Header */
+    header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:10px}
+    .brand .logo-img{height:28px;width:auto}
+    .brand .title{color:#ffb732;font-family:zooja-pro,Arial,sans-serif;font-size:clamp(28px,3.5vw,40px);line-height:1}
+    .header-controls{display:flex;align-items:center;gap:10px;margin-left:auto;flex-wrap:wrap}
+    .header-btn{background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;transition:all .15s;width:auto}
+    .header-btn:hover{background:#f8fafc;border-color:#cbd5e1}
+    .company-name{font-size:12px;color:var(--subtext);font-weight:500}
+    .save-status{font-size:12px;color:var(--subtext);font-weight:700;white-space:nowrap}
+    .save-status.saving{color:var(--warning)}
+    .save-status.saved{color:var(--success)}
+    .save-status.error{color:var(--danger)}
+    .save-status.unsaved{color:var(--warning)}
+
+    .container{padding:24px; max-width:1600px; margin:0 auto}
+
+    /* Cards */
+    .card{background:#ffffff; border:1px solid var(--border); border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,0.06); overflow:hidden; margin-bottom:20px}
+    .card h3{margin:0; padding:16px 20px; font-size:15px; color:#374151; font-weight:700; font-family: Roboto, Arial, sans-serif; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--border); background:#f8fafc}
+    .card .content{padding:20px}
+
+    /* Form Elements */
+    label{font-size:12px; color:#6b7280; display:block; margin-bottom:6px; font-weight:600}
+    input, select, textarea{width:100%; padding:10px 12px; border-radius:8px; border:1px solid #d1d5db; background:#fff; color:var(--text); font-size:14px; transition:border-color .15s, box-shadow .15s; font-family:inherit}
+    input:focus, select:focus, textarea:focus{outline:none; border-color:var(--brand-accent-2); box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
+    textarea{min-height:80px;resize:vertical}
+
+    /* Buttons */
+    .btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 18px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--text); font-weight:600; cursor:pointer; font-size:14px; transition:all .15s; width:auto}
+    .btn:hover{background:#f8fafc}
+    .btn.primary{background:var(--brand-accent-2); border-color:var(--brand-accent-2); color:#0b1b24}
+    .btn.primary:hover{background:#3ecbf5}
+    .btn.success{background:var(--success); border-color:var(--success); color:#fff}
+    .btn.danger{background:var(--danger); border-color:var(--danger); color:#fff}
+    .btn.sm{padding:6px 12px; font-size:13px}
+    .btn:disabled{opacity:0.5; cursor:not-allowed}
+
+    .badge{display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; background:#f1f5f9; color:#475569; border:1px solid var(--border); font-weight:600}
+    .badge.success{background:#dcfce7;color:#166534;border-color:#bbf7d0}
+    .badge.warning{background:#fef3c7;color:#92400e;border-color:#fde68a}
+    .badge.danger{background:#fee2e2;color:#991b1b;border-color:#fecaca}
+    .badge.info{background:#dbeafe;color:#1e40af;border-color:#bfdbfe}
+
+    .hidden{display:none}
+
+    /* Login / Boot */
+    #loginView{min-height:100vh; display:none; align-items:center; justify-content:center; padding:20px; background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)}
+    #bootLoader{position:fixed; inset:0; background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); display:flex; align-items:center; justify-content:center; z-index:100}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* ===================== Overview Dashboard ===================== */
+    .ov-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:16px; margin-bottom:20px}
+    .ov-card{background:#fff; border:1px solid var(--border); border-radius:14px; padding:22px 16px; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+    .ov-value{font-size:30px; font-weight:800; color:var(--brand-primary); line-height:1.1; letter-spacing:-.5px}
+    .ov-value.danger{color:var(--danger)}
+    .ov-label{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:var(--subtext); margin-top:10px}
+
+    /* Quick Jump pill nav */
+    .quick-jump{display:flex; gap:6px; overflow-x:auto; padding:10px 4px 18px; margin-bottom:6px}
+    .quick-jump-pill{padding:7px 16px; border-radius:999px; border:1px solid var(--border); background:#fff; font-size:12px; font-weight:700; color:var(--subtext); white-space:nowrap; cursor:pointer; transition:all .15s}
+    .quick-jump-pill:hover{border-color:#cbd5e1; color:var(--text)}
+    .quick-jump-pill.current{border-color:var(--brand-accent-2); color:var(--brand-primary)}
+
+    /* Key Dates & Hot Spots */
+    .keydate-row, .hotspot-row{display:flex; gap:8px; align-items:center; margin-bottom:8px}
+    .keydate-row input[type="text"]{flex:2}
+    .keydate-row input[type="date"]{flex:1}
+    .hotspot-row input{flex:1}
+    .row-del{flex-shrink:0; width:30px; height:30px; border-radius:6px; border:1px solid var(--border); background:#fff; color:var(--danger); font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0}
+    .row-del:hover{background:#fef2f2}
+    .hotspot-group-title{font-size:12px; font-weight:700; color:var(--subtext); text-transform:uppercase; letter-spacing:.5px; margin:16px 0 8px}
+    .hotspot-group-title:first-child{margin-top:0}
+    .two-col-panels{display:grid; grid-template-columns:1fr 1fr; gap:20px}
+    @media(max-width:900px){.two-col-panels{grid-template-columns:1fr}}
+
+    /* ===================== Month Sections (no calendar grid) ===================== */
+    .month-card{background:#fff; border:1px solid var(--border); border-radius:14px; margin-bottom:16px; overflow:hidden}
+    .month-card summary{list-style:none; cursor:pointer; padding:16px 20px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; background:#f8fafc; user-select:none}
+    .month-card summary::-webkit-details-marker{display:none}
+    .month-card[open] summary{border-bottom:1px solid var(--border)}
+    .month-title{font-size:16px; font-weight:700; color:var(--text); font-family:Roboto,Arial,sans-serif; white-space:nowrap}
+    .month-chip{display:flex; align-items:center; gap:6px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:var(--subtext)}
+    .month-chip input{width:74px; padding:6px 8px; font-size:13px; font-weight:700; color:var(--text)}
+    .chev{margin-left:auto; color:var(--subtext); font-size:14px; transition:transform .2s; flex-shrink:0}
+    .month-card[open] .chev{transform:rotate(90deg)}
+    .month-body{padding:20px}
+
+    .field-block{margin-bottom:18px}
+
+    /* Budget table */
+    .budget-table{width:100%; border-collapse:collapse}
+    .budget-table th{text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.4px; color:var(--subtext); font-weight:700; padding:0 8px 8px; border-bottom:2px solid var(--border)}
+    .budget-table td{padding:6px 8px; vertical-align:middle}
+    .budget-table input{padding:7px 9px; font-size:13px}
+    .money-left{font-weight:700; color:var(--success); font-size:14px}
+    .money-left.neg{color:var(--danger)}
+    .total-row td{font-weight:700; background:#f8fafc; border-top:2px solid var(--border); padding-top:10px}
+
+    /* Requirements chip grids */
+    .req-two-col{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px}
+    @media(max-width:900px){.req-two-col{grid-template-columns:1fr}}
+    .chip-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:10px}
+    .chip-input-card{border:1px solid var(--border); border-radius:10px; padding:10px 12px; background:#f8fafc}
+    .chip-input-card label{font-size:10.5px; text-transform:uppercase; letter-spacing:.4px; color:var(--subtext); font-weight:700; margin-bottom:6px}
+    .chip-input-card input{padding:7px 9px; font-size:13px; background:#fff}
+
+    /* Effort filter chips */
+    .filter-chips{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px}
+    .filter-chip{padding:5px 13px; border-radius:999px; border:1px solid var(--border); background:#f1f5f9; font-size:11.5px; font-weight:700; color:var(--subtext); cursor:pointer; transition:all .15s}
+    .filter-chip.active{background:var(--brand-accent-2); border-color:var(--brand-accent-2); color:#fff}
+
+    /* Effort cards (replace wide spreadsheet rows) */
+    .effort-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:12px}
+    .effort-card{border:1px solid var(--border); border-left:4px solid var(--brand-accent-2); border-radius:10px; padding:12px; background:#fff; display:flex; flex-direction:column; gap:8px}
+    .effort-card-top{display:flex; align-items:center; gap:8px}
+    .effort-card-top select{flex:1; padding:6px 8px; font-size:12px; font-weight:700}
+    .icon-del{flex-shrink:0; width:28px; height:28px; border-radius:6px; border:1px solid var(--border); background:#fff; color:var(--danger); font-size:17px; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; line-height:1}
+    .icon-del:hover{background:#fef2f2}
+    .effort-card input, .effort-card textarea{padding:7px 9px; font-size:13px}
+    .effort-card textarea{min-height:48px}
+    .effort-row-2{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+    .effort-row-checks{display:flex; gap:16px; font-size:12px; color:var(--subtext); align-items:center; font-weight:600}
+    .effort-row-checks label{display:flex; align-items:center; gap:6px; margin:0; font-size:12px; color:var(--subtext); font-weight:600; cursor:pointer}
+    .effort-row-checks input{width:auto}
+    .empty-hint{color:var(--subtext); font-size:13px; padding:18px; text-align:center; border:1px dashed var(--border); border-radius:10px; grid-column:1/-1}
+
+    .create-plan-card{text-align:center; padding:60px 40px}
+    .create-plan-card h3{justify-content:center; background:transparent; border:none; font-size:20px}
+    .create-plan-actions{display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:10px}
+
+    @media print{ header, .quick-jump, .filter-chips, .icon-del, .row-del{display:none !important} }
+  </style>
+</head>
+<body>
+  <div id="bootLoader">
+    <div style="display:flex;flex-direction:column;gap:12px;align-items:center">
+      <div style="width:48px;height:48px;border:4px solid #e5e7eb;border-top-color:#446472;border-radius:50%;animation:spin 1s linear infinite"></div>
+      <div style="font-weight:700;font-size:18px;color:#446472">Marketing Hub</div>
+      <div style="font-size:12px;color:#6b7280">Loading your workspace…</div>
+    </div>
+  </div>
+
+  <div id="loginView">
+    <div class="card" style="max-width:440px;width:100%;box-shadow:0 10px 25px rgba(0,0,0,0.1)">
+      <h3 style="justify-content:center;font-size:18px">Welcome Back</h3>
+      <div class="content">
+        <p style="text-align:center;color:#6b7280;font-size:14px;margin-bottom:20px">Sign in to access the Monthly Marketing Plan</p>
+        <div style="margin-bottom:16px">
+          <label for="loginUsername">Username</label>
+          <input id="loginUsername" type="text" autocomplete="username" placeholder="Enter your username" />
+        </div>
+        <div style="margin-bottom:16px">
+          <label for="loginPassword">Password</label>
+          <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Enter your password" />
+        </div>
+        <div style="margin-bottom:20px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input id="togglePw" type="checkbox" style="width:auto" /> Show password
+          </label>
+        </div>
+        <button id="loginBtn" class="btn success" style="width:100%">Sign In</button>
+        <div id="loginError" style="margin-top:12px;padding:10px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#dc2626;font-size:13px;display:none"></div>
+      </div>
+    </div>
+  </div>
+
+  <header id="appHeader" class="hidden">
+    <div class="brand">
+      <img src="logo-main.svg" class="logo-img" alt="Capstone" />
+      <div class="title">Marketing Hub</div>
+    </div>
+    <div class="header-controls">
+      <select id="propertySelect" style="min-width:190px;padding:8px 12px"></select>
+      <select id="yearSelect" style="min-width:150px;padding:8px 12px"></select>
+      <span id="saveStatus" class="save-status">—</span>
+      <button id="saveNowBtn" class="header-btn">Save Now</button>
+      <button id="logoutBtn" class="header-btn">Sign Out</button>
+      <button id="adminPageBtn" class="header-btn hidden">Admin</button>
+    </div>
+    <span class="company-name">Capstone Management Partners</span>
+  </header>
+
+  <main id="appContainer" class="container hidden">
+    <h2 style="font-family:Roboto,Arial,sans-serif;font-size:22px;color:var(--text);margin-bottom:4px">Monthly Marketing Plan</h2>
+    <p id="planSubtitle" style="color:var(--subtext);font-size:13px;margin-bottom:18px">—</p>
+
+    <!-- No plan yet for this property/year -->
+    <div id="createPlanState" class="card hidden">
+      <div class="create-plan-card">
+        <h3>No Monthly Marketing Plan Yet</h3>
+        <p style="color:var(--subtext);font-size:14px;margin-top:8px" id="createPlanHint">Create a plan for this property and academic year to get started.</p>
+        <div class="create-plan-actions">
+          <button class="btn primary" data-action="create-plan">Create Blank Plan</button>
+          <button class="btn hidden" id="copyPlanBtn" data-action="copy-plan">Copy Structure From Last Year</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main plan view -->
+    <div id="planView" class="hidden">
+      <div id="overviewSection" class="ov-grid"></div>
+
+      <div id="quickJump" class="quick-jump"></div>
+
+      <details class="card" id="keyDatesCard" open>
+        <summary style="cursor:pointer;list-style:none" class="card-summary-h3">
+          <h3 style="margin:0;border:none;background:transparent">Key Dates &amp; Hot Spots / Contacts</h3>
+        </summary>
+        <div class="content" id="keyDatesHotSpotsContent"></div>
+      </details>
+
+      <div id="monthsContainer"></div>
+    </div>
+  </main>
+
+  <script>
+    // ==================== CONSTANTS ====================
+    const MONTHS_META = [
+      { key: 'AUG', name: 'August', month: 8, yearOffset: 0 },
+      { key: 'SEP', name: 'September', month: 9, yearOffset: 0 },
+      { key: 'OCT', name: 'October', month: 10, yearOffset: 0 },
+      { key: 'NOV', name: 'November', month: 11, yearOffset: 0 },
+      { key: 'DEC', name: 'December', month: 12, yearOffset: 0 },
+      { key: 'JAN', name: 'January', month: 1, yearOffset: 1 },
+      { key: 'FEB', name: 'February', month: 2, yearOffset: 1 },
+      { key: 'MAR', name: 'March', month: 3, yearOffset: 1 },
+      { key: 'APR', name: 'April', month: 4, yearOffset: 1 },
+      { key: 'MAY', name: 'May', month: 5, yearOffset: 1 },
+      { key: 'JUN', name: 'June', month: 6, yearOffset: 1 },
+      { key: 'JUL', name: 'July', month: 7, yearOffset: 1 },
+    ];
+
+    const DEFAULT_REQUIREMENTS = {
+      AUG: { residentEvent: '1x / Week', renewalRetention: '1-2x / Week (When Applicable)', outreaching: '2x / Month', streetMarketing: '1x / Week', crossMarketing: '1x / Month', reviewCampaign: '1x / Week' },
+      SEP: { residentEvent: '1x / Week', renewalRetention: '3-4x / Week (When Applicable)', outreaching: '1x / Week', streetMarketing: '2x / Week', crossMarketing: '1x / Week', reviewCampaign: '1x / Week' },
+      OCT: { residentEvent: '1x / Week', renewalRetention: '3-4x / Week (When Applicable)', outreaching: '1x / Week', streetMarketing: '2x / Week', crossMarketing: '1x / Week', reviewCampaign: '1x / Week' },
+      NOV: { residentEvent: '1x / Week', renewalRetention: '3-4x / Week (When Applicable)', outreaching: '1x / Week', streetMarketing: '2x / Week', crossMarketing: '1x / Week', reviewCampaign: '1x / Week' },
+      DEC: { residentEvent: '2x / Month', renewalRetention: '2x / Week (When Applicable)', outreaching: '2x / Month', streetMarketing: '2x / Week', crossMarketing: '2x / Month', reviewCampaign: '1x / Week' },
+      JAN: { residentEvent: '3x / Month', renewalRetention: '2x / Week (When Applicable)', outreaching: '2x / Month', streetMarketing: '2x / Week', crossMarketing: '2x / Month', reviewCampaign: '1x / Week' },
+      FEB: { residentEvent: '3x / Month', renewalRetention: '2x / Week (When Applicable)', outreaching: '1x / Week', streetMarketing: '4x / Week', crossMarketing: '1x / Week', reviewCampaign: '1x / Week' },
+      MAR: { residentEvent: '3x / Month', renewalRetention: '1-2x / Week (When Applicable)', outreaching: '2x / Week', streetMarketing: '4x / Week', crossMarketing: '1x / Week', reviewCampaign: '1x / Week' },
+      APR: { residentEvent: '3x / Month', renewalRetention: '1x / Week (When Applicable)', outreaching: '2x / Week', streetMarketing: '4x / Week', crossMarketing: '1x / Week', reviewCampaign: '1x / Week' },
+      MAY: { residentEvent: '2x / Month', renewalRetention: '1x / Week (When Applicable)', outreaching: '2x / Week', streetMarketing: '4x / Week', crossMarketing: '1x / Week', reviewCampaign: '1x / Week' },
+      JUN: { residentEvent: '2x / Month', renewalRetention: '1x / Week (When Applicable)', outreaching: '2x / Week', streetMarketing: '4x / Week', crossMarketing: '1x / Week', reviewCampaign: '1x / Week' },
+      JUL: { residentEvent: '2x / Month', renewalRetention: '1-2x / Week (When Applicable)', outreaching: '2x / Week', streetMarketing: '2x / Week', crossMarketing: '1x / Week', reviewCampaign: '1x / Week' },
+    };
+
+    const DEFAULT_DIGITAL_REQUIREMENTS = { gmb: '2x / Week', tiktok: '1x / Week', igReel: '1x / Week', igGrid: '3x / Week', igStory: '4x / Week', fbPage: '2x / Week', communityGroups: '2x / Week' };
+
+    const DEFAULT_KEY_DATES = ['First Day of Classes', 'Move In Day', 'First Day of Classes', 'Fall Housing Fair', 'Homecoming Game/Week', 'Parents/Family Weekend', 'Mid Terms Week', 'Thanksgiving Break/Fall Break', 'Finals Week', 'Winter Break', 'Spring Classes Start', 'Spring Housing Fair', 'Parents/Family Weekend', 'Mid Terms Week', 'Spring Break', 'Finals Week', 'Graduation'];
+
+    const HOT_SPOT_TYPES = ['Bar / Nightlife', 'Campus Hot Spot / Landmark', 'Restaurant', 'Things To Do'];
+
+    const EFFORT_TYPES = ['Resident Event', 'Renewal/Retention Efforts', 'Outreaching Effort', 'Street Marketing', 'Cross-Marketing Partnership', 'Review Campaign'];
+    const DIGITAL_EFFORT_TYPES = ['GMB Post', 'Tik Tok Post', 'Instagram Reel', 'Instagram Grid Post', 'Instagram Story', 'Facebook Page Post', 'Community Groups Post'];
+
+    const EFFORT_COLORS = { 'Resident Event': '#52d5ff', 'Renewal/Retention Efforts': '#ffb732', 'Outreaching Effort': '#22c55e', 'Street Marketing': '#a78bfa', 'Cross-Marketing Partnership': '#f472b6', 'Review Campaign': '#f59e0b' };
+    const DIGITAL_COLORS = { 'GMB Post': '#4285f4', 'Tik Tok Post': '#111827', 'Instagram Reel': '#e1306c', 'Instagram Grid Post': '#c13584', 'Instagram Story': '#fd1d1d', 'Facebook Page Post': '#1877f2', 'Community Groups Post': '#22c55e' };
+
+    const REQ_FIELDS = [
+      ['residentEvent', 'Resident Event'],
+      ['renewalRetention', 'Renewal / Retention Efforts'],
+      ['outreaching', 'Outreaching Effort'],
+      ['streetMarketing', 'Street Marketing'],
+      ['crossMarketing', 'Cross-Marketing Partnership'],
+      ['reviewCampaign', 'Review Campaign'],
+    ];
+    const DIGITAL_REQ_FIELDS = [
+      ['gmb', 'GMB Post'],
+      ['tiktok', 'TikTok Post'],
+      ['igReel', 'Instagram Reel'],
+      ['igGrid', 'Instagram Grid Post'],
+      ['igStory', 'Instagram Story'],
+      ['fbPage', 'Facebook Page Post'],
+      ['communityGroups', 'Community Groups Post/Engagement'],
+    ];
+
+    const MONEY = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+    function fmtMoney(n) { return MONEY.format(Number(n) || 0); }
+
+    // ==================== STATE ====================
+    let currentUser = null;
+    let properties = [];
+    const state = {
+      property: '',
+      year: '',
+      years: [],       // [{id, property, academicYear, createdAt, updatedAt}]
+      plan: null,       // full plan doc incl. id
+      dirty: false,
+      filters: {},      // { [monthIndex]: { effort: 'all', digital: 'all' } }
+    };
+    let saveTimer = null;
+
+    // ==================== ELEMENTS ====================
+    const els = {
+      bootLoader: document.getElementById('bootLoader'),
+      loginView: document.getElementById('loginView'),
+      loginUsername: document.getElementById('loginUsername'),
+      loginPassword: document.getElementById('loginPassword'),
+      togglePw: document.getElementById('togglePw'),
+      loginBtn: document.getElementById('loginBtn'),
+      loginError: document.getElementById('loginError'),
+      appHeader: document.getElementById('appHeader'),
+      appContainer: document.getElementById('appContainer'),
+      propertySelect: document.getElementById('propertySelect'),
+      yearSelect: document.getElementById('yearSelect'),
+      saveStatus: document.getElementById('saveStatus'),
+      saveNowBtn: document.getElementById('saveNowBtn'),
+      logoutBtn: document.getElementById('logoutBtn'),
+      adminPageBtn: document.getElementById('adminPageBtn'),
+      planSubtitle: document.getElementById('planSubtitle'),
+      createPlanState: document.getElementById('createPlanState'),
+      createPlanHint: document.getElementById('createPlanHint'),
+      copyPlanBtn: document.getElementById('copyPlanBtn'),
+      planView: document.getElementById('planView'),
+      overviewSection: document.getElementById('overviewSection'),
+      quickJump: document.getElementById('quickJump'),
+      keyDatesHotSpotsContent: document.getElementById('keyDatesHotSpotsContent'),
+      monthsContainer: document.getElementById('monthsContainer'),
+    };
+
+    // ==================== UTILITIES ====================
+    function show(el) { if (el) el.classList.remove('hidden'); }
+    function hide(el) { if (el) el.classList.add('hidden'); }
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+    function rid(p) { return (p || 'r') + Math.random().toString(36).slice(2, 10); }
+
+    function getByPath(obj, path) {
+      const parts = path.split('.');
+      let cur = obj;
+      for (const p of parts) { if (cur == null) return undefined; cur = cur[p]; }
+      return cur;
+    }
+    function setByPath(obj, path, value) {
+      const parts = path.split('.');
+      let cur = obj;
+      for (let i = 0; i < parts.length - 1; i++) { cur = cur[parts[i]]; if (cur == null) return; }
+      cur[parts[parts.length - 1]] = value;
+    }
+
+    function computeDefaultAcademicYear(d) {
+      d = d || new Date();
+      const y = d.getFullYear();
+      const start = d.getMonth() >= 5 ? y : y - 1; // academic year rolls over ~June
+      return `${start}-${start + 1}`;
+    }
+
+    function yearStart(label) { const n = parseInt(String(label).split('-')[0], 10); return Number.isFinite(n) ? n : 0; }
+
+    // ==================== DEFAULT PLAN SCAFFOLD ====================
+    function buildDefaultHotSpots() {
+      const out = [];
+      HOT_SPOT_TYPES.forEach(type => { for (let i = 0; i < 4; i++) out.push({ location: '', type, contact: '' }); });
+      return out;
+    }
+
+    function buildDefaultPlan(property, academicYear) {
+      const startYear = yearStart(academicYear);
+      const months = MONTHS_META.map(meta => ({
+        key: meta.key,
+        label: `${meta.name} ${startYear + meta.yearOffset}`,
+        year: startYear + meta.yearOffset,
+        month: meta.month,
+        leadGoal: 0,
+        leaseGoal: 0,
+        notes: '',
+        budget: {
+          residentLife: { budget: 0, spend: 0 },
+          modelLeasing: { budget: 0, spend: 0 },
+          collateral: { budget: 0, spend: 0 },
+          sponsorships: { budget: 0, spend: 0 },
+        },
+        requirements: { ...DEFAULT_REQUIREMENTS[meta.key] },
+        digitalRequirements: { ...DEFAULT_DIGITAL_REQUIREMENTS },
+        engagementEfforts: [],
+        digitalEfforts: [],
+      }));
+      return {
+        property,
+        academicYear,
+        communityName: '',
+        keyDates: DEFAULT_KEY_DATES.map(label => ({ label, date: '' })),
+        hotSpots: buildDefaultHotSpots(),
+        months,
+      };
+    }
+
+    function isCurrentMonth(m) {
+      const now = new Date();
+      return now.getFullYear() === m.year && (now.getMonth() + 1) === m.month;
+    }
+
+    // ==================== AUTH ====================
+    els.togglePw?.addEventListener('change', () => { els.loginPassword.type = els.togglePw.checked ? 'text' : 'password'; });
+    els.loginBtn?.addEventListener('click', doLogin);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (document.activeElement === els.loginUsername || document.activeElement === els.loginPassword)) doLogin(); });
+
+    async function doLogin() {
+      const u = (els.loginUsername?.value || '').trim();
+      const p = els.loginPassword?.value || '';
+      if (!u || !p) { showError('Enter username and password'); return; }
+      try {
+        hideError();
+        const res = await fetch('/api/auth-login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ username: u, password: p }) });
+        if (!res.ok) { showError(res.status === 401 ? 'Incorrect username or password' : 'Login failed'); return; }
+        await initAuth();
+      } catch (e) { showError('Network error'); }
+    }
+
+    function showError(msg) { if (els.loginError) { els.loginError.textContent = msg; els.loginError.style.display = ''; } }
+    function hideError() { if (els.loginError) els.loginError.style.display = 'none'; }
+
+    function showApp() {
+      show(els.appHeader);
+      show(els.appContainer);
+      els.loginView.style.display = 'none';
+      els.bootLoader.style.display = 'none';
+    }
+
+    function showLogin() {
+      els.bootLoader.style.display = 'none';
+      hide(els.appHeader);
+      hide(els.appContainer);
+      els.loginView.style.display = 'flex';
+    }
+
+    async function initAuth() {
+      try {
+        const res = await fetch('/api/me', { credentials: 'include' });
+        if (res.ok) {
+          const me = await res.json();
+          currentUser = { username: me.username, role: me.role, properties: me.properties };
+          showApp();
+          bindHeaderHandlers();
+          await initApp();
+          return true;
+        }
+      } catch (e) { }
+      showLogin();
+      return false;
+    }
+
+    function bindHeaderHandlers() {
+      els.logoutBtn.onclick = async () => { try { await fetch('/api/auth-logout', { method: 'POST' }); } catch (e) { } location.href = 'index.html'; };
+      if (currentUser?.role === 'admin') show(els.adminPageBtn);
+      els.adminPageBtn.onclick = () => location.href = 'mmp_admin.html';
+    }
+
+    // ==================== API ====================
+    async function apiFetch(path, opts = {}) {
+      const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+      const res = await fetch('/api' + path, Object.assign({}, opts, { headers, credentials: 'include' }));
+      if (!res.ok) { const text = await res.text(); throw new Error(text || ('HTTP ' + res.status)); }
+      return res;
+    }
+
+    // ==================== INIT ====================
+    async function initApp() {
+      await loadProperties();
+      renderPropertyOptions();
+      if (properties.length) {
+        els.propertySelect.value = properties[0];
+        await setActiveProperty(properties[0]);
+      } else {
+        els.planSubtitle.textContent = 'No properties are assigned to your account.';
+      }
+      els.propertySelect.addEventListener('change', () => setActiveProperty(els.propertySelect.value));
+      els.yearSelect.addEventListener('change', () => setActiveYear(els.yearSelect.value));
+      els.saveNowBtn.addEventListener('click', saveNow);
+      window.addEventListener('beforeunload', (e) => { if (state.dirty) { e.preventDefault(); e.returnValue = ''; } });
+      document.addEventListener('input', handleFieldChange);
+      document.addEventListener('change', handleFieldChange);
+      document.addEventListener('click', handleActionClick);
+    }
+
+    async function loadProperties() {
+      try {
+        const res = await fetch('/api/properties');
+        const list = await res.json();
+        properties = (list || []).map(x => x.name).filter(Boolean);
+      } catch (e) { properties = []; }
+    }
+
+    function renderPropertyOptions() {
+      els.propertySelect.innerHTML = properties.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('');
+    }
+
+    async function setActiveProperty(prop) {
+      state.property = prop;
+      state.plan = null;
+      await loadYearsForProperty(prop);
+      const defaultYear = computeDefaultAcademicYear();
+      const hasDefault = state.years.some(y => y.academicYear === defaultYear);
+      const target = hasDefault || !state.years.length ? defaultYear : state.years[0].academicYear;
+      renderYearOptions(target);
+      await setActiveYear(target);
+    }
+
+    async function loadYearsForProperty(prop) {
+      try {
+        const res = await apiFetch(`/mmp-monthly-plans?property=${encodeURIComponent(prop)}`);
+        state.years = await res.json();
+      } catch (e) { state.years = []; }
+    }
+
+    function renderYearOptions(selected) {
+      const defaultYear = computeDefaultAcademicYear();
+      const labels = new Set(state.years.map(y => y.academicYear));
+      const hasDefault = labels.has(defaultYear);
+      const all = Array.from(labels);
+      if (!hasDefault) all.push(defaultYear);
+      all.sort((a, b) => yearStart(b) - yearStart(a));
+      els.yearSelect.innerHTML = all.map(y => `<option value="${esc(y)}">${esc(y)}${(!labels.has(y)) ? ' (new)' : ''}</option>`).join('');
+      els.yearSelect.value = selected;
+    }
+
+    async function setActiveYear(year) {
+      state.year = year;
+      const entry = state.years.find(y => y.academicYear === year);
+      state.dirty = false;
+      setSaveStatus('idle');
+      if (entry) {
+        try {
+          const res = await apiFetch(`/mmp-monthly-plans?id=${encodeURIComponent(entry.id)}`);
+          state.plan = await res.json();
+          state.filters = {};
+          showPlanView();
+          renderAll();
+        } catch (e) {
+          alert('Failed to load plan: ' + e.message);
+        }
+      } else {
+        showCreateState(year);
+      }
+    }
+
+    function showCreateState(year) {
+      state.plan = null;
+      els.planSubtitle.textContent = `${state.property} — ${year}`;
+      hide(els.planView);
+      show(els.createPlanState);
+      els.createPlanHint.textContent = `Create a Monthly Marketing Plan for ${state.property} (${year}) to get started.`;
+      const mostRecent = state.years[0];
+      if (mostRecent) {
+        show(els.copyPlanBtn);
+        els.copyPlanBtn.textContent = `Copy Structure From ${mostRecent.academicYear}`;
+        els.copyPlanBtn.dataset.sourceId = mostRecent.id;
+      } else {
+        hide(els.copyPlanBtn);
+      }
+    }
+
+    function showPlanView() {
+      hide(els.createPlanState);
+      show(els.planView);
+      els.planSubtitle.textContent = `${state.property} — ${state.year}`;
+    }
+
+    // ==================== CREATE / DUPLICATE PLAN ====================
+    async function createBlankPlan() {
+      const draft = buildDefaultPlan(state.property, state.year);
+      try {
+        const res = await apiFetch('/mmp-monthly-plans', { method: 'POST', body: JSON.stringify(draft) });
+        const { id } = await res.json();
+        draft.id = id;
+        state.plan = draft;
+        state.years.unshift({ id, property: state.property, academicYear: state.year, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+        state.filters = {};
+        renderYearOptions(state.year);
+        showPlanView();
+        renderAll();
+      } catch (e) { alert('Failed to create plan: ' + e.message); }
+    }
+
+    async function copyPlanFrom(sourceId) {
+      try {
+        const res = await apiFetch('/mmp-monthly-plans', { method: 'POST', body: JSON.stringify({ action: 'duplicate', id: sourceId, academicYear: state.year }) });
+        const { id } = await res.json();
+        const res2 = await apiFetch(`/mmp-monthly-plans?id=${encodeURIComponent(id)}`);
+        state.plan = await res2.json();
+        state.years.unshift({ id, property: state.property, academicYear: state.year, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+        state.filters = {};
+        renderYearOptions(state.year);
+        showPlanView();
+        renderAll();
+      } catch (e) { alert('Failed to copy plan: ' + e.message); }
+    }
+
+    // ==================== SAVE ====================
+    function markDirty() { state.dirty = true; setSaveStatus('unsaved'); scheduleSave(); }
+    function scheduleSave() { clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 800); }
+
+    async function saveNow() {
+      if (!state.plan || !state.plan.id) return;
+      clearTimeout(saveTimer);
+      setSaveStatus('saving');
+      try {
+        await apiFetch('/mmp-monthly-plans', { method: 'PUT', body: JSON.stringify({ id: state.plan.id, ...state.plan }) });
+        state.dirty = false;
+        setSaveStatus('saved');
+      } catch (e) {
+        setSaveStatus('error');
+      }
+    }
+
+    function setSaveStatus(s) {
+      const el = els.saveStatus; if (!el) return;
+      el.className = 'save-status ' + s;
+      if (s === 'saving') el.textContent = 'Saving…';
+      else if (s === 'saved') el.textContent = 'Saved ✓ ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      else if (s === 'unsaved') el.textContent = 'Unsaved changes…';
+      else if (s === 'error') el.textContent = 'Save failed — click Save Now to retry';
+      else el.textContent = '—';
+    }
+
+    // ==================== FIELD CHANGE DELEGATION ====================
+    function handleFieldChange(e) {
+      const t = e.target;
+      const path = t.dataset && t.dataset.path;
+      if (!path || !state.plan) return;
+      let value;
+      if (t.type === 'checkbox') value = t.checked;
+      else if (t.type === 'number') value = t.value === '' ? 0 : parseFloat(t.value);
+      else value = t.value;
+      setByPath(state.plan, path, value);
+
+      const budgetMatch = path.match(/^months\.(\d+)\.budget\./);
+      if (budgetMatch) recomputeMonthMoney(parseInt(budgetMatch[1], 10));
+
+      const typeMatch = path.match(/^months\.(\d+)\.(engagementEfforts|digitalEfforts)\.(\d+)\.type$/);
+      if (typeMatch) {
+        const card = t.closest('.effort-card');
+        if (card) {
+          const colorMap = typeMatch[2] === 'engagementEfforts' ? EFFORT_COLORS : DIGITAL_COLORS;
+          card.style.borderLeftColor = colorMap[value] || 'var(--brand-accent-2)';
+          card.dataset.type = value;
+        }
+      }
+
+      markDirty();
+    }
+
+    // ==================== ACTION CLICK DELEGATION ====================
+    function handleActionClick(e) {
+      const t = e.target.closest('[data-action]');
+      if (!t) return;
+      const action = t.dataset.action;
+      const mi = t.dataset.month != null ? parseInt(t.dataset.month, 10) : null;
+
+      if (action === 'create-plan') { createBlankPlan(); }
+      else if (action === 'copy-plan') { copyPlanFrom(t.dataset.sourceId); }
+      else if (action === 'save-now') { saveNow(); }
+      else if (action === 'jump') { jumpTo(t.dataset.target); }
+      else if (action === 'add-effort') { addEffort(mi); }
+      else if (action === 'del-effort') { delEffort(mi, parseInt(t.dataset.index, 10)); }
+      else if (action === 'add-digital') { addDigitalEffort(mi); }
+      else if (action === 'del-digital') { delDigitalEffort(mi, parseInt(t.dataset.index, 10)); }
+      else if (action === 'add-keydate') { addKeyDate(); }
+      else if (action === 'del-keydate') { delKeyDate(parseInt(t.dataset.index, 10)); }
+      else if (action === 'add-hotspot') { addHotSpot(t.dataset.type); }
+      else if (action === 'del-hotspot') { delHotSpot(parseInt(t.dataset.index, 10)); }
+      else if (action === 'filter-effort') { setEffortFilter(mi, 'effort', t.dataset.type); }
+      else if (action === 'filter-digital') { setEffortFilter(mi, 'digital', t.dataset.type); }
+    }
+
+    function jumpTo(targetId) {
+      const el = document.getElementById(targetId);
+      if (!el) return;
+      if (el.tagName === 'DETAILS') el.open = true;
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // ==================== RENDER: OVERVIEW ====================
+    function computeOverviewTotals() {
+      let budget = 0, spend = 0, efforts = 0, digital = 0;
+      (state.plan.months || []).forEach(m => {
+        ['residentLife', 'modelLeasing', 'collateral', 'sponsorships'].forEach(k => {
+          budget += Number(m.budget[k].budget) || 0;
+          spend += Number(m.budget[k].spend) || 0;
+        });
+        efforts += (m.engagementEfforts || []).length;
+        digital += (m.digitalEfforts || []).length;
+      });
+      return { budget, spend, remaining: budget - spend, efforts, digital };
+    }
+
+    function renderOverview() {
+      const t = computeOverviewTotals();
+      els.overviewSection.innerHTML = `
+        <div class="ov-card"><div class="ov-value" id="ovBudget">${fmtMoney(t.budget)}</div><div class="ov-label">Annual Budget</div></div>
+        <div class="ov-card"><div class="ov-value" id="ovSpent">${fmtMoney(t.spend)}</div><div class="ov-label">Total Spent</div></div>
+        <div class="ov-card"><div class="ov-value ${t.remaining < 0 ? 'danger' : ''}" id="ovRemaining">${fmtMoney(t.remaining)}</div><div class="ov-label">Remaining</div></div>
+        <div class="ov-card"><div class="ov-value" id="ovEfforts">${t.efforts}</div><div class="ov-label">Efforts Logged</div></div>
+        <div class="ov-card"><div class="ov-value" id="ovDigital">${t.digital}</div><div class="ov-label">Digital Posts Logged</div></div>
+      `;
+    }
+
+    function recomputeOverview() {
+      const t = computeOverviewTotals();
+      const b = document.getElementById('ovBudget'); if (b) b.textContent = fmtMoney(t.budget);
+      const s = document.getElementById('ovSpent'); if (s) s.textContent = fmtMoney(t.spend);
+      const r = document.getElementById('ovRemaining'); if (r) { r.textContent = fmtMoney(t.remaining); r.classList.toggle('danger', t.remaining < 0); }
+      const e = document.getElementById('ovEfforts'); if (e) e.textContent = t.efforts;
+      const d = document.getElementById('ovDigital'); if (d) d.textContent = t.digital;
+    }
+
+    // ==================== RENDER: QUICK JUMP ====================
+    function renderQuickJump() {
+      const pills = [`<button class="quick-jump-pill" data-action="jump" data-target="overviewSection">Overview</button>`,
+        `<button class="quick-jump-pill" data-action="jump" data-target="keyDatesCard">Key Dates</button>`];
+      (state.plan.months || []).forEach(m => {
+        const cur = isCurrentMonth(m) ? ' current' : '';
+        pills.push(`<button class="quick-jump-pill${cur}" data-action="jump" data-target="month-${m.key}">${m.key}</button>`);
+      });
+      els.quickJump.innerHTML = pills.join('');
+    }
+
+    // ==================== RENDER: KEY DATES & HOT SPOTS ====================
+    function renderKeyDatesHotSpots() {
+      const keyDatesHTML = (state.plan.keyDates || []).map((k, i) => `
+        <div class="keydate-row">
+          <input type="text" placeholder="Event label" data-path="keyDates.${i}.label" value="${esc(k.label)}" />
+          <input type="date" data-path="keyDates.${i}.date" value="${esc(k.date)}" />
+          <button class="row-del" data-action="del-keydate" data-index="${i}" title="Remove">×</button>
+        </div>`).join('') || `<div class="empty-hint">No key dates yet.</div>`;
+
+      const hotSpotsHTML = HOT_SPOT_TYPES.map(type => {
+        const rows = (state.plan.hotSpots || []).map((h, i) => ({ h, i })).filter(x => x.h.type === type);
+        const rowsHTML = rows.map(({ h, i }) => `
+          <div class="hotspot-row">
+            <input type="text" placeholder="Location / Business Name" data-path="hotSpots.${i}.location" value="${esc(h.location)}" />
+            <input type="text" placeholder="Contact Info" data-path="hotSpots.${i}.contact" value="${esc(h.contact)}" />
+            <button class="row-del" data-action="del-hotspot" data-index="${i}" title="Remove">×</button>
+          </div>`).join('');
+        return `<div class="hotspot-group-title">${esc(type)}</div>${rowsHTML}<button class="btn sm" data-action="add-hotspot" data-type="${esc(type)}">+ Add ${esc(type)}</button>`;
+      }).join('<div style="height:14px"></div>');
+
+      els.keyDatesHotSpotsContent.innerHTML = `
+        <div style="margin-bottom:18px">
+          <label>Community Name (optional display label)</label>
+          <input type="text" data-path="communityName" value="${esc(state.plan.communityName || '')}" placeholder="e.g. Ivory University House" />
+        </div>
+        <div class="two-col-panels">
+          <div>
+            <h4 style="margin-bottom:10px;font-family:Roboto,Arial,sans-serif;font-size:13px;color:var(--text)">Key Dates</h4>
+            <div id="keyDatesList">${keyDatesHTML}</div>
+            <button class="btn sm primary" style="margin-top:10px" data-action="add-keydate">+ Add Key Date</button>
+          </div>
+          <div>
+            <h4 style="margin-bottom:10px;font-family:Roboto,Arial,sans-serif;font-size:13px;color:var(--text)">Hot Spots &amp; Contacts</h4>
+            <div id="hotSpotsList">${hotSpotsHTML}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function addKeyDate() { state.plan.keyDates.push({ label: '', date: '' }); renderKeyDatesHotSpots(); markDirty(); }
+    function delKeyDate(i) { state.plan.keyDates.splice(i, 1); renderKeyDatesHotSpots(); markDirty(); }
+    function addHotSpot(type) { state.plan.hotSpots.push({ location: '', type, contact: '' }); renderKeyDatesHotSpots(); markDirty(); }
+    function delHotSpot(i) { state.plan.hotSpots.splice(i, 1); renderKeyDatesHotSpots(); markDirty(); }
+
+    // ==================== RENDER: MONTHS ====================
+    function renderMonths() {
+      els.monthsContainer.innerHTML = (state.plan.months || []).map((m, mi) => monthHTML(mi)).join('');
+    }
+
+    function monthHTML(mi) {
+      const m = state.plan.months[mi];
+      const totBudget = catSum(m, 'budget');
+      const totSpend = catSum(m, 'spend');
+      const totLeft = totBudget - totSpend;
+      const openAttr = isCurrentMonth(m) ? 'open' : '';
+      return `
+      <details class="month-card" id="month-${m.key}" ${openAttr}>
+        <summary>
+          <span class="month-title">${esc(m.label)}</span>
+          <span class="month-chip"><label>Lead Goal</label><input type="number" min="0" data-path="months.${mi}.leadGoal" value="${m.leadGoal || 0}" onclick="event.stopPropagation()" /></span>
+          <span class="month-chip"><label>Lease Goal</label><input type="number" min="0" data-path="months.${mi}.leaseGoal" value="${m.leaseGoal || 0}" onclick="event.stopPropagation()" /></span>
+          <span class="badge ${totLeft < 0 ? 'danger' : 'success'}" id="totLeftBadge-${mi}">${fmtMoney(totLeft)} left</span>
+          <span class="badge info" id="effortsBadge-${mi}">${m.engagementEfforts.length} efforts</span>
+          <span class="badge info" id="digitalBadge-${mi}">${m.digitalEfforts.length} posts</span>
+          <span class="chev">▸</span>
+        </summary>
+        <div class="month-body">
+          <div class="field-block">
+            <label>Notes</label>
+            <textarea data-path="months.${mi}.notes" placeholder="General notes for ${esc(m.label)}...">${esc(m.notes)}</textarea>
+          </div>
+
+          <div class="card" style="margin-bottom:16px">
+            <h3>Leasing &amp; Marketing Budget</h3>
+            <div class="content">
+              <table class="budget-table">
+                <thead><tr><th>Category</th><th>Budget</th><th>Spend</th><th>Left</th></tr></thead>
+                <tbody>
+                  ${budgetRow(mi, 'residentLife', 'Resident Life')}
+                  ${budgetRow(mi, 'modelLeasing', 'Model/Leasing Experience')}
+                  ${budgetRow(mi, 'collateral', 'Collateral &amp; Promotional')}
+                  ${budgetRow(mi, 'sponsorships', 'Sponsorships')}
+                </tbody>
+                <tfoot><tr class="total-row"><td>Total</td><td id="totBudget-${mi}">${fmtMoney(totBudget)}</td><td id="totSpend-${mi}">${fmtMoney(totSpend)}</td><td id="totLeft-${mi}">${fmtMoney(totLeft)}</td></tr></tfoot>
+              </table>
+            </div>
+          </div>
+
+          <div class="req-two-col">
+            <div class="card" style="margin-bottom:0">
+              <h3>Resident / Prospect Engagement Requirements</h3>
+              <div class="content chip-grid">
+                ${REQ_FIELDS.map(([f, label]) => reqChip(mi, 'requirements', f, label)).join('')}
+              </div>
+            </div>
+            <div class="card" style="margin-bottom:0">
+              <h3>Digital Engagement Requirements</h3>
+              <div class="content chip-grid">
+                ${DIGITAL_REQ_FIELDS.map(([f, label]) => reqChip(mi, 'digitalRequirements', f, label)).join('')}
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Resident / Prospect Engagement Efforts
+              <span style="margin-left:auto"><button class="btn sm primary" data-action="add-effort" data-month="${mi}">+ Add Effort</button></span>
+            </h3>
+            <div class="content">
+              <div class="filter-chips" id="effortFilters-${mi}">${effortFilterChips(mi, 'effort')}</div>
+              <div class="effort-grid" id="effortGrid-${mi}">${effortCards(mi)}</div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom:0">
+            <h3>Digital Engagement Efforts
+              <span style="margin-left:auto"><button class="btn sm primary" data-action="add-digital" data-month="${mi}">+ Add Digital Effort</button></span>
+            </h3>
+            <div class="content">
+              <div class="filter-chips" id="digitalFilters-${mi}">${effortFilterChips(mi, 'digital')}</div>
+              <div class="effort-grid" id="digitalGrid-${mi}">${digitalEffortCards(mi)}</div>
+            </div>
+          </div>
+        </div>
+      </details>`;
+    }
+
+    function catSum(m, field) {
+      return ['residentLife', 'modelLeasing', 'collateral', 'sponsorships'].reduce((sum, k) => sum + (Number(m.budget[k][field]) || 0), 0);
+    }
+
+    function budgetRow(mi, catKey, label) {
+      const cat = state.plan.months[mi].budget[catKey];
+      const left = (Number(cat.budget) || 0) - (Number(cat.spend) || 0);
+      return `<tr>
+        <td>${label}</td>
+        <td><input type="number" step="0.01" min="0" data-path="months.${mi}.budget.${catKey}.budget" value="${cat.budget || 0}" /></td>
+        <td><input type="number" step="0.01" min="0" data-path="months.${mi}.budget.${catKey}.spend" value="${cat.spend || 0}" /></td>
+        <td class="money-left ${left < 0 ? 'neg' : ''}" id="left-${mi}-${catKey}">${fmtMoney(left)}</td>
+      </tr>`;
+    }
+
+    function reqChip(mi, groupKey, field, label) {
+      const val = (state.plan.months[mi][groupKey] || {})[field] || '';
+      return `<div class="chip-input-card"><label>${esc(label)}</label><input type="text" data-path="months.${mi}.${groupKey}.${field}" value="${esc(val)}" placeholder="e.g. 1x / Week" /></div>`;
+    }
+
+    function recomputeMonthMoney(mi) {
+      const m = state.plan.months[mi];
+      ['residentLife', 'modelLeasing', 'collateral', 'sponsorships'].forEach(k => {
+        const left = (Number(m.budget[k].budget) || 0) - (Number(m.budget[k].spend) || 0);
+        const el = document.getElementById(`left-${mi}-${k}`);
+        if (el) { el.textContent = fmtMoney(left); el.classList.toggle('neg', left < 0); }
+      });
+      const totBudget = catSum(m, 'budget'), totSpend = catSum(m, 'spend'), totLeft = totBudget - totSpend;
+      const tb = document.getElementById(`totBudget-${mi}`); if (tb) tb.textContent = fmtMoney(totBudget);
+      const ts = document.getElementById(`totSpend-${mi}`); if (ts) ts.textContent = fmtMoney(totSpend);
+      const tl = document.getElementById(`totLeft-${mi}`); if (tl) tl.textContent = fmtMoney(totLeft);
+      const badge = document.getElementById(`totLeftBadge-${mi}`);
+      if (badge) { badge.textContent = `${fmtMoney(totLeft)} left`; badge.classList.toggle('danger', totLeft < 0); badge.classList.toggle('success', totLeft >= 0); }
+      recomputeOverview();
+    }
+
+    // ==================== EFFORT CARDS ====================
+    function typeOptions(types, selected) {
+      return types.map(t => `<option value="${esc(t)}" ${t === selected ? 'selected' : ''}>${esc(t)}</option>`).join('');
+    }
+
+    function effortFilterChips(mi, kind) {
+      const types = kind === 'effort' ? EFFORT_TYPES : DIGITAL_EFFORT_TYPES;
+      const current = (state.filters[mi] && state.filters[mi][kind]) || 'all';
+      const items = ['all', ...types];
+      const action = kind === 'effort' ? 'filter-effort' : 'filter-digital';
+      return items.map(t => `<button class="filter-chip ${current === t ? 'active' : ''}" data-action="${action}" data-month="${mi}" data-type="${esc(t)}">${t === 'all' ? 'All' : esc(t)}</button>`).join('');
+    }
+
+    function setEffortFilter(mi, kind, type) {
+      state.filters[mi] = state.filters[mi] || {};
+      state.filters[mi][kind] = type;
+      if (kind === 'effort') {
+        document.getElementById(`effortFilters-${mi}`).innerHTML = effortFilterChips(mi, 'effort');
+        document.getElementById(`effortGrid-${mi}`).innerHTML = effortCards(mi);
+      } else {
+        document.getElementById(`digitalFilters-${mi}`).innerHTML = effortFilterChips(mi, 'digital');
+        document.getElementById(`digitalGrid-${mi}`).innerHTML = digitalEffortCards(mi);
+      }
+    }
+
+    function effortCards(mi) {
+      const filter = (state.filters[mi] && state.filters[mi].effort) || 'all';
+      const list = state.plan.months[mi].engagementEfforts;
+      if (!list.length) return `<div class="empty-hint">No efforts logged yet. Click "+ Add Effort" to log one.</div>`;
+      const rows = list.map((e, ei) => ({ e, ei })).filter(x => filter === 'all' || x.e.type === filter);
+      if (!rows.length) return `<div class="empty-hint">No efforts match this filter.</div>`;
+      return rows.map(({ e, ei }) => effortCard(mi, e, ei)).join('');
+    }
+
+    function effortCard(mi, e, ei) {
+      const color = EFFORT_COLORS[e.type] || 'var(--brand-accent-2)';
+      return `<div class="effort-card" data-type="${esc(e.type)}" style="border-left-color:${color}">
+        <div class="effort-card-top">
+          <select data-path="months.${mi}.engagementEfforts.${ei}.type">${typeOptions(EFFORT_TYPES, e.type)}</select>
+          <button class="icon-del" data-action="del-effort" data-month="${mi}" data-index="${ei}" title="Delete">×</button>
+        </div>
+        <input type="text" placeholder="Effort name" data-path="months.${mi}.engagementEfforts.${ei}.name" value="${esc(e.name)}" />
+        <div class="effort-row-2">
+          <input type="date" data-path="months.${mi}.engagementEfforts.${ei}.date" value="${esc(e.date)}" />
+          <input type="number" step="0.01" min="0" placeholder="Cost" data-path="months.${mi}.engagementEfforts.${ei}.cost" value="${e.cost || 0}" />
+        </div>
+        <textarea placeholder="Description of event" data-path="months.${mi}.engagementEfforts.${ei}.description">${esc(e.description)}</textarea>
+        <div class="effort-row-2">
+          <input type="text" placeholder="Supplies needed" data-path="months.${mi}.engagementEfforts.${ei}.supplies" value="${esc(e.supplies)}" />
+          <input type="text" placeholder="Action desired" data-path="months.${mi}.engagementEfforts.${ei}.actionDesired" value="${esc(e.actionDesired)}" />
+        </div>
+        <input type="text" placeholder="Linked digital design (optional URL)" data-path="months.${mi}.engagementEfforts.${ei}.designLink" value="${esc(e.designLink)}" />
+        <div class="effort-row-checks">
+          <label><input type="checkbox" data-path="months.${mi}.engagementEfforts.${ei}.flyersPosted" ${e.flyersPosted ? 'checked' : ''} /> Flyers Posted</label>
+          <label><input type="checkbox" data-path="months.${mi}.engagementEfforts.${ei}.eblastSent" ${e.eblastSent ? 'checked' : ''} /> Eblast Sent</label>
+        </div>
+      </div>`;
+    }
+
+    function digitalEffortCards(mi) {
+      const filter = (state.filters[mi] && state.filters[mi].digital) || 'all';
+      const list = state.plan.months[mi].digitalEfforts;
+      if (!list.length) return `<div class="empty-hint">No digital efforts logged yet. Click "+ Add Digital Effort" to log one.</div>`;
+      const rows = list.map((e, ei) => ({ e, ei })).filter(x => filter === 'all' || x.e.type === filter);
+      if (!rows.length) return `<div class="empty-hint">No efforts match this filter.</div>`;
+      return rows.map(({ e, ei }) => digitalEffortCard(mi, e, ei)).join('');
+    }
+
+    function digitalEffortCard(mi, e, ei) {
+      const color = DIGITAL_COLORS[e.type] || 'var(--brand-accent-2)';
+      return `<div class="effort-card" data-type="${esc(e.type)}" style="border-left-color:${color}">
+        <div class="effort-card-top">
+          <select data-path="months.${mi}.digitalEfforts.${ei}.type">${typeOptions(DIGITAL_EFFORT_TYPES, e.type)}</select>
+          <button class="icon-del" data-action="del-digital" data-month="${mi}" data-index="${ei}" title="Delete">×</button>
+        </div>
+        <input type="text" placeholder="Digital effort title" data-path="months.${mi}.digitalEfforts.${ei}.title" value="${esc(e.title)}" />
+        <input type="date" data-path="months.${mi}.digitalEfforts.${ei}.date" value="${esc(e.date)}" />
+        <textarea placeholder="Content details" data-path="months.${mi}.digitalEfforts.${ei}.contentDetails">${esc(e.contentDetails)}</textarea>
+        <div class="effort-row-2">
+          <input type="text" placeholder="Caption" data-path="months.${mi}.digitalEfforts.${ei}.caption" value="${esc(e.caption)}" />
+          <input type="text" placeholder="Hashtags" data-path="months.${mi}.digitalEfforts.${ei}.hashtags" value="${esc(e.hashtags)}" />
+        </div>
+        <input type="text" placeholder="Action desired" data-path="months.${mi}.digitalEfforts.${ei}.actionDesired" value="${esc(e.actionDesired)}" />
+        <div class="effort-row-checks">
+          <label><input type="checkbox" data-path="months.${mi}.digitalEfforts.${ei}.postedToSocial" ${e.postedToSocial ? 'checked' : ''} /> Posted to Social</label>
+        </div>
+      </div>`;
+    }
+
+    function addEffort(mi) {
+      state.plan.months[mi].engagementEfforts.push({ id: rid('e'), name: '', type: EFFORT_TYPES[0], date: '', description: '', cost: 0, supplies: '', actionDesired: '', designLink: '', flyersPosted: false, eblastSent: false });
+      document.getElementById(`effortGrid-${mi}`).innerHTML = effortCards(mi);
+      updateMonthCounts(mi);
+      markDirty();
+    }
+    function delEffort(mi, ei) {
+      state.plan.months[mi].engagementEfforts.splice(ei, 1);
+      document.getElementById(`effortGrid-${mi}`).innerHTML = effortCards(mi);
+      updateMonthCounts(mi);
+      markDirty();
+    }
+    function addDigitalEffort(mi) {
+      state.plan.months[mi].digitalEfforts.push({ id: rid('d'), title: '', type: DIGITAL_EFFORT_TYPES[0], date: '', contentDetails: '', caption: '', hashtags: '', actionDesired: '', postedToSocial: false });
+      document.getElementById(`digitalGrid-${mi}`).innerHTML = digitalEffortCards(mi);
+      updateMonthCounts(mi);
+      markDirty();
+    }
+    function delDigitalEffort(mi, ei) {
+      state.plan.months[mi].digitalEfforts.splice(ei, 1);
+      document.getElementById(`digitalGrid-${mi}`).innerHTML = digitalEffortCards(mi);
+      updateMonthCounts(mi);
+      markDirty();
+    }
+
+    function updateMonthCounts(mi) {
+      const m = state.plan.months[mi];
+      const eb = document.getElementById(`effortsBadge-${mi}`); if (eb) eb.textContent = `${m.engagementEfforts.length} efforts`;
+      const db = document.getElementById(`digitalBadge-${mi}`); if (db) db.textContent = `${m.digitalEfforts.length} posts`;
+      recomputeOverview();
+    }
+
+    // ==================== RENDER ALL ====================
+    function renderAll() {
+      renderOverview();
+      renderQuickJump();
+      renderKeyDatesHotSpots();
+      renderMonths();
+    }
+
+    // ==================== BOOT ====================
+    initAuth();
+  </script>
+
+  <script src="standard-nav.js"></script>
+</body>
+</html>
