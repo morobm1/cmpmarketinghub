@@ -90,6 +90,27 @@ export function canModifyReslifeRecord(user, property, ownerUsername) {
   return !!ownerUsername && ownerUsername === user.sub;
 }
 
+/**
+ * Committee Lead is a per-group operational designation (the `lead` field
+ * on a reslife_committees/"Collateral Group" document), NOT a global role.
+ * The lead of a specific group gets elevated permissions scoped to that
+ * group only, even if their account's global role is just reslife-ra.
+ */
+export function isCommitteeLead(committee, user) {
+  return !!committee && !!committee.lead && committee.lead === user.sub;
+}
+
+/**
+ * True if the user may write shared operational content (projects, tasks,
+ * meetings, weekly updates, decisions) for a specific Collateral Group:
+ * manager tier, or that group's designated Committee Lead.
+ */
+export function canWriteCollateralGroup(user, property, committee) {
+  if (!canAccessReslifeProperty(user, property)) return false;
+  if (user.role === 'admin' || isReslifeManager(user.role)) return true;
+  return isCommitteeLead(committee, user);
+}
+
 export function json(statusCode, data) {
   return { statusCode, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) };
 }
@@ -105,4 +126,22 @@ export async function refreshReslifeUser(db, user) {
     user.properties = fresh.properties;
   }
   return user;
+}
+
+/**
+ * Shared in-app notification writer for the Collateral module (no outbound
+ * email/SMS infrastructure exists anywhere in this app, so every
+ * notification is in-app only, in reslife_collateral_notifications).
+ */
+export async function notifyCollateral(db, property, recipients, type, title, message) {
+  const now = new Date().toISOString();
+  const docs = [...new Set((recipients || []).filter(Boolean))].map(username => ({
+    property, forUsername: username, type, title, message, read: false, createdAt: now,
+  }));
+  if (docs.length) await db.collection('reslife_collateral_notifications').insertMany(docs);
+}
+
+export async function managersForReslifeProperty(db, property) {
+  const users = await db.collection('users').find({ role: { $in: ['reslife-rec', 'reslife-admin'] }, properties: property }, { projection: { username: 1 } }).toArray();
+  return users.map(u => u.username);
 }

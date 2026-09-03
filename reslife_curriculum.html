@@ -1,0 +1,1635 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Curriculum Management &bull; Reslife Hub</title>
+<meta name="description" content="Curriculum term management, assignment tracking, REC review workflow, and reporting for the RA/Residential Education program." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --rl-primary:#002D6A; --rl-primary-dark:#001B40; --rl-secondary:#F99239; --rl-on-primary:#fff;
+  --rl-bg:#f3f5f8; --rl-panel:#fff; --rl-border:#e2e8f0; --rl-text:#101828; --rl-subtext:#64748b;
+  --rl-danger:#d20000; --rl-danger-bg:#fef2f2; --rl-success:#16a34a; --rl-success-bg:#f0fdf4;
+  --rl-warn:#b45309; --rl-warn-bg:#fff7ed; --rl-nav-w:250px; --rl-nav-w-collapsed:64px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:'Montserrat',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--rl-bg);color:var(--rl-text);font-size:14px;line-height:1.5}
+.hidden{display:none !important}
+button{font-family:inherit}
+a{color:var(--rl-primary)}
+
+header.rl-header{background:linear-gradient(180deg,var(--rl-primary),var(--rl-primary-dark));color:#fff;padding:0 16px;height:58px;display:flex;align-items:center;gap:12px;position:fixed;top:0;left:0;right:0;z-index:60;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+.rl-mobile-toggle{display:none;width:34px;height:34px;align-items:center;justify-content:center;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.3);border-radius:8px;color:#fff;font-size:16px;cursor:pointer;flex-shrink:0}
+.rl-back-link{display:inline-flex;align-items:center;gap:6px;color:#fff;text-decoration:none;font-size:12px;font-weight:700;padding:6px 10px;border-radius:6px;border:1.5px solid rgba(255,255,255,.4);white-space:nowrap}
+.rl-back-link:hover{background:rgba(255,255,255,.12)}
+.rl-header-title{font-weight:800;font-size:14px;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap}
+.rl-header-right{display:flex;align-items:center;gap:10px;margin-left:auto;flex-wrap:wrap}
+.rl-term-select{padding:6px 10px;border-radius:6px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.08);color:#fff;font-size:12px;font-weight:600}
+.rl-term-select option{color:#111}
+.rl-role-badge{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:5px 9px;border-radius:999px;background:var(--rl-secondary);color:#1a1000}
+.rl-logout-btn{background:transparent;border:1.5px solid rgba(255,255,255,.6);color:#fff;padding:6px 12px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer}
+.rl-logout-btn:hover{background:#fff;color:var(--rl-primary)}
+.rl-bell-btn{position:relative;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.3);color:#fff;width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:15px}
+.rl-bell-dot{position:absolute;top:-3px;right:-3px;width:9px;height:9px;border-radius:50%;background:var(--rl-secondary);border:1.5px solid var(--rl-primary)}
+.rl-notif-panel{position:absolute;top:52px;right:16px;width:340px;max-height:420px;overflow-y:auto;background:#fff;border:1px solid var(--rl-border);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.18);z-index:70}
+.rl-notif-item{padding:12px 14px;border-bottom:1px solid var(--rl-border);font-size:12.5px}
+.rl-notif-item:last-child{border-bottom:none}
+.rl-notif-item.unread{background:#eff6ff}
+.rl-notif-title{font-weight:700;margin-bottom:2px}
+.rl-notif-meta{font-size:11px;color:var(--rl-subtext);margin-top:4px}
+
+.rl-sidebar{position:fixed;left:0;top:58px;bottom:0;width:var(--rl-nav-w);background:linear-gradient(180deg,var(--rl-primary-dark),#000a1a);overflow-y:auto;z-index:50;transition:width .2s;display:flex;flex-direction:column}
+.rl-sidebar.collapsed{width:var(--rl-nav-w-collapsed)}
+.rl-sidebar-nav{flex:1;padding:12px 0}
+.rl-nav-item{display:flex;align-items:center;gap:12px;width:100%;padding:11px 18px;background:none;border:none;border-left:3px solid transparent;color:rgba(255,255,255,.65);font-family:inherit;font-size:13px;font-weight:600;text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;text-decoration:none;box-sizing:border-box}
+.rl-nav-item:hover{background:rgba(255,255,255,.06);color:#fff}
+.rl-nav-item.active{background:rgba(249,146,57,.14);color:#fff;border-left-color:var(--rl-secondary)}
+.rl-nav-icon{flex-shrink:0;width:18px;height:18px;display:flex;align-items:center;justify-content:center}
+.rl-nav-icon svg{width:17px;height:17px}
+.rl-sidebar.collapsed .rl-nav-label{display:none}
+.rl-sidebar.collapsed .rl-nav-item{justify-content:center;padding:11px 0}
+
+main.wrap{margin-left:var(--rl-nav-w);margin-top:58px;padding:20px 22px 80px;transition:margin-left .2s;max-width:1360px}
+main.wrap.nav-collapsed{margin-left:var(--rl-nav-w-collapsed)}
+@media(max-width:900px){
+  .rl-mobile-toggle{display:flex}
+  .rl-sidebar{transform:translateX(-100%)}
+  .rl-sidebar.mobile-open{transform:translateX(0)}
+  main.wrap,main.wrap.nav-collapsed{margin-left:0;padding:16px}
+}
+.rl-fullscreen-msg{display:flex;align-items:center;justify-content:center;height:100vh;font-size:14px;color:var(--rl-subtext)}
+
+.view-panel{display:none}
+.view-panel.active{display:block}
+h1.page-title{font-size:19px;font-weight:800;color:var(--rl-primary);margin:0 0 2px}
+p.page-sub{margin:0 0 16px;font-size:12.5px;color:var(--rl-subtext)}
+
+.rl-panel{background:var(--rl-panel);border:1px solid var(--rl-border);border-radius:12px;margin-bottom:16px;overflow:hidden}
+.rl-panel-header{padding:14px 18px;border-bottom:1px solid var(--rl-border);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.rl-panel-header h2{font-size:14.5px;font-weight:800;margin:0;color:var(--rl-primary)}
+.rl-panel-header p{margin:2px 0 0;font-size:12px;color:var(--rl-subtext)}
+.rl-panel-body{padding:16px 18px}
+
+.kpi-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px}
+.kpi-card{background:#fff;border:1px solid var(--rl-border);border-radius:12px;padding:14px 16px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden}
+.kpi-card:hover{box-shadow:0 6px 16px rgba(0,0,0,.08);transform:translateY(-1px)}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--kpi-color,var(--rl-primary))}
+.kpi-value{font-size:24px;font-weight:800;line-height:1}
+.kpi-label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--rl-subtext);margin-top:5px}
+
+.health-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:760px){.health-grid{grid-template-columns:1fr}}
+.health-card{border-radius:12px;padding:16px;text-align:center}
+.health-card.on_track{background:var(--rl-success-bg);border:1px solid #bbf7d0}
+.health-card.needs_attention{background:var(--rl-warn-bg);border:1px solid #fde68a}
+.health-card.at_risk{background:var(--rl-danger-bg);border:1px solid #fecaca}
+.health-count{font-size:28px;font-weight:800}
+.health-card.on_track .health-count{color:var(--rl-success)}
+.health-card.needs_attention .health-count{color:var(--rl-warn)}
+.health-card.at_risk .health-count{color:var(--rl-danger)}
+.health-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-top:4px}
+
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 15px;border-radius:8px;border:1px solid var(--rl-border);background:#fff;color:var(--rl-text);font-weight:700;font-size:12.5px;cursor:pointer;min-height:38px}
+.btn:hover{background:#f8fafc}
+.btn.primary{background:var(--rl-secondary);border-color:var(--rl-secondary);color:#1a1000}
+.btn.outline{background:transparent;border-color:var(--rl-primary);color:var(--rl-primary)}
+.btn.dark{background:var(--rl-primary);border-color:var(--rl-primary);color:#fff}
+.btn.danger{background:var(--rl-danger-bg);border-color:#fecaca;color:var(--rl-danger)}
+.btn.sm{padding:6px 11px;font-size:11.5px;min-height:32px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.pill.blue{background:#eff6ff;color:#1d4ed8}
+.pill.gray{background:#f1f5f9;color:#475569}
+.pill.green{background:var(--rl-success-bg);color:var(--rl-success)}
+.pill.orange{background:var(--rl-warn-bg);color:var(--rl-warn)}
+.pill.red{background:var(--rl-danger-bg);color:var(--rl-danger)}
+.pill.purple{background:#f5f3ff;color:#6d28d9}
+
+table.rl-table{width:100%;border-collapse:collapse;font-size:12.5px}
+table.rl-table th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--rl-subtext);padding:9px 8px;border-bottom:1px solid var(--rl-border);white-space:nowrap}
+table.rl-table td{padding:9px 8px;border-bottom:1px solid var(--rl-border);vertical-align:middle}
+table.rl-table tr:hover td{background:#fafcff}
+table.rl-table tr.clickable{cursor:pointer}
+.progress-bar-track{width:70px;height:7px;background:#e2e8f0;border-radius:99px;overflow:hidden;display:inline-block;vertical-align:middle}
+.progress-bar-fill{height:100%;background:var(--rl-primary);border-radius:99px}
+
+.empty-note{font-size:12.5px;color:var(--rl-subtext);padding:18px;text-align:center;border:1.5px dashed var(--rl-border);border-radius:10px}
+.rl-loading{padding:18px;text-align:center;color:var(--rl-subtext);font-size:13px}
+.helper-text{font-size:11.5px;color:var(--rl-subtext);margin:3px 0 0}
+.section-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--rl-subtext);margin:0 0 8px}
+
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field.full{grid-column:1/-1}
+.field label{font-size:11px;font-weight:700;color:var(--rl-subtext);text-transform:uppercase;letter-spacing:.3px}
+.field input,.field select,.field textarea{padding:9px 10px;border:1px solid var(--rl-border);border-radius:8px;font-size:13px;font-family:inherit;background:#fff;color:var(--rl-text);min-height:38px}
+.field textarea{min-height:70px;resize:vertical}
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field-grid.cols-3{grid-template-columns:1fr 1fr 1fr}
+.field-grid.cols-4{grid-template-columns:1fr 1fr 1fr 1fr}
+@media(max-width:760px){.field-grid,.field-grid.cols-3,.field-grid.cols-4{grid-template-columns:1fr}}
+
+.chip-grid{display:flex;flex-wrap:wrap;gap:7px}
+.chip-opt{padding:8px 14px;border:1.5px solid var(--rl-border);border-radius:999px;background:#fff;font-size:12px;font-weight:600;cursor:pointer;min-height:34px;display:inline-flex;align-items:center}
+.chip-opt.selected{background:var(--rl-primary);border-color:var(--rl-primary);color:#fff}
+.seg{display:inline-flex;border:1px solid var(--rl-border);border-radius:8px;overflow:hidden}
+.seg button{border:none;background:#fff;padding:8px 16px;font-size:12.5px;font-weight:700;cursor:pointer;color:var(--rl-subtext);min-height:36px}
+.seg button.active{background:var(--rl-primary);color:#fff}
+.seg button+button{border-left:1px solid var(--rl-border)}
+
+.subcard{border:1px solid var(--rl-border);border-radius:10px;padding:13px 15px;margin-bottom:10px;background:#fbfcfe}
+.subcard-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+
+/* Matrix */
+.matrix-wrap{overflow-x:auto;border:1px solid var(--rl-border);border-radius:10px}
+table.matrix{border-collapse:collapse;font-size:12px;white-space:nowrap}
+table.matrix th,table.matrix td{border-bottom:1px solid var(--rl-border);border-right:1px solid #f1f5f9;padding:8px 10px;text-align:center}
+table.matrix th{background:#f8fafc;font-size:10.5px;text-transform:uppercase;letter-spacing:.3px;color:var(--rl-subtext);position:sticky;top:0}
+table.matrix td.ra-name{text-align:left;font-weight:700;position:sticky;left:0;background:#fff;cursor:pointer;color:var(--rl-primary)}
+table.matrix th.ra-name-h{position:sticky;left:0;background:#f8fafc;z-index:5;text-align:left}
+.matrix-cell{cursor:pointer;font-size:15px;display:inline-flex;width:26px;height:26px;align-items:center;justify-content:center;border-radius:6px}
+.matrix-cell:hover{background:#f1f5f9}
+.matrix-cell.complete{color:var(--rl-success)}
+.matrix-cell.progress{color:#1d4ed8}
+.matrix-cell.review{color:#7c3aed}
+.matrix-cell.purchasing{color:#0891b2}
+.matrix-cell.overdue{color:var(--rl-danger);font-weight:800}
+.matrix-cell.notstarted{color:#cbd5e1}
+.matrix-cell.unassigned{color:#e2e8f0}
+
+/* Drawer */
+.drawer-overlay{position:fixed;inset:0;background:rgba(15,23,42,.4);z-index:90;display:flex;justify-content:flex-end}
+.drawer{width:min(480px,100%);background:#fff;height:100%;overflow-y:auto;box-shadow:-8px 0 30px rgba(0,0,0,.2)}
+.drawer-header{padding:16px 20px;border-bottom:1px solid var(--rl-border);display:flex;justify-content:space-between;align-items:flex-start;gap:10px;position:sticky;top:0;background:#fff;z-index:5}
+.drawer-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--rl-subtext);line-height:1}
+.drawer-body{padding:16px 20px}
+.drawer-footer{padding:14px 20px;border-top:1px solid var(--rl-border);display:flex;gap:8px;flex-wrap:wrap;position:sticky;bottom:0;background:#fff}
+.kv-row{margin-bottom:9px}
+.kv-label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:var(--rl-subtext)}
+.kv-value{font-size:13px;margin-top:1px}
+.stage-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9}
+.stage-row:last-child{border-bottom:none}
+.stage-icon{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;font-weight:800}
+.stage-icon.done{background:var(--rl-success-bg);color:var(--rl-success)}
+.stage-icon.pending{background:#f1f5f9;color:#94a3b8}
+.comment-item{padding:9px 0;border-bottom:1px solid #f1f5f9;font-size:12.5px}
+.comment-item:last-child{border-bottom:none}
+.comment-author{font-weight:700}
+.history-item{font-size:12px;color:var(--rl-subtext);padding:6px 0;border-bottom:1px solid #f8fafc}
+
+.tabs-row{display:flex;gap:4px;margin-bottom:14px;overflow-x:auto}
+.tab-btn{background:none;border:none;border-bottom:2px solid transparent;padding:9px 4px;margin-right:16px;font-size:12px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--rl-subtext);cursor:pointer;white-space:nowrap}
+.tab-btn.active{color:var(--rl-primary);border-bottom-color:var(--rl-secondary)}
+
+.filters-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.filters-row select,.filters-row input{padding:7px 10px;border:1px solid var(--rl-border);border-radius:7px;font-size:12px;font-family:inherit;background:#fff}
+
+.agenda-day{margin-bottom:14px}
+.agenda-date{font-size:12px;font-weight:800;color:var(--rl-primary);margin-bottom:6px;text-transform:uppercase;letter-spacing:.3px}
+.agenda-event{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border:1px solid var(--rl-border);border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:12.5px}
+.agenda-event:hover{background:#f8fafc}
+
+.flag-card{border:1px solid #fde68a;background:#fffbeb;border-radius:10px;padding:12px 14px;margin-bottom:8px;font-size:12.5px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.flag-card:hover{background:#fef3c7}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal-box{background:#fff;border-radius:14px;max-width:560px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal-header{padding:16px 20px;border-bottom:1px solid var(--rl-border);display:flex;justify-content:space-between;align-items:center}
+.modal-header h3{margin:0;font-size:15px;font-weight:800;color:var(--rl-primary)}
+.modal-body{padding:18px 20px}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--rl-border);display:flex;justify-content:flex-end;gap:8px}
+.dynrow{border:1px solid var(--rl-border);border-radius:8px;padding:10px;margin-bottom:8px}
+</style>
+</head>
+<body>
+
+<div id="authGate" class="rl-fullscreen-msg">Loading Curriculum Management…</div>
+
+<div id="app" class="hidden">
+  <header class="rl-header">
+    <button class="rl-mobile-toggle" id="mobileToggle">&#9776;</button>
+    <a class="rl-back-link" href="reslife_hub.html">&larr; Hub</a>
+    <div class="rl-header-title" id="headerTitle">Curriculum</div>
+    <div class="rl-header-right">
+      <select class="rl-term-select" id="termSelect"></select>
+      <button class="rl-bell-btn" id="bellBtn">&#128276;<span class="rl-bell-dot hidden" id="bellDot"></span></button>
+      <div id="notifPanel" class="rl-notif-panel hidden"></div>
+      <span class="rl-role-badge" id="roleBadge"></span>
+      <button class="rl-logout-btn" id="logoutBtn">Log Out</button>
+    </div>
+  </header>
+
+  <aside class="rl-sidebar" id="sidebar">
+    <nav class="rl-sidebar-nav" id="sidebarNav"></nav>
+  </aside>
+
+  <main class="wrap" id="mainWrap">
+
+    <!-- ============ DASHBOARD ============ -->
+    <section class="view-panel active" id="view-dashboard">
+      <h1 class="page-title">Curriculum Dashboard</h1>
+      <p class="page-sub" id="dashSubtitle">Overall program health for the current term.</p>
+      <div id="kpiBar" class="kpi-bar"><div class="rl-loading">Loading…</div></div>
+      <div class="rl-panel">
+        <div class="rl-panel-header"><div><h2>Curriculum Health</h2><p>On Track / Needs Attention / At Risk, computed per RA from actual assignment data.</p></div></div>
+        <div class="rl-panel-body"><div class="health-grid" id="healthGrid"></div></div>
+      </div>
+      <div class="rl-panel">
+        <div class="rl-panel-header"><div><h2>Needs Attention</h2></div></div>
+        <div class="rl-panel-body"><div id="needsAttentionBox"></div></div>
+      </div>
+      <div class="rl-panel">
+        <div class="rl-panel-header">
+          <div><h2>Team Progress</h2></div>
+          <input type="text" id="teamSearchInput" placeholder="Search RA…" style="padding:7px 10px;border:1px solid var(--rl-border);border-radius:7px;font-size:12px" />
+        </div>
+        <div class="rl-panel-body"><div id="teamProgressBox"><div class="rl-loading">Loading…</div></div></div>
+      </div>
+      <div class="rl-panel">
+        <div class="rl-panel-header"><div><h2>Upcoming</h2></div></div>
+        <div class="rl-panel-body"><div id="dashUpcomingBox"></div></div>
+      </div>
+    </section>
+
+    <!-- ============ TODAY ============ -->
+    <section class="view-panel" id="view-today">
+      <h1 class="page-title" id="todayGreeting">Today</h1>
+      <p class="page-sub">Your operational home screen — everything that needs attention right now.</p>
+      <div id="todayBox"><div class="rl-loading">Loading…</div></div>
+    </section>
+
+    <!-- ============ MATRIX ============ -->
+    <section class="view-panel" id="view-matrix">
+      <h1 class="page-title">Curriculum Matrix</h1>
+      <p class="page-sub">RAs &times; requirements. Click any cell for details.</p>
+      <div class="filters-row" id="matrixFilters"></div>
+      <div class="matrix-wrap"><div id="matrixBox"><div class="rl-loading">Loading…</div></div></div>
+    </section>
+
+    <!-- ============ CALENDAR (Agenda) ============ -->
+    <section class="view-panel" id="view-calendar">
+      <h1 class="page-title">Curriculum Calendar</h1>
+      <p class="page-sub">Agenda view of every dated requirement and program in the selected term.</p>
+      <div id="calendarBox"><div class="rl-loading">Loading…</div></div>
+    </section>
+
+    <!-- ============ DEADLINE CENTER ============ -->
+    <section class="view-panel" id="view-deadlines">
+      <h1 class="page-title">Deadline Center</h1>
+      <p class="page-sub">What do I need to follow up on today?</p>
+      <div id="deadlineBox"><div class="rl-loading">Loading…</div></div>
+    </section>
+
+    <!-- ============ REVIEWS ============ -->
+    <section class="view-panel" id="view-reviews">
+      <h1 class="page-title">Review Queue</h1>
+      <p class="page-sub">RA submissions awaiting your attention.</p>
+      <div class="tabs-row" id="reviewTabs"></div>
+      <div id="reviewsBox"><div class="rl-loading">Loading…</div></div>
+    </section>
+
+    <!-- ============ MY CURRICULUM (RA view) ============ -->
+    <section class="view-panel" id="view-mine">
+      <h1 class="page-title">My Curriculum</h1>
+      <p class="page-sub">Everything assigned to you this term.</p>
+      <div id="mineSummary" class="kpi-bar"></div>
+      <div id="mineBox"><div class="rl-loading">Loading…</div></div>
+    </section>
+
+    <!-- ============ PROGRAMS (Library) ============ -->
+    <section class="view-panel" id="view-programs">
+      <h1 class="page-title">Curriculum Program Library</h1>
+      <p class="page-sub">Search completed programs from this and previous terms.</p>
+      <input type="text" id="programSearchInput" placeholder="Search by program, category, or RA…" style="width:100%;max-width:420px;padding:9px 12px;border:1px solid var(--rl-border);border-radius:8px;font-size:13px;margin-bottom:14px" />
+      <div id="programsBox"><div class="rl-loading">Loading…</div></div>
+    </section>
+
+    <!-- ============ REPORTS ============ -->
+    <section class="view-panel" id="view-reports">
+      <h1 class="page-title">Curriculum Reports</h1>
+      <p class="page-sub">Real metrics computed from current assignment data.</p>
+      <div class="tabs-row" id="reportTabs"></div>
+      <div id="reportsBox"><div class="rl-loading">Loading…</div></div>
+    </section>
+
+    <!-- ============ SETTINGS (Admin tier) ============ -->
+    <section class="view-panel" id="view-settings">
+      <h1 class="page-title">Curriculum Settings</h1>
+      <p class="page-sub">Terms, Curriculum Builder, and legacy tracker import.</p>
+      <div class="tabs-row" id="settingsTabs"></div>
+      <div id="settingsBox"></div>
+    </section>
+
+  </main>
+</div>
+
+<div id="drawerRoot"></div>
+
+<script>
+/* ==================================================================
+   CONSTANTS
+   ================================================================== */
+const RESLIFE_ROLES = ['reslife-ra', 'reslife-rec', 'reslife-admin'];
+const ROLE_LABELS = { 'reslife-ra': 'Reslife - RA', 'reslife-rec': 'Reslife - REC', 'reslife-admin': 'Reslife Admin', admin: 'Site Admin' };
+
+const CATEGORY_OPTIONS = ['Programming', 'Community Development', 'Administrative', 'Resident Connection', 'Passive Education', 'Meeting', 'Other'];
+const OWNER_TYPE_OPTIONS = ['RA', 'REC', 'Admin', 'RHC', 'Staff Lead', 'Group', 'Variable / Assigned Later', 'Other'];
+const ASSIGNMENT_TYPE_OPTIONS = [
+  { value: 'every_ra', label: 'Every RA' }, { value: 'selected_ras', label: 'Selected RAs' },
+  { value: 'team', label: 'Selected Team' }, { value: 'floor', label: 'Selected Floor' },
+  { value: 'building', label: 'Selected Building' }, { value: 'rec', label: 'REC' },
+  { value: 'staff_lead', label: 'Staff Lead' }, { value: 'group', label: 'Group Assignment' }, { value: 'other', label: 'Other' },
+];
+const WORKFLOW_TEMPLATES = {
+  simple: { label: 'Simple (Assigned → Completed)', stages: [{ key: 'assigned', label: 'Assigned', required: true }, { key: 'completed', label: 'Completed', required: true }] },
+  floorMeeting: { label: 'Floor Meeting (Plan → Purchase → Purchased → Held)', stages: [
+    { key: 'plan', label: 'Plan Submitted', required: true }, { key: 'purchaseRequest', label: 'Purchase Request Submitted', required: false },
+    { key: 'purchased', label: 'Purchased', required: false }, { key: 'held', label: 'Meeting Held', required: true },
+  ] },
+  program: { label: 'Full Program (Plan → Review → Approve → Purchase → Event → Docs)', stages: [
+    { key: 'plan', label: 'Plan Submitted', required: true }, { key: 'review', label: 'REC Review', required: true },
+    { key: 'approved', label: 'Approved', required: true }, { key: 'purchaseRequest', label: 'Purchase Requested', required: false },
+    { key: 'purchased', label: 'Purchased', required: false }, { key: 'held', label: 'Event Held', required: true },
+    { key: 'documentation', label: 'Documentation Submitted', required: false },
+  ] },
+};
+const REVISION_REASONS = ['Missing information', 'Program details incomplete', 'Purchase information incomplete', 'Date/time missing', 'Location missing', 'Budget needs adjustment', 'Documentation/evidence missing', 'Attendance missing', 'Learning outcome/information incomplete', 'Other'];
+const PURCHASE_STATUSES = ['Not Needed', 'Purchase Request Needed', 'Request Submitted', 'REC Review', 'Approved', 'Ordered / Purchased', 'Ready for Program', 'Denied'];
+
+const STATUS_ICON = {
+  'Not Started': { icon: '○', cls: 'notstarted' }, 'Upcoming': { icon: '○', cls: 'notstarted' },
+  'In Progress': { icon: '●', cls: 'progress' }, 'Submitted': { icon: '◷', cls: 'review' },
+  'Awaiting REC Review': { icon: '◷', cls: 'review' }, 'Revision Requested': { icon: '!', cls: 'overdue' },
+  'Approved': { icon: '✓', cls: 'progress' }, 'Purchase Needed': { icon: '$', cls: 'purchasing' },
+  'Purchase Submitted': { icon: '$', cls: 'purchasing' }, 'Purchased': { icon: '$', cls: 'purchasing' },
+  'Scheduled': { icon: '●', cls: 'progress' }, 'Completed': { icon: '✓', cls: 'complete' },
+  'Verified Complete': { icon: '✓', cls: 'complete' }, 'Waived': { icon: '—', cls: 'notstarted' },
+  'Not Applicable': { icon: '—', cls: 'notstarted' },
+};
+// Centralized health thresholds — the only place "how many overdue is risky" is decided.
+const HEALTH_THRESHOLDS = { atRiskOverdueCount: 3, atRiskCriticalDaysOverdue: 8, needsAttentionOverdueCount: 1 };
+
+/* ==================================================================
+   STATE
+   ================================================================== */
+let me = null;
+let allProperties = [];
+let myProperties = [];
+let currentProperty = null;
+let isManager = false;
+let isAdminTier = false;
+let isRAOnly = false;
+
+let terms = [];
+let currentTermId = null;
+let requirements = [];
+let assignments = [];
+let notifications = [];
+let raRoster = []; // [{username, role}] reslife-ra accounts for this property
+
+let currentView = 'dashboard';
+
+/* ==================================================================
+   UTIL (same proven helpers used in reslife_hub.html / reslife_incident_report.html)
+   ================================================================== */
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function uid(){ return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8); }
+function fmtDateShort(d){ if (!d) return ''; try { return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); } catch (e) { return d; } }
+function fmtDateLong(d){ if (!d) return ''; try { return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }); } catch (e) { return d; } }
+function fmtDateTime(iso){ if (!iso) return ''; try { return new Date(iso).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); } catch (e) { return iso; } }
+function todayStr(){ return new Date().toISOString().slice(0, 10); }
+
+async function apiFetch(path, opts = {}) {
+  const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+  const res = await fetch('/api' + path, Object.assign({ credentials: 'include' }, opts, { headers }));
+  if (!res.ok) { let msg = 'Request failed'; try { msg = await res.text(); } catch (e) {} throw new Error(msg || ('HTTP ' + res.status)); }
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+function propParam(){ return '?property=' + encodeURIComponent(currentProperty); }
+function termParam(){ return currentTermId ? '&termId=' + encodeURIComponent(currentTermId) : ''; }
+
+function bindSeg(containerId, currentVal, onChange){
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.querySelectorAll('button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.val === currentVal);
+    btn.onclick = () => {
+      el.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      onChange(btn.dataset.val);
+    };
+  });
+}
+function renderChipGroup(container, options, selected, multi, onToggle){
+  container.innerHTML = options.map(opt => {
+    const val = typeof opt === 'string' ? opt : opt.value;
+    const label = typeof opt === 'string' ? opt : opt.label;
+    const isSel = selected.includes(val);
+    return `<button type="button" class="chip-opt${isSel ? ' selected' : ''}" data-val="${esc(val)}">${esc(label)}</button>`;
+  }).join('');
+  container.querySelectorAll('.chip-opt').forEach(btn => {
+    btn.onclick = () => {
+      const val = btn.dataset.val;
+      if (multi) {
+        const idx = selected.indexOf(val);
+        if (idx === -1) selected.push(val); else selected.splice(idx, 1);
+        btn.classList.toggle('selected', selected.includes(val));
+      } else {
+        selected.length = 0; selected.push(val);
+        container.querySelectorAll('.chip-opt').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+      }
+      onToggle(selected, val);
+    };
+  });
+}
+function downloadCSV(filename, rows){
+  const csv = rows.map(r => r.map(c => {
+    const s = String(c == null ? '' : c);
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ==================================================================
+   AUTH / INIT
+   ================================================================== */
+async function init(){
+  try {
+    const meRes = await fetch('/api/me', { credentials: 'include' });
+    if (!meRes.ok) { window.location.href = 'index.html?redirect=reslife_curriculum.html'; return; }
+    me = await meRes.json();
+  } catch (e) { window.location.href = 'index.html?redirect=reslife_curriculum.html'; return; }
+
+  const allowed = RESLIFE_ROLES.includes(me.role) || me.role === 'admin';
+  if (!allowed) { window.location.href = 'mmp_calendar_app.html'; return; }
+  isManager = me.role === 'admin' || me.role === 'reslife-rec' || me.role === 'reslife-admin';
+  isAdminTier = me.role === 'admin' || me.role === 'reslife-admin';
+  isRAOnly = me.role === 'reslife-ra';
+
+  try { allProperties = await apiFetch('/properties'); } catch (e) { allProperties = []; }
+  if (me.role === 'admin' || me.properties === '*') myProperties = allProperties.map(p => p.name);
+  else myProperties = Array.isArray(me.properties) ? me.properties.filter(p => allProperties.some(ap => ap.name === p)) : [];
+
+  if (myProperties.length === 0) {
+    document.getElementById('authGate').textContent = 'Your account is not tied to a property yet. Contact your Reslife Admin.';
+    return;
+  }
+  currentProperty = localStorage.getItem('reslife_current_property');
+  if (!myProperties.includes(currentProperty)) currentProperty = myProperties[0];
+
+  document.getElementById('roleBadge').textContent = ROLE_LABELS[me.role] || me.role;
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    try { await fetch('/api/auth-logout', { method: 'POST', credentials: 'include' }); } catch (e) {}
+    window.location.href = 'index.html';
+  });
+
+  buildSidebarNav();
+  bindHeaderControls();
+
+  try { terms = await apiFetch('/reslife-curriculum-terms' + propParam()); } catch (e) { terms = []; }
+  populateTermSelect();
+
+  if (isAdminTier) {
+    try { raRoster = await apiFetch('/reslife-users'); } catch (e) { raRoster = []; }
+  }
+
+  document.getElementById('authGate').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+
+  await refreshTermData();
+  await loadNotifications();
+  goToView(isRAOnly ? 'mine' : 'dashboard');
+  setupInactivityLogout();
+}
+
+function populateTermSelect(){
+  const sel = document.getElementById('termSelect');
+  if (terms.length === 0) { sel.innerHTML = '<option value="">No terms yet</option>'; return; }
+  const savedTermId = localStorage.getItem('reslife_curriculum_term_' + currentProperty);
+  const activeTerm = terms.find(t => t.id === savedTermId) || terms.find(t => t.status === 'Active') || terms[0];
+  currentTermId = activeTerm.id;
+  sel.innerHTML = terms.map(t => `<option value="${t.id}" ${t.id === currentTermId ? 'selected' : ''}>${esc(t.name)} (${esc(t.status)})</option>`).join('');
+  sel.onchange = async () => {
+    currentTermId = sel.value;
+    try { localStorage.setItem('reslife_curriculum_term_' + currentProperty, currentTermId); } catch (e) {}
+    await refreshTermData();
+    renderCurrentView();
+  };
+}
+
+async function refreshTermData(){
+  if (!currentTermId) { requirements = []; assignments = []; return; }
+  try { requirements = await apiFetch('/reslife-curriculum-requirements' + propParam() + '&termId=' + encodeURIComponent(currentTermId)); } catch (e) { requirements = []; }
+  try { assignments = await apiFetch('/reslife-curriculum-assignments' + propParam() + termParam()); } catch (e) { assignments = []; }
+}
+
+async function loadNotifications(){
+  try { notifications = await apiFetch('/reslife-curriculum-notifications' + propParam()); } catch (e) { notifications = []; }
+  const unread = notifications.filter(n => !n.read).length;
+  document.getElementById('bellDot').classList.toggle('hidden', unread === 0);
+}
+
+function bindHeaderControls(){
+  document.getElementById('bellBtn').addEventListener('click', () => {
+    const panel = document.getElementById('notifPanel');
+    if (panel.classList.contains('hidden')) { renderNotifPanel(); panel.classList.remove('hidden'); }
+    else panel.classList.add('hidden');
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#notifPanel') && !e.target.closest('#bellBtn')) document.getElementById('notifPanel').classList.add('hidden');
+  });
+  document.getElementById('mobileToggle').addEventListener('click', () => document.getElementById('sidebar').classList.toggle('mobile-open'));
+}
+
+function renderNotifPanel(){
+  const panel = document.getElementById('notifPanel');
+  if (notifications.length === 0) { panel.innerHTML = '<div class="empty-note" style="margin:14px">No notifications yet.</div>'; return; }
+  panel.innerHTML = `<div style="padding:10px 14px;border-bottom:1px solid var(--rl-border);display:flex;justify-content:space-between;align-items:center"><strong style="font-size:12.5px">Notifications</strong><button class="btn sm" id="markAllReadBtn">Mark all read</button></div>` +
+    notifications.map(n => `<div class="rl-notif-item ${n.read ? '' : 'unread'}"><div class="rl-notif-title">${esc(n.title)}</div><div>${esc(n.message)}</div><div class="rl-notif-meta">${fmtDateTime(n.createdAt)}</div></div>`).join('');
+  document.getElementById('markAllReadBtn').addEventListener('click', async () => {
+    try { await apiFetch('/reslife-curriculum-notifications', { method: 'PUT', body: JSON.stringify({ property: currentProperty, action: 'markAllRead' }) }); await loadNotifications(); renderNotifPanel(); } catch (e) {}
+  });
+}
+
+function setupInactivityLogout(){
+  const INACTIVITY_MS = 12 * 60 * 60 * 1000;
+  const STORAGE_KEY = 'mmp_last_activity';
+  function updateActivity(){ try { localStorage.setItem(STORAGE_KEY, Date.now().toString()); } catch (e) {} }
+  function checkInactivity(){
+    try {
+      const last = parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10);
+      if (last && (Date.now() - last) > INACTIVITY_MS) {
+        localStorage.removeItem(STORAGE_KEY);
+        fetch('/api/auth-logout', { method: 'POST', credentials: 'include' }).catch(() => {});
+        window.location.href = 'index.html';
+      }
+    } catch (e) {}
+  }
+  updateActivity();
+  ['mousedown', 'keydown', 'scroll', 'touchstart', 'mousemove'].forEach(evt => document.addEventListener(evt, updateActivity, { passive: true }));
+  setInterval(checkInactivity, 60 * 1000);
+}
+
+/* ==================================================================
+   SIDEBAR NAV
+   ================================================================== */
+const NAV_ICONS = {
+  dashboard: '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
+  today: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  matrix: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>',
+  calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+  deadlines: '<circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 2"/>',
+  reviews: '<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
+  mine: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  programs: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+  reports: '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
+  settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+};
+function buildSidebarNav(){
+  const items = isRAOnly
+    ? [['mine', 'My Curriculum'], ['programs', 'Program Library']]
+    : [['dashboard', 'Dashboard'], ['today', 'Today'], ['matrix', 'Matrix'], ['calendar', 'Calendar'], ['deadlines', 'Deadline Center'], ['reviews', 'Review Queue'], ['programs', 'Program Library'], ['reports', 'Reports']].concat(isAdminTier ? [['settings', 'Settings']] : []);
+  document.getElementById('sidebarNav').innerHTML = items.map(([key, label]) => `
+    <button class="rl-nav-item${key === 'dashboard' ? ' active' : ''}" data-view="${key}">
+      <span class="rl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${NAV_ICONS[key]}</svg></span>
+      <span class="rl-nav-label">${esc(label)}</span>
+    </button>
+  `).join('');
+  document.querySelectorAll('.rl-nav-item[data-view]').forEach(btn => btn.addEventListener('click', () => goToView(btn.dataset.view)));
+}
+
+function goToView(view){
+  currentView = view;
+  document.querySelectorAll('.rl-nav-item[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+  document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+  const el = document.getElementById('view-' + view);
+  if (el) el.classList.add('active');
+  document.getElementById('sidebar').classList.remove('mobile-open');
+  renderCurrentView();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function renderCurrentView(){
+  if (currentView === 'dashboard') renderDashboard();
+  else if (currentView === 'today') renderToday();
+  else if (currentView === 'matrix') renderMatrix();
+  else if (currentView === 'calendar') renderCalendar();
+  else if (currentView === 'deadlines') renderDeadlineCenter();
+  else if (currentView === 'reviews') renderReviews();
+  else if (currentView === 'mine') renderMine();
+  else if (currentView === 'programs') renderPrograms();
+  else if (currentView === 'reports') renderReports();
+  else if (currentView === 'settings') renderSettings();
+}
+
+/* ==================================================================
+   DATA COMPUTATION (centralized — every view reuses these, per spec)
+   ================================================================== */
+const COMPLETE_STATUSES = ['Completed', 'Verified Complete'];
+const TERMINAL_STATUSES = COMPLETE_STATUSES.concat(['Waived', 'Not Applicable']);
+
+function daysUntil(dateStr){
+  if (!dateStr) return null;
+  const msPerDay = 86400000;
+  const todayMid = new Date(todayStr() + 'T00:00:00Z').getTime();
+  const dueMid = new Date(dateStr + 'T00:00:00Z').getTime();
+  return Math.round((dueMid - todayMid) / msPerDay);
+}
+function groupByRA(list){
+  const map = {};
+  (list || []).forEach(a => { if (a.scope === 'individual' && a.assignedTo) (map[a.assignedTo] = map[a.assignedTo] || []).push(a); });
+  return map;
+}
+function raList(){ return Object.keys(groupByRA(assignments)).sort(); }
+
+function computeRAHealth(raAssignments){
+  const overdue = raAssignments.filter(a => a._deadline && a._deadline.condition === 'overdue');
+  const criticalOverdue = overdue.filter(a => a._deadline.days <= -HEALTH_THRESHOLDS.atRiskCriticalDaysOverdue);
+  const needsRevision = raAssignments.filter(a => a.workflowStatus === 'Revision Requested');
+  if (overdue.length >= HEALTH_THRESHOLDS.atRiskOverdueCount || criticalOverdue.length > 0) return 'at_risk';
+  if (overdue.length >= HEALTH_THRESHOLDS.needsAttentionOverdueCount || needsRevision.length > 0) return 'needs_attention';
+  return 'on_track';
+}
+const HEALTH_LABELS = { on_track: 'On Track', needs_attention: 'Needs Attention', at_risk: 'At Risk' };
+function healthPill(h){ const cls = h === 'on_track' ? 'green' : (h === 'needs_attention' ? 'orange' : 'red'); return `<span class="pill ${cls}">${HEALTH_LABELS[h]}</span>`; }
+
+function computeKPIs(){
+  const total = assignments.length;
+  const completed = assignments.filter(a => COMPLETE_STATUSES.includes(a.workflowStatus)).length;
+  const completionPct = total ? Math.round((completed / total) * 100) : 0;
+  const dueThisWeek = assignments.filter(a => a._deadline && ['due_today', 'due_tomorrow', 'due_3_days', 'due_7_days'].includes(a._deadline.condition)).length;
+  const overdue = assignments.filter(a => a._deadline && a._deadline.condition === 'overdue').length;
+  const awaitingReview = assignments.filter(a => a.reviewStatus === 'pending').length;
+  const purchasing = assignments.filter(a => a.purchase && ['Purchase Request Needed', 'Request Submitted', 'REC Review'].includes(a.purchase.status)).length;
+  const activeRAs = raList().length;
+  const upcomingPrograms = assignments.filter(a => a.dueDates && a.dueDates.programDue && daysUntil(a.dueDates.programDue) !== null && daysUntil(a.dueDates.programDue) >= 0 && daysUntil(a.dueDates.programDue) <= 14 && !TERMINAL_STATUSES.includes(a.workflowStatus)).length;
+  return { total, completed, completionPct, dueThisWeek, overdue, awaitingReview, purchasing, activeRAs, upcomingPrograms };
+}
+
+function computeFlags(){
+  const flags = [];
+  const overdueList = assignments.filter(a => a._deadline && a._deadline.condition === 'overdue');
+  if (overdueList.length) flags.push({ label: `${overdueList.length} overdue requirement${overdueList.length > 1 ? 's' : ''}`, view: 'deadlines' });
+
+  const purchaseSoon = assignments.filter(a => {
+    if (!a.dueDates || !a.dueDates.programDue) return false;
+    const d = daysUntil(a.dueDates.programDue);
+    if (d === null || d < 0 || d > 7) return false;
+    if (!a.purchase || a.purchase.status === 'Not Needed') return false;
+    return !['Ordered / Purchased', 'Ready for Program', 'Purchased'].includes(a.purchase.status);
+  });
+  if (purchaseSoon.length) flags.push({ label: `${purchaseSoon.length} program${purchaseSoon.length > 1 ? 's' : ''} within 7 days with incomplete purchasing`, view: 'deadlines' });
+
+  const plansWaiting = assignments.filter(a => a.reviewStatus === 'pending');
+  if (plansWaiting.length) flags.push({ label: `${plansWaiting.length} submitted plan${plansWaiting.length > 1 ? 's' : ''} waiting for REC review`, view: 'reviews' });
+
+  const heldNoDocs = assignments.filter(a => {
+    if (!a.program || !a.program.actual) return false;
+    const docStage = (a.workflowStages || []).find(s => /doc/i.test(s.key) || /doc/i.test(s.label || ''));
+    if (!docStage) return false;
+    return !(a.stageProgress && a.stageProgress[docStage.key] && a.stageProgress[docStage.key].done);
+  });
+  if (heldNoDocs.length) flags.push({ label: `${heldNoDocs.length} program${heldNoDocs.length > 1 ? 's' : ''} held without completed documentation`, view: 'reviews' });
+
+  const revisions = assignments.filter(a => a.workflowStatus === 'Revision Requested');
+  if (revisions.length) flags.push({ label: `${revisions.length} revision request${revisions.length > 1 ? 's' : ''} outstanding`, view: 'reviews' });
+
+  const byRA = groupByRA(overdueList);
+  Object.keys(byRA).forEach(ra => {
+    if (byRA[ra].length >= HEALTH_THRESHOLDS.atRiskOverdueCount) flags.push({ label: `${ra} needs REC follow-up (${byRA[ra].length} overdue items)`, view: 'matrix' });
+  });
+  return flags;
+}
+
+/* ==================================================================
+   DASHBOARD
+   ================================================================== */
+function renderDashboard(){
+  const term = terms.find(t => t.id === currentTermId);
+  document.getElementById('dashSubtitle').textContent = term ? `${term.name} — overall program health for the current term.` : 'Create a term in Settings to get started.';
+  if (!currentTermId) {
+    document.getElementById('kpiBar').innerHTML = '<div class="empty-note">No term selected yet. Go to Settings to create one.</div>';
+    document.getElementById('healthGrid').innerHTML = '';
+    document.getElementById('needsAttentionBox').innerHTML = '';
+    document.getElementById('teamProgressBox').innerHTML = '';
+    document.getElementById('dashUpcomingBox').innerHTML = '';
+    return;
+  }
+
+  const k = computeKPIs();
+  const kpis = [
+    { label: 'Overall Completion', value: k.completionPct + '%', color: 'var(--rl-primary)', view: 'matrix' },
+    { label: 'Active RAs', value: k.activeRAs, color: '#0891b2', view: 'matrix' },
+    { label: 'Due This Week', value: k.dueThisWeek, color: 'var(--rl-secondary)', view: 'deadlines' },
+    { label: 'Overdue', value: k.overdue, color: 'var(--rl-danger)', view: 'deadlines' },
+    { label: 'Awaiting Review', value: k.awaitingReview, color: '#7c3aed', view: 'reviews' },
+    { label: 'Purchasing', value: k.purchasing, color: '#0891b2', view: 'deadlines' },
+    { label: 'Upcoming Programs', value: k.upcomingPrograms, color: 'var(--rl-success)', view: 'calendar' },
+  ];
+  document.getElementById('kpiBar').innerHTML = kpis.map(c => `
+    <div class="kpi-card" style="--kpi-color:${c.color}" data-goto="${c.view}"><div class="kpi-value">${c.value}</div><div class="kpi-label">${esc(c.label)}</div></div>
+  `).join('');
+  document.getElementById('kpiBar').querySelectorAll('[data-goto]').forEach(el => el.addEventListener('click', () => goToView(el.dataset.goto)));
+
+  const byRA = groupByRA(assignments);
+  const healthCounts = { on_track: 0, needs_attention: 0, at_risk: 0 };
+  Object.values(byRA).forEach(list => { healthCounts[computeRAHealth(list)]++; });
+  document.getElementById('healthGrid').innerHTML = ['on_track', 'needs_attention', 'at_risk'].map(h => `
+    <div class="health-card ${h}"><div class="health-count">${healthCounts[h]}</div><div class="health-label">${HEALTH_LABELS[h]}</div></div>
+  `).join('');
+
+  const flags = computeFlags();
+  document.getElementById('needsAttentionBox').innerHTML = flags.length === 0
+    ? '<div class="empty-note">Nothing needs attention right now — great work.</div>'
+    : flags.map(f => `<div class="flag-card" data-goto="${f.view}"><span>${esc(f.label)}</span><span class="btn sm">View &rarr;</span></div>`).join('');
+  document.getElementById('needsAttentionBox').querySelectorAll('[data-goto]').forEach(el => el.addEventListener('click', () => goToView(el.dataset.goto)));
+
+  renderTeamProgressTable(document.getElementById('teamSearchInput').value.trim().toLowerCase());
+  document.getElementById('teamSearchInput').oninput = (e) => renderTeamProgressTable(e.target.value.trim().toLowerCase());
+
+  const upcoming = requirements.filter(r => r.dates && (r.dates.planningDue || r.dates.purchaseDue || r.dates.programDue || r.dates.documentationDue))
+    .flatMap(r => Object.entries(r.dates).filter(([, v]) => v).map(([k2, v]) => ({ date: v, label: r.title + ' — ' + labelForDateField(k2) })))
+    .filter(e => daysUntil(e.date) !== null && daysUntil(e.date) >= 0)
+    .sort((a, b) => a.date.localeCompare(b.date)).slice(0, 8);
+  document.getElementById('dashUpcomingBox').innerHTML = upcoming.length === 0 ? '<div class="empty-note">Nothing upcoming.</div>' : upcoming.map(e => `
+    <div class="agenda-event"><span>${esc(e.label)}</span><span class="pill blue">${fmtDateLong(e.date)}</span></div>
+  `).join('');
+}
+
+function labelForDateField(k){
+  return { planningDue: 'Planning/Proposal Due', purchaseDue: 'Purchase Request Due', programDue: 'Program/Event Due', documentationDue: 'Documentation Due' }[k] || k;
+}
+
+function renderTeamProgressTable(searchTerm){
+  const box = document.getElementById('teamProgressBox');
+  const byRA = groupByRA(assignments);
+  let names = Object.keys(byRA).sort();
+  if (searchTerm) names = names.filter(n => n.toLowerCase().includes(searchTerm));
+  if (names.length === 0) { box.innerHTML = '<div class="empty-note">No individually-assigned RAs match.</div>'; return; }
+
+  box.innerHTML = `<div style="overflow-x:auto"><table class="rl-table"><thead><tr>
+    <th>RA</th><th>Assigned</th><th>Complete</th><th>Due Soon</th><th>Overdue</th><th>Review</th><th>Purchasing</th><th>Completion</th><th>Health</th><th>Next Deadline</th>
+  </tr></thead><tbody>` + names.map(name => {
+    const list = byRA[name];
+    const complete = list.filter(a => COMPLETE_STATUSES.includes(a.workflowStatus)).length;
+    const dueSoon = list.filter(a => a._deadline && ['due_today', 'due_tomorrow', 'due_3_days', 'due_7_days', 'due_14_days'].includes(a._deadline.condition)).length;
+    const overdue = list.filter(a => a._deadline && a._deadline.condition === 'overdue').length;
+    const review = list.filter(a => a.reviewStatus === 'pending').length;
+    const purchasing = list.filter(a => a.purchase && ['Purchase Request Needed', 'Request Submitted', 'REC Review'].includes(a.purchase.status)).length;
+    const pct = list.length ? Math.round((complete / list.length) * 100) : 0;
+    const health = computeRAHealth(list);
+    const nextDeadlines = list.map(a => a._deadline && a._deadline.dueDate).filter(Boolean).sort();
+    return `<tr class="clickable" data-ra="${esc(name)}">
+      <td><strong>${esc(name)}</strong></td><td>${list.length}</td><td>${complete}</td><td>${dueSoon}</td>
+      <td>${overdue > 0 ? '<span class="pill red">' + overdue + '</span>' : '0'}</td>
+      <td>${review > 0 ? '<span class="pill purple">' + review + '</span>' : '0'}</td>
+      <td>${purchasing > 0 ? '<span class="pill orange">' + purchasing + '</span>' : '0'}</td>
+      <td><span class="progress-bar-track"><span class="progress-bar-fill" style="width:${pct}%"></span></span> ${pct}%</td>
+      <td>${healthPill(health)}</td>
+      <td>${nextDeadlines[0] ? fmtDateShort(nextDeadlines[0]) : '—'}</td>
+    </tr>`;
+  }).join('') + '</tbody></table></div>';
+  box.querySelectorAll('tr[data-ra]').forEach(row => row.addEventListener('click', () => openRAProfile(row.dataset.ra)));
+}
+
+/* ==================================================================
+   TASK DETAIL DRAWER (shared by Matrix / Dashboard / Today / Reviews / Mine)
+   ================================================================== */
+function findAssignment(id){ return assignments.find(a => a.id === id); }
+function isOwner(a){ return a.assignedTo === me.username || (Array.isArray(a.participants) && a.participants.includes(me.username)); }
+
+async function assignmentAction(a, action, extra){
+  try {
+    const body = Object.assign({ id: a.id, property: currentProperty, action }, extra || {});
+    const res = await apiFetch('/reslife-curriculum-assignments', { method: 'PUT', body: JSON.stringify(body) });
+    if (res.results && res.results[0] && res.results[0].error) { alert(res.results[0].error); return false; }
+    await refreshTermData();
+    await loadNotifications();
+    return true;
+  } catch (e) { alert('Action failed: ' + e.message); return false; }
+}
+
+function closeDrawer(){ document.getElementById('drawerRoot').innerHTML = ''; }
+
+function openTaskDrawer(assignmentId){
+  const a = findAssignment(assignmentId);
+  if (!a) return;
+  const req = a.requirementSnapshot || {};
+  const st = STATUS_ICON[a.workflowStatus] || { icon: '○', cls: 'notstarted' };
+  const deadlineText = deadlineConditionText(a._deadline);
+  const canManage = isManager;
+  const canRA = isOwner(a);
+
+  const stagesHTML = (a.workflowStages || []).map(s => {
+    const done = a.stageProgress && a.stageProgress[s.key] && a.stageProgress[s.key].done;
+    const canToggle = canManage || canRA;
+    return `<div class="stage-row">
+      <button class="stage-icon ${done ? 'done' : 'pending'}" ${canToggle ? `data-toggle-stage="${esc(s.key)}"` : 'disabled'} title="${canToggle ? 'Click to toggle' : ''}">${done ? '✓' : ''}</button>
+      <div style="flex:1"><div style="font-weight:600;font-size:12.5px">${esc(s.label)}${s.required === false ? ' <span class=\"pill gray\">Optional</span>' : ''}</div>
+      ${done ? `<div class="helper-text">Completed ${fmtDateTime(a.stageProgress[s.key].completedAt)} by ${esc(a.stageProgress[s.key].completedBy)}</div>` : ''}</div>
+    </div>`;
+  }).join('');
+
+  const datesHTML = ['planningDue', 'purchaseDue', 'programDue', 'documentationDue'].filter(k => a.dueDates && a.dueDates[k])
+    .map(k => `<div class="kv-row"><div class="kv-label">${labelForDateField(k)}</div><div class="kv-value">${fmtDateLong(a.dueDates[k])}</div></div>`).join('');
+
+  const purchaseItemsHTML = (a.purchase && a.purchase.items && a.purchase.items.length)
+    ? `<table class="rl-table"><thead><tr><th>Item</th><th>Qty</th><th>Est. Cost</th><th>Vendor</th></tr></thead><tbody>${a.purchase.items.map(it => `<tr><td>${esc(it.item)}</td><td>${esc(it.quantity)}</td><td>${it.estimatedCost ? '$' + it.estimatedCost : ''}</td><td>${esc(it.vendor || '')}</td></tr>`).join('')}</tbody></table>
+       <div class="helper-text">Estimated total: $${(a.purchase.items.reduce((s, it) => s + (parseFloat(it.estimatedCost) || 0) * (parseFloat(it.quantity) || 1), 0)).toFixed(2)}</div>`
+    : '<div class="empty-note">No purchase items recorded.</div>';
+
+  const commentsHTML = (a.comments || []).length === 0 ? '<div class="empty-note">No comments yet.</div>' : a.comments.map(c => `
+    <div class="comment-item"><span class="comment-author">${esc(c.author)}</span> <span class="pill gray">${esc(ROLE_LABELS[c.role] || c.role)}</span>
+    <div>${esc(c.message)}</div><div class="helper-text">${fmtDateTime(c.timestamp)}</div></div>
+  `).join('');
+
+  const revisionsHTML = (a.revisionRequests || []).length === 0 ? '' : `<div class="section-title" style="margin-top:14px">Revision History</div>` +
+    a.revisionRequests.map(r => `<div class="subcard"><strong>${esc(r.reason)}</strong><div>${esc(r.comment || '')}</div><div class="helper-text">${esc(r.requestedBy)} · ${fmtDateTime(r.requestedAt)}</div></div>`).join('');
+
+  const historyHTML = (a.statusHistory || []).slice().reverse().map(h => `
+    <div class="history-item">${esc(h.field)}: ${esc(String(h.oldValue))} &rarr; ${esc(String(h.newValue))} &mdash; ${esc(h.changedBy)}, ${fmtDateTime(h.timestamp)}${h.note ? ' (' + esc(h.note) + ')' : ''}</div>
+  `).join('');
+
+  let actionsHTML = '';
+  if (canRA && !a.submission && !TERMINAL_STATUSES.includes(a.workflowStatus)) actionsHTML += `<button class="btn primary" id="drawerSubmitPlanBtn">Submit Plan</button>`;
+  if (canRA) actionsHTML += `<button class="btn" id="drawerSubmitPurchaseBtn">Submit Purchase Request</button>`;
+  if (canManage) actionsHTML += `<button class="btn" id="drawerUpdatePurchaseBtn">Update Purchase Status</button>`;
+  if (canRA || canManage) actionsHTML += `<button class="btn" id="drawerMarkCompleteBtn">Record Completion</button>`;
+  if (canManage && a.reviewStatus === 'pending') actionsHTML += `<button class="btn dark" id="drawerApproveBtn">Approve</button><button class="btn danger" id="drawerRevisionBtn">Request Revision</button>`;
+  if (canManage && COMPLETE_STATUSES.includes(a.workflowStatus) && a.reviewStatus !== 'verified_complete') actionsHTML += `<button class="btn dark" id="drawerVerifyBtn">Mark Verified Complete</button>`;
+  if (isAdminTier) {
+    actionsHTML += `<button class="btn" id="drawerExtendBtn">Extend Deadline</button>`;
+    if (!TERMINAL_STATUSES.includes(a.workflowStatus)) actionsHTML += `<button class="btn" id="drawerWaiveBtn">Waive</button>`;
+    if (TERMINAL_STATUSES.includes(a.workflowStatus)) actionsHTML += `<button class="btn" id="drawerReopenBtn">Reopen</button>`;
+  }
+
+  document.getElementById('drawerRoot').innerHTML = `
+    <div class="drawer-overlay" id="drawerOverlay">
+      <div class="drawer">
+        <div class="drawer-header">
+          <div><div style="font-weight:800;font-size:15px;color:var(--rl-primary)">${esc(req.title)}</div>
+          <div class="pill blue" style="margin-top:4px">${esc(req.category || '')}</div>
+          <span class="pill gray" style="margin-top:4px">${esc(a.scope)}</span></div>
+          <button class="drawer-close" id="drawerCloseBtn">&times;</button>
+        </div>
+        <div class="drawer-body">
+          <div class="kv-row"><div class="kv-label">Assigned To</div><div class="kv-value">${esc(a.assignedTo || (a.participants || []).join(', ') || 'Unassigned')}</div></div>
+          <div class="kv-row"><div class="kv-label">Status</div><div class="kv-value"><span class="pill ${st.cls === 'complete' ? 'green' : (st.cls === 'overdue' ? 'red' : (st.cls === 'purchasing' || st.cls === 'review' ? 'orange' : 'blue'))}">${st.icon} ${esc(a.workflowStatus)}</span> ${deadlineText}</div></div>
+          <div class="kv-row"><div class="kv-label">Completion</div><div class="kv-value"><span class="progress-bar-track"><span class="progress-bar-fill" style="width:${a.completionPercent}%"></span></span> ${a.completionPercent}%</div></div>
+          ${datesHTML}
+          <div class="section-title" style="margin-top:16px">Workflow Stages</div>
+          ${stagesHTML}
+          <div class="section-title" style="margin-top:16px">Purchasing — ${esc((a.purchase && a.purchase.status) || 'Not Needed')}</div>
+          ${purchaseItemsHTML}
+          ${a.program && a.program.actual ? `<div class="section-title" style="margin-top:16px">Program Documentation</div><div class="subcard">${Object.entries(a.program.actual).filter(([k]) => !['recordedAt', 'recordedBy'].includes(k)).map(([k, v]) => `<div class="kv-row"><div class="kv-label">${esc(k)}</div><div class="kv-value">${esc(v)}</div></div>`).join('')}</div>` : ''}
+          ${revisionsHTML}
+          <div class="section-title" style="margin-top:16px">Comments</div>
+          <div id="drawerComments">${commentsHTML}</div>
+          <div style="display:flex;gap:8px;margin-top:8px"><input type="text" id="drawerCommentInput" placeholder="Add a comment…" style="flex:1;padding:8px 10px;border:1px solid var(--rl-border);border-radius:8px;font-size:12.5px" /><button class="btn sm" id="drawerAddCommentBtn">Post</button></div>
+          <div class="section-title" style="margin-top:16px">History</div>
+          <div>${historyHTML || '<div class="empty-note">No history yet.</div>'}</div>
+        </div>
+        <div class="drawer-footer">${actionsHTML || '<span class="helper-text">No actions available for your role.</span>'}</div>
+      </div>
+    </div>`;
+
+  document.getElementById('drawerCloseBtn').addEventListener('click', closeDrawer);
+  document.getElementById('drawerOverlay').addEventListener('click', (e) => { if (e.target.id === 'drawerOverlay') closeDrawer(); });
+  document.querySelectorAll('[data-toggle-stage]').forEach(btn => btn.addEventListener('click', async () => {
+    if (await assignmentAction(a, 'toggleStage', { stageKey: btn.getAttribute('data-toggle-stage') })) openTaskDrawer(assignmentId);
+  }));
+  document.getElementById('drawerAddCommentBtn').addEventListener('click', async () => {
+    const val = document.getElementById('drawerCommentInput').value.trim();
+    if (!val) return;
+    if (await assignmentAction(a, 'addComment', { message: val })) openTaskDrawer(assignmentId);
+  });
+  const bind = (id, fn) => { const el = document.getElementById(id); if (el) el.addEventListener('click', fn); };
+  bind('drawerSubmitPlanBtn', () => openPlanSubmissionForm(a));
+  bind('drawerSubmitPurchaseBtn', () => openPurchaseRequestForm(a));
+  bind('drawerUpdatePurchaseBtn', () => openPurchaseStatusForm(a));
+  bind('drawerMarkCompleteBtn', () => openCompletionForm(a));
+  bind('drawerApproveBtn', async () => { if (await assignmentAction(a, 'approve')) openTaskDrawer(assignmentId); });
+  bind('drawerRevisionBtn', () => openRevisionForm(a));
+  bind('drawerVerifyBtn', async () => { if (await assignmentAction(a, 'markVerified')) openTaskDrawer(assignmentId); });
+  bind('drawerExtendBtn', () => openExtendDeadlineForm(a));
+  bind('drawerWaiveBtn', async () => { const reason = prompt('Reason for waiving this requirement?') || ''; if (await assignmentAction(a, 'waive', { reason })) openTaskDrawer(assignmentId); });
+  bind('drawerReopenBtn', async () => { if (confirm('Reopen this completed requirement?') && await assignmentAction(a, 'reopen')) openTaskDrawer(assignmentId); });
+}
+
+function deadlineConditionText(d){
+  if (!d || d.condition === 'none') return '';
+  const map = { overdue: `<span class="pill red">Overdue ${Math.abs(d.days)}d</span>`, due_today: '<span class="pill orange">Due Today</span>', due_tomorrow: '<span class="pill orange">Due Tomorrow</span>', due_3_days: `<span class="pill orange">Due in ${d.days}d</span>`, due_7_days: `<span class="pill blue">Due in ${d.days}d</span>`, due_14_days: `<span class="pill blue">Due in ${d.days}d</span>`, upcoming: `<span class="pill gray">Due ${fmtDateShort(d.dueDate)}</span>` };
+  return map[d.condition] || '';
+}
+
+/* ==================================================================
+   GENERIC MODAL HELPER + ACTION FORMS
+   ================================================================== */
+function openModal(title, bodyHTML, footerHTML){
+  const root = document.getElementById('drawerRoot');
+  const existing = document.createElement('div');
+  existing.innerHTML = `<div class="modal-overlay" id="genModalOverlay"><div class="modal-box">
+    <div class="modal-header"><h3>${esc(title)}</h3><button class="drawer-close" id="genModalCloseBtn">&times;</button></div>
+    <div class="modal-body">${bodyHTML}</div>
+    <div class="modal-footer">${footerHTML}</div>
+  </div></div>`;
+  root.appendChild(existing.firstElementChild);
+  document.getElementById('genModalCloseBtn').addEventListener('click', closeModal);
+  document.getElementById('genModalOverlay').addEventListener('click', (e) => { if (e.target.id === 'genModalOverlay') closeModal(); });
+}
+function closeModal(){ const el = document.getElementById('genModalOverlay'); if (el) el.remove(); }
+
+function openPlanSubmissionForm(a){
+  openModal('Submit Plan — ' + a.requirementSnapshot.title, `
+    <div class="field-grid">
+      <div class="field full"><label>Program Name</label><input id="pf-name" value="${esc(a.requirementSnapshot.title)}" /></div>
+      <div class="field"><label>Program Type</label><input id="pf-type" placeholder="e.g., Passive, Active" /></div>
+      <div class="field"><label>Date</label><input id="pf-date" type="date" value="${esc((a.dueDates || {}).programDue || '')}" /></div>
+      <div class="field"><label>Start Time</label><input id="pf-start" type="time" /></div>
+      <div class="field"><label>End Time</label><input id="pf-end" type="time" /></div>
+      <div class="field"><label>Location</label><input id="pf-location" /></div>
+      <div class="field"><label>Target Audience</label><input id="pf-audience" /></div>
+      <div class="field"><label>Expected Attendance</label><input id="pf-attendance" type="number" min="0" /></div>
+      <div class="field full"><label>Program Description</label><textarea id="pf-desc"></textarea></div>
+      <div class="field full"><label>Goal / Purpose</label><textarea id="pf-goal"></textarea></div>
+      <div class="field full"><label>Supplies Needed</label><textarea id="pf-supplies"></textarea></div>
+      <div class="field"><label>Estimated Cost</label><input id="pf-cost" type="number" step="0.01" /></div>
+      <div class="field"><label>Purchase Needed?</label><select id="pf-purchase"><option value="no">No</option><option value="yes">Yes</option></select></div>
+      <div class="field"><label>Co-Host / Partner</label><input id="pf-cohost" /></div>
+      <div class="field full"><label>Additional Notes</label><textarea id="pf-notes"></textarea></div>
+    </div>
+  `, `<button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" id="pfSaveBtn">Submit Plan</button>`);
+  document.getElementById('pfSaveBtn').addEventListener('click', async () => {
+    const submission = {
+      programName: val('pf-name'), programType: val('pf-type'), date: val('pf-date'), startTime: val('pf-start'), endTime: val('pf-end'),
+      location: val('pf-location'), targetAudience: val('pf-audience'), expectedAttendance: val('pf-attendance'), description: val('pf-desc'),
+      goal: val('pf-goal'), suppliesNeeded: val('pf-supplies'), estimatedCost: val('pf-cost'), purchaseNeeded: val('pf-purchase'), coHost: val('pf-cohost'), notes: val('pf-notes'),
+    };
+    if (!submission.programName) { alert('Program name is required.'); return; }
+    if (await assignmentAction(a, 'submitPlan', { submission })) { closeModal(); openTaskDrawer(a.id); }
+  });
+}
+function val(id){ const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+
+function openPurchaseRequestForm(a){
+  let rows = (a.purchase && a.purchase.items && a.purchase.items.length) ? a.purchase.items.slice() : [{ item: '', quantity: 1, estimatedCost: '', vendor: '', purpose: '' }];
+  function rowsHTML(){ return rows.map((r, i) => `
+    <div class="dynrow field-grid cols-3" data-i="${i}">
+      <div class="field full"><label>Item</label><input class="pi-item" value="${esc(r.item)}" /></div>
+      <div class="field"><label>Quantity</label><input class="pi-qty" type="number" min="1" value="${esc(r.quantity || 1)}" /></div>
+      <div class="field"><label>Est. Cost</label><input class="pi-cost" type="number" step="0.01" value="${esc(r.estimatedCost || '')}" /></div>
+      <div class="field"><label>Vendor / Link</label><input class="pi-vendor" value="${esc(r.vendor || '')}" /></div>
+      <div class="field full"><label>Purpose</label><input class="pi-purpose" value="${esc(r.purpose || '')}" /></div>
+      <div class="field"><button class="btn sm danger" data-remove-item="${i}" type="button">Remove</button></div>
+    </div>`).join(''); }
+  openModal('Submit Purchase Request — ' + a.requirementSnapshot.title,
+    `<div id="purchaseRows">${rowsHTML()}</div><button class="btn sm" id="addPurchaseItemBtn" type="button">+ Add Item</button>`,
+    `<button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" id="prSaveBtn">Submit Request</button>`);
+  function bindRows(){
+    document.querySelectorAll('#purchaseRows .dynrow').forEach(row => {
+      const i = parseInt(row.dataset.i, 10);
+      row.querySelector('.pi-item').addEventListener('input', e => rows[i].item = e.target.value);
+      row.querySelector('.pi-qty').addEventListener('input', e => rows[i].quantity = e.target.value);
+      row.querySelector('.pi-cost').addEventListener('input', e => rows[i].estimatedCost = e.target.value);
+      row.querySelector('.pi-vendor').addEventListener('input', e => rows[i].vendor = e.target.value);
+      row.querySelector('.pi-purpose').addEventListener('input', e => rows[i].purpose = e.target.value);
+    });
+    document.querySelectorAll('[data-remove-item]').forEach(btn => btn.addEventListener('click', () => { rows.splice(parseInt(btn.dataset.removeItem, 10), 1); document.getElementById('purchaseRows').innerHTML = rowsHTML(); bindRows(); }));
+  }
+  bindRows();
+  document.getElementById('addPurchaseItemBtn').addEventListener('click', () => { rows.push({ item: '', quantity: 1, estimatedCost: '', vendor: '', purpose: '' }); document.getElementById('purchaseRows').innerHTML = rowsHTML(); bindRows(); });
+  document.getElementById('prSaveBtn').addEventListener('click', async () => {
+    const items = rows.filter(r => r.item && r.item.trim());
+    if (items.length === 0) { alert('Add at least one item.'); return; }
+    if (await assignmentAction(a, 'submitPurchaseRequest', { items })) { closeModal(); openTaskDrawer(a.id); }
+  });
+}
+
+function openPurchaseStatusForm(a){
+  openModal('Update Purchase Status — ' + a.requirementSnapshot.title,
+    `<div class="field"><label>Status</label><select id="psStatus">${PURCHASE_STATUSES.map(s => `<option ${((a.purchase || {}).status === s) ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
+     <div class="field full" style="margin-top:10px"><label>Note</label><textarea id="psNote"></textarea></div>`,
+    `<button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" id="psSaveBtn">Save</button>`);
+  document.getElementById('psSaveBtn').addEventListener('click', async () => {
+    if (await assignmentAction(a, 'updatePurchaseStatus', { status: val('psStatus'), note: val('psNote') })) { closeModal(); openTaskDrawer(a.id); }
+  });
+}
+
+function openCompletionForm(a){
+  openModal('Record Completion — ' + a.requirementSnapshot.title, `
+    <div class="field-grid">
+      <div class="field"><label>Actual Date</label><input id="cf-date" type="date" value="${todayStr()}" /></div>
+      <div class="field"><label>Actual Start</label><input id="cf-start" type="time" /></div>
+      <div class="field"><label>Actual End</label><input id="cf-end" type="time" /></div>
+      <div class="field"><label>Location</label><input id="cf-location" /></div>
+      <div class="field"><label>Expected Attendance</label><input id="cf-expected" type="number" min="0" /></div>
+      <div class="field"><label>Actual Attendance</label><input id="cf-actual" type="number" min="0" /></div>
+      <div class="field full"><label>Description / Summary</label><textarea id="cf-desc"></textarea></div>
+      <div class="field full"><label>What went well?</label><textarea id="cf-well"></textarea></div>
+      <div class="field full"><label>What would you change?</label><textarea id="cf-change"></textarea></div>
+      <div class="field full"><label>Resident Engagement Notes</label><textarea id="cf-engagement"></textarea></div>
+    </div>
+  `, `<button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" id="cfSaveBtn">Record Completion</button>`);
+  document.getElementById('cfSaveBtn').addEventListener('click', async () => {
+    const actual = {
+      actualDate: val('cf-date'), actualStart: val('cf-start'), actualEnd: val('cf-end'), location: val('cf-location'),
+      expectedAttendance: val('cf-expected'), actualAttendance: val('cf-actual'), description: val('cf-desc'),
+      whatWentWell: val('cf-well'), whatWouldChange: val('cf-change'), residentEngagementNotes: val('cf-engagement'),
+    };
+    if (await assignmentAction(a, 'markComplete', { actual })) { closeModal(); openTaskDrawer(a.id); }
+  });
+}
+
+function openRevisionForm(a){
+  openModal('Request Revision — ' + a.requirementSnapshot.title, `
+    <div class="field"><label>Reason</label><select id="rvReason">${REVISION_REASONS.map(r => `<option>${r}</option>`).join('')}</select></div>
+    <div class="field full" style="margin-top:10px"><label>Comment for the RA</label><textarea id="rvComment" placeholder="Explain what needs to change…"></textarea></div>
+  `, `<button class="btn" onclick="closeModal()">Cancel</button><button class="btn danger" id="rvSaveBtn">Request Revision</button>`);
+  document.getElementById('rvSaveBtn').addEventListener('click', async () => {
+    if (await assignmentAction(a, 'requestRevision', { reason: val('rvReason'), comment: val('rvComment') })) { closeModal(); openTaskDrawer(a.id); }
+  });
+}
+
+function openExtendDeadlineForm(a){
+  const dd = a.dueDates || {};
+  openModal('Extend Deadline — ' + a.requirementSnapshot.title, `
+    <div class="field-grid">
+      <div class="field"><label>Planning/Proposal Due</label><input id="ed-plan" type="date" value="${esc(dd.planningDue || '')}" /></div>
+      <div class="field"><label>Purchase Request Due</label><input id="ed-purchase" type="date" value="${esc(dd.purchaseDue || '')}" /></div>
+      <div class="field"><label>Program/Event Due</label><input id="ed-program" type="date" value="${esc(dd.programDue || '')}" /></div>
+      <div class="field"><label>Documentation Due</label><input id="ed-doc" type="date" value="${esc(dd.documentationDue || '')}" /></div>
+    </div>
+    <div class="field full" style="margin-top:10px"><label>Reason</label><input id="ed-note" placeholder="Why is this being extended?" /></div>
+  `, `<button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" id="edSaveBtn">Save New Dates</button>`);
+  document.getElementById('edSaveBtn').addEventListener('click', async () => {
+    const dueDates = { planningDue: val('ed-plan'), purchaseDue: val('ed-purchase'), programDue: val('ed-program'), documentationDue: val('ed-doc') };
+    if (await assignmentAction(a, 'extendDeadline', { dueDates, note: val('ed-note') })) { closeModal(); openTaskDrawer(a.id); }
+  });
+}
+
+/* ==================================================================
+   SHARED: compact assignment card list
+   ================================================================== */
+function assignmentCardsHTML(list, emptyMsg){
+  if (list.length === 0) return `<div class="empty-note">${esc(emptyMsg)}</div>`;
+  return list.map(a => {
+    const st = STATUS_ICON[a.workflowStatus] || { icon: '○', cls: 'notstarted' };
+    return `<div class="subcard" data-open="${a.id}" style="cursor:pointer">
+      <div class="subcard-head">
+        <div><strong>${esc(a.assignedTo || (a.participants || []).join(', ') || 'Unassigned')}</strong> &mdash; ${esc(a.requirementSnapshot.title)}</div>
+        ${deadlineConditionText(a._deadline)}
+      </div>
+      <div class="helper-text">
+        <span class="pill ${st.cls === 'complete' ? 'green' : (st.cls === 'overdue' ? 'red' : 'blue')}">${st.icon} ${esc(a.workflowStatus)}</span>
+        ${a.dueDates && a.dueDates.programDue ? ' · Program: ' + fmtDateShort(a.dueDates.programDue) : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+function bindCardOpeners(container){
+  container.querySelectorAll('[data-open]').forEach(el => el.addEventListener('click', () => openTaskDrawer(el.getAttribute('data-open'))));
+}
+
+/* ==================================================================
+   TODAY (REC Daily View)
+   ================================================================== */
+function renderToday(){
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : (hour < 18 ? 'Good afternoon' : 'Good evening');
+  const needsReview = assignments.filter(a => a.reviewStatus === 'pending');
+  const overdue = assignments.filter(a => a._deadline && a._deadline.condition === 'overdue');
+  const dueToday = assignments.filter(a => a._deadline && a._deadline.condition === 'due_today');
+  const dueThisWeek = assignments.filter(a => a._deadline && ['due_tomorrow', 'due_3_days', 'due_7_days'].includes(a._deadline.condition));
+  const upcomingPrograms = assignments.filter(a => a.dueDates && a.dueDates.programDue && daysUntil(a.dueDates.programDue) >= 0 && daysUntil(a.dueDates.programDue) <= 14 && !TERMINAL_STATUSES.includes(a.workflowStatus));
+  const purchasingIssues = assignments.filter(a => a.purchase && ['Purchase Request Needed', 'Request Submitted', 'REC Review', 'Denied'].includes(a.purchase.status));
+  const byRA = groupByRA(overdue);
+  const followUpRAs = Object.keys(byRA).filter(r => byRA[r].length >= HEALTH_THRESHOLDS.needsAttentionOverdueCount);
+
+  const total = needsReview.length + overdue.length + dueToday.length + purchasingIssues.length;
+  document.getElementById('todayGreeting').textContent = `${greeting}, ${me.username}`;
+
+  const box = document.getElementById('todayBox');
+  box.innerHTML = `
+    <div class="alert-inline" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#1e3a8a">${total} item${total === 1 ? '' : 's'} need your attention.</div>
+    <div class="rl-panel"><div class="rl-panel-header"><h2>Needs Your Review (${needsReview.length})</h2></div><div class="rl-panel-body" id="todayReview">${assignmentCardsHTML(needsReview, 'Nothing needs review.')}</div></div>
+    <div class="rl-panel"><div class="rl-panel-header"><h2>Overdue (${overdue.length})</h2></div><div class="rl-panel-body" id="todayOverdue">${assignmentCardsHTML(overdue, 'Nothing overdue.')}</div></div>
+    <div class="rl-panel"><div class="rl-panel-header"><h2>Due Today (${dueToday.length})</h2></div><div class="rl-panel-body" id="todayDueToday">${assignmentCardsHTML(dueToday, 'Nothing due today.')}</div></div>
+    <div class="rl-panel"><div class="rl-panel-header"><h2>Due This Week (${dueThisWeek.length})</h2></div><div class="rl-panel-body" id="todayDueWeek">${assignmentCardsHTML(dueThisWeek, 'Nothing due this week.')}</div></div>
+    <div class="rl-panel"><div class="rl-panel-header"><h2>Upcoming Programs (${upcomingPrograms.length})</h2></div><div class="rl-panel-body" id="todayUpcoming">${assignmentCardsHTML(upcomingPrograms, 'No programs in the next 14 days.')}</div></div>
+    <div class="rl-panel"><div class="rl-panel-header"><h2>Purchasing Issues (${purchasingIssues.length})</h2></div><div class="rl-panel-body" id="todayPurchasing">${assignmentCardsHTML(purchasingIssues, 'No open purchasing items.')}</div></div>
+    <div class="rl-panel"><div class="rl-panel-header"><h2>Staff Needing Follow-Up (${followUpRAs.length})</h2></div><div class="rl-panel-body">${followUpRAs.length === 0 ? '<div class="empty-note">No RAs currently need follow-up.</div>' : followUpRAs.map(r => `<div class="subcard" data-openra="${esc(r)}" style="cursor:pointer"><strong>${esc(r)}</strong> — ${byRA[r].length} overdue item(s)</div>`).join('')}</div></div>
+  `;
+  ['todayReview', 'todayOverdue', 'todayDueToday', 'todayDueWeek', 'todayUpcoming', 'todayPurchasing'].forEach(id => bindCardOpeners(document.getElementById(id)));
+  box.querySelectorAll('[data-openra]').forEach(el => el.addEventListener('click', () => openRAProfile(el.getAttribute('data-openra'))));
+}
+
+/* ==================================================================
+   DEADLINE CENTER
+   ================================================================== */
+function renderDeadlineCenter(){
+  const box = document.getElementById('deadlineBox');
+  const groups = [
+    { key: 'overdue', label: 'Overdue', list: assignments.filter(a => a._deadline && a._deadline.condition === 'overdue') },
+    { key: 'due_today', label: 'Due Today', list: assignments.filter(a => a._deadline && a._deadline.condition === 'due_today') },
+    { key: 'week', label: 'Due This Week', list: assignments.filter(a => a._deadline && ['due_tomorrow', 'due_3_days', 'due_7_days'].includes(a._deadline.condition)) },
+    { key: 'next_week', label: 'Due Next Week', list: assignments.filter(a => a._deadline && a._deadline.condition === 'due_14_days') },
+    { key: 'upcoming', label: 'Upcoming', list: assignments.filter(a => a._deadline && a._deadline.condition === 'upcoming') },
+  ];
+  box.innerHTML = groups.map(g => `<div class="rl-panel"><div class="rl-panel-header"><h2>${esc(g.label)} (${g.list.length})</h2></div><div class="rl-panel-body" id="dl-${g.key}">${assignmentCardsHTML(g.list, 'Nothing in this range.')}</div></div>`).join('');
+  groups.forEach(g => bindCardOpeners(document.getElementById('dl-' + g.key)));
+}
+
+/* ==================================================================
+   MATRIX
+   ================================================================== */
+function matrixCellHTML(a){
+  if (!a) return '<span class="matrix-cell unassigned" title="Not assigned">—</span>';
+  const st = STATUS_ICON[a.workflowStatus] || { icon: '○', cls: 'notstarted' };
+  let cls = st.cls, icon = st.icon;
+  if (a._deadline && a._deadline.condition === 'overdue' && !TERMINAL_STATUSES.includes(a.workflowStatus)) { cls = 'overdue'; icon = '!'; }
+  const title = `${a.requirementSnapshot.title} — ${a.workflowStatus}${a._deadline && a._deadline.dueDate ? ' (Due ' + a._deadline.dueDate + ')' : ''}`;
+  return `<span class="matrix-cell ${cls}" data-open="${a.id}" title="${esc(title)}">${icon}</span>`;
+}
+function renderMatrix(){
+  const box = document.getElementById('matrixBox');
+  const filtersBox = document.getElementById('matrixFilters');
+  const months = [...new Set(requirements.map(r => r.month).filter(Boolean))];
+  filtersBox.innerHTML = (months.length ? `<select id="matrixMonthFilter"><option value="">All Months</option>${months.map(m => `<option>${esc(m)}</option>`).join('')}</select>` : '') +
+    `<span class="helper-text" style="margin-left:auto">✓ Complete &middot; ● In Progress &middot; ◷ Review &middot; $ Purchasing &middot; ! Overdue &middot; ○ Not Started &middot; — Not Assigned</span>`;
+
+  function draw(monthFilter){
+    const reqs = requirements.filter(r => !monthFilter || r.month === monthFilter);
+    const names = raList();
+    if (names.length === 0 || reqs.length === 0) { box.innerHTML = '<div class="empty-note">No published requirements/assignments yet for this term. Go to Settings to build and publish curriculum.</div>'; return; }
+    const byRA = groupByRA(assignments);
+    let html = '<table class="matrix"><thead><tr><th class="ra-name-h">RA</th>' + reqs.map(r => `<th title="${esc(r.title)}">${esc(r.title.length > 16 ? r.title.slice(0, 15) + '…' : r.title)}</th>`).join('') + '</tr></thead><tbody>';
+    names.forEach(name => {
+      html += `<tr><td class="ra-name" data-ra="${esc(name)}">${esc(name)}</td>`;
+      reqs.forEach(r => {
+        const a = (byRA[name] || []).find(x => x.requirementId === r.id);
+        html += `<td>${matrixCellHTML(a)}</td>`;
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    box.innerHTML = html;
+    box.querySelectorAll('.matrix-cell[data-open]').forEach(el => el.addEventListener('click', () => openTaskDrawer(el.getAttribute('data-open'))));
+    box.querySelectorAll('td.ra-name').forEach(el => el.addEventListener('click', () => openRAProfile(el.getAttribute('data-ra'))));
+  }
+  draw('');
+  const sel = document.getElementById('matrixMonthFilter');
+  if (sel) sel.onchange = () => draw(sel.value);
+}
+
+/* ==================================================================
+   CALENDAR (Agenda view)
+   ================================================================== */
+function renderCalendar(){
+  const box = document.getElementById('calendarBox');
+  const events = [];
+  requirements.forEach(r => {
+    Object.entries(r.dates || {}).forEach(([k, v]) => { if (v) events.push({ date: v, label: r.title + ' — ' + labelForDateField(k), reqId: r.id }); });
+  });
+  assignments.forEach(a => {
+    if (a.program && a.program.actual && a.program.actual.actualDate) {
+      events.push({ date: a.program.actual.actualDate, label: (a.assignedTo || 'Group') + ' — ' + a.requirementSnapshot.title + ' (held)', assignId: a.id });
+    }
+  });
+  events.sort((x, y) => x.date.localeCompare(y.date));
+  if (events.length === 0) { box.innerHTML = '<div class="empty-note">No dated events in this term yet.</div>'; return; }
+  const byDate = {};
+  events.forEach(e => { (byDate[e.date] = byDate[e.date] || []).push(e); });
+  box.innerHTML = Object.keys(byDate).sort().map(d => `
+    <div class="agenda-day"><div class="agenda-date">${fmtDateLong(d)}</div>
+    ${byDate[d].map(e => `<div class="agenda-event" data-req="${e.reqId || ''}" data-assign="${e.assignId || ''}"><span>${esc(e.label)}</span><span class="pill blue">${fmtDateShort(d)}</span></div>`).join('')}
+    </div>`).join('');
+  box.querySelectorAll('.agenda-event').forEach(el => {
+    el.addEventListener('click', () => {
+      if (el.dataset.assign) openTaskDrawer(el.dataset.assign);
+      else if (el.dataset.req) {
+        const first = assignments.find(a => a.requirementId === el.dataset.req);
+        if (first) openTaskDrawer(first.id); else alert('This requirement has not been published/assigned yet.');
+      }
+    });
+  });
+}
+
+/* ==================================================================
+   REVIEW QUEUE
+   ================================================================== */
+let reviewTab = 'needsReview';
+function renderReviews(){
+  const tabs = [['all', 'All'], ['needsReview', 'Needs Review'], ['revision', 'Revision Requested'], ['approved', 'Approved'], ['completed', 'Completed']];
+  document.getElementById('reviewTabs').innerHTML = tabs.map(([k, l]) => `<button class="tab-btn ${reviewTab === k ? 'active' : ''}" data-tab="${k}">${l}</button>`).join('');
+  document.querySelectorAll('#reviewTabs .tab-btn').forEach(b => b.addEventListener('click', () => { reviewTab = b.dataset.tab; renderReviews(); }));
+  let list = [];
+  if (reviewTab === 'all') list = assignments.filter(a => a.submission || a.reviewStatus !== 'none');
+  else if (reviewTab === 'needsReview') list = assignments.filter(a => a.reviewStatus === 'pending');
+  else if (reviewTab === 'revision') list = assignments.filter(a => a.workflowStatus === 'Revision Requested');
+  else if (reviewTab === 'approved') list = assignments.filter(a => a.reviewStatus === 'approved');
+  else if (reviewTab === 'completed') list = assignments.filter(a => COMPLETE_STATUSES.includes(a.workflowStatus));
+  const box = document.getElementById('reviewsBox');
+  box.innerHTML = assignmentCardsHTML(list, 'No submissions in this view.');
+  bindCardOpeners(box);
+}
+
+/* ==================================================================
+   RA PROFILE (modal)
+   ================================================================== */
+function openRAProfile(username){
+  const list = (groupByRA(assignments))[username] || [];
+  const complete = list.filter(a => COMPLETE_STATUSES.includes(a.workflowStatus)).length;
+  const overdue = list.filter(a => a._deadline && a._deadline.condition === 'overdue').length;
+  const upcoming = list.filter(a => a._deadline && ['due_today', 'due_tomorrow', 'due_3_days', 'due_7_days', 'due_14_days', 'upcoming'].includes(a._deadline.condition)).length;
+  const review = list.filter(a => a.reviewStatus === 'pending').length;
+  const pct = list.length ? Math.round((complete / list.length) * 100) : 0;
+  const byMonth = {};
+  list.forEach(a => { const req = requirements.find(r => r.id === a.requirementId); const m = (req && req.month) || 'Unscheduled'; (byMonth[m] = byMonth[m] || []).push(a); });
+  const bodyHTML = `
+    <div class="kpi-bar" style="margin-bottom:16px">
+      <div class="kpi-card" style="--kpi-color:var(--rl-primary)"><div class="kpi-value">${pct}%</div><div class="kpi-label">Completion</div></div>
+      <div class="kpi-card" style="--kpi-color:var(--rl-success)"><div class="kpi-value">${complete}</div><div class="kpi-label">Completed</div></div>
+      <div class="kpi-card" style="--kpi-color:var(--rl-danger)"><div class="kpi-value">${overdue}</div><div class="kpi-label">Overdue</div></div>
+      <div class="kpi-card" style="--kpi-color:var(--rl-secondary)"><div class="kpi-value">${upcoming}</div><div class="kpi-label">Upcoming</div></div>
+      <div class="kpi-card" style="--kpi-color:#7c3aed"><div class="kpi-value">${review}</div><div class="kpi-label">Awaiting Review</div></div>
+    </div>
+    ${Object.keys(byMonth).length === 0 ? '<div class="empty-note">No individual assignments yet.</div>' : Object.keys(byMonth).map(m => `<div class="section-title">${esc(m)}</div>${assignmentCardsHTML(byMonth[m], '')}`).join('')}
+  `;
+  openModal(username + ' — Curriculum Progress', bodyHTML, `<button class="btn" onclick="closeModal()">Close</button>`);
+  document.querySelectorAll('#genModalOverlay [data-open]').forEach(el => el.addEventListener('click', () => { closeModal(); openTaskDrawer(el.getAttribute('data-open')); }));
+}
+
+/* ==================================================================
+   MY CURRICULUM (RA-facing — backend already scopes `assignments` to self)
+   ================================================================== */
+function renderMine(){
+  const list = assignments;
+  const complete = list.filter(a => COMPLETE_STATUSES.includes(a.workflowStatus)).length;
+  const overdue = list.filter(a => a._deadline && a._deadline.condition === 'overdue').length;
+  const review = list.filter(a => a.reviewStatus === 'pending').length;
+  const pct = list.length ? Math.round((complete / list.length) * 100) : 0;
+  document.getElementById('mineSummary').innerHTML = `
+    <div class="kpi-card" style="--kpi-color:var(--rl-primary)"><div class="kpi-value">${pct}%</div><div class="kpi-label">Completion</div></div>
+    <div class="kpi-card" style="--kpi-color:var(--rl-success)"><div class="kpi-value">${complete}</div><div class="kpi-label">Completed</div></div>
+    <div class="kpi-card" style="--kpi-color:var(--rl-danger)"><div class="kpi-value">${overdue}</div><div class="kpi-label">Overdue</div></div>
+    <div class="kpi-card" style="--kpi-color:#7c3aed"><div class="kpi-value">${review}</div><div class="kpi-label">Awaiting Review</div></div>
+  `;
+  const box = document.getElementById('mineBox');
+  if (list.length === 0) { box.innerHTML = '<div class="empty-note">Nothing assigned to you yet this term.</div>'; return; }
+  const byMonth = {};
+  list.forEach(a => { const req = requirements.find(r => r.id === a.requirementId); const m = (req && req.month) || 'Unscheduled'; (byMonth[m] = byMonth[m] || []).push(a); });
+  box.innerHTML = Object.keys(byMonth).map((m, i) => `<div class="rl-panel"><div class="rl-panel-header"><h2>${esc(m)}</h2></div><div class="rl-panel-body" id="mine-${i}">${assignmentCardsHTML(byMonth[m], '')}</div></div>`).join('');
+  Object.keys(byMonth).forEach((m, i) => bindCardOpeners(document.getElementById('mine-' + i)));
+}
+
+/* ==================================================================
+   PROGRAM LIBRARY
+   ================================================================== */
+function renderPrograms(){
+  const input = document.getElementById('programSearchInput');
+  const q = (input.value || '').toLowerCase();
+  const completed = assignments.filter(a => COMPLETE_STATUSES.includes(a.workflowStatus) && a.program && a.program.actual);
+  const filtered = completed.filter(a => !q || a.requirementSnapshot.title.toLowerCase().includes(q) || (a.requirementSnapshot.category || '').toLowerCase().includes(q) || (a.assignedTo || '').toLowerCase().includes(q));
+  const box = document.getElementById('programsBox');
+  box.innerHTML = filtered.length === 0 ? '<div class="empty-note">No completed programs match yet.</div>' : filtered.map(a => `
+    <div class="subcard" data-open="${a.id}" style="cursor:pointer">
+      <div class="subcard-head"><strong>${esc(a.requirementSnapshot.title)}</strong><span class="pill blue">${esc(a.requirementSnapshot.category || '')}</span></div>
+      <div class="helper-text">${esc(a.assignedTo || (a.participants || []).join(', '))}${a.program.actual.actualDate ? ' · ' + fmtDateLong(a.program.actual.actualDate) : ''}${a.program.actual.actualAttendance ? ' · Attendance: ' + a.program.actual.actualAttendance : ''}</div>
+      ${a.program.actual.description ? `<div style="margin-top:6px;font-size:12.5px">${esc(a.program.actual.description)}</div>` : ''}
+    </div>
+  `).join('');
+  bindCardOpeners(box);
+  input.oninput = renderPrograms;
+}
+
+/* ==================================================================
+   REPORTS
+   ================================================================== */
+let reportTab = 'byRA';
+function renderReports(){
+  const tabs = [['byRA', 'By RA'], ['byCategory', 'By Category'], ['byMonth', 'By Month'], ['overdue', 'Overdue'], ['purchasing', 'Purchasing']];
+  document.getElementById('reportTabs').innerHTML = tabs.map(([k, l]) => `<button class="tab-btn ${reportTab === k ? 'active' : ''}" data-tab="${k}">${l}</button>`).join('') + `<button class="btn sm" id="exportCsvBtn" style="margin-left:auto">Export CSV</button>`;
+  document.querySelectorAll('#reportTabs .tab-btn').forEach(b => b.addEventListener('click', () => { reportTab = b.dataset.tab; renderReports(); }));
+
+  let headers = [], rows = [];
+  if (reportTab === 'byRA') {
+    headers = ['RA', 'Assigned', 'Complete', 'Completion %', 'Overdue'];
+    const byRA = groupByRA(assignments);
+    rows = Object.keys(byRA).sort().map(n => {
+      const l = byRA[n]; const c = l.filter(a => COMPLETE_STATUSES.includes(a.workflowStatus)).length;
+      return [n, l.length, c, l.length ? Math.round((c / l.length) * 100) : 0, l.filter(a => a._deadline && a._deadline.condition === 'overdue').length];
+    });
+  } else if (reportTab === 'byCategory') {
+    headers = ['Category', 'Assigned', 'Complete', 'Completion %'];
+    const cats = {};
+    assignments.forEach(a => { const c = a.requirementSnapshot.category || 'Other'; cats[c] = cats[c] || { total: 0, complete: 0 }; cats[c].total++; if (COMPLETE_STATUSES.includes(a.workflowStatus)) cats[c].complete++; });
+    rows = Object.keys(cats).map(c => [c, cats[c].total, cats[c].complete, cats[c].total ? Math.round((cats[c].complete / cats[c].total) * 100) : 0]);
+  } else if (reportTab === 'byMonth') {
+    headers = ['Month', 'Assigned', 'Complete', 'Completion %'];
+    const months = {};
+    assignments.forEach(a => { const req = requirements.find(r => r.id === a.requirementId); const m = (req && req.month) || 'Unscheduled'; months[m] = months[m] || { total: 0, complete: 0 }; months[m].total++; if (COMPLETE_STATUSES.includes(a.workflowStatus)) months[m].complete++; });
+    rows = Object.keys(months).map(m => [m, months[m].total, months[m].complete, months[m].total ? Math.round((months[m].complete / months[m].total) * 100) : 0]);
+  } else if (reportTab === 'overdue') {
+    headers = ['RA', 'Requirement', 'Due Date', 'Days Overdue'];
+    rows = assignments.filter(a => a._deadline && a._deadline.condition === 'overdue').map(a => [a.assignedTo || (a.participants || []).join(', '), a.requirementSnapshot.title, a._deadline.dueDate, Math.abs(a._deadline.days)]);
+  } else if (reportTab === 'purchasing') {
+    headers = ['RA', 'Requirement', 'Purchase Status', 'Estimated Cost'];
+    rows = assignments.filter(a => a.purchase && a.purchase.status !== 'Not Needed').map(a => [a.assignedTo || (a.participants || []).join(', '), a.requirementSnapshot.title, a.purchase.status, ((a.purchase.items || []).reduce((s, it) => s + (parseFloat(it.estimatedCost) || 0) * (parseFloat(it.quantity) || 1), 0)).toFixed(2)]);
+  }
+  const box = document.getElementById('reportsBox');
+  box.innerHTML = rows.length === 0 ? '<div class="empty-note">No data for this report yet.</div>' : `<div style="overflow-x:auto"><table class="rl-table"><thead><tr>${headers.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  document.getElementById('exportCsvBtn').addEventListener('click', () => downloadCSV('curriculum-' + reportTab + '.csv', [headers, ...rows]));
+}
+
+/* ==================================================================
+   SETTINGS — Terms / Curriculum Builder / Import (admin tier only)
+   ================================================================== */
+let settingsTab = 'terms';
+function renderSettings(){
+  const tabs = [['terms', 'Terms'], ['builder', 'Curriculum Builder'], ['import', 'Import Legacy Tracker']];
+  document.getElementById('settingsTabs').innerHTML = tabs.map(([k, l]) => `<button class="tab-btn ${settingsTab === k ? 'active' : ''}" data-tab="${k}">${l}</button>`).join('');
+  document.querySelectorAll('#settingsTabs .tab-btn').forEach(b => b.addEventListener('click', () => { settingsTab = b.dataset.tab; renderSettings(); }));
+  if (settingsTab === 'terms') renderTermsSettings();
+  else if (settingsTab === 'builder') renderBuilderSettings();
+  else renderImportSettings();
+}
+
+/* ---- Terms ---- */
+function renderTermsSettings(){
+  const box = document.getElementById('settingsBox');
+  box.innerHTML = `
+    <div class="rl-panel"><div class="rl-panel-header"><div><h2>Academic Terms</h2></div><button class="btn primary" id="newTermBtn">+ New Term</button></div>
+    <div class="rl-panel-body" id="termsList"></div></div>`;
+  document.getElementById('newTermBtn').addEventListener('click', () => openTermForm(null));
+  const list = document.getElementById('termsList');
+  if (terms.length === 0) { list.innerHTML = '<div class="empty-note">No terms yet — create one to get started.</div>'; return; }
+  list.innerHTML = terms.map(t => `
+    <div class="subcard">
+      <div class="subcard-head">
+        <div><strong>${esc(t.name)}</strong> ${t.academicYear ? '(' + esc(t.academicYear) + ')' : ''} <span class="pill ${t.status === 'Active' ? 'green' : (t.status === 'Draft' ? 'orange' : 'gray')}">${esc(t.status)}</span> ${t.needsDateReview ? '<span class="pill red">Date Review Needed</span>' : ''}</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn sm" data-edit-term="${t.id}">Edit</button>
+          <button class="btn sm" data-dup-term="${t.id}">Duplicate</button>
+        </div>
+      </div>
+      <div class="helper-text">${t.startDate ? fmtDateLong(t.startDate) : 'No start date set'} &rarr; ${t.endDate ? fmtDateLong(t.endDate) : 'No end date set'}</div>
+    </div>
+  `).join('');
+  list.querySelectorAll('[data-edit-term]').forEach(btn => btn.addEventListener('click', () => openTermForm(terms.find(t => t.id === btn.dataset.editTerm))));
+  list.querySelectorAll('[data-dup-term]').forEach(btn => btn.addEventListener('click', () => openDuplicateTermForm(terms.find(t => t.id === btn.dataset.dupTerm))));
+}
+
+function openTermForm(term){
+  openModal(term ? 'Edit Term' : 'New Term', `
+    <div class="field-grid">
+      <div class="field full"><label>Term Name</label><input id="tf-name" value="${esc(term ? term.name : '')}" placeholder="e.g., Fall 2026" /></div>
+      <div class="field"><label>Academic Year</label><input id="tf-year" value="${esc(term ? term.academicYear : '')}" placeholder="e.g., 2026-2027" /></div>
+      <div class="field"><label>Status</label><select id="tf-status">${['Draft', 'Active', 'Completed', 'Archived'].map(s => `<option ${term && term.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
+      <div class="field"><label>Start Date</label><input id="tf-start" type="date" value="${esc(term ? term.startDate : '')}" /></div>
+      <div class="field"><label>End Date</label><input id="tf-end" type="date" value="${esc(term ? term.endDate : '')}" /></div>
+    </div>
+    ${term && term.needsDateReview ? '<div class="helper-text" style="color:var(--rl-danger);margin-top:8px">This term was duplicated or imported — verify these dates before activating it.</div>' : ''}
+  `, `<button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" id="tfSaveBtn">Save Term</button>`);
+  document.getElementById('tfSaveBtn').addEventListener('click', async () => {
+    const name = val('tf-name');
+    if (!name) { alert('Term name is required.'); return; }
+    const payload = { property: currentProperty, name, academicYear: val('tf-year'), status: val('tf-status'), startDate: val('tf-start'), endDate: val('tf-end') };
+    try {
+      if (term) await apiFetch('/reslife-curriculum-terms', { method: 'PUT', body: JSON.stringify(Object.assign({ id: term.id }, payload)) });
+      else await apiFetch('/reslife-curriculum-terms', { method: 'POST', body: JSON.stringify(payload) });
+      terms = await apiFetch('/reslife-curriculum-terms' + propParam());
+      populateTermSelect();
+      closeModal(); renderSettings();
+    } catch (e) { alert('Save failed: ' + e.message); }
+  });
+}
+
+function openDuplicateTermForm(term){
+  openModal('Duplicate "' + term.name + '"', `
+    <div class="field-grid">
+      <div class="field full"><label>New Term Name</label><input id="dt-name" placeholder="e.g., Fall 2027" /></div>
+      <div class="field full"><label>New Academic Year</label><input id="dt-year" value="${esc(term.academicYear || '')}" /></div>
+    </div>
+    <div class="helper-text" style="margin-top:8px">This copies the curriculum requirement structure only. You'll need to verify/update all dates before publishing — they are never carried over automatically.</div>
+  `, `<button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" id="dtSaveBtn">Duplicate</button>`);
+  document.getElementById('dtSaveBtn').addEventListener('click', async () => {
+    const newName = val('dt-name');
+    if (!newName) { alert('New term name is required.'); return; }
+    try {
+      const res = await apiFetch('/reslife-curriculum-terms', { method: 'POST', body: JSON.stringify({ action: 'duplicate', id: term.id, property: currentProperty, newName, newAcademicYear: val('dt-year') }) });
+      terms = await apiFetch('/reslife-curriculum-terms' + propParam());
+      populateTermSelect();
+      closeModal();
+      alert(`Created draft term "${newName}" with ${res.requirementsCopied} requirement(s) copied. Review dates before publishing.`);
+      renderSettings();
+    } catch (e) { alert('Duplicate failed: ' + e.message); }
+  });
+}
+
+/* ---- Curriculum Builder ---- */
+function renderBuilderSettings(){
+  const box = document.getElementById('settingsBox');
+  if (!currentTermId) { box.innerHTML = '<div class="empty-note">Select or create a term first.</div>'; return; }
+  const term = terms.find(t => t.id === currentTermId);
+  const unpublished = requirements.filter(r => !r.published);
+  box.innerHTML = `
+    <div class="rl-panel"><div class="rl-panel-header">
+      <div><h2>Curriculum Builder — ${esc(term ? term.name : '')}</h2><p>Requirements for the currently selected term (use the term switcher in the header to change terms).</p></div>
+      <div style="display:flex;gap:8px">
+        ${unpublished.length ? `<button class="btn dark" id="publishTermBtn">Publish Term (${unpublished.length} unpublished)</button>` : ''}
+        <button class="btn primary" id="newReqBtn">+ New Requirement</button>
+      </div>
+    </div><div class="rl-panel-body" id="reqList"></div></div>`;
+  document.getElementById('newReqBtn').addEventListener('click', () => openRequirementForm(null));
+  const pubBtn = document.getElementById('publishTermBtn');
+  if (pubBtn) pubBtn.addEventListener('click', async () => {
+    if (!confirm(`Publish ${unpublished.length} requirement(s)? This creates real assignments for the resolved staff.`)) return;
+    try {
+      const res = await apiFetch('/reslife-curriculum-requirements', { method: 'POST', body: JSON.stringify({ action: 'publishTerm', termId: currentTermId, property: currentProperty }) });
+      await refreshTermData();
+      alert(`Published. ${res.totalCreated} assignment(s) created across ${res.summary.length} requirement(s).`);
+      renderSettings();
+    } catch (e) { alert('Publish failed: ' + e.message); }
+  });
+
+  const list = document.getElementById('reqList');
+  if (requirements.length === 0) { list.innerHTML = '<div class="empty-note">No requirements yet for this term.</div>'; return; }
+  list.innerHTML = requirements.map(r => `
+    <div class="subcard">
+      <div class="subcard-head">
+        <div><strong>${esc(r.title)}</strong> <span class="pill blue">${esc(r.category)}</span> ${r.month ? '<span class="pill gray">' + esc(r.month) + '</span>' : ''}
+        ${r.published ? '<span class="pill green">Published</span>' : '<span class="pill orange">Draft</span>'}
+        ${r.needsDateReview ? '<span class="pill red">Date Review Needed</span>' : ''}${r.needsAssigneeReview ? '<span class="pill red">Assignee Review Needed</span>' : ''}</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn sm" data-edit-req="${r.id}">Edit</button>
+          ${!r.published ? `<button class="btn sm dark" data-pub-req="${r.id}">Publish</button>` : ''}
+          <button class="btn sm danger" data-archive-req="${r.id}">Archive</button>
+        </div>
+      </div>
+      <div class="helper-text">${esc((ASSIGNMENT_TYPE_OPTIONS.find(o => o.value === r.assignmentType) || {}).label || r.assignmentType)} &middot; Owner: ${esc(r.ownerType)} &middot; ${r.required ? 'Required' : 'Optional'}</div>
+    </div>
+  `).join('');
+  list.querySelectorAll('[data-edit-req]').forEach(btn => btn.addEventListener('click', () => openRequirementForm(requirements.find(r => r.id === btn.dataset.editReq))));
+  list.querySelectorAll('[data-pub-req]').forEach(btn => btn.addEventListener('click', async () => {
+    try {
+      const res = await apiFetch('/reslife-curriculum-requirements', { method: 'POST', body: JSON.stringify({ action: 'publish', id: btn.dataset.pubReq, property: currentProperty }) });
+      await refreshTermData();
+      alert(`Published. ${res.totalCreated} assignment(s) created.`);
+      renderSettings();
+    } catch (e) { alert('Publish failed: ' + e.message); }
+  }));
+  list.querySelectorAll('[data-archive-req]').forEach(btn => btn.addEventListener('click', async () => {
+    if (!confirm('Archive this requirement? It will be hidden from active views but assignment history is preserved.')) return;
+    try {
+      await apiFetch('/reslife-curriculum-requirements', { method: 'PUT', body: JSON.stringify({ id: btn.dataset.archiveReq, property: currentProperty, status: 'archived' }) });
+      await refreshTermData(); renderSettings();
+    } catch (e) { alert('Failed: ' + e.message); }
+  }));
+}
+
+function openRequirementForm(req){
+  let stages = req ? JSON.parse(JSON.stringify(req.workflowStages)) : JSON.parse(JSON.stringify(WORKFLOW_TEMPLATES.simple.stages));
+  let assignedRAs = req ? (req.assignedRAs || []).slice() : [];
+
+  function stagesHTML(){
+    return stages.map((s, i) => `
+      <div class="dynrow" style="display:flex;gap:8px;align-items:center" data-si="${i}">
+        <input class="stage-label" value="${esc(s.label)}" placeholder="Stage label" style="flex:1;padding:7px 9px;border:1px solid var(--rl-border);border-radius:6px" />
+        <label style="display:flex;align-items:center;gap:5px;font-size:11px;white-space:nowrap"><input type="checkbox" class="stage-required" ${s.required !== false ? 'checked' : ''} /> Required</label>
+        <button class="btn sm danger" type="button" data-remove-stage="${i}">Remove</button>
+      </div>`).join('');
+  }
+  function bindStageRows(){
+    document.querySelectorAll('#stagesBox .dynrow').forEach(row => {
+      const i = parseInt(row.dataset.si, 10);
+      row.querySelector('.stage-label').addEventListener('input', e => { stages[i].label = e.target.value; stages[i].key = stages[i].key || ('stage' + i); });
+      row.querySelector('.stage-required').addEventListener('change', e => { stages[i].required = e.target.checked; });
+      row.querySelector('[data-remove-stage]').addEventListener('click', () => { stages.splice(i, 1); document.getElementById('stagesBox').innerHTML = stagesHTML(); bindStageRows(); });
+    });
+  }
+
+  const dateFields = [['planningDue', 'Planning / Proposal Due'], ['purchaseDue', 'Purchase Request Due'], ['programDue', 'Program / Event Due'], ['documentationDue', 'Documentation Due']];
+  const existingDates = req ? (req.dates || {}) : {};
+
+  openModal(req ? 'Edit Requirement' : 'New Curriculum Requirement', `
+    <div class="field-grid">
+      <div class="field full"><label>Title</label><input id="rf-title" value="${esc(req ? req.title : '')}" placeholder="e.g., Floor Meeting" /></div>
+      <div class="field full"><label>Description</label><textarea id="rf-desc">${esc(req ? req.description : '')}</textarea></div>
+      <div class="field"><label>Category</label><select id="rf-category">${CATEGORY_OPTIONS.map(c => `<option ${req && req.category === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
+      <div class="field"><label>Month / Period</label><input id="rf-month" value="${esc(req ? req.month : '')}" placeholder="e.g., September" /></div>
+      <div class="field"><label>Owner Type</label><select id="rf-owner">${OWNER_TYPE_OPTIONS.map(o => `<option ${req && req.ownerType === o ? 'selected' : ''}>${o}</option>`).join('')}</select></div>
+      <div class="field"><label>Required?</label><div class="seg" id="rf-required"><button data-val="yes" class="${!req || req.required !== false ? 'active' : ''}">Required</button><button data-val="no" class="${req && req.required === false ? 'active' : ''}">Optional</button></div></div>
+      <div class="field full"><label>Assignment Type</label><select id="rf-assigntype">${ASSIGNMENT_TYPE_OPTIONS.map(o => `<option value="${o.value}" ${req && req.assignmentType === o.value ? 'selected' : ''}>${o.label}</option>`).join('')}</select></div>
+      <div class="field full hidden" id="rf-ras-field"><label>Selected RAs</label><div class="chip-grid" id="rf-ras-chips"></div></div>
+    </div>
+    <p class="section-title" style="margin-top:16px">Important Dates <span style="text-transform:none;font-weight:400">(check the ones that apply)</span></p>
+    <div class="field-grid">
+      ${dateFields.map(([k, l]) => `
+        <div class="field"><label><input type="checkbox" class="date-toggle" data-key="${k}" ${existingDates[k] ? 'checked' : ''} style="width:auto;margin-right:6px" />${l}</label>
+        <input type="date" class="date-input" data-key="${k}" value="${esc(existingDates[k] || '')}" ${existingDates[k] ? '' : 'disabled'} /></div>
+      `).join('')}
+    </div>
+    <p class="section-title" style="margin-top:16px">Workflow</p>
+    <select id="rf-template" style="margin-bottom:10px">
+      <option value="">Choose a template to start from…</option>
+      ${Object.entries(WORKFLOW_TEMPLATES).map(([k, t]) => `<option value="${k}">${esc(t.label)}</option>`).join('')}
+    </select>
+    <div id="stagesBox">${stagesHTML()}</div>
+    <button class="btn sm" id="addStageBtn" type="button" style="margin-top:6px">+ Add Stage</button>
+    <div class="field-grid" style="margin-top:14px">
+      <div class="field"><label>Requires Documentation?</label><div class="seg" id="rf-reqdoc"><button data-val="no" class="${!req || !req.requiresDocumentation ? 'active' : ''}">No</button><button data-val="yes" class="${req && req.requiresDocumentation ? 'active' : ''}">Yes</button></div></div>
+      <div class="field"><label>Requires Purchase?</label><div class="seg" id="rf-reqpurchase"><button data-val="no" class="${!req || !req.requiresPurchase ? 'active' : ''}">No</button><button data-val="yes" class="${req && req.requiresPurchase ? 'active' : ''}">Yes</button></div></div>
+    </div>
+  `, `<button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" id="rfSaveBtn">${req ? 'Save Changes' : 'Create Requirement'}</button>`);
+
+  bindStageRows();
+  document.getElementById('addStageBtn').addEventListener('click', () => { stages.push({ key: 'stage' + uid(), label: '', required: true }); document.getElementById('stagesBox').innerHTML = stagesHTML(); bindStageRows(); });
+  document.getElementById('rf-template').addEventListener('change', (e) => {
+    if (!e.target.value) return;
+    stages = JSON.parse(JSON.stringify(WORKFLOW_TEMPLATES[e.target.value].stages));
+    document.getElementById('stagesBox').innerHTML = stagesHTML(); bindStageRows();
+  });
+  document.querySelectorAll('.date-toggle').forEach(cb => cb.addEventListener('change', (e) => {
+    const input = document.querySelector(`.date-input[data-key="${e.target.dataset.key}"]`);
+    input.disabled = !e.target.checked; if (!e.target.checked) input.value = '';
+  }));
+  bindSeg('rf-required', (!req || req.required !== false) ? 'yes' : 'no', () => {});
+  bindSeg('rf-reqdoc', (req && req.requiresDocumentation) ? 'yes' : 'no', () => {});
+  bindSeg('rf-reqpurchase', (req && req.requiresPurchase) ? 'yes' : 'no', () => {});
+
+  function refreshRASection(){
+    const type = document.getElementById('rf-assigntype').value;
+    const show = type === 'selected_ras';
+    document.getElementById('rf-ras-field').classList.toggle('hidden', !show);
+    if (show) renderChipGroup(document.getElementById('rf-ras-chips'), raRoster.map(u => u.username), assignedRAs, true, () => {});
+  }
+  document.getElementById('rf-assigntype').value = req ? req.assignmentType : 'every_ra';
+  document.getElementById('rf-assigntype').addEventListener('change', refreshRASection);
+  refreshRASection();
+
+  document.getElementById('rfSaveBtn').addEventListener('click', async () => {
+    const title = val('rf-title');
+    if (!title) { alert('Title is required.'); return; }
+    if (stages.filter(s => s.label && s.label.trim()).length === 0) { alert('Add at least one workflow stage.'); return; }
+    stages.forEach((s, i) => { if (!s.key) s.key = 'stage' + i; s.order = i; });
+    const dates = {};
+    dateFields.forEach(([k]) => { const inp = document.querySelector(`.date-input[data-key="${k}"]`); dates[k] = inp.disabled ? '' : inp.value; });
+    const payload = {
+      property: currentProperty, termId: currentTermId, title, description: val('rf-desc'),
+      category: document.getElementById('rf-category').value, month: val('rf-month'), ownerType: document.getElementById('rf-owner').value,
+      assignmentType: document.getElementById('rf-assigntype').value, assignedRAs,
+      required: document.querySelector('#rf-required button.active').dataset.val === 'yes',
+      requiresDocumentation: document.querySelector('#rf-reqdoc button.active').dataset.val === 'yes',
+      requiresPurchase: document.querySelector('#rf-reqpurchase button.active').dataset.val === 'yes',
+      workflowStages: stages.filter(s => s.label && s.label.trim()), dates,
+    };
+    try {
+      if (req) await apiFetch('/reslife-curriculum-requirements', { method: 'PUT', body: JSON.stringify(Object.assign({ id: req.id }, payload)) });
+      else await apiFetch('/reslife-curriculum-requirements', { method: 'POST', body: JSON.stringify(payload) });
+      await refreshTermData();
+      closeModal(); renderSettings();
+    } catch (e) { alert('Save failed: ' + e.message); }
+  });
+}
+
+/* ---- Import Legacy Tracker ---- */
+async function renderImportSettings(){
+  const box = document.getElementById('settingsBox');
+  box.innerHTML = '<div class="rl-panel"><div class="rl-panel-header"><div><h2>Import from Quick Curriculum Tracker</h2><p>Migrates a legacy semester tracker into a real Term + Requirements. No assignments are created until you review and publish.</p></div></div><div class="rl-panel-body" id="importList"><div class="rl-loading">Loading…</div></div></div>';
+  let legacy = [];
+  try { legacy = await apiFetch('/reslife-curriculum' + propParam()); } catch (e) { legacy = []; }
+  const list = document.getElementById('importList');
+  const notYetImported = legacy.filter(l => !terms.some(t => t.importedFromLegacyId === l.id));
+  if (notYetImported.length === 0) { list.innerHTML = '<div class="empty-note">No legacy trackers left to import (or none exist yet).</div>'; return; }
+  list.innerHTML = notYetImported.map(l => `
+    <div class="subcard">
+      <div class="subcard-head"><strong>${esc(l.semester)}</strong><button class="btn sm dark" data-import="${l.id}">Import</button></div>
+      <div class="helper-text">${(l.roster || []).length} roster names &middot; ${(l.requirements || []).length} requirements</div>
+    </div>
+  `).join('');
+  list.querySelectorAll('[data-import]').forEach(btn => btn.addEventListener('click', async () => {
+    try {
+      const res = await apiFetch('/reslife-curriculum-import', { method: 'POST', body: JSON.stringify({ property: currentProperty, legacyTrackerId: btn.dataset.import }) });
+      terms = await apiFetch('/reslife-curriculum-terms' + propParam());
+      populateTermSelect();
+      alert(`Imported "${res.term.name}" as a draft term with ${res.requirementsImported} requirement(s). ${res.note}`);
+      renderSettings();
+    } catch (e) { alert('Import failed: ' + e.message); }
+  }));
+}
+
+init();
+</script>
+</body>
+</html>

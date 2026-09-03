@@ -1,0 +1,1602 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Collateral Hub &bull; Reslife Hub</title>
+<meta name="description" content="ResLife staff committee management: Programming, Recognition, and Recruitment &amp; Development collateral groups, projects, meetings, and accountability." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --rl-primary:#002D6A; --rl-primary-dark:#001B40; --rl-secondary:#F99239; --rl-on-primary:#fff;
+  --rl-bg:#f3f5f8; --rl-panel:#fff; --rl-border:#e2e8f0; --rl-text:#101828; --rl-subtext:#64748b;
+  --rl-danger:#d20000; --rl-danger-bg:#fef2f2; --rl-success:#16a34a; --rl-success-bg:#f0fdf4;
+  --rl-warn:#b45309; --rl-warn-bg:#fff7ed; --rl-nav-w:250px; --rl-nav-w-collapsed:64px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:'Montserrat',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--rl-bg);color:var(--rl-text);font-size:14px;line-height:1.5}
+.hidden{display:none !important}
+button{font-family:inherit}
+a{color:var(--rl-primary)}
+
+header.rl-header{background:linear-gradient(180deg,var(--rl-primary),var(--rl-primary-dark));color:#fff;padding:0 16px;height:58px;display:flex;align-items:center;gap:12px;position:fixed;top:0;left:0;right:0;z-index:60;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+.rl-mobile-toggle{display:none;width:34px;height:34px;align-items:center;justify-content:center;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.3);border-radius:8px;color:#fff;font-size:16px;cursor:pointer;flex-shrink:0}
+.rl-back-link{display:inline-flex;align-items:center;gap:6px;color:#fff;text-decoration:none;font-size:12px;font-weight:700;padding:6px 10px;border-radius:6px;border:1.5px solid rgba(255,255,255,.4);white-space:nowrap}
+.rl-back-link:hover{background:rgba(255,255,255,.12)}
+.rl-header-title{font-weight:800;font-size:14px;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap}
+.rl-header-right{display:flex;align-items:center;gap:10px;margin-left:auto;flex-wrap:wrap}
+.rl-bell-btn{position:relative;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.3);color:#fff;width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:15px}
+.rl-bell-dot{position:absolute;top:-3px;right:-3px;width:9px;height:9px;border-radius:50%;background:var(--rl-secondary);border:1.5px solid var(--rl-primary)}
+.rl-notif-panel{position:absolute;top:52px;right:16px;width:340px;max-height:420px;overflow-y:auto;background:#fff;border:1px solid var(--rl-border);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.18);z-index:70}
+.rl-notif-item{padding:12px 14px;border-bottom:1px solid var(--rl-border);font-size:12.5px}
+.rl-notif-item.unread{background:#eff6ff}
+.rl-notif-title{font-weight:700;margin-bottom:2px}
+.rl-notif-meta{font-size:11px;color:var(--rl-subtext);margin-top:4px}
+.rl-role-badge{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:5px 9px;border-radius:999px;background:var(--rl-secondary);color:#1a1000}
+.rl-logout-btn{background:transparent;border:1.5px solid rgba(255,255,255,.6);color:#fff;padding:6px 12px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer}
+.rl-logout-btn:hover{background:#fff;color:var(--rl-primary)}
+
+.rl-sidebar{position:fixed;left:0;top:58px;bottom:0;width:var(--rl-nav-w);background:linear-gradient(180deg,var(--rl-primary-dark),#000a1a);overflow-y:auto;z-index:50;transition:width .2s;display:flex;flex-direction:column}
+.rl-sidebar.collapsed{width:var(--rl-nav-w-collapsed)}
+.rl-sidebar-nav{flex:1;padding:12px 0}
+.rl-nav-item{display:flex;align-items:center;gap:12px;width:100%;padding:11px 18px;background:none;border:none;border-left:3px solid transparent;color:rgba(255,255,255,.65);font-family:inherit;font-size:13px;font-weight:600;text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;text-decoration:none;box-sizing:border-box}
+.rl-nav-item:hover{background:rgba(255,255,255,.06);color:#fff}
+.rl-nav-item.active{background:rgba(249,146,57,.14);color:#fff;border-left-color:var(--rl-secondary)}
+.rl-nav-icon{flex-shrink:0;width:18px;height:18px;display:flex;align-items:center;justify-content:center}
+.rl-nav-icon svg{width:17px;height:17px}
+.rl-nav-divider{height:1px;background:rgba(255,255,255,.1);margin:10px 18px}
+.rl-nav-group-title{padding:14px 18px 4px;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:rgba(255,255,255,.35)}
+.rl-sidebar.collapsed .rl-nav-label,.rl-sidebar.collapsed .rl-nav-group-title{display:none}
+.rl-sidebar.collapsed .rl-nav-item{justify-content:center;padding:11px 0}
+
+main.wrap{margin-left:var(--rl-nav-w);margin-top:58px;padding:20px 22px 80px;transition:margin-left .2s;max-width:1360px}
+@media(max-width:900px){
+  .rl-mobile-toggle{display:flex}
+  .rl-sidebar{transform:translateX(-100%)}
+  .rl-sidebar.mobile-open{transform:translateX(0)}
+  main.wrap{margin-left:0;padding:16px}
+}
+.rl-fullscreen-msg{display:flex;align-items:center;justify-content:center;height:100vh;font-size:14px;color:var(--rl-subtext)}
+
+.view-panel{display:none}
+.view-panel.active{display:block}
+h1.page-title{font-size:19px;font-weight:800;color:var(--rl-primary);margin:0 0 2px}
+p.page-sub{margin:0 0 16px;font-size:12.5px;color:var(--rl-subtext)}
+
+.rl-panel{background:var(--rl-panel);border:1px solid var(--rl-border);border-radius:12px;margin-bottom:16px;overflow:hidden}
+.rl-panel-header{padding:14px 18px;border-bottom:1px solid var(--rl-border);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.rl-panel-header h2{font-size:14.5px;font-weight:800;margin:0;color:var(--rl-primary)}
+.rl-panel-header p{margin:2px 0 0;font-size:12px;color:var(--rl-subtext)}
+.rl-panel-body{padding:16px 18px}
+
+.kpi-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px}
+.kpi-card{background:#fff;border:1px solid var(--rl-border);border-radius:12px;padding:14px 16px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden}
+.kpi-card:hover{box-shadow:0 6px 16px rgba(0,0,0,.08);transform:translateY(-1px)}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--kpi-color,var(--rl-primary))}
+.kpi-value{font-size:24px;font-weight:800;line-height:1}
+.kpi-label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--rl-subtext);margin-top:5px}
+
+.group-card{background:#fff;border:1px solid var(--rl-border);border-radius:12px;padding:16px 18px;margin-bottom:12px;cursor:pointer;transition:all .15s}
+.group-card:hover{box-shadow:0 6px 16px rgba(0,0,0,.08)}
+.group-card-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+.group-card-head h3{margin:0;font-size:15px;font-weight:800;color:var(--rl-primary)}
+
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 15px;border-radius:8px;border:1px solid var(--rl-border);background:#fff;color:var(--rl-text);font-weight:700;font-size:12.5px;cursor:pointer;min-height:38px}
+.btn:hover{background:#f8fafc}
+.btn.primary{background:var(--rl-secondary);border-color:var(--rl-secondary);color:#1a1000}
+.btn.outline{background:transparent;border-color:var(--rl-primary);color:var(--rl-primary)}
+.btn.dark{background:var(--rl-primary);border-color:var(--rl-primary);color:#fff}
+.btn.danger{background:var(--rl-danger-bg);border-color:#fecaca;color:var(--rl-danger)}
+.btn.sm{padding:6px 11px;font-size:11.5px;min-height:32px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.pill.blue{background:#eff6ff;color:#1d4ed8}
+.pill.gray{background:#f1f5f9;color:#475569}
+.pill.green{background:var(--rl-success-bg);color:var(--rl-success)}
+.pill.orange{background:var(--rl-warn-bg);color:var(--rl-warn)}
+.pill.red{background:var(--rl-danger-bg);color:var(--rl-danger)}
+.pill.purple{background:#f5f3ff;color:#6d28d9}
+
+table.rl-table{width:100%;border-collapse:collapse;font-size:12.5px}
+table.rl-table th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--rl-subtext);padding:9px 8px;border-bottom:1px solid var(--rl-border);white-space:nowrap}
+table.rl-table td{padding:9px 8px;border-bottom:1px solid var(--rl-border);vertical-align:middle}
+table.rl-table tr:hover td{background:#fafcff}
+table.rl-table tr.clickable{cursor:pointer}
+.progress-bar-track{width:70px;height:7px;background:#e2e8f0;border-radius:99px;overflow:hidden;display:inline-block;vertical-align:middle}
+.progress-bar-fill{height:100%;background:var(--rl-primary);border-radius:99px}
+
+.empty-note{font-size:12.5px;color:var(--rl-subtext);padding:18px;text-align:center;border:1.5px dashed var(--rl-border);border-radius:10px}
+.rl-loading{padding:18px;text-align:center;color:var(--rl-subtext);font-size:13px}
+.helper-text{font-size:11.5px;color:var(--rl-subtext);margin:3px 0 0}
+.section-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--rl-subtext);margin:0 0 8px}
+
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field.full{grid-column:1/-1}
+.field label{font-size:11px;font-weight:700;color:var(--rl-subtext);text-transform:uppercase;letter-spacing:.3px}
+.field input,.field select,.field textarea{padding:9px 10px;border:1px solid var(--rl-border);border-radius:8px;font-size:13px;font-family:inherit;background:#fff;color:var(--rl-text);min-height:38px}
+.field textarea{min-height:70px;resize:vertical}
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field-grid.cols-3{grid-template-columns:1fr 1fr 1fr}
+.field-grid.cols-4{grid-template-columns:1fr 1fr 1fr 1fr}
+@media(max-width:760px){.field-grid,.field-grid.cols-3,.field-grid.cols-4{grid-template-columns:1fr}}
+
+.chip-grid{display:flex;flex-wrap:wrap;gap:7px}
+.chip-opt{padding:8px 14px;border:1.5px solid var(--rl-border);border-radius:999px;background:#fff;font-size:12px;font-weight:600;cursor:pointer;min-height:34px;display:inline-flex;align-items:center}
+.chip-opt.selected{background:var(--rl-primary);border-color:var(--rl-primary);color:#fff}
+.seg{display:inline-flex;border:1px solid var(--rl-border);border-radius:8px;overflow:hidden}
+.seg button{border:none;background:#fff;padding:8px 16px;font-size:12.5px;font-weight:700;cursor:pointer;color:var(--rl-subtext);min-height:36px}
+.seg button.active{background:var(--rl-primary);color:#fff}
+.seg button+button{border-left:1px solid var(--rl-border)}
+
+.subcard{border:1px solid var(--rl-border);border-radius:10px;padding:13px 15px;margin-bottom:10px;background:#fbfcfe}
+.subcard-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+
+.tabs-row{display:flex;gap:4px;margin-bottom:14px;overflow-x:auto}
+.tab-btn{background:none;border:none;border-bottom:2px solid transparent;padding:9px 4px;margin-right:16px;font-size:12px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--rl-subtext);cursor:pointer;white-space:nowrap}
+.tab-btn.active{color:var(--rl-primary);border-bottom-color:var(--rl-secondary)}
+
+.flag-card{border:1px solid #fde68a;background:#fffbeb;border-radius:10px;padding:12px 14px;margin-bottom:8px;font-size:12.5px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.flag-card:hover{background:#fef3c7}
+
+.matrix-wrap{overflow-x:auto;border:1px solid var(--rl-border);border-radius:10px}
+table.matrix{border-collapse:collapse;font-size:12.5px;white-space:nowrap;width:100%}
+table.matrix th,table.matrix td{border-bottom:1px solid var(--rl-border);border-right:1px solid #f1f5f9;padding:10px 12px;text-align:center}
+table.matrix th{background:#f8fafc;font-size:10.5px;text-transform:uppercase;letter-spacing:.3px;color:var(--rl-subtext)}
+table.matrix td.group-name{text-align:left;font-weight:700;cursor:pointer;color:var(--rl-primary)}
+
+.drawer-overlay{position:fixed;inset:0;background:rgba(15,23,42,.4);z-index:90;display:flex;justify-content:flex-end}
+.drawer{width:min(520px,100%);background:#fff;height:100%;overflow-y:auto;box-shadow:-8px 0 30px rgba(0,0,0,.2)}
+.drawer-header{padding:16px 20px;border-bottom:1px solid var(--rl-border);display:flex;justify-content:space-between;align-items:flex-start;gap:10px;position:sticky;top:0;background:#fff;z-index:5}
+.drawer-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--rl-subtext);line-height:1}
+.drawer-body{padding:16px 20px}
+.drawer-footer{padding:14px 20px;border-top:1px solid var(--rl-border);display:flex;gap:8px;flex-wrap:wrap;position:sticky;bottom:0;background:#fff}
+.kv-row{margin-bottom:9px}
+.kv-label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:var(--rl-subtext)}
+.kv-value{font-size:13px;margin-top:1px}
+.comment-item{padding:9px 0;border-bottom:1px solid #f1f5f9;font-size:12.5px}
+.comment-author{font-weight:700}
+.history-item{font-size:12px;color:var(--rl-subtext);padding:6px 0;border-bottom:1px solid #f8fafc}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal-box{background:#fff;border-radius:14px;max-width:600px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal-header{padding:16px 20px;border-bottom:1px solid var(--rl-border);display:flex;justify-content:space-between;align-items:center}
+.modal-header h3{margin:0;font-size:15px;font-weight:800;color:var(--rl-primary)}
+.modal-body{padding:18px 20px}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--rl-border);display:flex;justify-content:flex-end;gap:8px}
+.dynrow{border:1px solid var(--rl-border);border-radius:8px;padding:10px;margin-bottom:8px}
+
+.checklist-row{display:flex;align-items:center;gap:8px;padding:5px 0}
+.checklist-row input[type=checkbox]{width:auto}
+.checklist-row.done label{text-decoration:line-through;color:var(--rl-subtext)}
+</style>
+</head>
+<body>
+
+<div id="authGate" class="rl-fullscreen-msg">Loading Collateral Hub…</div>
+
+<div id="app" class="hidden">
+  <header class="rl-header">
+    <button class="rl-mobile-toggle" id="mobileToggle">&#9776;</button>
+    <a class="rl-back-link" href="reslife_hub.html">&larr; Hub</a>
+    <div class="rl-header-title">Collateral Hub</div>
+    <div class="rl-header-right">
+      <button class="rl-bell-btn" id="bellBtn">&#128276;<span class="rl-bell-dot hidden" id="bellDot"></span></button>
+      <div id="notifPanel" class="rl-notif-panel hidden"></div>
+      <span class="rl-role-badge" id="roleBadge"></span>
+      <button class="rl-logout-btn" id="logoutBtn">Log Out</button>
+    </div>
+  </header>
+
+  <aside class="rl-sidebar" id="sidebar">
+    <nav class="rl-sidebar-nav" id="sidebarNav"></nav>
+  </aside>
+
+  <main class="wrap" id="mainWrap">
+
+    <!-- ============ OVERVIEW ============ -->
+    <section class="view-panel active" id="view-overview">
+      <h1 class="page-title" id="overviewTitle">Collateral Overview</h1>
+      <p class="page-sub" id="overviewSub">Every group at a glance.</p>
+      <div id="overviewBox"><div class="rl-loading">Loading…</div></div>
+    </section>
+
+    <!-- ============ TODAY ============ -->
+    <section class="view-panel" id="view-today">
+      <h1 class="page-title" id="todayGreeting">Collateral Today</h1>
+      <p class="page-sub">Everything that needs your attention right now, across every group.</p>
+      <div id="todayBox"><div class="rl-loading">Loading…</div></div>
+    </section>
+
+    <!-- ============ MATRIX ============ -->
+    <section class="view-panel" id="view-matrix">
+      <h1 class="page-title">Collateral Matrix</h1>
+      <p class="page-sub">Every group's meeting cadence, update status, and health at a glance.</p>
+      <div class="matrix-wrap"><div id="matrixBox"><div class="rl-loading">Loading…</div></div></div>
+    </section>
+
+    <!-- ============ WORKLOAD ============ -->
+    <section class="view-panel" id="view-workload">
+      <h1 class="page-title">Member Workload</h1>
+      <p class="page-sub">Open tasks and projects per staff member, across all collateral groups.</p>
+      <div id="workloadBox"><div class="rl-loading">Loading…</div></div>
+    </section>
+
+    <!-- ============ GROUP WORKSPACE ============ -->
+    <section class="view-panel" id="view-group">
+      <div id="groupHeaderBox"></div>
+      <div class="tabs-row" id="groupTabs"></div>
+      <div id="groupTabContent"></div>
+    </section>
+
+    <!-- ============ SHOUT-OUTS ============ -->
+    <section class="view-panel" id="view-shoutouts">
+      <h1 class="page-title">Staff Shout-Outs</h1>
+      <p class="page-sub">A digital complement to the Recognition committee's positive-note box.</p>
+      <div class="rl-panel">
+        <div class="rl-panel-header"><div><h2>Send a Shout-Out</h2></div></div>
+        <div class="rl-panel-body">
+          <div class="field-grid cols-3">
+            <div class="field"><label>To</label><select id="shoutoutTo"></select></div>
+            <div class="field"><label>Visibility</label><select id="shoutoutVisibility"><option value="team">Team Visible</option><option value="staff_meeting">Staff Meeting</option><option value="private">Private to Recipient</option></select></div>
+            <div class="field"><button class="btn primary" id="sendShoutoutBtn" style="margin-top:18px;width:100%">Send</button></div>
+            <div class="field full"><label>Message</label><textarea id="shoutoutMessage" placeholder="Something positive and specific…"></textarea></div>
+          </div>
+        </div>
+      </div>
+      <div id="shoutoutsList"><div class="rl-loading">Loading…</div></div>
+    </section>
+
+    <!-- ============ REPORTS ============ -->
+    <section class="view-panel" id="view-reports">
+      <h1 class="page-title">Collateral Reports</h1>
+      <p class="page-sub">Real metrics computed from current collateral data.</p>
+      <div class="tabs-row" id="reportTabs"></div>
+      <div id="reportsBox"><div class="rl-loading">Loading…</div></div>
+    </section>
+
+    <!-- ============ SETTINGS (Admin tier) ============ -->
+    <section class="view-panel" id="view-settings">
+      <h1 class="page-title">Collateral Settings</h1>
+      <p class="page-sub">Create and manage collateral groups.</p>
+      <div id="settingsBox"></div>
+    </section>
+
+  </main>
+</div>
+
+<div id="drawerRoot"></div>
+
+<script>
+/* ==================================================================
+   CONSTANTS
+   ================================================================== */
+const RESLIFE_ROLES = ['reslife-ra', 'reslife-rec', 'reslife-admin'];
+const ROLE_LABELS = { 'reslife-ra': 'Reslife - RA', 'reslife-rec': 'Reslife - REC', 'reslife-admin': 'Reslife Admin', admin: 'Site Admin' };
+const CATEGORY_OPTIONS = [{ value: 'programming', label: 'Programming' }, { value: 'recognition', label: 'Recognition' }, { value: 'recruitment', label: 'Recruitment & Development' }, { value: '', label: 'Other / Custom' }];
+const PROJECT_STATUSES = ['Idea', 'Planning', 'In Progress', 'Waiting', 'Needs Review', 'Approved', 'Scheduled', 'Completed', 'Paused', 'Cancelled'];
+const PROJECT_DONE_STATUSES = ['Completed'];
+const TASK_STATUSES = ['Not Started', 'In Progress', 'Submitted', 'Needs Review', 'Revision Requested', 'Complete', 'Blocked', 'Not Applicable'];
+const TASK_DONE_STATUSES = ['Complete', 'Not Applicable'];
+const PRIORITIES = ['Low', 'Medium', 'High'];
+const ATTENDANCE_STATUSES = ['Present', 'Absent', 'Excused', 'Late', 'Not Recorded'];
+const RECOGNITION_TYPES = [{ value: 'birthday', label: 'Birthday' }, { value: 'team_bonding', label: 'Team Bonding' }, { value: 'special', label: 'Special Recognition' }, { value: 'banquet_milestone', label: 'Banquet Milestone' }];
+const HEALTH_THRESHOLDS = { atRiskOverdueCount: 3, needsAttentionOverdueCount: 1 };
+
+/* ==================================================================
+   STATE
+   ================================================================== */
+let me = null, allProperties = [], myProperties = [], currentProperty = null;
+let isManager = false, isAdminTier = false, isRAOnly = false;
+let groups = [], allProjects = [], allTasks = [], allMeetings = [], allDecisions = [], allUpdates = [], allRecognition = [], allInfoSessions = [], notifications = [];
+let raRoster = [];
+let currentView = 'overview';
+let currentGroupId = null;
+let groupTab = 'overview';
+
+/* ==================================================================
+   UTIL (same proven helpers used across the Reslife Hub tools)
+   ================================================================== */
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function uid(){ return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8); }
+function fmtDateShort(d){ if (!d) return ''; try { return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); } catch (e) { return d; } }
+function fmtDateLong(d){ if (!d) return ''; try { return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }); } catch (e) { return d; } }
+function fmtDateTime(iso){ if (!iso) return ''; try { return new Date(iso).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); } catch (e) { return iso; } }
+function todayStr(){ return new Date().toISOString().slice(0, 10); }
+function daysUntil(dateStr){
+  if (!dateStr) return null;
+  const msPerDay = 86400000;
+  const todayMid = new Date(todayStr() + 'T00:00:00Z').getTime();
+  const dueMid = new Date(dateStr + 'T00:00:00Z').getTime();
+  return Math.round((dueMid - todayMid) / msPerDay);
+}
+function deadlineCondition(dateStr, isDone){
+  if (!dateStr || isDone) return { condition: 'none', days: null };
+  const d = daysUntil(dateStr);
+  if (d === null) return { condition: 'none', days: null };
+  let condition;
+  if (d < 0) condition = 'overdue'; else if (d === 0) condition = 'due_today'; else if (d === 1) condition = 'due_tomorrow';
+  else if (d <= 3) condition = 'due_3_days'; else if (d <= 7) condition = 'due_7_days'; else if (d <= 14) condition = 'due_14_days'; else condition = 'upcoming';
+  return { condition, days: d };
+}
+function deadlinePill(dc){
+  if (!dc || dc.condition === 'none') return '';
+  const map = { overdue: `<span class="pill red">Overdue ${Math.abs(dc.days)}d</span>`, due_today: '<span class="pill orange">Due Today</span>', due_tomorrow: '<span class="pill orange">Due Tomorrow</span>', due_3_days: `<span class="pill orange">Due in ${dc.days}d</span>`, due_7_days: `<span class="pill blue">Due in ${dc.days}d</span>`, due_14_days: `<span class="pill blue">Due in ${dc.days}d</span>`, upcoming: '<span class="pill gray">Upcoming</span>' };
+  return map[dc.condition] || '';
+}
+
+async function apiFetch(path, opts = {}) {
+  const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+  const res = await fetch('/api' + path, Object.assign({ credentials: 'include' }, opts, { headers }));
+  if (!res.ok) { let msg = 'Request failed'; try { msg = await res.text(); } catch (e) {} throw new Error(msg || ('HTTP ' + res.status)); }
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+function propParam(){ return '?property=' + encodeURIComponent(currentProperty); }
+
+function bindSeg(containerId, currentVal, onChange){
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.querySelectorAll('button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.val === currentVal);
+    btn.onclick = () => { el.querySelectorAll('button').forEach(b => b.classList.remove('active')); btn.classList.add('active'); onChange(btn.dataset.val); };
+  });
+}
+function renderChipGroup(container, options, selected, multi, onToggle){
+  container.innerHTML = options.map(opt => {
+    const val = typeof opt === 'string' ? opt : opt.value;
+    const label = typeof opt === 'string' ? opt : opt.label;
+    const isSel = selected.includes(val);
+    return `<button type="button" class="chip-opt${isSel ? ' selected' : ''}" data-val="${esc(val)}">${esc(label)}</button>`;
+  }).join('');
+  container.querySelectorAll('.chip-opt').forEach(btn => {
+    btn.onclick = () => {
+      const val = btn.dataset.val;
+      if (multi) { const idx = selected.indexOf(val); if (idx === -1) selected.push(val); else selected.splice(idx, 1); btn.classList.toggle('selected', selected.includes(val)); }
+      else { selected.length = 0; selected.push(val); container.querySelectorAll('.chip-opt').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); }
+      onToggle(selected, val);
+    };
+  });
+}
+function downloadCSV(filename, rows){
+  const csv = rows.map(r => r.map(c => { const s = String(c == null ? '' : c); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+function val(id){ const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+
+/* ==================================================================
+   AUTH / INIT
+   ================================================================== */
+async function init(){
+  try {
+    const meRes = await fetch('/api/me', { credentials: 'include' });
+    if (!meRes.ok) { window.location.href = 'index.html?redirect=reslife_collateral.html'; return; }
+    me = await meRes.json();
+  } catch (e) { window.location.href = 'index.html?redirect=reslife_collateral.html'; return; }
+
+  const allowed = RESLIFE_ROLES.includes(me.role) || me.role === 'admin';
+  if (!allowed) { window.location.href = 'mmp_calendar_app.html'; return; }
+  isManager = me.role === 'admin' || me.role === 'reslife-rec' || me.role === 'reslife-admin';
+  isAdminTier = me.role === 'admin' || me.role === 'reslife-admin';
+  isRAOnly = me.role === 'reslife-ra';
+
+  try { allProperties = await apiFetch('/properties'); } catch (e) { allProperties = []; }
+  if (me.role === 'admin' || me.properties === '*') myProperties = allProperties.map(p => p.name);
+  else myProperties = Array.isArray(me.properties) ? me.properties.filter(p => allProperties.some(ap => ap.name === p)) : [];
+
+  if (myProperties.length === 0) {
+    document.getElementById('authGate').textContent = 'Your account is not tied to a property yet. Contact your Reslife Admin.';
+    return;
+  }
+  currentProperty = localStorage.getItem('reslife_current_property');
+  if (!myProperties.includes(currentProperty)) currentProperty = myProperties[0];
+
+  document.getElementById('roleBadge').textContent = ROLE_LABELS[me.role] || me.role;
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    try { await fetch('/api/auth-logout', { method: 'POST', credentials: 'include' }); } catch (e) {}
+    window.location.href = 'index.html';
+  });
+
+  if (isAdminTier) { try { raRoster = await apiFetch('/reslife-users'); } catch (e) { raRoster = []; } }
+
+  bindHeaderControls();
+  await refreshAllData();
+  buildSidebarNav();
+
+  document.getElementById('authGate').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+
+  await loadNotifications();
+  goToView(isRAOnly ? myGroup() ? 'group' : 'overview' : 'overview', isRAOnly && myGroup() ? myGroup().id : null);
+  setupInactivityLogout();
+}
+
+function myGroup(){ return groups.find(g => (g.members || []).includes(me.username) || g.lead === me.username); }
+
+async function refreshAllData(){
+  const safe = (p) => p.catch(() => []);
+  [groups, allProjects, allTasks, allMeetings, allDecisions, allUpdates, allRecognition, allInfoSessions] = await Promise.all([
+    safe(apiFetch('/reslife-committees' + propParam())),
+    safe(apiFetch('/reslife-collateral-projects' + propParam())),
+    safe(apiFetch('/reslife-collateral-tasks' + propParam())),
+    safe(loadAllMeetings()),
+    safe(loadAllDecisions()),
+    safe(apiFetch('/reslife-collateral-updates' + propParam())),
+    safe(apiFetch('/reslife-collateral-recognition' + propParam())),
+    safe(loadAllInfoSessions()),
+  ]);
+}
+async function loadAllMeetings(){
+  const lists = await Promise.all(groups.map(g => apiFetch('/reslife-committee-minutes' + propParam() + '&committeeId=' + encodeURIComponent(g.id)).catch(() => [])));
+  return lists.flat();
+}
+async function loadAllDecisions(){
+  const lists = await Promise.all(groups.map(g => apiFetch('/reslife-collateral-decisions' + propParam() + '&committeeId=' + encodeURIComponent(g.id)).catch(() => [])));
+  return lists.flat();
+}
+async function loadAllInfoSessions(){
+  const lists = await Promise.all(groups.map(g => apiFetch('/reslife-collateral-info-sessions' + propParam() + '&committeeId=' + encodeURIComponent(g.id)).catch(() => [])));
+  return lists.flat();
+}
+
+async function loadNotifications(){
+  try { notifications = await apiFetch('/reslife-collateral-notifications' + propParam()); } catch (e) { notifications = []; }
+  document.getElementById('bellDot').classList.toggle('hidden', notifications.filter(n => !n.read).length === 0);
+}
+function bindHeaderControls(){
+  document.getElementById('bellBtn').addEventListener('click', () => {
+    const panel = document.getElementById('notifPanel');
+    if (panel.classList.contains('hidden')) { renderNotifPanel(); panel.classList.remove('hidden'); } else panel.classList.add('hidden');
+  });
+  document.addEventListener('click', (e) => { if (!e.target.closest('#notifPanel') && !e.target.closest('#bellBtn')) document.getElementById('notifPanel').classList.add('hidden'); });
+  document.getElementById('mobileToggle').addEventListener('click', () => document.getElementById('sidebar').classList.toggle('mobile-open'));
+}
+function renderNotifPanel(){
+  const panel = document.getElementById('notifPanel');
+  if (notifications.length === 0) { panel.innerHTML = '<div class="empty-note" style="margin:14px">No notifications yet.</div>'; return; }
+  panel.innerHTML = `<div style="padding:10px 14px;border-bottom:1px solid var(--rl-border);display:flex;justify-content:space-between;align-items:center"><strong style="font-size:12.5px">Notifications</strong><button class="btn sm" id="markAllReadBtn">Mark all read</button></div>` +
+    notifications.map(n => `<div class="rl-notif-item ${n.read ? '' : 'unread'}"><div class="rl-notif-title">${esc(n.title)}</div><div>${esc(n.message)}</div><div class="rl-notif-meta">${fmtDateTime(n.createdAt)}</div></div>`).join('');
+  document.getElementById('markAllReadBtn').addEventListener('click', async () => {
+    try { await apiFetch('/reslife-collateral-notifications', { method: 'PUT', body: JSON.stringify({ property: currentProperty, action: 'markAllRead' }) }); await loadNotifications(); renderNotifPanel(); } catch (e) {}
+  });
+}
+function setupInactivityLogout(){
+  const INACTIVITY_MS = 12 * 60 * 60 * 1000, STORAGE_KEY = 'mmp_last_activity';
+  function updateActivity(){ try { localStorage.setItem(STORAGE_KEY, Date.now().toString()); } catch (e) {} }
+  function checkInactivity(){
+    try {
+      const last = parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10);
+      if (last && (Date.now() - last) > INACTIVITY_MS) { localStorage.removeItem(STORAGE_KEY); fetch('/api/auth-logout', { method: 'POST', credentials: 'include' }).catch(() => {}); window.location.href = 'index.html'; }
+    } catch (e) {}
+  }
+  updateActivity();
+  ['mousedown', 'keydown', 'scroll', 'touchstart', 'mousemove'].forEach(evt => document.addEventListener(evt, updateActivity, { passive: true }));
+  setInterval(checkInactivity, 60 * 1000);
+}
+
+/* ==================================================================
+   SIDEBAR NAV
+   ================================================================== */
+const NAV_ICONS = {
+  overview: '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
+  today: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  matrix: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>',
+  workload: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  group: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  shoutouts: '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
+  reports: '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
+  settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+};
+function buildSidebarNav(){
+  let html = '';
+  if (!isRAOnly) {
+    html += navBtn('overview', 'Collateral Overview') + navBtn('today', 'Today') + navBtn('matrix', 'Matrix') + navBtn('workload', 'Member Workload');
+    html += '<div class="rl-nav-divider"></div><div class="rl-nav-group-title">Groups</div>';
+  } else {
+    html += '<div class="rl-nav-group-title">My Collateral</div>';
+  }
+  groups.forEach(g => { html += `<button class="rl-nav-item" data-view="group" data-group="${g.id}"><span class="rl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${NAV_ICONS.group}</svg></span><span class="rl-nav-label">${esc(g.name)}</span></button>`; });
+  html += '<div class="rl-nav-divider"></div>';
+  html += navBtn('shoutouts', 'Shout-Outs');
+  if (!isRAOnly) html += navBtn('reports', 'Reports');
+  if (isAdminTier) html += navBtn('settings', 'Settings');
+  document.getElementById('sidebarNav').innerHTML = html;
+  document.querySelectorAll('.rl-nav-item[data-view]').forEach(btn => btn.addEventListener('click', () => goToView(btn.dataset.view, btn.dataset.group || null)));
+}
+function navBtn(key, label){
+  return `<button class="rl-nav-item" data-view="${key}"><span class="rl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${NAV_ICONS[key]}</svg></span><span class="rl-nav-label">${esc(label)}</span></button>`;
+}
+
+function goToView(view, groupId){
+  currentView = view;
+  if (view === 'group') { currentGroupId = groupId; groupTab = 'overview'; }
+  document.querySelectorAll('.rl-nav-item[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === view && (view !== 'group' || b.dataset.group === groupId)));
+  document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+  const el = document.getElementById('view-' + view);
+  if (el) el.classList.add('active');
+  document.getElementById('sidebar').classList.remove('mobile-open');
+  renderCurrentView();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function renderCurrentView(){
+  if (currentView === 'overview') renderOverview();
+  else if (currentView === 'today') renderToday();
+  else if (currentView === 'matrix') renderMatrix();
+  else if (currentView === 'workload') renderWorkload();
+  else if (currentView === 'group') renderGroupWorkspace();
+  else if (currentView === 'shoutouts') renderShoutouts();
+  else if (currentView === 'reports') renderReports();
+  else if (currentView === 'settings') renderSettings();
+}
+
+/* ==================================================================
+   COMPUTATION HELPERS (centralized, reused by every view)
+   ================================================================== */
+function tasksForGroup(gid){ return allTasks.filter(t => t.committeeId === gid); }
+function projectsForGroup(gid){ return allProjects.filter(p => p.committeeId === gid); }
+function meetingsForGroup(gid){ return allMeetings.filter(m => m.committeeId === gid).sort((a, b) => (b.meetingDate || '').localeCompare(a.meetingDate || '')); }
+function updatesForGroup(gid){ return allUpdates.filter(u => u.committeeId === gid).sort((a, b) => (b.weekOf || '').localeCompare(a.weekOf || '')); }
+function decisionsForGroup(gid){ return allDecisions.filter(d => d.committeeId === gid).sort((a, b) => (b.date || '').localeCompare(a.date || '')); }
+function infoSessionsForGroup(gid){ return allInfoSessions.filter(s => s.committeeId === gid); }
+function recognitionForGroup(gid){ return allRecognition.filter(r => r.committeeId === gid); }
+const HEALTH_LABELS = { on_track: 'On Track', needs_attention: 'Needs Attention', at_risk: 'At Risk' };
+function healthPill(h){ const cls = h === 'on_track' ? 'green' : (h === 'needs_attention' ? 'orange' : 'red'); return `<span class="pill ${cls}">${HEALTH_LABELS[h]}</span>`; }
+function canWriteGroup(group){ if (!group) return false; return isManager || group.lead === me.username; }
+
+function computeGroupStats(gid){
+  const group = groups.find(g => g.id === gid);
+  const tasks = tasksForGroup(gid), projects = projectsForGroup(gid);
+  const openProjects = projects.filter(p => p.status !== 'Completed' && p.status !== 'Cancelled');
+  const openTasks = tasks.filter(t => !TASK_DONE_STATUSES.includes(t.status));
+  const overdueTasks = openTasks.filter(t => deadlineCondition(t.dueDate).condition === 'overdue');
+  const overdueProjects = openProjects.filter(p => deadlineCondition(p.targetDate).condition === 'overdue');
+  const dueSoonTasks = openTasks.filter(t => ['due_today', 'due_tomorrow', 'due_3_days', 'due_7_days'].includes(deadlineCondition(t.dueDate).condition));
+  const needsReview = tasks.filter(t => t.status === 'Needs Review').length + projects.filter(p => p.status === 'Needs Review').length;
+  const total = tasks.length + projects.length;
+  const done = tasks.filter(t => TASK_DONE_STATUSES.includes(t.status)).length + projects.filter(p => p.status === 'Completed').length;
+  const completionPct = total ? Math.round((done / total) * 100) : 0;
+  const overdueCount = overdueTasks.length + overdueProjects.length;
+
+  const meetings = meetingsForGroup(gid);
+  const lastMeeting = meetings[0];
+  const meetingGapDays = (group && group.meetingFrequencyDays) || 14;
+  const daysSinceLastMeeting = lastMeeting ? -daysUntil((lastMeeting.meetingDate || '').slice(0, 10)) : null;
+  const meetingMissing = !lastMeeting || (daysSinceLastMeeting !== null && daysSinceLastMeeting > meetingGapDays + 3);
+  const nextMeetingDate = lastMeeting && lastMeeting.nextMeetingDate ? lastMeeting.nextMeetingDate : null;
+
+  const updates = updatesForGroup(gid);
+  const latestUpdate = updates[0];
+  const daysSinceUpdate = latestUpdate ? -daysUntil(latestUpdate.weekOf) : null;
+  const updateMissing = !latestUpdate || (daysSinceUpdate !== null && daysSinceUpdate > 8);
+
+  let health = 'on_track';
+  if (overdueCount >= HEALTH_THRESHOLDS.atRiskOverdueCount) health = 'at_risk';
+  else if (overdueCount >= HEALTH_THRESHOLDS.needsAttentionOverdueCount || meetingMissing || updateMissing) health = 'needs_attention';
+
+  return { openProjects: openProjects.length, openTasks: openTasks.length, overdueCount, dueSoonCount: dueSoonTasks.length, needsReview, completionPct, health, meetingMissing, updateMissing, nextMeetingDate, lastMeeting, latestUpdate };
+}
+
+function computeCollateralFlags(){
+  const flags = [];
+  groups.forEach(g => {
+    const s = computeGroupStats(g.id);
+    if (s.meetingMissing) flags.push({ label: `${g.name}: no meeting recorded within its expected ${g.meetingFrequencyDays || 14}-day cadence`, groupId: g.id });
+    if (s.updateMissing) flags.push({ label: `${g.name}: Committee Lead has not submitted a weekly update recently`, groupId: g.id });
+    if (s.overdueCount > 0) flags.push({ label: `${g.name}: ${s.overdueCount} overdue item${s.overdueCount > 1 ? 's' : ''}`, groupId: g.id });
+  });
+  projectsForRisk().forEach(p => flags.push({ label: `"${p.title}" is due within 7 days with incomplete work`, groupId: p.committeeId }));
+  allTasks.filter(t => !t.assignedTo && !TASK_DONE_STATUSES.includes(t.status)).forEach(t => flags.push({ label: `"${t.title}" has no assigned owner`, groupId: t.committeeId }));
+  upcomingBirthdaysNeedingAction().forEach(r => flags.push({ label: `Upcoming birthday recognition for ${r.personUsername || 'a staff member'} has no action assigned`, groupId: r.committeeId }));
+  return flags;
+}
+function projectsForRisk(){
+  return allProjects.filter(p => {
+    if (p.status === 'Completed' || p.status === 'Cancelled') return false;
+    const dc = deadlineCondition(p.targetDate);
+    return ['due_today', 'due_tomorrow', 'due_3_days', 'due_7_days'].includes(dc.condition);
+  });
+}
+function upcomingBirthdaysNeedingAction(){
+  return allRecognition.filter(r => r.type === 'birthday' && !r.completed && !r.cardNeeded && !r.bannerNeeded && !r.celebrationPlanned && !r.assignedTo);
+}
+
+/* ==================================================================
+   OVERVIEW
+   ================================================================== */
+function renderOverview(){
+  const box = document.getElementById('overviewBox');
+  if (isRAOnly) {
+    const g = myGroup();
+    if (!g) { box.innerHTML = '<div class="empty-note">You are not currently assigned to a collateral group.</div>'; return; }
+    goToView('group', g.id); return;
+  }
+  document.getElementById('overviewSub').textContent = `${groups.length} collateral group${groups.length === 1 ? '' : 's'} in ${currentProperty}.`;
+  if (groups.length === 0) { box.innerHTML = '<div class="empty-note">No collateral groups yet. Create one in Settings.</div>'; return; }
+
+  const flags = computeCollateralFlags();
+  const flagsHTML = flags.length === 0 ? '<div class="empty-note">Nothing needs attention right now.</div>' : flags.slice(0, 8).map(f => `<div class="flag-card" data-group="${f.groupId}"><span>${esc(f.label)}</span><span class="btn sm">View &rarr;</span></div>`).join('');
+
+  const cardsHTML = groups.map(g => {
+    const s = computeGroupStats(g.id);
+    return `<div class="group-card" data-group="${g.id}">
+      <div class="group-card-head"><h3>${esc(g.name)}</h3>${healthPill(s.health)}</div>
+      <div class="helper-text">Committee Lead: ${esc(g.lead || 'Unassigned')} &middot; Advisors: ${esc(g.advisors || '—')}</div>
+      <div style="display:flex;gap:16px;margin-top:10px;flex-wrap:wrap;font-size:12.5px">
+        <span><strong>${s.openProjects}</strong> Open Projects</span>
+        <span><strong>${s.openTasks}</strong> Open Tasks</span>
+        <span style="color:${s.overdueCount ? 'var(--rl-danger)' : 'inherit'}"><strong>${s.overdueCount}</strong> Overdue</span>
+        <span><strong>${s.completionPct}%</strong> Complete</span>
+        <span>Next Meeting: ${s.nextMeetingDate ? fmtDateShort(s.nextMeetingDate) : 'Not scheduled'}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  box.innerHTML = `
+    <div class="rl-panel"><div class="rl-panel-header"><h2>Needs Attention</h2></div><div class="rl-panel-body">${flagsHTML}</div></div>
+    <div class="rl-panel"><div class="rl-panel-header"><h2>Groups</h2></div><div class="rl-panel-body">${cardsHTML}</div></div>
+  `;
+  box.querySelectorAll('[data-group]').forEach(el => el.addEventListener('click', () => goToView('group', el.getAttribute('data-group'))));
+}
+
+/* ==================================================================
+   TODAY
+   ================================================================== */
+function renderToday(){
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : (hour < 18 ? 'Good afternoon' : 'Good evening');
+  document.getElementById('todayGreeting').textContent = `${greeting}, ${me.username}`;
+
+  const overdueTasks = allTasks.filter(t => !TASK_DONE_STATUSES.includes(t.status) && deadlineCondition(t.dueDate).condition === 'overdue');
+  const overdueProjects = allProjects.filter(p => p.status !== 'Completed' && p.status !== 'Cancelled' && deadlineCondition(p.targetDate).condition === 'overdue');
+  const missingUpdates = groups.filter(g => computeGroupStats(g.id).updateMissing);
+  const dueThisWeekProjects = allProjects.filter(p => p.status !== 'Completed' && p.status !== 'Cancelled' && ['due_today', 'due_tomorrow', 'due_3_days', 'due_7_days'].includes(deadlineCondition(p.targetDate).condition));
+  const needsReview = allTasks.filter(t => t.status === 'Needs Review').concat(allProjects.filter(p => p.status === 'Needs Review'));
+  const purchasingIssues = allProjects.filter(p => p.budget && p.budget.estimated > 0 && p.budget.purchased === 0 && ['due_today', 'due_tomorrow', 'due_3_days', 'due_7_days'].includes(deadlineCondition(p.targetDate).condition));
+  const upcomingRecognition = allRecognition.filter(r => !r.completed && (r.type === 'birthday' || r.type === 'team_bonding'));
+
+  const total = overdueTasks.length + overdueProjects.length + missingUpdates.length + purchasingIssues.length;
+  const box = document.getElementById('todayBox');
+  box.innerHTML = `
+    <div class="alert-inline" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#1e3a8a">${total} item${total === 1 ? '' : 's'} need your attention.</div>
+    <div class="rl-panel"><div class="rl-panel-header"><h2>Needs Your Attention</h2></div><div class="rl-panel-body" id="tdNeedsReview">${needsReview.length === 0 ? '<div class="empty-note">Nothing needs review.</div>' : needsReview.map(genericCardHTML).join('')}</div></div>
+    <div class="rl-panel"><div class="rl-panel-header"><h2>Overdue (${overdueTasks.length + overdueProjects.length})</h2></div><div class="rl-panel-body" id="tdOverdue">${overdueTasks.concat(overdueProjects).length === 0 ? '<div class="empty-note">Nothing overdue.</div>' : overdueTasks.concat(overdueProjects).map(genericCardHTML).join('')}</div></div>
+    <div class="rl-panel"><div class="rl-panel-header"><h2>Projects Due This Week (${dueThisWeekProjects.length})</h2></div><div class="rl-panel-body" id="tdDueWeek">${dueThisWeekProjects.length === 0 ? '<div class="empty-note">Nothing due this week.</div>' : dueThisWeekProjects.map(genericCardHTML).join('')}</div></div>
+    <div class="rl-panel"><div class="rl-panel-header"><h2>Committee Updates Missing (${missingUpdates.length})</h2></div><div class="rl-panel-body">${missingUpdates.length === 0 ? '<div class="empty-note">Every group is current on weekly updates.</div>' : missingUpdates.map(g => `<div class="subcard" data-group="${g.id}" style="cursor:pointer">${esc(g.name)}</div>`).join('')}</div></div>
+    <div class="rl-panel"><div class="rl-panel-header"><h2>Purchasing Issues (${purchasingIssues.length})</h2></div><div class="rl-panel-body" id="tdPurchasing">${purchasingIssues.length === 0 ? '<div class="empty-note">No purchasing issues.</div>' : purchasingIssues.map(genericCardHTML).join('')}</div></div>
+    <div class="rl-panel"><div class="rl-panel-header"><h2>Upcoming Recognition (${upcomingRecognition.length})</h2></div><div class="rl-panel-body">${upcomingRecognition.length === 0 ? '<div class="empty-note">Nothing upcoming.</div>' : upcomingRecognition.map(r => `<div class="subcard" data-group="${r.committeeId}" style="cursor:pointer"><strong>${esc(r.title)}</strong> — ${esc(r.personUsername || '')}</div>`).join('')}</div></div>
+  `;
+  ['tdNeedsReview', 'tdOverdue', 'tdDueWeek', 'tdPurchasing'].forEach(id => bindGenericCardOpeners(document.getElementById(id)));
+  box.querySelectorAll('[data-group]').forEach(el => { if (!el.hasAttribute('data-bound')) el.addEventListener('click', () => goToView('group', el.getAttribute('data-group'))); });
+}
+function genericCardHTML(item){
+  const isTask = TASK_STATUSES.includes(item.status) && item.hasOwnProperty('assignedTo');
+  const dc = deadlineCondition(item.dueDate || item.targetDate);
+  const group = groups.find(g => g.id === item.committeeId);
+  return `<div class="subcard" data-open-item="${item.id}" data-item-type="${isTask ? 'task' : 'project'}" style="cursor:pointer">
+    <div class="subcard-head"><strong>${esc(item.title)}</strong>${deadlinePill(dc)}</div>
+    <div class="helper-text">${esc((group || {}).name || '')} &middot; <span class="pill blue">${esc(item.status)}</span></div>
+  </div>`;
+}
+function bindGenericCardOpeners(container){
+  if (!container) return;
+  container.querySelectorAll('[data-open-item]').forEach(el => el.addEventListener('click', () => {
+    if (el.getAttribute('data-item-type') === 'task') openTaskDrawer(el.getAttribute('data-open-item'));
+    else openProjectDrawer(el.getAttribute('data-open-item'));
+  }));
+}
+
+/* ==================================================================
+   MATRIX
+   ================================================================== */
+function renderMatrix(){
+  const box = document.getElementById('matrixBox');
+  if (groups.length === 0) { box.innerHTML = '<div class="empty-note">No collateral groups yet.</div>'; return; }
+  box.innerHTML = `<table class="matrix"><thead><tr><th style="text-align:left">Group</th><th>Meeting</th><th>Update</th><th>Projects</th><th>Overdue</th><th>Completion</th><th>Health</th></tr></thead><tbody>` +
+    groups.map(g => {
+      const s = computeGroupStats(g.id);
+      return `<tr>
+        <td class="group-name" data-group="${g.id}">${esc(g.name)}</td>
+        <td>${s.meetingMissing ? '<span class="pill red">!</span>' : '<span class="pill green">&#10003;</span>'}</td>
+        <td>${s.updateMissing ? '<span class="pill red">!</span>' : '<span class="pill green">&#10003;</span>'}</td>
+        <td>${s.openProjects}</td>
+        <td>${s.overdueCount > 0 ? '<span class="pill red">' + s.overdueCount + '</span>' : '0'}</td>
+        <td><span class="progress-bar-track"><span class="progress-bar-fill" style="width:${s.completionPct}%"></span></span> ${s.completionPct}%</td>
+        <td>${healthPill(s.health)}</td>
+      </tr>`;
+    }).join('') + '</tbody></table>';
+  box.querySelectorAll('[data-group]').forEach(el => el.addEventListener('click', () => goToView('group', el.getAttribute('data-group'))));
+}
+
+/* ==================================================================
+   MEMBER WORKLOAD
+   ================================================================== */
+function renderWorkload(){
+  const box = document.getElementById('workloadBox');
+  const byMember = {};
+  groups.forEach(g => (g.members || []).forEach(m => { byMember[m] = byMember[m] || { groups: new Set(), role: '' }; byMember[m].groups.add(g.name); if (g.lead === m) byMember[m].role = 'Committee Lead'; }));
+  allTasks.forEach(t => { if (t.assignedTo) { byMember[t.assignedTo] = byMember[t.assignedTo] || { groups: new Set(), role: '' }; } });
+  const names = Object.keys(byMember).sort();
+  if (names.length === 0) { box.innerHTML = '<div class="empty-note">No members assigned to any collateral group yet.</div>'; return; }
+  box.innerHTML = `<div style="overflow-x:auto"><table class="rl-table"><thead><tr><th>Staff Member</th><th>Group(s)</th><th>Committee Role</th><th>Open Tasks</th><th>Due This Week</th><th>Overdue</th><th>Projects</th></tr></thead><tbody>` +
+    names.map(n => {
+      const tasks = allTasks.filter(t => t.assignedTo === n);
+      const openTasks = tasks.filter(t => !TASK_DONE_STATUSES.includes(t.status));
+      const overdue = openTasks.filter(t => deadlineCondition(t.dueDate).condition === 'overdue').length;
+      const dueSoon = openTasks.filter(t => ['due_today', 'due_tomorrow', 'due_3_days', 'due_7_days'].includes(deadlineCondition(t.dueDate).condition)).length;
+      const projects = allProjects.filter(p => p.owner === n || (p.participants || []).includes(n)).length;
+      return `<tr><td><strong>${esc(n)}</strong></td><td>${esc([...byMember[n].groups].join(', '))}</td><td>${esc(byMember[n].role || 'Member')}</td><td>${openTasks.length}</td><td>${dueSoon}</td><td>${overdue > 0 ? '<span class="pill red">' + overdue + '</span>' : '0'}</td><td>${projects}</td></tr>`;
+    }).join('') + '</tbody></table></div>';
+}
+
+/* ==================================================================
+   GROUP WORKSPACE
+   ================================================================== */
+const GROUP_TABS = [
+  ['overview', 'Overview'], ['projects', 'Projects'], ['tasks', 'Tasks'], ['meetings', 'Meetings'],
+  ['updates', 'Weekly Update'], ['decisions', 'Decisions'], ['resources', 'Resources'],
+];
+function renderGroupWorkspace(){
+  const g = groups.find(x => x.id === currentGroupId);
+  if (!g) { document.getElementById('groupHeaderBox').innerHTML = '<div class="empty-note">Group not found.</div>'; return; }
+  const s = computeGroupStats(g.id);
+  const isLead = g.lead === me.username;
+  const canWrite = canWriteGroup(g);
+
+  document.getElementById('groupHeaderBox').innerHTML = `
+    <div class="rl-panel">
+      <div class="rl-panel-body">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap">
+          <div>
+            <h1 class="page-title" style="margin-bottom:6px">${esc(g.name)} ${healthPill(s.health)} ${isLead ? '<span class="pill purple">You are Committee Lead</span>' : ''}</h1>
+            <p class="page-sub" style="margin-bottom:8px">${esc(g.description || 'No description yet.')}</p>
+            <div class="helper-text">Committee Lead: <strong>${esc(g.lead || 'Unassigned')}</strong> &middot; Advisors: <strong>${esc(g.advisors || '—')}</strong> &middot; Members: ${esc((g.members || []).join(', ') || '—')}</div>
+            <div class="helper-text">Meets every ${esc(g.meetingFrequencyDays || 14)} days for ${esc(g.meetingDurationMinutes || 60)} minutes ${g.semesterLabel ? '&middot; ' + esc(g.semesterLabel) : ''}</div>
+          </div>
+          <div class="kpi-bar" style="margin-bottom:0">
+            <div class="kpi-card" style="--kpi-color:var(--rl-primary)"><div class="kpi-value">${s.completionPct}%</div><div class="kpi-label">Complete</div></div>
+            <div class="kpi-card" style="--kpi-color:var(--rl-danger)"><div class="kpi-value">${s.overdueCount}</div><div class="kpi-label">Overdue</div></div>
+            <div class="kpi-card" style="--kpi-color:#7c3aed"><div class="kpi-value">${s.needsReview}</div><div class="kpi-label">Needs Review</div></div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  let tabs = GROUP_TABS.slice();
+  if (g.category === 'recognition') tabs.splice(6, 0, ['recognition', 'Recognition']);
+  if (g.category === 'recruitment') tabs.splice(6, 0, ['recruitment', 'Recruitment & Training']);
+
+  document.getElementById('groupTabs').innerHTML = tabs.map(([k, l]) => `<button class="tab-btn ${groupTab === k ? 'active' : ''}" data-tab="${k}">${esc(l)}</button>`).join('');
+  document.querySelectorAll('#groupTabs .tab-btn').forEach(b => b.addEventListener('click', () => { groupTab = b.dataset.tab; renderGroupWorkspace(); }));
+
+  const content = document.getElementById('groupTabContent');
+  if (groupTab === 'overview') renderGroupOverviewTab(g, s, content, canWrite);
+  else if (groupTab === 'projects') renderGroupProjectsTab(g, content, canWrite);
+  else if (groupTab === 'tasks') renderGroupTasksTab(g, content, canWrite);
+  else if (groupTab === 'meetings') renderGroupMeetingsTab(g, content, canWrite);
+  else if (groupTab === 'updates') renderGroupUpdatesTab(g, content, canWrite);
+  else if (groupTab === 'decisions') renderGroupDecisionsTab(g, content, canWrite);
+  else if (groupTab === 'resources') renderGroupResourcesTab(g, content);
+  else if (groupTab === 'recognition') renderGroupRecognitionTab(g, content, canWrite);
+  else if (groupTab === 'recruitment') renderGroupRecruitmentTab(g, content, canWrite);
+}
+
+function renderGroupOverviewTab(g, s, content, canWrite){
+  const myTasks = allTasks.filter(t => t.committeeId === g.id && t.assignedTo === me.username && !TASK_DONE_STATUSES.includes(t.status));
+  const priorities = projectsForGroup(g.id).filter(p => p.status === 'In Progress' || p.status === 'Planning').slice(0, 5);
+  const upcomingDeadlines = tasksForGroup(g.id).concat(projectsForGroup(g.id))
+    .filter(x => !TASK_DONE_STATUSES.includes(x.status) && x.status !== 'Completed')
+    .map(x => ({ item: x, date: x.dueDate || x.targetDate }))
+    .filter(x => x.date && deadlineCondition(x.date).condition !== 'none')
+    .sort((a, b) => a.date.localeCompare(b.date)).slice(0, 6);
+  const recentMeetings = meetingsForGroup(g.id).slice(0, 3);
+  const inProgress = projectsForGroup(g.id).filter(p => p.status === 'In Progress');
+  const needsAttentionItems = tasksForGroup(g.id).concat(projectsForGroup(g.id)).filter(x => (x.dueDate || x.targetDate) && deadlineCondition(x.dueDate || x.targetDate).condition === 'overdue');
+
+  content.innerHTML = `
+    <div class="field-grid">
+      <div>
+        <div class="rl-panel"><div class="rl-panel-header"><h2>My Tasks</h2></div><div class="rl-panel-body" id="ovMyTasks">${myTasks.length === 0 ? '<div class="empty-note">You\'re caught up. No tasks assigned to you in this group.</div>' : myTasks.map(genericCardHTML).join('')}</div></div>
+        <div class="rl-panel"><div class="rl-panel-header"><h2>Current Priorities</h2></div><div class="rl-panel-body" id="ovPriorities">${priorities.length === 0 ? '<div class="empty-note">No active priorities right now.</div>' : priorities.map(genericCardHTML).join('')}</div></div>
+        <div class="rl-panel"><div class="rl-panel-header"><h2>Needs Attention</h2></div><div class="rl-panel-body" id="ovNeedsAttention">${needsAttentionItems.length === 0 ? '<div class="empty-note">Nothing overdue in this group.</div>' : needsAttentionItems.map(genericCardHTML).join('')}</div></div>
+      </div>
+      <div>
+        <div class="rl-panel"><div class="rl-panel-header"><h2>Upcoming Deadlines</h2></div><div class="rl-panel-body">${upcomingDeadlines.length === 0 ? '<div class="empty-note">Nothing on the horizon yet.</div>' : upcomingDeadlines.map(x => `<div class="subcard"><div class="subcard-head"><strong>${esc(x.item.title)}</strong>${deadlinePill(deadlineCondition(x.date))}</div><div class="helper-text">${fmtDateLong(x.date)}</div></div>`).join('')}</div></div>
+        <div class="rl-panel"><div class="rl-panel-header"><h2>Upcoming Meetings</h2></div><div class="rl-panel-body">${recentMeetings.length === 0 ? '<div class="empty-note">This group hasn\'t scheduled its next meeting yet.</div>' : `<div class="helper-text">Last meeting: ${fmtDateLong((recentMeetings[0].meetingDate || '').slice(0, 10))}</div>` + (recentMeetings[0].nextMeetingDate ? `<div class="subcard" style="margin-top:8px"><strong>Next Meeting</strong><div class="helper-text">${fmtDateLong(recentMeetings[0].nextMeetingDate)}</div></div>` : '<div class="empty-note" style="margin-top:8px">Next meeting not yet scheduled.</div>')}</div></div>
+        <div class="rl-panel"><div class="rl-panel-header"><h2>Projects In Progress</h2></div><div class="rl-panel-body" id="ovInProgress">${inProgress.length === 0 ? '<div class="empty-note">No projects currently in progress.</div>' : inProgress.map(genericCardHTML).join('')}</div></div>
+        <div class="rl-panel"><div class="rl-panel-header"><h2>Recent Updates</h2></div><div class="rl-panel-body">${updatesForGroup(g.id).length === 0 ? '<div class="empty-note">No weekly updates submitted yet.</div>' : weeklyUpdateSummaryHTML(updatesForGroup(g.id)[0])}</div></div>
+      </div>
+    </div>`;
+  ['ovMyTasks', 'ovPriorities', 'ovNeedsAttention', 'ovInProgress'].forEach(id => bindGenericCardOpeners(document.getElementById(id)));
+}
+function weeklyUpdateSummaryHTML(u){
+  return `<div class="subcard">
+    <div class="helper-text">Week of ${fmtDateLong(u.weekOf)} &middot; submitted by ${esc(u.submittedBy)}</div>
+    ${u.completed ? `<div style="margin-top:6px"><strong>Completed:</strong> ${esc(u.completed)}</div>` : ''}
+    ${u.working ? `<div style="margin-top:4px"><strong>Working On:</strong> ${esc(u.working)}</div>` : ''}
+    ${u.decisionsNeeded ? `<div style="margin-top:4px"><strong>Decisions Needed:</strong> ${esc(u.decisionsNeeded)}</div>` : ''}
+  </div>`;
+}
+
+/* ---- PROJECTS TAB ---- */
+function renderGroupProjectsTab(g, content, canWrite){
+  const projects = projectsForGroup(g.id);
+  content.innerHTML = `
+    <div class="rl-panel"><div class="rl-panel-header"><div><h2>Projects</h2></div>${canWrite ? '<button class="btn primary" id="addProjectBtn">+ New Project</button>' : ''}</div>
+    <div class="rl-panel-body" id="projectsListBox">${projects.length === 0 ? '<div class="empty-note">No projects yet for this group.</div>' : projects.map(p => projectCardHTML(p)).join('')}</div></div>`;
+  bindGenericCardOpeners(document.getElementById('projectsListBox'));
+  document.querySelectorAll('#projectsListBox [data-open-project]').forEach(el => el.addEventListener('click', () => openProjectDrawer(el.getAttribute('data-open-project'))));
+  if (canWrite) document.getElementById('addProjectBtn').addEventListener('click', () => openProjectForm(g, null));
+}
+function projectCardHTML(p){
+  const dc = deadlineCondition(p.targetDate, p.status === 'Completed' || p.status === 'Cancelled');
+  return `<div class="subcard" data-open-project="${p.id}" style="cursor:pointer">
+    <div class="subcard-head"><strong>${esc(p.title)}</strong><span style="display:flex;gap:6px">${deadlinePill(dc)}<span class="pill blue">${esc(p.status)}</span></span></div>
+    <div class="helper-text">${esc(p.category ? p.category + ' &middot; ' : '')}${p.owner ? 'Owner: ' + esc(p.owner) : 'No owner'}${p.targetDate ? ' &middot; Target: ' + fmtDateShort(p.targetDate) : ''}</div>
+  </div>`;
+}
+
+function openProjectForm(g, project){
+  openModal(project ? 'Edit Project' : 'New Project — ' + g.name, `
+    <div class="field-grid">
+      <div class="field full"><label>Project Name</label><input id="pjf-title" value="${esc(project ? project.title : '')}" /></div>
+      <div class="field full"><label>Description</label><textarea id="pjf-desc">${esc(project ? project.description : '')}</textarea></div>
+      <div class="field"><label>Owner</label><input id="pjf-owner" value="${esc(project ? project.owner : '')}" placeholder="username" /></div>
+      <div class="field"><label>Advisor</label><input id="pjf-advisor" value="${esc(project ? project.advisor : '')}" /></div>
+      <div class="field"><label>Participants (comma-separated)</label><input id="pjf-participants" value="${esc(project ? (project.participants || []).join(', ') : '')}" /></div>
+      <div class="field"><label>Priority</label><select id="pjf-priority">${PRIORITIES.map(p => `<option ${project && project.priority === p ? 'selected' : ''}>${p}</option>`).join('')}</select></div>
+      <div class="field"><label>Start Date</label><input id="pjf-start" type="date" value="${esc(project ? project.startDate : '')}" /></div>
+      <div class="field"><label>Target Date</label><input id="pjf-target" type="date" value="${esc(project ? project.targetDate : '')}" /></div>
+      <div class="field"><label>Status</label><select id="pjf-status">${PROJECT_STATUSES.map(s => `<option ${project && project.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
+    </div>
+    <p class="section-title" style="margin-top:16px">Budget</p>
+    <div class="field-grid cols-4">
+      <div class="field"><label>Default</label><input id="pjf-bdefault" type="number" step="0.01" value="${esc(project ? project.budget.default : '')}" /></div>
+      <div class="field"><label>Estimated</label><input id="pjf-bestimated" type="number" step="0.01" value="${esc(project ? project.budget.estimated : '')}" /></div>
+      <div class="field"><label>Approved</label><input id="pjf-bapproved" type="number" step="0.01" value="${esc(project ? project.budget.approved : '')}" /></div>
+      <div class="field"><label>Purchased</label><input id="pjf-bpurchased" type="number" step="0.01" value="${esc(project ? project.budget.purchased : '')}" /></div>
+    </div>
+    ${g.category === 'programming' ? `<p class="section-title" style="margin-top:16px">Curriculum Link (optional)</p><div class="field full"><label>Linked Curriculum Requirement ID</label><input id="pjf-curric" value="${esc(project ? project.linkedCurriculumRequirementId : '')}" placeholder="Avoid duplicating program/purchasing/attendance data already tracked in Curriculum" /><p class="helper-text">Find the requirement ID in Curriculum Management → Settings → Curriculum Builder.</p></div>` : ''}
+  `, `<button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" id="pjfSaveBtn">${project ? 'Save Changes' : 'Create Project'}</button>`);
+  document.getElementById('pjfSaveBtn').addEventListener('click', async () => {
+    const title = val('pjf-title');
+    if (!title) { alert('Project name is required.'); return; }
+    const payload = {
+      property: currentProperty, committeeId: g.id, title, description: val('pjf-desc'), owner: val('pjf-owner'), advisor: val('pjf-advisor'),
+      participants: val('pjf-participants').split(',').map(s => s.trim()).filter(Boolean),
+      priority: document.getElementById('pjf-priority').value, startDate: val('pjf-start'), targetDate: val('pjf-target'), status: document.getElementById('pjf-status').value,
+      budget: { default: parseFloat(val('pjf-bdefault')) || 0, estimated: parseFloat(val('pjf-bestimated')) || 0, approved: parseFloat(val('pjf-bapproved')) || 0, purchased: parseFloat(val('pjf-bpurchased')) || 0 },
+    };
+    if (g.category === 'programming') payload.linkedCurriculumRequirementId = val('pjf-curric');
+    try {
+      if (project) await apiFetch('/reslife-collateral-projects', { method: 'PUT', body: JSON.stringify(Object.assign({ id: project.id }, payload)) });
+      else await apiFetch('/reslife-collateral-projects', { method: 'POST', body: JSON.stringify(payload) });
+      await refreshAllData();
+      closeModal(); renderGroupWorkspace();
+    } catch (e) { alert('Save failed: ' + e.message); }
+  });
+}
+
+function openProjectDrawer(id){
+  const p = allProjects.find(x => x.id === id);
+  if (!p) return;
+  const g = groups.find(x => x.id === p.committeeId);
+  const canWrite = canWriteGroup(g);
+  const isParticipant = p.owner === me.username || (p.participants || []).includes(me.username);
+  const dc = deadlineCondition(p.targetDate, p.status === 'Completed' || p.status === 'Cancelled');
+  const tasks = allTasks.filter(t => t.projectId === p.id);
+
+  const commentsHTML = (p.comments || []).length === 0 ? '<div class="empty-note">No comments yet.</div>' : p.comments.map(c => `<div class="comment-item"><span class="comment-author">${esc(c.author)}</span> <span class="pill gray">${esc(ROLE_LABELS[c.role] || c.role)}</span><div>${esc(c.message)}</div><div class="helper-text">${fmtDateTime(c.timestamp)}</div></div>`).join('');
+  const historyHTML = (p.statusHistory || []).slice().reverse().map(h => `<div class="history-item">${esc(h.field)}: ${esc(String(h.oldValue))} &rarr; ${esc(String(h.newValue))} &mdash; ${esc(h.changedBy)}, ${fmtDateTime(h.timestamp)}</div>`).join('') || '<div class="empty-note">No history yet.</div>';
+  const tasksHTML = tasks.length === 0 ? '<div class="empty-note">No tasks linked to this project yet.</div>' : tasks.map(t => `<div class="subcard" data-open-task="${t.id}" style="cursor:pointer"><strong>${esc(t.title)}</strong> <span class="pill blue">${esc(t.status)}</span> ${t.assignedTo ? '<span class="helper-text">— ' + esc(t.assignedTo) + '</span>' : ''}</div>`).join('');
+
+  let actionsHTML = '';
+  if (canWrite || isParticipant) actionsHTML += `<select id="drawerProjStatus">${PROJECT_STATUSES.map(s => `<option ${p.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select><button class="btn primary" id="drawerProjStatusBtn">Update Status</button>`;
+  if (canWrite) actionsHTML += `<button class="btn" id="drawerEditProjectBtn">Edit</button><button class="btn danger" id="drawerDeleteProjectBtn">Delete</button>`;
+
+  document.getElementById('drawerRoot').innerHTML = `
+    <div class="drawer-overlay" id="drawerOverlay"><div class="drawer">
+      <div class="drawer-header"><div><div style="font-weight:800;font-size:15px;color:var(--rl-primary)">${esc(p.title)}</div><div style="margin-top:4px">${esc((g || {}).name || '')} <span class="pill blue">${esc(p.status)}</span> ${deadlinePill(dc)}</div></div><button class="drawer-close" id="drawerCloseBtn">&times;</button></div>
+      <div class="drawer-body">
+        <div class="kv-row"><div class="kv-label">Description</div><div class="kv-value">${esc(p.description || '—')}</div></div>
+        <div class="kv-row"><div class="kv-label">Owner / Participants</div><div class="kv-value">${esc(p.owner || '—')}${(p.participants || []).length ? ' + ' + esc(p.participants.join(', ')) : ''}</div></div>
+        <div class="kv-row"><div class="kv-label">Advisor</div><div class="kv-value">${esc(p.advisor || '—')}</div></div>
+        <div class="kv-row"><div class="kv-label">Dates</div><div class="kv-value">${p.startDate ? 'Start ' + fmtDateLong(p.startDate) : ''} ${p.targetDate ? '&middot; Target ' + fmtDateLong(p.targetDate) : ''}</div></div>
+        ${p.budget ? `<div class="kv-row"><div class="kv-label">Budget</div><div class="kv-value">Default $${p.budget.default} &middot; Estimated $${p.budget.estimated} &middot; Approved $${p.budget.approved} &middot; Purchased $${p.budget.purchased} &middot; Remaining $${(p.budget.approved - p.budget.purchased).toFixed(2)}</div></div>` : ''}
+        ${p.linkedCurriculumRequirementId ? `<div class="kv-row"><div class="kv-label">Linked Curriculum Requirement</div><div class="kv-value"><a href="reslife_curriculum.html" target="_blank">Open Curriculum Management &rarr;</a> (ID: ${esc(p.linkedCurriculumRequirementId)})</div></div>` : ''}
+        <div class="section-title" style="margin-top:16px">Tasks</div>${tasksHTML}
+        <div class="section-title" style="margin-top:16px">Comments</div><div id="drawerComments">${commentsHTML}</div>
+        <div style="display:flex;gap:8px;margin-top:8px"><input type="text" id="drawerCommentInput" placeholder="Add a comment…" style="flex:1;padding:8px 10px;border:1px solid var(--rl-border);border-radius:8px;font-size:12.5px" /><button class="btn sm" id="drawerAddCommentBtn">Post</button></div>
+        <div class="section-title" style="margin-top:16px">History</div>${historyHTML}
+      </div>
+      <div class="drawer-footer">${actionsHTML || '<span class="helper-text">No actions available for your role.</span>'}</div>
+    </div></div>`;
+
+  document.getElementById('drawerCloseBtn').addEventListener('click', closeDrawer);
+  document.getElementById('drawerOverlay').addEventListener('click', (e) => { if (e.target.id === 'drawerOverlay') closeDrawer(); });
+  document.querySelectorAll('[data-open-task]').forEach(el => el.addEventListener('click', () => openTaskDrawer(el.getAttribute('data-open-task'))));
+  document.getElementById('drawerAddCommentBtn').addEventListener('click', async () => {
+    const message = document.getElementById('drawerCommentInput').value.trim();
+    if (!message) return;
+    try { await apiFetch('/reslife-collateral-projects', { method: 'PUT', body: JSON.stringify({ id: p.id, property: currentProperty, action: 'addComment', message }) }); await refreshAllData(); openProjectDrawer(id); } catch (e) { alert('Failed: ' + e.message); }
+  });
+  const bind = (elId, fn) => { const el = document.getElementById(elId); if (el) el.addEventListener('click', fn); };
+  bind('drawerProjStatusBtn', async () => {
+    try { await apiFetch('/reslife-collateral-projects', { method: 'PUT', body: JSON.stringify({ id: p.id, property: currentProperty, status: document.getElementById('drawerProjStatus').value }) }); await refreshAllData(); openProjectDrawer(id); } catch (e) { alert('Failed: ' + e.message); }
+  });
+  bind('drawerEditProjectBtn', () => { closeDrawer(); openProjectForm(g, p); });
+  bind('drawerDeleteProjectBtn', async () => {
+    if (!confirm('Delete this project? Linked tasks will also be removed.')) return;
+    try { await apiFetch('/reslife-collateral-projects?id=' + p.id + '&property=' + encodeURIComponent(currentProperty), { method: 'DELETE' }); await refreshAllData(); closeDrawer(); renderGroupWorkspace(); } catch (e) { alert('Failed: ' + e.message); }
+  });
+}
+
+function closeDrawer(){ document.getElementById('drawerRoot').innerHTML = ''; }
+
+function openModal(title, bodyHTML, footerHTML){
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `<div class="modal-overlay" id="genModalOverlay"><div class="modal-box">
+    <div class="modal-header"><h3>${esc(title)}</h3><button class="drawer-close" id="genModalCloseBtn">&times;</button></div>
+    <div class="modal-body">${bodyHTML}</div><div class="modal-footer">${footerHTML}</div>
+  </div></div>`;
+  document.getElementById('drawerRoot').appendChild(wrap.firstElementChild);
+  document.getElementById('genModalCloseBtn').addEventListener('click', closeModal);
+  document.getElementById('genModalOverlay').addEventListener('click', (e) => { if (e.target.id === 'genModalOverlay') closeModal(); });
+}
+function closeModal(){ const el = document.getElementById('genModalOverlay'); if (el) el.remove(); }
+
+/* ---- TASKS TAB ---- */
+function renderGroupTasksTab(g, content, canWrite){
+  const tasks = tasksForGroup(g.id);
+  content.innerHTML = `
+    <div class="rl-panel"><div class="rl-panel-header"><div><h2>Tasks</h2></div>${canWrite ? '<button class="btn primary" id="addTaskBtn">+ New Task</button>' : ''}</div>
+    <div class="rl-panel-body" id="tasksListBox">${tasks.length === 0 ? '<div class="empty-note">No tasks yet. Convert a meeting note into an action item, or add one directly.</div>' : tasks.map(t => taskCardHTML(t)).join('')}</div></div>`;
+  document.querySelectorAll('#tasksListBox [data-open-task]').forEach(el => el.addEventListener('click', () => openTaskDrawer(el.getAttribute('data-open-task'))));
+  if (canWrite) document.getElementById('addTaskBtn').addEventListener('click', () => openTaskForm(g, null));
+}
+function taskCardHTML(t){
+  const dc = deadlineCondition(t.dueDate, TASK_DONE_STATUSES.includes(t.status));
+  const project = allProjects.find(p => p.id === t.projectId);
+  return `<div class="subcard" data-open-task="${t.id}" style="cursor:pointer">
+    <div class="subcard-head"><strong>${esc(t.title)}</strong><span style="display:flex;gap:6px">${deadlinePill(dc)}<span class="pill blue">${esc(t.status)}</span></span></div>
+    <div class="helper-text">${t.assignedTo ? 'Assigned to ' + esc(t.assignedTo) : '<span style="color:var(--rl-danger)">No owner assigned</span>'}${project ? ' &middot; Project: ' + esc(project.title) : ''}${t.dueDate ? ' &middot; Due ' + fmtDateShort(t.dueDate) : ''}</div>
+  </div>`;
+}
+function openTaskForm(g, task, prefill){
+  const projects = projectsForGroup(g.id);
+  const pf = prefill || {};
+  openModal(task ? 'Edit Task' : 'New Task — ' + g.name, `
+    <div class="field-grid">
+      <div class="field full"><label>Title</label><input id="tkf-title" value="${esc(task ? task.title : (pf.title || ''))}" /></div>
+      <div class="field full"><label>Description</label><textarea id="tkf-desc">${esc(task ? task.description : (pf.description || ''))}</textarea></div>
+      <div class="field"><label>Project (optional)</label><select id="tkf-project"><option value="">No project</option>${projects.map(p => `<option value="${p.id}" ${(task && task.projectId === p.id) ? 'selected' : ''}>${esc(p.title)}</option>`).join('')}</select></div>
+      <div class="field"><label>Assigned To</label><input id="tkf-assignee" value="${esc(task ? task.assignedTo : (pf.assignedTo || ''))}" placeholder="username" /></div>
+      <div class="field"><label>Due Date</label><input id="tkf-due" type="date" value="${esc(task ? task.dueDate : (pf.dueDate || ''))}" /></div>
+      <div class="field"><label>Priority</label><select id="tkf-priority">${PRIORITIES.map(p => `<option ${task && task.priority === p ? 'selected' : ''}>${p}</option>`).join('')}</select></div>
+      <div class="field"><label>Status</label><select id="tkf-status">${TASK_STATUSES.map(s => `<option ${task && task.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
+    </div>
+    <p class="section-title" style="margin-top:14px">Checklist (optional)</p>
+    <div id="tkf-checklist"></div>
+    <button class="btn sm" id="tkfAddChecklistBtn" type="button">+ Add Checklist Item</button>
+  `, `<button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" id="tkfSaveBtn">${task ? 'Save Changes' : 'Create Task'}</button>`);
+
+  let checklist = task ? JSON.parse(JSON.stringify(task.checklist || [])) : [];
+  function renderChecklist(){
+    document.getElementById('tkf-checklist').innerHTML = checklist.map((c, i) => `
+      <div class="checklist-row" data-i="${i}"><input type="checkbox" class="cl-done" ${c.done ? 'checked' : ''} /><input type="text" class="cl-text" value="${esc(c.text)}" style="flex:1;padding:6px 8px;border:1px solid var(--rl-border);border-radius:6px" /><button class="btn sm danger" type="button" data-remove-cl="${i}">&times;</button></div>
+    `).join('');
+    document.querySelectorAll('#tkf-checklist .checklist-row').forEach(row => {
+      const i = parseInt(row.dataset.i, 10);
+      row.querySelector('.cl-done').addEventListener('change', e => checklist[i].done = e.target.checked);
+      row.querySelector('.cl-text').addEventListener('input', e => checklist[i].text = e.target.value);
+      row.querySelector('[data-remove-cl]').addEventListener('click', () => { checklist.splice(i, 1); renderChecklist(); });
+    });
+  }
+  renderChecklist();
+  document.getElementById('tkfAddChecklistBtn').addEventListener('click', () => { checklist.push({ id: uid(), text: '', done: false }); renderChecklist(); });
+
+  document.getElementById('tkfSaveBtn').addEventListener('click', async () => {
+    const title = val('tkf-title');
+    if (!title) { alert('Task title is required.'); return; }
+    const payload = {
+      property: currentProperty, committeeId: g.id, title, description: val('tkf-desc'),
+      projectId: document.getElementById('tkf-project').value, assignedTo: val('tkf-assignee'), dueDate: val('tkf-due'),
+      priority: document.getElementById('tkf-priority').value, status: document.getElementById('tkf-status').value,
+      checklist: checklist.filter(c => c.text && c.text.trim()),
+    };
+    try {
+      if (task) await apiFetch('/reslife-collateral-tasks', { method: 'PUT', body: JSON.stringify(Object.assign({ id: task.id }, payload)) });
+      else await apiFetch('/reslife-collateral-tasks', { method: 'POST', body: JSON.stringify(payload) });
+      await refreshAllData();
+      closeModal(); renderGroupWorkspace();
+    } catch (e) { alert('Save failed: ' + e.message); }
+  });
+}
+
+function openTaskDrawer(id){
+  const t = allTasks.find(x => x.id === id);
+  if (!t) return;
+  const g = groups.find(x => x.id === t.committeeId);
+  const canWrite = canWriteGroup(g);
+  const isAssignee = t.assignedTo === me.username;
+  const dc = deadlineCondition(t.dueDate, TASK_DONE_STATUSES.includes(t.status));
+  const project = allProjects.find(p => p.id === t.projectId);
+
+  const checklistHTML = (t.checklist || []).length === 0 ? '<div class="empty-note">No checklist items.</div>' : t.checklist.map(c => `
+    <div class="checklist-row ${c.done ? 'done' : ''}"><input type="checkbox" data-toggle-check="${c.id}" ${c.done ? 'checked' : ''} ${(canWrite || isAssignee) ? '' : 'disabled'} /><label>${esc(c.text)}</label></div>
+  `).join('');
+  const commentsHTML = (t.comments || []).length === 0 ? '<div class="empty-note">No comments yet.</div>' : t.comments.map(c => `<div class="comment-item"><span class="comment-author">${esc(c.author)}</span> <span class="pill gray">${esc(ROLE_LABELS[c.role] || c.role)}</span><div>${esc(c.message)}</div><div class="helper-text">${fmtDateTime(c.timestamp)}</div></div>`).join('');
+  const historyHTML = (t.statusHistory || []).slice().reverse().map(h => `<div class="history-item">${esc(h.field)}: ${esc(String(h.oldValue))} &rarr; ${esc(String(h.newValue))} &mdash; ${esc(h.changedBy)}, ${fmtDateTime(h.timestamp)}</div>`).join('') || '<div class="empty-note">No history yet.</div>';
+
+  let actionsHTML = '';
+  if (canWrite || isAssignee) actionsHTML += `<select id="drawerTaskStatus">${TASK_STATUSES.map(s => `<option ${t.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select><button class="btn primary" id="drawerTaskStatusBtn">Update Status</button>`;
+  if (canWrite) actionsHTML += `<button class="btn" id="drawerEditTaskBtn">Edit</button><button class="btn danger" id="drawerDeleteTaskBtn">Delete</button>`;
+
+  document.getElementById('drawerRoot').innerHTML = `
+    <div class="drawer-overlay" id="drawerOverlay"><div class="drawer">
+      <div class="drawer-header"><div><div style="font-weight:800;font-size:15px;color:var(--rl-primary)">${esc(t.title)}</div><div style="margin-top:4px">${esc((g || {}).name || '')} <span class="pill blue">${esc(t.status)}</span> ${deadlinePill(dc)}</div></div><button class="drawer-close" id="drawerCloseBtn">&times;</button></div>
+      <div class="drawer-body">
+        <div class="kv-row"><div class="kv-label">Description</div><div class="kv-value">${esc(t.description || '—')}</div></div>
+        <div class="kv-row"><div class="kv-label">Assigned To</div><div class="kv-value">${esc(t.assignedTo || 'Unassigned')}</div></div>
+        <div class="kv-row"><div class="kv-label">Project</div><div class="kv-value">${project ? esc(project.title) : '—'}</div></div>
+        <div class="kv-row"><div class="kv-label">Due Date</div><div class="kv-value">${t.dueDate ? fmtDateLong(t.dueDate) : '—'}</div></div>
+        <div class="kv-row"><div class="kv-label">Priority</div><div class="kv-value">${esc(t.priority)}</div></div>
+        <div class="section-title" style="margin-top:16px">Checklist</div>${checklistHTML}
+        <div class="section-title" style="margin-top:16px">Comments</div><div id="drawerComments">${commentsHTML}</div>
+        <div style="display:flex;gap:8px;margin-top:8px"><input type="text" id="drawerCommentInput" placeholder="Add a comment…" style="flex:1;padding:8px 10px;border:1px solid var(--rl-border);border-radius:8px;font-size:12.5px" /><button class="btn sm" id="drawerAddCommentBtn">Post</button></div>
+        <div class="section-title" style="margin-top:16px">History</div>${historyHTML}
+      </div>
+      <div class="drawer-footer">${actionsHTML || '<span class="helper-text">No actions available for your role.</span>'}</div>
+    </div></div>`;
+
+  document.getElementById('drawerCloseBtn').addEventListener('click', closeDrawer);
+  document.getElementById('drawerOverlay').addEventListener('click', (e) => { if (e.target.id === 'drawerOverlay') closeDrawer(); });
+  document.querySelectorAll('[data-toggle-check]').forEach(cb => cb.addEventListener('change', async () => {
+    const newChecklist = (t.checklist || []).map(c => c.id === cb.getAttribute('data-toggle-check') ? Object.assign({}, c, { done: cb.checked }) : c);
+    try { await apiFetch('/reslife-collateral-tasks', { method: 'PUT', body: JSON.stringify({ id: t.id, property: currentProperty, checklist: newChecklist }) }); await refreshAllData(); openTaskDrawer(id); } catch (e) { alert('Failed: ' + e.message); }
+  }));
+  document.getElementById('drawerAddCommentBtn').addEventListener('click', async () => {
+    const message = document.getElementById('drawerCommentInput').value.trim();
+    if (!message) return;
+    try { await apiFetch('/reslife-collateral-tasks', { method: 'PUT', body: JSON.stringify({ id: t.id, property: currentProperty, action: 'addComment', message }) }); await refreshAllData(); openTaskDrawer(id); } catch (e) { alert('Failed: ' + e.message); }
+  });
+  const bind = (elId, fn) => { const el = document.getElementById(elId); if (el) el.addEventListener('click', fn); };
+  bind('drawerTaskStatusBtn', async () => {
+    try { await apiFetch('/reslife-collateral-tasks', { method: 'PUT', body: JSON.stringify({ id: t.id, property: currentProperty, status: document.getElementById('drawerTaskStatus').value }) }); await refreshAllData(); openTaskDrawer(id); } catch (e) { alert('Failed: ' + e.message); }
+  });
+  bind('drawerEditTaskBtn', () => { closeDrawer(); openTaskForm(g, t); });
+  bind('drawerDeleteTaskBtn', async () => {
+    if (!confirm('Delete this task?')) return;
+    try { await apiFetch('/reslife-collateral-tasks?id=' + t.id + '&property=' + encodeURIComponent(currentProperty), { method: 'DELETE' }); await refreshAllData(); closeDrawer(); renderGroupWorkspace(); } catch (e) { alert('Failed: ' + e.message); }
+  });
+}
+
+/* ---- MEETINGS TAB ---- */
+function renderGroupMeetingsTab(g, content, canWrite){
+  const meetings = meetingsForGroup(g.id);
+  content.innerHTML = `
+    <div class="rl-panel"><div class="rl-panel-header"><div><h2>Meetings</h2><p>Meets every ${esc(g.meetingFrequencyDays || 14)} days for ${esc(g.meetingDurationMinutes || 60)} minutes.</p></div><button class="btn primary" id="addMeetingBtn">+ Log Meeting</button></div>
+    <div class="rl-panel-body" id="meetingsListBox">${meetings.length === 0 ? '<div class="empty-note">No meetings recorded yet.</div>' : meetings.map(m => meetingCardHTML(m, g)).join('')}</div></div>`;
+  document.getElementById('addMeetingBtn').addEventListener('click', () => openMeetingForm(g, null));
+  document.querySelectorAll('#meetingsListBox [data-expand-meeting]').forEach(el => el.addEventListener('click', () => toggleMeetingDetail(el.getAttribute('data-expand-meeting'))));
+}
+function meetingCardHTML(m, g){
+  const presentCount = (m.attendance || []).filter(a => a.status === 'Present').length;
+  return `<div class="subcard">
+    <div class="subcard-head" data-expand-meeting="${m.id}" style="cursor:pointer">
+      <div><strong>${fmtDateLong((m.meetingDate || '').slice(0, 10))}</strong> ${m.facilitator ? '&middot; Facilitated by ' + esc(m.facilitator) : ''}</div>
+      <span class="pill gray">${presentCount}/${(m.attendance || []).length || (g.members || []).length} present</span>
+    </div>
+    <div id="meeting-detail-${m.id}" class="hidden" style="margin-top:10px"></div>
+  </div>`;
+}
+function toggleMeetingDetail(mid){
+  const box = document.getElementById('meeting-detail-' + mid);
+  if (!box) return;
+  if (!box.classList.contains('hidden')) { box.classList.add('hidden'); return; }
+  const m = allMeetings.find(x => x.id === mid);
+  const g = groups.find(x => x.id === m.committeeId);
+  const canWrite = canWriteGroup(g);
+  box.classList.remove('hidden');
+  const attendanceHTML = (m.attendance || []).length === 0 ? '<div class="empty-note">No attendance recorded.</div>' : m.attendance.map(a => `<span class="pill ${a.status === 'Present' ? 'green' : (a.status === 'Absent' ? 'red' : 'gray')}">${esc(a.username)}: ${esc(a.status)}</span> `).join('');
+  const actionItemsHTML = (m.actionItems || []).length === 0 ? '<div class="empty-note">No action items from this meeting.</div>' : m.actionItems.map((ai, i) => `
+    <div class="subcard"><div class="subcard-head"><span>${esc(ai.task)} ${ai.assignedTo ? '— ' + esc(ai.assignedTo) : ''} ${ai.dueDate ? '(due ' + esc(ai.dueDate) + ')' : ''}</span>
+    ${ai.taskId ? '<span class="pill green">Task Created</span>' : (canWrite ? `<button class="btn sm primary" data-convert-ai="${mid}:${i}">Create Action Item</button>` : '')}</div></div>`).join('');
+  const decisionsHTML = (m.decisions || []).length === 0 ? '' : `<div class="section-title" style="margin-top:12px">Decisions</div>` + m.decisions.map(d => `<div class="helper-text">&bull; ${esc(d)}</div>`).join('');
+  box.innerHTML = `
+    <div class="kv-row"><div class="kv-label">Time / Location</div><div class="kv-value">${m.startTime ? esc(m.startTime) : ''}${m.endTime ? '–' + esc(m.endTime) : ''} ${m.location ? '&middot; ' + esc(m.location) : ''} ${m.virtualLink ? '&middot; <a href="' + esc(m.virtualLink) + '" target="_blank">Virtual Link</a>' : ''}</div></div>
+    <div class="kv-row"><div class="kv-label">Attendance</div><div class="kv-value">${attendanceHTML}</div></div>
+    <div class="kv-row"><div class="kv-label">Agenda / Notes</div><div class="kv-value" style="white-space:pre-wrap">${esc(m.agenda)}</div></div>
+    ${decisionsHTML}
+    <div class="section-title" style="margin-top:12px">Action Items</div>${actionItemsHTML}
+    ${m.nextMeetingDate ? `<div class="kv-row" style="margin-top:10px"><div class="kv-label">Next Meeting</div><div class="kv-value">${fmtDateLong(m.nextMeetingDate)}</div></div>` : ''}
+    ${canWrite ? `<button class="btn sm" style="margin-top:10px" data-edit-meeting="${mid}">Edit Meeting</button>` : ''}
+  `;
+  box.querySelectorAll('[data-convert-ai]').forEach(btn => btn.addEventListener('click', async () => {
+    const [meetingId, idx] = btn.getAttribute('data-convert-ai').split(':');
+    const meeting = allMeetings.find(x => x.id === meetingId);
+    const ai = meeting.actionItems[parseInt(idx, 10)];
+    try {
+      const created = await apiFetch('/reslife-collateral-tasks', { method: 'POST', body: JSON.stringify({ property: currentProperty, committeeId: meeting.committeeId, title: ai.task, assignedTo: ai.assignedTo || '', dueDate: ai.dueDate || '' }) });
+      const newActionItems = meeting.actionItems.map((x, i) => i === parseInt(idx, 10) ? Object.assign({}, x, { taskId: created.id }) : x);
+      await apiFetch('/reslife-committee-minutes', { method: 'PUT', body: JSON.stringify({ id: meetingId, property: currentProperty, actionItems: newActionItems }) });
+      await refreshAllData();
+      renderGroupWorkspace();
+    } catch (e) { alert('Failed: ' + e.message); }
+  }));
+  box.querySelectorAll('[data-edit-meeting]').forEach(btn => btn.addEventListener('click', () => openMeetingForm(g, m)));
+}
+
+function openMeetingForm(g, meeting){
+  let attendance = meeting ? JSON.parse(JSON.stringify(meeting.attendance || [])) : (g.members || []).map(u => ({ username: u, status: 'Not Recorded' }));
+  let actionItems = meeting ? JSON.parse(JSON.stringify(meeting.actionItems || [])) : [];
+  let decisions = meeting ? (meeting.decisions || []).slice() : [];
+
+  function attendanceHTML(){ return attendance.map((a, i) => `
+    <div class="dynrow" style="display:flex;align-items:center;gap:8px" data-i="${i}">
+      <span style="flex:1;font-weight:600">${esc(a.username)}</span>
+      <select class="att-status" style="min-height:32px;padding:5px 8px">${ATTENDANCE_STATUSES.map(s => `<option ${a.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select>
+    </div>`).join(''); }
+  function actionItemsHTML(){ return actionItems.map((ai, i) => `
+    <div class="dynrow field-grid cols-3" data-i="${i}">
+      <div class="field full"><label>Task</label><input class="ai-task" value="${esc(ai.task || '')}" /></div>
+      <div class="field"><label>Owner</label><input class="ai-owner" value="${esc(ai.assignedTo || '')}" /></div>
+      <div class="field"><label>Due Date</label><input class="ai-due" type="date" value="${esc(ai.dueDate || '')}" /></div>
+      <div class="field"><button class="btn sm danger" type="button" data-remove-ai="${i}">Remove</button></div>
+    </div>`).join(''); }
+  function decisionsHTML(){ return decisions.map((d, i) => `<div class="dynrow" style="display:flex;gap:8px" data-i="${i}"><input class="dec-text" value="${esc(d)}" style="flex:1;padding:7px 9px;border:1px solid var(--rl-border);border-radius:6px" /><button class="btn sm danger" type="button" data-remove-dec="${i}">&times;</button></div>`).join(''); }
+
+  openModal(meeting ? 'Edit Meeting' : 'Log Meeting — ' + g.name, `
+    <div class="field-grid cols-3">
+      <div class="field"><label>Meeting Date</label><input id="mtf-date" type="date" value="${esc(meeting ? (meeting.meetingDate || '').slice(0, 10) : todayStr())}" /></div>
+      <div class="field"><label>Start Time</label><input id="mtf-start" type="time" value="${esc(meeting ? meeting.startTime : '')}" /></div>
+      <div class="field"><label>End Time</label><input id="mtf-end" type="time" value="${esc(meeting ? meeting.endTime : '')}" /></div>
+      <div class="field"><label>Location</label><input id="mtf-location" value="${esc(meeting ? meeting.location : '')}" /></div>
+      <div class="field"><label>Virtual Link</label><input id="mtf-link" value="${esc(meeting ? meeting.virtualLink : '')}" /></div>
+      <div class="field"><label>Facilitator</label><input id="mtf-facilitator" value="${esc(meeting ? meeting.facilitator : (g.lead || ''))}" /></div>
+    </div>
+    <div class="field full" style="margin-top:12px"><label>Agenda / Notes</label><textarea id="mtf-agenda" placeholder="Updates, Old Business, Current Projects, Upcoming Deadlines, Decisions Needed, New Business, Advisor Notes, Next Steps…">${esc(meeting ? meeting.agenda : '')}</textarea></div>
+    <p class="section-title" style="margin-top:14px">Attendance</p>
+    <div id="mtf-attendance">${attendanceHTML()}</div>
+    <p class="section-title" style="margin-top:14px">Decisions Made</p>
+    <div id="mtf-decisions">${decisionsHTML()}</div>
+    <button class="btn sm" id="mtfAddDecisionBtn" type="button">+ Add Decision</button>
+    <p class="section-title" style="margin-top:14px">Action Items</p>
+    <div id="mtf-actionitems">${actionItemsHTML()}</div>
+    <button class="btn sm" id="mtfAddActionItemBtn" type="button">+ Add Action Item</button>
+    <div class="field" style="margin-top:14px"><label>Next Meeting Date</label><input id="mtf-nextdate" type="date" value="${esc(meeting ? meeting.nextMeetingDate : '')}" /></div>
+  `, `<button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" id="mtfSaveBtn">${meeting ? 'Save Changes' : 'Log Meeting'}</button>`);
+
+  function bindAttendance(){ document.querySelectorAll('#mtf-attendance .dynrow').forEach(row => { const i = parseInt(row.dataset.i, 10); row.querySelector('.att-status').addEventListener('change', e => attendance[i].status = e.target.value); }); }
+  function bindActionItems(){
+    document.querySelectorAll('#mtf-actionitems .dynrow').forEach(row => {
+      const i = parseInt(row.dataset.i, 10);
+      row.querySelector('.ai-task').addEventListener('input', e => actionItems[i].task = e.target.value);
+      row.querySelector('.ai-owner').addEventListener('input', e => actionItems[i].assignedTo = e.target.value);
+      row.querySelector('.ai-due').addEventListener('change', e => actionItems[i].dueDate = e.target.value);
+      row.querySelector('[data-remove-ai]').addEventListener('click', () => { actionItems.splice(i, 1); document.getElementById('mtf-actionitems').innerHTML = actionItemsHTML(); bindActionItems(); });
+    });
+  }
+  function bindDecisions(){
+    document.querySelectorAll('#mtf-decisions .dynrow').forEach(row => {
+      const i = parseInt(row.dataset.i, 10);
+      row.querySelector('.dec-text').addEventListener('input', e => decisions[i] = e.target.value);
+      row.querySelector('[data-remove-dec]').addEventListener('click', () => { decisions.splice(i, 1); document.getElementById('mtf-decisions').innerHTML = decisionsHTML(); bindDecisions(); });
+    });
+  }
+  bindAttendance(); bindActionItems(); bindDecisions();
+  document.getElementById('mtfAddActionItemBtn').addEventListener('click', () => { actionItems.push({ task: '', assignedTo: '', dueDate: '' }); document.getElementById('mtf-actionitems').innerHTML = actionItemsHTML(); bindActionItems(); });
+  document.getElementById('mtfAddDecisionBtn').addEventListener('click', () => { decisions.push(''); document.getElementById('mtf-decisions').innerHTML = decisionsHTML(); bindDecisions(); });
+
+  document.getElementById('mtfSaveBtn').addEventListener('click', async () => {
+    const agenda = val('mtf-agenda');
+    if (!agenda) { alert('Agenda / notes is required.'); return; }
+    const payload = {
+      property: currentProperty, committeeId: g.id, meetingDate: val('mtf-date'), startTime: val('mtf-start'), endTime: val('mtf-end'),
+      location: val('mtf-location'), virtualLink: val('mtf-link'), facilitator: val('mtf-facilitator'), agenda,
+      attendance, decisions: decisions.filter(d => d.trim()), actionItems: actionItems.filter(a => a.task && a.task.trim()),
+      nextMeetingDate: val('mtf-nextdate'),
+    };
+    try {
+      if (meeting) await apiFetch('/reslife-committee-minutes', { method: 'PUT', body: JSON.stringify(Object.assign({ id: meeting.id }, payload)) });
+      else await apiFetch('/reslife-committee-minutes', { method: 'POST', body: JSON.stringify(payload) });
+      await refreshAllData();
+      closeModal(); renderGroupWorkspace();
+    } catch (e) { alert('Save failed: ' + e.message); }
+  });
+}
+
+/* ---- WEEKLY UPDATE TAB ---- */
+function renderGroupUpdatesTab(g, content, canWrite){
+  const updates = updatesForGroup(g.id);
+  content.innerHTML = `
+    <div class="rl-panel"><div class="rl-panel-header"><div><h2>Weekly Update</h2><p>The Committee Lead's concise status for full staff meetings — built only from this group's real data.</p></div>${canWrite ? '<button class="btn primary" id="addUpdateBtn">+ New Update</button>' : ''}</div>
+    <div class="rl-panel-body" id="updatesListBox">${updates.length === 0 ? '<div class="empty-note">No weekly updates submitted yet.</div>' : updates.map(u => fullUpdateHTML(u)).join('')}</div></div>`;
+  if (canWrite) document.getElementById('addUpdateBtn').addEventListener('click', () => openUpdateForm(g, null));
+  document.querySelectorAll('#updatesListBox [data-generate-update]').forEach(btn => btn.addEventListener('click', () => showGeneratedUpdate(updates.find(u => u.id === btn.getAttribute('data-generate-update')), g)));
+  if (canWrite) document.querySelectorAll('#updatesListBox [data-edit-update]').forEach(btn => btn.addEventListener('click', () => openUpdateForm(g, updates.find(u => u.id === btn.getAttribute('data-edit-update')))));
+}
+function fullUpdateHTML(u){
+  return `<div class="subcard">
+    <div class="subcard-head"><strong>Week of ${fmtDateLong(u.weekOf)}</strong><span style="display:flex;gap:6px"><button class="btn sm" data-generate-update="${u.id}">Generate 2-Minute Update</button><button class="btn sm" data-edit-update="${u.id}">Edit</button></span></div>
+    ${u.completed ? `<div class="kv-row"><div class="kv-label">Completed</div><div class="kv-value">${esc(u.completed)}</div></div>` : ''}
+    ${u.working ? `<div class="kv-row"><div class="kv-label">Working On</div><div class="kv-value">${esc(u.working)}</div></div>` : ''}
+    ${u.upcoming ? `<div class="kv-row"><div class="kv-label">Upcoming</div><div class="kv-value">${esc(u.upcoming)}</div></div>` : ''}
+    ${u.needsFromStaff ? `<div class="kv-row"><div class="kv-label">Needs From Staff</div><div class="kv-value">${esc(u.needsFromStaff)}</div></div>` : ''}
+    ${u.needsFromREC ? `<div class="kv-row"><div class="kv-label">Needs From REC/Admin</div><div class="kv-value">${esc(u.needsFromREC)}</div></div>` : ''}
+    ${u.decisionsNeeded ? `<div class="kv-row"><div class="kv-label">Decisions Needed</div><div class="kv-value">${esc(u.decisionsNeeded)}</div></div>` : ''}
+    ${u.risks ? `<div class="kv-row"><div class="kv-label">Risks / Delays</div><div class="kv-value">${esc(u.risks)}</div></div>` : ''}
+  </div>`;
+}
+function openUpdateForm(g, u){
+  openModal(u ? 'Edit Weekly Update' : 'New Weekly Update — ' + g.name, `
+    <div class="field"><label>Week Of</label><input id="wuf-week" type="date" value="${esc(u ? u.weekOf : todayStr())}" /></div>
+    <div class="field-grid" style="margin-top:10px">
+      <div class="field full"><label>What We Completed</label><textarea id="wuf-completed">${esc(u ? u.completed : '')}</textarea></div>
+      <div class="field full"><label>What We're Working On</label><textarea id="wuf-working">${esc(u ? u.working : '')}</textarea></div>
+      <div class="field full"><label>Upcoming</label><textarea id="wuf-upcoming">${esc(u ? u.upcoming : '')}</textarea></div>
+      <div class="field full"><label>Needs From Staff</label><textarea id="wuf-needsstaff">${esc(u ? u.needsFromStaff : '')}</textarea></div>
+      <div class="field full"><label>Needs From REC/Admin</label><textarea id="wuf-needsrec">${esc(u ? u.needsFromREC : '')}</textarea></div>
+      <div class="field full"><label>Decisions Needed</label><textarea id="wuf-decisions">${esc(u ? u.decisionsNeeded : '')}</textarea></div>
+      <div class="field full"><label>Risks / Delays</label><textarea id="wuf-risks">${esc(u ? u.risks : '')}</textarea></div>
+    </div>
+  `, `<button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" id="wufSaveBtn">${u ? 'Save Changes' : 'Submit Update'}</button>`);
+  document.getElementById('wufSaveBtn').addEventListener('click', async () => {
+    const payload = { property: currentProperty, committeeId: g.id, weekOf: val('wuf-week'), completed: val('wuf-completed'), working: val('wuf-working'), upcoming: val('wuf-upcoming'), needsFromStaff: val('wuf-needsstaff'), needsFromREC: val('wuf-needsrec'), decisionsNeeded: val('wuf-decisions'), risks: val('wuf-risks') };
+    try {
+      if (u) await apiFetch('/reslife-collateral-updates', { method: 'PUT', body: JSON.stringify(Object.assign({ id: u.id }, payload)) });
+      else await apiFetch('/reslife-collateral-updates', { method: 'POST', body: JSON.stringify(payload) });
+      await refreshAllData();
+      closeModal(); renderGroupWorkspace();
+    } catch (e) { alert('Save failed: ' + e.message); }
+  });
+}
+function showGeneratedUpdate(u, g){
+  if (!u) return;
+  const lines = [];
+  lines.push(`${g.name} — Week of ${fmtDateLong(u.weekOf)}`);
+  if (u.completed) lines.push(`Completed: ${u.completed}`);
+  if (u.working) lines.push(`Currently working on: ${u.working}`);
+  if (u.upcoming) lines.push(`Upcoming: ${u.upcoming}`);
+  if (u.needsFromStaff) lines.push(`Need from staff: ${u.needsFromStaff}`);
+  if (u.needsFromREC) lines.push(`Need from REC/Admin: ${u.needsFromREC}`);
+  if (u.decisionsNeeded) lines.push(`Decision needed: ${u.decisionsNeeded}`);
+  if (u.risks) lines.push(`Risk/delay: ${u.risks}`);
+  const text = lines.join('\n');
+  openModal('2-Minute Update — ' + g.name, `<div class="kv-value" style="white-space:pre-wrap;font-size:13.5px;line-height:1.7">${esc(text)}</div>`,
+    `<button class="btn" onclick="closeModal()">Close</button><button class="btn primary" id="copyUpdateBtn">Copy</button>`);
+  document.getElementById('copyUpdateBtn').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(text); document.getElementById('copyUpdateBtn').textContent = 'Copied!'; } catch (e) { alert('Copy failed — select and copy manually.'); }
+  });
+}
+
+/* ---- DECISIONS TAB ---- */
+function renderGroupDecisionsTab(g, content, canWrite){
+  const decisions = decisionsForGroup(g.id);
+  content.innerHTML = `
+    <div class="rl-panel"><div class="rl-panel-header"><div><h2>Decision Log</h2></div>${canWrite ? '<button class="btn primary" id="addDecisionBtn">+ Record Decision</button>' : ''}</div>
+    <div class="rl-panel-body" id="decisionsListBox">${decisions.length === 0 ? '<div class="empty-note">No decisions recorded yet.</div>' : decisions.map(d => `
+      <div class="subcard"><div class="subcard-head"><strong>${esc(d.decision)}</strong><span class="pill gray">${fmtDateShort(d.date)}</span></div>
+      ${d.outcome ? `<div class="helper-text">Outcome: ${esc(d.outcome)}</div>` : ''}
+      ${(d.peopleInvolved || []).length ? `<div class="helper-text">Involved: ${esc(d.peopleInvolved.join(', '))}</div>` : ''}
+      ${d.notes ? `<div style="margin-top:6px;font-size:12.5px">${esc(d.notes)}</div>` : ''}</div>
+    `).join('')}</div></div>`;
+  if (canWrite) document.getElementById('addDecisionBtn').addEventListener('click', () => openDecisionForm(g));
+}
+function openDecisionForm(g){
+  openModal('Record a Decision — ' + g.name, `
+    <div class="field full"><label>Decision</label><input id="decf-decision" /></div>
+    <div class="field-grid" style="margin-top:10px">
+      <div class="field"><label>Date</label><input id="decf-date" type="date" value="${todayStr()}" /></div>
+      <div class="field"><label>People Involved (comma-separated)</label><input id="decf-people" /></div>
+      <div class="field full"><label>Outcome</label><input id="decf-outcome" /></div>
+      <div class="field full"><label>Reason / Notes</label><textarea id="decf-notes"></textarea></div>
+      <div class="field"><label>Approved By (if applicable)</label><input id="decf-approved" /></div>
+    </div>
+  `, `<button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" id="decfSaveBtn">Save Decision</button>`);
+  document.getElementById('decfSaveBtn').addEventListener('click', async () => {
+    const decision = val('decf-decision');
+    if (!decision) { alert('Decision text is required.'); return; }
+    try {
+      await apiFetch('/reslife-collateral-decisions', { method: 'POST', body: JSON.stringify({ property: currentProperty, committeeId: g.id, decision, date: val('decf-date'), peopleInvolved: val('decf-people').split(',').map(s => s.trim()).filter(Boolean), outcome: val('decf-outcome'), notes: val('decf-notes'), approvedBy: val('decf-approved') }) });
+      await refreshAllData();
+      closeModal(); renderGroupWorkspace();
+    } catch (e) { alert('Save failed: ' + e.message); }
+  });
+}
+
+/* ---- RESOURCES TAB ---- */
+function renderGroupResourcesTab(g, content){
+  content.innerHTML = `
+    <div class="rl-panel"><div class="rl-panel-header"><div><h2>Resources</h2></div></div>
+    <div class="rl-panel-body">
+      <div class="alert-inline" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 16px;font-size:12.5px;color:#1e3a8a">
+        <strong>File storage isn't connected yet.</strong> This app has no server-side file/blob storage anywhere (the same limitation applies to Incident Report and Curriculum attachments) — connecting one (e.g. S3, Cloudinary, or Netlify Blobs) would let planning documents, meeting resources, training materials, templates, and recruitment/recognition/program resources attach directly to this group, a project, a meeting, or a task.
+      </div>
+    </div></div>`;
+}
+
+/* ---- RECOGNITION TAB (Birthdays / Team Bonding / Special / Banquet) ---- */
+function renderGroupRecognitionTab(g, content, canWrite){
+  const items = recognitionForGroup(g.id);
+  const birthdays = items.filter(r => r.type === 'birthday').sort((a, b) => (a.month - b.month) || (a.day - b.day));
+  const bonding = items.filter(r => r.type === 'team_bonding');
+  const special = items.filter(r => r.type === 'special');
+  const banquet = items.filter(r => r.type === 'banquet_milestone');
+  const MONTHS = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  function recogRow(r){
+    return `<div class="subcard" data-recog="${r.id}">
+      <div class="subcard-head"><strong>${esc(r.title)}</strong>${r.completed ? '<span class="pill green">Completed</span>' : ''}</div>
+      <div class="helper-text">${r.personUsername ? esc(r.personUsername) + ' &middot; ' : ''}${r.month ? MONTHS[r.month] + (r.day ? ' ' + r.day : '') + ' &middot; ' : ''}${r.eventDate ? fmtDateShort(r.eventDate) + ' &middot; ' : ''}${r.assignedTo ? 'Assigned: ' + esc(r.assignedTo) : 'Unassigned'}</div>
+      <div style="display:flex;gap:14px;margin-top:8px;flex-wrap:wrap;font-size:12px">
+        ${['cardNeeded', 'bannerNeeded', 'celebrationPlanned', 'purchasingNeeded'].map(f => `<label style="display:flex;align-items:center;gap:5px"><input type="checkbox" class="recog-flag" data-field="${f}" ${r[f] ? 'checked' : ''} ${canWrite || r.assignedTo === me.username ? '' : 'disabled'} />${f.replace('Needed', '').replace('Planned', '')}</label>`).join('')}
+        <label style="display:flex;align-items:center;gap:5px"><input type="checkbox" class="recog-flag" data-field="completed" ${r.completed ? 'checked' : ''} ${canWrite || r.assignedTo === me.username ? '' : 'disabled'} />Completed</label>
+      </div>
+    </div>`;
+  }
+  content.innerHTML = `
+    <div class="rl-panel"><div class="rl-panel-header"><div><h2>Birthday Calendar</h2><p>Month/day only — no personal data beyond what's operationally needed.</p></div>${canWrite ? '<button class="btn primary" data-add-recog="birthday">+ Add Birthday</button>' : ''}</div>
+    <div class="rl-panel-body" id="recogBirthdays">${birthdays.length === 0 ? '<div class="empty-note">No upcoming birthdays tracked yet.</div>' : birthdays.map(recogRow).join('')}</div></div>
+    <div class="rl-panel"><div class="rl-panel-header"><div><h2>Team Bonding</h2></div>${canWrite ? '<button class="btn primary" data-add-recog="team_bonding">+ Add Event</button>' : ''}</div>
+    <div class="rl-panel-body" id="recogBonding">${bonding.length === 0 ? '<div class="empty-note">No team bonding events yet.</div>' : bonding.map(recogRow).join('')}</div></div>
+    <div class="rl-panel"><div class="rl-panel-header"><div><h2>Special Recognition</h2></div>${canWrite ? '<button class="btn primary" data-add-recog="special">+ Add</button>' : ''}</div>
+    <div class="rl-panel-body" id="recogSpecial">${special.length === 0 ? '<div class="empty-note">Nothing tracked yet.</div>' : special.map(recogRow).join('')}</div></div>
+    <div class="rl-panel"><div class="rl-panel-header"><div><h2>End-of-Year Banquet</h2></div>${canWrite ? '<button class="btn primary" data-add-recog="banquet_milestone">+ Add Milestone</button>' : ''}</div>
+    <div class="rl-panel-body" id="recogBanquet">${banquet.length === 0 ? '<div class="empty-note">No banquet milestones yet.</div>' : banquet.map(recogRow).join('')}</div></div>
+  `;
+  document.querySelectorAll('[data-add-recog]').forEach(btn => btn.addEventListener('click', () => openRecognitionForm(g, btn.getAttribute('data-add-recog'), null)));
+  content.querySelectorAll('.recog-flag').forEach(cb => cb.addEventListener('change', async () => {
+    const id = cb.closest('[data-recog]').getAttribute('data-recog');
+    try { await apiFetch('/reslife-collateral-recognition', { method: 'PUT', body: JSON.stringify({ id, property: currentProperty, [cb.dataset.field]: cb.checked }) }); await refreshAllData(); renderGroupWorkspace(); } catch (e) { alert('Failed: ' + e.message); }
+  }));
+}
+function openRecognitionForm(g, type, item){
+  const typeLabel = (RECOGNITION_TYPES.find(t => t.value === type) || {}).label || type;
+  openModal('Add ' + typeLabel, `
+    <div class="field full"><label>Title</label><input id="rgf-title" placeholder="${type === 'birthday' ? 'e.g., March Birthdays' : 'e.g., February Bowling Night'}" /></div>
+    <div class="field-grid" style="margin-top:10px">
+      ${type === 'birthday' ? `
+        <div class="field"><label>Staff Member (username)</label><input id="rgf-person" /></div>
+        <div class="field"><label>Month (1-12)</label><input id="rgf-month" type="number" min="1" max="12" /></div>
+        <div class="field"><label>Day</label><input id="rgf-day" type="number" min="1" max="31" /></div>
+      ` : `
+        <div class="field"><label>Event Date</label><input id="rgf-eventdate" type="date" /></div>
+        <div class="field"><label>Location</label><input id="rgf-location" /></div>
+        <div class="field"><label>On Property?</label><select id="rgf-onproperty"><option value="yes">Yes</option><option value="no">No</option></select></div>
+        <div class="field"><label>Budget</label><input id="rgf-budget" type="number" step="0.01" /></div>
+      `}
+      <div class="field"><label>Assigned To</label><input id="rgf-assignee" placeholder="username" /></div>
+      <div class="field full"><label>Notes</label><textarea id="rgf-notes"></textarea></div>
+    </div>
+  `, `<button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" id="rgfSaveBtn">Save</button>`);
+  document.getElementById('rgfSaveBtn').addEventListener('click', async () => {
+    const title = val('rgf-title');
+    if (!title) { alert('Title is required.'); return; }
+    const payload = { property: currentProperty, committeeId: g.id, type, title, assignedTo: val('rgf-assignee'), notes: val('rgf-notes') };
+    if (type === 'birthday') { payload.personUsername = val('rgf-person'); payload.month = parseInt(val('rgf-month'), 10) || null; payload.day = parseInt(val('rgf-day'), 10) || null; }
+    else { payload.eventDate = val('rgf-eventdate'); payload.location = val('rgf-location'); payload.onProperty = document.getElementById('rgf-onproperty').value === 'yes'; payload.budget = parseFloat(val('rgf-budget')) || 0; }
+    try {
+      await apiFetch('/reslife-collateral-recognition', { method: 'POST', body: JSON.stringify(payload) });
+      await refreshAllData();
+      closeModal(); renderGroupWorkspace();
+    } catch (e) { alert('Save failed: ' + e.message); }
+  });
+}
+
+/* ---- RECRUITMENT & DEVELOPMENT TAB (Info Sessions + Training Compliance) ---- */
+function renderGroupRecruitmentTab(g, content, canWrite){
+  const sessions = infoSessionsForGroup(g.id);
+  content.innerHTML = `
+    <div class="rl-panel"><div class="rl-panel-header"><div><h2>Information Sessions</h2></div>${canWrite ? '<button class="btn primary" id="addSessionBtn">+ Add Session</button>' : ''}</div>
+    <div class="rl-panel-body" id="sessionsListBox">${sessions.length === 0 ? '<div class="empty-note">No information sessions scheduled yet.</div>' : sessions.map(s => `
+      <div class="subcard"><div class="subcard-head"><strong>${fmtDateLong(s.sessionDate)}</strong>${s.slidesReady ? '<span class="pill green">Slides Ready</span>' : '<span class="pill orange">Slides Not Ready</span>'}</div>
+      <div class="helper-text">${s.location ? esc(s.location) + ' &middot; ' : ''}${(s.presenters || []).length ? 'Presenters: ' + esc(s.presenters.join(', ')) : 'No presenters assigned'}${s.attendance != null ? ' &middot; Attendance: ' + s.attendance : ''}</div>
+      ${s.feedback ? `<div style="margin-top:6px;font-size:12.5px">Feedback: ${esc(s.feedback)}</div>` : ''}
+      ${s.followUpNeeded ? '<span class="pill red" style="margin-top:6px">Follow-Up Needed</span>' : ''}</div>
+    `).join('')}</div></div>
+    <div class="rl-panel"><div class="rl-panel-header"><div><h2>Training Completion Tracker</h2><p>Reuses the existing Training Modules system — no duplicate data.</p></div>
+    <button class="btn" id="openTrainingBtn">Open Training Modules &rarr;</button></div>
+    <div class="rl-panel-body" id="trainingComplianceBox"><div class="rl-loading">Loading…</div></div></div>
+  `;
+  if (canWrite) document.getElementById('addSessionBtn').addEventListener('click', () => openInfoSessionForm(g, null));
+  document.getElementById('openTrainingBtn').addEventListener('click', () => window.open('reslife_hub.html', '_blank'));
+  loadTrainingComplianceBox();
+}
+async function loadTrainingComplianceBox(){
+  const box = document.getElementById('trainingComplianceBox');
+  if (!box) return;
+  try {
+    const modules = await apiFetch('/reslife-training' + propParam());
+    if (!isManager) {
+      const mine = await apiFetch('/reslife-training-progress' + propParam());
+      box.innerHTML = modules.length === 0 ? '<div class="empty-note">No training modules configured yet.</div>' : `<div class="helper-text" style="margin-bottom:8px">Only REC/Admin can see full-staff completion — showing your own status.</div>` +
+        modules.map(m => { const p = mine.find(x => x.moduleId === m.id); return `<div class="subcard"><strong>${esc(m.title)}</strong> <span class="pill ${p && p.passed ? 'green' : 'orange'}">${p ? (p.passed ? 'Passed ' + p.score + '%' : 'Attempted ' + p.score + '%') : 'Not Started'}</span></div>`; }).join('');
+      return;
+    }
+    const all = await apiFetch('/reslife-training-progress' + propParam() + '&all=1');
+    if (modules.length === 0) { box.innerHTML = '<div class="empty-note">No training modules configured yet. Create one in the Reslife Hub → Training Modules.</div>'; return; }
+    box.innerHTML = modules.map(m => {
+      const attempts = all.filter(a => a.moduleId === m.id);
+      const passed = attempts.filter(a => a.passed).length;
+      return `<div class="subcard"><div class="subcard-head"><strong>${esc(m.title)}</strong><span class="pill blue">${esc(m.category)}</span></div>
+        <div class="helper-text">${passed}/${attempts.length || 0} staff passed &middot; ${attempts.length === 0 ? 'no attempts yet' : ''}</div>
+        ${attempts.filter(a => !a.passed).map(a => `<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:12.5px"><span>${esc(a.username)} — ${a.score}%</span><button class="btn sm" data-remind="${esc(a.username)}" data-module="${esc(m.title)}">Send Reminder</button></div>`).join('')}
+      </div>`;
+    }).join('');
+    box.querySelectorAll('[data-remind]').forEach(btn => btn.addEventListener('click', async () => {
+      try {
+        await apiFetch('/reslife-collateral-notifications', { method: 'POST', body: JSON.stringify({ property: currentProperty, toUsername: btn.getAttribute('data-remind'), title: 'Training reminder', message: `Friendly reminder: your "${btn.getAttribute('data-module')}" training is not yet complete.` }) });
+        btn.textContent = 'Reminder Sent'; btn.disabled = true;
+      } catch (e) { alert('Failed: ' + e.message); }
+    }));
+  } catch (e) { box.innerHTML = '<div class="empty-note">Could not load training data.</div>'; }
+}
+function openInfoSessionForm(g, session){
+  openModal(session ? 'Edit Information Session' : 'New Information Session — ' + g.name, `
+    <div class="field-grid">
+      <div class="field"><label>Session Date</label><input id="isf-date" type="date" value="${esc(session ? session.sessionDate : '')}" /></div>
+      <div class="field"><label>Location</label><input id="isf-location" value="${esc(session ? session.location : '')}" /></div>
+      <div class="field full"><label>Presenters (comma-separated)</label><input id="isf-presenters" value="${esc(session ? (session.presenters || []).join(', ') : '')}" /></div>
+      <div class="field"><label>Slides Ready?</label><select id="isf-slides"><option value="no">No</option><option value="yes">Yes</option></select></div>
+      <div class="field"><label>Attendance</label><input id="isf-attendance" type="number" min="0" value="${esc(session ? session.attendance : '')}" /></div>
+      <div class="field full"><label>Questions / Feedback</label><textarea id="isf-feedback">${esc(session ? session.feedback : '')}</textarea></div>
+      <div class="field"><label>Follow-Up Needed?</label><select id="isf-followup"><option value="no">No</option><option value="yes">Yes</option></select></div>
+    </div>
+  `, `<button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" id="isfSaveBtn">Save</button>`);
+  document.getElementById('isfSaveBtn').addEventListener('click', async () => {
+    const sessionDate = val('isf-date');
+    if (!sessionDate) { alert('Session date is required.'); return; }
+    const payload = {
+      property: currentProperty, committeeId: g.id, sessionDate, location: val('isf-location'),
+      presenters: val('isf-presenters').split(',').map(s => s.trim()).filter(Boolean),
+      slidesReady: document.getElementById('isf-slides').value === 'yes', attendance: parseInt(val('isf-attendance'), 10) || null,
+      feedback: val('isf-feedback'), followUpNeeded: document.getElementById('isf-followup').value === 'yes',
+    };
+    try {
+      if (session) await apiFetch('/reslife-collateral-info-sessions', { method: 'PUT', body: JSON.stringify(Object.assign({ id: session.id }, payload)) });
+      else await apiFetch('/reslife-collateral-info-sessions', { method: 'POST', body: JSON.stringify(payload) });
+      await refreshAllData();
+      closeModal(); renderGroupWorkspace();
+    } catch (e) { alert('Save failed: ' + e.message); }
+  });
+}
+
+/* ==================================================================
+   SHOUT-OUTS
+   ================================================================== */
+async function renderShoutouts(){
+  const toSel = document.getElementById('shoutoutTo');
+  if (raRoster.length === 0 && isAdminTier) { try { raRoster = await apiFetch('/reslife-users'); } catch (e) {} }
+  const allMembers = [...new Set(groups.flatMap(g => (g.members || []).concat(g.lead ? [g.lead] : [])))].sort();
+  toSel.innerHTML = allMembers.map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join('') || '<option value="">No staff found</option>';
+
+  document.getElementById('sendShoutoutBtn').onclick = async () => {
+    const toUsername = toSel.value;
+    const message = document.getElementById('shoutoutMessage').value.trim();
+    if (!toUsername || !message) { alert('Choose a recipient and write a message.'); return; }
+    try {
+      await apiFetch('/reslife-collateral-shoutouts', { method: 'POST', body: JSON.stringify({ property: currentProperty, toUsername, message, visibility: document.getElementById('shoutoutVisibility').value }) });
+      document.getElementById('shoutoutMessage').value = '';
+      await renderShoutoutsList();
+    } catch (e) { alert('Failed: ' + e.message); }
+  };
+  await renderShoutoutsList();
+}
+async function renderShoutoutsList(){
+  const box = document.getElementById('shoutoutsList');
+  box.innerHTML = '<div class="rl-loading">Loading…</div>';
+  let list = [];
+  try { list = await apiFetch('/reslife-collateral-shoutouts' + propParam()); } catch (e) { list = []; }
+  if (list.length === 0) { box.innerHTML = '<div class="empty-note">No shout-outs yet — be the first to recognize a teammate.</div>'; return; }
+  box.innerHTML = list.map(s => `
+    <div class="subcard">
+      <div class="subcard-head"><strong>${esc(s.fromUsername)} &rarr; ${esc(s.toUsername)}</strong><span class="pill ${s.visibility === 'private' ? 'gray' : (s.visibility === 'staff_meeting' ? 'purple' : 'blue')}">${esc(s.visibility.replace('_', ' '))}</span></div>
+      <div>${esc(s.message)}</div><div class="helper-text">${fmtDateTime(s.createdAt)}</div>
+    </div>
+  `).join('');
+}
+
+/* ==================================================================
+   REPORTS
+   ================================================================== */
+let reportTab = 'projects';
+function renderReports(){
+  const tabs = [['projects', 'Projects'], ['tasks', 'Tasks'], ['meetings', 'Meetings & Updates'], ['recognition', 'Recognition'], ['recruitment', 'Recruitment']];
+  document.getElementById('reportTabs').innerHTML = tabs.map(([k, l]) => `<button class="tab-btn ${reportTab === k ? 'active' : ''}" data-tab="${k}">${l}</button>`).join('') + `<button class="btn sm" id="exportCsvBtn" style="margin-left:auto">Export CSV</button>`;
+  document.querySelectorAll('#reportTabs .tab-btn').forEach(b => b.addEventListener('click', () => { reportTab = b.dataset.tab; renderReports(); }));
+
+  let headers = [], rows = [];
+  if (reportTab === 'projects') {
+    headers = ['Group', 'Project', 'Status', 'Target Date', 'Owner'];
+    rows = allProjects.map(p => [(groups.find(g => g.id === p.committeeId) || {}).name || '', p.title, p.status, p.targetDate, p.owner]);
+  } else if (reportTab === 'tasks') {
+    const completed = allTasks.filter(t => TASK_DONE_STATUSES.includes(t.status)).length;
+    const overdue = allTasks.filter(t => !TASK_DONE_STATUSES.includes(t.status) && deadlineCondition(t.dueDate).condition === 'overdue').length;
+    headers = ['Metric', 'Value'];
+    rows = [['Total Tasks', allTasks.length], ['Completed', completed], ['Overdue', overdue], ['On-Time Completion %', allTasks.length ? Math.round((completed / allTasks.length) * 100) : 0]];
+  } else if (reportTab === 'meetings') {
+    headers = ['Group', 'Meetings Held', 'Weekly Updates Submitted'];
+    rows = groups.map(g => [g.name, meetingsForGroup(g.id).length, updatesForGroup(g.id).length]);
+  } else if (reportTab === 'recognition') {
+    headers = ['Type', 'Count', 'Completed'];
+    RECOGNITION_TYPES.forEach(t => { const items = allRecognition.filter(r => r.type === t.value); rows.push([t.label, items.length, items.filter(r => r.completed).length]); });
+    headers = ['Type', 'Count', 'Completed'];
+  } else if (reportTab === 'recruitment') {
+    headers = ['Metric', 'Value'];
+    rows = [['Information Sessions', allInfoSessions.length], ['Total Attendance', allInfoSessions.reduce((s, x) => s + (x.attendance || 0), 0)], ['Sessions Needing Follow-Up', allInfoSessions.filter(x => x.followUpNeeded).length]];
+  }
+  const box = document.getElementById('reportsBox');
+  box.innerHTML = rows.length === 0 ? '<div class="empty-note">No data for this report yet.</div>' : `<div style="overflow-x:auto"><table class="rl-table"><thead><tr>${headers.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  document.getElementById('exportCsvBtn').addEventListener('click', () => downloadCSV('collateral-' + reportTab + '.csv', [headers, ...rows]));
+}
+
+/* ==================================================================
+   SETTINGS (Admin tier — create/archive collateral groups)
+   ================================================================== */
+function renderSettings(){
+  const box = document.getElementById('settingsBox');
+  box.innerHTML = `<div class="rl-panel"><div class="rl-panel-header"><div><h2>Collateral Groups</h2></div><button class="btn primary" id="newGroupBtn">+ New Collateral Group</button></div>
+  <div class="rl-panel-body" id="settingsGroupsList"></div></div>`;
+  document.getElementById('newGroupBtn').addEventListener('click', () => openGroupForm(null));
+  const list = document.getElementById('settingsGroupsList');
+  list.innerHTML = groups.length === 0 ? '<div class="empty-note">No collateral groups yet.</div>' : groups.map(g => `
+    <div class="subcard">
+      <div class="subcard-head"><strong>${esc(g.name)}</strong> <span class="pill ${g.status === 'active' ? 'green' : 'gray'}">${esc(g.status || 'active')}</span>
+      <span style="display:flex;gap:6px"><button class="btn sm" data-edit-group="${g.id}">Edit</button><button class="btn sm danger" data-archive-group="${g.id}">${g.status === 'archived' ? 'Reactivate' : 'Archive'}</button><button class="btn sm danger" data-delete-group="${g.id}">Delete</button></span></div>
+      <div class="helper-text">Lead: ${esc(g.lead || 'Unassigned')} &middot; Category: ${esc(g.category || 'Custom')} &middot; ${esc((g.members || []).length)} members</div>
+    </div>
+  `).join('');
+  list.querySelectorAll('[data-edit-group]').forEach(btn => btn.addEventListener('click', () => openGroupForm(groups.find(g => g.id === btn.dataset.editGroup))));
+  list.querySelectorAll('[data-archive-group]').forEach(btn => btn.addEventListener('click', async () => {
+    const g = groups.find(x => x.id === btn.dataset.archiveGroup);
+    try { await apiFetch('/reslife-committees', { method: 'PUT', body: JSON.stringify({ id: g.id, property: currentProperty, status: g.status === 'archived' ? 'active' : 'archived' }) }); await refreshAllData(); buildSidebarNav(); renderSettings(); } catch (e) { alert('Failed: ' + e.message); }
+  }));
+  list.querySelectorAll('[data-delete-group]').forEach(btn => btn.addEventListener('click', async () => {
+    if (!confirm('Permanently delete this collateral group and all of its meeting records? This cannot be undone. Consider Archive instead.')) return;
+    try { await apiFetch('/reslife-committees?id=' + btn.dataset.deleteGroup + '&property=' + encodeURIComponent(currentProperty), { method: 'DELETE' }); await refreshAllData(); buildSidebarNav(); renderSettings(); } catch (e) { alert('Failed: ' + e.message); }
+  }));
+}
+function openGroupForm(g){
+  openModal(g ? 'Edit Collateral Group' : 'New Collateral Group', `
+    <div class="field-grid">
+      <div class="field full"><label>Group Name</label><input id="grf-name" value="${esc(g ? g.name : '')}" placeholder="e.g., Programming" /></div>
+      <div class="field full"><label>Description</label><textarea id="grf-desc">${esc(g ? g.description : '')}</textarea></div>
+      <div class="field"><label>Category</label><select id="grf-category">${CATEGORY_OPTIONS.map(c => `<option value="${c.value}" ${g && g.category === c.value ? 'selected' : ''}>${c.label}</option>`).join('')}</select></div>
+      <div class="field"><label>Semester Label</label><input id="grf-semester" value="${esc(g ? g.semesterLabel : '')}" placeholder="e.g., Fall 2026" /></div>
+      <div class="field"><label>Committee Lead</label><input id="grf-lead" value="${esc(g ? g.lead : '')}" placeholder="username" /></div>
+      <div class="field"><label>Advisors</label><input id="grf-advisors" value="${esc(g ? g.advisors : '')}" placeholder="e.g., Chris, Martin" /></div>
+      <div class="field full"><label>Members (comma-separated usernames)</label><input id="grf-members" value="${esc(g ? (g.members || []).join(', ') : '')}" /></div>
+      <div class="field"><label>Meeting Frequency (days)</label><input id="grf-freq" type="number" min="1" value="${esc(g ? g.meetingFrequencyDays : 14)}" /></div>
+      <div class="field"><label>Meeting Duration (minutes)</label><input id="grf-dur" type="number" min="1" value="${esc(g ? g.meetingDurationMinutes : 60)}" /></div>
+    </div>
+  `, `<button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" id="grfSaveBtn">${g ? 'Save Changes' : 'Create Group'}</button>`);
+  document.getElementById('grfSaveBtn').addEventListener('click', async () => {
+    const name = val('grf-name');
+    if (!name) { alert('Group name is required.'); return; }
+    const payload = {
+      property: currentProperty, name, description: val('grf-desc'), category: document.getElementById('grf-category').value,
+      semesterLabel: val('grf-semester'), lead: val('grf-lead'), advisors: val('grf-advisors'),
+      members: val('grf-members').split(',').map(s => s.trim()).filter(Boolean),
+      meetingFrequencyDays: parseInt(val('grf-freq'), 10) || 14, meetingDurationMinutes: parseInt(val('grf-dur'), 10) || 60,
+    };
+    try {
+      if (g) await apiFetch('/reslife-committees', { method: 'PUT', body: JSON.stringify(Object.assign({ id: g.id }, payload)) });
+      else await apiFetch('/reslife-committees', { method: 'POST', body: JSON.stringify(payload) });
+      await refreshAllData();
+      buildSidebarNav();
+      closeModal(); renderSettings();
+    } catch (e) { alert('Save failed: ' + e.message); }
+  });
+}
+
+init();
+</script>
+</body>
+</html>

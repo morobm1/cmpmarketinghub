@@ -818,8 +818,13 @@ function renderChipGroup(container, options, selected, multi, onToggle){
       if (multi) {
         const idx = selected.indexOf(val);
         if (idx === -1) selected.push(val); else selected.splice(idx, 1);
+        // Update this button's own visual state immediately — do not rely on
+        // the caller re-rendering the whole group (most callers don't).
+        btn.classList.toggle('selected', selected.includes(val));
       } else {
         selected.length = 0; selected.push(val);
+        container.querySelectorAll('.chip-opt').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
       }
       onToggle(selected, val);
     };
@@ -1466,15 +1471,33 @@ function getCatAnswers(catId, defaults){
 function renderCategoryQuestions(){
   const box = document.getElementById('categoryQuestionsBox');
   if (report.categories.length === 0) { box.innerHTML = ''; return; }
-  box.innerHTML = report.categories.map(catId => {
-    const def = CATEGORY_DEFS.find(c => c.id === catId) || { label: catId };
-    return `<div class="rl-panel" id="catpanel-${catId}"><div class="rl-panel-header"><div><h2>${esc(def.label)}</h2><p>Possible / Alleged &mdash; selecting a category does not claim a violation occurred.</p></div></div><div class="rl-panel-body" id="catbody-${catId}"></div></div>`;
-  }).join('');
+
+  // "Drugs" and "Smoking / Vaping" share one combined question set — collapse
+  // them into a single panel/id even if both are selected, so selecting both
+  // never renders duplicate element ids.
+  const panelIds = [];
   report.categories.forEach(catId => {
-    if (catId === 'noise') renderNoisePanel();
-    else if (catId === 'alcohol') renderAlcoholPanel();
-    else if (catId === 'drugs' || catId === 'smoking') renderDrugsSmokingPanel(catId);
-    else renderGenericCategoryPanel(catId);
+    const pid = (catId === 'drugs' || catId === 'smoking') ? 'drugsSmoking' : catId;
+    if (!panelIds.includes(pid)) panelIds.push(pid);
+  });
+
+  box.innerHTML = panelIds.map(pid => {
+    let label;
+    if (pid === 'drugsSmoking') {
+      const hasDrugs = report.categories.includes('drugs');
+      const hasSmoking = report.categories.includes('smoking');
+      label = (hasDrugs && hasSmoking) ? 'Drugs / Smoking' : (hasDrugs ? 'Drugs' : 'Smoking / Vaping');
+    } else {
+      label = (CATEGORY_DEFS.find(c => c.id === pid) || { label: pid }).label;
+    }
+    return `<div class="rl-panel" id="catpanel-${pid}"><div class="rl-panel-header"><div><h2>${esc(label)}</h2><p>Possible / Alleged &mdash; selecting a category does not claim a violation occurred.</p></div></div><div class="rl-panel-body" id="catbody-${pid}"></div></div>`;
+  }).join('');
+
+  panelIds.forEach(pid => {
+    if (pid === 'noise') renderNoisePanel();
+    else if (pid === 'alcohol') renderAlcoholPanel();
+    else if (pid === 'drugsSmoking') renderDrugsSmokingPanel();
+    else renderGenericCategoryPanel(pid);
   });
 }
 
@@ -1609,10 +1632,10 @@ function renderObservedItemsList(category){
 
 /* ---- DRUGS / SMOKING (combined per shared question set) ---- */
 let drugsDraft = { itemType: '', location: '' };
-function renderDrugsSmokingPanel(catId){
+function renderDrugsSmokingPanel(){
   const key = 'drugsSmoking';
   const a = getCatAnswers(key, { substanceObserved: '', paraphernaliaObserved: '', odorDetected: '', odorDescription: '', odorLocation: '', policeContacted: '', policeConfiscated: '' });
-  const body = document.getElementById('catbody-' + catId);
+  const body = document.getElementById('catbody-drugsSmoking');
   body.innerHTML = `
     <div class="alert alert-info" style="margin-bottom:14px"><div class="alert-icon">&#8505;</div><div><p>Document only what was directly observed. An odor or appearance alone should never be written as a definitive statement that a person possessed or used a substance.</p></div></div>
     <div class="field-grid">
