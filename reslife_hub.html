@@ -28,6 +28,7 @@
       --rl-success-bg:#f0fdf4;
       --rl-warn:#F99239;
       --rl-warn-bg:#fff7ed;
+      --rl-hero-image:none;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -41,19 +42,20 @@
     header.rl-header{
       background:linear-gradient(180deg,var(--rl-primary),var(--rl-primary-dark));
       color:var(--rl-on-primary);
-      padding:14px 24px;
+      padding:0 20px;
+      height:60px;
       display:flex;
       align-items:center;
-      gap:18px;
-      flex-wrap:wrap;
-      position:sticky;top:0;z-index:40;
+      gap:16px;
+      position:fixed;top:0;left:0;right:0;z-index:50;
       box-shadow:0 2px 10px rgba(0,0,0,.15);
     }
+    .rl-mobile-toggle{display:none;width:36px;height:36px;align-items:center;justify-content:center;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.3);border-radius:8px;color:#fff;font-size:18px;cursor:pointer;flex-shrink:0}
     .rl-brand{display:flex;align-items:center;gap:14px;min-width:0}
-    .rl-brand img{height:40px;width:auto;display:block}
+    .rl-brand img{height:34px;width:auto;display:block}
     .rl-brand-text{display:flex;flex-direction:column;line-height:1.15;min-width:0}
-    .rl-brand-name{font-weight:800;font-size:16px;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .rl-brand-sub{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--rl-secondary);font-weight:600}
+    .rl-brand-name{font-weight:800;font-size:15px;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px}
+    .rl-brand-sub{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--rl-secondary);font-weight:600}
     .rl-header-right{display:flex;align-items:center;gap:14px;margin-left:auto;flex-wrap:wrap}
     .rl-property-switcher{padding:7px 10px;border-radius:6px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.08);color:#fff;font-size:12px;font-weight:600}
     .rl-property-switcher option{color:#111}
@@ -62,20 +64,106 @@
     .rl-logout-btn{background:transparent;border:1.5px solid rgba(255,255,255,.6);color:#fff;padding:8px 16px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:all .15s}
     .rl-logout-btn:hover{background:#fff;color:var(--rl-primary)}
 
-    /* ===== Nav tabs ===== */
-    nav.rl-tabs{background:#fff;border-bottom:1px solid var(--rl-border);padding:0 24px;display:flex;gap:4px;overflow-x:auto;position:sticky;top:68px;z-index:35}
-    .rl-tab-btn{background:none;border:none;border-bottom:3px solid transparent;padding:14px 16px;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--rl-subtext);cursor:pointer;white-space:nowrap;transition:all .15s}
-    .rl-tab-btn:hover{color:var(--rl-primary)}
-    .rl-tab-btn.active{color:var(--rl-primary);border-bottom-color:var(--rl-secondary)}
+    /* ===== Vertical Sidebar Navigation ===== */
+    :root{ --rl-nav-w:250px; --rl-nav-w-collapsed:64px; }
+    .rl-sidebar{
+      position:fixed;left:0;top:60px;bottom:0;
+      width:var(--rl-nav-w);
+      background:linear-gradient(180deg,var(--rl-primary-dark),#000a1a);
+      overflow-y:auto;overflow-x:hidden;
+      z-index:40;
+      transition:width .22s cubic-bezier(.4,0,.2,1);
+      display:flex;flex-direction:column;
+      box-shadow:2px 0 12px rgba(0,0,0,.12);
+    }
+    .rl-sidebar.collapsed{width:var(--rl-nav-w-collapsed)}
+    .rl-sidebar::-webkit-scrollbar{width:6px}
+    .rl-sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:3px}
+    .rl-sidebar-nav{flex:1;padding:14px 0}
+    .rl-nav-item{
+      display:flex;align-items:center;gap:13px;
+      width:100%;padding:11px 18px;
+      background:none;border:none;border-left:3px solid transparent;
+      color:rgba(255,255,255,.65);
+      font-family:inherit;font-size:13px;font-weight:600;letter-spacing:.3px;
+      text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;
+      transition:all .15s;position:relative;
+    }
+    .rl-nav-item:hover{background:rgba(255,255,255,.06);color:#fff}
+    .rl-nav-item.active{background:rgba(249,146,57,.14);color:#fff;border-left-color:var(--rl-secondary)}
+    .rl-nav-icon{flex-shrink:0;width:20px;height:20px;display:flex;align-items:center;justify-content:center}
+    .rl-nav-icon svg{width:19px;height:19px}
+    .rl-nav-label{overflow:hidden;text-overflow:ellipsis;transition:opacity .15s}
+    .rl-sidebar.collapsed .rl-nav-item{justify-content:center;padding:11px 0;border-left-width:0}
+    .rl-sidebar.collapsed .rl-nav-label{display:none}
+    .rl-sidebar.collapsed .rl-nav-item:hover::after{
+      content:attr(data-label);position:absolute;left:var(--rl-nav-w-collapsed);top:50%;transform:translateY(-50%);
+      background:#001028;color:#fff;padding:7px 12px;border-radius:6px;font-size:12px;font-weight:600;
+      white-space:nowrap;z-index:100;box-shadow:0 4px 14px rgba(0,0,0,.35);pointer-events:none;
+    }
+    .rl-sidebar-collapse{
+      display:flex;align-items:center;justify-content:center;gap:8px;
+      width:100%;padding:14px 16px;background:rgba(255,255,255,.04);border:none;border-top:1px solid rgba(255,255,255,.1);
+      color:rgba(255,255,255,.55);font-family:inherit;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+      cursor:pointer;transition:all .15s;
+    }
+    .rl-sidebar-collapse:hover{background:rgba(255,255,255,.08);color:#fff}
+    .rl-sidebar.collapsed .rl-sidebar-collapse .rl-collapse-label{display:none}
 
-    main{max-width:1180px;margin:0 auto;padding:24px}
+    main{
+      margin-left:var(--rl-nav-w);
+      margin-top:60px;
+      max-width:1180px;
+      padding:24px;
+      transition:margin-left .22s cubic-bezier(.4,0,.2,1);
+    }
+    main.nav-collapsed{margin-left:var(--rl-nav-w-collapsed)}
     .rl-tab-content{display:none}
     .rl-tab-content.active{display:block}
+
+    @media(max-width:900px){
+      .rl-mobile-toggle{display:flex}
+      .rl-sidebar{transform:translateX(-100%);top:60px}
+      .rl-sidebar.mobile-open{transform:translateX(0)}
+      main, main.nav-collapsed{margin-left:0}
+      .rl-brand-name{max-width:140px}
+    }
 
     .rl-panel{background:var(--rl-panel);border:1px solid var(--rl-border);border-radius:12px;overflow:hidden;margin-bottom:20px}
     .rl-panel-header{padding:16px 20px;border-bottom:1px solid var(--rl-border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
     .rl-panel-header h2{font-size:16px;font-weight:800;margin:0;text-transform:uppercase;letter-spacing:.5px;color:var(--rl-primary)}
     .rl-panel-body{padding:16px 20px}
+
+    /* ===== Dashboard ===== */
+    .rl-hero{
+      position:relative;border-radius:14px;overflow:hidden;margin-bottom:24px;min-height:220px;
+      display:flex;flex-direction:column;justify-content:flex-end;padding:28px 28px 24px;color:#fff;
+      background:linear-gradient(135deg,var(--rl-primary),var(--rl-primary-dark));
+      background-image:var(--rl-hero-image), linear-gradient(135deg,var(--rl-primary),var(--rl-primary-dark));
+      background-size:cover;background-position:center;
+      box-shadow:0 8px 24px rgba(0,0,0,.15);
+    }
+    .rl-hero::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,20,50,.25),rgba(0,10,25,.85));z-index:0}
+    .rl-hero-content{position:relative;z-index:1}
+    .rl-hero-eyebrow{font-size:11px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:var(--rl-secondary);margin-bottom:6px}
+    .rl-hero-title{font-size:clamp(22px,3vw,32px);font-weight:800;letter-spacing:.5px;margin-bottom:6px}
+    .rl-hero-sub{font-size:13px;color:rgba(255,255,255,.85);max-width:560px;line-height:1.5}
+
+    .rl-stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:24px}
+    .rl-stat-card{background:var(--rl-panel);border:1px solid var(--rl-border);border-radius:12px;padding:18px 20px;position:relative;overflow:hidden;cursor:pointer;transition:all .15s}
+    .rl-stat-card:hover{box-shadow:0 6px 18px rgba(0,0,0,.08);transform:translateY(-1px)}
+    .rl-stat-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--rl-stat-color,var(--rl-primary))}
+    .rl-stat-value{font-size:28px;font-weight:800;color:var(--rl-text);line-height:1}
+    .rl-stat-label{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--rl-subtext);margin-top:6px}
+    .rl-stat-icon{position:absolute;top:16px;right:16px;width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb, var(--rl-stat-color, var(--rl-primary)) 12%, transparent);color:var(--rl-stat-color,var(--rl-primary))}
+    .rl-stat-icon svg{width:16px;height:16px}
+
+    .rl-dash-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:20px}
+    @media(max-width:900px){.rl-dash-grid{grid-template-columns:1fr}}
+    .rl-mini-item{padding:12px 16px;border-bottom:1px solid var(--rl-border);font-size:13px}
+    .rl-mini-item:last-child{border-bottom:none}
+    .rl-mini-item-title{font-weight:700;color:var(--rl-text);display:flex;align-items:center;gap:8px}
+    .rl-mini-item-meta{font-size:11px;color:var(--rl-subtext);margin-top:2px}
 
     .rl-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:6px;border:1px solid var(--rl-border);background:#fff;color:var(--rl-text);font-weight:700;font-size:12px;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:all .15s}
     .rl-btn:hover{background:#f8fafc}
@@ -134,6 +222,7 @@
 
   <div id="rlApp" class="hidden">
     <header class="rl-header">
+      <button class="rl-mobile-toggle" id="rlMobileToggle" aria-label="Toggle navigation">&#9776;</button>
       <div class="rl-brand">
         <img id="rlLogoImg" class="hidden" alt="Property logo" />
         <div class="rl-brand-text">
@@ -149,22 +238,89 @@
       </div>
     </header>
 
-    <nav class="rl-tabs">
-      <button class="rl-tab-btn active" data-tab="announcements">Announcements</button>
-      <button class="rl-tab-btn" data-tab="programs">Program Proposals</button>
-      <button class="rl-tab-btn" data-tab="committees">Committees</button>
-      <button class="rl-tab-btn" data-tab="roster">Duty Roster</button>
-      <button class="rl-tab-btn" data-tab="incidents">Incident Reports</button>
-      <button class="rl-tab-btn" data-tab="maintenance">Maintenance &amp; Keys</button>
-      <button class="rl-tab-btn" data-tab="directory">Resident Directory</button>
-      <button class="rl-tab-btn" data-tab="contacts">Campus Contacts</button>
-      <button class="rl-tab-btn" data-tab="curriculum">Curriculum Tracker</button>
-      <button class="rl-tab-btn hidden" id="rlUsersTabBtn" data-tab="users">Manage Users</button>
-    </nav>
+    <aside class="rl-sidebar" id="rlSidebar">
+      <nav class="rl-sidebar-nav">
+        <button class="rl-nav-item active" data-tab="dashboard" data-label="Dashboard">
+          <span class="rl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span>
+          <span class="rl-nav-label">Dashboard</span>
+        </button>
+        <button class="rl-nav-item" data-tab="announcements" data-label="Announcements">
+          <span class="rl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>
+          <span class="rl-nav-label">Announcements</span>
+        </button>
+        <button class="rl-nav-item" data-tab="programs" data-label="Program Proposals">
+          <span class="rl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 14l2 2 4-4"/></svg></span>
+          <span class="rl-nav-label">Program Proposals</span>
+        </button>
+        <button class="rl-nav-item" data-tab="committees" data-label="Committees">
+          <span class="rl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+          <span class="rl-nav-label">Committees</span>
+        </button>
+        <button class="rl-nav-item" data-tab="roster" data-label="Duty Roster">
+          <span class="rl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M12 14v3l2 1"/></svg></span>
+          <span class="rl-nav-label">Duty Roster</span>
+        </button>
+        <button class="rl-nav-item" data-tab="incidents" data-label="Incident Reports">
+          <span class="rl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
+          <span class="rl-nav-label">Incident Reports</span>
+        </button>
+        <button class="rl-nav-item" data-tab="maintenance" data-label="Maintenance &amp; Keys">
+          <span class="rl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span>
+          <span class="rl-nav-label">Maintenance &amp; Keys</span>
+        </button>
+        <button class="rl-nav-item" data-tab="directory" data-label="Resident Directory">
+          <span class="rl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+          <span class="rl-nav-label">Resident Directory</span>
+        </button>
+        <button class="rl-nav-item" data-tab="contacts" data-label="Campus Contacts">
+          <span class="rl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
+          <span class="rl-nav-label">Campus Contacts</span>
+        </button>
+        <button class="rl-nav-item" data-tab="curriculum" data-label="Curriculum Tracker">
+          <span class="rl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12l2 2 4-4"/></svg></span>
+          <span class="rl-nav-label">Curriculum Tracker</span>
+        </button>
+        <button class="rl-nav-item hidden" id="rlUsersTabBtn" data-tab="users" data-label="Manage Users">
+          <span class="rl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><circle cx="19" cy="11" r="2"/><path d="M19 8v1"/><path d="M19 13v1"/><path d="M16.5 9.5l.9.5"/><path d="M20.6 12l.9.5"/><path d="M16.5 12.5l.9-.5"/><path d="M20.6 10l.9-.5"/></svg></span>
+          <span class="rl-nav-label">Manage Users</span>
+        </button>
+      </nav>
+      <button class="rl-sidebar-collapse" id="rlSidebarCollapseBtn" title="Collapse">
+        <span class="rl-nav-icon" id="rlCollapseIcon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/></svg></span>
+        <span class="rl-collapse-label">Collapse</span>
+      </button>
+    </aside>
 
-    <main>
+    <main id="rlMain">
       <!-- ================= ANNOUNCEMENTS ================= -->
-      <section class="rl-tab-content active" id="tab-announcements">
+      <!-- ================= DASHBOARD ================= -->
+      <section class="rl-tab-content active" id="tab-dashboard">
+        <div class="rl-hero">
+          <div class="rl-hero-content">
+            <div class="rl-hero-eyebrow">Reslife Hub</div>
+            <div class="rl-hero-title" id="dashHeroTitle">Welcome back</div>
+            <div class="rl-hero-sub" id="dashHeroSub">Everything your Resident Life team needs for this property, in one place.</div>
+          </div>
+        </div>
+
+        <div class="rl-stat-grid" id="dashStatGrid">
+          <div class="rl-loading">Loading dashboard…</div>
+        </div>
+
+        <div class="rl-dash-grid">
+          <div class="rl-panel">
+            <div class="rl-panel-header"><h2>Pinned &amp; Recent Announcements</h2></div>
+            <div id="dashAnnList"><div class="rl-loading">Loading…</div></div>
+          </div>
+          <div class="rl-panel">
+            <div class="rl-panel-header"><h2>Upcoming Duty Shifts</h2></div>
+            <div id="dashRosterList"><div class="rl-loading">Loading…</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= ANNOUNCEMENTS ================= -->
+      <section class="rl-tab-content" id="tab-announcements">
         <div class="rl-panel">
           <div class="rl-panel-header">
             <h2>Announcements</h2>
@@ -559,6 +715,7 @@
 
       if (isAdminTier) els.usersTabBtn.classList.remove('hidden');
       setupTabs();
+      setupSidebarToggle();
       setupPermissions();
       bindAllForms();
 
@@ -586,20 +743,36 @@
     }
 
     // ==================== BRANDING (per-property, via email_brand_kits) ====================
+    // Known real property defaults, used until a Creative Studio brand kit is
+    // configured for that property (see email_brand_kits). The Harbour at Occ
+    // ships with its real public-site assets so the hub looks fully branded
+    // from day one instead of a placeholder.
+    const KNOWN_PROPERTY_DEFAULTS = {
+      'The Harbour at Occ': {
+        primary: '#002D6A', primaryDark: '#001B40', secondary: '#F99239',
+        logo: 'https://theharbourocc.com/wp-content/uploads/2025/09/harbour-logo-white.svg',
+        hero: 'https://theharbourocc.com/wp-content/uploads/2025/09/0235_OCC_1920.webp',
+      },
+    };
+    const GENERIC_DEFAULT = { primary: '#002D6A', primaryDark: '#001B40', secondary: '#F99239', logo: '', hero: '' };
+
     async function applyBrandTheme(){
       els.propertyName.textContent = currentProperty;
-      els.logoImg.classList.add('hidden');
-
-      // Reset to Harbour-inspired defaults before attempting an override
       const root = document.documentElement.style;
-      root.setProperty('--rl-primary', '#002D6A');
-      root.setProperty('--rl-primary-dark', '#001B40');
-      root.setProperty('--rl-secondary', '#F99239');
+      const fallback = KNOWN_PROPERTY_DEFAULTS[currentProperty] || GENERIC_DEFAULT;
+
+      root.setProperty('--rl-primary', fallback.primary);
+      root.setProperty('--rl-primary-dark', fallback.primaryDark);
+      root.setProperty('--rl-secondary', fallback.secondary);
+      root.setProperty('--rl-hero-image', fallback.hero ? `url('${fallback.hero}')` : 'none');
+      if (fallback.logo) { els.logoImg.src = fallback.logo; els.logoImg.classList.remove('hidden'); }
+      else { els.logoImg.classList.add('hidden'); }
 
       let kit = null;
       try { kit = await apiFetch('/reslife-brand?property=' + encodeURIComponent(currentProperty)); } catch (e) { kit = null; }
       if (!kit) return;
 
+      // A real configured brand kit always takes priority over the hardcoded fallback.
       const colors = Array.isArray(kit.colors) ? kit.colors : [];
       const findColor = (needle) => {
         const hit = colors.find(c => (c.name || '').toLowerCase().includes(needle));
@@ -615,30 +788,64 @@
         els.logoImg.src = logos[0].sourceUrl;
         els.logoImg.classList.remove('hidden');
       }
+      const images = Array.isArray(kit.images) ? kit.images : [];
+      if (images.length > 0 && images[0].sourceUrl) {
+        root.setProperty('--rl-hero-image', `url('${images[0].sourceUrl}')`);
+      }
     }
 
-    // ==================== TABS ====================
+    // ==================== TABS / SIDEBAR NAV ====================
     function setupTabs(){
-      document.querySelectorAll('.rl-tab-btn').forEach(btn => {
+      document.querySelectorAll('.rl-nav-item').forEach(btn => {
         btn.addEventListener('click', async () => {
-          document.querySelectorAll('.rl-tab-btn').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.rl-nav-item').forEach(b => b.classList.remove('active'));
           document.querySelectorAll('.rl-tab-content').forEach(c => c.classList.remove('active'));
           btn.classList.add('active');
           const tab = btn.getAttribute('data-tab');
           document.getElementById('tab-' + tab).classList.add('active');
+          document.getElementById('rlSidebar').classList.remove('mobile-open');
           await loadTabData(tab);
         });
       });
     }
 
     function activeTabKey(){
-      const btn = document.querySelector('.rl-tab-btn.active');
+      const btn = document.querySelector('.rl-nav-item.active');
       return btn ? btn.getAttribute('data-tab') : 'announcements';
+    }
+
+    function setupSidebarToggle(){
+      const NAV_COLLAPSE_KEY = 'reslife_nav_collapsed';
+      const sidebar = document.getElementById('rlSidebar');
+      const main = document.getElementById('rlMain');
+      const collapseBtn = document.getElementById('rlSidebarCollapseBtn');
+      const collapseIcon = document.getElementById('rlCollapseIcon');
+      const collapseLabel = collapseBtn.querySelector('.rl-collapse-label');
+      const iconExpand = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>';
+      const iconCollapse = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/></svg>';
+
+      let collapsed = false;
+      try { collapsed = localStorage.getItem(NAV_COLLAPSE_KEY) === '1'; } catch (e) {}
+      if (collapsed) { sidebar.classList.add('collapsed'); main.classList.add('nav-collapsed'); collapseIcon.innerHTML = iconExpand; collapseLabel.textContent = 'Expand'; }
+
+      collapseBtn.addEventListener('click', () => {
+        collapsed = !collapsed;
+        sidebar.classList.toggle('collapsed', collapsed);
+        main.classList.toggle('nav-collapsed', collapsed);
+        collapseIcon.innerHTML = collapsed ? iconExpand : iconCollapse;
+        collapseLabel.textContent = collapsed ? 'Expand' : 'Collapse';
+        try { localStorage.setItem(NAV_COLLAPSE_KEY, collapsed ? '1' : '0'); } catch (e) {}
+      });
+
+      document.getElementById('rlMobileToggle').addEventListener('click', () => {
+        sidebar.classList.toggle('mobile-open');
+      });
     }
 
     async function loadCurrentTabData(){ await loadTabData(activeTabKey()); }
 
     async function loadTabData(tab){
+      if (tab === 'dashboard') return loadDashboard();
       if (tab === 'announcements') return loadAnnouncements();
       if (tab === 'programs') return loadPrograms();
       if (tab === 'committees') return loadCommittees();
@@ -668,6 +875,72 @@
     }
 
     function toggleForm(id, show){ document.getElementById(id).classList.toggle('hidden', !show); }
+
+    // ==================== DASHBOARD ====================
+    function goToTab(tab){
+      const btn = document.querySelector('.rl-nav-item[data-tab="' + tab + '"]');
+      if (btn) btn.click();
+    }
+
+    async function loadDashboard(){
+      document.getElementById('dashHeroTitle').textContent = currentProperty;
+      document.getElementById('dashHeroSub').textContent =
+        'Signed in as ' + me.username + ' (' + (ROLE_LABELS[me.role] || me.role) + ') — everything your Resident Life team needs for this property, in one place.';
+
+      const grid = document.getElementById('dashStatGrid');
+      const annBox = document.getElementById('dashAnnList');
+      const rosterBox = document.getElementById('dashRosterList');
+      grid.innerHTML = '<div class="rl-loading">Loading dashboard…</div>';
+
+      const safe = (p) => p.catch(() => []);
+      const [announcements, incidents, maintenance, roster, programs, committees] = await Promise.all([
+        safe(apiFetch('/reslife-announcements' + propParam())),
+        safe(apiFetch('/reslife-incidents' + propParam())),
+        safe(apiFetch('/reslife-maintenance' + propParam())),
+        safe(apiFetch('/reslife-roster' + propParam())),
+        safe(apiFetch('/reslife-programs' + propParam())),
+        safe(apiFetch('/reslife-committees' + propParam())),
+      ]);
+
+      const openIncidents = incidents.filter(i => i.status !== 'resolved').length;
+      const openRequests = maintenance.filter(m => m.status !== 'resolved').length;
+      const activePrograms = programs.filter(p => p.status !== 'completed').length;
+      const now = Date.now();
+      const upcomingShifts = roster.filter(r => new Date(r.shiftEnd).getTime() >= now)
+        .sort((a, b) => new Date(a.shiftStart) - new Date(b.shiftStart));
+
+      const stats = [
+        { key: 'incidents', label: 'Open Incidents', value: openIncidents, color: 'var(--rl-danger)', icon: '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>' },
+        { key: 'maintenance', label: 'Open Maintenance & Keys', value: openRequests, color: 'var(--rl-warn)', icon: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>' },
+        { key: 'roster', label: 'Upcoming Duty Shifts', value: upcomingShifts.length, color: 'var(--rl-primary)', icon: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M12 14v3l2 1"/>' },
+        { key: 'programs', label: 'Active Program Proposals', value: activePrograms, color: 'var(--rl-success)', icon: '<path d="M9 14l2 2 4-4"/><rect x="3" y="4" width="18" height="16" rx="2"/>' },
+        { key: 'committees', label: 'Committees', value: committees.length, color: '#7c3aed', icon: '<circle cx="9" cy="7" r="4"/><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>' },
+      ];
+
+      grid.innerHTML = stats.map(s => `
+        <div class="rl-stat-card" style="--rl-stat-color:${s.color}" data-goto="${s.key}">
+          <div class="rl-stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${s.icon}</svg></div>
+          <div class="rl-stat-value">${s.value}</div>
+          <div class="rl-stat-label">${s.label}</div>
+        </div>
+      `).join('');
+      grid.querySelectorAll('[data-goto]').forEach(card => card.addEventListener('click', () => goToTab(card.getAttribute('data-goto'))));
+
+      const pinnedFirst = announcements.slice().sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+      annBox.innerHTML = pinnedFirst.length === 0 ? '<div class="rl-empty">No announcements yet.</div>' : pinnedFirst.slice(0, 5).map(a => `
+        <div class="rl-mini-item">
+          <div class="rl-mini-item-title">${a.pinned ? '<span class="rl-pill pinned">Pinned</span>' : ''}${esc(a.title)}</div>
+          <div class="rl-mini-item-meta">${esc(a.createdBy)} · ${fmtDate(a.createdAt)}</div>
+        </div>
+      `).join('');
+
+      rosterBox.innerHTML = upcomingShifts.length === 0 ? '<div class="rl-empty">No upcoming shifts scheduled.</div>' : upcomingShifts.slice(0, 5).map(r => `
+        <div class="rl-mini-item">
+          <div class="rl-mini-item-title">${esc(r.assignedTo)}</div>
+          <div class="rl-mini-item-meta">${fmtDate(r.shiftStart)} – ${fmtDate(r.shiftEnd)}</div>
+        </div>
+      `).join('');
+    }
 
     // ==================== ANNOUNCEMENTS ====================
     async function loadAnnouncements(){

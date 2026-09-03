@@ -103,6 +103,34 @@
     .form-group input:focus, .form-group select:focus{outline:none; border-color:var(--brand-accent-2); box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
     .form-group .hint{font-size:12px; color:var(--subtext); margin-top:6px}
 
+    /* Role Cards */
+    .role-cards{display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:10px; margin-top:8px}
+    .role-card{display:flex; flex-direction:column; gap:6px; padding:12px 14px; border:1.5px solid var(--border); border-radius:10px; cursor:pointer; background:#fff; transition:all .15s; position:relative}
+    .role-card:hover{border-color:var(--brand-accent-2); background:#f8fcff}
+    .role-card.selected{border-color:var(--brand-primary); background:linear-gradient(180deg,#eff8ff,#f5fbff); box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
+    .role-card .rc-icon{width:26px; height:26px; display:flex; align-items:center; justify-content:center; border-radius:8px; background:#f1f5f9; color:var(--brand-primary)}
+    .role-card.selected .rc-icon{background:var(--brand-primary); color:#fff}
+    .role-card .rc-icon svg{width:16px; height:16px}
+    .role-card .rc-title{font-size:13px; font-weight:700; color:var(--text)}
+    .role-card .rc-desc{font-size:11px; color:var(--subtext); line-height:1.35}
+    .role-card .rc-check{position:absolute; top:10px; right:10px; width:16px; height:16px; border-radius:50%; border:2px solid #cbd5e1; background:#fff}
+    .role-card.selected .rc-check{border-color:var(--brand-primary); background:var(--brand-primary); box-shadow:inset 0 0 0 3px #fff}
+
+    /* Reslife Property Chip Picker */
+    .reslife-prop-picker{display:flex; flex-direction:column; gap:10px}
+    .chip-list{display:flex; flex-wrap:wrap; gap:8px; min-height:0}
+    .chip{display:inline-flex; align-items:center; gap:8px; padding:6px 8px 6px 14px; border-radius:999px; background:linear-gradient(135deg,var(--brand-primary),#5b8394); color:#fff; font-size:12px; font-weight:600}
+    .chip .chip-remove{width:18px; height:18px; border-radius:50%; background:rgba(255,255,255,0.25); border:none; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px; line-height:1; padding:0}
+    .chip .chip-remove:hover{background:rgba(255,255,255,0.45)}
+    .chip-empty-hint{font-size:12px; color:var(--subtext); padding:8px 0}
+    .chip-input-wrap{position:relative}
+    .chip-search-icon{position:absolute; left:12px; top:50%; transform:translateY(-50%); width:15px; height:15px; color:var(--subtext); pointer-events:none}
+    .chip-input-wrap input{padding-left:36px}
+    .chip-suggestions{position:absolute; top:calc(100% + 4px); left:0; right:0; background:#fff; border:1px solid var(--border); border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,0.12); max-height:220px; overflow-y:auto; z-index:20}
+    .chip-suggestion{padding:10px 14px; font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:space-between}
+    .chip-suggestion:hover{background:#f0f9ff}
+    .chip-suggestion .cs-name{font-weight:600; color:var(--text)}
+
     /* Properties Grid */
     .props-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:10px}
     .prop-checkbox{display:flex; align-items:center; gap:10px; padding:10px 14px; border:1px solid var(--border); border-radius:8px; cursor:pointer; transition:all .15s; background:#fff}
@@ -315,18 +343,13 @@
                       <label>Username</label>
                       <input type="text" id="editUsername" placeholder="Enter username">
                     </div>
-                    <div class="form-group">
-                      <label>Role</label>
-                      <select id="editRole">
-                        <option value="user">User</option>
-                        <option value="admin">Admin</option>
-                        <option value="maintenance">Maintenance</option>
-                        <option value="reslife-ra">Reslife - RA</option>
-                        <option value="reslife-rec">Reslife - REC</option>
-                        <option value="reslife-admin">Reslife Admin</option>
-                      </select>
-                      <p class="hint" id="reslifeRoleHint" style="display:none">Reslife credentials redirect straight to the Reslife Hub on login and cannot access the rest of the Marketing Hub. Reslife - RA and Reslife - REC must be assigned exactly one property below; Reslife Admin may be assigned more than one.</p>
-                    </div>
+                  </div>
+
+                  <div class="form-group" style="margin-top:16px">
+                    <label>Role</label>
+                    <select id="editRole" class="hidden"></select>
+                    <div class="role-cards" id="roleCardsGrid"><!-- populated by renderRoleCards() --></div>
+                    <p class="hint" id="reslifeRoleHint" style="display:none">Reslife credentials redirect straight to the Reslife Hub on login and cannot access the rest of the Marketing Hub.</p>
                   </div>
                   
                   <div class="form-grid" style="margin-top:16px">
@@ -343,7 +366,7 @@
                   </div>
                 </div>
 
-                <div class="form-section">
+                <div class="form-section" id="genericPropsSection">
                   <div class="form-section-title">Property Access</div>
                   <div class="props-grid" id="propsGrid">
                     <!-- Properties populated here -->
@@ -352,6 +375,19 @@
                     <button id="selectAllProps">Select All</button>
                     <button id="clearAllProps">Clear All</button>
                   </div>
+                </div>
+
+                <div class="form-section" id="reslifePropSection" style="display:none">
+                  <div class="form-section-title">Reslife Property Assignment</div>
+                  <div class="reslife-prop-picker">
+                    <div class="chip-list" id="reslifePropChips"><!-- chips populated by renderReslifePropChips() --></div>
+                    <div class="chip-input-wrap">
+                      <svg class="chip-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                      <input type="text" id="reslifePropSearch" placeholder="Search properties to assign…" autocomplete="off">
+                      <div class="chip-suggestions hidden" id="reslifePropSuggestions"></div>
+                    </div>
+                  </div>
+                  <p class="hint" id="reslifePropHint"></p>
                 </div>
 
                 <!-- Email Section (only for new users) -->
@@ -719,6 +755,7 @@
       detailRoleBadge: document.getElementById('detailRoleBadge'),
       editUsername: document.getElementById('editUsername'),
       editRole: document.getElementById('editRole'),
+      roleCardsGrid: document.getElementById('roleCardsGrid'),
       reslifeRoleHint: document.getElementById('reslifeRoleHint'),
       editPassword: document.getElementById('editPassword'),
       passwordLabel: document.getElementById('passwordLabel'),
@@ -727,6 +764,12 @@
       propsGrid: document.getElementById('propsGrid'),
       selectAllProps: document.getElementById('selectAllProps'),
       clearAllProps: document.getElementById('clearAllProps'),
+      genericPropsSection: document.getElementById('genericPropsSection'),
+      reslifePropSection: document.getElementById('reslifePropSection'),
+      reslifePropChips: document.getElementById('reslifePropChips'),
+      reslifePropSearch: document.getElementById('reslifePropSearch'),
+      reslifePropSuggestions: document.getElementById('reslifePropSuggestions'),
+      reslifePropHint: document.getElementById('reslifePropHint'),
       emailSection: document.getElementById('emailSection'),
       sendEmail: document.getElementById('sendEmail'),
       userEmail: document.getElementById('userEmail'),
@@ -783,6 +826,117 @@
     const ROLE_LABELS = { admin:'Admin', maintenance:'Maintenance', 'reslife-ra':'Reslife - RA', 'reslife-rec':'Reslife - REC', 'reslife-admin':'Reslife Admin' };
     function roleLabel(role){ return ROLE_LABELS[role] || 'User'; }
     function isReslifeRole(role){ return role === 'reslife-ra' || role === 'reslife-rec' || role === 'reslife-admin'; }
+    function isSinglePropReslifeRole(role){ return role === 'reslife-ra' || role === 'reslife-rec'; }
+
+    const ROLE_META = [
+      { value:'user', title:'User', desc:'Standard access to assigned properties', icon:'<circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/>' },
+      { value:'admin', title:'Admin', desc:'Full access to everything', icon:'<path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/>' },
+      { value:'maintenance', title:'Maintenance', desc:'Limited to maintenance tools', icon:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>' },
+      { value:'reslife-ra', title:'Reslife - RA', desc:'Resident Assistant · Reslife Hub only · 1 property', icon:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>' },
+      { value:'reslife-rec', title:'Reslife - REC', desc:'Resident Engagement Coordinator · Reslife Hub only · 1 property', icon:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>' },
+      { value:'reslife-admin', title:'Reslife Admin', desc:'Manages the Reslife Hub · 1+ properties', icon:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><circle cx="19" cy="11" r="2"/>' },
+    ];
+
+    function renderRoleCards(){
+      els.roleCardsGrid.innerHTML = ROLE_META.map(r => `
+        <div class="role-card" data-role="${r.value}">
+          <div class="rc-check"></div>
+          <div class="rc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${r.icon}</svg></div>
+          <div class="rc-title">${r.title}</div>
+          <div class="rc-desc">${r.desc}</div>
+        </div>
+      `).join('');
+      els.roleCardsGrid.querySelectorAll('.role-card').forEach(card => {
+        card.addEventListener('click', () => {
+          els.editRole.value = card.dataset.role;
+          applyRoleUI(card.dataset.role);
+        });
+      });
+    }
+
+    function applyRoleUI(role){
+      els.roleCardsGrid.querySelectorAll('.role-card').forEach(card => {
+        card.classList.toggle('selected', card.dataset.role === role);
+      });
+      els.detailRoleBadge.textContent = roleLabel(role);
+      els.detailRoleBadge.className = `role-badge ${role}`;
+      if (els.reslifeRoleHint) els.reslifeRoleHint.style.display = isReslifeRole(role) ? '' : 'none';
+
+      if (isReslifeRole(role)) {
+        els.genericPropsSection.style.display = 'none';
+        els.reslifePropSection.style.display = '';
+        if (isSinglePropReslifeRole(role)) {
+          // Enforce exactly one selected property for RA/REC
+          const selected = getSelectedPropNames();
+          if (selected.length > 1) {
+            selected.slice(1).forEach(name => setPropChecked(name, false));
+          }
+          els.reslifePropHint.textContent = 'Reslife - RA and Reslife - REC must be assigned exactly one property.';
+        } else {
+          els.reslifePropHint.textContent = 'Reslife Admin may be assigned one or more properties.';
+        }
+        renderReslifePropChips();
+      } else {
+        els.genericPropsSection.style.display = '';
+        els.reslifePropSection.style.display = 'none';
+      }
+    }
+
+    // ---- Reslife property chip picker (backed by the same hidden .prop-checkbox grid) ----
+    function getSelectedPropNames(){
+      return Array.from(els.propsGrid.querySelectorAll('.prop-checkbox input:checked'))
+        .map(cb => cb.closest('.prop-checkbox').dataset.prop);
+    }
+
+    function setPropChecked(name, checked){
+      const label = els.propsGrid.querySelector(`.prop-checkbox[data-prop="${CSS.escape(name)}"]`);
+      if (!label) return;
+      const input = label.querySelector('input');
+      input.checked = checked;
+      label.classList.toggle('selected', checked);
+    }
+
+    function renderReslifePropChips(){
+      const selected = getSelectedPropNames();
+      if (selected.length === 0) {
+        els.reslifePropChips.innerHTML = '<div class="chip-empty-hint">No property assigned yet — search below to add one.</div>';
+      } else {
+        els.reslifePropChips.innerHTML = selected.map(name => `
+          <span class="chip" data-prop="${esc(name)}">${esc(name)}<button type="button" class="chip-remove" data-remove-chip="${esc(name)}">&times;</button></span>
+        `).join('');
+        els.reslifePropChips.querySelectorAll('[data-remove-chip]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            setPropChecked(btn.dataset.removeChip, false);
+            renderReslifePropChips();
+          });
+        });
+      }
+    }
+
+    function renderReslifePropSuggestions(query){
+      const selected = new Set(getSelectedPropNames());
+      const q = query.trim().toLowerCase();
+      const matches = properties.filter(p => !selected.has(p) && (!q || p.toLowerCase().includes(q))).slice(0, 8);
+      if (matches.length === 0) {
+        els.reslifePropSuggestions.classList.add('hidden');
+        els.reslifePropSuggestions.innerHTML = '';
+        return;
+      }
+      els.reslifePropSuggestions.innerHTML = matches.map(p => `<div class="chip-suggestion" data-pick="${esc(p)}"><span class="cs-name">${esc(p)}</span></div>`).join('');
+      els.reslifePropSuggestions.classList.remove('hidden');
+      els.reslifePropSuggestions.querySelectorAll('[data-pick]').forEach(row => {
+        row.addEventListener('click', () => {
+          const name = row.dataset.pick;
+          if (isSinglePropReslifeRole(els.editRole.value)) {
+            getSelectedPropNames().forEach(existing => setPropChecked(existing, false));
+          }
+          setPropChecked(name, true);
+          renderReslifePropChips();
+          els.reslifePropSearch.value = '';
+          els.reslifePropSuggestions.classList.add('hidden');
+        });
+      });
+    }
 
     async function apiFetch(path, opts={}){
       const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers||{});
@@ -878,9 +1032,6 @@
       els.userDetail.classList.remove('hidden');
       
       els.detailUsername.textContent = user.username;
-      els.detailRoleBadge.textContent = roleLabel(user.role);
-      els.detailRoleBadge.className = `role-badge ${user.role}`;
-      if (els.reslifeRoleHint) els.reslifeRoleHint.style.display = isReslifeRole(user.role) ? '' : 'none';
 
       els.editUsername.value = user.username;
       els.editUsername.disabled = true;
@@ -891,6 +1042,7 @@
 
       const userProps = user.properties === '*' ? properties : (user.properties || []);
       renderProperties(userProps);
+      applyRoleUI(user.role);
 
       els.emailSection.classList.add('hidden');
       els.deleteUserBtn.classList.remove('hidden');
@@ -918,8 +1070,6 @@
       els.userDetail.classList.remove('hidden');
       
       els.detailUsername.textContent = 'New User';
-      els.detailRoleBadge.textContent = 'User';
-      els.detailRoleBadge.className = 'role-badge user';
 
       els.editUsername.value = '';
       els.editUsername.disabled = false;
@@ -929,6 +1079,7 @@
       els.passwordHint.classList.add('hidden');
 
       renderProperties([]);
+      applyRoleUI('user');
 
       els.emailSection.classList.remove('hidden');
       els.userEmail.value = '';
@@ -1540,11 +1691,10 @@ Capstone Management Partners`;
       });
     });
 
-    els.editRole.addEventListener('change', () => {
-      const rv = els.editRole.value;
-      els.detailRoleBadge.textContent = roleLabel(rv);
-      els.detailRoleBadge.className = `role-badge ${rv}`;
-      if (els.reslifeRoleHint) els.reslifeRoleHint.style.display = isReslifeRole(rv) ? '' : 'none';
+    els.reslifePropSearch.addEventListener('input', (e) => renderReslifePropSuggestions(e.target.value));
+    els.reslifePropSearch.addEventListener('focus', (e) => renderReslifePropSuggestions(e.target.value));
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.chip-input-wrap')) els.reslifePropSuggestions.classList.add('hidden');
     });
 
     els.toCalendarBtn.addEventListener('click', () => { location.href = 'mmp_calendar_app.html'; });
@@ -1563,6 +1713,7 @@ Capstone Management Partners`;
         if (me.role !== 'admin'){ location.href = 'index.html'; return; }
       } catch(e){ location.href = 'index.html'; return; }
 
+      renderRoleCards();
       show(els.appHeader);
       show(els.appContainer);
 
