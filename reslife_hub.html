@@ -178,6 +178,28 @@
     .rl-empty{padding:32px 16px;text-align:center;color:var(--rl-subtext);font-size:13px}
 
     .rl-form{background:#f8fafc;border:1px solid var(--rl-border);border-radius:10px;padding:16px;margin-bottom:16px}
+
+    /* ===== Wizard-style add/edit forms ===== */
+    .rl-wizard-progress{display:flex;align-items:center;margin-bottom:22px;flex-wrap:wrap;gap:0}
+    .rl-wizard-step-dot{display:flex;align-items:center;gap:8px}
+    .rl-wizard-step-dot .dot{width:26px;height:26px;border-radius:50%;background:#e2e8f0;color:#94a3b8;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;transition:all .2s}
+    .rl-wizard-step-dot .label{font-size:11px;font-weight:700;color:var(--rl-subtext);text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
+    .rl-wizard-step-dot.active .dot{background:var(--rl-secondary);color:#1a1000;box-shadow:0 0 0 4px color-mix(in srgb, var(--rl-secondary) 25%, transparent)}
+    .rl-wizard-step-dot.active .label{color:var(--rl-text)}
+    .rl-wizard-step-dot.done .dot{background:var(--rl-primary);color:#fff}
+    .rl-wizard-step-dot.done .label{color:var(--rl-subtext)}
+    .rl-wizard-connector{flex:1 1 20px;height:2px;background:#e2e8f0;margin:0 8px;min-width:12px}
+    .rl-wizard-connector.done{background:var(--rl-primary)}
+    .rl-wizard-step-panel{display:none;animation:rlFadeIn .18s ease}
+    .rl-wizard-step-panel.active{display:block}
+    @keyframes rlFadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+    .rl-wizard-step-title{font-size:13px;font-weight:800;color:var(--rl-primary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px}
+    .rl-wizard-nav{display:flex;justify-content:space-between;align-items:center;margin-top:18px;padding-top:16px;border-top:1px solid var(--rl-border)}
+    .rl-wizard-review{background:#fff;border:1px solid var(--rl-border);border-radius:10px;padding:4px 16px}
+    .rl-wizard-review dt{font-weight:800;color:var(--rl-subtext);font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin-top:14px}
+    .rl-wizard-review dt:first-child{margin-top:14px}
+    .rl-wizard-review dd{margin:3px 0 0;color:var(--rl-text);font-size:13px;white-space:pre-wrap}
+    .rl-wizard-review dd:empty::before,.rl-wizard-review dd.rl-empty-val::before{content:'—';color:#cbd5e1}
     .rl-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .rl-form-grid.cols-3{grid-template-columns:1fr 1fr 1fr}
     @media(max-width:640px){.rl-form-grid,.rl-form-grid.cols-3{grid-template-columns:1fr}}
@@ -280,6 +302,10 @@
           <span class="rl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12l2 2 4-4"/></svg></span>
           <span class="rl-nav-label">Curriculum Tracker</span>
         </button>
+        <button class="rl-nav-item" data-tab="sops" data-label="SOP Library">
+          <span class="rl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/></svg></span>
+          <span class="rl-nav-label">SOP Library</span>
+        </button>
         <button class="rl-nav-item hidden" id="rlUsersTabBtn" data-tab="users" data-label="Manage Users">
           <span class="rl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><circle cx="19" cy="11" r="2"/><path d="M19 8v1"/><path d="M19 13v1"/><path d="M16.5 9.5l.9.5"/><path d="M20.6 12l.9.5"/><path d="M16.5 12.5l.9-.5"/><path d="M20.6 10l.9-.5"/></svg></span>
           <span class="rl-nav-label">Manage Users</span>
@@ -329,14 +355,29 @@
           <div class="rl-panel-body">
             <div class="rl-form hidden" id="annForm">
               <input type="hidden" id="annId" />
-              <div class="rl-form-grid">
-                <div class="rl-field full"><label>Title</label><input id="annTitle" maxlength="140" /></div>
-                <div class="rl-field full"><label>Message</label><textarea id="annMessage"></textarea></div>
-                <div class="rl-field"><label><input type="checkbox" id="annPinned" style="width:auto;margin-right:6px" />Pin to top</label></div>
+              <div class="rl-wizard-progress"></div>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 1 · Content</div>
+                <div class="rl-form-grid">
+                  <div class="rl-field full"><label>Title</label><input id="annTitle" maxlength="140" data-required /></div>
+                  <div class="rl-field full"><label>Message</label><textarea id="annMessage" data-required></textarea></div>
+                  <div class="rl-field"><label><input type="checkbox" id="annPinned" style="width:auto;margin-right:6px" />Pin to top</label></div>
+                </div>
               </div>
-              <div class="rl-form-actions">
-                <button class="rl-btn" id="annCancelBtn">Cancel</button>
-                <button class="rl-btn primary" id="annSaveBtn">Save</button>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 2 · Review &amp; Post</div>
+                <dl class="rl-wizard-review" id="annReview"></dl>
+              </div>
+
+              <div class="rl-wizard-nav">
+                <button class="rl-btn" data-wizard-back>&larr; Back</button>
+                <div style="display:flex;gap:8px">
+                  <button class="rl-btn" id="annCancelBtn">Cancel</button>
+                  <button class="rl-btn primary" data-wizard-next>Next &rarr;</button>
+                  <button class="rl-btn primary" id="annSaveBtn">Post Announcement</button>
+                </div>
               </div>
             </div>
             <div id="annList"><div class="rl-loading">Loading…</div></div>
@@ -354,24 +395,48 @@
           <div class="rl-panel-body">
             <div class="rl-form hidden" id="progForm">
               <input type="hidden" id="progId" />
-              <div class="rl-form-grid cols-3">
-                <div class="rl-field full"><label>Program Title</label><input id="progTitle" placeholder="e.g., Valentine's Day Craft Night" /></div>
-                <div class="rl-field"><label>Type</label>
-                  <select id="progType"><option value="active">Active</option><option value="passive">Passive</option></select>
+              <div class="rl-wizard-progress"></div>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 1 · Basics</div>
+                <div class="rl-form-grid cols-3">
+                  <div class="rl-field full"><label>Program Title</label><input id="progTitle" placeholder="e.g., Valentine's Day Craft Night" data-required /></div>
+                  <div class="rl-field"><label>Type</label>
+                    <select id="progType"><option value="active">Active</option><option value="passive">Passive</option></select>
+                  </div>
+                  <div class="rl-field"><label>Month</label><input id="progMonth" placeholder="e.g., February" /></div>
+                  <div class="rl-field"><label>Event Date/Time</label><input id="progDate" type="datetime-local" /></div>
+                  <div class="rl-field"><label>Location</label><input id="progLocation" placeholder="e.g., Building 2-4 Courtyard" /></div>
+                  <div class="rl-field"><label>Budget ($)</label><input id="progBudget" type="number" step="0.01" placeholder="200" /></div>
                 </div>
-                <div class="rl-field"><label>Month</label><input id="progMonth" placeholder="e.g., February" /></div>
-                <div class="rl-field"><label>Event Date/Time</label><input id="progDate" type="datetime-local" /></div>
-                <div class="rl-field"><label>Location</label><input id="progLocation" placeholder="e.g., Building 2-4 Courtyard" /></div>
-                <div class="rl-field"><label>Budget ($)</label><input id="progBudget" type="number" step="0.01" placeholder="200" /></div>
-                <div class="rl-field full"><label>Description / Proposal</label><textarea id="progDescription" placeholder="Event concept, stations, campus collaborations, etc."></textarea></div>
-                <div class="rl-field full"><label>Stations &amp; Assignments (one per line, e.g. "Photo Booth - Sydney")</label><textarea id="progStations"></textarea></div>
               </div>
-              <div class="rl-form-section-title" style="margin-top:14px;font-size:11px;font-weight:700;color:var(--rl-subtext);text-transform:uppercase;letter-spacing:.5px">Shopping / Action Item List</div>
-              <div id="progShoppingRows" style="margin-top:8px"></div>
-              <button class="rl-btn sm" id="progAddItemBtn" type="button" style="margin-top:8px">+ Add Item</button>
-              <div class="rl-form-actions">
-                <button class="rl-btn" id="progCancelBtn">Cancel</button>
-                <button class="rl-btn primary" id="progSaveBtn">Save</button>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 2 · Description &amp; Stations</div>
+                <div class="rl-form-grid">
+                  <div class="rl-field full"><label>Description / Proposal</label><textarea id="progDescription" placeholder="Event concept, stations, campus collaborations, etc."></textarea></div>
+                  <div class="rl-field full"><label>Stations &amp; Assignments (one per line, e.g. "Photo Booth - Sydney")</label><textarea id="progStations"></textarea></div>
+                </div>
+              </div>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 3 · Shopping / Action Item List</div>
+                <div id="progShoppingRows"></div>
+                <button class="rl-btn sm" id="progAddItemBtn" type="button" style="margin-top:8px">+ Add Item</button>
+              </div>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 4 · Review &amp; Submit</div>
+                <dl class="rl-wizard-review" id="progReview"></dl>
+              </div>
+
+              <div class="rl-wizard-nav">
+                <button class="rl-btn" data-wizard-back>&larr; Back</button>
+                <div style="display:flex;gap:8px">
+                  <button class="rl-btn" id="progCancelBtn">Cancel</button>
+                  <button class="rl-btn primary" data-wizard-next>Next &rarr;</button>
+                  <button class="rl-btn primary" id="progSaveBtn">Submit Proposal</button>
+                </div>
               </div>
             </div>
             <div id="progList"><div class="rl-loading">Loading…</div></div>
@@ -389,16 +454,37 @@
           <div class="rl-panel-body">
             <div class="rl-form hidden" id="commForm">
               <input type="hidden" id="commId" />
-              <div class="rl-form-grid cols-3">
-                <div class="rl-field"><label>Committee Name</label><input id="commName" placeholder="e.g., Programming" /></div>
-                <div class="rl-field"><label>Advisors</label><input id="commAdvisors" placeholder="e.g., Chris, Martin" /></div>
-                <div class="rl-field"><label>Committee Lead</label><input id="commLead" placeholder="e.g., Atalay" /></div>
-                <div class="rl-field full"><label>Members (comma-separated)</label><input id="commMembers" placeholder="e.g., Amelia, Emily, Joanna" /></div>
-                <div class="rl-field full"><label>Meeting Cadence</label><input id="commCadence" placeholder="e.g., Every other week, 60 minutes" /></div>
+              <div class="rl-wizard-progress"></div>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 1 · Committee Details</div>
+                <div class="rl-form-grid cols-3">
+                  <div class="rl-field"><label>Committee Name</label><input id="commName" placeholder="e.g., Programming" data-required /></div>
+                  <div class="rl-field"><label>Advisors</label><input id="commAdvisors" placeholder="e.g., Chris, Martin" /></div>
+                  <div class="rl-field"><label>Committee Lead</label><input id="commLead" placeholder="e.g., Atalay" /></div>
+                </div>
               </div>
-              <div class="rl-form-actions">
-                <button class="rl-btn" id="commCancelBtn">Cancel</button>
-                <button class="rl-btn primary" id="commSaveBtn">Save</button>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 2 · Members &amp; Cadence</div>
+                <div class="rl-form-grid">
+                  <div class="rl-field full"><label>Members (comma-separated)</label><input id="commMembers" placeholder="e.g., Amelia, Emily, Joanna" /></div>
+                  <div class="rl-field full"><label>Meeting Cadence</label><input id="commCadence" placeholder="e.g., Every other week, 60 minutes" /></div>
+                </div>
+              </div>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 3 · Review</div>
+                <dl class="rl-wizard-review" id="commReview"></dl>
+              </div>
+
+              <div class="rl-wizard-nav">
+                <button class="rl-btn" data-wizard-back>&larr; Back</button>
+                <div style="display:flex;gap:8px">
+                  <button class="rl-btn" id="commCancelBtn">Cancel</button>
+                  <button class="rl-btn primary" data-wizard-next>Next &rarr;</button>
+                  <button class="rl-btn primary" id="commSaveBtn">Save Committee</button>
+                </div>
               </div>
             </div>
             <div id="commList"><div class="rl-loading">Loading…</div></div>
@@ -418,16 +504,34 @@
             <div class="rl-form hidden" id="minForm">
               <input type="hidden" id="minId" />
               <input type="hidden" id="minCommitteeId" />
-              <div class="rl-form-grid">
-                <div class="rl-field"><label>Meeting Date</label><input id="minDate" type="date" /></div>
-                <div class="rl-field full"><label>Agenda / Notes</label><textarea id="minAgenda" placeholder="Check-in, track updates, discussion notes..."></textarea></div>
+              <div class="rl-wizard-progress"></div>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 1 · Meeting Info</div>
+                <div class="rl-form-grid">
+                  <div class="rl-field"><label>Meeting Date</label><input id="minDate" type="date" /></div>
+                  <div class="rl-field full"><label>Agenda / Notes</label><textarea id="minAgenda" placeholder="Check-in, track updates, discussion notes..." data-required></textarea></div>
+                </div>
               </div>
-              <div class="rl-form-section-title" style="margin-top:14px;font-size:11px;font-weight:700;color:var(--rl-subtext);text-transform:uppercase;letter-spacing:.5px">Action Items</div>
-              <div id="minActionRows" style="margin-top:8px"></div>
-              <button class="rl-btn sm" id="minAddItemBtn" type="button" style="margin-top:8px">+ Add Action Item</button>
-              <div class="rl-form-actions">
-                <button class="rl-btn" id="minCancelBtn">Cancel</button>
-                <button class="rl-btn primary" id="minSaveBtn">Save</button>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 2 · Action Items</div>
+                <div id="minActionRows"></div>
+                <button class="rl-btn sm" id="minAddItemBtn" type="button" style="margin-top:8px">+ Add Action Item</button>
+              </div>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 3 · Review</div>
+                <dl class="rl-wizard-review" id="minReview"></dl>
+              </div>
+
+              <div class="rl-wizard-nav">
+                <button class="rl-btn" data-wizard-back>&larr; Back</button>
+                <div style="display:flex;gap:8px">
+                  <button class="rl-btn" id="minCancelBtn">Cancel</button>
+                  <button class="rl-btn primary" data-wizard-next>Next &rarr;</button>
+                  <button class="rl-btn primary" id="minSaveBtn">Save Minutes</button>
+                </div>
               </div>
             </div>
             <div id="minList"><div class="rl-loading">Loading…</div></div>
@@ -445,15 +549,30 @@
           <div class="rl-panel-body">
             <div class="rl-form hidden" id="rosterForm">
               <input type="hidden" id="rosterId" />
-              <div class="rl-form-grid cols-3">
-                <div class="rl-field"><label>Assigned To</label><input id="rosterAssignedTo" placeholder="RA name" /></div>
-                <div class="rl-field"><label>Shift Start</label><input id="rosterStart" type="datetime-local" /></div>
-                <div class="rl-field"><label>Shift End</label><input id="rosterEnd" type="datetime-local" /></div>
-                <div class="rl-field full"><label>Notes</label><input id="rosterNotes" placeholder="Optional" /></div>
+              <div class="rl-wizard-progress"></div>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 1 · Shift Details</div>
+                <div class="rl-form-grid cols-3">
+                  <div class="rl-field"><label>Assigned To</label><input id="rosterAssignedTo" placeholder="RA name" data-required /></div>
+                  <div class="rl-field"><label>Shift Start</label><input id="rosterStart" type="datetime-local" data-required /></div>
+                  <div class="rl-field"><label>Shift End</label><input id="rosterEnd" type="datetime-local" data-required /></div>
+                  <div class="rl-field full"><label>Notes</label><input id="rosterNotes" placeholder="Optional" /></div>
+                </div>
               </div>
-              <div class="rl-form-actions">
-                <button class="rl-btn" id="rosterCancelBtn">Cancel</button>
-                <button class="rl-btn primary" id="rosterSaveBtn">Save</button>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 2 · Review</div>
+                <dl class="rl-wizard-review" id="rosterReview"></dl>
+              </div>
+
+              <div class="rl-wizard-nav">
+                <button class="rl-btn" data-wizard-back>&larr; Back</button>
+                <div style="display:flex;gap:8px">
+                  <button class="rl-btn" id="rosterCancelBtn">Cancel</button>
+                  <button class="rl-btn primary" data-wizard-next>Next &rarr;</button>
+                  <button class="rl-btn primary" id="rosterSaveBtn">Save Shift</button>
+                </div>
               </div>
             </div>
             <div id="rosterList"><div class="rl-loading">Loading…</div></div>
@@ -471,17 +590,38 @@
           <div class="rl-panel-body">
             <div class="rl-form hidden" id="incForm">
               <input type="hidden" id="incId" />
-              <div class="rl-form-grid cols-3">
-                <div class="rl-field"><label>Resident Name</label><input id="incResident" placeholder="Optional" /></div>
-                <div class="rl-field"><label>Room / Unit</label><input id="incRoom" placeholder="Optional" /></div>
-                <div class="rl-field"><label>Severity</label>
-                  <select id="incSeverity"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select>
+              <div class="rl-wizard-progress"></div>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 1 · Who &amp; Where</div>
+                <div class="rl-form-grid cols-3">
+                  <div class="rl-field"><label>Resident Name</label><input id="incResident" placeholder="Optional" /></div>
+                  <div class="rl-field"><label>Room / Unit</label><input id="incRoom" placeholder="Optional" /></div>
+                  <div class="rl-field"><label>Severity</label>
+                    <select id="incSeverity"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select>
+                  </div>
                 </div>
-                <div class="rl-field full"><label>Description</label><textarea id="incDescription"></textarea></div>
               </div>
-              <div class="rl-form-actions">
-                <button class="rl-btn" id="incCancelBtn">Cancel</button>
-                <button class="rl-btn primary" id="incSaveBtn">Save</button>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 2 · What Happened</div>
+                <div class="rl-form-grid">
+                  <div class="rl-field full"><label>Description</label><textarea id="incDescription" data-required></textarea></div>
+                </div>
+              </div>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 3 · Review</div>
+                <dl class="rl-wizard-review" id="incReview"></dl>
+              </div>
+
+              <div class="rl-wizard-nav">
+                <button class="rl-btn" data-wizard-back>&larr; Back</button>
+                <div style="display:flex;gap:8px">
+                  <button class="rl-btn" id="incCancelBtn">Cancel</button>
+                  <button class="rl-btn primary" data-wizard-next>Next &rarr;</button>
+                  <button class="rl-btn primary" id="incSaveBtn">Submit Report</button>
+                </div>
               </div>
             </div>
             <div id="incList"><div class="rl-loading">Loading…</div></div>
@@ -499,16 +639,37 @@
           <div class="rl-panel-body">
             <div class="rl-form hidden" id="mrForm">
               <input type="hidden" id="mrId" />
-              <div class="rl-form-grid cols-3">
-                <div class="rl-field"><label>Type</label>
-                  <select id="mrType"><option value="maintenance">Maintenance</option><option value="key">Key</option></select>
+              <div class="rl-wizard-progress"></div>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 1 · Type &amp; Location</div>
+                <div class="rl-form-grid cols-3">
+                  <div class="rl-field"><label>Type</label>
+                    <select id="mrType"><option value="maintenance">Maintenance</option><option value="key">Key</option></select>
+                  </div>
+                  <div class="rl-field"><label>Location</label><input id="mrLocation" placeholder="Room / area" /></div>
                 </div>
-                <div class="rl-field"><label>Location</label><input id="mrLocation" placeholder="Room / area" /></div>
-                <div class="rl-field full"><label>Description</label><textarea id="mrDescription"></textarea></div>
               </div>
-              <div class="rl-form-actions">
-                <button class="rl-btn" id="mrCancelBtn">Cancel</button>
-                <button class="rl-btn primary" id="mrSaveBtn">Save</button>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 2 · Description</div>
+                <div class="rl-form-grid">
+                  <div class="rl-field full"><label>Description</label><textarea id="mrDescription" data-required></textarea></div>
+                </div>
+              </div>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 3 · Review</div>
+                <dl class="rl-wizard-review" id="mrReview"></dl>
+              </div>
+
+              <div class="rl-wizard-nav">
+                <button class="rl-btn" data-wizard-back>&larr; Back</button>
+                <div style="display:flex;gap:8px">
+                  <button class="rl-btn" id="mrCancelBtn">Cancel</button>
+                  <button class="rl-btn primary" data-wizard-next>Next &rarr;</button>
+                  <button class="rl-btn primary" id="mrSaveBtn">Submit Request</button>
+                </div>
               </div>
             </div>
             <div id="mrList"><div class="rl-loading">Loading…</div></div>
@@ -526,17 +687,38 @@
           <div class="rl-panel-body">
             <div class="rl-form hidden" id="dirForm">
               <input type="hidden" id="dirId" />
-              <div class="rl-form-grid cols-3">
-                <div class="rl-field"><label>Resident Name</label><input id="dirName" /></div>
-                <div class="rl-field"><label>Room</label><input id="dirRoom" /></div>
-                <div class="rl-field"><label>Unit</label><input id="dirUnit" /></div>
-                <div class="rl-field"><label>Phone</label><input id="dirPhone" /></div>
-                <div class="rl-field"><label>Email</label><input id="dirEmail" /></div>
-                <div class="rl-field full"><label>Notes</label><input id="dirNotes" /></div>
+              <div class="rl-wizard-progress"></div>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 1 · Resident Info</div>
+                <div class="rl-form-grid cols-3">
+                  <div class="rl-field"><label>Resident Name</label><input id="dirName" data-required /></div>
+                  <div class="rl-field"><label>Room</label><input id="dirRoom" /></div>
+                  <div class="rl-field"><label>Unit</label><input id="dirUnit" /></div>
+                </div>
               </div>
-              <div class="rl-form-actions">
-                <button class="rl-btn" id="dirCancelBtn">Cancel</button>
-                <button class="rl-btn primary" id="dirSaveBtn">Save</button>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 2 · Contact Info</div>
+                <div class="rl-form-grid cols-3">
+                  <div class="rl-field"><label>Phone</label><input id="dirPhone" /></div>
+                  <div class="rl-field"><label>Email</label><input id="dirEmail" /></div>
+                  <div class="rl-field full"><label>Notes</label><input id="dirNotes" /></div>
+                </div>
+              </div>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 3 · Review</div>
+                <dl class="rl-wizard-review" id="dirReview"></dl>
+              </div>
+
+              <div class="rl-wizard-nav">
+                <button class="rl-btn" data-wizard-back>&larr; Back</button>
+                <div style="display:flex;gap:8px">
+                  <button class="rl-btn" id="dirCancelBtn">Cancel</button>
+                  <button class="rl-btn primary" data-wizard-next>Next &rarr;</button>
+                  <button class="rl-btn primary" id="dirSaveBtn">Save Resident</button>
+                </div>
               </div>
             </div>
             <div id="dirList"><div class="rl-loading">Loading…</div></div>
@@ -554,22 +736,43 @@
           <div class="rl-panel-body">
             <div class="rl-form hidden" id="contactForm">
               <input type="hidden" id="contactId" />
-              <div class="rl-form-grid cols-3">
-                <div class="rl-field"><label>Department / Org</label><input id="contactDept" placeholder="e.g., Financial Aid" /></div>
-                <div class="rl-field"><label>Contact Name</label><input id="contactName" placeholder="Optional" /></div>
-                <div class="rl-field"><label>Category</label>
-                  <select id="contactCategory">
-                    <option>Academic</option><option>Safety</option><option>Financial</option>
-                    <option>Health &amp; Wellness</option><option>Student Organizations</option><option>Other</option>
-                  </select>
+              <div class="rl-wizard-progress"></div>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 1 · Department</div>
+                <div class="rl-form-grid cols-3">
+                  <div class="rl-field"><label>Department / Org</label><input id="contactDept" placeholder="e.g., Financial Aid" data-required /></div>
+                  <div class="rl-field"><label>Contact Name</label><input id="contactName" placeholder="Optional" /></div>
+                  <div class="rl-field"><label>Category</label>
+                    <select id="contactCategory">
+                      <option>Academic</option><option>Safety</option><option>Financial</option>
+                      <option>Health &amp; Wellness</option><option>Student Organizations</option><option>Other</option>
+                    </select>
+                  </div>
                 </div>
-                <div class="rl-field"><label>Email</label><input id="contactEmail" type="email" /></div>
-                <div class="rl-field"><label>Phone</label><input id="contactPhone" placeholder="Optional" /></div>
-                <div class="rl-field full"><label>Notes</label><input id="contactNotes" placeholder="Optional" /></div>
               </div>
-              <div class="rl-form-actions">
-                <button class="rl-btn" id="contactCancelBtn">Cancel</button>
-                <button class="rl-btn primary" id="contactSaveBtn">Save</button>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 2 · Contact Info</div>
+                <div class="rl-form-grid cols-3">
+                  <div class="rl-field"><label>Email</label><input id="contactEmail" type="email" /></div>
+                  <div class="rl-field"><label>Phone</label><input id="contactPhone" placeholder="Optional" /></div>
+                  <div class="rl-field full"><label>Notes</label><input id="contactNotes" placeholder="Optional" /></div>
+                </div>
+              </div>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 3 · Review</div>
+                <dl class="rl-wizard-review" id="contactReview"></dl>
+              </div>
+
+              <div class="rl-wizard-nav">
+                <button class="rl-btn" data-wizard-back>&larr; Back</button>
+                <div style="display:flex;gap:8px">
+                  <button class="rl-btn" id="contactCancelBtn">Cancel</button>
+                  <button class="rl-btn primary" data-wizard-next>Next &rarr;</button>
+                  <button class="rl-btn primary" id="contactSaveBtn">Save Contact</button>
+                </div>
               </div>
             </div>
             <div id="contactList"><div class="rl-loading">Loading…</div></div>
@@ -586,18 +789,99 @@
           </div>
           <div class="rl-panel-body">
             <div class="rl-form hidden" id="curForm">
-              <div class="rl-form-grid">
-                <div class="rl-field"><label>Semester</label><input id="curSemester" placeholder="e.g., Fall 2026" /></div>
-                <div class="rl-field full"><label>RA Roster (one name per line)</label><textarea id="curRoster" placeholder="Amelia&#10;Atalay&#10;Emily"></textarea></div>
-                <div class="rl-field full"><label>Requirements (one per line: Name, Due Date)</label><textarea id="curRequirements" placeholder="Floor Meeting, 2026-09-15&#10;Roommate Agreement, 2026-09-30"></textarea></div>
+              <div class="rl-wizard-progress"></div>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 1 · Semester</div>
+                <div class="rl-form-grid">
+                  <div class="rl-field full"><label>Semester</label><input id="curSemester" placeholder="e.g., Fall 2026" data-required /></div>
+                </div>
               </div>
-              <div class="rl-form-actions">
-                <button class="rl-btn" id="curCancelBtn">Cancel</button>
-                <button class="rl-btn primary" id="curSaveBtn">Create Tracker</button>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 2 · RA Roster</div>
+                <div class="rl-form-grid">
+                  <div class="rl-field full"><label>RA Roster (one name per line)</label><textarea id="curRoster" placeholder="Amelia&#10;Atalay&#10;Emily"></textarea></div>
+                </div>
+              </div>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 3 · Requirements</div>
+                <div class="rl-form-grid">
+                  <div class="rl-field full"><label>Requirements (one per line: Name, Due Date)</label><textarea id="curRequirements" placeholder="Floor Meeting, 2026-09-15&#10;Roommate Agreement, 2026-09-30"></textarea></div>
+                </div>
+              </div>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 4 · Review</div>
+                <dl class="rl-wizard-review" id="curReview"></dl>
+              </div>
+
+              <div class="rl-wizard-nav">
+                <button class="rl-btn" data-wizard-back>&larr; Back</button>
+                <div style="display:flex;gap:8px">
+                  <button class="rl-btn" id="curCancelBtn">Cancel</button>
+                  <button class="rl-btn primary" data-wizard-next>Next &rarr;</button>
+                  <button class="rl-btn primary" id="curSaveBtn">Create Tracker</button>
+                </div>
               </div>
             </div>
             <div id="curSemesterPicker" style="margin-bottom:14px"></div>
             <div id="curGrid"><div class="rl-loading">Loading…</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= SOP LIBRARY ================= -->
+      <section class="rl-tab-content" id="tab-sops">
+        <div class="rl-panel">
+          <div class="rl-panel-header">
+            <h2>SOP Library</h2>
+            <button class="rl-btn primary hidden" id="sopAddBtn">+ Add SOP</button>
+          </div>
+          <div class="rl-panel-body">
+            <div class="rl-form hidden" id="sopForm">
+              <input type="hidden" id="sopId" />
+              <div class="rl-wizard-progress"></div>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 1 · Title &amp; Category</div>
+                <div class="rl-form-grid cols-3">
+                  <div class="rl-field full"><label>Title</label><input id="sopTitle" placeholder="e.g., Duty Coverage Swap Procedure" data-required /></div>
+                  <div class="rl-field"><label>Category</label>
+                    <select id="sopCategory">
+                      <option>Programming</option><option>Recruitment &amp; Selection</option><option>Duty &amp; Coverage</option>
+                      <option>Incident Response</option><option>Administrative</option><option>General</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 2 · Procedure &amp; Reference Link</div>
+                <div class="rl-form-grid">
+                  <div class="rl-field full"><label>Procedure / Content</label><textarea id="sopContent" placeholder="Write the SOP here, or leave blank and just link an external doc below." style="min-height:160px" data-required></textarea></div>
+                  <div class="rl-field full"><label>Reference Link (optional)</label><input id="sopLinkUrl" placeholder="https://docs.google.com/..." /></div>
+                </div>
+              </div>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 3 · Review</div>
+                <dl class="rl-wizard-review" id="sopReview"></dl>
+              </div>
+
+              <div class="rl-wizard-nav">
+                <button class="rl-btn" data-wizard-back>&larr; Back</button>
+                <div style="display:flex;gap:8px">
+                  <button class="rl-btn" id="sopCancelBtn">Cancel</button>
+                  <button class="rl-btn primary" data-wizard-next>Next &rarr;</button>
+                  <button class="rl-btn primary" id="sopSaveBtn">Save SOP</button>
+                </div>
+              </div>
+            </div>
+
+            <input type="text" id="sopSearch" placeholder="Search SOPs by title or category…" style="width:100%;padding:10px 14px;border:1px solid var(--rl-border);border-radius:8px;font-size:13px;margin-bottom:16px;font-family:inherit">
+            <div id="sopList"><div class="rl-loading">Loading…</div></div>
           </div>
         </div>
       </section>
@@ -613,17 +897,38 @@
             <p class="rl-item-meta" style="margin-bottom:12px">Create and manage Reslife - RA and Reslife - REC logins for the properties you are assigned to. Each account is locked to exactly one property.</p>
             <div class="rl-form hidden" id="userForm">
               <input type="hidden" id="userOrigUsername" />
-              <div class="rl-form-grid cols-3">
-                <div class="rl-field"><label>Username</label><input id="userUsername" autocomplete="off" /></div>
-                <div class="rl-field"><label>Password</label><input id="userPassword" type="password" autocomplete="new-password" /></div>
-                <div class="rl-field"><label>Role</label>
-                  <select id="userRole"><option value="reslife-ra">Reslife - RA</option><option value="reslife-rec">Reslife - REC</option></select>
+              <div class="rl-wizard-progress"></div>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 1 · Account</div>
+                <div class="rl-form-grid cols-3">
+                  <div class="rl-field"><label>Username</label><input id="userUsername" autocomplete="off" data-required /></div>
+                  <div class="rl-field"><label>Password</label><input id="userPassword" type="password" autocomplete="new-password" /></div>
                 </div>
-                <div class="rl-field full"><label>Property</label><select id="userProperty"></select></div>
               </div>
-              <div class="rl-form-actions">
-                <button class="rl-btn" id="userCancelBtn">Cancel</button>
-                <button class="rl-btn primary" id="userSaveBtn">Save</button>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 2 · Role &amp; Property</div>
+                <div class="rl-form-grid cols-3">
+                  <div class="rl-field"><label>Role</label>
+                    <select id="userRole"><option value="reslife-ra">Reslife - RA</option><option value="reslife-rec">Reslife - REC</option></select>
+                  </div>
+                  <div class="rl-field full"><label>Property</label><select id="userProperty"></select></div>
+                </div>
+              </div>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 3 · Review</div>
+                <dl class="rl-wizard-review" id="userReview"></dl>
+              </div>
+
+              <div class="rl-wizard-nav">
+                <button class="rl-btn" data-wizard-back>&larr; Back</button>
+                <div style="display:flex;gap:8px">
+                  <button class="rl-btn" id="userCancelBtn">Cancel</button>
+                  <button class="rl-btn primary" data-wizard-next>Next &rarr;</button>
+                  <button class="rl-btn primary" id="userSaveBtn">Create Account</button>
+                </div>
               </div>
             </div>
             <div id="userList"><div class="rl-loading">Loading…</div></div>
@@ -855,6 +1160,7 @@
       if (tab === 'directory') return loadDirectory();
       if (tab === 'contacts') return loadContacts();
       if (tab === 'curriculum') return loadCurriculum();
+      if (tab === 'sops') return loadSops();
       if (tab === 'users') return loadReslifeUsers();
     }
 
@@ -864,6 +1170,7 @@
         document.getElementById('rosterAddBtn').classList.remove('hidden');
         document.getElementById('commAddBtn').classList.remove('hidden');
         document.getElementById('curAddBtn').classList.remove('hidden');
+        document.getElementById('sopAddBtn').classList.remove('hidden');
       }
       // Incident + maintenance + program proposal "add" is available to every Reslife role + admin
       document.getElementById('incAddBtn').classList.remove('hidden');
@@ -875,6 +1182,63 @@
     }
 
     function toggleForm(id, show){ document.getElementById(id).classList.toggle('hidden', !show); }
+
+    // ==================== WIZARD ENGINE ====================
+    // Turns any .rl-form containing .rl-wizard-step-panel children into a
+    // step-by-step wizard with a progress bar, Back/Next navigation, and a
+    // final review step. Reuses the form's existing fields/save button as-is.
+    const wizards = {};
+
+    function initWizard(formId, steps, opts){
+      opts = opts || {};
+      const form = document.getElementById(formId);
+      const progress = form.querySelector('.rl-wizard-progress');
+      const panels = Array.from(form.querySelectorAll('.rl-wizard-step-panel'));
+      const backBtn = form.querySelector('[data-wizard-back]');
+      const nextBtn = form.querySelector('[data-wizard-next]');
+      const saveBtn = document.getElementById(opts.saveBtnId);
+      let current = 0;
+
+      function renderProgress(){
+        progress.innerHTML = steps.map((s, i) => {
+          const cls = i < current ? 'done' : (i === current ? 'active' : '');
+          const connector = i < steps.length - 1 ? `<div class="rl-wizard-connector ${i < current ? 'done' : ''}"></div>` : '';
+          return `<div class="rl-wizard-step-dot ${cls}"><div class="dot">${i < current ? '&#10003;' : (i + 1)}</div><span class="label">${s}</span></div>${connector}`;
+        }).join('');
+      }
+
+      function showStep(i){
+        current = Math.max(0, Math.min(steps.length - 1, i));
+        panels.forEach((p, idx) => p.classList.toggle('active', idx === current));
+        if (backBtn) backBtn.style.visibility = current === 0 ? 'hidden' : 'visible';
+        if (nextBtn) nextBtn.classList.toggle('hidden', current === steps.length - 1);
+        if (saveBtn) saveBtn.classList.toggle('hidden', current !== steps.length - 1);
+        if (current === steps.length - 1 && opts.onReview) opts.onReview();
+        renderProgress();
+      }
+
+      function validateStep(i){
+        const required = panels[i].querySelectorAll('[data-required]');
+        for (const el of required) {
+          const val = (el.value || '').trim();
+          if (!val) { el.focus(); alert('Please fill out all required fields before continuing.'); return false; }
+        }
+        return true;
+      }
+
+      if (backBtn) backBtn.onclick = () => showStep(current - 1);
+      if (nextBtn) nextBtn.onclick = () => { if (validateStep(current)) showStep(current + 1); };
+
+      wizards[formId] = { reset: () => showStep(0) };
+      showStep(0);
+    }
+
+    function resetWizard(formId){ if (wizards[formId]) wizards[formId].reset(); }
+
+    function reviewRow(label, value){
+      const v = (value === undefined || value === null || value === '') ? '' : esc(value);
+      return `<dt>${esc(label)}</dt><dd class="${v ? '' : 'rl-empty-val'}">${v}</dd>`;
+    }
 
     // ==================== DASHBOARD ====================
     function goToTab(tab){
@@ -893,13 +1257,14 @@
       grid.innerHTML = '<div class="rl-loading">Loading dashboard…</div>';
 
       const safe = (p) => p.catch(() => []);
-      const [announcements, incidents, maintenance, roster, programs, committees] = await Promise.all([
+      const [announcements, incidents, maintenance, roster, programs, committees, sops] = await Promise.all([
         safe(apiFetch('/reslife-announcements' + propParam())),
         safe(apiFetch('/reslife-incidents' + propParam())),
         safe(apiFetch('/reslife-maintenance' + propParam())),
         safe(apiFetch('/reslife-roster' + propParam())),
         safe(apiFetch('/reslife-programs' + propParam())),
         safe(apiFetch('/reslife-committees' + propParam())),
+        safe(apiFetch('/reslife-sops' + propParam())),
       ]);
 
       const openIncidents = incidents.filter(i => i.status !== 'resolved').length;
@@ -915,6 +1280,7 @@
         { key: 'roster', label: 'Upcoming Duty Shifts', value: upcomingShifts.length, color: 'var(--rl-primary)', icon: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M12 14v3l2 1"/>' },
         { key: 'programs', label: 'Active Program Proposals', value: activePrograms, color: 'var(--rl-success)', icon: '<path d="M9 14l2 2 4-4"/><rect x="3" y="4" width="18" height="16" rx="2"/>' },
         { key: 'committees', label: 'Committees', value: committees.length, color: '#7c3aed', icon: '<circle cx="9" cy="7" r="4"/><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>' },
+        { key: 'sops', label: 'SOP Library Entries', value: sops.length, color: '#0891b2', icon: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>' },
       ];
 
       grid.innerHTML = stats.map(s => `
@@ -979,6 +1345,14 @@
       document.getElementById('annMessage').value = a ? a.message : '';
       document.getElementById('annPinned').checked = a ? !!a.pinned : false;
       toggleForm('annForm', true);
+      resetWizard('annForm');
+    }
+
+    function renderAnnReview(){
+      document.getElementById('annReview').innerHTML =
+        reviewRow('Title', document.getElementById('annTitle').value) +
+        reviewRow('Message', document.getElementById('annMessage').value) +
+        reviewRow('Pinned', document.getElementById('annPinned').checked ? 'Yes' : 'No');
     }
 
     function bindAnnouncementForm(){
@@ -997,6 +1371,7 @@
           await loadAnnouncements();
         } catch (e) { alert('Save failed: ' + e.message); }
       });
+      initWizard('annForm', ['Content', 'Review'], { saveBtnId: 'annSaveBtn', onReview: renderAnnReview });
     }
 
     // ==================== DUTY ROSTER ====================
@@ -1042,6 +1417,15 @@
       document.getElementById('rosterEnd').value = r ? toLocalInputValue(r.shiftEnd) : '';
       document.getElementById('rosterNotes').value = r ? (r.notes || '') : '';
       toggleForm('rosterForm', true);
+      resetWizard('rosterForm');
+    }
+
+    function renderRosterReview(){
+      document.getElementById('rosterReview').innerHTML =
+        reviewRow('Assigned To', document.getElementById('rosterAssignedTo').value) +
+        reviewRow('Shift Start', fmtDate(document.getElementById('rosterStart').value)) +
+        reviewRow('Shift End', fmtDate(document.getElementById('rosterEnd').value)) +
+        reviewRow('Notes', document.getElementById('rosterNotes').value);
     }
 
     function bindRosterForm(){
@@ -1062,6 +1446,7 @@
           await loadRoster();
         } catch (e) { alert('Save failed: ' + e.message); }
       });
+      initWizard('rosterForm', ['Shift Details', 'Review'], { saveBtnId: 'rosterSaveBtn', onReview: renderRosterReview });
     }
 
     // ==================== INCIDENT REPORTS ====================
@@ -1112,6 +1497,15 @@
       document.getElementById('incSeverity').value = i ? i.severity : 'low';
       document.getElementById('incDescription').value = i ? i.description : '';
       toggleForm('incForm', true);
+      resetWizard('incForm');
+    }
+
+    function renderIncReview(){
+      document.getElementById('incReview').innerHTML =
+        reviewRow('Resident', document.getElementById('incResident').value) +
+        reviewRow('Room / Unit', document.getElementById('incRoom').value) +
+        reviewRow('Severity', document.getElementById('incSeverity').value) +
+        reviewRow('Description', document.getElementById('incDescription').value);
     }
 
     function bindIncidentForm(){
@@ -1132,6 +1526,7 @@
           await loadIncidents();
         } catch (e) { alert('Save failed: ' + e.message); }
       });
+      initWizard('incForm', ['Who & Where', 'Details', 'Review'], { saveBtnId: 'incSaveBtn', onReview: renderIncReview });
     }
 
     // ==================== MAINTENANCE & KEYS ====================
@@ -1182,6 +1577,14 @@
       document.getElementById('mrLocation').value = m ? (m.location || '') : '';
       document.getElementById('mrDescription').value = m ? m.description : '';
       toggleForm('mrForm', true);
+      resetWizard('mrForm');
+    }
+
+    function renderMrReview(){
+      document.getElementById('mrReview').innerHTML =
+        reviewRow('Type', document.getElementById('mrType').value) +
+        reviewRow('Location', document.getElementById('mrLocation').value) +
+        reviewRow('Description', document.getElementById('mrDescription').value);
     }
 
     function bindMaintenanceForm(){
@@ -1201,6 +1604,7 @@
           await loadMaintenance();
         } catch (e) { alert('Save failed: ' + e.message); }
       });
+      initWizard('mrForm', ['Type & Location', 'Description', 'Review'], { saveBtnId: 'mrSaveBtn', onReview: renderMrReview });
     }
 
     // ==================== RESIDENT DIRECTORY ====================
@@ -1242,6 +1646,17 @@
       document.getElementById('dirEmail').value = d ? (d.email || '') : '';
       document.getElementById('dirNotes').value = d ? (d.notes || '') : '';
       toggleForm('dirForm', true);
+      resetWizard('dirForm');
+    }
+
+    function renderDirReview(){
+      document.getElementById('dirReview').innerHTML =
+        reviewRow('Resident', document.getElementById('dirName').value) +
+        reviewRow('Room', document.getElementById('dirRoom').value) +
+        reviewRow('Unit', document.getElementById('dirUnit').value) +
+        reviewRow('Phone', document.getElementById('dirPhone').value) +
+        reviewRow('Email', document.getElementById('dirEmail').value) +
+        reviewRow('Notes', document.getElementById('dirNotes').value);
     }
 
     function bindDirectoryForm(){
@@ -1264,6 +1679,7 @@
           await loadDirectory();
         } catch (e) { alert('Save failed: ' + e.message); }
       });
+      initWizard('dirForm', ['Resident Info', 'Contact Info', 'Review'], { saveBtnId: 'dirSaveBtn', onReview: renderDirReview });
     }
 
     // ==================== PROGRAM PROPOSALS ====================
@@ -1358,6 +1774,23 @@
         ? p.shoppingList.map(shoppingRowHTML).join('')
         : shoppingRowHTML();
       toggleForm('progForm', true);
+      resetWizard('progForm');
+    }
+
+    function renderProgReview(){
+      const shoppingList = collectShoppingList();
+      const total = shoppingList.reduce((sum, r) => sum + (r.price || 0) * (r.qty || 1), 0);
+      document.getElementById('progReview').innerHTML =
+        reviewRow('Title', document.getElementById('progTitle').value) +
+        reviewRow('Type', document.getElementById('progType').value) +
+        reviewRow('Month', document.getElementById('progMonth').value) +
+        reviewRow('Event Date/Time', fmtDate(document.getElementById('progDate').value)) +
+        reviewRow('Location', document.getElementById('progLocation').value) +
+        reviewRow('Budget', '$' + (parseFloat(document.getElementById('progBudget').value) || 0).toFixed(2)) +
+        reviewRow('Description', document.getElementById('progDescription').value) +
+        reviewRow('Stations', document.getElementById('progStations').value) +
+        reviewRow('Shopping List Items', String(shoppingList.length)) +
+        reviewRow('Shopping List Total', '$' + total.toFixed(2));
     }
 
     function bindProgramForm(){
@@ -1383,6 +1816,7 @@
           await loadPrograms();
         } catch (e) { alert('Save failed: ' + e.message); }
       });
+      initWizard('progForm', ['Basics', 'Description', 'Shopping List', 'Review'], { saveBtnId: 'progSaveBtn', onReview: renderProgReview });
     }
 
     // ==================== COMMITTEES ====================
@@ -1429,6 +1863,16 @@
       document.getElementById('commMembers').value = c ? (c.members || []).join(', ') : '';
       document.getElementById('commCadence').value = c ? (c.cadence || '') : '';
       toggleForm('commForm', true);
+      resetWizard('commForm');
+    }
+
+    function renderCommReview(){
+      document.getElementById('commReview').innerHTML =
+        reviewRow('Committee Name', document.getElementById('commName').value) +
+        reviewRow('Advisors', document.getElementById('commAdvisors').value) +
+        reviewRow('Committee Lead', document.getElementById('commLead').value) +
+        reviewRow('Members', document.getElementById('commMembers').value) +
+        reviewRow('Meeting Cadence', document.getElementById('commCadence').value);
     }
 
     function bindCommitteeForm(){
@@ -1450,6 +1894,7 @@
           await loadCommittees();
         } catch (e) { alert('Save failed: ' + e.message); }
       });
+      initWizard('commForm', ['Details', 'Members', 'Review'], { saveBtnId: 'commSaveBtn', onReview: renderCommReview });
     }
 
     // ---- Committee meeting minutes ----
@@ -1524,6 +1969,15 @@
       document.getElementById('minAgenda').value = m ? m.agenda : '';
       document.getElementById('minActionRows').innerHTML = m && m.actionItems && m.actionItems.length ? m.actionItems.map(actionRowHTML).join('') : actionRowHTML();
       toggleForm('minForm', true);
+      resetWizard('minForm');
+    }
+
+    function renderMinReview(){
+      const items = collectActionItems();
+      document.getElementById('minReview').innerHTML =
+        reviewRow('Meeting Date', document.getElementById('minDate').value) +
+        reviewRow('Agenda / Notes', document.getElementById('minAgenda').value) +
+        reviewRow('Action Items', items.length ? items.map(i => `${i.task} → ${i.assignedTo || 'Unassigned'}${i.dueDate ? ' (due ' + i.dueDate + ')' : ''}`).join('\n') : '');
     }
 
     function bindMinutesForm(){
@@ -1548,6 +2002,7 @@
           await loadCommitteeMinutes();
         } catch (e) { alert('Save failed: ' + e.message); }
       });
+      initWizard('minForm', ['Meeting Info', 'Action Items', 'Review'], { saveBtnId: 'minSaveBtn', onReview: renderMinReview });
     }
 
     // ==================== CAMPUS CONTACTS ====================
@@ -1589,6 +2044,17 @@
       document.getElementById('contactPhone').value = c ? (c.phone || '') : '';
       document.getElementById('contactNotes').value = c ? (c.notes || '') : '';
       toggleForm('contactForm', true);
+      resetWizard('contactForm');
+    }
+
+    function renderContactReview(){
+      document.getElementById('contactReview').innerHTML =
+        reviewRow('Department / Org', document.getElementById('contactDept').value) +
+        reviewRow('Contact Name', document.getElementById('contactName').value) +
+        reviewRow('Category', document.getElementById('contactCategory').value) +
+        reviewRow('Email', document.getElementById('contactEmail').value) +
+        reviewRow('Phone', document.getElementById('contactPhone').value) +
+        reviewRow('Notes', document.getElementById('contactNotes').value);
     }
 
     function bindContactForm(){
@@ -1611,6 +2077,7 @@
           await loadContacts();
         } catch (e) { alert('Save failed: ' + e.message); }
       });
+      initWizard('contactForm', ['Department', 'Contact Info', 'Review'], { saveBtnId: 'contactSaveBtn', onReview: renderContactReview });
     }
 
     // ==================== CURRICULUM TRACKER ====================
@@ -1670,8 +2137,15 @@
       }
     }
 
+    function renderCurReview(){
+      document.getElementById('curReview').innerHTML =
+        reviewRow('Semester', document.getElementById('curSemester').value) +
+        reviewRow('RA Roster', document.getElementById('curRoster').value.split('\n').map(s => s.trim()).filter(Boolean).join(', ')) +
+        reviewRow('Requirements', document.getElementById('curRequirements').value);
+    }
+
     function bindCurriculumForm(){
-      document.getElementById('curAddBtn').addEventListener('click', () => toggleForm('curForm', true));
+      document.getElementById('curAddBtn').addEventListener('click', () => { toggleForm('curForm', true); resetWizard('curForm'); });
       document.getElementById('curCancelBtn').addEventListener('click', () => toggleForm('curForm', false));
       document.getElementById('curSaveBtn').addEventListener('click', async () => {
         const semester = document.getElementById('curSemester').value.trim();
@@ -1691,6 +2165,93 @@
           await loadCurriculum();
         } catch (e) { alert('Save failed: ' + e.message); }
       });
+      initWizard('curForm', ['Semester', 'Roster', 'Requirements', 'Review'], { saveBtnId: 'curSaveBtn', onReview: renderCurReview });
+    }
+
+    // ==================== SOP LIBRARY ====================
+    let sopDocs = [];
+
+    async function loadSops(){
+      const list = document.getElementById('sopList');
+      list.innerHTML = '<div class="rl-loading">Loading…</div>';
+      try { sopDocs = await apiFetch('/reslife-sops' + propParam()); } catch (e) { list.innerHTML = '<div class="rl-empty">Failed to load SOP library.</div>'; return; }
+      renderSops(document.getElementById('sopSearch').value);
+    }
+
+    function renderSops(query){
+      const list = document.getElementById('sopList');
+      const q = (query || '').trim().toLowerCase();
+      const filtered = sopDocs.filter(s => !q || s.title.toLowerCase().includes(q) || (s.category || '').toLowerCase().includes(q));
+      if (filtered.length === 0) { list.innerHTML = '<div class="rl-empty">No SOPs found.</div>'; return; }
+
+      const byCategory = {};
+      filtered.forEach(s => { (byCategory[s.category || 'General'] = byCategory[s.category || 'General'] || []).push(s); });
+
+      list.innerHTML = Object.keys(byCategory).sort().map(cat => `
+        <div style="margin-bottom:18px">
+          <div style="font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--rl-subtext);margin-bottom:8px">${esc(cat)}</div>
+          ${byCategory[cat].map(s => `
+            <div class="rl-item">
+              <div class="rl-item-main">
+                <div class="rl-item-title">${esc(s.title)}</div>
+                <div class="rl-item-meta">Updated by ${esc(s.updatedBy || s.createdBy)} · ${fmtDate(s.updatedAt || s.createdAt)}${s.linkUrl ? ` · <a href="${esc(s.linkUrl)}" target="_blank" rel="noopener">Reference Link</a>` : ''}</div>
+                ${s.content ? `<div class="rl-item-body">${esc(s.content)}</div>` : ''}
+              </div>
+              ${isManager ? `<div class="rl-item-actions"><button class="rl-btn sm" data-sop-edit="${s.id}">Edit</button><button class="rl-btn sm danger" data-sop-del="${s.id}">Delete</button></div>` : ''}
+            </div>
+          `).join('')}
+        </div>
+      `).join('');
+
+      list.querySelectorAll('[data-sop-edit]').forEach(btn => btn.addEventListener('click', () => {
+        const s = sopDocs.find(x => x.id === btn.getAttribute('data-sop-edit'));
+        if (s) openSopForm(s);
+      }));
+      list.querySelectorAll('[data-sop-del]').forEach(btn => btn.addEventListener('click', async () => {
+        if (!confirm('Delete this SOP?')) return;
+        try { await apiFetch('/reslife-sops?id=' + btn.getAttribute('data-sop-del') + '&property=' + encodeURIComponent(currentProperty), { method: 'DELETE' }); await loadSops(); }
+        catch (e) { alert('Failed to delete: ' + e.message); }
+      }));
+    }
+
+    function openSopForm(s){
+      document.getElementById('sopId').value = s ? s.id : '';
+      document.getElementById('sopTitle').value = s ? s.title : '';
+      document.getElementById('sopCategory').value = s ? (s.category || 'General') : 'General';
+      document.getElementById('sopContent').value = s ? (s.content || '') : '';
+      document.getElementById('sopLinkUrl').value = s ? (s.linkUrl || '') : '';
+      toggleForm('sopForm', true);
+      resetWizard('sopForm');
+    }
+
+    function renderSopReview(){
+      document.getElementById('sopReview').innerHTML =
+        reviewRow('Title', document.getElementById('sopTitle').value) +
+        reviewRow('Category', document.getElementById('sopCategory').value) +
+        reviewRow('Procedure / Content', document.getElementById('sopContent').value) +
+        reviewRow('Reference Link', document.getElementById('sopLinkUrl').value);
+    }
+
+    function bindSopForm(){
+      document.getElementById('sopAddBtn').addEventListener('click', () => openSopForm(null));
+      document.getElementById('sopCancelBtn').addEventListener('click', () => toggleForm('sopForm', false));
+      document.getElementById('sopSearch').addEventListener('input', (e) => renderSops(e.target.value));
+      document.getElementById('sopSaveBtn').addEventListener('click', async () => {
+        const id = document.getElementById('sopId').value;
+        const title = document.getElementById('sopTitle').value.trim();
+        const category = document.getElementById('sopCategory').value;
+        const content = document.getElementById('sopContent').value.trim();
+        const linkUrl = document.getElementById('sopLinkUrl').value.trim();
+        if (!title) { alert('Title is required'); return; }
+        try {
+          const payload = { property: currentProperty, title, category, content, linkUrl };
+          if (id) await apiFetch('/reslife-sops', { method: 'PUT', body: JSON.stringify(Object.assign({ id }, payload)) });
+          else await apiFetch('/reslife-sops', { method: 'POST', body: JSON.stringify(payload) });
+          toggleForm('sopForm', false);
+          await loadSops();
+        } catch (e) { alert('Save failed: ' + e.message); }
+      });
+      initWizard('sopForm', ['Title & Category', 'Procedure', 'Review'], { saveBtnId: 'sopSaveBtn', onReview: renderSopReview });
     }
 
     // ==================== MANAGE RESLIFE USERS (Admin tier only) ====================
@@ -1738,6 +2299,15 @@
       const propSel = document.getElementById('userProperty');
       if (u && Array.isArray(u.properties) && u.properties[0]) propSel.value = u.properties[0];
       toggleForm('userForm', true);
+      resetWizard('userForm');
+    }
+
+    function renderUserReview(){
+      document.getElementById('userReview').innerHTML =
+        reviewRow('Username', document.getElementById('userUsername').value) +
+        reviewRow('Password', document.getElementById('userPassword').value ? '•••••••• (set)' : '(unchanged / none)') +
+        reviewRow('Role', ROLE_LABELS[document.getElementById('userRole').value] || document.getElementById('userRole').value) +
+        reviewRow('Property', document.getElementById('userProperty').value);
     }
 
     function bindUserForm(){
@@ -1764,6 +2334,7 @@
           await loadReslifeUsers();
         } catch (e) { alert('Save failed: ' + e.message); }
       });
+      initWizard('userForm', ['Account', 'Role & Property', 'Review'], { saveBtnId: 'userSaveBtn', onReview: renderUserReview });
     }
 
     function bindAllForms(){
@@ -1777,6 +2348,7 @@
       bindDirectoryForm();
       bindContactForm();
       bindCurriculumForm();
+      bindSopForm();
       if (isAdminTier) bindUserForm();
     }
 
