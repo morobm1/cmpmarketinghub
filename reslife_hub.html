@@ -291,11 +291,11 @@
           <span class="rl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span>
           <span class="rl-nav-label">Dashboard</span>
         </button>
-        <a class="rl-nav-item" href="creative_studio.html" data-label="Creative Studio">
+        <a class="rl-nav-item" href="reslife_creative_studio.html" data-label="Creative Studio">
           <span class="rl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg></span>
           <span class="rl-nav-label">Creative Studio (Email Creator)</span>
         </a>
-        <a class="rl-nav-item" href="creative_library.html" data-label="Creative Library">
+        <a class="rl-nav-item" href="reslife_creative_library.html" data-label="Creative Library">
           <span class="rl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></span>
           <span class="rl-nav-label">Creative Library</span>
         </a>
@@ -848,16 +848,16 @@
 
               <div class="rl-wizard-step-panel">
                 <div class="rl-wizard-step-title">Step 2 · RA Roster</div>
-                <div class="rl-form-grid">
-                  <div class="rl-field full"><label>RA Roster (one name per line)</label><textarea id="curRoster" placeholder="Amelia&#10;Atalay&#10;Emily"></textarea></div>
-                </div>
+                <p class="rl-item-meta" style="margin-bottom:10px">Add one row per RA on this semester's roster.</p>
+                <div id="curRosterRows"></div>
+                <button class="rl-btn sm" id="curAddRosterBtn" type="button" style="margin-top:4px">+ Add RA</button>
               </div>
 
               <div class="rl-wizard-step-panel">
                 <div class="rl-wizard-step-title">Step 3 · Requirements</div>
-                <div class="rl-form-grid">
-                  <div class="rl-field full"><label>Requirements (one per line: Name, Due Date)</label><textarea id="curRequirements" placeholder="Floor Meeting, 2026-09-15&#10;Roommate Agreement, 2026-09-30"></textarea></div>
-                </div>
+                <p class="rl-item-meta" style="margin-bottom:10px">Add one row per required program/deliverable, with its due date.</p>
+                <div id="curRequirementRows"></div>
+                <button class="rl-btn sm" id="curAddRequirementBtn" type="button" style="margin-top:4px">+ Add Requirement</button>
               </div>
 
               <div class="rl-wizard-step-panel">
@@ -2267,29 +2267,77 @@
       }
     }
 
+    // ---- Dynamic RA roster rows ----
+    function rosterEntryRowHTML(name){
+      return `<div class="rl-form-grid roster-entry-row" style="grid-template-columns:1fr auto;margin-bottom:8px;align-items:end">
+        <div class="rl-field"><label>RA Name</label><input class="roster-entry-name" placeholder="e.g., Amelia" value="${esc(name || '')}" /></div>
+        <div class="rl-field"><button class="rl-btn sm danger" type="button" data-remove-roster-row>Remove</button></div>
+      </div>`;
+    }
+
+    function collectRosterEntries(){
+      return Array.from(document.querySelectorAll('#curRosterRows .roster-entry-row'))
+        .map(row => row.querySelector('.roster-entry-name').value.trim())
+        .filter(Boolean);
+    }
+
+    document.getElementById('curRosterRows').addEventListener('click', (e) => {
+      if (e.target.hasAttribute('data-remove-roster-row')) e.target.closest('.roster-entry-row').remove();
+    });
+    document.getElementById('curAddRosterBtn').addEventListener('click', () => {
+      document.getElementById('curRosterRows').insertAdjacentHTML('beforeend', rosterEntryRowHTML());
+    });
+
+    // ---- Dynamic requirement rows ----
+    function curRequirementRowHTML(req){
+      req = req || { name: '', dueDate: '' };
+      return `<div class="rl-form-grid cols-3 cur-requirement-row" style="margin-bottom:8px;align-items:end">
+        <div class="rl-field full"><label>Requirement Name</label><input class="cur-req-name" placeholder="e.g., Floor Meeting" value="${esc(req.name)}" /></div>
+        <div class="rl-field"><label>Due Date</label><input class="cur-req-due" type="date" value="${esc(req.dueDate || '')}" /></div>
+        <div class="rl-field"><button class="rl-btn sm danger" type="button" data-remove-requirement-row>Remove</button></div>
+      </div>`;
+    }
+
+    function collectCurRequirements(){
+      return Array.from(document.querySelectorAll('#curRequirementRows .cur-requirement-row')).map((row, i) => ({
+        id: 'req-' + Date.now() + '-' + i,
+        name: row.querySelector('.cur-req-name').value.trim(),
+        dueDate: row.querySelector('.cur-req-due').value || null,
+      })).filter(r => r.name);
+    }
+
+    document.getElementById('curRequirementRows').addEventListener('click', (e) => {
+      if (e.target.hasAttribute('data-remove-requirement-row')) e.target.closest('.cur-requirement-row').remove();
+    });
+    document.getElementById('curAddRequirementBtn').addEventListener('click', () => {
+      document.getElementById('curRequirementRows').insertAdjacentHTML('beforeend', curRequirementRowHTML());
+    });
+
     function renderCurReview(){
+      const roster = collectRosterEntries();
+      const requirements = collectCurRequirements();
       document.getElementById('curReview').innerHTML =
         reviewRow('Semester', document.getElementById('curSemester').value) +
-        reviewRow('RA Roster', document.getElementById('curRoster').value.split('\n').map(s => s.trim()).filter(Boolean).join(', ')) +
-        reviewRow('Requirements', document.getElementById('curRequirements').value);
+        reviewRow('RA Roster', roster.join(', ')) +
+        reviewRow('Requirements', requirements.map(r => r.name + (r.dueDate ? ' (due ' + r.dueDate + ')' : '')).join('\n'));
     }
 
     function bindCurriculumForm(){
-      document.getElementById('curAddBtn').addEventListener('click', () => { toggleForm('curForm', true); resetWizard('curForm'); });
+      document.getElementById('curAddBtn').addEventListener('click', () => {
+        document.getElementById('curSemester').value = '';
+        document.getElementById('curRosterRows').innerHTML = rosterEntryRowHTML();
+        document.getElementById('curRequirementRows').innerHTML = curRequirementRowHTML();
+        toggleForm('curForm', true);
+        resetWizard('curForm');
+      });
       document.getElementById('curCancelBtn').addEventListener('click', () => toggleForm('curForm', false));
       document.getElementById('curSaveBtn').addEventListener('click', async () => {
         const semester = document.getElementById('curSemester').value.trim();
-        const roster = document.getElementById('curRoster').value.split('\n').map(s => s.trim()).filter(Boolean);
-        const requirements = document.getElementById('curRequirements').value.split('\n').map(s => s.trim()).filter(Boolean).map((line, i) => {
-          const parts = line.split(',').map(s => s.trim());
-          return { id: 'req-' + Date.now() + '-' + i, name: parts[0] || ('Requirement ' + (i + 1)), dueDate: parts[1] || null };
-        });
+        const roster = collectRosterEntries();
+        const requirements = collectCurRequirements();
         if (!semester) { alert('Semester name is required'); return; }
         try {
           await apiFetch('/reslife-curriculum', { method: 'POST', body: JSON.stringify({ property: currentProperty, semester, roster, requirements }) });
-          document.getElementById('curSemester').value = '';
-          document.getElementById('curRoster').value = '';
-          document.getElementById('curRequirements').value = '';
           toggleForm('curForm', false);
           curSelectedId = null;
           await loadCurriculum();

@@ -69,12 +69,11 @@
     'sop_library.html'
   ];
 
-  // Reslife credentials (Reslife - RA, Reslife - REC, Reslife Admin) are locked out
-  // of the entire Marketing Hub and belong only in the branded Reslife Hub, with two
-  // narrow exceptions: Creative Studio (email creator) and Creative Library, which they
-  // may use scoped to their own assigned property (same property ACL as every other role).
+  // Reslife credentials (Reslife - RA, Reslife - REC, Reslife Admin) are locked out of
+  // the entire Marketing Hub and belong only in the branded Reslife Hub. They have their
+  // own dedicated Creative Studio/Library (reslife_creative_studio.html,
+  // reslife_creative_library.html), so no exception is needed here.
   var reslifeRoles = ['reslife-ra', 'reslife-rec', 'reslife-admin'];
-  var reslifeAllowedHrefs = ['creative_studio.html', 'creative_library.html'];
 
   function getNavStructure(role) {
     if (role === 'maintenance') {
@@ -90,14 +89,9 @@
       };
     }
     if (reslifeRoles.indexOf(role) !== -1) {
-      function filterReslifeItems(items) {
-        return items.filter(function(item) {
-          return reslifeAllowedHrefs.indexOf(item.href) !== -1;
-        });
-      }
       return {
         main: [{ href: 'reslife_hub.html', label: 'Back to Reslife Hub' }],
-        tools: filterReslifeItems(fullNavStructure.tools),
+        tools: [],
         resources: []
       };
     }
@@ -436,8 +430,7 @@
   function enforceReslifeAccess() {
     var currentPage = window.location.pathname.split('/').pop() || 'index.html';
     if (currentPage === 'index.html' || currentPage === '') return;
-    if (reslifeAllowedHrefs.indexOf(currentPage) !== -1) return; // Creative Studio / Creative Library are allowed
-    // Reslife credentials have no access to any other Marketing Hub page.
+    // Reslife credentials have no access to any Marketing Hub page, including this one.
     window.location.href = 'reslife_hub.html';
   }
 
@@ -456,16 +449,7 @@
       .then(function(user) {
         if (!user) return;
         if (reslifeRoles.indexOf(user.role) !== -1) {
-          var currentPage = window.location.pathname.split('/').pop() || 'index.html';
-          if (reslifeAllowedHrefs.indexOf(currentPage) !== -1) {
-            // Creative Studio / Creative Library: show a minimal Reslife-scoped nav
-            // (just this page's siblings + a link back to the hub) instead of the
-            // full Marketing Hub sidebar.
-            navStructure = getNavStructure(user.role);
-            rebuildNav();
-            return;
-          }
-          // Every other Marketing Hub page: no nav or content for Reslife credentials — redirect immediately.
+          // No Marketing Hub nav or content for Reslife credentials — redirect immediately.
           var existingNav = document.getElementById('sidebarNav');
           if (existingNav) existingNav.remove();
           var existingToggle = document.getElementById('navToggle');

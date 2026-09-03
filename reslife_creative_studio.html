@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Creative Studio &bull; Reslife Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/email-shop/dist/assets/email-shop-index.css" />
+    <style>
+      :root {
+        --rl-primary:#002D6A;
+        --rl-primary-dark:#001B40;
+        --rl-secondary:#F99239;
+        --border: #e5e7eb;
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; overflow: hidden; }
+      body { font-family: 'Montserrat', system-ui, -apple-system, sans-serif; background: #f1f5f9; color: #1f2937; }
+
+      header.rl-header {
+        position: fixed; top: 0; left: 0; right: 0; height: 60px; z-index: 40;
+        background: linear-gradient(180deg, var(--rl-primary), var(--rl-primary-dark));
+        color: #fff; padding: 0 20px; display: flex; align-items: center; gap: 16px;
+        box-shadow: 0 2px 10px rgba(0,0,0,.15);
+      }
+      .rl-back-link {
+        display: inline-flex; align-items: center; gap: 8px; color: #fff; text-decoration: none;
+        font-size: 13px; font-weight: 700; letter-spacing: .3px; padding: 7px 14px; border-radius: 6px;
+        border: 1.5px solid rgba(255,255,255,.4); transition: all .15s;
+      }
+      .rl-back-link:hover { background: rgba(255,255,255,.12); }
+      .rl-header-title { font-weight: 800; font-size: 15px; letter-spacing: 1px; text-transform: uppercase; }
+      .rl-header-right { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+      .rl-role-badge { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 5px 10px; border-radius: 999px; background: var(--rl-secondary); color: #1a1000; }
+      .rl-username { font-size: 13px; font-weight: 600; opacity: .9; }
+      .rl-logout-btn {
+        background: transparent; border: 1.5px solid rgba(255,255,255,.6); color: #fff; padding: 8px 14px;
+        border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+        cursor: pointer; transition: all .15s; font-family: inherit;
+      }
+      .rl-logout-btn:hover { background: #fff; color: var(--rl-primary); }
+
+      .main-content { margin-top: 60px; height: calc(100vh - 60px); min-height: 0; overflow: hidden; }
+      #email-shop-root { width: 100%; height: 100%; overflow: hidden; }
+
+      .auth-loading, .auth-blocked {
+        display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;
+        color: #64748b; font-family: 'Montserrat', system-ui, sans-serif; font-size: 15px; gap: 14px; text-align: center; padding: 24px;
+      }
+      .auth-blocked a { color: var(--rl-primary); font-weight: 700; text-decoration: none; }
+    </style>
+  </head>
+  <body>
+    <header class="rl-header">
+      <a class="rl-back-link" href="reslife_hub.html">&larr; Back to Reslife Hub</a>
+      <div class="rl-header-title">Creative Studio</div>
+      <div class="rl-header-right">
+        <span class="rl-role-badge" id="roleBadge">&mdash;</span>
+        <span class="rl-username" id="usernameLabel"></span>
+        <button class="rl-logout-btn" id="logoutBtn">Log Out</button>
+      </div>
+    </header>
+    <div class="main-content">
+      <div id="email-shop-root">
+        <div class="auth-loading">Loading Creative Studio&hellip;</div>
+      </div>
+    </div>
+    <script>
+      // Reslife-only auth guard — allow Reslife roles + site admin, block everyone else.
+      (function() {
+        var RESLIFE_ROLES = ['reslife-ra', 'reslife-rec', 'reslife-admin'];
+        var ROLE_LABELS = { 'reslife-ra': 'Reslife - RA', 'reslife-rec': 'Reslife - REC', 'reslife-admin': 'Reslife Admin', admin: 'Site Admin' };
+
+        fetch('/.netlify/functions/me', { credentials: 'include' })
+          .then(function(r) {
+            if (!r.ok) throw new Error('Not authenticated');
+            return r.json();
+          })
+          .then(function(userData) {
+            var role = userData.role;
+            if (role !== 'admin' && RESLIFE_ROLES.indexOf(role) === -1) {
+              window.location.href = 'mmp_calendar_app.html';
+              return;
+            }
+            window.__EMAIL_SHOP_USER__ = {
+              username: userData.username || '',
+              role: role || 'user',
+              properties: Array.isArray(userData.properties) ? userData.properties
+                : userData.properties === '*' ? ['*'] : []
+            };
+            document.getElementById('roleBadge').textContent = ROLE_LABELS[role] || role;
+            document.getElementById('usernameLabel').textContent = userData.username || '';
+          })
+          .catch(function() {
+            window.location.href = 'index.html?redirect=reslife_creative_studio.html';
+          });
+
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+          fetch('/.netlify/functions/auth-logout', { method: 'POST', credentials: 'include' })
+            .finally(function() { window.location.href = 'index.html'; });
+        });
+
+        // 12h inactivity auto-logout (mirrors reslife_hub.html / standard-nav.js behavior)
+        var INACTIVITY_MS = 12 * 60 * 60 * 1000;
+        var STORAGE_KEY = 'mmp_last_activity';
+        function updateActivity() { try { localStorage.setItem(STORAGE_KEY, Date.now().toString()); } catch (e) {} }
+        function checkInactivity() {
+          try {
+            var last = parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10);
+            if (last && (Date.now() - last) > INACTIVITY_MS) {
+              localStorage.removeItem(STORAGE_KEY);
+              fetch('/.netlify/functions/auth-logout', { method: 'POST', credentials: 'include' }).catch(function(){});
+              window.location.href = 'index.html';
+            }
+          } catch (e) {}
+        }
+        updateActivity();
+        ['mousedown', 'keydown', 'scroll', 'touchstart', 'mousemove'].forEach(function(evt) {
+          document.addEventListener(evt, updateActivity, { passive: true });
+        });
+        setInterval(checkInactivity, 60 * 1000);
+      })();
+    </script>
+    <script type="module" src="/email-shop/dist/assets/email-shop.js"></script>
+  </body>
+</html>
