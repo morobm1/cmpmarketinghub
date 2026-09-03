@@ -299,6 +299,10 @@
           <span class="rl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></span>
           <span class="rl-nav-label">Creative Library</span>
         </a>
+        <a class="rl-nav-item" href="reslife_incident_report.html" data-label="Incident Report Assistant">
+          <span class="rl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/><path d="M9 9h1"/></svg></span>
+          <span class="rl-nav-label">Incident Report Assistant</span>
+        </a>
         <div class="rl-nav-divider"></div>
         <button class="rl-nav-item" data-tab="announcements" data-label="Announcements">
           <span class="rl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>
@@ -389,6 +393,10 @@
           <div class="rl-panel">
             <div class="rl-panel-header"><h2>Upcoming Duty Shifts</h2></div>
             <div id="dashRosterList"><div class="rl-loading">Loading…</div></div>
+          </div>
+          <div class="rl-panel">
+            <div class="rl-panel-header"><h2>Incident Report Assistant</h2><a href="reslife_incident_report.html" class="rl-btn sm primary" style="text-decoration:none">+ New Report</a></div>
+            <div id="dashIncidentReportsList"><div class="rl-loading">Loading…</div></div>
           </div>
         </div>
       </section>
@@ -630,9 +638,13 @@
 
       <!-- ================= INCIDENT REPORTS ================= -->
       <section class="rl-tab-content" id="tab-incidents">
+        <div class="alert-inline" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12.5px;color:#1e3a8a;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <span>Need a full, Maxient-ready report with a guided narrative builder instead of a quick log entry?</span>
+          <a href="reslife_incident_report.html" class="rl-btn sm dark" style="text-decoration:none">Open Incident Report Assistant &rarr;</a>
+        </div>
         <div class="rl-panel">
           <div class="rl-panel-header">
-            <h2>Incident Reports</h2>
+            <h2>Incident Reports (Quick Log)</h2>
             <button class="rl-btn primary hidden" id="incAddBtn">+ New Incident Report</button>
           </div>
           <div class="rl-panel-body">
@@ -1382,14 +1394,16 @@
       const grid = document.getElementById('dashStatGrid');
       const annBox = document.getElementById('dashAnnList');
       const rosterBox = document.getElementById('dashRosterList');
+      const incidentReportsBox = document.getElementById('dashIncidentReportsList');
       grid.innerHTML = '<div class="rl-loading">Loading dashboard…</div>';
 
       const safe = (p) => p.catch(() => []);
-      const [announcements, incidents, maintenance, roster, programs, committees, sops, training] = await Promise.all([
+      const [announcements, incidents, maintenance, roster, maxientReports, programs, committees, sops, training] = await Promise.all([
         safe(apiFetch('/reslife-announcements' + propParam())),
         safe(apiFetch('/reslife-incidents' + propParam())),
         safe(apiFetch('/reslife-maintenance' + propParam())),
         safe(apiFetch('/reslife-roster' + propParam())),
+        safe(apiFetch('/reslife-maxient-reports' + propParam())),
         safe(apiFetch('/reslife-programs' + propParam())),
         safe(apiFetch('/reslife-committees' + propParam())),
         safe(apiFetch('/reslife-sops' + propParam())),
@@ -1436,6 +1450,22 @@
           <div class="rl-mini-item-meta">${fmtDate(r.shiftStart)} – ${fmtDate(r.shiftEnd)}</div>
         </div>
       `).join('');
+
+      if (maxientReports.length === 0) {
+        incidentReportsBox.innerHTML = '<div class="rl-empty">No incident reports yet.</div>';
+      } else {
+        incidentReportsBox.innerHTML = maxientReports.slice(0, 5).map(d => {
+          const rep = d.report || {};
+          const cats = (rep.categories || []).map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(', ') || 'Uncategorized';
+          const loc = (rep.incident && rep.incident.area) || 'No location';
+          const statusLabel = d.status === 'ready' ? 'Ready for Maxient' : 'Draft';
+          return `
+          <div class="rl-mini-item">
+            <div class="rl-mini-item-title">${esc(cats)} — ${esc(loc)}</div>
+            <div class="rl-mini-item-meta">${esc(statusLabel)} · ${fmtDate(d.updatedAt)} &middot; <a href="reslife_incident_report.html?draftId=${esc(d.id)}">Continue</a></div>
+          </div>`;
+        }).join('');
+      }
     }
 
     // ==================== ANNOUNCEMENTS ====================

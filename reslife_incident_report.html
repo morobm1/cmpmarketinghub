@@ -1,0 +1,2529 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Incident Report Assistant &bull; Reslife Hub</title>
+<meta name="description" content="Guided assistant for building a complete, objective, Maxient-ready incident report." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --rl-primary:#002D6A; --rl-primary-dark:#001B40; --rl-secondary:#F99239; --rl-on-primary:#fff;
+  --rl-bg:#f3f5f8; --rl-panel:#fff; --rl-border:#e2e8f0; --rl-text:#101828; --rl-subtext:#64748b;
+  --rl-danger:#d20000; --rl-danger-bg:#fef2f2; --rl-success:#16a34a; --rl-success-bg:#f0fdf4;
+  --rl-warn:#b45309; --rl-warn-bg:#fff7ed;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:'Montserrat',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--rl-bg);color:var(--rl-text);font-size:14px;line-height:1.5}
+.hidden{display:none !important}
+button{font-family:inherit}
+a{color:var(--rl-primary)}
+
+/* ===== Header ===== */
+header.rl-header{background:linear-gradient(180deg,var(--rl-primary),var(--rl-primary-dark));color:#fff;padding:0 20px;height:58px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:50;box-shadow:0 2px 10px rgba(0,0,0,.15);flex-wrap:wrap}
+.rl-back-link{display:inline-flex;align-items:center;gap:6px;color:#fff;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:.3px;padding:7px 12px;border-radius:6px;border:1.5px solid rgba(255,255,255,.4)}
+.rl-back-link:hover{background:rgba(255,255,255,.12)}
+.rl-header-title{font-weight:800;font-size:14px;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap}
+.rl-header-sub{font-size:11px;opacity:.75;white-space:nowrap}
+.rl-header-right{display:flex;align-items:center;gap:12px;margin-left:auto;flex-wrap:wrap}
+.rl-draft-status{font-size:11px;font-weight:600;padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.12);white-space:nowrap}
+.rl-role-badge{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:5px 9px;border-radius:999px;background:var(--rl-secondary);color:#1a1000}
+.rl-logout-btn{background:transparent;border:1.5px solid rgba(255,255,255,.6);color:#fff;padding:7px 12px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer}
+.rl-logout-btn:hover{background:#fff;color:var(--rl-primary)}
+
+/* ===== Layout ===== */
+main.wrap{max-width:1280px;margin:0 auto;padding:20px 20px 80px}
+.rl-fullscreen-msg{display:flex;align-items:center;justify-content:center;height:100vh;font-size:14px;color:var(--rl-subtext)}
+
+/* ===== Mode bar ===== */
+.mode-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+.mode-toggle{display:flex;background:#e9edf3;border-radius:999px;padding:3px}
+.mode-toggle button{border:none;background:none;padding:8px 16px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.3px;cursor:pointer;color:var(--rl-subtext)}
+.mode-toggle button.active{background:#fff;color:var(--rl-primary);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.title-block h1{font-size:20px;font-weight:800;margin:0 0 2px;color:var(--rl-primary)}
+.title-block p{margin:0;font-size:12px;color:var(--rl-subtext)}
+
+/* ===== Progress ===== */
+.progress-rail{display:flex;overflow-x:auto;gap:0;margin-bottom:22px;background:#fff;border:1px solid var(--rl-border);border-radius:12px;padding:10px 14px}
+.progress-step{display:flex;align-items:center;gap:8px;flex-shrink:0;cursor:pointer;padding:6px 10px;border-radius:8px;border:none;background:none}
+.progress-step:hover{background:#f8fafc}
+.progress-step .dot{width:24px;height:24px;border-radius:50%;background:#e2e8f0;color:#94a3b8;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0}
+.progress-step .label{font-size:11px;font-weight:700;color:var(--rl-subtext);text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+.progress-step.active .dot{background:var(--rl-secondary);color:#1a1000}
+.progress-step.active .label{color:var(--rl-text)}
+.progress-step.done .dot{background:var(--rl-primary);color:#fff}
+.progress-step.warn .dot::after{content:'!';position:absolute}
+.progress-connector{flex:1 1 16px;height:2px;background:#e2e8f0;align-self:center;min-width:10px}
+.progress-connector.done{background:var(--rl-primary)}
+
+/* ===== Cards / panels ===== */
+.rl-panel{background:var(--rl-panel);border:1px solid var(--rl-border);border-radius:12px;margin-bottom:18px;overflow:hidden}
+.rl-panel-header{padding:14px 18px;border-bottom:1px solid var(--rl-border);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.rl-panel-header h2{font-size:15px;font-weight:800;margin:0;color:var(--rl-primary)}
+.rl-panel-header p{margin:2px 0 0;font-size:12px;color:var(--rl-subtext)}
+.rl-panel-body{padding:16px 18px}
+.section-title{font-size:12px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--rl-subtext);margin:0 0 10px}
+.helper-text{font-size:12px;color:var(--rl-subtext);margin:4px 0 0}
+
+/* ===== Alerts ===== */
+.alert{border-radius:10px;padding:14px 16px;margin-bottom:16px;display:flex;gap:12px;align-items:flex-start}
+.alert .alert-icon{flex-shrink:0;font-size:18px;line-height:1}
+.alert-danger{background:var(--rl-danger-bg);border:1px solid #fecaca;color:#7f1d1d}
+.alert-warn{background:var(--rl-warn-bg);border:1px solid #fde68a;color:#7c4a03}
+.alert-info{background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a}
+.alert-success{background:var(--rl-success-bg);border:1px solid #bbf7d0;color:#14532d}
+.alert h3{margin:0 0 4px;font-size:14px;font-weight:800}
+.alert p{margin:0;font-size:13px;line-height:1.5}
+
+/* ===== Fields ===== */
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field-grid.cols-3{grid-template-columns:1fr 1fr 1fr}
+.field-grid.cols-4{grid-template-columns:1fr 1fr 1fr 1fr}
+@media(max-width:760px){.field-grid,.field-grid.cols-3,.field-grid.cols-4{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field.full{grid-column:1/-1}
+.field label{font-size:11px;font-weight:700;color:var(--rl-subtext);text-transform:uppercase;letter-spacing:.4px;display:flex;align-items:center;gap:6px}
+.field label .req{color:var(--rl-danger)}
+.field label .rec{color:var(--rl-secondary);font-weight:700;font-size:10px}
+.field input[type=text],.field input[type=email],.field input[type=tel],.field input[type=number],.field input[type=date],.field input[type=time],.field select,.field textarea{
+  padding:10px 12px;border:1px solid var(--rl-border);border-radius:8px;font-size:13px;font-family:inherit;color:var(--rl-text);background:#fff;min-height:42px
+}
+.field textarea{min-height:80px;resize:vertical}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--rl-primary);box-shadow:0 0 0 3px rgba(0,45,106,.1)}
+.field-error{font-size:11px;color:var(--rl-danger);font-weight:600}
+
+/* Segmented Yes/No */
+.seg{display:inline-flex;border:1px solid var(--rl-border);border-radius:8px;overflow:hidden}
+.seg button{border:none;background:#fff;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer;color:var(--rl-subtext);min-height:42px;min-width:64px}
+.seg button.active{background:var(--rl-primary);color:#fff}
+.seg button+button{border-left:1px solid var(--rl-border)}
+
+/* Chips (multi-select) */
+.chip-grid{display:flex;flex-wrap:wrap;gap:8px}
+.chip-opt{padding:10px 16px;border:1.5px solid var(--rl-border);border-radius:999px;background:#fff;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--rl-text);min-height:40px;display:inline-flex;align-items:center}
+.chip-opt:hover{border-color:var(--rl-primary)}
+.chip-opt.selected{background:var(--rl-primary);border-color:var(--rl-primary);color:#fff}
+.chip-opt.danger.selected{background:var(--rl-danger);border-color:var(--rl-danger)}
+
+/* Counter */
+.counter{display:inline-flex;align-items:center;gap:10px}
+.counter button{width:36px;height:36px;border-radius:8px;border:1px solid var(--rl-border);background:#fff;font-size:16px;font-weight:800;cursor:pointer;color:var(--rl-primary)}
+.counter button:hover{background:#f1f5f9}
+.counter .count-val{font-size:16px;font-weight:800;min-width:24px;text-align:center}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:8px;border:1px solid var(--rl-border);background:#fff;color:var(--rl-text);font-weight:700;font-size:12.5px;cursor:pointer;min-height:40px}
+.btn:hover{background:#f8fafc}
+.btn.primary{background:var(--rl-secondary);border-color:var(--rl-secondary);color:#1a1000}
+.btn.primary:hover{filter:brightness(1.05)}
+.btn.outline{background:transparent;border-color:var(--rl-primary);color:var(--rl-primary)}
+.btn.dark{background:var(--rl-primary);border-color:var(--rl-primary);color:#fff}
+.btn.danger{background:var(--rl-danger-bg);border-color:#fecaca;color:var(--rl-danger)}
+.btn.sm{padding:6px 12px;font-size:11.5px;min-height:32px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* Sub-cards for repeatable items */
+.subcard{border:1px solid var(--rl-border);border-radius:10px;padding:14px 16px;margin-bottom:12px;background:#fbfcfe;position:relative}
+.subcard-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px}
+.subcard-head .subcard-title{font-weight:700;font-size:13px;color:var(--rl-primary)}
+.empty-note{font-size:12.5px;color:var(--rl-subtext);padding:14px;text-align:center;border:1.5px dashed var(--rl-border);border-radius:10px}
+
+/* Nav footer */
+.step-nav{display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding:16px 4px 40px;gap:10px}
+.step-nav .right-group{display:flex;gap:8px}
+
+/* Person type / role pills in review */
+.pill{display:inline-flex;align-items:center;font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;padding:3px 9px;border-radius:999px}
+.pill.blue{background:#eff6ff;color:#1d4ed8}
+.pill.gray{background:#f1f5f9;color:#475569}
+.pill.green{background:var(--rl-success-bg);color:var(--rl-success)}
+.pill.orange{background:var(--rl-warn-bg);color:var(--rl-warn)}
+.pill.red{background:var(--rl-danger-bg);color:var(--rl-danger)}
+
+/* ===== Narrative split view ===== */
+.narrative-split{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:980px){.narrative-split{grid-template-columns:1fr}}
+.narrative-box{border:1px solid var(--rl-border);border-radius:10px;padding:14px;background:#fff;font-size:13.5px;line-height:1.7;white-space:pre-wrap;min-height:320px}
+.narrative-box[contenteditable]:focus{outline:none;border-color:var(--rl-primary);box-shadow:0 0 0 3px rgba(0,45,106,.08)}
+.narrative-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.narrative-changed-banner{background:var(--rl-warn-bg);border:1px solid #fde68a;border-radius:10px;padding:10px 14px;font-size:12.5px;color:#7c4a03;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.flag-item{border:1px solid #fde68a;background:#fffbeb;border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:12.5px}
+.flag-item b{color:#92400e}
+
+/* Timeline */
+.timeline{border-left:3px solid var(--rl-border);margin-left:8px;padding-left:18px}
+.timeline-item{position:relative;padding-bottom:16px}
+.timeline-item::before{content:'';position:absolute;left:-25px;top:3px;width:11px;height:11px;border-radius:50%;background:var(--rl-primary);border:2px solid #fff;box-shadow:0 0 0 1px var(--rl-border)}
+.timeline-time{font-weight:800;font-size:13px;color:var(--rl-primary)}
+.timeline-time input{border:1px solid transparent;background:transparent;font-weight:800;color:var(--rl-primary);font-size:13px;font-family:inherit;padding:2px 4px;border-radius:4px;width:110px}
+.timeline-time input:hover,.timeline-time input:focus{border-color:var(--rl-border);background:#fff}
+.timeline-label{font-size:13px;margin-top:2px}
+.timeline-source{font-size:11px;color:var(--rl-subtext)}
+
+/* Quality checker */
+.readiness-score{display:flex;align-items:center;gap:16px;margin-bottom:16px}
+.readiness-ring{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff;flex-shrink:0}
+.check-group-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--rl-subtext);margin:14px 0 6px}
+.check-row{display:flex;align-items:flex-start;gap:8px;font-size:13px;padding:6px 0;border-bottom:1px solid #f1f5f9}
+.check-row:last-child{border-bottom:none}
+.check-row .ico{flex-shrink:0;font-weight:800}
+.check-row.ok .ico{color:var(--rl-success)}
+.check-row.required .ico{color:var(--rl-danger)}
+.check-row.recommended .ico{color:var(--rl-secondary)}
+
+/* Maxient entry mode */
+.maxient-field{border:1px solid var(--rl-border);border-radius:10px;padding:14px 16px;margin-bottom:12px;background:#fff}
+.maxient-field .mf-label{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--rl-subtext);margin-bottom:6px}
+.maxient-field .mf-value{font-size:14px;white-space:pre-wrap;margin-bottom:10px;color:var(--rl-text)}
+.maxient-field .mf-value:empty::before{content:'(not entered)';color:#cbd5e1;font-style:italic}
+
+/* Attachments */
+.dropzone{border:2px dashed var(--rl-border);border-radius:12px;padding:30px 20px;text-align:center;color:var(--rl-subtext);font-size:13px;cursor:pointer;background:#fafcff}
+.dropzone.dragover{border-color:var(--rl-primary);background:#eff6ff}
+.attachment-card{display:flex;align-items:center;gap:12px;border:1px solid var(--rl-border);border-radius:10px;padding:10px 14px;margin-bottom:8px}
+.attachment-card .att-icon{font-size:22px;flex-shrink:0}
+.attachment-card .att-meta{flex:1;min-width:0}
+.attachment-card .att-name{font-weight:700;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.attachment-card .att-sub{font-size:11px;color:var(--rl-subtext)}
+
+/* Disposition table */
+table.rl-table{width:100%;border-collapse:collapse;font-size:12.5px}
+table.rl-table th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--rl-subtext);padding:8px 8px;border-bottom:1px solid var(--rl-border)}
+table.rl-table td{padding:8px 8px;border-bottom:1px solid var(--rl-border);vertical-align:top}
+table.rl-table input,table.rl-table select{width:100%;padding:6px 8px;border:1px solid var(--rl-border);border-radius:6px;font-size:12.5px;font-family:inherit}
+
+.step-panel{display:none}
+.step-panel.active{display:block}
+.searchbox-wrap{position:relative}
+.searchbox-results{position:absolute;top:calc(100%+4px);left:0;right:0;background:#fff;border:1px solid var(--rl-border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:220px;overflow-y:auto;z-index:30}
+.searchbox-result{padding:10px 14px;font-size:13px;cursor:pointer}
+.searchbox-result:hover{background:#f0f9ff}
+.searchbox-result .sr-sub{font-size:11px;color:var(--rl-subtext)}
+</style>
+</head>
+<body>
+
+<div id="authGate" class="rl-fullscreen-msg">Loading Incident Report Assistant&hellip;</div>
+
+<div id="app" class="hidden">
+  <header class="rl-header">
+    <a class="rl-back-link" href="reslife_hub.html">&larr; Reslife Hub</a>
+    <div>
+      <div class="rl-header-title">Incident Report Assistant</div>
+      <div class="rl-header-sub" id="propertyLabel"></div>
+    </div>
+    <div class="rl-header-right">
+      <span class="rl-draft-status" id="draftStatus">Not saved yet</span>
+      <span class="rl-role-badge" id="roleBadge"></span>
+      <button class="rl-logout-btn" id="logoutBtn">Log Out</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <!-- ============ DRAFT LIST VIEW ============ -->
+    <section id="view-list">
+      <div class="title-block" style="margin-bottom:16px">
+        <h1>Incident Report Assistant</h1>
+        <p>Build a complete, objective report for Maxient step by step.</p>
+      </div>
+      <div class="rl-panel">
+        <div class="rl-panel-header">
+          <div>
+            <h2>Your Reports</h2>
+            <p>Continue a draft or start a new incident report.</p>
+          </div>
+          <button class="btn primary" id="newReportBtn">+ New Incident Report</button>
+        </div>
+        <div class="rl-panel-body">
+          <div id="draftListBox"><div class="empty-note">Loading&hellip;</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ WIZARD VIEW ============ -->
+    <section id="view-wizard" class="hidden">
+
+      <div class="mode-bar">
+        <div class="title-block">
+          <h1 id="wizardTitle">Incident Report Assistant</h1>
+          <p>Build a complete, objective report for Maxient step by step.</p>
+        </div>
+        <div class="mode-toggle" id="modeToggle">
+          <button data-mode="quick" id="modeQuickBtn">Quick Report</button>
+          <button data-mode="full" id="modeFullBtn" class="active">Full Report</button>
+        </div>
+      </div>
+
+      <div class="progress-rail" id="progressRail"></div>
+
+      <!-- ===== STEP 0: SAFETY / ESCALATION ===== -->
+      <div class="step-panel" id="step-0">
+        <div class="rl-panel">
+          <div class="rl-panel-header">
+            <div>
+              <h2>Safety / Escalation Check</h2>
+              <p>Answer this before continuing. This does not replace contacting the REC-on-Duty.</p>
+            </div>
+          </div>
+          <div class="rl-panel-body">
+            <p class="section-title">Does this incident involve any of the following?</p>
+            <div class="chip-grid" id="escalationChips"></div>
+            <div id="escalationWarning" class="hidden alert alert-danger" style="margin-top:16px">
+              <div class="alert-icon">&#9888;</div>
+              <div>
+                <h3>Contact the REC-on-Duty</h3>
+                <p>This type of incident should be reported to the REC-on-Duty immediately. You should still complete the incident report after following the appropriate response procedure. Completing this form does not replace contacting the REC-on-Duty.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== STEP 1: INCIDENT BASICS ===== -->
+      <div class="step-panel" id="step-1">
+        <div class="rl-panel">
+          <div class="rl-panel-header"><div><h2>Reporting RA</h2><p>Your information as the person filing this report.</p></div></div>
+          <div class="rl-panel-body">
+            <div class="field-grid cols-4">
+              <div class="field"><label>Full Name <span class="req">*</span></label><input type="text" id="reporterFullName" /></div>
+              <div class="field"><label>Position / Title</label><input type="text" id="reporterTitle" /></div>
+              <div class="field"><label>Phone Number</label><input type="tel" id="reporterPhone" placeholder="(555) 555-5555" /></div>
+              <div class="field"><label>School Email</label><input type="email" id="reporterEmail" /></div>
+            </div>
+            <div id="respondingStaffList" style="margin-top:14px"></div>
+            <button class="btn sm" id="addRespondingStaffBtn" type="button" style="margin-top:6px">+ Add Responding Staff Member</button>
+            <p class="helper-text">Do not add housing staff here as "Involved Parties" &mdash; use this section for staff who responded, and the People Involved step for residents/guests/others.</p>
+          </div>
+        </div>
+
+        <div class="rl-panel">
+          <div class="rl-panel-header"><div><h2>Nature of Report</h2></div></div>
+          <div class="rl-panel-body">
+            <div class="field-grid">
+              <div class="field">
+                <label>Report Type <span class="req">*</span></label>
+                <select id="natureOfReport">
+                  <option value="">Select&hellip;</option>
+                  <option>Alleged Housing Violation</option>
+                  <option>Alleged OCC Student Code of Conduct Violation</option>
+                  <option>Student of Concern Incident</option>
+                  <option>Title IX Incident</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <div class="field hidden" id="natureOtherField"><label>Describe report type</label><input type="text" id="natureOfReportOther" /></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rl-panel">
+          <div class="rl-panel-header"><div><h2>Incident Date &amp; Time</h2><p>The start date/time is the beginning of the incident.</p></div></div>
+          <div class="rl-panel-body">
+            <div class="field-grid cols-4">
+              <div class="field"><label>Incident Start Date <span class="req">*</span></label><input type="date" id="incidentStartDate" /></div>
+              <div class="field"><label>Incident Start Time <span class="req">*</span></label><input type="time" id="incidentStartTime" /></div>
+              <div class="field"><label>Incident End Date <span class="rec">Optional</span></label><input type="date" id="incidentEndDate" /></div>
+              <div class="field"><label>Incident End Time <span class="rec">Optional</span></label><input type="time" id="incidentEndTime" /></div>
+            </div>
+            <div class="field-grid" style="margin-top:14px">
+              <div class="field">
+                <label>Was this discovered during an inspection?</label>
+                <div class="seg" id="inspectionToggle"><button data-val="no" class="active">No</button><button data-val="yes">Yes</button></div>
+              </div>
+              <div class="field hidden" id="inspectionDateField"><label>Inspection Date</label><input type="date" id="inspectionDate" /></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rl-panel">
+          <div class="rl-panel-header"><div><h2>Location</h2></div></div>
+          <div class="rl-panel-body">
+            <div class="field-grid cols-3">
+              <div class="field"><label>Location of Incident <span class="req">*</span></label>
+                <select id="locationType"><option>Residence Hall</option></select>
+              </div>
+              <div class="field"><label>Specific Location <span class="req">*</span></label>
+                <select id="specificLocationType">
+                  <option value="">Select&hellip;</option>
+                  <option>Apartment</option><option>Room</option><option>Front Desk</option><option>Hallway</option>
+                  <option>Lobby</option><option>Community Space</option><option>Exterior</option><option>Other</option>
+                </select>
+              </div>
+              <div class="field"><label>Apartment / Room / Area <span class="req">*</span></label>
+                <div class="searchbox-wrap">
+                  <input type="text" id="locationArea" placeholder="e.g., Apartment 1105" autocomplete="off" />
+                  <div class="searchbox-results hidden" id="locationAreaResults"></div>
+                </div>
+                <p class="helper-text">Matches your property's Resident Directory when available &mdash; type to search, or enter manually.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== STEP 2: PEOPLE INVOLVED ===== -->
+      <div class="step-panel" id="step-2">
+        <div class="rl-panel">
+          <div class="rl-panel-header">
+            <div><h2>People Involved</h2><p>Add every resident, staff member, or other party involved.</p></div>
+            <button class="btn primary" id="addPersonBtn" type="button">+ Add Involved Person</button>
+          </div>
+          <div class="rl-panel-body"><div id="peopleList"></div></div>
+        </div>
+
+        <div class="rl-panel">
+          <div class="rl-panel-header"><div><h2>Guests</h2></div></div>
+          <div class="rl-panel-body">
+            <div class="field">
+              <label>Were any guests present?</label>
+              <div class="seg" id="guestsPresentToggle"><button data-val="no" class="active">No</button><button data-val="yes">Yes</button></div>
+            </div>
+            <div id="guestsSection" class="hidden" style="margin-top:14px">
+              <div id="guestsList"></div>
+              <button class="btn sm" id="addGuestBtn" type="button" style="margin-top:6px">+ Add Guest</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== STEP 3: WHAT HAPPENED ===== -->
+      <div class="step-panel" id="step-3">
+        <div class="rl-panel">
+          <div class="rl-panel-header"><div><h2>Discovery</h2></div></div>
+          <div class="rl-panel-body">
+            <div class="field-grid">
+              <div class="field"><label>How was the incident discovered? <span class="req">*</span></label>
+                <select id="discoveryMethod">
+                  <option value="">Select&hellip;</option>
+                  <option>Duty phone call</option><option>Resident complaint</option><option>Staff observation</option>
+                  <option>During rounds</option><option>During inspection</option><option>University Police notification</option>
+                  <option>Maintenance notification</option><option>Front desk notification</option><option>Other staff member</option><option>Other</option>
+                </select>
+              </div>
+              <div class="field"><label>Who initially reported the situation?</label><input type="text" id="discoveryReportedBy" /></div>
+            </div>
+            <div class="field hidden full" id="discoveryOtherField" style="margin-top:12px"><label>Describe discovery method</label><input type="text" id="discoveryMethodOther" /></div>
+          </div>
+        </div>
+
+        <div class="rl-panel">
+          <div class="rl-panel-header"><div><h2>Possible / Alleged Incident Category</h2><p>Select every category that may apply. This does not claim a policy violation occurred.</p></div></div>
+          <div class="rl-panel-body"><div class="chip-grid" id="categoryChips"></div></div>
+        </div>
+
+        <div id="categoryQuestionsBox"></div>
+
+        <div class="rl-panel">
+          <div class="rl-panel-header">
+            <div><h2>Physical Condition / Behavior</h2><p>Objective, observable behavior only &mdash; never a conclusion.</p></div>
+          </div>
+          <div class="rl-panel-body">
+            <div class="field">
+              <label>Did staff observe physical or behavioral indicators that should be documented?</label>
+              <div class="seg" id="behaviorObservedToggle"><button data-val="no" class="active">No</button><button data-val="yes">Yes</button></div>
+            </div>
+            <div id="behaviorSection" class="hidden" style="margin-top:14px">
+              <div class="chip-grid" id="behaviorChips"></div>
+              <div class="field full" style="margin-top:12px"><label>Short description</label><textarea id="behaviorDescription" placeholder="Describe only what was observed, objectively."></textarea></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rl-panel">
+          <div class="rl-panel-header">
+            <div><h2>Statements Made</h2></div>
+            <button class="btn primary" id="addStatementBtn" type="button">+ Add Statement</button>
+          </div>
+          <div class="rl-panel-body"><div id="statementsList"></div></div>
+        </div>
+
+        <div class="rl-panel">
+          <div class="rl-panel-header">
+            <div><h2>What did staff directly observe?</h2></div>
+            <button class="btn primary" id="addObservationBtn" type="button">+ Add Observation</button>
+          </div>
+          <div class="rl-panel-body"><div id="observationsList"></div></div>
+        </div>
+      </div>
+
+      <!-- ===== STEP 4: ACTIONS & RESPONSE ===== -->
+      <div class="step-panel" id="step-4">
+        <div class="rl-panel">
+          <div class="rl-panel-header"><div><h2>What actions were taken?</h2></div></div>
+          <div class="rl-panel-body"><div class="chip-grid" id="actionChips"></div>
+            <div class="field full hidden" id="actionOtherField" style="margin-top:12px"><label>Describe other action</label><input type="text" id="actionOther" /></div>
+          </div>
+        </div>
+
+        <div class="rl-panel">
+          <div class="rl-panel-header">
+            <div><h2>Staff Contacted</h2></div>
+            <button class="btn primary" id="addStaffContactBtn" type="button">+ Add Staff Contact</button>
+          </div>
+          <div class="rl-panel-body"><div id="staffContactsList"></div></div>
+        </div>
+
+        <div class="rl-panel">
+          <div class="rl-panel-header"><div><h2>Police</h2></div></div>
+          <div class="rl-panel-body">
+            <div class="field">
+              <label>Were Police contacted or present?</label>
+              <div class="seg" id="policePresentToggle"><button data-val="no" class="active">No</button><button data-val="yes">Yes</button></div>
+            </div>
+            <div id="policeSection" class="hidden" style="margin-top:14px">
+              <div class="field-grid cols-3">
+                <div class="field"><label>Agency</label><input type="text" id="policeAgency" /></div>
+                <div class="field"><label>Responding Officer Name</label><input type="text" id="policeOfficerName" /></div>
+                <div class="field"><label>Badge Number</label><input type="text" id="policeBadgeNumber" /></div>
+                <div class="field"><label>Case Number <span class="rec">Recommended</span></label><input type="text" id="policeCaseNumber" /></div>
+                <div class="field"><label>Approximate Arrival Time</label><input type="time" id="policeArrivalTime" /></div>
+                <div class="field"><label>Approximate Departure Time</label><input type="time" id="policeDepartureTime" /></div>
+              </div>
+              <div class="field" style="margin-top:12px">
+                <label>Did Police dispose of or confiscate anything?</label>
+                <select id="policeDisposedOrConfiscated"><option value="unknown">Unknown</option><option value="no">No</option><option value="yes">Yes</option></select>
+              </div>
+              <div class="field full hidden" id="policeDisposalDescField" style="margin-top:12px"><label>Describe the item(s) and what occurred</label><textarea id="policeDisposalDescription"></textarea></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rl-panel">
+          <div class="rl-panel-header">
+            <div><h2>Disposal / Confiscation</h2><p>Any item disposed of or confiscated by anyone, including staff.</p></div>
+          </div>
+          <div class="rl-panel-body">
+            <div style="overflow-x:auto">
+              <table class="rl-table" id="dispositionTable">
+                <thead><tr><th>Item</th><th>Quantity</th><th>Action</th><th>Person / Agency</th><th>Witnessed By</th><th></th></tr></thead>
+                <tbody id="dispositionRows"></tbody>
+              </table>
+            </div>
+            <button class="btn sm" id="addDispositionRowBtn" type="button" style="margin-top:8px">+ Add Row</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== STEP 5: NARRATIVE ===== -->
+      <div class="step-panel" id="step-5">
+        <div class="rl-panel">
+          <div class="rl-panel-header"><div><h2>Narrative Builder</h2><p>Generated only from the facts you've entered &mdash; nothing is invented.</p></div></div>
+          <div class="rl-panel-body">
+            <div id="narrativeChangedBanner" class="narrative-changed-banner hidden">
+              <span>Incident information changed since the narrative was last generated.</span>
+              <span style="display:flex;gap:8px">
+                <button class="btn sm primary" id="updateNarrativeBtn">Update Narrative</button>
+                <button class="btn sm" id="keepNarrativeBtn">Keep My Version</button>
+              </span>
+            </div>
+            <div class="narrative-toolbar">
+              <button class="btn sm dark" id="regenerateNarrativeBtn">Regenerate Narrative</button>
+              <button class="btn sm" id="improveClarityBtn">Improve Clarity</button>
+              <button class="btn sm" id="checkObjectivityBtn">Check Objectivity</button>
+              <button class="btn sm" id="checkChronologyBtn">Check Chronology</button>
+              <button class="btn sm" id="copyNarrativeBtn">Copy Narrative</button>
+            </div>
+            <div class="narrative-split">
+              <div>
+                <p class="section-title">Structured Facts (read-only summary)</p>
+                <div class="narrative-box" id="factsSummaryBox" style="min-height:320px;background:#fbfcfe"></div>
+              </div>
+              <div>
+                <p class="section-title">Live Narrative <span class="rec" id="narrativeEditedFlag" style="display:none">(manually edited)</span></p>
+                <div class="narrative-box" id="narrativeBox" contenteditable="true"></div>
+              </div>
+            </div>
+            <div id="objectivityFlags" style="margin-top:14px"></div>
+          </div>
+        </div>
+
+        <div class="rl-panel">
+          <div class="rl-panel-header"><div><h2>Incident Timeline</h2><p>Built automatically from the times you entered. Edit any timestamp directly.</p></div></div>
+          <div class="rl-panel-body"><div class="timeline" id="timelineBox"></div></div>
+        </div>
+
+        <div class="rl-panel">
+          <div class="rl-panel-header"><div><h2>Report Readiness</h2></div></div>
+          <div class="rl-panel-body">
+            <div class="readiness-score">
+              <div class="readiness-ring" id="readinessRing" style="background:#94a3b8">&hellip;</div>
+              <div><div style="font-size:18px;font-weight:800" id="readinessPercentLabel">Calculating&hellip;</div><div class="helper-text">Based on completed applicable fields</div></div>
+            </div>
+            <div id="qualityChecksBox"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== STEP 6: SUPPORTING DOCUMENTS ===== -->
+      <div class="step-panel" id="step-6">
+        <div class="rl-panel">
+          <div class="rl-panel-header"><div><h2>Supporting Documents</h2><p>Maximum total attachment size: 5 GB</p></div></div>
+          <div class="rl-panel-body">
+            <div class="alert alert-info" id="attachmentBackendNotice">
+              <div class="alert-icon">&#8505;</div>
+              <div><h3>Attachment storage is not yet connected</h3><p>Files added here are tracked for this session and included in your report metadata, but are <strong>not uploaded to durable server storage</strong> &mdash; this app does not currently have a file-storage backend (e.g. S3, Cloudinary, or Netlify Blobs). Ask your site admin about connecting one if you need attachments to persist with the saved draft.</p></div>
+            </div>
+            <div class="dropzone" id="dropzone">
+              <div style="font-size:28px;margin-bottom:6px">&#128193;</div>
+              Drag &amp; drop files here, or <strong>click to browse</strong>
+              <input type="file" id="fileInput" multiple class="hidden" />
+            </div>
+            <div id="attachmentsList" style="margin-top:16px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== STEP 7: REVIEW ===== -->
+      <div class="step-panel" id="step-7">
+        <div class="rl-panel">
+          <div class="rl-panel-header">
+            <div><h2>Final Submission Checklist</h2></div>
+            <span class="pill" id="readyPill">&hellip;</span>
+          </div>
+          <div class="rl-panel-body"><div id="finalChecklistBox"></div></div>
+        </div>
+
+        <div class="rl-panel">
+          <div class="rl-panel-header">
+            <div><h2>Review</h2></div>
+            <button class="btn dark" id="enterMaxientModeBtn">Maxient Entry Mode</button>
+          </div>
+          <div class="rl-panel-body">
+            <div id="reviewViewBox"></div>
+            <div id="maxientViewBox" class="hidden"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-nav">
+        <button class="btn" id="backStepBtn">&larr; Back</button>
+        <div class="right-group">
+          <button class="btn" id="saveDraftBtn">Save Draft</button>
+          <button class="btn" id="deleteDraftBtn">Delete Draft</button>
+          <button class="btn primary" id="nextStepBtn">Continue &rarr;</button>
+        </div>
+      </div>
+
+    </section>
+  </main>
+</div>
+
+<script>
+/* ==================================================================
+   CONSTANTS / CONFIG
+   ================================================================== */
+const RESLIFE_ROLES = ['reslife-ra', 'reslife-rec', 'reslife-admin'];
+const ROLE_LABELS = { 'reslife-ra': 'Reslife - RA', 'reslife-rec': 'Reslife - REC', 'reslife-admin': 'Reslife Admin', admin: 'Site Admin' };
+const ROLE_TITLE = { 'reslife-ra': 'Resident Advisor', 'reslife-rec': 'Resident Education Coordinator', 'reslife-admin': 'Reslife Admin', admin: 'Reslife Admin' };
+const ROLE_SHORT = { 'Resident Advisor': 'RA', 'Resident Education Coordinator': 'REC', 'Reslife Admin': 'Admin' };
+
+const STEPS = [
+  { key: 'escalation', label: 'Safety Check', quick: true },
+  { key: 'basics', label: 'Incident Basics', quick: true },
+  { key: 'people', label: 'People', quick: true },
+  { key: 'details', label: 'What Happened', quick: true },
+  { key: 'actions', label: 'Response', quick: true },
+  { key: 'narrative', label: 'Narrative', quick: true },
+  { key: 'attachments', label: 'Documents', quick: false },
+  { key: 'review', label: 'Review', quick: true },
+];
+
+const ESCALATION_OPTIONS = [
+  'Physical harm to a person', 'Sexual assault', 'Suicide attempt or suicidal ideation', 'Mental health concern',
+  'Weapon', 'Serious harassment', 'Large quantity of alcohol', 'Drugs', 'Medical emergency', 'Fire',
+  'University Police present', 'Something significantly out of the ordinary', 'None of the above',
+];
+
+const CATEGORY_DEFS = [
+  { id: 'noise', label: 'Noise' }, { id: 'alcohol', label: 'Alcohol' }, { id: 'drugs', label: 'Drugs' },
+  { id: 'smoking', label: 'Smoking / Vaping' }, { id: 'guestIssue', label: 'Guest Issue' },
+  { id: 'communityDisruption', label: 'Community Disruption' }, { id: 'propertyDamage', label: 'Property Damage' },
+  { id: 'vandalism', label: 'Vandalism' }, { id: 'trash', label: 'Trash / Cleanliness' },
+  { id: 'prohibitedItem', label: 'Prohibited Item' }, { id: 'fireSafety', label: 'Fire / Fire Safety' },
+  { id: 'mentalHealth', label: 'Mental Health / Student of Concern' }, { id: 'physicalAltercation', label: 'Physical Altercation' },
+  { id: 'harassment', label: 'Harassment' }, { id: 'titleIX', label: 'Title IX Related' },
+  { id: 'policeInvolvement', label: 'Police Involvement' }, { id: 'medicalEmergency', label: 'Medical Emergency' },
+  { id: 'roomCondition', label: 'Room / Apartment Condition' }, { id: 'other', label: 'Other' },
+];
+const BESPOKE_CATEGORIES = ['noise', 'alcohol', 'drugs', 'smoking'];
+
+const BEHAVIOR_OPTIONS = [
+  'Bloodshot eyes', 'Slurred speech', 'Difficulty standing', 'Difficulty walking', 'Unsteady movement',
+  'Strong odor on breath', 'Raised voice', 'Crying', 'Shaking', 'Sleeping / unresponsive appearance',
+  'Aggressive physical movement', 'Other observable behavior',
+];
+
+const ACTION_OPTIONS = [
+  'Resident(s) contacted', 'Policy expectations explained', 'Resident(s) advised incident would be documented',
+  'Item disposed of', 'Guest escorted from property', 'REC-on-Duty contacted', 'Other staff contacted',
+  'University Police contacted', 'Medical assistance requested', 'Counseling / Psychological Services referral',
+  'Title IX referral', 'Service Request submitted', 'Area secured', 'No additional action', 'Other',
+];
+
+const SUBJECTIVE_TERMS = [
+  { term: 'drunk', hint: 'States a conclusion rather than an observation.' },
+  { term: 'intoxicated', hint: 'States a conclusion rather than an observation.' },
+  { term: 'high', hint: 'States a conclusion rather than an observation.' },
+  { term: 'crazy', hint: 'Subjective characterization.' },
+  { term: 'obviously', hint: 'Implies an assumption rather than a stated fact.' },
+  { term: 'clearly intoxicated', hint: 'States a conclusion rather than an observation.' },
+  { term: 'seemed suspicious', hint: 'Subjective impression rather than an observed fact.' },
+  { term: 'rude', hint: 'Subjective characterization.' },
+  { term: 'belligerent', hint: 'Subjective characterization unless specific behavior is described.' },
+  { term: 'aggressive', hint: 'Subjective unless specific behavior is described nearby.' },
+];
+
+/* ==================================================================
+   STATE
+   ================================================================== */
+let me = null;
+let allProperties = [];
+let myProperties = [];
+let currentProperty = null;
+let isManager = false;
+let isAdminTier = false;
+let residentDirectory = [];
+
+let draftId = null;
+let report = null;
+let mode = 'full';
+let currentStep = 0;
+let narrativeManuallyEdited = false;
+let lastGeneratedNarrativeHash = '';
+let isDirty = false;
+let isSaving = false;
+let autosaveTimer = null;
+let draftsCache = [];
+
+/* ==================================================================
+   UTIL
+   ================================================================== */
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function uid(){ return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8); }
+function h(strings, ...vals){ return strings.reduce((acc, s, i) => acc + s + (vals[i] !== undefined ? vals[i] : ''), ''); }
+
+function fmtDateLong(dateStr){
+  if (!dateStr) return null;
+  const d = new Date(dateStr + 'T00:00:00');
+  if (isNaN(d)) return null;
+  return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+}
+function fmtTime12(timeStr){
+  if (!timeStr) return null;
+  const [h1, m1] = timeStr.split(':').map(Number);
+  if (isNaN(h1)) return null;
+  const ampm = h1 >= 12 ? 'PM' : 'AM';
+  const h12 = h1 % 12 === 0 ? 12 : h1 % 12;
+  return h12 + ':' + String(m1).padStart(2, '0') + ' ' + ampm;
+}
+function minutesSinceMidnight(timeStr){
+  if (!timeStr) return null;
+  const [h1, m1] = timeStr.split(':').map(Number);
+  if (isNaN(h1)) return null;
+  return h1 * 60 + m1;
+}
+function timeSortValue(dateStr, timeStr){
+  if (!timeStr) return null;
+  const d = dateStr || '2000-01-01';
+  return new Date(d + 'T' + timeStr + ':00').getTime();
+}
+
+async function apiFetch(path, opts = {}) {
+  const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+  const res = await fetch('/api' + path, Object.assign({ credentials: 'include' }, opts, { headers }));
+  if (!res.ok) {
+    let msg = 'Request failed';
+    try { msg = await res.text(); } catch (e) {}
+    throw new Error(msg || ('HTTP ' + res.status));
+  }
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+function setDraftStatus(text){ document.getElementById('draftStatus').textContent = text; }
+function markDirty(){ isDirty = true; setDraftStatus('Unsaved changes'); scheduleAutosave(); }
+function scheduleAutosave(){
+  if (autosaveTimer) clearTimeout(autosaveTimer);
+  autosaveTimer = setTimeout(() => { if (isDirty && draftId) saveDraft(true); }, 4000);
+}
+
+window.addEventListener('beforeunload', (e) => {
+  if (isDirty) { e.preventDefault(); e.returnValue = ''; return ''; }
+});
+
+/* ==================================================================
+   EMPTY REPORT FACTORY
+   ================================================================== */
+function emptyReport(){
+  return {
+    metadata: { quickMode: false },
+    reporter: { fullName: '', title: 'Resident Advisor', phone: '', email: '' },
+    respondingStaff: [],
+    incident: {
+      natureOfReport: '', natureOfReportOther: '',
+      startDate: '', startTime: '', endDate: '', endTime: '',
+      discoveredDuringInspection: false, inspectionDate: '',
+      locationType: 'Residence Hall', specificLocationType: '', area: '',
+    },
+    escalationFlags: [],
+    categories: [],
+    categoryAnswers: {},
+    observedItems: [],
+    involvedParties: [],
+    guestsPresent: false,
+    guests: [],
+    discovery: { method: '', methodOther: '', reportedBy: '' },
+    statements: [],
+    observations: [],
+    behavior: { observed: false, indicators: [], description: '' },
+    actions: [], actionOther: '',
+    staffContacts: [],
+    police: { present: false, agency: '', officerName: '', badgeNumber: '', caseNumber: '', arrivalTime: '', departureTime: '', disposedOrConfiscated: 'unknown', disposalDescription: '' },
+    disposition: [],
+    attachments: [],
+    narrative: { text: '', manuallyEdited: false, lastGeneratedHash: '' },
+    timeline: [],
+  };
+}
+
+/* ==================================================================
+   GENERIC UI HELPERS
+   ================================================================== */
+function bindSeg(containerId, currentVal, onChange){
+  const el = document.getElementById(containerId);
+  el.querySelectorAll('button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.val === currentVal);
+    btn.onclick = () => {
+      el.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      onChange(btn.dataset.val);
+    };
+  });
+}
+function renderChipGroup(container, options, selected, multi, onToggle){
+  container.innerHTML = options.map(opt => {
+    const val = typeof opt === 'string' ? opt : opt.value;
+    const label = typeof opt === 'string' ? opt : opt.label;
+    const isSel = selected.includes(val);
+    return `<button type="button" class="chip-opt${isSel ? ' selected' : ''}" data-val="${esc(val)}">${esc(label)}</button>`;
+  }).join('');
+  container.querySelectorAll('.chip-opt').forEach(btn => {
+    btn.onclick = () => {
+      const val = btn.dataset.val;
+      if (multi) {
+        const idx = selected.indexOf(val);
+        if (idx === -1) selected.push(val); else selected.splice(idx, 1);
+      } else {
+        selected.length = 0; selected.push(val);
+      }
+      onToggle(selected, val);
+    };
+  });
+}
+
+/* ==================================================================
+   AUTH / INIT
+   ================================================================== */
+async function init(){
+  try {
+    const meRes = await fetch('/api/me', { credentials: 'include' });
+    if (!meRes.ok) { window.location.href = 'index.html?redirect=reslife_incident_report.html'; return; }
+    me = await meRes.json();
+  } catch (e) { window.location.href = 'index.html?redirect=reslife_incident_report.html'; return; }
+
+  const allowed = RESLIFE_ROLES.includes(me.role) || me.role === 'admin';
+  if (!allowed) { window.location.href = 'mmp_calendar_app.html'; return; }
+  isManager = me.role === 'admin' || me.role === 'reslife-rec' || me.role === 'reslife-admin';
+  isAdminTier = me.role === 'admin' || me.role === 'reslife-admin';
+
+  try { allProperties = await apiFetch('/properties'); } catch (e) { allProperties = []; }
+  if (me.role === 'admin' || me.properties === '*') myProperties = allProperties.map(p => p.name);
+  else myProperties = Array.isArray(me.properties) ? me.properties.filter(p => allProperties.some(ap => ap.name === p)) : [];
+
+  if (myProperties.length === 0) {
+    document.getElementById('authGate').textContent = 'Your account is not tied to a property yet. Contact your Reslife Admin.';
+    return;
+  }
+  currentProperty = localStorage.getItem('reslife_current_property');
+  if (!myProperties.includes(currentProperty)) currentProperty = myProperties[0];
+
+  document.getElementById('propertyLabel').textContent = currentProperty;
+  document.getElementById('roleBadge').textContent = ROLE_LABELS[me.role] || me.role;
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    try { await fetch('/api/auth-logout', { method: 'POST', credentials: 'include' }); } catch (e) {}
+    window.location.href = 'index.html';
+  });
+
+  try { residentDirectory = await apiFetch('/reslife-directory?property=' + encodeURIComponent(currentProperty)); } catch (e) { residentDirectory = []; }
+
+  const params = new URLSearchParams(window.location.search);
+  const draftParam = params.get('draftId') || params.get('draft');
+
+  document.getElementById('authGate').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+
+  if (draftParam) {
+    await openReport(draftParam);
+  } else {
+    showListView();
+  }
+
+  setupInactivityLogout();
+}
+
+function setupInactivityLogout(){
+  const INACTIVITY_MS = 12 * 60 * 60 * 1000;
+  const STORAGE_KEY = 'mmp_last_activity';
+  function updateActivity(){ try { localStorage.setItem(STORAGE_KEY, Date.now().toString()); } catch (e) {} }
+  function checkInactivity(){
+    try {
+      const last = parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10);
+      if (last && (Date.now() - last) > INACTIVITY_MS) {
+        localStorage.removeItem(STORAGE_KEY);
+        fetch('/api/auth-logout', { method: 'POST', credentials: 'include' }).catch(() => {});
+        window.location.href = 'index.html';
+      }
+    } catch (e) {}
+  }
+  updateActivity();
+  ['mousedown', 'keydown', 'scroll', 'touchstart', 'mousemove'].forEach(evt => document.addEventListener(evt, updateActivity, { passive: true }));
+  setInterval(checkInactivity, 60 * 1000);
+}
+
+/* ==================================================================
+   LIST VIEW (drafts dashboard)
+   ================================================================== */
+function showListView(){
+  draftId = null; report = null;
+  document.getElementById('view-list').classList.remove('hidden');
+  document.getElementById('view-wizard').classList.add('hidden');
+  loadDraftList();
+}
+
+async function loadDraftList(){
+  const box = document.getElementById('draftListBox');
+  box.innerHTML = '<div class="empty-note">Loading&hellip;</div>';
+  try { draftsCache = await apiFetch('/reslife-maxient-reports?property=' + encodeURIComponent(currentProperty)); }
+  catch (e) { box.innerHTML = '<div class="empty-note">Failed to load reports.</div>'; return; }
+  if (draftsCache.length === 0) { box.innerHTML = '<div class="empty-note">No reports yet. Click "+ New Incident Report" to get started.</div>'; return; }
+  box.innerHTML = draftsCache.map(d => {
+    const r = d.report || {};
+    const cats = (r.categories || []).map(c => (CATEGORY_DEFS.find(cd => cd.id === c) || {}).label || c).join(', ') || 'Uncategorized';
+    const loc = (r.incident && r.incident.area) || 'No location';
+    const dt = d.updatedAt ? new Date(d.updatedAt).toLocaleDateString() : '';
+    const statusPill = d.status === 'ready' ? '<span class="pill green">Ready</span>' : '<span class="pill orange">Draft</span>';
+    return `<div class="subcard">
+      <div class="subcard-head">
+        <div><span class="subcard-title">${esc(cats)} &mdash; ${esc(loc)}</span> ${statusPill}</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn sm primary" data-continue="${d.id}">Continue</button>
+          <button class="btn sm danger" data-delete="${d.id}">Delete</button>
+        </div>
+      </div>
+      <div class="helper-text">Last updated ${esc(dt)} by ${esc(d.updatedBy || d.createdBy || '')}</div>
+    </div>`;
+  }).join('');
+  box.querySelectorAll('[data-continue]').forEach(btn => btn.addEventListener('click', () => openReport(btn.getAttribute('data-continue'))));
+  box.querySelectorAll('[data-delete]').forEach(btn => btn.addEventListener('click', async () => {
+    if (!confirm('Delete this report permanently? This cannot be undone.')) return;
+    try { await apiFetch('/reslife-maxient-reports?id=' + btn.getAttribute('data-delete') + '&property=' + encodeURIComponent(currentProperty), { method: 'DELETE' }); await loadDraftList(); }
+    catch (e) { alert('Failed to delete: ' + e.message); }
+  }));
+}
+
+document.getElementById('newReportBtn').addEventListener('click', async () => {
+  resetScratchState();
+  report = emptyReport();
+  try {
+    let profile = {};
+    try { profile = JSON.parse(localStorage.getItem('reslife_reporter_profile') || '{}'); } catch (e) {}
+    report.reporter.fullName = profile.fullName || '';
+    report.reporter.phone = profile.phone || '';
+    report.reporter.email = profile.email || '';
+    report.reporter.title = ROLE_TITLE[me.role] || 'Resident Advisor';
+  } catch (e) {}
+  const created = await apiFetch('/reslife-maxient-reports', { method: 'POST', body: JSON.stringify({ property: currentProperty, report }) });
+  draftId = created.id;
+  isDirty = false;
+  openWizardView();
+});
+
+/* ==================================================================
+   OPEN / SAVE DRAFT
+   ================================================================== */
+async function openReport(id){
+  try {
+    resetScratchState();
+    const doc = await apiFetch('/reslife-maxient-reports?property=' + encodeURIComponent(currentProperty) + '&id=' + encodeURIComponent(id));
+    draftId = doc.id;
+    report = Object.assign(emptyReport(), doc.report || {});
+    // Deep-merge nested defaults so older/partial drafts don't crash on missing keys
+    report.reporter = Object.assign(emptyReport().reporter, report.reporter || {});
+    report.incident = Object.assign(emptyReport().incident, report.incident || {});
+    report.discovery = Object.assign(emptyReport().discovery, report.discovery || {});
+    report.behavior = Object.assign(emptyReport().behavior, report.behavior || {});
+    report.police = Object.assign(emptyReport().police, report.police || {});
+    report.narrative = Object.assign(emptyReport().narrative, report.narrative || {});
+    narrativeManuallyEdited = !!report.narrative.manuallyEdited;
+    lastGeneratedNarrativeHash = report.narrative.lastGeneratedHash || '';
+    mode = (report.metadata && report.metadata.quickMode) ? 'quick' : 'full';
+    isDirty = false;
+    openWizardView();
+  } catch (e) {
+    alert('Could not open that report: ' + e.message);
+    showListView();
+  }
+}
+
+async function saveDraft(silent){
+  if (!draftId) return;
+  isSaving = true;
+  if (!silent) setDraftStatus('Saving…');
+  try {
+    report.narrative.manuallyEdited = narrativeManuallyEdited;
+    report.narrative.lastGeneratedHash = lastGeneratedNarrativeHash;
+    report.metadata.quickMode = mode === 'quick';
+    await apiFetch('/reslife-maxient-reports', { method: 'PUT', body: JSON.stringify({ id: draftId, property: currentProperty, report }) });
+    isDirty = false;
+    setDraftStatus('Saved just now');
+  } catch (e) {
+    setDraftStatus('Save failed');
+  }
+  isSaving = false;
+}
+
+document.getElementById('saveDraftBtn').addEventListener('click', () => saveDraft(false));
+document.getElementById('deleteDraftBtn').addEventListener('click', async () => {
+  if (!draftId) return;
+  if (!confirm('Delete this report permanently? This cannot be undone.')) return;
+  try {
+    await apiFetch('/reslife-maxient-reports?id=' + draftId + '&property=' + encodeURIComponent(currentProperty), { method: 'DELETE' });
+    isDirty = false;
+    showListView();
+  } catch (e) { alert('Failed to delete: ' + e.message); }
+});
+
+/* ==================================================================
+   WIZARD SHELL
+   ================================================================== */
+let staticUIBound = false;
+function openWizardView(){
+  document.getElementById('view-list').classList.add('hidden');
+  document.getElementById('view-wizard').classList.remove('hidden');
+  setDraftStatus(draftId ? 'Saved' : 'Not saved yet');
+  updateModeToggleUI();
+  currentStep = 0;
+  if (!staticUIBound) { bindStaticUI(); staticUIBound = true; }
+  fillFormsFromReport();
+  goToStep(0);
+}
+
+/* ==================================================================
+   BIND (one-time) + FILL (every time a report is opened)
+   ================================================================== */
+function bindStaticUI(){
+  bindBasicsStatic();
+  bindPeopleStatic();
+  bindDetailsStatic();
+  bindActionsStatic();
+  bindAttachmentsStatic();
+}
+
+function fillFormsFromReport(){
+  const r = report;
+  // Step 0
+  renderEscalation();
+  // Step 1
+  document.getElementById('reporterFullName').value = r.reporter.fullName || '';
+  document.getElementById('reporterTitle').value = r.reporter.title || '';
+  document.getElementById('reporterPhone').value = r.reporter.phone || '';
+  document.getElementById('reporterEmail').value = r.reporter.email || '';
+  renderRespondingStaff();
+  document.getElementById('natureOfReport').value = r.incident.natureOfReport || '';
+  document.getElementById('natureOfReportOther').value = r.incident.natureOfReportOther || '';
+  document.getElementById('natureOtherField').classList.toggle('hidden', r.incident.natureOfReport !== 'Other');
+  document.getElementById('incidentStartDate').value = r.incident.startDate || '';
+  document.getElementById('incidentStartTime').value = r.incident.startTime || '';
+  document.getElementById('incidentEndDate').value = r.incident.endDate || '';
+  document.getElementById('incidentEndTime').value = r.incident.endTime || '';
+  bindSeg('inspectionToggle', r.incident.discoveredDuringInspection ? 'yes' : 'no', (val) => {
+    r.incident.discoveredDuringInspection = val === 'yes';
+    document.getElementById('inspectionDateField').classList.toggle('hidden', val !== 'yes');
+    markDirty();
+  });
+  document.getElementById('inspectionDateField').classList.toggle('hidden', !r.incident.discoveredDuringInspection);
+  document.getElementById('inspectionDate').value = r.incident.inspectionDate || '';
+  document.getElementById('specificLocationType').value = r.incident.specificLocationType || '';
+  document.getElementById('locationArea').value = r.incident.area || '';
+
+  // Step 2
+  renderPeople();
+  bindSeg('guestsPresentToggle', r.guestsPresent ? 'yes' : 'no', (val) => {
+    r.guestsPresent = val === 'yes';
+    document.getElementById('guestsSection').classList.toggle('hidden', val !== 'yes');
+    if (val === 'yes' && r.guests.length === 0) { r.guests.push(emptyGuest()); renderGuests(); }
+    markDirty();
+  });
+  document.getElementById('guestsSection').classList.toggle('hidden', !r.guestsPresent);
+  renderGuests();
+
+  // Step 3
+  document.getElementById('discoveryMethod').value = r.discovery.method || '';
+  document.getElementById('discoveryMethodOther').value = r.discovery.methodOther || '';
+  document.getElementById('discoveryOtherField').classList.toggle('hidden', r.discovery.method !== 'Other');
+  document.getElementById('discoveryReportedBy').value = r.discovery.reportedBy || '';
+  renderChipGroup(document.getElementById('categoryChips'), CATEGORY_DEFS, r.categories, true, () => { renderCategoryQuestions(); markDirty(); });
+  renderCategoryQuestions();
+  bindSeg('behaviorObservedToggle', r.behavior.observed ? 'yes' : 'no', (val) => {
+    r.behavior.observed = val === 'yes';
+    document.getElementById('behaviorSection').classList.toggle('hidden', val !== 'yes');
+    markDirty();
+  });
+  document.getElementById('behaviorSection').classList.toggle('hidden', !r.behavior.observed);
+  renderChipGroup(document.getElementById('behaviorChips'), BEHAVIOR_OPTIONS, r.behavior.indicators, true, () => markDirty());
+  document.getElementById('behaviorDescription').value = r.behavior.description || '';
+  renderStatements();
+  renderObservations();
+
+  // Step 4
+  renderChipGroup(document.getElementById('actionChips'), ACTION_OPTIONS, r.actions, true, (sel) => {
+    document.getElementById('actionOtherField').classList.toggle('hidden', !sel.includes('Other'));
+    if (sel.includes('University Police contacted') && !r.police.present) {
+      r.police.present = true;
+      bindSeg('policePresentToggle', 'yes', policeToggleHandler);
+      document.getElementById('policeSection').classList.remove('hidden');
+    }
+    markDirty();
+  });
+  document.getElementById('actionOtherField').classList.toggle('hidden', !r.actions.includes('Other'));
+  document.getElementById('actionOther').value = r.actionOther || '';
+  renderStaffContacts();
+  bindSeg('policePresentToggle', r.police.present ? 'yes' : 'no', policeToggleHandler);
+  document.getElementById('policeSection').classList.toggle('hidden', !r.police.present);
+  document.getElementById('policeAgency').value = r.police.agency || '';
+  document.getElementById('policeOfficerName').value = r.police.officerName || '';
+  document.getElementById('policeBadgeNumber').value = r.police.badgeNumber || '';
+  document.getElementById('policeCaseNumber').value = r.police.caseNumber || '';
+  document.getElementById('policeArrivalTime').value = r.police.arrivalTime || '';
+  document.getElementById('policeDepartureTime').value = r.police.departureTime || '';
+  document.getElementById('policeDisposedOrConfiscated').value = r.police.disposedOrConfiscated || 'unknown';
+  document.getElementById('policeDisposalDescField').classList.toggle('hidden', r.police.disposedOrConfiscated !== 'yes');
+  document.getElementById('policeDisposalDescription').value = r.police.disposalDescription || '';
+  renderDisposition();
+}
+
+function updateModeToggleUI(){
+  document.getElementById('modeQuickBtn').classList.toggle('active', mode === 'quick');
+  document.getElementById('modeFullBtn').classList.toggle('active', mode === 'full');
+}
+document.getElementById('modeQuickBtn').addEventListener('click', () => { mode = 'quick'; updateModeToggleUI(); markDirty(); renderProgress(); });
+document.getElementById('modeFullBtn').addEventListener('click', () => { mode = 'full'; updateModeToggleUI(); markDirty(); renderProgress(); });
+
+function visibleSteps(){ return mode === 'quick' ? STEPS.filter(s => s.quick) : STEPS; }
+function stepIndexToKey(i){ return visibleSteps()[i].key; }
+
+function renderProgress(){
+  const steps = visibleSteps();
+  const rail = document.getElementById('progressRail');
+  rail.innerHTML = steps.map((s, i) => {
+    const cls = i < currentStep ? 'done' : (i === currentStep ? 'active' : '');
+    const connector = i < steps.length - 1 ? `<div class="progress-connector ${i < currentStep ? 'done' : ''}"></div>` : '';
+    return `<button class="progress-step ${cls}" data-step="${i}" type="button"><span class="dot">${i < currentStep ? '&#10003;' : i + 1}</span><span class="label">${esc(s.label)}</span></button>${connector}`;
+  }).join('');
+  rail.querySelectorAll('.progress-step').forEach(btn => btn.addEventListener('click', () => goToStep(parseInt(btn.dataset.step, 10))));
+}
+
+function goToStep(i){
+  const steps = visibleSteps();
+  i = Math.max(0, Math.min(steps.length - 1, i));
+  currentStep = i;
+  document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+  const key = steps[i].key;
+  const panelIdMap = { escalation: 'step-0', basics: 'step-1', people: 'step-2', details: 'step-3', actions: 'step-4', narrative: 'step-5', attachments: 'step-6', review: 'step-7' };
+  document.getElementById(panelIdMap[key]).classList.add('active');
+  renderProgress();
+  document.getElementById('backStepBtn').style.visibility = i === 0 ? 'hidden' : 'visible';
+  document.getElementById('nextStepBtn').classList.toggle('hidden', i === steps.length - 1);
+
+  if (key === 'narrative') { syncTimelineFromReport(); renderNarrativeStep(); }
+  if (key === 'review') renderReviewStep();
+  if (key === 'attachments') renderAttachments();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+document.getElementById('backStepBtn').addEventListener('click', () => goToStep(currentStep - 1));
+document.getElementById('nextStepBtn').addEventListener('click', () => goToStep(currentStep + 1));
+
+/* ==================================================================
+   STEP 0 — ESCALATION
+   ================================================================== */
+function renderEscalation(){
+  const box = document.getElementById('escalationChips');
+  renderChipGroup(box, ESCALATION_OPTIONS, report.escalationFlags, true, (sel, val) => {
+    if (val === 'None of the above') { sel.length = 0; sel.push('None of the above'); }
+    else { const i = sel.indexOf('None of the above'); if (i !== -1) sel.splice(i, 1); }
+    renderEscalation();
+    markDirty();
+  });
+  const flagged = report.escalationFlags.filter(f => f !== 'None of the above');
+  document.getElementById('escalationWarning').classList.toggle('hidden', flagged.length === 0);
+}
+
+/* ==================================================================
+   STEP 1 — INCIDENT BASICS
+   ================================================================== */
+function bindBasicsStatic(){
+  document.getElementById('reporterFullName').addEventListener('input', (e) => { report.reporter.fullName = e.target.value; markDirty(); });
+  document.getElementById('reporterTitle').addEventListener('input', (e) => { report.reporter.title = e.target.value; markDirty(); });
+  document.getElementById('reporterPhone').addEventListener('input', (e) => { report.reporter.phone = e.target.value; markDirty(); });
+  document.getElementById('reporterEmail').addEventListener('input', (e) => { report.reporter.email = e.target.value; markDirty(); });
+  ['reporterFullName', 'reporterPhone', 'reporterEmail'].forEach(id => {
+    document.getElementById(id).addEventListener('blur', saveReporterProfileCache);
+  });
+
+  document.getElementById('addRespondingStaffBtn').addEventListener('click', () => {
+    report.respondingStaff.push({ id: uid(), fullName: '', title: '', phone: '', email: '' });
+    renderRespondingStaff();
+    markDirty();
+  });
+
+  document.getElementById('natureOfReport').addEventListener('change', (e) => {
+    report.incident.natureOfReport = e.target.value;
+    document.getElementById('natureOtherField').classList.toggle('hidden', e.target.value !== 'Other');
+    markDirty();
+  });
+  document.getElementById('natureOfReportOther').addEventListener('input', (e) => { report.incident.natureOfReportOther = e.target.value; markDirty(); });
+
+  document.getElementById('incidentStartDate').addEventListener('change', (e) => { report.incident.startDate = e.target.value; markDirty(); });
+  document.getElementById('incidentStartTime').addEventListener('change', (e) => { report.incident.startTime = e.target.value; markDirty(); });
+  document.getElementById('incidentEndDate').addEventListener('change', (e) => { report.incident.endDate = e.target.value; markDirty(); });
+  document.getElementById('incidentEndTime').addEventListener('change', (e) => { report.incident.endTime = e.target.value; markDirty(); });
+
+  bindSeg('inspectionToggle', report.incident.discoveredDuringInspection ? 'yes' : 'no', (val) => {
+    report.incident.discoveredDuringInspection = val === 'yes';
+    document.getElementById('inspectionDateField').classList.toggle('hidden', val !== 'yes');
+    if (val === 'yes' && report.incident.inspectionDate) { report.incident.startDate = report.incident.inspectionDate; document.getElementById('incidentStartDate').value = report.incident.inspectionDate; }
+    markDirty();
+  });
+  document.getElementById('inspectionDate').addEventListener('change', (e) => {
+    report.incident.inspectionDate = e.target.value;
+    report.incident.startDate = e.target.value;
+    document.getElementById('incidentStartDate').value = e.target.value;
+    markDirty();
+  });
+
+  document.getElementById('specificLocationType').addEventListener('change', (e) => { report.incident.specificLocationType = e.target.value; markDirty(); });
+
+  const areaInput = document.getElementById('locationArea');
+  const areaResults = document.getElementById('locationAreaResults');
+  areaInput.addEventListener('input', (e) => {
+    report.incident.area = e.target.value; markDirty();
+    const q = e.target.value.trim().toLowerCase();
+    if (!q) { areaResults.classList.add('hidden'); return; }
+    const matches = residentDirectory.filter(r => (r.room || '').toLowerCase().includes(q) || (r.unit || '').toLowerCase().includes(q)).slice(0, 6);
+    if (matches.length === 0) { areaResults.classList.add('hidden'); return; }
+    areaResults.innerHTML = matches.map(r => `<div class="searchbox-result" data-room="${esc(r.room || '')}" data-unit="${esc(r.unit || '')}"><div>${esc(r.room || r.unit || '')}</div><div class="sr-sub">${esc(r.residentName || '')}</div></div>`).join('');
+    areaResults.classList.remove('hidden');
+    areaResults.querySelectorAll('.searchbox-result').forEach(row => row.addEventListener('click', () => {
+      const val = row.dataset.room || row.dataset.unit;
+      areaInput.value = val; report.incident.area = val; areaResults.classList.add('hidden'); markDirty();
+    }));
+  });
+  document.addEventListener('click', (e) => { if (!e.target.closest('.searchbox-wrap')) areaResults.classList.add('hidden'); });
+}
+
+function saveReporterProfileCache(){
+  try {
+    localStorage.setItem('reslife_reporter_profile', JSON.stringify({
+      fullName: report.reporter.fullName, phone: report.reporter.phone, email: report.reporter.email,
+    }));
+  } catch (e) {}
+}
+
+function renderRespondingStaff(){
+  const box = document.getElementById('respondingStaffList');
+  if (report.respondingStaff.length === 0) { box.innerHTML = ''; return; }
+  box.innerHTML = report.respondingStaff.map((s, i) => `
+    <div class="subcard" data-idx="${i}">
+      <div class="subcard-head"><span class="subcard-title">Responding Staff Member ${i + 1}</span><button class="btn sm danger" data-remove-staff="${i}" type="button">Remove</button></div>
+      <div class="field-grid cols-4">
+        <div class="field"><label>Full Name</label><input type="text" class="rs-name" value="${esc(s.fullName)}" /></div>
+        <div class="field"><label>Position / Title</label><input type="text" class="rs-title" value="${esc(s.title)}" /></div>
+        <div class="field"><label>Phone Number</label><input type="tel" class="rs-phone" value="${esc(s.phone)}" /></div>
+        <div class="field"><label>School Email</label><input type="email" class="rs-email" value="${esc(s.email)}" /></div>
+      </div>
+    </div>
+  `).join('');
+  box.querySelectorAll('[data-remove-staff]').forEach(btn => btn.addEventListener('click', () => {
+    report.respondingStaff.splice(parseInt(btn.dataset.removeStaff, 10), 1); renderRespondingStaff(); markDirty();
+  }));
+  box.querySelectorAll('.subcard').forEach(card => {
+    const i = parseInt(card.dataset.idx, 10);
+    card.querySelector('.rs-name').addEventListener('input', (e) => { report.respondingStaff[i].fullName = e.target.value; markDirty(); });
+    card.querySelector('.rs-title').addEventListener('input', (e) => { report.respondingStaff[i].title = e.target.value; markDirty(); });
+    card.querySelector('.rs-phone').addEventListener('input', (e) => { report.respondingStaff[i].phone = e.target.value; markDirty(); });
+    card.querySelector('.rs-email').addEventListener('input', (e) => { report.respondingStaff[i].email = e.target.value; markDirty(); });
+  });
+}
+
+/* ==================================================================
+   STEP 2 — PEOPLE INVOLVED + GUESTS
+   ================================================================== */
+function bindPeopleStatic(){
+  document.getElementById('addPersonBtn').addEventListener('click', () => {
+    report.involvedParties.push({
+      id: uid(), name: '', role: 'Student', studentId: '', dob: '',
+      building: '', apartment: '', room: '', locationNA: false, personType: 'Resident', resolvedFromDirectory: false,
+    });
+    renderPeople(); markDirty();
+    document.querySelector(`[data-person-idx="${report.involvedParties.length - 1}"] .p-name`)?.focus();
+  });
+
+  bindSeg('guestsPresentToggle', report.guestsPresent ? 'yes' : 'no', (val) => {
+    report.guestsPresent = val === 'yes';
+    document.getElementById('guestsSection').classList.toggle('hidden', val !== 'yes');
+    if (val === 'yes' && report.guests.length === 0) { report.guests.push(emptyGuest()); renderGuests(); }
+    markDirty();
+  });
+  document.getElementById('addGuestBtn').addEventListener('click', () => { report.guests.push(emptyGuest()); renderGuests(); markDirty(); });
+}
+function emptyGuest(){ return { id: uid(), fullName: '', studentStatus: 'Non-Student', studentId: '', idInfo: '', visitingResident: '', escorted: 'not_applicable' }; }
+
+function renderPeople(){
+  const box = document.getElementById('peopleList');
+  if (report.involvedParties.length === 0) { box.innerHTML = '<div class="empty-note">No involved people added yet.</div>'; return; }
+  box.innerHTML = report.involvedParties.map((p, i) => {
+    const isStudent = p.role === 'Student';
+    return `
+    <div class="subcard" data-person-idx="${i}">
+      <div class="subcard-head"><span class="subcard-title">Person ${i + 1}${p.name ? ' — ' + esc(p.name) : ''}</span><button class="btn sm danger" data-remove-person="${i}" type="button">Remove</button></div>
+      <div class="field-grid cols-3">
+        <div class="field full searchbox-wrap"><label>Name</label>
+          <input type="text" class="p-name" value="${esc(p.name)}" placeholder="Search resident directory or type a name" autocomplete="off" />
+          <div class="searchbox-results hidden p-name-results"></div>
+        </div>
+        <div class="field"><label>Role</label>
+          <select class="p-role">
+            <option ${p.role === 'Student' ? 'selected' : ''}>Student</option>
+            <option ${p.role === 'Staff' ? 'selected' : ''}>Staff</option>
+            <option ${p.role === 'Outside Vendor / 3rd Party' ? 'selected' : ''}>Outside Vendor / 3rd Party</option>
+            <option ${p.role === 'Faculty' ? 'selected' : ''}>Faculty</option>
+            <option ${p.role === 'Unknown' ? 'selected' : ''}>Unknown</option>
+          </select>
+        </div>
+        <div class="field"><label>Person Type <span class="helper-text" style="text-transform:none;font-weight:400">(internal, for narrative only)</span></label>
+          <select class="p-type">
+            ${['Resident', 'Guest', 'Reporting Party', 'Witness', 'Person Involved', 'Other'].map(t => `<option ${p.personType === t ? 'selected' : ''}>${t}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field p-studentid-field" style="${isStudent ? '' : 'display:none'}"><label>Student ID</label><input type="text" class="p-studentid" value="${esc(p.studentId)}" /></div>
+        <div class="field"><label>Date of Birth <span class="helper-text" style="text-transform:none;font-weight:400">YYYY-MM-DD</span></label><input type="date" class="p-dob" value="${esc(p.dob)}" /></div>
+        <div class="field"><label><input type="checkbox" class="p-na" ${p.locationNA ? 'checked' : ''} style="width:auto;margin-right:6px" />Location Not Applicable / Unknown</label></div>
+      </div>
+      <div class="field-grid cols-3 p-location-fields" style="margin-top:10px;${p.locationNA ? 'display:none' : ''}">
+        <div class="field"><label>Building</label><input type="text" class="p-building" value="${esc(p.building)}" /></div>
+        <div class="field"><label>Apartment</label><input type="text" class="p-apartment" value="${esc(p.apartment)}" /></div>
+        <div class="field"><label>Room</label><input type="text" class="p-room" value="${esc(p.room)}" /></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  box.querySelectorAll('[data-remove-person]').forEach(btn => btn.addEventListener('click', () => {
+    report.involvedParties.splice(parseInt(btn.dataset.removePerson, 10), 1); renderPeople(); markDirty();
+  }));
+
+  box.querySelectorAll('.subcard').forEach(card => {
+    const i = parseInt(card.dataset.personIdx, 10);
+    const p = report.involvedParties[i];
+    const nameInput = card.querySelector('.p-name');
+    const nameResults = card.querySelector('.p-name-results');
+    nameInput.addEventListener('input', (e) => {
+      p.name = e.target.value; p.resolvedFromDirectory = false; markDirty();
+      const q = e.target.value.trim().toLowerCase();
+      if (!q) { nameResults.classList.add('hidden'); return; }
+      const matches = residentDirectory.filter(r => (r.residentName || '').toLowerCase().includes(q)).slice(0, 6);
+      if (matches.length === 0) { nameResults.classList.add('hidden'); return; }
+      nameResults.innerHTML = matches.map((r, mi) => `<div class="searchbox-result" data-mi="${mi}"><div>${esc(r.residentName)}</div><div class="sr-sub">${esc(r.room || r.unit || '')}</div></div>`).join('');
+      nameResults.classList.remove('hidden');
+      nameResults.querySelectorAll('.searchbox-result').forEach(row => row.addEventListener('click', () => {
+        const r = matches[parseInt(row.dataset.mi, 10)];
+        p.name = r.residentName; p.room = r.room || ''; p.apartment = r.unit || ''; p.resolvedFromDirectory = true;
+        p.locationNA = false;
+        nameResults.classList.add('hidden');
+        renderPeople(); markDirty();
+      }));
+    });
+    nameInput.addEventListener('blur', () => setTimeout(() => nameResults.classList.add('hidden'), 150));
+
+    card.querySelector('.p-role').addEventListener('change', (e) => {
+      p.role = e.target.value;
+      card.querySelector('.p-studentid-field').style.display = p.role === 'Student' ? '' : 'none';
+      markDirty();
+    });
+    card.querySelector('.p-type').addEventListener('change', (e) => { p.personType = e.target.value; markDirty(); });
+    card.querySelector('.p-studentid').addEventListener('input', (e) => { p.studentId = e.target.value; markDirty(); });
+    card.querySelector('.p-dob').addEventListener('change', (e) => { p.dob = e.target.value; markDirty(); });
+    card.querySelector('.p-na').addEventListener('change', (e) => {
+      p.locationNA = e.target.checked;
+      card.querySelector('.p-location-fields').style.display = p.locationNA ? 'none' : '';
+      markDirty();
+    });
+    card.querySelector('.p-building').addEventListener('input', (e) => { p.building = e.target.value; markDirty(); });
+    card.querySelector('.p-apartment').addEventListener('input', (e) => { p.apartment = e.target.value; markDirty(); });
+    card.querySelector('.p-room').addEventListener('input', (e) => { p.room = e.target.value; markDirty(); });
+  });
+}
+
+function renderGuests(){
+  const box = document.getElementById('guestsList');
+  if (report.guests.length === 0) { box.innerHTML = '<div class="empty-note">No guests added yet.</div>'; return; }
+  box.innerHTML = report.guests.map((g, i) => `
+    <div class="subcard" data-guest-idx="${i}">
+      <div class="subcard-head"><span class="subcard-title">Guest ${i + 1}</span><button class="btn sm danger" data-remove-guest="${i}" type="button">Remove</button></div>
+      <div class="field-grid cols-3">
+        <div class="field"><label>Full Name</label><input type="text" class="g-name" value="${esc(g.fullName)}" /></div>
+        <div class="field"><label>Student / Non-Student</label>
+          <select class="g-status"><option ${g.studentStatus === 'Student' ? 'selected' : ''}>Student</option><option ${g.studentStatus === 'Non-Student' ? 'selected' : ''}>Non-Student</option></select>
+        </div>
+        <div class="field g-studentid-field" style="${g.studentStatus === 'Student' ? '' : 'display:none'}"><label>Student ID</label><input type="text" class="g-studentid" value="${esc(g.studentId)}" /></div>
+        <div class="field full"><label>Driver's License / Identifying Info</label><input type="text" class="g-idinfo" value="${esc(g.idInfo)}" /></div>
+        <div class="field"><label>Resident They Were Visiting</label><input type="text" class="g-visiting" value="${esc(g.visitingResident)}" /></div>
+        <div class="field"><label>Was the guest escorted from the premises?</label>
+          <select class="g-escorted">
+            <option value="yes" ${g.escorted === 'yes' ? 'selected' : ''}>Yes</option>
+            <option value="no" ${g.escorted === 'no' ? 'selected' : ''}>No</option>
+            <option value="not_applicable" ${g.escorted === 'not_applicable' ? 'selected' : ''}>Not Applicable</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  box.querySelectorAll('[data-remove-guest]').forEach(btn => btn.addEventListener('click', () => {
+    report.guests.splice(parseInt(btn.dataset.removeGuest, 10), 1); renderGuests(); markDirty();
+  }));
+  box.querySelectorAll('.subcard').forEach(card => {
+    const i = parseInt(card.dataset.guestIdx, 10);
+    const g = report.guests[i];
+    card.querySelector('.g-name').addEventListener('input', (e) => { g.fullName = e.target.value; markDirty(); });
+    card.querySelector('.g-status').addEventListener('change', (e) => {
+      g.studentStatus = e.target.value;
+      card.querySelector('.g-studentid-field').style.display = g.studentStatus === 'Student' ? '' : 'none';
+      markDirty();
+    });
+    card.querySelector('.g-studentid').addEventListener('input', (e) => { g.studentId = e.target.value; markDirty(); });
+    card.querySelector('.g-idinfo').addEventListener('input', (e) => { g.idInfo = e.target.value; markDirty(); });
+    card.querySelector('.g-visiting').addEventListener('input', (e) => { g.visitingResident = e.target.value; markDirty(); });
+    card.querySelector('.g-escorted').addEventListener('change', (e) => { g.escorted = e.target.value; markDirty(); });
+  });
+}
+
+/* ==================================================================
+   STEP 3 — WHAT HAPPENED
+   ================================================================== */
+function bindDetailsStatic(){
+  document.getElementById('discoveryMethod').addEventListener('change', (e) => {
+    report.discovery.method = e.target.value;
+    document.getElementById('discoveryOtherField').classList.toggle('hidden', e.target.value !== 'Other');
+    markDirty();
+  });
+  document.getElementById('discoveryMethodOther').addEventListener('input', (e) => { report.discovery.methodOther = e.target.value; markDirty(); });
+  document.getElementById('discoveryReportedBy').addEventListener('input', (e) => { report.discovery.reportedBy = e.target.value; markDirty(); });
+
+  renderChipGroup(document.getElementById('categoryChips'), CATEGORY_DEFS, report.categories, true, () => {
+    renderCategoryQuestions(); markDirty();
+  });
+
+  bindSeg('behaviorObservedToggle', report.behavior.observed ? 'yes' : 'no', (val) => {
+    report.behavior.observed = val === 'yes';
+    document.getElementById('behaviorSection').classList.toggle('hidden', val !== 'yes');
+    markDirty();
+  });
+  renderChipGroup(document.getElementById('behaviorChips'), BEHAVIOR_OPTIONS, report.behavior.indicators, true, () => markDirty());
+  document.getElementById('behaviorDescription').addEventListener('input', (e) => { report.behavior.description = e.target.value; markDirty(); });
+
+  document.getElementById('addStatementBtn').addEventListener('click', () => { report.statements.push({ id: uid(), personRef: '', quote: '', isExact: true }); renderStatements(); markDirty(); });
+  document.getElementById('addObservationBtn').addEventListener('click', () => { report.observations.push({ id: uid(), staffMember: report.reporter.fullName || '', personOrObject: '', action: '', location: '', description: '', time: '' }); renderObservations(); markDirty(); });
+}
+
+function involvedPersonOptionsHTML(selected){
+  const names = report.involvedParties.map(p => p.name).filter(Boolean);
+  const staff = report.respondingStaff.map(s => s.fullName).filter(Boolean);
+  const all = [report.reporter.fullName].filter(Boolean).concat(staff, names);
+  return all.map(n => `<option value="${esc(n)}" ${selected === n ? 'selected' : ''}>${esc(n)}</option>`).join('');
+}
+
+/* ---- Category question renderer (config-driven dispatch) ---- */
+function getCatAnswers(catId, defaults){
+  if (!report.categoryAnswers[catId]) report.categoryAnswers[catId] = Object.assign({}, defaults);
+  return report.categoryAnswers[catId];
+}
+
+function renderCategoryQuestions(){
+  const box = document.getElementById('categoryQuestionsBox');
+  if (report.categories.length === 0) { box.innerHTML = ''; return; }
+  box.innerHTML = report.categories.map(catId => {
+    const def = CATEGORY_DEFS.find(c => c.id === catId) || { label: catId };
+    return `<div class="rl-panel" id="catpanel-${catId}"><div class="rl-panel-header"><div><h2>${esc(def.label)}</h2><p>Possible / Alleged &mdash; selecting a category does not claim a violation occurred.</p></div></div><div class="rl-panel-body" id="catbody-${catId}"></div></div>`;
+  }).join('');
+  report.categories.forEach(catId => {
+    if (catId === 'noise') renderNoisePanel();
+    else if (catId === 'alcohol') renderAlcoholPanel();
+    else if (catId === 'drugs' || catId === 'smoking') renderDrugsSmokingPanel(catId);
+    else renderGenericCategoryPanel(catId);
+  });
+}
+
+/* ---- NOISE ---- */
+function renderNoisePanel(){
+  const a = getCatAnswers('noise', { heardFrom: '', noiseType: [], wordsDistinguished: '', musicHeard: '', yellingHeard: '', distance: '', contacted: '', stoppedAfterContact: 'not_applicable', priorContact: '' });
+  const body = document.getElementById('catbody-noise');
+  body.innerHTML = `
+    <div class="field-grid">
+      <div class="field full"><label>Where was the noise heard from?</label><input type="text" id="noise-heardFrom" value="${esc(a.heardFrom)}" /></div>
+      <div class="field full"><label>What type of noise was heard?</label><div class="chip-grid" id="noise-type"></div></div>
+      <div class="field"><label>Could words/conversation be distinguished?</label><div class="seg" id="noise-words"><button data-val="yes">Yes</button><button data-val="no">No</button></div></div>
+      <div class="field"><label>Was music heard?</label><div class="seg" id="noise-music"><button data-val="yes">Yes</button><button data-val="no">No</button></div></div>
+      <div class="field"><label>Was yelling heard?</label><div class="seg" id="noise-yelling"><button data-val="yes">Yes</button><button data-val="no">No</button></div></div>
+      <div class="field"><label>Approximately how far away could it be heard?</label><input type="text" id="noise-distance" value="${esc(a.distance)}" placeholder="e.g., adjacent hallway" /></div>
+      <div class="field"><label>Did the RA knock/contact the occupants?</label><div class="seg" id="noise-contacted"><button data-val="yes">Yes</button><button data-val="no">No</button></div></div>
+      <div class="field"><label>Did the noise stop after contact?</label><div class="seg" id="noise-stopped"><button data-val="yes">Yes</button><button data-val="no">No</button><button data-val="not_applicable">N/A</button></div></div>
+      <div class="field"><label>Previous contact during the same incident?</label><div class="seg" id="noise-priorcontact"><button data-val="yes">Yes</button><button data-val="no">No</button></div></div>
+    </div>`;
+  document.getElementById('noise-heardFrom').addEventListener('input', (e) => { a.heardFrom = e.target.value; markDirty(); });
+  document.getElementById('noise-distance').addEventListener('input', (e) => { a.distance = e.target.value; markDirty(); });
+  renderChipGroup(document.getElementById('noise-type'), ['Music', 'Talking / Conversation', 'Yelling', 'Other'], a.noiseType, true, () => markDirty());
+  bindSeg('noise-words', a.wordsDistinguished, (v) => { a.wordsDistinguished = v; markDirty(); });
+  bindSeg('noise-music', a.musicHeard, (v) => { a.musicHeard = v; markDirty(); });
+  bindSeg('noise-yelling', a.yellingHeard, (v) => { a.yellingHeard = v; markDirty(); });
+  bindSeg('noise-contacted', a.contacted, (v) => { a.contacted = v; markDirty(); });
+  bindSeg('noise-stopped', a.stoppedAfterContact, (v) => { a.stoppedAfterContact = v; markDirty(); });
+  bindSeg('noise-priorcontact', a.priorContact, (v) => { a.priorContact = v; markDirty(); });
+}
+
+/* ---- ALCOHOL ---- */
+let alcoholDraft = { itemType: '', itemTypeOther: '', quantity: 1, location: '', locationOther: '', openClosed: 'closed', associatedPerson: '', disposition: '' };
+function resetScratchState(){
+  alcoholDraft = { itemType: '', itemTypeOther: '', quantity: 1, location: '', locationOther: '', openClosed: 'closed', associatedPerson: '', disposition: '' };
+  drugsDraft = { itemType: '', location: '' };
+  narrativeManuallyEdited = false;
+  lastGeneratedNarrativeHash = '';
+  pendingNarrative = null;
+  attachmentFileObjects = {};
+}
+function renderAlcoholPanel(){
+  const a = getCatAnswers('alcohol', { observed: '', disposedOverall: '', disposedBy: '', witnessedByStaff: '', policeInvolved: '' });
+  const body = document.getElementById('catbody-alcohol');
+  body.innerHTML = `
+    <div class="field"><label>Was alcohol observed?</label><div class="seg" id="alc-observed"><button data-val="yes">Yes</button><button data-val="no">No</button></div></div>
+    <div id="alc-section" class="hidden" style="margin-top:14px">
+      <p class="section-title">Observed Items</p>
+      <div id="alc-items-list"></div>
+      <div class="subcard">
+        <p class="helper-text" style="margin-bottom:8px">What was observed?</p>
+        <div class="chip-grid" id="alc-itemtype"></div>
+        <div class="field hidden" id="alc-itemtype-other-field" style="margin-top:10px"><label>Describe item</label><input type="text" id="alc-itemtype-other" /></div>
+        <div class="field-grid cols-3" style="margin-top:12px">
+          <div class="field"><label>How many?</label><div class="counter"><button type="button" id="alc-qty-minus">&minus;</button><span class="count-val" id="alc-qty-val">1</span><button type="button" id="alc-qty-plus">+</button></div></div>
+          <div class="field"><label>Open or closed?</label><div class="seg" id="alc-openclosed"><button data-val="open">Open</button><button data-val="closed" class="active">Closed</button></div></div>
+          <div class="field"><label>Associated Person</label><input type="text" id="alc-assocperson" placeholder="Optional" /></div>
+        </div>
+        <p class="helper-text" style="margin:12px 0 8px">Where was it located?</p>
+        <div class="chip-grid" id="alc-location"></div>
+        <div class="field hidden" id="alc-location-other-field" style="margin-top:10px"><label>Describe location</label><input type="text" id="alc-location-other" /></div>
+        <p class="helper-text" style="margin:12px 0 8px">What happened to it?</p>
+        <div class="chip-grid" id="alc-disposition"></div>
+        <button class="btn sm primary" id="alc-add-item-btn" type="button" style="margin-top:12px">+ Add Item</button>
+      </div>
+      <div class="field-grid" style="margin-top:14px">
+        <div class="field"><label>Was alcohol disposed of (overall)?</label><div class="seg" id="alc-disposed-overall"><button data-val="yes">Yes</button><button data-val="no">No</button></div></div>
+        <div class="field"><label>Who disposed of it?</label><input type="text" id="alc-disposed-by" value="${esc(a.disposedBy)}" /></div>
+        <div class="field"><label>Was disposal witnessed by staff?</label><div class="seg" id="alc-witnessed"><button data-val="yes">Yes</button><button data-val="no">No</button></div></div>
+        <div class="field"><label>Was Police involved?</label><div class="seg" id="alc-police"><button data-val="yes">Yes</button><button data-val="no">No</button></div></div>
+      </div>
+    </div>`;
+
+  bindSeg('alc-observed', a.observed, (v) => { a.observed = v; document.getElementById('alc-section').classList.toggle('hidden', v !== 'yes'); markDirty(); });
+  document.getElementById('alc-section').classList.toggle('hidden', a.observed !== 'yes');
+  document.getElementById('alc-disposed-by').addEventListener('input', (e) => { a.disposedBy = e.target.value; markDirty(); });
+  bindSeg('alc-disposed-overall', a.disposedOverall, (v) => { a.disposedOverall = v; markDirty(); });
+  bindSeg('alc-witnessed', a.witnessedByStaff, (v) => { a.witnessedByStaff = v; markDirty(); });
+  bindSeg('alc-police', a.policeInvolved, (v) => { a.policeInvolved = v; markDirty(); });
+
+  renderChipGroup(document.getElementById('alc-itemtype'), ['Beer', 'Wine', 'Liquor', 'Seltzer', 'Other'], alcoholDraft.itemType ? [alcoholDraft.itemType] : [], false, (sel, val) => {
+    alcoholDraft.itemType = val;
+    document.getElementById('alc-itemtype-other-field').classList.toggle('hidden', val !== 'Other');
+  });
+  document.getElementById('alc-itemtype-other').addEventListener('input', (e) => { alcoholDraft.itemTypeOther = e.target.value; });
+  document.getElementById('alc-qty-minus').addEventListener('click', () => { alcoholDraft.quantity = Math.max(1, alcoholDraft.quantity - 1); document.getElementById('alc-qty-val').textContent = alcoholDraft.quantity; });
+  document.getElementById('alc-qty-plus').addEventListener('click', () => { alcoholDraft.quantity += 1; document.getElementById('alc-qty-val').textContent = alcoholDraft.quantity; });
+  bindSeg('alc-openclosed', alcoholDraft.openClosed, (v) => { alcoholDraft.openClosed = v; });
+  document.getElementById('alc-assocperson').addEventListener('input', (e) => { alcoholDraft.associatedPerson = e.target.value; });
+  renderChipGroup(document.getElementById('alc-location'), ["Counter", "Refrigerator", "Floor", "Person's Hand", "Table", "Other"], alcoholDraft.location ? [alcoholDraft.location] : [], false, (sel, val) => {
+    alcoholDraft.location = val;
+    document.getElementById('alc-location-other-field').classList.toggle('hidden', val !== 'Other');
+  });
+  document.getElementById('alc-location-other').addEventListener('input', (e) => { alcoholDraft.locationOther = e.target.value; });
+  renderChipGroup(document.getElementById('alc-disposition'), ['Disposed', 'Police Confiscated', 'Left in Place', 'Other'], alcoholDraft.disposition ? [alcoholDraft.disposition] : [], false, (sel, val) => { alcoholDraft.disposition = val; });
+
+  document.getElementById('alc-add-item-btn').addEventListener('click', () => {
+    if (!alcoholDraft.itemType) { alert('Select what was observed before adding.'); return; }
+    report.observedItems.push({
+      id: uid(), category: 'alcohol',
+      itemType: alcoholDraft.itemType === 'Other' ? (alcoholDraft.itemTypeOther || 'Other') : alcoholDraft.itemType,
+      brand: '', quantity: alcoholDraft.quantity,
+      location: alcoholDraft.location === 'Other' ? (alcoholDraft.locationOther || 'Other') : alcoholDraft.location,
+      openClosed: alcoholDraft.openClosed, associatedPerson: alcoholDraft.associatedPerson,
+      disposition: alcoholDraft.disposition,
+    });
+    alcoholDraft = { itemType: '', itemTypeOther: '', quantity: 1, location: '', locationOther: '', openClosed: 'closed', associatedPerson: '', disposition: '' };
+    renderAlcoholPanel(); renderObservedItemsList('alcohol'); markDirty();
+  });
+  renderObservedItemsList('alcohol');
+}
+
+function renderObservedItemsList(category){
+  const list = document.getElementById(category === 'alcohol' ? 'alc-items-list' : (category + '-items-list'));
+  if (!list) return;
+  const items = report.observedItems.filter(it => it.category === category);
+  if (items.length === 0) { list.innerHTML = '<div class="empty-note">No items added yet.</div>'; return; }
+  list.innerHTML = items.map(it => `
+    <div class="subcard">
+      <div class="subcard-head">
+        <span class="subcard-title">${esc(it.itemType)}${it.quantity ? ' &times; ' + esc(it.quantity) : ''}</span>
+        <button class="btn sm danger" data-remove-item="${it.id}" type="button">Remove</button>
+      </div>
+      <div class="helper-text">${esc(it.location ? 'Location: ' + it.location : '')}${it.openClosed ? ' &middot; ' + esc(it.openClosed) : ''}${it.associatedPerson ? ' &middot; Associated: ' + esc(it.associatedPerson) : ''}${it.disposition ? ' &middot; Disposition: ' + esc(it.disposition) : ''}</div>
+    </div>
+  `).join('');
+  list.querySelectorAll('[data-remove-item]').forEach(btn => btn.addEventListener('click', () => {
+    const idx = report.observedItems.findIndex(it => it.id === btn.getAttribute('data-remove-item'));
+    if (idx !== -1) report.observedItems.splice(idx, 1);
+    renderObservedItemsList(category); markDirty();
+  }));
+}
+
+/* ---- DRUGS / SMOKING (combined per shared question set) ---- */
+let drugsDraft = { itemType: '', location: '' };
+function renderDrugsSmokingPanel(catId){
+  const key = 'drugsSmoking';
+  const a = getCatAnswers(key, { substanceObserved: '', paraphernaliaObserved: '', odorDetected: '', odorDescription: '', odorLocation: '', policeContacted: '', policeConfiscated: '' });
+  const body = document.getElementById('catbody-' + catId);
+  body.innerHTML = `
+    <div class="alert alert-info" style="margin-bottom:14px"><div class="alert-icon">&#8505;</div><div><p>Document only what was directly observed. An odor or appearance alone should never be written as a definitive statement that a person possessed or used a substance.</p></div></div>
+    <div class="field-grid">
+      <div class="field"><label>Was a substance directly observed?</label><div class="seg" id="ds-substance"><button data-val="yes">Yes</button><button data-val="no">No</button></div></div>
+      <div class="field"><label>Was paraphernalia directly observed?</label><div class="seg" id="ds-paraphernalia"><button data-val="yes">Yes</button><button data-val="no">No</button></div></div>
+      <div class="field"><label>Was an odor detected?</label><div class="seg" id="ds-odor"><button data-val="yes">Yes</button><button data-val="no">No</button></div></div>
+    </div>
+    <div class="field-grid" id="ds-odor-fields" style="margin-top:12px;${a.odorDetected === 'yes' ? '' : 'display:none'}">
+      <div class="field full"><label>Describe the odor objectively</label><input type="text" id="ds-odor-desc" value="${esc(a.odorDescription)}" placeholder="e.g., odor consistent with marijuana" /></div>
+      <div class="field full"><label>Where was the odor detected?</label><input type="text" id="ds-odor-location" value="${esc(a.odorLocation)}" /></div>
+    </div>
+    <p class="section-title" style="margin-top:16px">What objects were observed, and where?</p>
+    <div id="ds-items-list"></div>
+    <div class="subcard">
+      <div class="field-grid">
+        <div class="field"><label>Object</label><input type="text" id="ds-item-type" placeholder="e.g., rolling papers" /></div>
+        <div class="field"><label>Location</label><input type="text" id="ds-item-location" placeholder="e.g., top of dresser" /></div>
+      </div>
+      <button class="btn sm primary" id="ds-add-item-btn" type="button" style="margin-top:10px">+ Add Object</button>
+    </div>
+    <div class="field-grid" style="margin-top:14px">
+      <div class="field"><label>Was Police contacted?</label><div class="seg" id="ds-police"><button data-val="yes">Yes</button><button data-val="no">No</button></div></div>
+      <div class="field"><label>Were any items confiscated by Police?</label><div class="seg" id="ds-confiscated"><button data-val="yes">Yes</button><button data-val="no">No</button></div></div>
+    </div>`;
+
+  bindSeg('ds-substance', a.substanceObserved, (v) => { a.substanceObserved = v; markDirty(); });
+  bindSeg('ds-paraphernalia', a.paraphernaliaObserved, (v) => { a.paraphernaliaObserved = v; markDirty(); });
+  bindSeg('ds-odor', a.odorDetected, (v) => { a.odorDetected = v; document.getElementById('ds-odor-fields').style.display = v === 'yes' ? '' : 'none'; markDirty(); });
+  document.getElementById('ds-odor-desc').addEventListener('input', (e) => { a.odorDescription = e.target.value; markDirty(); });
+  document.getElementById('ds-odor-location').addEventListener('input', (e) => { a.odorLocation = e.target.value; markDirty(); });
+  bindSeg('ds-police', a.policeContacted, (v) => { a.policeContacted = v; markDirty(); });
+  bindSeg('ds-confiscated', a.policeConfiscated, (v) => { a.policeConfiscated = v; markDirty(); });
+
+  document.getElementById('ds-add-item-btn').addEventListener('click', () => {
+    const itemType = document.getElementById('ds-item-type').value.trim();
+    const location = document.getElementById('ds-item-location').value.trim();
+    if (!itemType) { alert('Enter what object was observed.'); return; }
+    report.observedItems.push({ id: uid(), category: 'drugsSmoking', itemType, brand: '', quantity: '', location, associatedPerson: '', disposition: '' });
+    renderObservedItemsList('drugsSmoking'); markDirty();
+    document.getElementById('ds-item-type').value = ''; document.getElementById('ds-item-location').value = '';
+  });
+  renderObservedItemsList('drugsSmoking');
+}
+
+/* ---- GENERIC CATEGORY FALLBACK ---- */
+function renderGenericCategoryPanel(catId){
+  const a = getCatAnswers(catId, { location: '', description: '' });
+  const body = document.getElementById('catbody-' + catId);
+  body.innerHTML = `
+    <div class="field-grid">
+      <div class="field"><label>Where did this occur?</label><input type="text" id="gen-${catId}-loc" value="${esc(a.location)}" /></div>
+      <div class="field full"><label>Brief factual description</label><textarea id="gen-${catId}-desc" placeholder="Describe only what was observed.">${esc(a.description)}</textarea></div>
+    </div>
+    <p class="helper-text">Add specific facts (who was involved, what was said, what was observed) in the Statements and Observations sections below &mdash; they feed the narrative directly.</p>`;
+  document.getElementById(`gen-${catId}-loc`).addEventListener('input', (e) => { a.location = e.target.value; markDirty(); });
+  document.getElementById(`gen-${catId}-desc`).addEventListener('input', (e) => { a.description = e.target.value; markDirty(); });
+}
+
+/* ---- STATEMENTS ---- */
+function renderStatements(){
+  const box = document.getElementById('statementsList');
+  if (report.statements.length === 0) { box.innerHTML = '<div class="empty-note">No statements recorded yet.</div>'; return; }
+  box.innerHTML = report.statements.map((s, i) => `
+    <div class="subcard" data-st-idx="${i}">
+      <div class="subcard-head"><span class="subcard-title">Statement ${i + 1}</span><button class="btn sm danger" data-remove-statement="${i}" type="button">Remove</button></div>
+      <div class="field-grid">
+        <div class="field"><label>Person</label><select class="st-person">${involvedPersonOptionsHTML(s.personRef)}</select></div>
+        <div class="field"><label>Exact Quote?</label><div class="seg st-exact"><button data-val="yes" class="${s.isExact ? 'active' : ''}">Yes</button><button data-val="no" class="${!s.isExact ? 'active' : ''}">No / Paraphrased</button></div></div>
+        <div class="field full"><label>${s.isExact ? 'Exact Quote' : 'Paraphrase'}</label><textarea class="st-quote">${esc(s.quote)}</textarea></div>
+      </div>
+    </div>
+  `).join('');
+  box.querySelectorAll('[data-remove-statement]').forEach(btn => btn.addEventListener('click', () => {
+    report.statements.splice(parseInt(btn.dataset.removeStatement, 10), 1); renderStatements(); markDirty();
+  }));
+  box.querySelectorAll('.subcard').forEach(card => {
+    const i = parseInt(card.dataset.stIdx, 10);
+    const s = report.statements[i];
+    card.querySelector('.st-person').addEventListener('change', (e) => { s.personRef = e.target.value; markDirty(); });
+    card.querySelector('.st-quote').addEventListener('input', (e) => { s.quote = e.target.value; markDirty(); });
+    card.querySelectorAll('.st-exact button').forEach(btn => btn.addEventListener('click', () => {
+      s.isExact = btn.dataset.val === 'yes'; renderStatements(); markDirty();
+    }));
+  });
+}
+
+/* ---- OBSERVATIONS ---- */
+function renderObservations(){
+  const box = document.getElementById('observationsList');
+  if (report.observations.length === 0) { box.innerHTML = '<div class="empty-note">No observations recorded yet.</div>'; return; }
+  box.innerHTML = report.observations.map((o, i) => `
+    <div class="subcard" data-ob-idx="${i}">
+      <div class="subcard-head"><span class="subcard-title">Observation ${i + 1}</span><button class="btn sm danger" data-remove-observation="${i}" type="button">Remove</button></div>
+      <div class="field-grid cols-3">
+        <div class="field"><label>Staff Member Who Observed</label><input type="text" class="ob-staff" value="${esc(o.staffMember)}" /></div>
+        <div class="field"><label>Person / Object Involved</label><input type="text" class="ob-personobj" value="${esc(o.personOrObject)}" /></div>
+        <div class="field"><label>Approximate Time</label><input type="time" class="ob-time" value="${esc(o.time)}" /></div>
+        <div class="field"><label>Action</label><input type="text" class="ob-action" value="${esc(o.action)}" placeholder="e.g., knocked on door" /></div>
+        <div class="field"><label>Location</label><input type="text" class="ob-location" value="${esc(o.location)}" /></div>
+        <div class="field full"><label>Description</label><textarea class="ob-desc">${esc(o.description)}</textarea></div>
+      </div>
+    </div>
+  `).join('');
+  box.querySelectorAll('[data-remove-observation]').forEach(btn => btn.addEventListener('click', () => {
+    report.observations.splice(parseInt(btn.dataset.removeObservation, 10), 1); renderObservations(); markDirty();
+  }));
+  box.querySelectorAll('.subcard').forEach(card => {
+    const i = parseInt(card.dataset.obIdx, 10);
+    const o = report.observations[i];
+    card.querySelector('.ob-staff').addEventListener('input', (e) => { o.staffMember = e.target.value; markDirty(); });
+    card.querySelector('.ob-personobj').addEventListener('input', (e) => { o.personOrObject = e.target.value; markDirty(); });
+    card.querySelector('.ob-time').addEventListener('change', (e) => { o.time = e.target.value; markDirty(); });
+    card.querySelector('.ob-action').addEventListener('input', (e) => { o.action = e.target.value; markDirty(); });
+    card.querySelector('.ob-location').addEventListener('input', (e) => { o.location = e.target.value; markDirty(); });
+    card.querySelector('.ob-desc').addEventListener('input', (e) => { o.description = e.target.value; markDirty(); });
+  });
+}
+
+/* ==================================================================
+   STEP 4 — ACTIONS & RESPONSE
+   ================================================================== */
+function bindActionsStatic(){
+  renderChipGroup(document.getElementById('actionChips'), ACTION_OPTIONS, report.actions, true, (sel) => {
+    document.getElementById('actionOtherField').classList.toggle('hidden', !sel.includes('Other'));
+    if (sel.includes('University Police contacted') && !report.police.present) {
+      report.police.present = true;
+      bindSeg('policePresentToggle', 'yes', policeToggleHandler);
+      document.getElementById('policeSection').classList.remove('hidden');
+    }
+    markDirty();
+  });
+  document.getElementById('actionOtherField').classList.toggle('hidden', !report.actions.includes('Other'));
+  document.getElementById('actionOther').addEventListener('input', (e) => { report.actionOther = e.target.value; markDirty(); });
+
+  document.getElementById('addStaffContactBtn').addEventListener('click', () => {
+    report.staffContacts.push({ id: uid(), staffMember: '', title: '', time: '', method: 'Phone', notes: '' });
+    renderStaffContacts(); markDirty();
+  });
+
+  bindSeg('policePresentToggle', report.police.present ? 'yes' : 'no', policeToggleHandler);
+  document.getElementById('policeSection').classList.toggle('hidden', !report.police.present);
+  document.getElementById('policeAgency').addEventListener('input', (e) => { report.police.agency = e.target.value; markDirty(); });
+  document.getElementById('policeOfficerName').addEventListener('input', (e) => { report.police.officerName = e.target.value; markDirty(); });
+  document.getElementById('policeBadgeNumber').addEventListener('input', (e) => { report.police.badgeNumber = e.target.value; markDirty(); });
+  document.getElementById('policeCaseNumber').addEventListener('input', (e) => { report.police.caseNumber = e.target.value; markDirty(); });
+  document.getElementById('policeArrivalTime').addEventListener('change', (e) => { report.police.arrivalTime = e.target.value; markDirty(); });
+  document.getElementById('policeDepartureTime').addEventListener('change', (e) => { report.police.departureTime = e.target.value; markDirty(); });
+  document.getElementById('policeDisposedOrConfiscated').addEventListener('change', (e) => {
+    report.police.disposedOrConfiscated = e.target.value;
+    document.getElementById('policeDisposalDescField').classList.toggle('hidden', e.target.value !== 'yes');
+    markDirty();
+  });
+  document.getElementById('policeDisposalDescription').addEventListener('input', (e) => { report.police.disposalDescription = e.target.value; markDirty(); });
+
+  document.getElementById('addDispositionRowBtn').addEventListener('click', () => {
+    report.disposition.push({ id: uid(), item: '', quantity: '', action: '', personOrAgency: '', witnessedBy: '' });
+    renderDisposition(); markDirty();
+  });
+}
+
+function policeToggleHandler(val){
+  report.police.present = val === 'yes';
+  document.getElementById('policeSection').classList.toggle('hidden', val !== 'yes');
+  markDirty();
+}
+
+function renderStaffContacts(){
+  const box = document.getElementById('staffContactsList');
+  if (report.staffContacts.length === 0) { box.innerHTML = '<div class="empty-note">No staff contacts recorded yet.</div>'; return; }
+  box.innerHTML = report.staffContacts.map((s, i) => `
+    <div class="subcard" data-sc-idx="${i}">
+      <div class="subcard-head"><span class="subcard-title">Staff Contact ${i + 1}</span><button class="btn sm danger" data-remove-sc="${i}" type="button">Remove</button></div>
+      <div class="field-grid cols-4">
+        <div class="field"><label>Staff Member</label><input type="text" class="sc-name" value="${esc(s.staffMember)}" /></div>
+        <div class="field"><label>Title</label><input type="text" class="sc-title" value="${esc(s.title)}" /></div>
+        <div class="field"><label>Time Contacted</label><input type="time" class="sc-time" value="${esc(s.time)}" /></div>
+        <div class="field"><label>Method</label>
+          <select class="sc-method">${['Phone', 'Text', 'In Person', 'Other'].map(m => `<option ${s.method === m ? 'selected' : ''}>${m}</option>`).join('')}</select>
+        </div>
+        <div class="field full"><label>Instructions / Response Received</label><input type="text" class="sc-notes" value="${esc(s.notes)}" /></div>
+      </div>
+    </div>
+  `).join('');
+  box.querySelectorAll('[data-remove-sc]').forEach(btn => btn.addEventListener('click', () => {
+    report.staffContacts.splice(parseInt(btn.dataset.removeSc, 10), 1); renderStaffContacts(); markDirty();
+  }));
+  box.querySelectorAll('.subcard').forEach(card => {
+    const i = parseInt(card.dataset.scIdx, 10);
+    const s = report.staffContacts[i];
+    card.querySelector('.sc-name').addEventListener('input', (e) => { s.staffMember = e.target.value; markDirty(); });
+    card.querySelector('.sc-title').addEventListener('input', (e) => { s.title = e.target.value; markDirty(); });
+    card.querySelector('.sc-time').addEventListener('change', (e) => { s.time = e.target.value; markDirty(); });
+    card.querySelector('.sc-method').addEventListener('change', (e) => { s.method = e.target.value; markDirty(); });
+    card.querySelector('.sc-notes').addEventListener('input', (e) => { s.notes = e.target.value; markDirty(); });
+  });
+}
+
+function renderDisposition(){
+  const tbody = document.getElementById('dispositionRows');
+  if (report.disposition.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--rl-subtext);padding:14px">No items disposed of or confiscated.</td></tr>'; return; }
+  tbody.innerHTML = report.disposition.map((d, i) => `
+    <tr data-disp-idx="${i}">
+      <td><input type="text" class="d-item" value="${esc(d.item)}" /></td>
+      <td><input type="text" class="d-qty" value="${esc(d.quantity)}" /></td>
+      <td><select class="d-action"><option value="">Select&hellip;</option><option ${d.action === 'Disposed' ? 'selected' : ''}>Disposed</option><option ${d.action === 'Confiscated' ? 'selected' : ''}>Confiscated</option><option ${d.action === 'Left in Place' ? 'selected' : ''}>Left in Place</option><option ${d.action === 'Other' ? 'selected' : ''}>Other</option></select></td>
+      <td><input type="text" class="d-person" value="${esc(d.personOrAgency)}" /></td>
+      <td><input type="text" class="d-witness" value="${esc(d.witnessedBy)}" /></td>
+      <td><button class="btn sm danger" data-remove-disp="${i}" type="button">&times;</button></td>
+    </tr>
+  `).join('');
+  tbody.querySelectorAll('[data-remove-disp]').forEach(btn => btn.addEventListener('click', () => {
+    report.disposition.splice(parseInt(btn.dataset.removeDisp, 10), 1); renderDisposition(); markDirty();
+  }));
+  tbody.querySelectorAll('tr').forEach(row => {
+    const i = parseInt(row.dataset.dispIdx, 10);
+    const d = report.disposition[i];
+    row.querySelector('.d-item').addEventListener('input', (e) => { d.item = e.target.value; markDirty(); });
+    row.querySelector('.d-qty').addEventListener('input', (e) => { d.quantity = e.target.value; markDirty(); });
+    row.querySelector('.d-action').addEventListener('change', (e) => { d.action = e.target.value; markDirty(); });
+    row.querySelector('.d-person').addEventListener('input', (e) => { d.personOrAgency = e.target.value; markDirty(); });
+    row.querySelector('.d-witness').addEventListener('input', (e) => { d.witnessedBy = e.target.value; markDirty(); });
+  });
+}
+
+/* ==================================================================
+   STEP 5 — NARRATIVE / TIMELINE / QUALITY / OBJECTIVITY
+   All generation below is 100% deterministic and template-based —
+   no AI/LLM call is involved anywhere in this file. The generator can
+   only ever emit sentences built from fields the RA actually entered;
+   it never fabricates times, quotes, names, quantities, or conclusions.
+   ================================================================== */
+const TITLE_ABBR = { 'Resident Advisor': 'RA', 'Resident Assistant': 'RA', 'Resident Education Coordinator': 'REC', 'Reslife Admin': 'Admin', 'Resident': 'Resident', 'Guest': 'Guest', 'Witness': 'Witness', 'Reporting Party': 'Reporting Party' };
+function shortRef(title, fullName){
+  const abbr = TITLE_ABBR[title] || title || '';
+  const parts = (fullName || '').trim().split(/\s+/);
+  const last = parts.length ? parts[parts.length - 1] : '';
+  if (!last) return abbr;
+  return (abbr ? abbr + ' ' : '') + last;
+}
+function titleForPerson(p){
+  if (p.role === 'Staff') return p.title || 'Staff Member';
+  if (p.personType) return p.personType;
+  return p.role || 'Individual';
+}
+function hashStr(s){ let hh = 0; for (let i = 0; i < s.length; i++) { hh = (hh * 31 + s.charCodeAt(i)) | 0; } return String(hh); }
+
+let pendingNarrative = null;
+
+function buildNarrative(r){
+  const introduced = {};
+  const nameToShort = {};
+  function mention(key, title, fullName){
+    if (!fullName) return null;
+    if (introduced[key]) return introduced[key];
+    const sref = shortRef(title, fullName);
+    const full = (title ? title + ' ' : '') + fullName;
+    const result = (sref && sref !== full) ? `${full} (${sref})` : full;
+    introduced[key] = sref || full;
+    nameToShort[fullName] = introduced[key];
+    return result;
+  }
+  function nameDisplay(name){ if (!name) return null; return nameToShort[name] || name; }
+
+  const p1 = []; // opening / discovery / location
+  const p2 = []; // people / guests
+  const p3 = []; // category facts / behavior
+  const p4 = []; // statements / observations
+  const p5 = []; // actions / staff / police / disposition / closing
+
+  // --- Opening ---
+  const dateStr = r.incident.startDate ? fmtDateLong(r.incident.startDate) : null;
+  const timeStr = r.incident.startTime ? fmtTime12(r.incident.startTime) : null;
+  const reporterMention = mention('reporter', r.reporter.title || 'Resident Advisor', r.reporter.fullName);
+  let opening = '';
+  if (dateStr && timeStr) opening = `On ${dateStr}, at ${timeStr}, `;
+  else if (dateStr) opening = `On ${dateStr}, `;
+  const discoveryLabel = r.discovery.method === 'Other' ? (r.discovery.methodOther || 'other means') : r.discovery.method;
+  const discoveryClause = discoveryLabel ? ` learned of the incident via ${discoveryLabel.toLowerCase()}` : ' documented the following incident';
+  p1.push(`${opening}${reporterMention || (r.reporter.title || 'Resident Advisor')}${discoveryClause}.`);
+  if (r.discovery.reportedBy) p1.push(`The situation was initially reported by ${r.discovery.reportedBy}.`);
+  if (r.incident.area) {
+    const locDesc = [r.incident.specificLocationType, r.incident.area].filter(Boolean).join(' ');
+    p1.push(`The incident occurred at ${locDesc}${r.incident.locationType ? ' within the ' + r.incident.locationType : ''}.`);
+  }
+  if (r.incident.discoveredDuringInspection && r.incident.inspectionDate) {
+    p1.push(`This was discovered during an inspection conducted on ${fmtDateLong(r.incident.inspectionDate) || r.incident.inspectionDate}.`);
+  }
+
+  // --- Responding staff ---
+  (r.respondingStaff || []).forEach((s, i) => {
+    if (!s.fullName) return;
+    const m = mention('staff-' + i, s.title || 'Staff Member', s.fullName);
+    p2.push(`${m} responded to the scene.`);
+  });
+
+  // --- Involved parties roll call ---
+  const namedParties = (r.involvedParties || []).filter(p => p.name);
+  if (namedParties.length) {
+    const list = namedParties.map(p => mention('party-' + p.id, titleForPerson(p), p.name));
+    p2.push(`The following individuals were involved: ${list.join('; ')}.`);
+  }
+
+  // --- Guests ---
+  (r.guests || []).forEach(g => {
+    if (!g.fullName) return;
+    const m = mention('guest-' + g.id, 'Guest', g.fullName);
+    let sent = `${m} was present`;
+    if (g.visitingResident) sent += ` as a guest of ${g.visitingResident}`;
+    sent += '.';
+    p2.push(sent);
+    const short = nameToShort[g.fullName];
+    if (g.escorted === 'yes') p2.push(`${short} was escorted from the property.`);
+    else if (g.escorted === 'no') p2.push(`${short} was not escorted from the property.`);
+    if (g.studentId) p2.push(`${short} was identified with student ID ${g.studentId}.`);
+    if (g.idInfo) p2.push(`${short} provided the following identifying information: ${g.idInfo}.`);
+  });
+
+  // --- Category-specific facts ---
+  if ((r.categories || []).includes('noise') && r.categoryAnswers.noise) {
+    const a = r.categoryAnswers.noise;
+    if (a.heardFrom) p3.push(`Noise was heard from ${a.heardFrom}.`);
+    if (a.noiseType && a.noiseType.length) p3.push(`The noise was characterized as: ${a.noiseType.join(', ').toLowerCase()}.`);
+    if (a.wordsDistinguished) p3.push(`Words/conversation could ${a.wordsDistinguished === 'yes' ? '' : 'not '}be distinguished.`);
+    if (a.distance) p3.push(`The noise could be heard from approximately ${a.distance}.`);
+    if (a.contacted) p3.push(`Staff ${a.contacted === 'yes' ? 'made contact' : 'did not make contact'} with the occupants.`);
+    if (a.contacted === 'yes' && a.stoppedAfterContact && a.stoppedAfterContact !== 'not_applicable') p3.push(`The noise ${a.stoppedAfterContact === 'yes' ? 'stopped' : 'did not stop'} after contact was made.`);
+    if (a.priorContact) p3.push(`${a.priorContact === 'yes' ? 'There was' : 'There was no'} previous contact during the same incident.`);
+  }
+  if ((r.categories || []).includes('alcohol') && r.categoryAnswers.alcohol) {
+    const a = r.categoryAnswers.alcohol;
+    (r.observedItems || []).filter(it => it.category === 'alcohol').forEach(it => {
+      let s = `Staff observed ${it.quantity ? it.quantity + ' ' : ''}${it.itemType}${it.openClosed ? ' (' + it.openClosed + ')' : ''} located at ${it.location || 'an unspecified location'}`;
+      if (it.associatedPerson) s += `, associated with ${it.associatedPerson}`;
+      s += '.';
+      if (it.disposition) s += ` The item was ${it.disposition.toLowerCase()}.`;
+      p3.push(s);
+    });
+    if (a.disposedOverall) p3.push(`Alcohol ${a.disposedOverall === 'yes' ? 'was' : 'was not'} disposed of.`);
+    if (a.disposedBy) p3.push(`Disposal was carried out by ${a.disposedBy}.`);
+    if (a.witnessedByStaff) p3.push(`Disposal ${a.witnessedByStaff === 'yes' ? 'was' : 'was not'} witnessed by staff.`);
+    if (a.policeInvolved) p3.push(`Police ${a.policeInvolved === 'yes' ? 'were' : 'were not'} involved.`);
+  }
+  if ((r.categories || []).includes('drugs') || (r.categories || []).includes('smoking')) {
+    const a = r.categoryAnswers.drugsSmoking;
+    if (a) {
+      if (a.substanceObserved) p3.push(`A substance was ${a.substanceObserved === 'yes' ? 'directly observed' : 'not directly observed'}.`);
+      if (a.paraphernaliaObserved) p3.push(`Paraphernalia was ${a.paraphernaliaObserved === 'yes' ? 'directly observed' : 'not directly observed'}.`);
+      if (a.odorDetected === 'yes' && a.odorDescription) p3.push(`Staff detected an odor described as ${a.odorDescription}${a.odorLocation ? ' near ' + a.odorLocation : ''}.`);
+      (r.observedItems || []).filter(it => it.category === 'drugsSmoking').forEach(it => {
+        p3.push(`Staff observed ${it.itemType}${it.location ? ' located at ' + it.location : ''}.`);
+      });
+      if (a.policeContacted) p3.push(`Police ${a.policeContacted === 'yes' ? 'were' : 'were not'} contacted regarding this.`);
+      if (a.policeConfiscated) p3.push(`Police ${a.policeConfiscated === 'yes' ? 'did confiscate' : 'did not confiscate'} items.`);
+    }
+  }
+  (r.categories || []).filter(c => !BESPOKE_CATEGORIES.includes(c)).forEach(catId => {
+    const a = r.categoryAnswers[catId];
+    if (!a) return;
+    const def = CATEGORY_DEFS.find(c => c.id === catId);
+    if (a.location || a.description) {
+      p3.push(`Regarding ${def ? def.label.toLowerCase() : catId}${a.location ? ' at ' + a.location : ''}: ${a.description || ''}`.trim());
+    }
+  });
+
+  // --- Behavior ---
+  if (r.behavior && r.behavior.observed && (r.behavior.indicators.length || r.behavior.description)) {
+    let s = 'Staff observed the following';
+    if (r.behavior.indicators.length) s += `: ${r.behavior.indicators.join(', ').toLowerCase()}`;
+    s += '.';
+    p3.push(s);
+    if (r.behavior.description) p3.push(r.behavior.description);
+  }
+
+  // --- Statements ---
+  (r.statements || []).forEach(s => {
+    if (!s.quote || !s.personRef) return;
+    const who = nameDisplay(s.personRef) || s.personRef;
+    if (s.isExact) p4.push(`${who} stated, "${s.quote}"`);
+    else p4.push(`${who} indicated, in substance, that ${s.quote}`);
+  });
+
+  // --- Observations ---
+  (r.observations || []).forEach(o => {
+    if (!o.description && !o.action) return;
+    const staff = o.staffMember ? (nameDisplay(o.staffMember) || o.staffMember) : 'Staff';
+    const timeClause = o.time ? ` at approximately ${fmtTime12(o.time)}` : '';
+    const locClause = o.location ? ` at ${o.location}` : '';
+    const involvingClause = o.personOrObject ? ` involving ${o.personOrObject}` : '';
+    let sent = `${staff} observed`;
+    if (o.action) sent += ` ${o.action}`;
+    sent += `${involvingClause}${locClause}${timeClause}.`;
+    if (o.description) sent += ' ' + o.description;
+    p4.push(sent.trim());
+  });
+
+  // --- Actions taken ---
+  const ACTION_SENTENCES = {
+    'Resident(s) contacted': 'Resident(s) were contacted regarding the incident.',
+    'Policy expectations explained': 'Policy expectations were explained to those involved.',
+    'Resident(s) advised incident would be documented': 'Resident(s) were advised that the incident would be documented.',
+    'Item disposed of': 'The item(s) involved were disposed of.',
+    'Guest escorted from property': 'The guest was escorted from the property.',
+    'REC-on-Duty contacted': 'The REC-on-Duty was contacted.',
+    'Other staff contacted': 'Other staff were contacted.',
+    'University Police contacted': 'University Police were contacted.',
+    'Medical assistance requested': 'Medical assistance was requested.',
+    'Counseling / Psychological Services referral': 'A referral to Counseling / Psychological Services was made.',
+    'Title IX referral': 'A Title IX referral was made.',
+    'Service Request submitted': 'A Service Request was submitted.',
+    'Area secured': 'The area was secured.',
+    'No additional action': 'No additional action was taken.',
+  };
+  (r.actions || []).forEach(a => {
+    if (a === 'Other') { if (r.actionOther) p5.push(r.actionOther + (/[.!?]$/.test(r.actionOther) ? '' : '.')); }
+    else p5.push(ACTION_SENTENCES[a] || (a + '.'));
+  });
+
+  // --- Staff contacted ---
+  (r.staffContacts || []).forEach(s => {
+    if (!s.staffMember) return;
+    let sent = `${s.staffMember}${s.title ? ' (' + s.title + ')' : ''} was contacted`;
+    if (s.time) sent += ` at approximately ${fmtTime12(s.time)}`;
+    if (s.method) sent += ` via ${s.method.toLowerCase()}`;
+    sent += '.';
+    if (s.notes) sent += ' ' + s.notes;
+    p5.push(sent);
+  });
+
+  // --- Police ---
+  if (r.police && r.police.present) {
+    let sent = 'Police';
+    if (r.police.agency) sent += ` from ${r.police.agency}`;
+    sent += ' responded to the incident.';
+    p5.push(sent);
+    if (r.police.officerName) p5.push(`The responding officer was ${r.police.officerName}${r.police.badgeNumber ? ' (Badge #' + r.police.badgeNumber + ')' : ''}.`);
+    if (r.police.caseNumber) p5.push(`The associated case number is ${r.police.caseNumber}.`);
+    if (r.police.arrivalTime) p5.push(`Police arrived at approximately ${fmtTime12(r.police.arrivalTime)}${r.police.departureTime ? ' and departed at approximately ' + fmtTime12(r.police.departureTime) : ''}.`);
+    if (r.police.disposedOrConfiscated === 'yes' && r.police.disposalDescription) p5.push(`Police disposed of or confiscated the following: ${r.police.disposalDescription}`);
+  }
+
+  // --- Disposition table ---
+  (r.disposition || []).forEach(d => {
+    if (!d.item) return;
+    let sent = `${d.item}${d.quantity ? ' (quantity ' + d.quantity + ')' : ''} was ${d.action ? d.action.toLowerCase() : 'documented'}`;
+    if (d.personOrAgency) sent += ` by ${d.personOrAgency}`;
+    sent += '.';
+    if (d.witnessedBy) sent += ` This was witnessed by ${d.witnessedBy}.`;
+    p5.push(sent);
+  });
+
+  // --- Closing ---
+  if (r.incident.endTime) p5.push(`The incident concluded at approximately ${fmtTime12(r.incident.endTime)}.`);
+
+  const paragraphs = [p1, p2, p3, p4, p5].map(arr => arr.join(' ')).filter(Boolean);
+  return paragraphs.join('\n\n');
+}
+
+/* ---- Facts summary (left panel, read-only reference) ---- */
+function buildFactsSummary(r){
+  const rows = [];
+  const add = (label, val) => { if (val) rows.push(`<div style="margin-bottom:8px"><strong>${esc(label)}:</strong> ${esc(val)}</div>`); };
+  add('Reporter', r.reporter.fullName ? `${r.reporter.fullName} (${r.reporter.title})` : '');
+  add('Report Type', r.incident.natureOfReport === 'Other' ? r.incident.natureOfReportOther : r.incident.natureOfReport);
+  add('Start', [r.incident.startDate, r.incident.startTime].filter(Boolean).join(' '));
+  add('End', [r.incident.endDate, r.incident.endTime].filter(Boolean).join(' '));
+  add('Location', [r.incident.specificLocationType, r.incident.area].filter(Boolean).join(' '));
+  add('Categories', (r.categories || []).map(c => (CATEGORY_DEFS.find(cd => cd.id === c) || {}).label || c).join(', '));
+  add('Discovery', r.discovery.method === 'Other' ? r.discovery.methodOther : r.discovery.method);
+  add('People Involved', (r.involvedParties || []).filter(p => p.name).map(p => p.name + ' (' + titleForPerson(p) + ')').join(', '));
+  add('Guests', (r.guests || []).filter(g => g.fullName).map(g => g.fullName).join(', '));
+  add('Statements', String((r.statements || []).filter(s => s.quote).length) + ' recorded');
+  add('Observations', String((r.observations || []).filter(o => o.description || o.action).length) + ' recorded');
+  add('Actions Taken', (r.actions || []).join(', '));
+  add('Staff Contacted', (r.staffContacts || []).filter(s => s.staffMember).map(s => s.staffMember).join(', '));
+  add('Police', r.police && r.police.present ? 'Present' : 'Not involved');
+  add('Disposition Entries', String((r.disposition || []).filter(d => d.item).length));
+  return rows.join('') || '<div class="empty-note">No facts entered yet.</div>';
+}
+function renderFactsSummary(){ document.getElementById('factsSummaryBox').innerHTML = buildFactsSummary(report); }
+
+/* ---- Timeline ---- */
+function syncTimelineFromReport(){
+  const r = report;
+  const candidates = [];
+  if (r.incident.startTime) candidates.push({ key: 'incident-start', time: r.incident.startTime, label: 'Incident began' + (r.discovery.method ? ' — discovered via ' + r.discovery.method : ''), source: 'Incident Basics' });
+  (r.observations || []).forEach((o, i) => { if (o.time) candidates.push({ key: 'obs-' + o.id, time: o.time, label: (o.action || 'Observation') + (o.personOrObject ? ' — ' + o.personOrObject : ''), source: 'Observation' }); });
+  (r.staffContacts || []).forEach(s => { if (s.time && s.staffMember) candidates.push({ key: 'sc-' + s.id, time: s.time, label: s.staffMember + ' contacted', source: 'Staff Contact' }); });
+  if (r.police && r.police.present && r.police.arrivalTime) candidates.push({ key: 'police-arrive', time: r.police.arrivalTime, label: 'Police arrived' + (r.police.agency ? ' (' + r.police.agency + ')' : ''), source: 'Police' });
+  if (r.police && r.police.present && r.police.departureTime) candidates.push({ key: 'police-depart', time: r.police.departureTime, label: 'Police departed', source: 'Police' });
+  if (r.incident.endTime) candidates.push({ key: 'incident-end', time: r.incident.endTime, label: 'Incident concluded', source: 'Incident Basics' });
+
+  const existingByKey = {};
+  (r.timeline || []).forEach(t => { existingByKey[t.key] = t; });
+  r.timeline = candidates.map(c => {
+    const existing = existingByKey[c.key];
+    return existing ? Object.assign({}, c, { time: existing.edited ? existing.time : c.time, edited: existing.edited }) : Object.assign({ edited: false }, c);
+  }).sort((a, b) => (minutesSinceMidnight(a.time) || 0) - (minutesSinceMidnight(b.time) || 0));
+}
+function renderTimeline(){
+  const box = document.getElementById('timelineBox');
+  if (!report.timeline || report.timeline.length === 0) { box.innerHTML = '<div class="empty-note">No timestamped events recorded yet. Add times in Incident Basics, Observations, Staff Contacts, or Police to build a timeline.</div>'; return; }
+  box.innerHTML = report.timeline.map((t, i) => `
+    <div class="timeline-item">
+      <div class="timeline-time">${t.time ? `<input type="time" value="${esc(t.time)}" data-tl-idx="${i}" />` : 'Time not recorded'}</div>
+      <div class="timeline-label">${esc(t.label)}</div>
+      <div class="timeline-source">${esc(t.source)}</div>
+    </div>
+  `).join('');
+  box.querySelectorAll('[data-tl-idx]').forEach(inp => inp.addEventListener('change', (e) => {
+    const i = parseInt(e.target.dataset.tlIdx, 10);
+    report.timeline[i].time = e.target.value;
+    report.timeline[i].edited = true;
+    markDirty();
+  }));
+}
+
+/* ---- Objectivity checker ---- */
+function checkObjectivity(text){
+  const flags = [];
+  SUBJECTIVE_TERMS.forEach(t => {
+    const re = new RegExp('\\b' + t.term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'ig');
+    if (re.test(text)) flags.push(t);
+  });
+  return flags;
+}
+function renderObjectivityFlags(flags){
+  const box = document.getElementById('objectivityFlags');
+  if (!flags || flags.length === 0) { box.innerHTML = ''; return; }
+  box.innerHTML = `<p class="section-title">Potentially Subjective Wording</p>` + flags.map(f => `
+    <div class="flag-item"><b>"${esc(f.term)}"</b> — ${esc(f.hint)} Consider describing the specific observable behavior instead, using facts already entered above.</div>
+  `).join('');
+}
+
+/* ---- Quality / readiness checker ---- */
+function computeReadiness(r){
+  const required = [];
+  const recommended = [];
+  const writing = [];
+  const narrativeText = r.narrative.text || '';
+
+  const req = (label, ok) => required.push({ label, ok });
+  const rec = (label, ok) => recommended.push({ label, ok });
+
+  req('Reporting RA name entered', !!r.reporter.fullName);
+  req('Report type selected', !!r.incident.natureOfReport);
+  req('Incident start date entered', !!r.incident.startDate);
+  req('Incident start time entered', !!r.incident.startTime);
+  req('Location entered', !!r.incident.area);
+  req('Narrative generated', narrativeText.trim().length > 0);
+
+  (r.involvedParties || []).forEach(p => {
+    if (p.role === 'Student' && p.name && !p.studentId) rec(`Missing Student ID for ${p.name}`, false);
+  });
+  if ((r.categories || []).includes('alcohol') && r.categoryAnswers.alcohol && r.categoryAnswers.alcohol.observed === 'yes') {
+    rec('Alcohol observed — at least one observed item recorded', (r.observedItems || []).some(it => it.category === 'alcohol'));
+  }
+  if (r.police && r.police.present) rec('Police involved — case number provided', !!r.police.caseNumber);
+  if (r.guestsPresent) rec('Guest listed — escort status recorded', (r.guests || []).every(g => !g.fullName || (g.escorted && g.escorted !== '')));
+  rec('At least one person or observation documented', (r.involvedParties || []).some(p => p.name) || (r.observations || []).some(o => o.description || o.action));
+
+  const thirdPersonOk = !/\b(I|I'm|I've|my|we|our)\b/.test(narrativeText);
+  writing.push({ label: 'Narrative is written in third person', ok: thirdPersonOk });
+
+  let chronologyOk = true;
+  if (r.incident.startTime && r.incident.endTime) {
+    const startMin = minutesSinceMidnight(r.incident.startTime);
+    const endMin = minutesSinceMidnight(r.incident.endTime);
+    if (startMin !== null && endMin !== null && endMin < startMin) chronologyOk = false;
+  }
+  (r.timeline || []).forEach(t => {
+    if (t.time && r.incident.startTime && minutesSinceMidnight(t.time) < minutesSinceMidnight(r.incident.startTime)) chronologyOk = false;
+  });
+  writing.push({ label: 'Chronology appears consistent', ok: chronologyOk });
+  writing.push({ label: 'Reporting staff identified', ok: !!r.reporter.fullName && narrativeText.includes(r.reporter.fullName) });
+  writing.push({ label: 'Involved people identified', ok: (r.involvedParties || []).some(p => p.name) ? (r.involvedParties.some(p => p.name && narrativeText.includes(p.name))) : true });
+  writing.push({ label: 'Actions taken documented', ok: (r.actions || []).length > 0 });
+
+  const allChecks = required.concat(recommended);
+  const completed = allChecks.filter(c => c.ok).length;
+  const percent = allChecks.length ? Math.round((completed / allChecks.length) * 100) : 0;
+
+  return { percent, required, recommended, writing };
+}
+
+function renderQualityChecks(){
+  const q = computeReadiness(report);
+  const ring = document.getElementById('readinessRing');
+  const color = q.percent >= 90 ? 'var(--rl-success)' : (q.percent >= 60 ? 'var(--rl-secondary)' : 'var(--rl-danger)');
+  ring.style.background = color;
+  ring.textContent = q.percent + '%';
+  document.getElementById('readinessPercentLabel').textContent = q.percent + '% Complete';
+
+  const box = document.getElementById('qualityChecksBox');
+  function group(title, items, cls){
+    const missing = items.filter(i => !i.ok);
+    if (missing.length === 0 && cls !== 'writing') return '';
+    const rows = (cls === 'writing' ? items : missing).map(i => `<div class="check-row ${cls === 'writing' ? (i.ok ? 'ok' : 'required') : cls}"><span class="ico">${i.ok ? '&#10003;' : '&#33;'}</span><span>${esc(i.label)}${cls === 'writing' ? (i.ok ? ' \u2713' : '') : ''}</span></div>`).join('');
+    return `<div class="check-group-title">${title}</div>${rows}`;
+  }
+  box.innerHTML =
+    group('Required', q.required, 'required') +
+    group('Recommended', q.recommended, 'recommended') +
+    `<div class="check-group-title">Writing Check</div>` + q.writing.map(i => `<div class="check-row ${i.ok ? 'ok' : 'required'}"><span class="ico">${i.ok ? '&#10003;' : '&#10007;'}</span><span>${esc(i.label)}</span></div>`).join('');
+
+  if (q.required.every(i => i.ok) && q.recommended.length === 0 && q.required.filter(i=>!i.ok).length===0) {
+    // no-op placeholder; readiness ring already communicates state
+  }
+}
+
+/* ---- Narrative step orchestration ---- */
+function renderNarrativeStep(){
+  renderFactsSummary();
+  const generated = buildNarrative(report);
+  const generatedHash = hashStr(generated);
+  const box = document.getElementById('narrativeBox');
+
+  if (!narrativeManuallyEdited) {
+    report.narrative.text = generated;
+    lastGeneratedNarrativeHash = generatedHash;
+    box.textContent = generated;
+    document.getElementById('narrativeChangedBanner').classList.add('hidden');
+    pendingNarrative = null;
+  } else {
+    box.textContent = report.narrative.text || generated;
+    if (generatedHash !== lastGeneratedNarrativeHash) {
+      pendingNarrative = generated;
+      document.getElementById('narrativeChangedBanner').classList.remove('hidden');
+    } else {
+      pendingNarrative = null;
+      document.getElementById('narrativeChangedBanner').classList.add('hidden');
+    }
+  }
+  document.getElementById('narrativeEditedFlag').style.display = narrativeManuallyEdited ? '' : 'none';
+  syncTimelineFromReport();
+  renderTimeline();
+  renderQualityChecks();
+  renderObjectivityFlags(checkObjectivity(box.textContent));
+}
+
+document.getElementById('narrativeBox').addEventListener('input', (e) => {
+  narrativeManuallyEdited = true;
+  report.narrative.text = e.target.textContent;
+  document.getElementById('narrativeEditedFlag').style.display = '';
+  markDirty();
+});
+document.getElementById('updateNarrativeBtn').addEventListener('click', () => {
+  if (pendingNarrative == null) return;
+  report.narrative.text = pendingNarrative;
+  lastGeneratedNarrativeHash = hashStr(pendingNarrative);
+  narrativeManuallyEdited = false;
+  document.getElementById('narrativeBox').textContent = pendingNarrative;
+  document.getElementById('narrativeChangedBanner').classList.add('hidden');
+  document.getElementById('narrativeEditedFlag').style.display = 'none';
+  renderQualityChecks();
+  renderObjectivityFlags(checkObjectivity(pendingNarrative));
+  markDirty();
+});
+document.getElementById('keepNarrativeBtn').addEventListener('click', () => {
+  lastGeneratedNarrativeHash = hashStr(buildNarrative(report));
+  document.getElementById('narrativeChangedBanner').classList.add('hidden');
+});
+document.getElementById('regenerateNarrativeBtn').addEventListener('click', () => {
+  if (narrativeManuallyEdited && !confirm('This will replace your manually edited narrative with a freshly generated one. Continue?')) return;
+  narrativeManuallyEdited = false;
+  renderNarrativeStep();
+  markDirty();
+});
+document.getElementById('improveClarityBtn').addEventListener('click', () => {
+  const box = document.getElementById('narrativeBox');
+  let text = box.textContent;
+  text = text.replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').replace(/ +([.,;:])/g, '$1');
+  text = text.split('\n\n').map(p => p.trim()).filter(Boolean).join('\n\n');
+  text = text.replace(/(^\s*|\n\s*)([a-z])/g, (m, pre, ch) => pre + ch.toUpperCase());
+  box.textContent = text;
+  report.narrative.text = text;
+  narrativeManuallyEdited = true;
+  document.getElementById('narrativeEditedFlag').style.display = '';
+  markDirty();
+});
+document.getElementById('checkObjectivityBtn').addEventListener('click', () => {
+  const flags = checkObjectivity(document.getElementById('narrativeBox').textContent);
+  renderObjectivityFlags(flags);
+  if (flags.length === 0) alert('No potentially subjective wording detected.');
+});
+document.getElementById('checkChronologyBtn').addEventListener('click', () => {
+  const q = computeReadiness(report);
+  const chronoCheck = q.writing.find(w => w.label === 'Chronology appears consistent');
+  alert(chronoCheck.ok ? 'Chronology appears consistent.' : 'One or more timestamps appear out of order — review the Incident Timeline above.');
+});
+document.getElementById('copyNarrativeBtn').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText(document.getElementById('narrativeBox').textContent); flashBtn('copyNarrativeBtn', 'Copied!'); }
+  catch (e) { alert('Could not copy automatically — please select and copy the text manually.'); }
+});
+function flashBtn(id, text){
+  const btn = document.getElementById(id);
+  const orig = btn.textContent;
+  btn.textContent = text;
+  setTimeout(() => { btn.textContent = orig; }, 1500);
+}
+
+/* ==================================================================
+   STEP 6 — SUPPORTING DOCUMENTS
+   NOTE: this app has no server-side file/blob storage integration
+   (Creative Library and Email Assets both reference external URLs
+   rather than uploading binaries). File metadata is tracked here and
+   saved with the draft; the actual file bytes are NOT persisted to a
+   server and will not survive a page reload. See the on-screen notice.
+   ================================================================== */
+const ATTACHMENT_CATEGORIES = ['Photo', 'Video', 'Email', 'Screenshot', 'Document', 'Other'];
+let attachmentFileObjects = {}; // id -> File (session-only, not persisted)
+
+function bindAttachmentsStatic(){
+  const dz = document.getElementById('dropzone');
+  const input = document.getElementById('fileInput');
+  dz.addEventListener('click', () => input.click());
+  dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('dragover'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+  dz.addEventListener('drop', (e) => { e.preventDefault(); dz.classList.remove('dragover'); addFiles(e.dataTransfer.files); });
+  input.addEventListener('change', (e) => { addFiles(e.target.files); input.value = ''; });
+}
+function addFiles(fileList){
+  Array.from(fileList).forEach(file => {
+    const id = uid();
+    attachmentFileObjects[id] = file;
+    report.attachments.push({ id, filename: file.name, size: file.size, type: file.type || 'unknown', category: guessCategory(file), description: '' });
+  });
+  renderAttachments(); markDirty();
+}
+function guessCategory(file){
+  const t = (file.type || '').toLowerCase();
+  if (t.startsWith('image/')) return 'Photo';
+  if (t.startsWith('video/')) return 'Video';
+  if (t === 'message/rfc822' || file.name.toLowerCase().endsWith('.eml')) return 'Email';
+  if (t === 'application/pdf' || t.includes('document') || t.includes('word')) return 'Document';
+  return 'Other';
+}
+function fmtBytes(bytes){
+  if (!bytes) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let i = 0; let n = bytes;
+  while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
+  return n.toFixed(i === 0 ? 0 : 1) + ' ' + units[i];
+}
+const ATT_ICONS = { Photo: '\u{1F4F7}', Video: '\u{1F3A5}', Email: '\u{2709}', Screenshot: '\u{1F5BC}', Document: '\u{1F4C4}', Other: '\u{1F4CE}' };
+
+function renderAttachments(){
+  const box = document.getElementById('attachmentsList');
+  const totalBytes = report.attachments.reduce((s, a) => s + (a.size || 0), 0);
+  if (report.attachments.length === 0) { box.innerHTML = '<div class="empty-note">No files added yet.</div>'; return; }
+  box.innerHTML = `<div class="helper-text" style="margin-bottom:10px">${report.attachments.length} file(s) &middot; ${fmtBytes(totalBytes)} total</div>` +
+    report.attachments.map((a, i) => `
+    <div class="attachment-card" data-att-idx="${i}">
+      <div class="att-icon">${ATT_ICONS[a.category] || '\u{1F4CE}'}</div>
+      <div class="att-meta">
+        <div class="att-name">${esc(a.filename)}</div>
+        <div class="att-sub">${fmtBytes(a.size)} &middot; <select class="att-cat" style="font-size:11px;padding:2px 4px">${ATTACHMENT_CATEGORIES.map(c => `<option ${a.category === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
+        <input type="text" class="att-desc" placeholder="Optional description" value="${esc(a.description)}" style="margin-top:6px;width:100%;padding:6px 8px;border:1px solid var(--rl-border);border-radius:6px;font-size:12px;font-family:inherit" />
+      </div>
+      <button class="btn sm danger" data-remove-att="${i}" type="button">Remove</button>
+    </div>
+  `).join('');
+  box.querySelectorAll('[data-remove-att]').forEach(btn => btn.addEventListener('click', () => {
+    const i = parseInt(btn.dataset.removeAtt, 10);
+    delete attachmentFileObjects[report.attachments[i].id];
+    report.attachments.splice(i, 1); renderAttachments(); markDirty();
+  }));
+  box.querySelectorAll('.attachment-card').forEach(card => {
+    const i = parseInt(card.dataset.attIdx, 10);
+    card.querySelector('.att-cat').addEventListener('change', (e) => { report.attachments[i].category = e.target.value; markDirty(); });
+    card.querySelector('.att-desc').addEventListener('input', (e) => { report.attachments[i].description = e.target.value; markDirty(); });
+  });
+}
+
+/* ==================================================================
+   STEP 7 — REVIEW & MAXIENT EXPORT
+   ================================================================== */
+function finalChecklist(r){
+  const items = [
+    { label: 'Reporting RA identified', ok: !!r.reporter.fullName },
+    { label: 'Report nature selected', ok: !!r.incident.natureOfReport },
+    { label: 'Incident start date/time entered', ok: !!(r.incident.startDate && r.incident.startTime) },
+    { label: 'Location entered', ok: !!r.incident.area },
+    { label: 'Applicable involved parties entered', ok: (r.involvedParties || []).some(p => p.name) || (r.categories || []).length === 0 },
+    { label: 'Narrative exists', ok: !!(r.narrative.text && r.narrative.text.trim()) },
+    { label: 'Narrative begins with incident date/time', ok: !!(r.narrative.text && /^On /.test(r.narrative.text.trim())) },
+    { label: 'Key actions documented', ok: (r.actions || []).length > 0 },
+    { label: 'Applicable staff contacts documented', ok: !r.actions.includes('Other staff contacted') || (r.staffContacts || []).some(s => s.staffMember) },
+    { label: 'Applicable Police information addressed', ok: !r.police.present || !!r.police.officerName || !!r.police.agency },
+    { label: 'Required conditional questions complete', ok: (r.involvedParties || []).filter(p => p.role === 'Student' && p.name).every(p => !!p.studentId) },
+  ];
+  return items;
+}
+
+function renderReviewStep(){
+  const r = report;
+  const checklist = finalChecklist(r);
+  const allOk = checklist.every(i => i.ok);
+  document.getElementById('finalChecklistBox').innerHTML = checklist.map(i => `<div class="check-row ${i.ok ? 'ok' : 'required'}"><span class="ico">${i.ok ? '&#10003;' : '&#10007;'}</span><span>${esc(i.label)}</span></div>`).join('');
+  const pill = document.getElementById('readyPill');
+  pill.textContent = allOk ? 'Ready for Maxient' : 'Needs Attention';
+  pill.className = 'pill ' + (allOk ? 'green' : 'orange');
+  if (allOk && r.metadata) r.metadata.readyConfirmed = true;
+
+  renderReviewView();
+  renderMaxientView();
+  document.getElementById('reviewViewBox').classList.remove('hidden');
+  document.getElementById('maxientViewBox').classList.add('hidden');
+}
+
+function reviewSectionHTML(title, rowsHtml){
+  return `<div class="rl-panel"><div class="rl-panel-header"><div><h2>${esc(title)}</h2></div></div><div class="rl-panel-body">${rowsHtml}</div></div>`;
+}
+function kv(label, value){
+  return `<div style="margin-bottom:8px"><div class="helper-text" style="margin:0">${esc(label)}</div><div style="font-size:13.5px">${value ? esc(value) : '<span style="color:#cbd5e1">Not entered</span>'}</div></div>`;
+}
+
+function renderReviewView(){
+  const r = report;
+  let html = '';
+  html += reviewSectionHTML('Reporting Party', `
+    <div class="field-grid cols-4">${kv('Full Name', r.reporter.fullName)}${kv('Title', r.reporter.title)}${kv('Phone', r.reporter.phone)}${kv('Email', r.reporter.email)}</div>
+    ${r.respondingStaff.length ? '<p class="section-title" style="margin-top:14px">Responding Staff</p>' + r.respondingStaff.map(s => `<div class="subcard">${kv('Name', s.fullName)}${kv('Title', s.title)}</div>`).join('') : ''}
+  `);
+  html += reviewSectionHTML('Incident', `
+    <div class="field-grid cols-3">
+      ${kv('Nature of Report', r.incident.natureOfReport === 'Other' ? r.incident.natureOfReportOther : r.incident.natureOfReport)}
+      ${kv('Start', [r.incident.startDate, r.incident.startTime && fmtTime12(r.incident.startTime)].filter(Boolean).join(' at '))}
+      ${kv('End', [r.incident.endDate, r.incident.endTime && fmtTime12(r.incident.endTime)].filter(Boolean).join(' at '))}
+      ${kv('Location', [r.incident.specificLocationType, r.incident.area].filter(Boolean).join(' — '))}
+      ${kv('Categories', (r.categories || []).map(c => (CATEGORY_DEFS.find(cd => cd.id === c) || {}).label || c).join(', '))}
+      ${kv('Discovered During Inspection', r.incident.discoveredDuringInspection ? 'Yes (' + (r.incident.inspectionDate || '') + ')' : 'No')}
+    </div>
+  `);
+  const partyCards = (r.involvedParties || []).filter(p => p.name).map(p => `
+    <div class="subcard">
+      <div class="subcard-head"><span class="subcard-title">${esc(p.name)}</span><span class="pill blue">${esc(p.role)}</span></div>
+      <div class="field-grid cols-3">${kv('Person Type', p.personType)}${p.role === 'Student' ? kv('Student ID', p.studentId) : ''}${kv('DOB', p.dob)}${kv('Location', p.locationNA ? 'N/A' : [p.building, p.apartment, p.room].filter(Boolean).join(' / '))}</div>
+    </div>`).join('');
+  html += reviewSectionHTML('Involved Parties', partyCards || '<div class="empty-note">No involved parties added.</div>');
+  if (r.guestsPresent) {
+    html += reviewSectionHTML('Guests', (r.guests || []).filter(g => g.fullName).map(g => `<div class="subcard">${kv('Name', g.fullName)}${kv('Status', g.studentStatus)}${kv('Visiting', g.visitingResident)}${kv('Escorted', g.escorted)}</div>`).join('') || '<div class="empty-note">None recorded.</div>');
+  }
+  html += reviewSectionHTML('Chronological Narrative', `<div class="narrative-box">${esc(r.narrative.text || '')}</div>`);
+  html += reviewSectionHTML('Actions Taken', `<div class="field-grid">${kv('Actions', (r.actions || []).join(', '))}${kv('Other', r.actionOther)}</div>` +
+    ((r.staffContacts || []).length ? '<p class="section-title" style="margin-top:12px">Staff Contacted</p>' + r.staffContacts.map(s => `<div class="subcard">${kv('Staff', s.staffMember)}${kv('Method', s.method)}${kv('Time', s.time && fmtTime12(s.time))}</div>`).join('') : ''));
+  if (r.police && r.police.present) {
+    html += reviewSectionHTML('Police Information', `<div class="field-grid cols-3">${kv('Agency', r.police.agency)}${kv('Officer', r.police.officerName)}${kv('Badge #', r.police.badgeNumber)}${kv('Case #', r.police.caseNumber)}${kv('Arrival', r.police.arrivalTime && fmtTime12(r.police.arrivalTime))}${kv('Departure', r.police.departureTime && fmtTime12(r.police.departureTime))}</div>`);
+  }
+  html += reviewSectionHTML('Supporting Documents', (r.attachments || []).length ? r.attachments.map(a => `<div class="subcard">${kv('File', a.filename)}${kv('Category', a.category)}${kv('Size', fmtBytes(a.size))}</div>`).join('') : '<div class="empty-note">No attachments.</div>');
+  document.getElementById('reviewViewBox').innerHTML = html;
+}
+
+/* ---- Maxient Entry Mode ---- */
+function maxientField(label, value){
+  const id = 'mx-' + Math.random().toString(36).slice(2, 8);
+  return `<div class="maxient-field">
+    <div class="mf-label">${esc(label)}</div>
+    <div class="mf-value" id="${id}">${esc(value || '')}</div>
+    <button class="btn sm" data-copy-target="${id}" type="button">Copy</button>
+  </div>`;
+}
+function renderMaxientView(){
+  const r = report;
+  const parties = (r.involvedParties || []).filter(p => p.name).map(p => `${p.name} (${p.role}${p.studentId ? ', ID ' + p.studentId : ''})`).join('; ');
+  const staffContacts = (r.staffContacts || []).map(s => `${s.staffMember} — ${s.method || ''} at ${s.time ? fmtTime12(s.time) : 'time not recorded'}`).join('; ');
+  let html = '';
+  html += maxientField('YOUR FULL NAME', r.reporter.fullName);
+  html += maxientField('POSITION / TITLE', r.reporter.title);
+  html += maxientField('PHONE NUMBER', r.reporter.phone);
+  html += maxientField('SCHOOL EMAIL', r.reporter.email);
+  html += maxientField('NATURE OF REPORT', r.incident.natureOfReport === 'Other' ? r.incident.natureOfReportOther : r.incident.natureOfReport);
+  html += maxientField('INCIDENT START DATE', r.incident.startDate);
+  html += maxientField('INCIDENT START TIME', r.incident.startTime ? fmtTime12(r.incident.startTime) : '');
+  html += maxientField('INCIDENT END DATE', r.incident.endDate);
+  html += maxientField('INCIDENT END TIME', r.incident.endTime ? fmtTime12(r.incident.endTime) : '');
+  html += maxientField('LOCATION OF INCIDENT', r.incident.locationType);
+  html += maxientField('SPECIFIC LOCATION', [r.incident.specificLocationType, r.incident.area].filter(Boolean).join(' — '));
+  html += maxientField('INVOLVED PARTIES', parties);
+  html += maxientField('STAFF CONTACTED', staffContacts);
+  if (r.police.present) {
+    html += maxientField('POLICE AGENCY', r.police.agency);
+    html += maxientField('POLICE CASE NUMBER', r.police.caseNumber);
+  }
+  html += `<div class="maxient-field"><div class="mf-label">CHRONOLOGICAL NARRATIVE</div><div class="mf-value" id="mx-narrative">${esc(r.narrative.text || '')}</div><button class="btn sm" data-copy-target="mx-narrative" type="button">Copy Narrative</button></div>`;
+  document.getElementById('maxientViewBox').innerHTML = `<div style="margin-bottom:14px"><button class="btn dark" id="copyAllBtn" type="button">Copy All Report Information</button></div>` + html;
+
+  document.getElementById('maxientViewBox').querySelectorAll('[data-copy-target]').forEach(btn => btn.addEventListener('click', async () => {
+    const val = document.getElementById(btn.getAttribute('data-copy-target')).textContent;
+    try { await navigator.clipboard.writeText(val); btn.textContent = 'Copied!'; setTimeout(() => { btn.textContent = 'Copy'; }, 1200); }
+    catch (e) { alert('Could not copy automatically — please select and copy manually.'); }
+  }));
+  document.getElementById('copyAllBtn').addEventListener('click', async () => {
+    const lines = [];
+    document.querySelectorAll('#maxientViewBox .maxient-field').forEach(f => {
+      lines.push(f.querySelector('.mf-label').textContent + ': ' + f.querySelector('.mf-value').textContent);
+    });
+    try { await navigator.clipboard.writeText(lines.join('\n\n')); flashBtn('copyAllBtn', 'Copied!'); }
+    catch (e) { alert('Could not copy automatically — please select and copy manually.'); }
+  });
+}
+
+document.getElementById('enterMaxientModeBtn').addEventListener('click', () => {
+  const reviewBox = document.getElementById('reviewViewBox');
+  const maxientBox = document.getElementById('maxientViewBox');
+  const showingMaxient = !maxientBox.classList.contains('hidden');
+  reviewBox.classList.toggle('hidden', !showingMaxient);
+  maxientBox.classList.toggle('hidden', showingMaxient);
+  document.getElementById('enterMaxientModeBtn').textContent = showingMaxient ? 'Maxient Entry Mode' : 'Back to Standard Review';
+});
+
+init();
+</script>
+</body>
+</html>
