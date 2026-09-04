@@ -349,6 +349,7 @@
                     <label>Role</label>
                     <select id="editRole" class="hidden"></select>
                     <div class="role-cards" id="roleCardsGrid"><!-- populated by renderRoleCards() --></div>
+                    <p class="hint" style="margin-top:8px;font-weight:600;color:var(--text)">Will save as: <span id="roleConfirmLabel">User</span></p>
                     <p class="hint" id="reslifeRoleHint" style="display:none">Reslife credentials redirect straight to the Reslife Hub on login and cannot access the rest of the Marketing Hub.</p>
                   </div>
                   
@@ -756,6 +757,7 @@
       editUsername: document.getElementById('editUsername'),
       editRole: document.getElementById('editRole'),
       roleCardsGrid: document.getElementById('roleCardsGrid'),
+      roleConfirmLabel: document.getElementById('roleConfirmLabel'),
       reslifeRoleHint: document.getElementById('reslifeRoleHint'),
       editPassword: document.getElementById('editPassword'),
       passwordLabel: document.getElementById('passwordLabel'),
@@ -847,17 +849,23 @@
         </div>
       `).join('');
       els.roleCardsGrid.querySelectorAll('.role-card').forEach(card => {
-        card.addEventListener('click', () => {
-          els.editRole.value = card.dataset.role;
-          applyRoleUI(card.dataset.role);
-        });
+        card.addEventListener('click', () => { applyRoleUI(card.dataset.role); });
       });
     }
 
+    // Single source of truth for the currently-selected role: whichever
+    // .role-card has the .selected class. applyRoleUI() is the only place
+    // that sets it, and it always keeps the hidden <select>, the visible
+    // "Will save as" confirmation, and the role badge in sync with it —
+    // this exists specifically because Reslife role assignments were
+    // silently reverting to "User" for some admins; reading the role back
+    // OFF THE CARD (not just the hidden select) at save time closes that gap.
     function applyRoleUI(role){
       els.roleCardsGrid.querySelectorAll('.role-card').forEach(card => {
         card.classList.toggle('selected', card.dataset.role === role);
       });
+      els.editRole.value = role;
+      if (els.roleConfirmLabel) els.roleConfirmLabel.textContent = roleLabel(role);
       els.detailRoleBadge.textContent = roleLabel(role);
       els.detailRoleBadge.className = `role-badge ${role}`;
       if (els.reslifeRoleHint) els.reslifeRoleHint.style.display = isReslifeRole(role) ? '' : 'none';
@@ -1105,7 +1113,10 @@
 
     async function saveUser(){
       const username = els.editUsername.value.trim();
-      const role = els.editRole.value;
+      // Read the role off the visually-selected card first (source of truth);
+      // only fall back to the hidden <select> if somehow no card is selected.
+      const selectedCard = els.roleCardsGrid.querySelector('.role-card.selected');
+      const role = selectedCard ? selectedCard.dataset.role : els.editRole.value;
       const password = els.editPassword.value;
       
       const selectedProps = Array.from(els.propsGrid.querySelectorAll('.prop-checkbox input:checked'))
