@@ -71,6 +71,12 @@
     .btn-accent:hover { background: #3bc4ee; }
     .btn-warning { background: #d97706; color: #fff; border-color: #d97706; }
     .btn-warning:hover { background: #b45309; }
+    /* Ghost/outline variant for buttons placed on dark backgrounds (subject banner, compare-bar).
+       Unlike .btn-outline (opaque white fill), this stays transparent so white text is readable. */
+    .btn-outline-light { background: rgba(255,255,255,0.08); color: #fff; border-color: rgba(255,255,255,0.4); }
+    .btn-outline-light:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.6); }
+    .btn-outline-light:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+    .btn-outline-light:active { background: rgba(255,255,255,0.28); }
     .btn-sm { padding: 5px 10px; font-size: 12px; }
     .btn-back { background: none; border: none; color: var(--subtext); cursor: pointer; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; }
     .btn-back:hover { color: var(--text); background: #f3f4f6; }
@@ -118,15 +124,13 @@
     .card-thumb .thumb-actions button:hover { background: #f3f4f6; color: var(--text); }
     .card-thumb .thumb-actions button.archive-btn { margin-left: auto; }
     .card-thumb .thumb-actions button.archive-btn:hover { color: #dc2626; background: #fef2f2; }
-    /* Compare checkbox on card */
-    /* Report checkbox on card - left side */
-    .card-thumb .report-check { position: absolute; bottom: 95px; left: 14px; z-index: 2; }
-    .card-thumb .report-check label { font-size: 11px; color: var(--subtext); display: flex; align-items: center; gap: 4px; cursor: pointer; background: rgba(255,255,255,0.95); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border); backdrop-filter: blur(4px); }
-    .card-thumb .report-check input { accent-color: var(--brand-primary); }
-    /* Compare checkbox on card - right side */
-    .card-thumb .compare-check { position: absolute; bottom: 95px; right: 14px; z-index: 2; }
-    .card-thumb .compare-check label { font-size: 11px; color: var(--subtext); display: flex; align-items: center; gap: 4px; cursor: pointer; background: rgba(255,255,255,0.95); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border); backdrop-filter: blur(4px); }
-    .card-thumb .compare-check input { accent-color: var(--brand-accent-2); }
+    /* Report + Compare control group — right-aligned, Report always above Compare.
+       Anchored from the TOP of the fixed-height .thumb-img (not bottom of the whole card),
+       so position is independent of variable .thumb-body content (rate/name/description length). */
+    .card-thumb .card-select-group { position: absolute; top: 38px; right: 14px; z-index: 2; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+    .card-thumb .card-select-group label { font-size: 11px; color: var(--subtext); display: flex; align-items: center; gap: 4px; cursor: pointer; background: rgba(255,255,255,0.95); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border); backdrop-filter: blur(4px); white-space: nowrap; }
+    .card-thumb .card-select-group .report-check input { accent-color: var(--brand-primary); }
+    .card-thumb .card-select-group .compare-check input { accent-color: var(--brand-accent-2); }
 
     /* Badges */
     .badge { display: inline-flex; align-items: center; padding: 2px 10px; font-size: 11px; font-weight: 600; border-radius: 999px; border: 1px solid; white-space: nowrap; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -543,6 +547,8 @@
     .bulk-img-table .bit-thumb img { width: 100%; height: 100%; object-fit: cover; }
     .bulk-img-table tr.bit-changed { background: #fffbeb; }
     .bulk-img-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; }
+    .bit-filter-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .bit-filter-bar .bit-filter-label { font-size: 11px; font-weight: 700; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.5px; }
 
     /* ===== Future Rates ===== */
     .future-rates-table-wrap { overflow-x: auto; background: #fff; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-bottom: 16px; }
@@ -571,6 +577,27 @@
     .ch-bedroom-table th, .ch-bedroom-table td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #f1f5f9; }
     .ch-bedroom-table th { font-size: 10px; font-weight: 700; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.5px; background: #f8fafc; }
     .ch-meta-bar { background: #f0faff; border: 1px solid var(--brand-accent-2); border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; font-size: 12px; color: #1e293b; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+    /* ===== Generic Modal (mirrors mmp_admin.html's modal design for consistency) ===== */
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: #fff; border: 1px solid var(--border); border-radius: 14px; max-width: 560px; width: 100%; max-height: 90vh; overflow: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+    .modal-header { padding: 18px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .modal-header h3 { margin: 0; font-size: 16px; color: var(--text); font-weight: 700; }
+    .modal-header .modal-subtitle { font-size: 12px; color: var(--subtext); margin-top: 3px; }
+    .modal-header .modal-helper { font-size: 12px; color: var(--subtext); margin-top: 6px; }
+    .modal-close { background: none; border: none; color: var(--subtext); font-size: 22px; cursor: pointer; padding: 0; line-height: 1; }
+    .modal-close:hover { color: var(--text); }
+    .modal-body { padding: 16px 20px; }
+    .modal-footer { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; align-items: center; }
+    .modal-footer .modal-footer-left { margin-right: auto; display: flex; gap: 8px; }
+    .rcm-list { background: #fff; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; max-height: 320px; overflow-y: auto; }
+    .rcm-item { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-bottom: 1px solid #f1f5f9; }
+    .rcm-item:last-child { border-bottom: none; }
+    .rcm-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--brand-primary); cursor: pointer; flex-shrink: 0; }
+    .rcm-item .rcm-name { font-size: 13px; font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .rcm-item .rcm-type { font-size: 11px; color: var(--subtext); white-space: nowrap; }
+    .rcm-item .rcm-rate { font-size: 12px; font-weight: 600; color: #059669; white-space: nowrap; }
 
     /* ===== Report Export (jsPDF/html2canvas dedicated layout, off-screen) ===== */
     .report-export-root { position: fixed; left: -20000px; top: 0; width: 0; height: 0; overflow: visible; z-index: -1; }
@@ -728,7 +755,8 @@
     var reportSections = { 'subjectCard': true, 'competitorCards': true, 'rateComparison': true, 'amenityCart': true, 'comparisonTable': true, 'collegeHouse': false };
     var reportRateMode = 'current'; // 'current' | 'future' | 'currentVsFuture' — used by the report's Rate Comparison section
     var rateCompareMode = 'current'; // same three values, used by the standalone Rate Comparison view
-    var bulkImageRows = []; // admin Bulk Update Property Images working state: [{ id, property, cardType, name, currentImage, newValue }]
+    var bulkImageRows = []; // admin Bulk Update Property Images working state: [{ id, property, cardType, name, currentImage, newValue }] — scoped to currentProperty only
+    var bulkImageFilter = 'all'; // 'all' | 'missing' | 'has'
     var amenityOverrides = {}; // Manual amenity overrides: { cardIndex_amenityName: true/false }
     var importStage = 'upload'; // 'upload' | 'preview' | 'importing' | 'done'
     var importParsedRows = []; // [{ card, warnings: [], errors: [], included: bool }]
@@ -926,7 +954,7 @@
         '<button class="btn btn-primary" id="newCardBtn">' + icon('plus') + ' New Competitor Card</button>';
       document.getElementById('newCardBtn').onclick = handleNewCard;
       document.getElementById('reportBuilderBtn').onclick = function() { renderReportBuilder(); };
-      document.getElementById('rateCompareBtn').onclick = function() { renderRateComparison(); };
+      document.getElementById('rateCompareBtn').onclick = function() { openRateCompareModal(); };
       document.getElementById('importCardsBtn').onclick = function() { renderImportView(); };
       if (document.getElementById('compareBtn')) {
         document.getElementById('compareBtn').onclick = function() { renderComparison(); };
@@ -985,8 +1013,10 @@
               '<div class="thumb-badges-right">' + (card.impactToProperty ? badgeHTML('impact', card.impactToProperty, IMPACT_LABELS[card.impactToProperty] + ' Impact') : '') + '</div>' +
               '<div class="thumb-view-overlay" data-action="view" data-id="' + esc(card.id) + '"><span class="thumb-view-label">' + icon('eye') + ' View Card</span></div>' +
             '</div>' +
-            '<div class="report-check"><label><input type="checkbox" data-report-id="' + esc(card.id) + '"' + (reportSelected[card.id] ? ' checked' : '') + '> Report</label></div>' +
-            '<div class="compare-check"><label><input type="checkbox" data-compare-id="' + esc(card.id) + '"' + isChecked + '> Compare</label></div>' +
+            '<div class="card-select-group">' +
+              '<div class="report-check"><label><input type="checkbox" data-report-id="' + esc(card.id) + '"' + (reportSelected[card.id] ? ' checked' : '') + '> Report</label></div>' +
+              '<div class="compare-check"><label><input type="checkbox" data-compare-id="' + esc(card.id) + '"' + isChecked + '> Compare</label></div>' +
+            '</div>' +
             '<div class="thumb-body">' +
               '<h3>' + esc(card.competitorName || 'Untitled') + '</h3>' +
               (card.address ? '<div class="thumb-address">' + esc(card.address) + '</div>' : '') +
@@ -1076,10 +1106,10 @@
             '<div><div class="sc-label">Our Property</div><h3>' + esc(sc.competitorName || currentProperty) + '</h3></div>' +
             '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
               '<button class="btn btn-subject btn-sm" id="editSubjectBtn">' + icon('edit') + ' Edit Our Property Card</button>' +
-              '<button class="btn btn-sm btn-outline" id="viewSubjectBtn" style="color:#fff;border-color:rgba(255,255,255,0.3);">' + icon('eye') + ' View</button>' +
-              '<button class="btn btn-sm btn-outline" id="futureRatesFromGalleryBtn" style="color:#fff;border-color:rgba(255,255,255,0.3);">' + icon('tag') + ' Future Rates</button>' +
-              '<button class="btn btn-sm btn-outline" id="analystBtn" style="color:#fff;border-color:rgba(255,255,255,0.3);">' + icon('trendUp') + ' Analyst</button>' +
-              '<button class="btn btn-sm btn-outline" id="collegeHouseBtn" style="color:#fff;border-color:rgba(255,255,255,0.3);">' + icon('building') + ' College House Market Overview</button>' +
+              '<button class="btn btn-sm btn-outline-light" id="viewSubjectBtn">' + icon('eye') + ' View</button>' +
+              '<button class="btn btn-sm btn-outline-light" id="futureRatesFromGalleryBtn">' + icon('tag') + ' Future Rates</button>' +
+              '<button class="btn btn-sm btn-outline-light" id="analystBtn">' + icon('trendUp') + ' Analyst</button>' +
+              '<button class="btn btn-sm btn-outline-light" id="collegeHouseBtn">' + icon('building') + ' College House Market Overview</button>' +
             '</div>' +
           '</div>' +
           '<div class="sc-body">';
@@ -2125,9 +2155,9 @@
         '<div class="compare-bar">' +
           '<div class="compare-info">' + icon('compare') + ' <span style="background:var(--brand-accent-2);color:#1e293b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:2px 6px;border-radius:4px;font-size:11px;">OUR PROPERTY</span> ' + esc(currentProperty) + ' vs ' + compCards.length + ' competitors</div>' +
           '<div class="compare-actions">' +
-            '<button class="btn btn-sm btn-outline" id="acBtn" style="color:#fff;border-color:rgba(255,255,255,0.3);">' + icon('check') + ' Amenity Cart</button>' +
-            '<button class="btn btn-sm btn-outline" id="rcBtn" style="color:#fff;border-color:rgba(255,255,255,0.3);">' + icon('compare') + ' Rate Compare</button>' +
-            '<button class="btn btn-sm btn-outline" id="clearCompareBtn" style="color:#fff;border-color:rgba(255,255,255,0.3);">Clear Selection</button>' +
+            '<button class="btn btn-sm btn-outline-light" id="acBtn">' + icon('check') + ' Amenity Cart</button>' +
+            '<button class="btn btn-sm btn-outline-light" id="rcBtn">' + icon('compare') + ' Rate Compare</button>' +
+            '<button class="btn btn-sm btn-outline-light" id="clearCompareBtn">Clear Selection</button>' +
           '</div>' +
         '</div>' +
         tableHTML;
@@ -2135,7 +2165,7 @@
       var acBtn = document.getElementById('acBtn');
       if (acBtn) acBtn.onclick = function() { renderAmenityCart(); };
       var rcBtn = document.getElementById('rcBtn');
-      if (rcBtn) rcBtn.onclick = function() { renderRateComparison(); };
+      if (rcBtn) rcBtn.onclick = function() { openRateCompareModal(); };
       document.getElementById('clearCompareBtn').onclick = function() {
         compareSelected = {};
         renderGallery();
@@ -4166,6 +4196,126 @@
     }
 
     // ── Render: Rate Comparison standalone view ──
+    // ══════════════════════════════════════════════════════════════════════
+    // ── Generic Modal helpers (new — this app had no modal system; mirrors mmp_admin.html's
+    // .modal-overlay/.modal/... structure for visual consistency). Built dynamically and
+    // appended to <body> on open, removed on close — no static HTML skeleton needed. ──
+    // ══════════════════════════════════════════════════════════════════════
+    function closeModal() {
+      var existing = document.getElementById('genericModalOverlay');
+      if (existing) existing.remove();
+    }
+    function openModal(titleHTML, bodyHTML, footerHTML) {
+      closeModal();
+      var overlay = document.createElement('div');
+      overlay.className = 'modal-overlay show';
+      overlay.id = 'genericModalOverlay';
+      overlay.innerHTML =
+        '<div class="modal" role="dialog" aria-modal="true">' +
+          '<div class="modal-header"><div>' + titleHTML + '</div><button type="button" class="modal-close" id="genericModalCloseBtn">&times;</button></div>' +
+          '<div class="modal-body">' + bodyHTML + '</div>' +
+          (footerHTML ? '<div class="modal-footer">' + footerHTML + '</div>' : '') +
+        '</div>';
+      document.body.appendChild(overlay);
+      overlay.addEventListener('mousedown', function(e) { if (e.target === overlay) closeModal(); });
+      document.getElementById('genericModalCloseBtn').onclick = closeModal;
+      return overlay;
+    }
+
+    // ── Rate Compare: property selection modal ──
+    // Reuses the SAME compareSelected/getCompareIds() state as the per-card Compare checkboxes
+    // (single source of truth — no parallel selection system). Candidates are always `cards`,
+    // which is already scoped to currentProperty, so no cross-property competitors can appear.
+    function openRateCompareModal() {
+      var candidates = cards.filter(function(c) { return c.status !== 'archived'; });
+      var existingIds = getCompareIds();
+      // Working copy: only pre-seed from ids that still correspond to a real candidate — any
+      // stale/deleted id in compareSelected is silently dropped here rather than erroring.
+      var working = {};
+      existingIds.forEach(function(id) {
+        if (candidates.some(function(c) { return c.id === id; })) working[id] = true;
+      });
+
+      function selectedCount() { return Object.keys(working).filter(function(k) { return working[k]; }).length; }
+
+      function renderBody() {
+        if (candidates.length === 0) {
+          return '<p style="color:#9ca3af;padding:12px 0;">No competitor properties are currently assigned to this property.</p>';
+        }
+        var rows = candidates.map(function(c) {
+          var checked = working[c.id] ? ' checked' : '';
+          var typeLabel = PROPERTY_TYPE_LABELS[c.propertyType] || c.propertyType || '';
+          return '<div class="rcm-item"><label style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer;">' +
+            '<input type="checkbox" data-rcm-id="' + esc(c.id) + '"' + checked + '>' +
+            '<span class="rcm-name">' + esc(c.competitorName || 'Untitled') + '</span>' +
+          '</label>' +
+          (typeLabel ? '<span class="rcm-type">' + esc(typeLabel) + '</span>' : '') +
+          '<span class="rcm-rate">' + (c.startingRate ? esc(c.startingRate) : '\u2014') + '</span>' +
+        '</div>';
+        }).join('');
+        return '<div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:8px;">' +
+            '<button type="button" class="btn btn-sm btn-outline" id="rcmSelectAllBtn">Select All</button>' +
+            '<button type="button" class="btn btn-sm btn-outline" id="rcmClearAllBtn">Clear All</button>' +
+          '</div>' +
+          '<div class="rcm-list">' + rows + '</div>';
+      }
+
+      function attachBodyHandlers() {
+        document.querySelectorAll('[data-rcm-id]').forEach(function(cb) {
+          cb.onchange = function() {
+            var id = cb.getAttribute('data-rcm-id');
+            if (cb.checked) working[id] = true; else delete working[id];
+            updateCompareSelectedBtn();
+          };
+        });
+        var selectAllBtn = document.getElementById('rcmSelectAllBtn');
+        if (selectAllBtn) selectAllBtn.onclick = function() {
+          candidates.forEach(function(c) { working[c.id] = true; });
+          refresh();
+        };
+        var clearAllBtn = document.getElementById('rcmClearAllBtn');
+        if (clearAllBtn) clearAllBtn.onclick = function() {
+          working = {};
+          refresh();
+        };
+      }
+
+      function updateCompareSelectedBtn() {
+        var btn = document.getElementById('rcmCompareBtn');
+        if (btn) btn.disabled = selectedCount() === 0;
+      }
+
+      function refresh() {
+        var bodyEl = overlay.querySelector('.modal-body');
+        if (bodyEl) bodyEl.innerHTML = renderBody();
+        attachBodyHandlers();
+        updateCompareSelectedBtn();
+      }
+
+      var titleHTML = '<h3>Select Properties to Compare</h3>' +
+        '<div class="modal-subtitle">' + esc(currentProperty) + '</div>' +
+        '<div class="modal-helper">Choose the competitor properties you want to include in the rate comparison.</div>';
+      var footerHTML =
+        '<button type="button" class="btn btn-outline modal-footer-left" id="rcmCancelBtn">Cancel</button>' +
+        '<button type="button" class="btn btn-primary" id="rcmCompareBtn"' + (selectedCount() === 0 ? ' disabled' : '') + '>Compare Selected</button>';
+
+      var overlay = openModal(titleHTML, renderBody(), footerHTML);
+      attachBodyHandlers();
+
+      document.getElementById('rcmCancelBtn').onclick = closeModal;
+      document.getElementById('rcmCompareBtn').onclick = function() {
+        if (selectedCount() === 0) return;
+        // Commit the working copy back into the SAME compareSelected state used by the
+        // per-card Compare checkboxes, scoped only to this property's candidate ids.
+        candidates.forEach(function(c) {
+          if (working[c.id]) compareSelected[c.id] = true;
+          else delete compareSelected[c.id];
+        });
+        closeModal();
+        renderRateComparison();
+      };
+    }
+
     function renderRateComparison() {
       currentView = 'rateCompare';
 
@@ -4545,79 +4695,121 @@
 
     // ══════════════════════════════════════════════════════════════════════
     // ── Admin: Bulk Update Property Images ──
-    // Uses the existing admin role check (currentUser.role === 'admin') and the existing
-    // apiGet/apiUpdate persistence path; loops the admin's accessible properties instead of
-    // requiring a new backend endpoint.
+    // Uses the existing admin role check (currentUser.role === 'admin', already gates the
+    // toolbar button) and the existing property-to-competitor relationship: subjectCard/cards
+    // are already loaded and scoped to currentProperty by loadCards()/silentRefreshCards(), so
+    // this tool reads them directly instead of fetching across every accessible property.
     // ══════════════════════════════════════════════════════════════════════
     function renderBulkImageTool() {
       currentView = 'bulkImages';
       viewingCard = null;
       currentCard = null;
+      bulkImageFilter = 'all';
 
       els.pageTitle.textContent = 'Bulk Update Property Images';
-      els.pageSubtitle.textContent = 'Admin \u2014 update hero image URLs across properties and competitors';
+      els.pageSubtitle.textContent = currentProperty;
       els.pageSubtitle.style.display = '';
       els.toolbarActions.innerHTML = '<button class="btn btn-back" id="backBtn">' + icon('arrowLeft') + ' Back</button>';
+      // Back always returns to the gallery for whatever currentProperty already is — this tool
+      // never mutates currentProperty/cards/subjectCard except via explicit Save.
       document.getElementById('backBtn').onclick = function() { renderGallery(); };
 
-      els.mainContent.innerHTML = '<div class="bulk-img-summary"><span>' + icon('clock') + ' Loading properties and cards\u2026</span></div>';
-      loadAllCardsForBulkImages();
+      buildBulkImageRowsFromCurrentProperty();
+      renderBulkImageTable();
     }
 
-    async function loadAllCardsForBulkImages() {
+    // Builds bulkImageRows from the already property-scoped in-memory state (subjectCard + cards)
+    // for currentProperty only. Preserves any not-yet-saved draft "newValue" typed for a row that
+    // still exists, keyed by the card's stable id (never by name or array position).
+    function buildBulkImageRowsFromCurrentProperty() {
+      var priorDrafts = {};
+      bulkImageRows.forEach(function(r) { if (r.newValue) priorDrafts[r.id] = r.newValue; });
+
       bulkImageRows = [];
-      try {
-        var propsRes = await fetch('/api/properties');
-        var props = await propsRes.json();
-        var accessible = getAccessible(props, currentUser);
-        for (var i = 0; i < accessible.length; i++) {
-          var propName = accessible[i];
-          try {
-            var propCards = await apiGet(propName);
-            propCards.forEach(function(c) {
-              bulkImageRows.push({ id: c.id, property: c.property || propName, cardType: c.cardType || 'competitor', name: c.competitorName || '(untitled)', currentImage: c.heroImage || '', newValue: '' });
-            });
-          } catch (e) { console.error('Error loading cards for property ' + propName, e); }
-        }
-      } catch (e) {
-        console.error('Error loading properties for bulk image tool:', e);
+      if (subjectCard && subjectCard.id) {
+        bulkImageRows.push({
+          id: subjectCard.id, property: subjectCard.property || currentProperty, cardType: 'subject',
+          name: subjectCard.competitorName || currentProperty, currentImage: subjectCard.heroImage || '',
+          newValue: priorDrafts[subjectCard.id] || ''
+        });
       }
-      if (currentView === 'bulkImages') renderBulkImageTable();
+      cards.forEach(function(c) {
+        bulkImageRows.push({
+          id: c.id, property: c.property || currentProperty, cardType: c.cardType || 'competitor',
+          name: c.competitorName || '(untitled)', currentImage: c.heroImage || '',
+          newValue: priorDrafts[c.id] || ''
+        });
+      });
+    }
+
+    function isMissingImageURL(row) { return !row.currentImage || !String(row.currentImage).trim(); }
+
+    function getBulkImageCounts() {
+      var all = bulkImageRows.length;
+      var missing = bulkImageRows.filter(isMissingImageURL).length;
+      return { all: all, missing: missing, has: all - missing };
+    }
+
+    function getFilteredBulkImageRows() {
+      if (bulkImageFilter === 'missing') return bulkImageRows.filter(isMissingImageURL);
+      if (bulkImageFilter === 'has') return bulkImageRows.filter(function(r) { return !isMissingImageURL(r); });
+      return bulkImageRows;
     }
 
     function renderBulkImageTable() {
-      var rowsHTML = bulkImageRows.map(function(row, i) {
+      var counts = getBulkImageCounts();
+      var filtered = getFilteredBulkImageRows();
+
+      var filterBarHTML = '<div class="bit-filter-bar"><span class="bit-filter-label">Show:</span>' +
+        [['all', 'All', counts.all], ['missing', 'Missing Image URL', counts.missing], ['has', 'Has Image URL', counts.has]].map(function(f) {
+          var active = bulkImageFilter === f[0];
+          return '<button type="button" class="btn btn-sm ' + (active ? 'btn-primary' : 'btn-outline') + '" data-bit-filter="' + f[0] + '">' + f[1] + ' (' + f[2] + ')</button>';
+        }).join('') +
+      '</div>';
+
+      var rowsHTML = filtered.map(function(row) {
         var typeLabel = row.cardType === 'subject' ? 'Our Property' : 'Competitor';
-        return '<tr data-bit-idx="' + i + '">' +
-          '<td>' + esc(row.name) + '<div style="font-size:10px;color:#9ca3af;">' + esc(row.property) + '</div></td>' +
+        return '<tr data-bit-row-id="' + esc(row.id) + '">' +
+          '<td>' + esc(row.name) + (row.cardType === 'subject' ? ' <span style="font-size:9px;color:#1e293b;background:var(--brand-accent-2);padding:1px 5px;border-radius:3px;font-weight:700;">OUR PROPERTY</span>' : '') + '</td>' +
           '<td>' + esc(typeLabel) + '</td>' +
           '<td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:#6b7280;" title="' + esc(row.currentImage) + '">' + esc(row.currentImage || '(none)') + '</td>' +
-          '<td><input type="text" data-bit-input="' + i + '" placeholder="https://\u2026" value="' + esc(row.newValue) + '"></td>' +
-          '<td><div class="bit-thumb" id="bitThumb' + i + '">' + (row.currentImage ? '<img src="' + esc(row.currentImage) + '">' : 'No Image') + '</div></td>' +
+          '<td><input type="text" data-bit-input="' + esc(row.id) + '" placeholder="https://\u2026" value="' + esc(row.newValue) + '"></td>' +
+          '<td><div class="bit-thumb" id="bitThumb_' + esc(row.id) + '">' + (row.currentImage ? '<img src="' + esc(row.currentImage) + '">' : 'No Image') + '</div></td>' +
         '</tr>';
       }).join('');
 
       els.mainContent.innerHTML =
-        '<div class="bulk-img-summary"><span>' + bulkImageRows.length + ' record(s) across all accessible properties</span>' +
+        '<div class="bulk-img-summary"><span>' + counts.all + ' record' + (counts.all !== 1 ? 's' : '') + ' in ' + esc(currentProperty) + ' competitor set</span>' +
           '<button class="btn btn-success" id="bitSaveBtn">' + icon('save') + ' Save Changed Images</button>' +
         '</div>' +
-        (bulkImageRows.length === 0 ? '<p style="color:#9ca3af;padding:20px;">No property or competitor cards found.</p>' :
+        filterBarHTML +
+        (bulkImageRows.length === 0 ? '<p style="color:#9ca3af;padding:20px;">No property or competitor cards found for ' + esc(currentProperty) + '.</p>' :
+         filtered.length === 0 ? '<p style="color:#9ca3af;padding:20px;">No records match this filter.</p>' :
         '<div class="bulk-img-table-wrap"><table class="bulk-img-table"><thead><tr>' +
           '<th>Property</th><th>Type</th><th>Current Image URL</th><th>New Image URL</th><th>Preview</th>' +
         '</tr></thead><tbody id="bitBody">' + rowsHTML + '</tbody></table></div>');
 
       document.querySelectorAll('[data-bit-input]').forEach(function(input) {
         input.oninput = function() {
-          var idx = parseInt(input.getAttribute('data-bit-input'), 10);
-          bulkImageRows[idx].newValue = input.value;
+          var id = input.getAttribute('data-bit-input');
+          var row = bulkImageRows.find(function(r) { return r.id === id; });
+          if (!row) return;
+          row.newValue = input.value;
           var tr = input.closest('tr');
-          var isChanged = !!(input.value.trim() && input.value.trim() !== bulkImageRows[idx].currentImage);
+          var isChanged = !!(input.value.trim() && input.value.trim() !== row.currentImage);
           if (tr) tr.classList.toggle('bit-changed', isChanged);
-          var thumb = document.getElementById('bitThumb' + idx);
+          var thumb = document.getElementById('bitThumb_' + id);
           if (thumb) {
-            var v = input.value.trim() || bulkImageRows[idx].currentImage;
+            var v = input.value.trim() || row.currentImage;
             thumb.innerHTML = v ? '<img src="' + esc(v) + '" onerror="this.parentElement.textContent=\'Invalid\'">' : 'No Image';
           }
+        };
+      });
+
+      document.querySelectorAll('[data-bit-filter]').forEach(function(btn) {
+        btn.onclick = function() {
+          bulkImageFilter = btn.getAttribute('data-bit-filter');
+          renderBulkImageTable(); // bulkImageRows itself is untouched, so drafts survive the filter switch
         };
       });
 
@@ -4628,7 +4820,7 @@
     async function saveBulkImageChanges() {
       var changed = bulkImageRows.filter(function(r) { return r.newValue && r.newValue.trim() && r.newValue.trim() !== r.currentImage; });
       if (changed.length === 0) { showToast('No changed images to save'); return; }
-      if (!confirm('Save ' + changed.length + ' updated image URL(s)? Untouched images will not be modified.')) return;
+      if (!confirm('Save ' + changed.length + ' updated image URL(s) for ' + currentProperty + '? Untouched images will not be modified.')) return;
 
       var saveBtn = document.getElementById('bitSaveBtn');
       if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving\u2026'; }
@@ -4638,7 +4830,7 @@
         var row = changed[i];
         try {
           await apiUpdate({ id: row.id, property: row.property, heroImage: row.newValue.trim() });
-          row.currentImage = row.newValue.trim();
+          row.currentImage = row.newValue.trim(); // updates Current Image URL + re-evaluates filter membership in place
           row.newValue = '';
           okCount++;
         } catch (e) {
@@ -4649,9 +4841,11 @@
 
       showToast('Saved ' + okCount + ' image(s)' + (failCount ? ', ' + failCount + ' failed' : ''));
 
-      if (bulkImageRows.some(function(r) { return r.property === currentProperty; })) {
-        await silentRefreshCards();
-      }
+      // Keep the main app's in-memory state (subjectCard/cards) in sync for currentProperty only.
+      await silentRefreshCards();
+      // Re-render with the same active filter — rows that just gained an image will naturally
+      // drop out of a "Missing Image URL" view since counts/membership are recomputed from the
+      // just-updated bulkImageRows above.
       if (currentView === 'bulkImages') renderBulkImageTable();
     }
 
