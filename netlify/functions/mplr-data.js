@@ -34,12 +34,21 @@ export const handler = async (event, context) => {
             property,
             leases: [],
             floorPlans: [],
-            newLeaseTiers: [],
-            renewalTiers: [],
+            rateTiers: { newLease: [], renewal: [] },
+            renewals: [],
+            goals: [],
+            relets: [],
             totalBeds: 0
           })
         };
       }
+
+      // rateTiers is the current schema. Older documents stored newLeaseTiers/renewalTiers
+      // at the top level (pre-rehaul schema) - fall back to those for backward compatibility.
+      const rateTiers = doc.rateTiers || {
+        newLease: doc.newLeaseTiers || [],
+        renewal: doc.renewalTiers || []
+      };
 
       return {
         statusCode: 200,
@@ -48,9 +57,12 @@ export const handler = async (event, context) => {
           property: doc.property,
           leases: doc.leases || [],
           floorPlans: doc.floorPlans || [],
-          newLeaseTiers: doc.newLeaseTiers || [],
-          renewalTiers: doc.renewalTiers || [],
-          totalBeds: doc.totalBeds || 0
+          rateTiers,
+          renewals: doc.renewals || [],
+          goals: doc.goals || [],
+          relets: doc.relets || [],
+          totalBeds: doc.totalBeds || 0,
+          updatedAt: doc.updatedAt
         })
       };
     }
@@ -68,9 +80,15 @@ export const handler = async (event, context) => {
       // Only update fields that are provided
       if (body.leases !== undefined) updateData.leases = body.leases;
       if (body.floorPlans !== undefined) updateData.floorPlans = body.floorPlans;
+      if (body.rateTiers !== undefined) updateData.rateTiers = body.rateTiers;
+      if (body.renewals !== undefined) updateData.renewals = body.renewals;
+      if (body.goals !== undefined) updateData.goals = body.goals;
+      if (body.relets !== undefined) updateData.relets = body.relets;
+      if (body.totalBeds !== undefined) updateData.totalBeds = body.totalBeds;
+      // Legacy field names (pre-rehaul schema) - kept writable in case any old
+      // client/script still posts them directly.
       if (body.newLeaseTiers !== undefined) updateData.newLeaseTiers = body.newLeaseTiers;
       if (body.renewalTiers !== undefined) updateData.renewalTiers = body.renewalTiers;
-      if (body.totalBeds !== undefined) updateData.totalBeds = body.totalBeds;
 
       const result = await collection.updateOne(
         { property },
