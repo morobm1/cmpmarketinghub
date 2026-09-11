@@ -11,6 +11,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     :root {
       --brand-primary: #446472;
@@ -522,6 +524,78 @@
     .import-results .ir-ok { color: #059669; }
     .import-results .ir-fail { color: #dc2626; }
 
+    /* ===== Excel Import/Export panel (embedded in editor) ===== */
+    .xlpanel { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+    .xlpanel .xlpanel-title { font-size: 12px; font-weight: 700; color: var(--card-navy); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .xlpanel .xlpanel-desc { font-size: 12px; color: var(--subtext); margin-bottom: 10px; }
+    .xlpanel .xlpanel-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .xlpanel .xl-status { margin-top: 8px; font-size: 12px; }
+    .xlpanel .xl-status.ok { color: #059669; }
+    .xlpanel .xl-status.err { color: #dc2626; }
+
+    /* ===== Admin Bulk Image Tool ===== */
+    .bulk-img-table-wrap { overflow-x: auto; background: #fff; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .bulk-img-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .bulk-img-table th, .bulk-img-table td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .bulk-img-table th { font-size: 10px; font-weight: 700; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.5px; background: #f8fafc; position: sticky; top: 0; }
+    .bulk-img-table input[type="text"] { width: 100%; min-width: 220px; padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 12px; }
+    .bulk-img-table .bit-thumb { width: 48px; height: 36px; border-radius: 6px; overflow: hidden; background: #e5e7eb; display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: 9px; }
+    .bulk-img-table .bit-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .bulk-img-table tr.bit-changed { background: #fffbeb; }
+    .bulk-img-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; }
+
+    /* ===== Future Rates ===== */
+    .future-rates-table-wrap { overflow-x: auto; background: #fff; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-bottom: 16px; }
+    .future-rates-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .future-rates-table th, .future-rates-table td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #f1f5f9; }
+    .future-rates-table th { font-size: 10px; font-weight: 700; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.5px; background: #f8fafc; }
+    .future-rates-table input[type="text"] { width: 110px; padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 12px; }
+    .future-rates-table .fr-change-pos { color: #dc2626; font-weight: 700; }
+    .future-rates-table .fr-change-neg { color: #059669; font-weight: 700; }
+    .future-rates-table .fr-change-zero { color: #6b7280; }
+    .future-rates-table .fr-not-set { color: #9ca3af; font-style: italic; }
+    .fr-bulk-bar { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .fr-bulk-bar input[type="text"] { width: 100px; padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 12px; }
+    .status-pill { display: inline-flex; align-items: center; padding: 2px 10px; font-size: 11px; font-weight: 700; border-radius: 999px; border: 1px solid; white-space: nowrap; }
+    .status-pill.status-increase { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+    .status-pill.status-decrease { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+    .status-pill.status-nochange { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
+    .status-pill.status-notset { background: #f9fafb; color: #9ca3af; border-color: #e5e7eb; }
+
+    /* ===== College House Market Overview ===== */
+    .ch-kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .ch-kpi-card { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 14px; text-align: center; }
+    .ch-kpi-card .ch-kpi-value { font-size: 22px; font-weight: 800; color: var(--card-navy); font-family: Roboto, Arial, sans-serif; }
+    .ch-kpi-card .ch-kpi-label { font-size: 11px; color: var(--subtext); margin-top: 4px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.3px; }
+    .ch-bedroom-table { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .ch-bedroom-table th, .ch-bedroom-table td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #f1f5f9; }
+    .ch-bedroom-table th { font-size: 10px; font-weight: 700; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.5px; background: #f8fafc; }
+    .ch-meta-bar { background: #f0faff; border: 1px solid var(--brand-accent-2); border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; font-size: 12px; color: #1e293b; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+    /* ===== Report Export (jsPDF/html2canvas dedicated layout, off-screen) ===== */
+    .report-export-root { position: fixed; left: -20000px; top: 0; width: 0; height: 0; overflow: visible; z-index: -1; }
+    .report-export-page { width: 1056px; background: #fff; font-family: 'Open Sans', Arial, sans-serif; color: #1f2937; box-sizing: border-box; padding: 36px 44px; }
+    .rex-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid var(--brand-primary); padding-bottom: 10px; margin-bottom: 18px; }
+    .rex-header h2 { font-size: 18px; color: var(--card-navy); font-family: Roboto, Arial, sans-serif; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+    .rex-header .rex-meta { font-size: 11px; color: #9ca3af; text-align: right; }
+    .rex-snapshot-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .rex-snap-card { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; break-inside: avoid; }
+    .rex-snap-card .rex-snap-img { height: 90px; background: linear-gradient(135deg, var(--card-navy), var(--card-navy-dark)); }
+    .rex-snap-card .rex-snap-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .rex-snap-card .rex-snap-head { background: var(--card-navy); color: #fff; padding: 6px 10px; font-size: 12px; font-weight: 700; }
+    .rex-snap-card.rex-ours .rex-snap-head { background: var(--brand-accent-2); color: #1e293b; }
+    .rex-snap-card .rex-snap-body { padding: 8px 10px; font-size: 10.5px; line-height: 1.5; }
+    .rex-snap-body .rex-row { margin-bottom: 5px; }
+    .rex-snap-body .rex-label { font-weight: 700; color: #6b7280; text-transform: uppercase; font-size: 8.5px; letter-spacing: 0.3px; }
+    .rex-matrix-table, .rex-rate-table, .rex-amenity-table { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed; }
+    .rex-matrix-table th, .rex-matrix-table td, .rex-rate-table th, .rex-rate-table td, .rex-amenity-table th, .rex-amenity-table td { padding: 6px 8px; border: 1px solid #e5e7eb; text-align: left; vertical-align: top; min-width: 0; max-width: none; position: static; word-wrap: break-word; overflow-wrap: break-word; white-space: normal; }
+    .rex-matrix-table th, .rex-rate-table th, .rex-amenity-table th { background: var(--card-navy); color: #fff; font-size: 10px; text-transform: uppercase; }
+    .rex-matrix-table th.rex-ours-col, .rex-rate-table th.rex-ours-col, .rex-amenity-table th.rex-ours-col { background: var(--brand-accent-2); color: #1e293b; }
+    .rex-matrix-table td.rex-metric-label, .rex-rate-table td.rex-metric-label { font-weight: 700; color: var(--card-navy); background: #f8fafc; }
+    .rex-amenity-table td.rex-cat-row { background: #f1f5f9; font-weight: 700; color: var(--brand-primary); font-size: 10px; text-transform: uppercase; }
+    .rex-section-title { font-size: 14px; font-weight: 800; color: #fff; background: var(--card-navy); padding: 10px 14px; border-radius: 6px 6px 0 0; text-transform: uppercase; letter-spacing: 0.5px; }
+    .rex-section-sub { font-size: 10px; color: var(--subtext); margin: 4px 0 10px; text-transform: uppercase; letter-spacing: 0.3px; }
+
   </style>
 </head>
 <body>
@@ -651,7 +725,10 @@
     var currentView = 'gallery';
     var compareSelected = {}; // id -> true
     var reportSelected = {}; // id -> true (cards to include in report)
-    var reportSections = { 'subjectCard': true, 'competitorCards': true, 'rateComparison': true, 'amenityCart': true, 'comparisonTable': true };
+    var reportSections = { 'subjectCard': true, 'competitorCards': true, 'rateComparison': true, 'amenityCart': true, 'comparisonTable': true, 'collegeHouse': false };
+    var reportRateMode = 'current'; // 'current' | 'future' | 'currentVsFuture' — used by the report's Rate Comparison section
+    var rateCompareMode = 'current'; // same three values, used by the standalone Rate Comparison view
+    var bulkImageRows = []; // admin Bulk Update Property Images working state: [{ id, property, cardType, name, currentImage, newValue }]
     var amenityOverrides = {}; // Manual amenity overrides: { cardIndex_amenityName: true/false }
     var importStage = 'upload'; // 'upload' | 'preview' | 'importing' | 'done'
     var importParsedRows = []; // [{ card, warnings: [], errors: [], included: bool }]
@@ -690,7 +767,7 @@
         distanceFromCampus: '', driveTimeToCampus: '', propertyType: '', targetAudience: '',
         shortDescription: '', floorplans: '', unitCount: '', leaseStyle: '', furnished: '',
         utilityStructure: '', topAmenities: '', parkingType: '', petPolicy: '',
-        floorplanDetails: [], // Array of { name, bedsBaths, sqft, rate }
+        floorplanDetails: [], // Array of { id, name, bedsBaths, sqft, rate }
         startingRate: '', pricingNotes: '', applicationFee: '', adminFee: '', signingFee: '', deposit: '',
         monthlyExtraFees: { parking: '', petRent: '', packageLocker: '', valetTrash: '', internetTechFee: '', utilityBillingFee: '', rentersInsurance: '', otherRecurring: '' },
         estimatedCostAboveBase: '', currentSpecials: '', specialsExpiration: '', historicalSpecials: '', pastConcessionsNote: '',
@@ -698,8 +775,84 @@
         impactExplanation: '', competitiveTakeaway: '',
         biggestStrengths: '', biggestWeaknesses: '', whoWeLoseTo: '', whoWeWinAgainst: '',
         closestComparableFloorplans: '', recommendedPositioning: '',
-        surveyDate: '', sourceOfInformation: '', lastUpdatedDate: '', notes: '', analystName: ''
+        surveyDate: '', sourceOfInformation: '', lastUpdatedDate: '', notes: '', analystName: '',
+        // ── Additive fields (backward compatible: may be absent on older records) ──
+        futureRates: {},       // { [floorplanId]: { rate: '1234', updatedAt } } — subject card only, planned/held rates
+        collegeHouseData: null // { raw: {...}, normalized: {...}, importedAt, sourceFileName } — subject card only
       };
+    }
+
+    // ── Floorplan stable IDs (additive; older floorplans get an id lazily backfilled) ──
+    var fpIdCounter = 0;
+    function makeFpId() {
+      fpIdCounter++;
+      return 'fp_' + Date.now().toString(36) + '_' + fpIdCounter.toString(36);
+    }
+    // Safe, case/space-insensitive key for matching floorplans that lack a stable id yet
+    // (e.g. imported from Excel or pre-existing records saved before ids existed).
+    function normalizeFPKey(fp) {
+      var s = ((fp && fp.name) || '') + '|' + ((fp && fp.bedsBaths) || '');
+      return s.toLowerCase().replace(/\s+/g, ' ').trim();
+    }
+    function getFloorplanId(fp) {
+      if (!fp) return '';
+      if (fp.id) return fp.id;
+      return 'k_' + normalizeFPKey(fp);
+    }
+    function ensureFloorplanIds(card) {
+      if (!card || !Array.isArray(card.floorplanDetails)) return;
+      card.floorplanDetails.forEach(function(fp) {
+        if (!fp.id) fp.id = makeFpId();
+      });
+    }
+    function backfillCardDefaults(c) {
+      if (!c.floorplanDetails) c.floorplanDetails = [];
+      if (!c.monthlyExtraFees) c.monthlyExtraFees = {};
+      if (!c.cardType) c.cardType = 'competitor';
+      if (!c.futureRates || typeof c.futureRates !== 'object') c.futureRates = {};
+      if (typeof c.collegeHouseData === 'undefined') c.collegeHouseData = null;
+      ensureFloorplanIds(c);
+      return c;
+    }
+
+    // ── Safe numeric helpers (guard against NaN/Infinity/zero throughout) ──
+    function safeParseNum(v) {
+      if (v === null || typeof v === 'undefined') return 0;
+      var cleaned = String(v).replace(/[^0-9.\-]/g, '');
+      var n = parseFloat(cleaned);
+      if (!isFinite(n) || isNaN(n)) return 0;
+      return n;
+    }
+    function safeRatePerSqft(rateStr, sqftStr) {
+      var rate = safeParseNum(rateStr);
+      var sqft = safeParseNum(sqftStr);
+      if (!rate || !sqft || sqft <= 0 || !isFinite(rate) || !isFinite(sqft)) return null;
+      var result = rate / sqft;
+      if (!isFinite(result) || isNaN(result)) return null;
+      return result;
+    }
+    function fmtMoney(n) {
+      if (n === null || typeof n === 'undefined' || !isFinite(n) || isNaN(n)) return '';
+      return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+    function fmtRatePerSqft(rateStr, sqftStr) {
+      var v = safeRatePerSqft(rateStr, sqftStr);
+      if (v === null) return '<span class="rc-empty">--</span>';
+      return '$' + v.toFixed(2);
+    }
+    function splitBedsBaths(bedsBaths) {
+      var s = (bedsBaths || '').trim();
+      if (!s) return { beds: '', baths: '' };
+      var m = s.match(/([\d.]+)\s*[xX\/]\s*([\d.]+)/);
+      if (m) return { beds: m[1], baths: m[2] };
+      if (/studio|efficiency/i.test(s)) return { beds: '0', baths: (s.match(/([\d.]+)/) || [,''])[1] || '1' };
+      var single = s.match(/([\d.]+)/);
+      return { beds: single ? single[1] : s, baths: '' };
+    }
+    function chunkArray(arr, size) {
+      var out = [];
+      for (var i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+      return out;
     }
 
     function getAccessible(properties, me) {
@@ -712,8 +865,8 @@
     }
 
     // ── API ──
-    async function apiGet() {
-      var res = await fetch('/api/competitor-cards?property=' + encodeURIComponent(currentProperty));
+    async function apiGet(propertyName) {
+      var res = await fetch('/api/competitor-cards?property=' + encodeURIComponent(propertyName || currentProperty));
       if (!res.ok) throw new Error('Failed to load cards');
       return res.json();
     }
@@ -761,8 +914,11 @@
       
       var reportCount = Object.keys(reportSelected).filter(function(k) { return reportSelected[k]; }).length;
       var reportBtnText = reportCount > 0 ? ' Report Builder (' + reportCount + ')' : ' Report Builder';
+      var isAdmin = !!(currentUser && currentUser.role === 'admin');
+      var adminImagesBtn = isAdmin ? '<button class="btn btn-outline" id="bulkImagesBtn" style="border-color:#d97706;color:#b45309;">' + icon('building') + ' Bulk Update Images</button>' : '';
 
       els.toolbarActions.innerHTML =
+        adminImagesBtn +
         compareBtn +
         '<button class="btn btn-warning" id="reportBuilderBtn">' + icon('file') + reportBtnText + '</button>' +
         '<button class="btn btn-accent" id="rateCompareBtn">' + icon('compare') + ' Rate Compare</button>' +
@@ -774,6 +930,9 @@
       document.getElementById('importCardsBtn').onclick = function() { renderImportView(); };
       if (document.getElementById('compareBtn')) {
         document.getElementById('compareBtn').onclick = function() { renderComparison(); };
+      }
+      if (document.getElementById('bulkImagesBtn')) {
+        document.getElementById('bulkImagesBtn').onclick = function() { renderBulkImageTool(); };
       }
 
       var search = '', impactFilter = '', typeFilter = '', statusFilter = '', sort = 'recent';
@@ -915,9 +1074,12 @@
         subjectHTML = '<div class="subject-card-section">' +
           '<div class="sc-header">' +
             '<div><div class="sc-label">Our Property</div><h3>' + esc(sc.competitorName || currentProperty) + '</h3></div>' +
-            '<div style="display:flex;gap:8px;">' +
+            '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
               '<button class="btn btn-subject btn-sm" id="editSubjectBtn">' + icon('edit') + ' Edit Our Property Card</button>' +
               '<button class="btn btn-sm btn-outline" id="viewSubjectBtn" style="color:#fff;border-color:rgba(255,255,255,0.3);">' + icon('eye') + ' View</button>' +
+              '<button class="btn btn-sm btn-outline" id="futureRatesFromGalleryBtn" style="color:#fff;border-color:rgba(255,255,255,0.3);">' + icon('tag') + ' Future Rates</button>' +
+              '<button class="btn btn-sm btn-outline" id="analystBtn" style="color:#fff;border-color:rgba(255,255,255,0.3);">' + icon('trendUp') + ' Analyst</button>' +
+              '<button class="btn btn-sm btn-outline" id="collegeHouseBtn" style="color:#fff;border-color:rgba(255,255,255,0.3);">' + icon('building') + ' College House Market Overview</button>' +
             '</div>' +
           '</div>' +
           '<div class="sc-body">';
@@ -989,6 +1151,18 @@
         viewSubBtn.onclick = function() {
           handleViewCard(subjectCard);
         };
+      }
+      var futureRatesGalleryBtn = document.getElementById('futureRatesFromGalleryBtn');
+      if (futureRatesGalleryBtn) {
+        futureRatesGalleryBtn.onclick = function() { renderFutureRates(subjectCard); };
+      }
+      var analystBtn = document.getElementById('analystBtn');
+      if (analystBtn) {
+        analystBtn.onclick = function() { renderAnalyst(); };
+      }
+      var collegeHouseBtn = document.getElementById('collegeHouseBtn');
+      if (collegeHouseBtn) {
+        collegeHouseBtn.onclick = function() { renderCollegeHouse(); };
       }
 
       renderGrid();
@@ -1070,7 +1244,7 @@
         var sqft = getRowVal(rowMap, 'fp' + i + 'Sqft');
         var rate = getRowVal(rowMap, 'fp' + i + 'Rate');
         if (name || bedsBaths || sqft || rate) {
-          card.floorplanDetails.push({ name: name, bedsBaths: bedsBaths, sqft: sqft, rate: rate });
+          card.floorplanDetails.push({ id: makeFpId(), name: name, bedsBaths: bedsBaths, sqft: sqft, rate: rate });
         }
       }
 
@@ -1222,6 +1396,287 @@
       XLSX.writeFile(wb, 'Competitor_Card_Import_Template.xlsx');
     }
 
+    // ── Shared per-card Excel Import/Export helpers (used by both Our Property and
+    // individual Competitor editors — see buildExcelPanelHTML/attachExcelPanelHandlers). ──
+    var CARD_FIELD_SHEETS = {
+      'Property Details': [
+        ['Property / Competitor Name', 'competitorName'],
+        ['Website', 'website'],
+        ['Address', 'address'],
+        ['Distance from Campus', 'distanceFromCampus'],
+        ['Drive Time to Campus', 'driveTimeToCampus'],
+        ['Property Type', 'propertyType'],
+        ['Target Audience', 'targetAudience'],
+        ['Hero Image URL', 'heroImage'],
+        ['Short Description', 'shortDescription'],
+        ['Floorplans Summary', 'floorplans'],
+        ['Unit Count', 'unitCount'],
+        ['Lease Style', 'leaseStyle'],
+        ['Furnished', 'furnished'],
+        ['Pet Policy', 'petPolicy'],
+        ['Starting Rate', 'startingRate'],
+        ['Pricing Notes', 'pricingNotes'],
+        ['Estimated Cost Above Base', 'estimatedCostAboveBase'],
+        ['Current Occupancy %', 'currentOccupancy'],
+        ['Preleased %', 'preleasedPercent'],
+        ['Availability Summary', 'availabilitySummary'],
+        ['Leasing Velocity', 'leasingVelocity'],
+        ['Impact To Property', 'impactToProperty'],
+        ['Impact Explanation', 'impactExplanation'],
+        ['Competitive Takeaway', 'competitiveTakeaway'],
+        ['Biggest Strengths vs Us', 'biggestStrengths'],
+        ['Biggest Weaknesses vs Us', 'biggestWeaknesses'],
+        ['Who We Lose To Them', 'whoWeLoseTo'],
+        ['Who We Win Against Them', 'whoWeWinAgainst'],
+        ['Closest Comparable Floorplans', 'closestComparableFloorplans'],
+        ['Recommended Positioning', 'recommendedPositioning'],
+        ['Survey Date', 'surveyDate'],
+        ['Last Updated Date', 'lastUpdatedDate'],
+        ['Source of Information', 'sourceOfInformation'],
+        ['Analyst Name', 'analystName'],
+        ['Notes', 'notes']
+      ],
+      'Fees': [
+        ['Application Fee', 'applicationFee'],
+        ['Admin Fee', 'adminFee'],
+        ['Signing Fee', 'signingFee'],
+        ['Deposit', 'deposit'],
+        ['Pet Rent (monthly)', 'monthlyExtraFees.petRent'],
+        ['Package Locker (monthly)', 'monthlyExtraFees.packageLocker'],
+        ['Valet Trash (monthly)', 'monthlyExtraFees.valetTrash'],
+        ['Internet / Tech Fee (monthly)', 'monthlyExtraFees.internetTechFee'],
+        ['Renters Insurance (monthly)', 'monthlyExtraFees.rentersInsurance'],
+        ['Other Recurring (monthly)', 'monthlyExtraFees.otherRecurring']
+      ],
+      'Utilities': [
+        ['Utility Structure (fully-included/partially-included/resident-paid)', 'utilityStructure'],
+        ['Utility Billing Fee (monthly)', 'monthlyExtraFees.utilityBillingFee']
+      ],
+      'Parking': [
+        ['Parking Type', 'parkingType'],
+        ['Parking Fee (monthly)', 'monthlyExtraFees.parking']
+      ],
+      'Specials / Concessions': [
+        ['Current Specials', 'currentSpecials'],
+        ['Specials Expiration', 'specialsExpiration'],
+        ['Historical Specials', 'historicalSpecials'],
+        ['Past Concessions Note', 'pastConcessionsNote']
+      ]
+    };
+
+    function getCardFieldValue(card, path) {
+      if (path.indexOf('.') === -1) return card[path];
+      var parts = path.split('.');
+      return ((card[parts[0]] || {})[parts[1]]) || '';
+    }
+    function setCardFieldValue(card, path, val) {
+      if (path.indexOf('.') === -1) { card[path] = val; return; }
+      var parts = path.split('.');
+      if (!card[parts[0]]) card[parts[0]] = {};
+      card[parts[0]][parts[1]] = val;
+    }
+
+    function buildCardWorkbook(card, mode) {
+      var wb = XLSX.utils.book_new();
+      Object.keys(CARD_FIELD_SHEETS).forEach(function(sheetName) {
+        var fields = CARD_FIELD_SHEETS[sheetName];
+        var rows = fields.map(function(f) {
+          var val = mode === 'clean' ? '' : (getCardFieldValue(card, f[1]) || '');
+          return { Field: f[0], Value: val };
+        });
+        var ws = XLSX.utils.json_to_sheet(rows, { header: ['Field', 'Value'] });
+        ws['!cols'] = [{ wch: 46 }, { wch: 40 }];
+        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      });
+
+      var fpRows;
+      if (mode === 'clean') {
+        fpRows = [
+          { Name: 'Studio', 'Beds/Baths': '0x1', 'Sq Ft': '450', Rate: '$1050', 'Floorplan ID (do not edit)': '' },
+          { Name: '1x1', 'Beds/Baths': '1x1', 'Sq Ft': '600', Rate: '$1150', 'Floorplan ID (do not edit)': '' }
+        ];
+      } else {
+        fpRows = (card.floorplanDetails || []).map(function(fp) {
+          return { Name: fp.name || '', 'Beds/Baths': fp.bedsBaths || '', 'Sq Ft': fp.sqft || '', Rate: fp.rate || '', 'Floorplan ID (do not edit)': fp.id || '' };
+        });
+        if (fpRows.length === 0) fpRows = [{ Name: '', 'Beds/Baths': '', 'Sq Ft': '', Rate: '', 'Floorplan ID (do not edit)': '' }];
+      }
+      var fpWs = XLSX.utils.json_to_sheet(fpRows, { header: ['Name', 'Beds/Baths', 'Sq Ft', 'Rate', 'Floorplan ID (do not edit)'] });
+      fpWs['!cols'] = [{ wch: 22 }, { wch: 14 }, { wch: 10 }, { wch: 14 }, { wch: 24 }];
+      XLSX.utils.book_append_sheet(wb, fpWs, 'Floorplans');
+
+      var amenityRows;
+      if (mode === 'clean') {
+        amenityRows = [{ Amenity: 'Pool' }, { Amenity: 'Fitness Center' }];
+      } else {
+        var list = parseAmenities(card.topAmenities);
+        amenityRows = list.length ? list.map(function(a) { return { Amenity: a }; }) : [{ Amenity: '' }];
+      }
+      var amWs = XLSX.utils.json_to_sheet(amenityRows, { header: ['Amenity'] });
+      amWs['!cols'] = [{ wch: 40 }];
+      XLSX.utils.book_append_sheet(wb, amWs, 'Amenities');
+
+      return wb;
+    }
+
+    function downloadCardExcel(card, mode, cardTypeLabel) {
+      var wb = buildCardWorkbook(card, mode);
+      var namePart = (card.competitorName || cardTypeLabel || 'Property').replace(/[^a-z0-9]/gi, '_');
+      var suffix = mode === 'clean' ? 'Clean_Template' : 'Current_Data';
+      XLSX.writeFile(wb, namePart + '_' + suffix + '.xlsx');
+    }
+
+    // Applies an uploaded workbook onto `card` IN PLACE. Blank cells never erase existing
+    // data (item requirement) — a field/sheet is only touched when the uploaded value is
+    // non-blank, or (for Floorplans/Amenities) when the sheet has at least one non-blank row.
+    function applyWorkbookToCard(wb, card) {
+      var report = { updated: [], skipped: [] };
+      Object.keys(CARD_FIELD_SHEETS).forEach(function(sheetName) {
+        var ws = wb.Sheets[sheetName];
+        if (!ws) { report.skipped.push(sheetName + ' (sheet not found)'); return; }
+        var rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        var fields = CARD_FIELD_SHEETS[sheetName];
+        rows.forEach(function(row) {
+          var fieldLabel = row.Field || row.field;
+          var value = (typeof row.Value !== 'undefined') ? row.Value : row.value;
+          if (value === undefined || value === null || String(value).trim() === '') return;
+          var match = fields.filter(function(f) { return f[0] === fieldLabel; })[0];
+          if (!match) return;
+          setCardFieldValue(card, match[1], String(value).trim());
+          report.updated.push(match[1]);
+        });
+      });
+
+      var fpWs = wb.Sheets['Floorplans'];
+      if (fpWs) {
+        var fpRows = XLSX.utils.sheet_to_json(fpWs, { defval: '' });
+        var parsedFps = fpRows.map(function(r) {
+          return {
+            name: String(r['Name'] || '').trim(),
+            bedsBaths: String(r['Beds/Baths'] || '').trim(),
+            sqft: String(r['Sq Ft'] || '').trim(),
+            rate: String(r['Rate'] || '').trim(),
+            id: String(r['Floorplan ID (do not edit)'] || '').trim() || undefined
+          };
+        }).filter(function(fp) { return fp.name || fp.bedsBaths || fp.sqft || fp.rate; });
+        if (parsedFps.length > 0) {
+          var existingById = {}, existingByKey = {};
+          (card.floorplanDetails || []).forEach(function(fp) {
+            if (fp.id) existingById[fp.id] = fp;
+            existingByKey[normalizeFPKey(fp)] = fp;
+          });
+          parsedFps.forEach(function(fp) {
+            if (fp.id && existingById[fp.id]) { fp.id = existingById[fp.id].id; return; }
+            var byKey = existingByKey[normalizeFPKey(fp)];
+            if (byKey) { fp.id = byKey.id; return; }
+            fp.id = makeFpId();
+          });
+          card.floorplanDetails = parsedFps;
+          report.updated.push('floorplanDetails (' + parsedFps.length + ' rows)');
+        } else {
+          report.skipped.push('Floorplans (blank sheet, existing floorplans left untouched)');
+        }
+      }
+
+      var amWs = wb.Sheets['Amenities'];
+      if (amWs) {
+        var amRows = XLSX.utils.sheet_to_json(amWs, { defval: '' });
+        var names = amRows.map(function(r) { return String(r['Amenity'] || '').trim(); }).filter(Boolean);
+        if (names.length > 0) {
+          card.topAmenities = names.join('; ');
+          report.updated.push('topAmenities (' + names.length + ' items)');
+        } else {
+          report.skipped.push('Amenities (blank sheet, existing amenities left untouched)');
+        }
+      }
+
+      return report;
+    }
+
+    function handleCardExcelUpload(file, card, onDone) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          var wb = XLSX.read(e.target.result, { type: 'array' });
+          var report = applyWorkbookToCard(wb, card);
+          onDone(null, report);
+        } catch (err) {
+          onDone(err, null);
+        }
+      };
+      reader.onerror = function() { onDone(new Error('Could not read file'), null); };
+      reader.readAsArrayBuffer(file);
+    }
+
+    // Re-syncs visible form input values from currentCard without a full rebuild (used after
+    // an Excel upload applies changes in place, so we don't lose scroll position/focus).
+    function refreshFormFieldValues() {
+      var container = document.getElementById('formContainer');
+      if (!container) return;
+      container.querySelectorAll('[data-field]').forEach(function(el) {
+        var fieldName = el.getAttribute('data-field');
+        var val;
+        if (fieldName.indexOf('monthlyExtraFees.') === 0) {
+          val = (currentCard.monthlyExtraFees || {})[fieldName.split('.')[1]];
+        } else {
+          val = currentCard[fieldName];
+        }
+        el.value = val || '';
+      });
+      renderFPRows();
+    }
+
+    function buildExcelPanelHTML(isSubjectCard) {
+      var label = isSubjectCard ? 'this property' : 'this competitor';
+      return '<div class="xlpanel">' +
+        '<div class="xlpanel-desc">Download a clean template to fill in offline, download the current data for backup or bulk editing, or upload a completed file to update ' + label + '. Blank cells will never erase existing data \u2014 only cells with a value are applied.</div>' +
+        '<div class="xlpanel-actions">' +
+          '<button type="button" class="btn btn-outline btn-sm" id="xlCleanBtn">' + icon('download') + ' Download Clean Template</button>' +
+          '<button type="button" class="btn btn-outline btn-sm" id="xlCurrentBtn">' + icon('download') + ' Download Current ' + (isSubjectCard ? 'Property' : 'Competitor') + ' Data</button>' +
+          '<button type="button" class="btn btn-primary btn-sm" id="xlUploadBtn">' + icon('upload') + ' Upload Excel File</button>' +
+        '</div>' +
+        '<input type="file" id="xlFileInput" accept=".xlsx,.xls" style="display:none">' +
+        '<div class="xl-status" id="xlStatus"></div>' +
+      '</div>';
+    }
+
+    function attachExcelPanelHandlers(isSubjectCard) {
+      var cleanBtn = document.getElementById('xlCleanBtn');
+      var currentBtn = document.getElementById('xlCurrentBtn');
+      var uploadBtn = document.getElementById('xlUploadBtn');
+      var fileInput = document.getElementById('xlFileInput');
+      if (cleanBtn) cleanBtn.onclick = function() { downloadCardExcel(currentCard, 'clean', isSubjectCard ? 'Our_Property' : 'Competitor'); };
+      if (currentBtn) currentBtn.onclick = function() { downloadCardExcel(currentCard, 'current', isSubjectCard ? 'Our_Property' : 'Competitor'); };
+      if (uploadBtn) uploadBtn.onclick = function() { fileInput.click(); };
+      if (fileInput) {
+        fileInput.onchange = function(e) {
+          var f = e.target.files[0];
+          if (!f) return;
+          var statusEl = document.getElementById('xlStatus');
+          statusEl.className = 'xl-status';
+          statusEl.textContent = 'Reading file\u2026';
+          handleCardExcelUpload(f, currentCard, function(err, report) {
+            statusEl = document.getElementById('xlStatus');
+            if (err) {
+              statusEl.className = 'xl-status err';
+              statusEl.textContent = 'Error reading file: ' + err.message;
+              return;
+            }
+            if (report.updated.length === 0) {
+              statusEl.className = 'xl-status err';
+              statusEl.textContent = 'No recognized data found in that file. Nothing was changed.';
+              return;
+            }
+            statusEl.className = 'xl-status ok';
+            statusEl.textContent = 'Applied: ' + report.updated.join(', ') + '. Nothing else was changed. Review the form below, then Save.';
+            refreshFormFieldValues();
+            renderPreview(currentCard, document.getElementById('previewContainer'));
+          });
+          e.target.value = '';
+        };
+      }
+    }
+
     // ── Render: Import from Excel ──
     function renderImportView() {
       currentView = 'import';
@@ -1355,11 +1810,7 @@
     async function silentRefreshCards() {
       try {
         var allCards = await apiGet();
-        allCards.forEach(function(c) {
-          if (!c.floorplanDetails) c.floorplanDetails = [];
-          if (!c.monthlyExtraFees) c.monthlyExtraFees = {};
-          if (!c.cardType) c.cardType = 'competitor';
-        });
+        allCards.forEach(backfillCardDefaults);
         subjectCard = allCards.find(function(c) { return c.cardType === 'subject'; }) || null;
         cards = allCards.filter(function(c) { return c.cardType !== 'subject'; });
       } catch (e) {
@@ -1447,8 +1898,10 @@
         ? 'Our Property: ' + (currentCard.competitorName || currentProperty)
         : (currentCard.competitorName || 'New Competitor Card');
       els.pageSubtitle.style.display = 'none';
+      var futureRatesBtn = isSubject ? '<button class="btn btn-accent" id="futureRatesBtn">' + icon('tag') + ' Manage Future Rates</button>' : '';
       els.toolbarActions.innerHTML =
         '<button class="btn btn-back" id="backBtn">' + icon('arrowLeft') + ' Back</button>' +
+        futureRatesBtn +
         '<button class="btn btn-outline" id="saveDraftBtn">' + icon('save') + ' Save Draft</button>' +
         '<button class="btn btn-success" id="saveCompleteBtn">' + icon('check') + ' Save Complete</button>' +
         '<button class="btn btn-outline" id="presentBtn">' + icon('printer') + ' Present</button>';
@@ -1457,6 +1910,12 @@
       document.getElementById('saveDraftBtn').onclick = handleSaveDraft;
       document.getElementById('saveCompleteBtn').onclick = handleSaveComplete;
       document.getElementById('presentBtn').onclick = function() { handlePresentation(currentCard); };
+      if (document.getElementById('futureRatesBtn')) {
+        document.getElementById('futureRatesBtn').onclick = function() {
+          if (!currentCard.id) { showToast('Save this property first, then manage future rates'); return; }
+          renderFutureRates(currentCard);
+        };
+      }
 
       var statusText = currentCard.status === 'draft' ? 'Draft' : currentCard.status === 'complete' ? 'Complete' : 'Archived';
       var bannerHTML = '<div class="assigned-banner">' +
@@ -1687,6 +2146,7 @@
     function buildForm() {
       var c = currentCard;
       var container = document.getElementById('formContainer');
+      var isSubjectCard = c.cardType === 'subject';
 
       function section(title, iconName, id, fields) {
         return '<div class="form-section open" id="section_' + id + '">' +
@@ -1726,6 +2186,9 @@
       var imOpts = Object.entries(IMPACT_LABELS);
 
       var html = '';
+
+      // Excel Import / Export (shared helpers; works identically for Our Property and Competitors)
+      html += section('Excel Import / Export', 'file', 'excel', '<div class="full">' + buildExcelPanelHTML(isSubjectCard) + '</div>');
 
       // Property Snapshot
       html += section('Property Snapshot', 'building', 'snapshot',
@@ -1824,6 +2287,9 @@
       // Render floorplan rows
       renderFPRows();
 
+      // Excel Import/Export panel handlers
+      attachExcelPanelHandlers(isSubjectCard);
+
       // Attach change listeners
       container.querySelectorAll('[data-field]').forEach(function(el) {
         var handler = function() {
@@ -1887,7 +2353,7 @@
       if (addBtn) {
         addBtn.onclick = function() {
           if (!currentCard.floorplanDetails) currentCard.floorplanDetails = [];
-          currentCard.floorplanDetails.push({ name: '', bedsBaths: '', sqft: '', rate: '' });
+          currentCard.floorplanDetails.push({ id: makeFpId(), name: '', bedsBaths: '', sqft: '', rate: '' });
           renderFPRows();
         };
       }
@@ -2098,8 +2564,7 @@
 
     function handleEditCard(card) {
       currentCard = JSON.parse(JSON.stringify(card));
-      if (!currentCard.floorplanDetails) currentCard.floorplanDetails = [];
-      if (!currentCard.monthlyExtraFees) currentCard.monthlyExtraFees = {};
+      backfillCardDefaults(currentCard);
       renderEditor();
     }
 
@@ -2211,12 +2676,8 @@
     async function loadCards() {
       try {
         var allCards = await apiGet();
-        // Ensure floorplanDetails exists on all cards
-        allCards.forEach(function(c) {
-          if (!c.floorplanDetails) c.floorplanDetails = [];
-          if (!c.monthlyExtraFees) c.monthlyExtraFees = {};
-          if (!c.cardType) c.cardType = 'competitor';
-        });
+        // Ensure floorplanDetails/futureRates/collegeHouseData exist on all cards (backward compatible)
+        allCards.forEach(backfillCardDefaults);
         // Separate subject card from competitor cards
         subjectCard = allCards.find(function(c) { return c.cardType === 'subject'; }) || null;
         cards = allCards.filter(function(c) { return c.cardType !== 'subject'; });
@@ -2291,25 +2752,15 @@
       }
       if (document.getElementById('printReportBtn')) {
         document.getElementById('printReportBtn').onclick = function() {
-          console.log('Print button clicked');
-          console.log('reportSelected:', reportSelected);
-          console.log('reportSections:', reportSections);
-          
           // Ensure we have selections
           var count = Object.keys(reportSelected).filter(function(k) { return reportSelected[k]; }).length;
-          if (count === 0) {
-            alert('Please select competitors in Step 1 before printing. Check the boxes next to competitors in the gallery first, or go back to Step 1.');
+          if (count === 0 && !(subjectCard && reportSections.subjectCard)) {
+            alert('Please select competitors in Step 1 (or enable Our Property in Step 2) before generating the PDF.');
             return;
           }
-          
-          // Navigate to preview and wait for render
-          renderReportPreview();
-          
-          // Wait longer for content to fully render before printing
-          setTimeout(function() {
-            console.log('Opening print dialog');
-            window.print();
-          }, 1500);
+          // Renders a dedicated, fixed-size landscape export layout off-screen and generates
+          // the PDF directly — independent of the on-screen preview, viewport, or scroll position.
+          generateReportPDF();
         };
       }
 
@@ -2403,10 +2854,25 @@
               '<div><div class="rst-label">' + icon('tag') + ' Rate Comparison</div><div class="rst-desc">Floorplan-level rate comparison</div></div>' +
               '<input type="checkbox" id="rsec_rateComparison" ' + (reportSections.rateComparison ? 'checked' : '') + '>' +
             '</div>' +
+            (reportSections.rateComparison ? (
+              '<div style="padding:10px 16px;background:#f8fafc;border-radius:8px;margin:-8px 0 4px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">' +
+                '<span style="font-size:11px;font-weight:700;color:var(--subtext);text-transform:uppercase;">Rate Source:</span>' +
+                ['current', 'future', 'currentVsFuture'].map(function(m) {
+                  var lbl = m === 'current' ? 'Current Rates' : m === 'future' ? 'Future Rates' : 'Current vs Future';
+                  return '<button type="button" class="btn btn-sm ' + (reportRateMode === m ? 'btn-primary' : 'btn-outline') + '" data-report-rate-mode="' + m + '">' + lbl + '</button>';
+                }).join('') +
+              '</div>'
+            ) : '') +
             '<div class="report-section-toggle">' +
               '<div><div class="rst-label">' + icon('check') + ' Amenity Cart</div><div class="rst-desc">Amenity presence comparison across properties</div></div>' +
               '<input type="checkbox" id="rsec_amenityCart" ' + (reportSections.amenityCart ? 'checked' : '') + '>' +
             '</div>' +
+            (subjectCard && subjectCard.collegeHouseData ? (
+              '<div class="report-section-toggle">' +
+                '<div><div class="rst-label">' + icon('building') + ' College House Market Overview</div><div class="rst-desc">Aggregated market KPIs and bedroom-level metrics (raw rows are never included)</div></div>' +
+                '<input type="checkbox" id="rsec_collegeHouse" ' + (reportSections.collegeHouse ? 'checked' : '') + '>' +
+              '</div>'
+            ) : '') +
           '</div>' +
         '</div>';
       }
@@ -2466,8 +2932,9 @@
           subjectCard: 'Subject Property Card',
           competitorCards: 'Competitor Cards',
           comparisonTable: 'Comparison Table',
-          rateComparison: 'Rate Comparison',
-          amenityCart: 'Amenity Cart'
+          rateComparison: 'Rate Comparison (' + (reportRateMode === 'future' ? 'Future Rates' : reportRateMode === 'currentVsFuture' ? 'Current vs Future' : 'Current Rates') + ')',
+          amenityCart: 'Amenity Cart',
+          collegeHouse: 'College House Market Overview'
         };
         Object.keys(sectionLabels).forEach(function(key) {
           if (reportSections[key]) {
@@ -2499,11 +2966,12 @@
 
       // Section toggle handlers (Step 2)
       if (wizardStep === 2) {
-        ['subjectCard', 'competitorCards', 'comparisonTable', 'rateComparison', 'amenityCart'].forEach(function(key) {
+        ['subjectCard', 'competitorCards', 'comparisonTable', 'rateComparison', 'amenityCart', 'collegeHouse'].forEach(function(key) {
           var el = document.getElementById('rsec_' + key);
           if (el) {
             el.onchange = function() {
               reportSections[key] = el.checked;
+              if (key === 'rateComparison') { renderReportBuilder(2); return; }
               // Update the count display
               var sectionsCount = Object.keys(reportSections).filter(function(k) { return reportSections[k]; }).length;
               var countEl = document.querySelector('[style*="background:#e0f2fe"]');
@@ -2512,6 +2980,9 @@
               }
             };
           }
+        });
+        document.querySelectorAll('[data-report-rate-mode]').forEach(function(btn) {
+          btn.onclick = function() { reportRateMode = btn.getAttribute('data-report-rate-mode'); renderReportBuilder(2); };
         });
       }
 
@@ -2573,7 +3044,7 @@
         '<button class="btn btn-success" id="printReportBtn2">' + icon('printer') + ' Print / PDF</button>';
 
       document.getElementById('backBtn').onclick = function() { renderReportBuilder(3); };
-      document.getElementById('printReportBtn2').onclick = function() { window.print(); };
+      document.getElementById('printReportBtn2').onclick = function() { generateReportPDF(); };
 
       var reportCards = Object.keys(reportSelected).filter(function(id) { return reportSelected[id]; }).map(function(id) { return cards.find(function(c) { return c.id === id; }); }).filter(Boolean);
       
@@ -2668,9 +3139,14 @@
 
       // Section 4: Rate Comparison
       if (reportSections.rateComparison && reportCards.length > 0) {
+        var rateModeLabel = reportRateMode === 'future' ? 'Future Rates' : reportRateMode === 'currentVsFuture' ? 'Current vs Future' : 'Current Rates';
         deckHTML += '<div class="report-preview-section">';
-        deckHTML += '<div class="rps-title" style="background:var(--card-navy);color:#fff;">' + icon('tag') + ' Rate Comparison</div>';
-        deckHTML += '<div class="rps-body"><div style="max-width:100%;overflow-x:auto;">' + buildRateCompareHTML(reportCards) + '</div></div>';
+        deckHTML += '<div class="rps-title" style="background:var(--card-navy);color:#fff;">' + icon('tag') + ' Rate Comparison <span style="font-weight:400;opacity:0.8;font-size:11px;">(' + rateModeLabel + ')</span></div>';
+        if (reportRateMode === 'currentVsFuture') {
+          deckHTML += '<div class="rps-body">' + (subjectCard ? buildFutureRatesTableHTML(subjectCard, { showStatus: true, editable: false }) : '<p style="color:#9ca3af;">Set up Our Property to use Current vs Future.</p>') + '</div>';
+        } else {
+          deckHTML += '<div class="rps-body"><div style="max-width:100%;overflow-x:auto;">' + buildRateCompareHTML(reportCards, reportRateMode) + (subjectCard ? buildOurPropertyFloorplanDetailHTML(subjectCard, reportRateMode) : '') + '</div></div>';
+        }
         deckHTML += '</div>';
       }
 
@@ -2684,6 +3160,14 @@
           console.error('Amenity Cart Error:', e);
           deckHTML += '<div class="rps-body"><p style="color:#dc2626;padding:20px;">Amenity cart could not be generated. Error: ' + e.message + '</p></div>';
         }
+        deckHTML += '</div>';
+      }
+
+      // Section 6: College House Market Overview
+      if (reportSections.collegeHouse && subjectCard && subjectCard.collegeHouseData) {
+        deckHTML += '<div class="report-preview-section">';
+        deckHTML += '<div class="rps-title" style="background:var(--card-navy);color:#fff;">' + icon('building') + ' College House Market Overview</div>';
+        deckHTML += '<div class="rps-body">' + buildCollegeHouseKPIHTML(subjectCard.collegeHouseData.normalized, true) + '</div>';
         deckHTML += '</div>';
       }
 
@@ -2992,61 +3476,62 @@
       return container;
     }
 
-    // ── Build comparison table HTML (for report) ──
+    // ── Comparison Matrix metrics (shared by on-screen report preview and PDF export) ──
+    var COMPARISON_MATRIX_METRICS = [
+      { label: 'Address', fn: function(c) { return c.address; } },
+      { label: 'Property Type', fn: function(c) { return PROPERTY_TYPE_LABELS[c.propertyType] || c.propertyType; } },
+      { label: 'Target Audience', fn: function(c) { return TARGET_AUDIENCE_LABELS[c.targetAudience] || c.targetAudience; } },
+      { label: 'Distance', fn: function(c) { return c.distanceFromCampus; } },
+      { label: 'Beds / Unit Count', fn: function(c) { return c.unitCount; } },
+      { label: 'Starting Rate', fn: function(c) { return c.startingRate; }, highlight: true },
+      { label: 'Occupancy', fn: function(c) { return c.currentOccupancy; }, highlight: true },
+      { label: 'Floorplans', fn: function(c) { return c.floorplans; } },
+      { label: 'Amenities', fn: function(c) { return c.topAmenities; } },
+      { label: 'Special', fn: function(c) { return c.currentSpecials; } },
+      { label: 'Takeaway', fn: function(c) { return c.competitiveTakeaway; } }
+    ];
+    var COMPARISON_MATRIX_CHUNK = 4; // competitors per continuation group/page
+
+    // Horizontal metric-rows table: Metric | Our Property | Comp A | Comp B ... Our Property
+    // column (and the Metric label column) are repeated in every continuation group.
+    function buildComparisonMatrixTableHTML(chunkCards, ourCard) {
+      var cols = [];
+      if (ourCard) cols.push({ card: ourCard, isOurs: true, label: ourCard.competitorName || currentProperty });
+      chunkCards.forEach(function(c) { cols.push({ card: c, isOurs: false, label: c.competitorName || 'Untitled' }); });
+
+      var html = '<div style="overflow-x:auto;"><table class="compare-table" style="width:100%;"><thead><tr><th>Metric</th>';
+      cols.forEach(function(col) {
+        html += '<th class="col-header' + (col.isOurs ? ' our-prop' : '') + '">' + esc(col.label) +
+          (col.isOurs ? '<br><span style="font-size:10px;font-weight:400;opacity:0.8;">Our Property</span>' : '') + '</th>';
+      });
+      html += '</tr></thead><tbody>';
+      COMPARISON_MATRIX_METRICS.forEach(function(m) {
+        html += '<tr><th>' + esc(m.label) + '</th>';
+        cols.forEach(function(col) {
+          var val = m.fn(col.card);
+          html += '<td' + (m.highlight ? ' class="highlight"' : '') + '>' + (val ? esc(val) : '<span style="color:#d1d5db;">--</span>') + '</td>';
+        });
+        html += '</tr>';
+      });
+      html += '</tbody></table></div>';
+      return html;
+    }
+
+    // ── Build comparison matrix HTML (for report) — horizontal table with Our Property
+    // always first, split into continuation groups when there are too many competitors
+    // for one readable table (metric + our property column repeat in every group). ──
     function buildComparisonTableHTML(compCards) {
       var sc = subjectCard;
       if (!sc && compCards.length === 0) return '<p style="color:#9ca3af;">No data to compare.</p>';
-
-      var allCards = [];
-      if (sc) allCards.push(sc);
-      allCards = allCards.concat(compCards);
-
-      var rows = [
-        { label: 'Address', fn: function(c) { return c.address; } },
-        { label: 'Property Type', fn: function(c) { return PROPERTY_TYPE_LABELS[c.propertyType] || c.propertyType; } },
-        { label: 'Target Audience', fn: function(c) { return TARGET_AUDIENCE_LABELS[c.targetAudience] || c.targetAudience; } },
-        { label: 'Distance', fn: function(c) { return c.distanceFromCampus; } },
-        { label: 'Floorplans', fn: function(c) { return c.floorplans; } },
-        { label: 'Unit Count', fn: function(c) { return c.unitCount; } },
-        { label: 'Starting Rate', fn: function(c) { return c.startingRate; }, highlight: true },
-        { label: 'Occupancy', fn: function(c) { return c.currentOccupancy; }, highlight: true },
-        { label: 'Top Amenities', fn: function(c) { return c.topAmenities; } },
-        { label: 'Specials', fn: function(c) { return c.currentSpecials; } },
-        { label: 'Takeaway', fn: function(c) { return c.competitiveTakeaway; } }
-      ];
-
-      // Use card layout for better readability with multiple properties
-      var html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin:0;">';
-      
-      allCards.forEach(function(c, i) {
-        var isOurs = i === 0 && sc;
-        var headerBg = isOurs ? 'var(--brand-accent-2)' : 'var(--card-navy)';
-        var headerColor = isOurs ? '#1e293b' : '#fff';
-        var name = isOurs ? (sc.competitorName || 'Our Property') : c.competitorName;
-        
-        html += '<div style="background:#fff;border:2px solid ' + (isOurs ? 'var(--brand-accent-2)' : 'var(--border)') + ';border-radius:12px;overflow:hidden;page-break-inside:avoid;">';
-        html += '<div style="background:' + headerBg + ';color:' + headerColor + ';padding:12px 16px;font-weight:700;font-size:14px;text-align:center;text-transform:uppercase;letter-spacing:0.5px;">';
-        html += (isOurs ? icon('building') + ' ' : '') + esc(name);
-        html += '</div>';
-        html += '<div style="padding:12px;">';
-        
-        rows.forEach(function(r) {
-          var val = r.fn(c);
-          if (!val) return; // Skip empty fields in card view
-          var labelColor = r.highlight ? '#059669' : '#6b7280';
-          var valueColor = r.highlight ? '#065f46' : '#1f2937';
-          var valueBg = r.highlight ? '#ecfdf5' : 'transparent';
-          
-          html += '<div style="margin-bottom:10px;padding:8px;background:' + valueBg + ';border-radius:6px;">';
-          html += '<div style="font-size:10px;font-weight:700;color:' + labelColor + ';text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">' + r.label + '</div>';
-          html += '<div style="font-size:13px;color:' + valueColor + ';font-weight:' + (r.highlight ? '700' : '400') + ';line-height:1.4;">' + esc(val) + '</div>';
-          html += '</div>';
-        });
-        
-        html += '</div></div>';
+      var groups = chunkArray(compCards, COMPARISON_MATRIX_CHUNK);
+      if (groups.length === 0) groups = [[]];
+      var html = '';
+      groups.forEach(function(group, gi) {
+        if (groups.length > 1) {
+          html += '<div style="margin:' + (gi > 0 ? '20px' : '0') + ' 0 8px;font-size:11px;font-weight:700;color:var(--subtext);text-transform:uppercase;letter-spacing:0.5px;">Comparison Matrix (Group ' + (gi + 1) + ' of ' + groups.length + ')</div>';
+        }
+        html += buildComparisonMatrixTableHTML(group, sc);
       });
-      
-      html += '</div>';
       return html;
     }
 
@@ -3075,8 +3560,11 @@
       return fp.name || fp.bedsBaths || 'Unspecified';
     }
 
-    // Build rate comparison HTML grouped by bedroom type with range and vs-subject arrows
-    function buildRateCompareHTML(compCards) {
+    // Build rate comparison HTML grouped by bedroom type with range and vs-subject arrows.
+    // rateSource: 'current' (default) uses live rates for Our Property; 'future' uses the
+    // held/planned rates from subjectCard.futureRates (never falls back to $0 — shows "Not Set").
+    function buildRateCompareHTML(compCards, rateSource) {
+      rateSource = rateSource || 'current';
       var sc = subjectCard;
       var allCards = [];
       if (sc) allCards.push(sc);
@@ -3085,6 +3573,14 @@
       // Group floorplans by bedroom type across all properties
       var typeGroups = {}; // bedroomType -> { props: { ci: [fps] } }
       var typeOrder = ['Studio / Efficiency', '1 Bedroom / 1 Bath', '2 Bedroom / 2 Bath', '3 Bedroom', '4 Bedroom', '5 Bedroom'];
+
+      function effectiveRate(fp, ci) {
+        if (ci === 0 && sc && rateSource === 'future') {
+          var entry = (sc.futureRates || {})[getFloorplanId(fp)];
+          return entry ? entry.rate : '';
+        }
+        return fp.rate;
+      }
 
       allCards.forEach(function(c, ci) {
         (c.floorplanDetails || []).forEach(function(fp) {
@@ -3095,7 +3591,7 @@
             name: fp.name,
             bedsBaths: fp.bedsBaths,
             sqft: fp.sqft,
-            rate: fp.rate
+            rate: effectiveRate(fp, ci)
           });
         });
       });
@@ -3159,7 +3655,11 @@
           }
           var nums = fps.map(function(fp) { return parseRateNum(fp.rate); }).filter(function(n) { return n > 0; });
           if (nums.length === 0) {
-            rowDisplay.push(fps[0].rate || '');
+            if (ci === 0 && rateSource === 'future') {
+              rowDisplay.push('<span class="fr-not-set">Not Set</span>');
+            } else {
+              rowDisplay.push(fps[0].rate || '');
+            }
             rowNums.push(0);
             return;
           }
@@ -3228,7 +3728,34 @@
 
       html += '</tbody></table>';
       return html;
-    }    // ── Build amenity cart HTML with grouped, cross-property comparison ──
+    }
+
+    // Per-floorplan SQ FT / Rate / Rate-per-SqFt detail for Our Property specifically (the
+    // bedroom-type bucket table above aggregates across properties and can't show a single
+    // SQ FT per row once more than one floorplan shares a bedroom type). Guards against
+    // NaN/Infinity/zero via fmtRatePerSqft/safeRatePerSqft.
+    function buildOurPropertyFloorplanDetailHTML(card, rateSource) {
+      if (!card || !(card.floorplanDetails || []).length) return '';
+      var showFuture = rateSource === 'future';
+      var html = '<div style="margin-top:20px;">' +
+        '<div style="font-size:12px;font-weight:700;color:var(--subtext);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Our Property Floorplan Detail' + (showFuture ? ' (Future Rates)' : '') + '</div>' +
+        '<table class="rate-compare-table" style="font-size:12px;"><thead><tr><th>Floorplan</th><th>Beds</th><th>Baths</th><th>SQ FT</th><th>' + (showFuture ? 'Future Rate' : 'Rate') + '</th><th>Rate / SQ FT</th></tr></thead><tbody>';
+      card.floorplanDetails.forEach(function(fp) {
+        var bb = splitBedsBaths(fp.bedsBaths);
+        var rateVal = fp.rate;
+        if (showFuture) {
+          var entry = (card.futureRates || {})[getFloorplanId(fp)];
+          rateVal = entry ? entry.rate : '';
+        }
+        html += '<tr><td class="rc-fp-name">' + esc(fp.name || '') + '</td><td>' + esc(bb.beds) + '</td><td>' + esc(bb.baths) + '</td><td>' + esc(fp.sqft || '') + '</td>' +
+          '<td>' + (rateVal ? esc(rateVal) : '<span class="fr-not-set">Not Set</span>') + '</td>' +
+          '<td>' + fmtRatePerSqft(rateVal, fp.sqft) + '</td></tr>';
+      });
+      html += '</tbody></table></div>';
+      return html;
+    }
+
+    // ── Build amenity cart HTML with grouped, cross-property comparison ──
     function buildAmenityCartHTML(compCards, editable) {
       if (typeof editable === 'undefined') editable = false;
       try {
@@ -3662,18 +4189,15 @@
       document.getElementById('printRCBtn').onclick = function() { window.print(); };
 
       // Check if subject card exists and has data for validation warnings
-      var subjectValid = true;
       var warningMessage = '';
 
       if (!subjectCard) {
-        subjectValid = false;
         warningMessage = '<div style="margin-bottom:16px;padding:12px 16px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#991b1b;">' +
           '<strong>' + icon('alert') + ' Subject Property Not Set Up</strong><br>' +
           'Set up your property card to see colored arrows comparing your rates to competitors. ' +
           '<button class="btn btn-sm" style="margin-left:8px;background:#dc2626;color:#fff;border-color:#dc2626;" onclick="(function(){ currentCard = createEmptyCard(\'subject\'); currentCard.competitorName = currentProperty; renderEditor(); })()">Set Up Now</button>' +
         '</div>';
       } else if (!subjectCard.floorplanDetails || subjectCard.floorplanDetails.length === 0) {
-        subjectValid = false;
         warningMessage = '<div style="margin-bottom:16px;padding:12px 16px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;color:#78350f;">' +
           '<strong>' + icon('alert') + ' Missing Floorplan Data</strong><br>' +
           'Add floorplan details to your property card to enable rate comparison arrows. ' +
@@ -3681,24 +4205,47 @@
         '</div>';
       }
 
-      els.mainContent.innerHTML =
-        '<div class="compare-bar">' +
-          '<div class="compare-info">' + icon('compare') + ' <span style="background:var(--brand-accent-2);color:#1e293b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:3px 8px;border-radius:4px;font-size:11px;">OUR PROPERTY</span> <span style="margin-left:4px;">' + esc(currentProperty) + ' vs ' + compCards.length + ' competitors</span></div>' +
-          '<div class="compare-actions" style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">' +
-            '<div style="display:flex;gap:6px;font-size:11px;opacity:0.85;white-space:nowrap;">' +
-              '<span style="background:#ecfdf5;color:#065f46;padding:3px 8px;border-radius:4px;font-weight:500;">Lowest</span>' +
-              '<span style="background:#fef2f2;color:#991b1b;padding:3px 8px;border-radius:4px;font-weight:500;">Highest</span>' +
-            '</div>' +
-            '<div style="display:flex;gap:6px;font-size:11px;white-space:nowrap;">' +
-              '<span style="background:#fef2f2;color:#dc2626;padding:3px 8px;border-radius:4px;font-weight:600;">↑ We\'re Higher</span>' +
-              '<span style="background:#ecfdf5;color:#059669;padding:3px 8px;border-radius:4px;font-weight:600;">↓ We\'re Lower</span>' +
+      var modeLabels = { current: 'Current Rates', future: 'Future Rates', currentVsFuture: 'Current vs Future' };
+      var modeBarHTML = '<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">' +
+        '<strong style="font-size:11px;color:var(--subtext);text-transform:uppercase;letter-spacing:0.5px;">Our Property Rate Source:</strong>' +
+        Object.keys(modeLabels).map(function(m) {
+          var active = rateCompareMode === m;
+          return '<button type="button" class="btn btn-sm ' + (active ? 'btn-primary' : 'btn-outline') + '" data-rate-mode="' + m + '">' + modeLabels[m] + '</button>';
+        }).join('') +
+      '</div>';
+
+      var mainHTML;
+      if (rateCompareMode === 'currentVsFuture') {
+        mainHTML = subjectCard
+          ? '<div class="report-preview-section"><div class="rps-title">' + icon('tag') + ' Current vs Future \u2014 ' + esc(subjectCard.competitorName || currentProperty) + '</div><div class="rps-body">' + buildFutureRatesTableHTML(subjectCard, { showStatus: true, editable: false }) + '</div></div>'
+          : '<p style="color:#9ca3af;">Set up Our Property to use Current vs Future.</p>';
+      } else {
+        mainHTML =
+          '<div class="compare-bar">' +
+            '<div class="compare-info">' + icon('compare') + ' <span style="background:var(--brand-accent-2);color:#1e293b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:3px 8px;border-radius:4px;font-size:11px;">OUR PROPERTY</span> <span style="margin-left:4px;">' + esc(currentProperty) + ' vs ' + compCards.length + ' competitors</span></div>' +
+            '<div class="compare-actions" style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">' +
+              '<div style="display:flex;gap:6px;font-size:11px;opacity:0.85;white-space:nowrap;">' +
+                '<span style="background:#ecfdf5;color:#065f46;padding:3px 8px;border-radius:4px;font-weight:500;">Lowest</span>' +
+                '<span style="background:#fef2f2;color:#991b1b;padding:3px 8px;border-radius:4px;font-weight:500;">Highest</span>' +
+              '</div>' +
+              '<div style="display:flex;gap:6px;font-size:11px;white-space:nowrap;">' +
+                '<span style="background:#fef2f2;color:#dc2626;padding:3px 8px;border-radius:4px;font-weight:600;">↑ We\'re Higher</span>' +
+                '<span style="background:#ecfdf5;color:#059669;padding:3px 8px;border-radius:4px;font-weight:600;">↓ We\'re Lower</span>' +
+              '</div>' +
             '</div>' +
           '</div>' +
-        '</div>' +
-        warningMessage +
-        '<div class="rate-compare-wrap">' + buildRateCompareHTML(compCards) + '</div>';
+          warningMessage +
+          '<div class="rate-compare-wrap">' + buildRateCompareHTML(compCards, rateCompareMode) + '</div>' +
+          (subjectCard ? buildOurPropertyFloorplanDetailHTML(subjectCard, rateCompareMode) : '');
+      }
 
-      if (subjectCard) {
+      els.mainContent.innerHTML = modeBarHTML + mainHTML;
+
+      document.querySelectorAll('[data-rate-mode]').forEach(function(btn) {
+        btn.onclick = function() { rateCompareMode = btn.getAttribute('data-rate-mode'); renderRateComparison(); };
+      });
+
+      if (subjectCard && rateCompareMode !== 'currentVsFuture') {
         var note = '<div style="margin-top:8px;padding:10px 16px;background:#f0faff;border-radius:8px;border:1px solid var(--brand-accent-2);display:flex;align-items:center;gap:8px;font-size:13px;color:#1e293b;"><span style="background:var(--brand-accent-2);color:#1e293b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:3px 8px;border-radius:4px;font-size:10px;">OUR PROPERTY</span> <span style="font-weight:600;">' + esc(subjectCard.competitorName || currentProperty) + '</span> included in the <strong>blue-highlighted column</strong>.</div>';
         els.mainContent.innerHTML += note;
       }
@@ -3753,6 +4300,783 @@
       setTimeout(function() {
         attachAmenityCartHandlers(compCards);
       }, 100);
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // ── Future / Held Rates (Manage Future Rates + Analyst > Held Future Rates) ──
+    // Shared by both views so edit/display/save logic is written once (see item 16).
+    // ══════════════════════════════════════════════════════════════════════
+    function computeFutureRateRows(card) {
+      var fps = (card && card.floorplanDetails) || [];
+      var futureMap = (card && card.futureRates) || {};
+      return fps.map(function(fp) {
+        var fpId = getFloorplanId(fp);
+        var bb = splitBedsBaths(fp.bedsBaths);
+        var entry = futureMap[fpId];
+        var futureRateRaw = entry ? (entry.rate || '') : '';
+        var hasFuture = !!(futureRateRaw && String(futureRateRaw).trim());
+        var currentNum = safeParseNum(fp.rate);
+        var futureNum = safeParseNum(futureRateRaw);
+        var dollarChange = null, percentChange = null, status = 'Not Set';
+        if (hasFuture) {
+          if (currentNum > 0) {
+            dollarChange = futureNum - currentNum;
+            percentChange = (dollarChange / currentNum) * 100;
+            if (!isFinite(percentChange)) percentChange = null;
+            status = dollarChange > 0 ? 'Increase' : (dollarChange < 0 ? 'Decrease' : 'No Change');
+          } else {
+            status = 'No Change';
+          }
+        }
+        return {
+          fpId: fpId, name: fp.name || '(Unnamed floorplan)', beds: bb.beds, baths: bb.baths, sqft: fp.sqft || '',
+          currentRate: fp.rate || '', futureRateRaw: futureRateRaw, hasFuture: hasFuture,
+          dollarChange: dollarChange, percentChange: percentChange, status: status
+        };
+      });
+    }
+
+    function statusPillHTML(status) {
+      var map = { 'Increase': 'status-increase', 'Decrease': 'status-decrease', 'No Change': 'status-nochange', 'Not Set': 'status-notset' };
+      return '<span class="status-pill ' + (map[status] || 'status-notset') + '">' + esc(status) + '</span>';
+    }
+    function fmtDollarChangeCell(row) {
+      if (!row.hasFuture) return '<span class="fr-not-set">Not Set</span>';
+      if (row.dollarChange === null) return '<span class="fr-not-set">--</span>';
+      var cls = row.dollarChange > 0 ? 'fr-change-pos' : row.dollarChange < 0 ? 'fr-change-neg' : 'fr-change-zero';
+      var sign = row.dollarChange > 0 ? '+' : '';
+      return '<span class="' + cls + '">' + sign + fmtMoney(row.dollarChange) + '</span>';
+    }
+    function fmtPercentChangeCell(row) {
+      if (!row.hasFuture) return '<span class="fr-not-set">Not Set</span>';
+      if (row.percentChange === null || !isFinite(row.percentChange)) return '<span class="fr-not-set">--</span>';
+      var cls = row.percentChange > 0 ? 'fr-change-pos' : row.percentChange < 0 ? 'fr-change-neg' : 'fr-change-zero';
+      var sign = row.percentChange > 0 ? '+' : '';
+      return '<span class="' + cls + '">' + sign + row.percentChange.toFixed(1) + '%</span>';
+    }
+
+    function buildFutureRatesTableHTML(card, opts) {
+      opts = opts || {};
+      var editable = opts.editable !== false;
+      var rows = computeFutureRateRows(card);
+      if (rows.length === 0) return '<p style="color:#9ca3af;padding:20px;">No floorplans found. Add Floorplan Details on the Our Property card first.</p>';
+      var html = '<div class="future-rates-table-wrap"><table class="future-rates-table"><thead><tr>' +
+        '<th>Floorplan</th><th>Beds</th><th>Baths</th><th>SQ FT</th><th>Current Rate</th><th>Future Rate</th><th>$ Change</th><th>% Change</th>' +
+        (opts.showStatus ? '<th>Status</th>' : '') +
+        (editable ? '<th></th>' : '') +
+      '</tr></thead><tbody>';
+      rows.forEach(function(r) {
+        html += '<tr data-fp-id="' + esc(r.fpId) + '">' +
+          '<td>' + esc(r.name) + '</td>' +
+          '<td>' + esc(r.beds) + '</td>' +
+          '<td>' + esc(r.baths) + '</td>' +
+          '<td>' + esc(r.sqft) + '</td>' +
+          '<td>' + (r.currentRate ? esc(r.currentRate) : '<span class="rc-empty">--</span>') + '</td>' +
+          (editable
+            ? '<td><input type="text" data-fr-input="' + esc(r.fpId) + '" value="' + esc(r.futureRateRaw) + '" placeholder="Not Set"></td>'
+            : '<td>' + (r.hasFuture ? esc(r.futureRateRaw) : '<span class="fr-not-set">Not Set</span>') + '</td>') +
+          '<td class="fr-change-cell">' + fmtDollarChangeCell(r) + '</td>' +
+          '<td class="fr-pct-cell">' + fmtPercentChangeCell(r) + '</td>' +
+          (opts.showStatus ? '<td class="fr-status-cell">' + statusPillHTML(r.status) + '</td>' : '') +
+          (editable ? '<td><button type="button" class="btn btn-sm btn-outline" data-fr-clear="' + esc(r.fpId) + '">Clear</button></td>' : '') +
+        '</tr>';
+      });
+      html += '</tbody></table></div>';
+      return html;
+    }
+
+    function attachFutureRatesHandlers(containerEl, card, opts, afterChange) {
+      if (!containerEl || opts.editable === false) return;
+      containerEl.querySelectorAll('[data-fr-input]').forEach(function(input) {
+        input.oninput = function() {
+          var fpId = input.getAttribute('data-fr-input');
+          var val = input.value;
+          if (!card.futureRates) card.futureRates = {};
+          if (val && val.trim()) {
+            card.futureRates[fpId] = { rate: val.trim(), updatedAt: new Date().toISOString() };
+          } else {
+            delete card.futureRates[fpId];
+          }
+          var row = computeFutureRateRows(card).filter(function(r) { return r.fpId === fpId; })[0];
+          var tr = input.closest('tr');
+          if (row && tr) {
+            var changeCell = tr.querySelector('.fr-change-cell');
+            var pctCell = tr.querySelector('.fr-pct-cell');
+            var statusCell = tr.querySelector('.fr-status-cell');
+            if (changeCell) changeCell.innerHTML = fmtDollarChangeCell(row);
+            if (pctCell) pctCell.innerHTML = fmtPercentChangeCell(row);
+            if (statusCell) statusCell.innerHTML = statusPillHTML(row.status);
+          }
+          if (afterChange) afterChange('edit');
+        };
+      });
+      containerEl.querySelectorAll('[data-fr-clear]').forEach(function(btn) {
+        btn.onclick = async function() {
+          var fpId = btn.getAttribute('data-fr-clear');
+          if (card.futureRates) delete card.futureRates[fpId];
+          var ok = await persistFutureRates(card);
+          if (ok) showToast('Future rate cleared');
+          if (afterChange) afterChange('clear-one');
+        };
+      });
+    }
+
+    async function persistFutureRates(card) {
+      try {
+        var result = await apiUpdate({ id: card.id, property: card.property || currentProperty, futureRates: card.futureRates || {} });
+        card.updatedAt = result.updatedAt;
+        // Patch only the futureRates field onto the in-memory subjectCard rather than
+        // replacing it wholesale — `card` may be an in-progress editor clone with other
+        // unsaved (not yet persisted) field edits that must not leak into app state.
+        if (card.cardType === 'subject') {
+          if (subjectCard && subjectCard.id === card.id) {
+            subjectCard.futureRates = JSON.parse(JSON.stringify(card.futureRates || {}));
+            subjectCard.updatedAt = result.updatedAt;
+          } else {
+            subjectCard = JSON.parse(JSON.stringify(card));
+          }
+        }
+        return true;
+      } catch (e) {
+        console.error('Error saving future rates:', e);
+        showToast('Error saving future rates');
+        return false;
+      }
+    }
+
+    // ── Render: Manage Future Rates (Our Property only) ──
+    function renderFutureRates(card) {
+      currentView = 'futureRates';
+      viewingCard = null;
+      currentCard = null;
+      ensureFloorplanIds(card);
+      if (!card.futureRates) card.futureRates = {};
+
+      els.pageTitle.textContent = 'Manage Future Rates';
+      els.pageSubtitle.textContent = 'Planned/held rates for ' + esc(card.competitorName || currentProperty) + ' \u2014 current live rates are never overwritten';
+      els.pageSubtitle.style.display = '';
+
+      els.toolbarActions.innerHTML =
+        '<button class="btn btn-back" id="backBtn">' + icon('arrowLeft') + ' Back</button>' +
+        '<button class="btn btn-outline" id="clearAllFRBtn">Clear All</button>' +
+        '<button class="btn btn-success" id="saveAllFRBtn">' + icon('save') + ' Save All</button>';
+      document.getElementById('backBtn').onclick = function() { renderGallery(); };
+      document.getElementById('saveAllFRBtn').onclick = async function() {
+        var ok = await persistFutureRates(card);
+        if (ok) showToast('Future rates saved');
+      };
+      document.getElementById('clearAllFRBtn').onclick = async function() {
+        if (!confirm('Clear ALL future rates for this property? This cannot be undone.')) return;
+        card.futureRates = {};
+        var ok = await persistFutureRates(card);
+        if (ok) { showToast('All future rates cleared'); renderFutureRates(card); }
+      };
+
+      var bulkBarHTML = '<div class="fr-bulk-bar">' +
+        '<strong style="font-size:12px;color:var(--subtext);text-transform:uppercase;letter-spacing:0.5px;">Bulk Edit:</strong>' +
+        '<span style="font-size:13px;">Adjust every current rate by</span>' +
+        '<input type="text" id="frBulkValue" placeholder="e.g. 25 or 3">' +
+        '<select id="frBulkType"><option value="percent">%</option><option value="dollar">$</option></select>' +
+        '<button class="btn btn-sm btn-primary" id="frBulkApplyBtn">Apply to All Floorplans</button>' +
+        '<span style="font-size:11px;color:var(--subtext);">Sets a Future Rate for every floorplan with a current rate. Click Save All to persist.</span>' +
+      '</div>';
+
+      function renderTable() {
+        document.getElementById('frTableWrap').innerHTML = buildFutureRatesTableHTML(card, { showStatus: false, editable: true });
+        attachFutureRatesHandlers(document.getElementById('frTableWrap'), card, { showStatus: false, editable: true }, function(kind) {
+          if (kind === 'clear-one') renderFutureRates(card);
+        });
+      }
+
+      els.mainContent.innerHTML = bulkBarHTML + '<div id="frTableWrap"></div>';
+      renderTable();
+
+      document.getElementById('frBulkApplyBtn').onclick = function() {
+        var raw = document.getElementById('frBulkValue').value;
+        var type = document.getElementById('frBulkType').value;
+        var amount = safeParseNum(raw);
+        if (!raw || !amount) { showToast('Enter a valid number'); return; }
+        if (!card.futureRates) card.futureRates = {};
+        (card.floorplanDetails || []).forEach(function(fp) {
+          var currentNum = safeParseNum(fp.rate);
+          if (currentNum <= 0) return; // nothing to base a bulk change on
+          var newNum = type === 'percent' ? currentNum + (currentNum * amount / 100) : currentNum + amount;
+          if (!isFinite(newNum) || newNum < 0) return;
+          card.futureRates[getFloorplanId(fp)] = { rate: String(Math.round(newNum)), updatedAt: new Date().toISOString() };
+        });
+        renderTable();
+        showToast('Bulk future rates applied \u2014 click Save All to persist');
+      };
+    }
+
+    // ── Render: Analyst > Held Future Rates ──
+    function renderAnalyst() {
+      currentView = 'analyst';
+      viewingCard = null;
+      currentCard = null;
+      if (!subjectCard) { showToast('Set up Our Property first'); renderGallery(); return; }
+      ensureFloorplanIds(subjectCard);
+      if (!subjectCard.futureRates) subjectCard.futureRates = {};
+
+      els.pageTitle.textContent = 'Analyst \u2014 Held Future Rates';
+      els.pageSubtitle.textContent = 'Our Property > Analyst for ' + esc(currentProperty);
+      els.pageSubtitle.style.display = '';
+
+      els.toolbarActions.innerHTML =
+        '<button class="btn btn-back" id="backBtn">' + icon('arrowLeft') + ' Back</button>' +
+        '<button class="btn btn-accent" id="goManageFRBtn">' + icon('tag') + ' Manage Future Rates</button>';
+      document.getElementById('backBtn').onclick = function() { renderGallery(); };
+      document.getElementById('goManageFRBtn').onclick = function() { renderFutureRates(subjectCard); };
+
+      els.mainContent.innerHTML =
+        '<div class="report-preview-section">' +
+          '<div class="rps-title">' + icon('trendUp') + ' Held Future Rates</div>' +
+          '<div class="rps-body" id="analystTableWrap"></div>' +
+        '</div>';
+
+      function renderTable() {
+        document.getElementById('analystTableWrap').innerHTML = buildFutureRatesTableHTML(subjectCard, { showStatus: true, editable: true });
+        attachFutureRatesHandlers(document.getElementById('analystTableWrap'), subjectCard, { showStatus: true, editable: true }, function(kind) {
+          if (kind === 'clear-one') renderAnalyst();
+        });
+      }
+      renderTable();
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // ── Admin: Bulk Update Property Images ──
+    // Uses the existing admin role check (currentUser.role === 'admin') and the existing
+    // apiGet/apiUpdate persistence path; loops the admin's accessible properties instead of
+    // requiring a new backend endpoint.
+    // ══════════════════════════════════════════════════════════════════════
+    function renderBulkImageTool() {
+      currentView = 'bulkImages';
+      viewingCard = null;
+      currentCard = null;
+
+      els.pageTitle.textContent = 'Bulk Update Property Images';
+      els.pageSubtitle.textContent = 'Admin \u2014 update hero image URLs across properties and competitors';
+      els.pageSubtitle.style.display = '';
+      els.toolbarActions.innerHTML = '<button class="btn btn-back" id="backBtn">' + icon('arrowLeft') + ' Back</button>';
+      document.getElementById('backBtn').onclick = function() { renderGallery(); };
+
+      els.mainContent.innerHTML = '<div class="bulk-img-summary"><span>' + icon('clock') + ' Loading properties and cards\u2026</span></div>';
+      loadAllCardsForBulkImages();
+    }
+
+    async function loadAllCardsForBulkImages() {
+      bulkImageRows = [];
+      try {
+        var propsRes = await fetch('/api/properties');
+        var props = await propsRes.json();
+        var accessible = getAccessible(props, currentUser);
+        for (var i = 0; i < accessible.length; i++) {
+          var propName = accessible[i];
+          try {
+            var propCards = await apiGet(propName);
+            propCards.forEach(function(c) {
+              bulkImageRows.push({ id: c.id, property: c.property || propName, cardType: c.cardType || 'competitor', name: c.competitorName || '(untitled)', currentImage: c.heroImage || '', newValue: '' });
+            });
+          } catch (e) { console.error('Error loading cards for property ' + propName, e); }
+        }
+      } catch (e) {
+        console.error('Error loading properties for bulk image tool:', e);
+      }
+      if (currentView === 'bulkImages') renderBulkImageTable();
+    }
+
+    function renderBulkImageTable() {
+      var rowsHTML = bulkImageRows.map(function(row, i) {
+        var typeLabel = row.cardType === 'subject' ? 'Our Property' : 'Competitor';
+        return '<tr data-bit-idx="' + i + '">' +
+          '<td>' + esc(row.name) + '<div style="font-size:10px;color:#9ca3af;">' + esc(row.property) + '</div></td>' +
+          '<td>' + esc(typeLabel) + '</td>' +
+          '<td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:#6b7280;" title="' + esc(row.currentImage) + '">' + esc(row.currentImage || '(none)') + '</td>' +
+          '<td><input type="text" data-bit-input="' + i + '" placeholder="https://\u2026" value="' + esc(row.newValue) + '"></td>' +
+          '<td><div class="bit-thumb" id="bitThumb' + i + '">' + (row.currentImage ? '<img src="' + esc(row.currentImage) + '">' : 'No Image') + '</div></td>' +
+        '</tr>';
+      }).join('');
+
+      els.mainContent.innerHTML =
+        '<div class="bulk-img-summary"><span>' + bulkImageRows.length + ' record(s) across all accessible properties</span>' +
+          '<button class="btn btn-success" id="bitSaveBtn">' + icon('save') + ' Save Changed Images</button>' +
+        '</div>' +
+        (bulkImageRows.length === 0 ? '<p style="color:#9ca3af;padding:20px;">No property or competitor cards found.</p>' :
+        '<div class="bulk-img-table-wrap"><table class="bulk-img-table"><thead><tr>' +
+          '<th>Property</th><th>Type</th><th>Current Image URL</th><th>New Image URL</th><th>Preview</th>' +
+        '</tr></thead><tbody id="bitBody">' + rowsHTML + '</tbody></table></div>');
+
+      document.querySelectorAll('[data-bit-input]').forEach(function(input) {
+        input.oninput = function() {
+          var idx = parseInt(input.getAttribute('data-bit-input'), 10);
+          bulkImageRows[idx].newValue = input.value;
+          var tr = input.closest('tr');
+          var isChanged = !!(input.value.trim() && input.value.trim() !== bulkImageRows[idx].currentImage);
+          if (tr) tr.classList.toggle('bit-changed', isChanged);
+          var thumb = document.getElementById('bitThumb' + idx);
+          if (thumb) {
+            var v = input.value.trim() || bulkImageRows[idx].currentImage;
+            thumb.innerHTML = v ? '<img src="' + esc(v) + '" onerror="this.parentElement.textContent=\'Invalid\'">' : 'No Image';
+          }
+        };
+      });
+
+      var saveBtn = document.getElementById('bitSaveBtn');
+      if (saveBtn) saveBtn.onclick = saveBulkImageChanges;
+    }
+
+    async function saveBulkImageChanges() {
+      var changed = bulkImageRows.filter(function(r) { return r.newValue && r.newValue.trim() && r.newValue.trim() !== r.currentImage; });
+      if (changed.length === 0) { showToast('No changed images to save'); return; }
+      if (!confirm('Save ' + changed.length + ' updated image URL(s)? Untouched images will not be modified.')) return;
+
+      var saveBtn = document.getElementById('bitSaveBtn');
+      if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving\u2026'; }
+
+      var okCount = 0, failCount = 0;
+      for (var i = 0; i < changed.length; i++) {
+        var row = changed[i];
+        try {
+          await apiUpdate({ id: row.id, property: row.property, heroImage: row.newValue.trim() });
+          row.currentImage = row.newValue.trim();
+          row.newValue = '';
+          okCount++;
+        } catch (e) {
+          failCount++;
+          console.error('Error saving image for ' + row.name, e);
+        }
+      }
+
+      showToast('Saved ' + okCount + ' image(s)' + (failCount ? ', ' + failCount + ' failed' : ''));
+
+      if (bulkImageRows.some(function(r) { return r.property === currentProperty; })) {
+        await silentRefreshCards();
+      }
+      if (currentView === 'bulkImages') renderBulkImageTable();
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // ── College House Market Overview ──
+    // Parses the actual College House workbook structure (Overview / Fundamentals /
+    // Universities / Properties / Sales Comps). Raw rows are preserved for future tools;
+    // only normalized KPIs are surfaced in the UI. Never auto-creates competitor cards.
+    // ══════════════════════════════════════════════════════════════════════
+    var CH_SHEET_NAMES = ['Overview', 'Fundamentals', 'Universities', 'Properties', 'Sales Comps'];
+    var CH_OVERVIEW_MAP = {
+      'Market ID': 'marketId', 'City': 'city', 'State': 'state', 'Date': 'date',
+      'On Campus Beds': 'onCampusBeds', 'Purpose Built Beds': 'purposeBuiltBeds',
+      'Purpose Built Property Count': 'purposeBuiltPropertyCount', 'Purpose Built Unit Count': 'purposeBuiltUnitCount',
+      'Avg Rate Per SF': 'avgRatePerSF', 'Average Rate': 'averageRate', 'Occupancy': 'occupancy',
+      'Pre-lease': 'preLease', 'Planned Beds': 'plannedBeds', 'Under Construction Beds': 'underConstructionBeds',
+      'Lease Up Beds': 'leaseUpBeds', 'Estimated Excess': 'estimatedExcess', 'Current Availability': 'currentAvailability',
+      'Shadow Market Average Rate': 'shadowAverageRate', 'Shadow Market Property Count': 'shadowPropertyCount',
+      'Shadow Market Unit Count': 'shadowUnitCount', 'Shadow Market Avg Rate Per SF': 'shadowAvgRatePerSF'
+    };
+    var CH_BEDROOM_TYPES = ['Studio', '1 Bedroom', '2 Bedroom', '3 Bedroom', '4 Bedroom', '5 Bedroom', '6 Bedroom'];
+
+    function normHeaderKey(h) { return String(h || '').replace(/\s+/g, ' ').trim(); }
+
+    function normalizeCollegeHouseOverview(rows) {
+      if (!rows || !rows.length) return null;
+      var row = rows[0];
+      var out = { bedroomBreakdown: [] };
+      Object.keys(row).forEach(function(rawKey) {
+        var key = normHeaderKey(rawKey);
+        if (CH_OVERVIEW_MAP[key]) out[CH_OVERVIEW_MAP[key]] = row[rawKey];
+      });
+      CH_BEDROOM_TYPES.forEach(function(bt) {
+        var rateKey = bt + ' Average Rate *', occKey = bt + ' Occupancy *', bedKey = bt + ' Bed Count *';
+        if (row.hasOwnProperty(rateKey) || row.hasOwnProperty(occKey) || row.hasOwnProperty(bedKey)) {
+          out.bedroomBreakdown.push({ type: bt, rate: row[rateKey], occupancy: row[occKey], beds: row[bedKey] });
+        }
+      });
+      return out;
+    }
+
+    function parseCollegeHouseWorkbook(wb) {
+      var raw = {};
+      CH_SHEET_NAMES.forEach(function(name) {
+        var ws = wb.Sheets[name];
+        if (ws) {
+          // Defensive cap keeps the Mongo document reasonably sized while preserving
+          // the vast majority of real-world market datasets (Properties sheets are
+          // typically a few hundred to ~1000 floorplan rows for a single market).
+          raw[name] = XLSX.utils.sheet_to_json(ws, { defval: '' }).slice(0, 3000);
+        }
+      });
+      return { raw: raw, normalized: { overview: normalizeCollegeHouseOverview(raw['Overview']) } };
+    }
+
+    function buildCollegeHouseKPIHTML(normalized, compact) {
+      if (!normalized || !normalized.overview) return '<p style="color:#9ca3af;">No market overview data found in the uploaded workbook.</p>';
+      var ov = normalized.overview;
+      function pct(v) { if (v === '' || v === null || typeof v === 'undefined') return '\u2014'; var n = safeParseNum(v); if (!n) return String(v); return (n <= 1 ? (n * 100) : n).toFixed(1) + '%'; }
+      function num(v) { if (v === '' || v === null || typeof v === 'undefined') return '\u2014'; var n = safeParseNum(v); return n || n === 0 ? n.toLocaleString('en-US') : String(v); }
+      function money(v) { var n = safeParseNum(v); return n ? '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '\u2014'; }
+
+      var kpis = [
+        { label: 'Purpose Built Beds', value: num(ov.purposeBuiltBeds) },
+        { label: 'Purpose Built Properties', value: num(ov.purposeBuiltPropertyCount) },
+        { label: 'Average Rate', value: money(ov.averageRate) },
+        { label: 'Average Rate / SF', value: money(ov.avgRatePerSF) },
+        { label: 'Occupancy', value: pct(ov.occupancy) },
+        { label: 'Pre-Lease', value: pct(ov.preLease) },
+        { label: 'Current Availability', value: num(ov.currentAvailability) },
+        { label: 'Planned Beds', value: num(ov.plannedBeds) },
+        { label: 'Under Construction Beds', value: num(ov.underConstructionBeds) },
+        { label: 'Lease-Up Beds', value: num(ov.leaseUpBeds) },
+        { label: 'Estimated Excess', value: num(ov.estimatedExcess) }
+      ];
+
+      var html = '<div class="ch-kpi-grid">' + kpis.map(function(k) {
+        return '<div class="ch-kpi-card"><div class="ch-kpi-value">' + esc(String(k.value)) + '</div><div class="ch-kpi-label">' + esc(k.label) + '</div></div>';
+      }).join('') + '</div>';
+
+      if (ov.bedroomBreakdown && ov.bedroomBreakdown.length) {
+        html += '<table class="ch-bedroom-table"><thead><tr><th>Bedroom Type</th><th>Avg Rate</th><th>Occupancy</th><th>Bed Count</th></tr></thead><tbody>';
+        ov.bedroomBreakdown.forEach(function(b) {
+          html += '<tr><td>' + esc(b.type) + '</td><td>' + money(b.rate) + '</td><td>' + pct(b.occupancy) + '</td><td>' + num(b.beds) + '</td></tr>';
+        });
+        html += '</tbody></table>';
+      }
+      return html;
+    }
+
+    function renderCollegeHouse() {
+      currentView = 'collegeHouse';
+      viewingCard = null;
+      currentCard = null;
+      if (!subjectCard) { showToast('Set up Our Property first'); renderGallery(); return; }
+
+      els.pageTitle.textContent = 'College House Market Overview';
+      els.pageSubtitle.textContent = 'Third-party market intelligence for ' + esc(currentProperty);
+      els.pageSubtitle.style.display = '';
+      els.toolbarActions.innerHTML = '<button class="btn btn-back" id="backBtn">' + icon('arrowLeft') + ' Back</button>';
+      document.getElementById('backBtn').onclick = function() { renderGallery(); };
+
+      var chData = subjectCard.collegeHouseData;
+      if (!chData) {
+        els.mainContent.innerHTML = buildCollegeHouseUploadHTML(false);
+        attachCollegeHouseUploadHandlers();
+        return;
+      }
+
+      var metaBar = '<div class="ch-meta-bar"><span>' + icon('file') + ' Imported ' + esc((chData.importedAt || '').split('T')[0] || '') + (chData.sourceFileName ? ' from ' + esc(chData.sourceFileName) : '') + '</span>' +
+        '<button class="btn btn-sm btn-outline" id="chReplaceBtn">' + icon('upload') + ' Replace / Upload New Report</button></div>';
+
+      els.mainContent.innerHTML = metaBar + '<div id="chBody">' + buildCollegeHouseKPIHTML(chData.normalized, false) + '</div>' + '<div id="chUploadWrap"></div>';
+
+      document.getElementById('chReplaceBtn').onclick = function() {
+        var wrap = document.getElementById('chUploadWrap');
+        wrap.innerHTML = buildCollegeHouseUploadHTML(true);
+        attachCollegeHouseUploadHandlers();
+      };
+    }
+
+    function buildCollegeHouseUploadHTML(isReplace) {
+      return '<div class="import-intro">' +
+        '<h3>' + (isReplace ? 'Replace College House Report' : 'Upload College House Market Report') + '</h3>' +
+        '<p>Upload the College House (or similar market intelligence) Excel workbook for this market. Expected sheets: Overview, Fundamentals, Universities, Properties, Sales Comps. Raw rows are preserved for future tools; this data is stored on Our Property and is never used to automatically create competitor cards.</p>' +
+      '</div>' +
+      '<div class="import-dropzone" id="chDropzone">' +
+        '<div class="id-icon">' + icon('upload') + '</div>' +
+        '<p><strong>Click to browse</strong> or drag &amp; drop the workbook here</p>' +
+        '<p class="id-hint">Accepts .xlsx and .xls files</p>' +
+        '<div class="import-file-name" id="chFileName" style="display:none"></div>' +
+      '</div>' +
+      '<input type="file" id="chFileInput" accept=".xlsx,.xls" style="display:none">' +
+      '<div class="xl-status" id="chStatus"></div>';
+    }
+
+    function attachCollegeHouseUploadHandlers() {
+      var zone = document.getElementById('chDropzone');
+      var input = document.getElementById('chFileInput');
+      if (!zone || !input) return;
+      zone.onclick = function() { input.click(); };
+      zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('drag-over'); });
+      zone.addEventListener('dragleave', function() { zone.classList.remove('drag-over'); });
+      zone.addEventListener('drop', function(e) { e.preventDefault(); zone.classList.remove('drag-over'); var f = e.dataTransfer.files[0]; if (f) handleCollegeHouseFile(f); });
+      input.onchange = function() { var f = input.files[0]; if (f) handleCollegeHouseFile(f); };
+    }
+
+    function handleCollegeHouseFile(file) {
+      var statusEl = document.getElementById('chStatus');
+      var nameEl = document.getElementById('chFileName');
+      if (nameEl) { nameEl.style.display = 'block'; nameEl.textContent = '\ud83d\udcce ' + file.name; }
+      if (statusEl) { statusEl.className = 'xl-status'; statusEl.textContent = 'Reading workbook\u2026'; }
+      var reader = new FileReader();
+      reader.onload = async function(e) {
+        try {
+          var wb = XLSX.read(e.target.result, { type: 'array' });
+          var parsed = parseCollegeHouseWorkbook(wb);
+          if (!parsed.raw['Overview'] && !parsed.raw['Properties']) {
+            if (statusEl) { statusEl.className = 'xl-status err'; statusEl.textContent = 'No recognized sheets found (expected Overview, Fundamentals, Universities, Properties, Sales Comps).'; }
+            return;
+          }
+          subjectCard.collegeHouseData = { raw: parsed.raw, normalized: parsed.normalized, importedAt: new Date().toISOString(), sourceFileName: file.name };
+          if (subjectCard.id) {
+            await apiUpdate({ id: subjectCard.id, property: subjectCard.property || currentProperty, collegeHouseData: subjectCard.collegeHouseData });
+            showToast('College House market data imported');
+          } else {
+            showToast('Imported \u2014 but Our Property has not been saved yet. Set up and save Our Property first so this data can persist.');
+          }
+          renderCollegeHouse();
+        } catch (err) {
+          console.error('College House import error:', err);
+          if (statusEl) { statusEl.className = 'xl-status err'; statusEl.textContent = 'Error reading workbook: ' + err.message; }
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // ── Report Export / PDF Generation (landscape letter, dedicated off-screen layout) ──
+    // Builds a fixed-width (independent of viewport/scroll) export DOM per report page,
+    // rasterizes each with html2canvas, then slices tall pages across multiple PDF pages
+    // so long tables/lists flow naturally instead of being clipped or forced to break
+    // mid-row via CSS break rules.
+    // ══════════════════════════════════════════════════════════════════════
+    var REPORT_PAGE_W = 1056; // px, 11in @ 96dpi (landscape letter width)
+    var REPORT_MATRIX_CHUNK_EXPORT = 3; // competitors per Comparison Matrix export page group (1 column each)
+    var REPORT_RATE_CHUNK_EXPORT = 2; // competitors per Rate Comparison export page group (2 columns each: Rate + Diff)
+    var REPORT_AMENITY_CHUNK_EXPORT = 5; // competitors per Amenity Matrix export page group
+
+    function createExportRoot() {
+      var root = document.createElement('div');
+      root.className = 'report-export-root';
+      document.body.appendChild(root);
+      return root;
+    }
+    function makeExportPage() {
+      var page = document.createElement('div');
+      page.className = 'report-export-page';
+      return page;
+    }
+
+    function buildSnapshotCardHTML(card, isOurs) {
+      var amenities = parseAmenities(card.topAmenities).slice(0, 5).join(', ');
+      return '<div class="rex-snap-card' + (isOurs ? ' rex-ours' : '') + '">' +
+        '<div class="rex-snap-img">' + (card.heroImage ? '<img src="' + esc(card.heroImage) + '">' : '') + '</div>' +
+        '<div class="rex-snap-head">' + esc(card.competitorName || (isOurs ? currentProperty : 'Untitled')) + '</div>' +
+        '<div class="rex-snap-body">' +
+          (card.address ? '<div class="rex-row"><span class="rex-label">Address</span><br>' + esc(card.address) + '</div>' : '') +
+          '<div class="rex-row"><span class="rex-label">Type</span><br>' + esc(PROPERTY_TYPE_LABELS[card.propertyType] || card.propertyType || '\u2014') + (card.targetAudience ? ' / ' + esc(TARGET_AUDIENCE_LABELS[card.targetAudience] || card.targetAudience) : '') + '</div>' +
+          (card.distanceFromCampus ? '<div class="rex-row"><span class="rex-label">Distance</span><br>' + esc(card.distanceFromCampus) + '</div>' : '') +
+          (card.floorplans ? '<div class="rex-row"><span class="rex-label">Floorplans</span><br>' + esc(card.floorplans) + '</div>' : '') +
+          (card.startingRate ? '<div class="rex-row"><span class="rex-label">Starting Rate</span><br><strong>' + esc(card.startingRate) + '</strong></div>' : '') +
+          (card.currentOccupancy ? '<div class="rex-row"><span class="rex-label">Occupancy</span><br>' + esc(card.currentOccupancy) + '</div>' : '') +
+          (amenities ? '<div class="rex-row"><span class="rex-label">Top Amenities</span><br>' + esc(amenities) + '</div>' : '') +
+          (card.currentSpecials ? '<div class="rex-row"><span class="rex-label">Special</span><br>' + esc(card.currentSpecials) + '</div>' : '') +
+          (card.competitiveTakeaway ? '<div class="rex-row"><span class="rex-label">Competitive Takeaway</span><br><em>' + esc(card.competitiveTakeaway) + '</em></div>' : '') +
+        '</div>' +
+      '</div>';
+    }
+
+    function buildExportCoverPage(reportCards, reportDate) {
+      var page = makeExportPage();
+      var html = '<div style="text-align:center;padding:70px 40px;">' +
+        '<h1 style="font-size:30px;color:var(--card-navy);font-weight:800;margin-bottom:6px;">' + esc(currentProperty) + '</h1>' +
+        '<h2 style="font-size:20px;color:var(--brand-primary);font-weight:700;margin-bottom:18px;">Market Analysis Report</h2>' +
+        '<p style="font-size:13px;color:#9ca3af;">Prepared: ' + esc(reportDate) + '</p>' +
+        '<p style="font-size:12px;color:#9ca3af;margin-top:2px;">Capstone Management Partners</p>';
+      if (reportCards.length) {
+        html += '<div style="margin-top:40px;border-top:1px solid #e5e7eb;padding-top:20px;">' +
+          '<p style="font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Competitors Analyzed</p>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">' +
+          reportCards.map(function(c) { return '<span style="background:#f1f5f9;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:600;">' + esc(c.competitorName) + '</span>'; }).join('') +
+          '</div></div>';
+      }
+      html += '</div>';
+      page.innerHTML = html;
+      return page;
+    }
+
+    function buildExportSubjectPage(sc) {
+      var page = makeExportPage();
+      page.innerHTML = '<div class="rex-header"><h2>Our Property Snapshot</h2><div class="rex-meta">' + esc(currentProperty) + '</div></div>' +
+        '<div class="rex-snapshot-grid" style="grid-template-columns:1fr;max-width:420px;">' + buildSnapshotCardHTML(sc, true) + '</div>';
+      return page;
+    }
+
+    function buildExportCompetitorPages(reportCards) {
+      var page = makeExportPage();
+      page.innerHTML = '<div class="rex-header"><h2>Competitor Profiles</h2><div class="rex-meta">' + reportCards.length + ' competitor' + (reportCards.length !== 1 ? 's' : '') + '</div></div>' +
+        '<div class="rex-snapshot-grid">' + reportCards.map(function(c) { return buildSnapshotCardHTML(c, false); }).join('') + '</div>';
+      return [page];
+    }
+
+    function buildExportComparisonMatrixPages(reportCards, sc) {
+      var groups = chunkArray(reportCards, REPORT_MATRIX_CHUNK_EXPORT);
+      if (!groups.length) groups = [[]];
+      return groups.map(function(group, gi) {
+        var page = makeExportPage();
+        var suffix = groups.length > 1 ? ' (Group ' + (gi + 1) + ' of ' + groups.length + ')' : '';
+        page.innerHTML = '<div class="rex-header"><h2>Comparison Matrix' + suffix + '</h2><div class="rex-meta">' + esc(currentProperty) + '</div></div>' +
+          buildComparisonMatrixTableHTML(group, sc).replace('compare-table', 'compare-table rex-matrix-table');
+        return page;
+      });
+    }
+
+    function buildRateComparisonReportTableHTML(group, sc, rateMode) {
+      var ourFps = (sc && sc.floorplanDetails) || [];
+      if (!ourFps.length) return '<p style="color:#9ca3af;">No floorplan data available for Our Property.</p>';
+
+      function bestRateForType(card, bt) {
+        var matches = (card.floorplanDetails || []).filter(function(fp) { return extractBedroomType(fp) === bt; });
+        if (!matches.length) return null;
+        var best = null, bestNum = Infinity;
+        matches.forEach(function(fp) {
+          var n = safeParseNum(fp.rate);
+          if (n > 0 && n < bestNum) { bestNum = n; best = fp; }
+        });
+        return best || matches[0];
+      }
+
+      var html = '<table class="rex-rate-table"><thead><tr>' +
+        '<th>Floorplan</th><th>Beds</th><th>Baths</th><th>SQ FT</th><th class="rex-ours-col">' + (rateMode === 'future' ? 'Future Rate' : 'Rate') + ' (Ours)</th><th class="rex-ours-col">Rate / SQ FT (Ours)</th>';
+      group.forEach(function(c) { html += '<th>' + esc(c.competitorName) + ' Rate</th><th>Diff to Us</th>'; });
+      html += '</tr></thead><tbody>';
+
+      ourFps.forEach(function(fp) {
+        var bb = splitBedsBaths(fp.bedsBaths);
+        var ourRate = fp.rate;
+        if (rateMode === 'future') {
+          var entry = (sc.futureRates || {})[getFloorplanId(fp)];
+          ourRate = entry ? entry.rate : '';
+        }
+        var bt = extractBedroomType(fp);
+        html += '<tr><td class="rex-metric-label">' + esc(fp.name || '') + '</td><td>' + esc(bb.beds) + '</td><td>' + esc(bb.baths) + '</td><td>' + esc(fp.sqft || '') + '</td>' +
+          '<td class="rex-ours-col">' + (ourRate ? esc(ourRate) : '<span style="color:#9ca3af;">Not Set</span>') + '</td>' +
+          '<td class="rex-ours-col">' + fmtRatePerSqft(ourRate, fp.sqft) + '</td>';
+        group.forEach(function(c) {
+          var m = bestRateForType(c, bt);
+          var compRate = m ? m.rate : '';
+          var diffHTML = '<span style="color:#9ca3af;">--</span>';
+          var ourNum = safeParseNum(ourRate), compNum = safeParseNum(compRate);
+          if (ourNum > 0 && compNum > 0) {
+            var diff = compNum - ourNum;
+            diffHTML = (diff > 0 ? '+' : '') + fmtMoney(diff);
+          }
+          html += '<td>' + (compRate ? esc(compRate) : '<span style="color:#9ca3af;">--</span>') + '</td><td>' + diffHTML + '</td>';
+        });
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+      return html;
+    }
+
+    function buildExportRateComparisonPages(reportCards, sc, rateMode) {
+      if (rateMode === 'currentVsFuture') {
+        var page = makeExportPage();
+        var body = sc ? buildFutureRatesTableHTML(sc, { showStatus: true, editable: false }) : '<p style="color:#9ca3af;">Our Property is not set up.</p>';
+        page.innerHTML = '<div class="rex-header"><h2>Rate Comparison \u2014 Current vs Future</h2><div class="rex-meta">' + esc(currentProperty) + '</div></div>' + body;
+        return [page];
+      }
+      var groups = chunkArray(reportCards, REPORT_RATE_CHUNK_EXPORT);
+      if (!groups.length) groups = [[]];
+      var modeLabel = rateMode === 'future' ? 'Held Future Rates' : 'Current Rates';
+      return groups.map(function(group, gi) {
+        var page = makeExportPage();
+        var suffix = groups.length > 1 ? ' (Group ' + (gi + 1) + ' of ' + groups.length + ')' : '';
+        page.innerHTML = '<div class="rex-header"><h2>Rate Comparison' + suffix + '</h2><div class="rex-meta">Source: ' + modeLabel + '</div></div>' +
+          buildRateComparisonReportTableHTML(group, sc, rateMode);
+        return page;
+      });
+    }
+
+    function buildExportAmenityPages(reportCards) {
+      var groups = chunkArray(reportCards, REPORT_AMENITY_CHUNK_EXPORT);
+      if (!groups.length) groups = [[]];
+      return groups.map(function(group, gi) {
+        var page = makeExportPage();
+        var suffix = groups.length > 1 ? ' (Group ' + (gi + 1) + ' of ' + groups.length + ')' : '';
+        var html;
+        try { html = buildAmenityCartHTML(group, false).replace(/class="amenity-cart-table"/, 'class="amenity-cart-table rex-amenity-table"'); }
+        catch (e) { html = '<p style="color:#dc2626;">Amenity cart error: ' + esc(e.message) + '</p>'; }
+        page.innerHTML = '<div class="rex-header"><h2>Amenity Matrix' + suffix + '</h2><div class="rex-meta">' + esc(currentProperty) + '</div></div>' + html;
+        return page;
+      });
+    }
+
+    function buildExportCollegeHousePage(sc) {
+      if (!sc || !sc.collegeHouseData || !sc.collegeHouseData.normalized) return null;
+      var page = makeExportPage();
+      page.innerHTML = '<div class="rex-header"><h2>College House Market Overview</h2><div class="rex-meta">' + esc(currentProperty) + '</div></div>' +
+        buildCollegeHouseKPIHTML(sc.collegeHouseData.normalized, true);
+      return page;
+    }
+
+    // Slices a (possibly very tall) rendered canvas into one-or-more PDF pages so long
+    // content flows naturally instead of being clipped or forced through CSS break rules.
+    function sliceCanvasIntoPdf(pdf, canvas, pageWmm, pageHmm, state) {
+      var sliceHeightPx = Math.max(1, Math.floor(canvas.width * (pageHmm / pageWmm)));
+      var totalSlices = Math.max(1, Math.ceil(canvas.height / sliceHeightPx));
+      for (var i = 0; i < totalSlices; i++) {
+        var thisSliceH = Math.min(sliceHeightPx, canvas.height - i * sliceHeightPx);
+        if (thisSliceH <= 0) continue;
+        var sliceCanvas = document.createElement('canvas');
+        sliceCanvas.width = canvas.width;
+        sliceCanvas.height = thisSliceH;
+        var ctx = sliceCanvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
+        ctx.drawImage(canvas, 0, i * sliceHeightPx, canvas.width, thisSliceH, 0, 0, canvas.width, thisSliceH);
+        var imgData = sliceCanvas.toDataURL('image/jpeg', 0.92);
+        if (state.used) pdf.addPage('letter', 'landscape');
+        state.used = true;
+        var renderedHmm = pageHmm * (thisSliceH / sliceHeightPx);
+        pdf.addImage(imgData, 'JPEG', 0, 0, pageWmm, renderedHmm);
+      }
+    }
+
+    async function generateReportPDF() {
+      var reportCards = Object.keys(reportSelected).filter(function(id) { return reportSelected[id]; }).map(function(id) { return cards.find(function(c) { return c.id === id; }); }).filter(Boolean);
+      if (reportCards.length === 0 && (!subjectCard || !reportSections.subjectCard)) {
+        showToast('Select at least one competitor, or enable Our Property in Report Builder Step 2');
+        return;
+      }
+      if (typeof window.jspdf === 'undefined' || typeof window.html2canvas === 'undefined') {
+        showToast('PDF library failed to load \u2014 check your connection and try again');
+        return;
+      }
+      showToast('Generating PDF\u2026 this may take a few seconds');
+
+      var root = createExportRoot();
+      var pages = [];
+      var reportDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+      pages.push(buildExportCoverPage(reportCards, reportDate));
+      if (reportSections.subjectCard && subjectCard) pages.push(buildExportSubjectPage(subjectCard));
+      if (reportSections.competitorCards && reportCards.length) pages = pages.concat(buildExportCompetitorPages(reportCards));
+      if (reportSections.comparisonTable && reportCards.length) pages = pages.concat(buildExportComparisonMatrixPages(reportCards, subjectCard));
+      if (reportSections.rateComparison && reportCards.length) pages = pages.concat(buildExportRateComparisonPages(reportCards, subjectCard, reportRateMode));
+      if (reportSections.amenityCart && reportCards.length) pages = pages.concat(buildExportAmenityPages(reportCards));
+      if (reportSections.collegeHouse && subjectCard && subjectCard.collegeHouseData) {
+        var chPage = buildExportCollegeHousePage(subjectCard);
+        if (chPage) pages.push(chPage);
+      }
+
+      pages.forEach(function(p) { root.appendChild(p); });
+
+      try {
+        var jsPDFCtor = window.jspdf.jsPDF;
+        var pdf = new jsPDFCtor({ orientation: 'landscape', unit: 'mm', format: 'letter' });
+        var pageWmm = pdf.internal.pageSize.getWidth();
+        var pageHmm = pdf.internal.pageSize.getHeight();
+        var state = { used: false };
+        for (var i = 0; i < pages.length; i++) {
+          var canvas = await html2canvas(pages[i], { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false, windowWidth: REPORT_PAGE_W });
+          sliceCanvasIntoPdf(pdf, canvas, pageWmm, pageHmm, state);
+        }
+        var filename = currentProperty.replace(/[^a-z0-9]/gi, '_') + '_Market_Report_' + new Date().toISOString().split('T')[0] + '.pdf';
+        pdf.save(filename);
+        showToast('PDF downloaded');
+      } catch (err) {
+        console.error('PDF generation error:', err);
+        showToast('Error generating PDF: ' + err.message);
+      } finally {
+        root.remove();
+      }
     }
 
     // ── Init ──
