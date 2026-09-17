@@ -28,13 +28,6 @@
     .company-name{font-size:12px;color:var(--subtext);font-weight:500}
     .admin-badge{background:#fff7e6;color:#8a5800;border:1px solid #fde68a;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:600}
 
-    /* Navigation */
-    .nav-bar{background:#fff;border-bottom:1px solid var(--border)}
-    .nav-wrap{max-width:1400px;margin:0 auto;padding:0 24px;display:flex;gap:2px;overflow-x:auto}
-    .nav-tab{display:flex;align-items:center;gap:6px;padding:14px 16px;color:var(--subtext);text-decoration:none;font-size:13px;font-weight:600;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap}
-    .nav-tab:hover{color:var(--text);background:#f8fafc}
-    .nav-tab.active{color:var(--brand-primary);border-bottom-color:var(--brand-primary)}
-
     .container{padding:24px; max-width:1400px; margin:0 auto; display:flex; flex-direction:column; gap:20px}
 
     /* Tabs */
@@ -264,18 +257,9 @@
     <span class="company-name">Capstone Management Partners</span>
   </header>
 
-  <nav class="nav-bar">
-    <div class="nav-wrap">
-      <a href="mmp_calendar_app.html" class="nav-tab">Marketing Calendar</a>
-      <a href="marketing_plans.html" class="nav-tab">Marketing Plans</a>
-      <a href="marketing_contacts.html" class="nav-tab">Marketing Contacts</a>
-      <a href="promo_order_tracker.html" class="nav-tab">Promo Order Tracker</a>
-      <a href="renewal_campaign.html" class="nav-tab">Renewal Campaign</a>
-      <a href="velocity_tracker.html" class="nav-tab">Velocity Tracker</a>
-      <a href="uniform_shop.html" class="nav-tab">Uniform Shop</a>
-      <a href="creative_library.html" class="nav-tab">Creative Library</a>
-    </div>
-  </nav>
+  <!-- Cross-app navigation (Marketing Calendar, Velocity Tracker, etc.) is now provided by
+       the shared sidebar injected by standard-nav.js, consolidating what used to be a
+       duplicate top nav-tab row here. -->
 
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <main id="appContainer" class="container hidden">
@@ -284,6 +268,7 @@
       <button class="tab-btn active" data-tab="users">User Management</button>
       <button class="tab-btn" data-tab="properties">Properties</button>
       <button class="tab-btn" data-tab="catalog">Uniform Catalog</button>
+      <button class="tab-btn" data-tab="navigation">Navigation Manager</button>
       <button class="tab-btn" onclick="location.href='cmpfont.html'">CMP Font</button>
       <button class="tab-btn" onclick="location.href='calendar_test.html'" style="background:#fef3c7;border-color:#fcd34d;color:#92400e">Calendar UX Test</button>
     </div>
@@ -598,6 +583,20 @@
         </div>
       </section>
     </div>
+
+    <!-- Navigation Manager Tab -->
+    <div id="navigationTab" class="tab-content">
+      <div class="detail-card">
+        <div class="detail-header">
+          <h2>Navigation Manager</h2>
+          <button class="btn success" id="navAddItemBtn">+ Add Navigation Item</button>
+        </div>
+        <div class="detail-body">
+          <p style="color:var(--subtext);font-size:13px;margin-bottom:18px;max-width:760px;">Controls the shared sidebar navigation shown across every Marketing Hub page. Changes take effect for all users on their next page load. Hiding an item here is a display convenience only — it does not remove that page's own access protection.</p>
+          <div id="navSectionsWrap">Loading&hellip;</div>
+        </div>
+      </div>
+    </div>
   </main>
 
   <!-- Edit Item Modal -->
@@ -669,6 +668,86 @@
       <div class="modal-footer">
         <button id="cancelEditBtn" class="btn">Cancel</button>
         <button id="saveEditBtn" class="btn success">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation Item Add/Edit Modal -->
+  <div id="navItemModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="navItemModalTitle">Add Navigation Item</h3>
+        <button class="modal-close" id="navItemModalClose">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="navItemId" />
+        <div class="form-row">
+          <div class="form-group">
+            <label for="navItemName">Name *</label>
+            <input id="navItemName" type="text" placeholder="e.g., Renewal Campaign" />
+          </div>
+          <div class="form-group">
+            <label for="navItemSection">Section *</label>
+            <select id="navItemSection">
+              <option value="main">Main</option>
+              <option value="tools">Tools</option>
+              <option value="resources">Resources</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Icon *</label>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div id="navItemIconPreview" style="width:40px;height:40px;border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--brand-primary);background:#f8fafc;flex-shrink:0;"><i class="bi bi-link-45deg"></i></div>
+            <input type="hidden" id="navItemIcon" value="bi-link-45deg" />
+            <button type="button" class="btn" id="navItemIconPickBtn">Choose Icon&hellip;</button>
+          </div>
+          <div id="navIconPicker" style="display:none;margin-top:10px;border:1px solid var(--border);border-radius:10px;padding:12px;background:#f8fafc;">
+            <label for="navIconSearch" style="display:block;font-size:11px;margin-bottom:4px;">Search icons</label>
+            <input type="text" id="navIconSearch" placeholder="e.g., calendar, cart, star&hellip;" style="width:100%;margin-bottom:10px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;" />
+            <div id="navIconGrid" role="listbox" aria-label="Icon choices" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(40px,1fr));gap:6px;max-height:220px;overflow-y:auto;"></div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="navItemDestType">Destination Type *</label>
+            <select id="navItemDestType">
+              <option value="project">Project Page</option>
+              <option value="custom">Custom / Internal Path</option>
+              <option value="external">External Website</option>
+            </select>
+          </div>
+          <div class="form-group" id="navItemLinkProjectWrap">
+            <label for="navItemLinkProject">Page *</label>
+            <select id="navItemLinkProject"></select>
+          </div>
+          <div class="form-group" id="navItemLinkCustomWrap" style="display:none">
+            <label for="navItemLinkCustom">Path *</label>
+            <input id="navItemLinkCustom" type="text" placeholder="e.g., reports/monthly.html" />
+          </div>
+          <div class="form-group" id="navItemLinkExternalWrap" style="display:none">
+            <label for="navItemLinkExternal">URL *</label>
+            <input id="navItemLinkExternal" type="url" placeholder="https://example.com" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label style="display:flex;align-items:center;gap:8px;text-transform:none;font-weight:600;color:var(--text);">
+            <input type="checkbox" id="navItemEnabled" checked style="width:auto" /> Enabled (visible in the sidebar)
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label>Visible To</label>
+          <p class="hint" style="margin:0 0 8px;">Leave all unchecked to show this item to every role.</p>
+          <div id="navItemRoles" style="display:flex;flex-wrap:wrap;gap:12px;"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="navItemCancelBtn" class="btn">Cancel</button>
+        <button id="navItemSaveBtn" class="btn success">Save Navigation Item</button>
       </div>
     </div>
   </div>
@@ -952,6 +1031,249 @@
       if (!res.ok){ const text = await res.text(); throw new Error(text || ('HTTP '+res.status)); }
       return res;
     }
+
+    // ==================== NAVIGATION MANAGER ====================
+    const NAV_KNOWN_PROJECT_PAGES = [
+      'mmp_calendar_app.html', 'marketing_plans.html', 'mmp_monthly_plan.html', 'velocity_tracker.html',
+      'competitor_cards.html', 'mplr.html', 'promo_order_tracker.html', 'uniform_shop.html',
+      'creative_studio.html', 'creative_library.html', 'marketing_contacts.html', 'leasing_staff_list.html',
+      'custom_tools.html', 'sop_library.html', 'renewal_campaign.html', 'mmp_admin.html'
+    ];
+    // A curated, searchable subset of Bootstrap Icons (free, already loaded via standard-nav.js's
+    // CDN link) — the full set has 1800+ icons, more than useful to hardcode; admins can also type
+    // any valid "bi-xxx" class directly if they know it.
+    const NAV_ICON_CHOICES = [
+      'bi-calendar3','bi-calendar-check','bi-calendar-week','bi-graph-up-arrow','bi-graph-up','bi-bar-chart-steps','bi-bar-chart',
+      'bi-columns-gap','bi-grid-3x3-gap','bi-cart3','bi-bag-check','bi-bag','bi-magic','bi-images','bi-image','bi-person-lines-fill',
+      'bi-people','bi-person-badge','bi-kanban','bi-clipboard-check','bi-gear-wide-connected','bi-gear','bi-sliders','bi-journal-bookmark',
+      'bi-journal-text','bi-file-earmark-text','bi-file-earmark','bi-folder','bi-link-45deg','bi-box-arrow-up-right','bi-building',
+      'bi-house-door','bi-mailbox','bi-envelope','bi-chat-dots','bi-megaphone','bi-star','bi-flag','bi-clock-history','bi-shield-check',
+      'bi-tools','bi-wrench-adjustable','bi-printer','bi-camera','bi-palette','bi-brush','bi-pie-chart','bi-clipboard-data','bi-list-check',
+      'bi-check2-square','bi-award','bi-trophy','bi-lightbulb','bi-globe','bi-map','bi-geo-alt','bi-truck','bi-boxes','bi-tag','bi-tags',
+      'bi-credit-card','bi-cash-stack','bi-bank','bi-briefcase','bi-book','bi-mortarboard','bi-door-open','bi-key','bi-arrow-left-circle',
+      'bi-house','bi-question-circle','bi-info-circle','bi-bell'
+    ];
+    const NAV_ROLE_CHOICES = [
+      { value: 'user', label: 'User' },
+      { value: 'admin', label: 'Admin' },
+      { value: 'maintenance', label: 'Maintenance' },
+      { value: 'reslife-ra', label: 'Reslife - RA' },
+      { value: 'reslife-rec', label: 'Reslife - REC' },
+      { value: 'reslife-admin', label: 'Reslife Admin' },
+    ];
+    let navItemsCache = [];
+
+    async function loadNavItems() {
+      const wrap = document.getElementById('navSectionsWrap');
+      wrap.innerHTML = 'Loading&hellip;';
+      try {
+        const res = await fetch('/api/nav-config', { credentials: 'include' });
+        if (!res.ok) throw new Error(await res.text());
+        navItemsCache = await res.json();
+        renderNavSections();
+      } catch (err) {
+        wrap.innerHTML = `<p style="color:var(--danger)">Failed to load navigation: ${esc(err.message)}</p>`;
+      }
+    }
+
+    function navSectionLabel(s) { return s === 'main' ? 'Main' : s === 'resources' ? 'Resources' : 'Tools'; }
+
+    function renderNavSections() {
+      const wrap = document.getElementById('navSectionsWrap');
+      const sections = ['main', 'tools', 'resources'];
+      wrap.innerHTML = sections.map(sec => {
+        const items = navItemsCache.filter(i => (i.section || 'tools') === sec).sort((a, b) => (a.order || 0) - (b.order || 0));
+        const rows = items.length === 0
+          ? `<div class="hint" style="padding:12px 0">No items in this section.</div>`
+          : items.map((it, idx) => navItemRowHTML(it, idx, items.length)).join('');
+        return `
+          <div style="margin-bottom:24px">
+            <div class="form-section-title" style="margin-bottom:10px">${navSectionLabel(sec)}</div>
+            <div>${rows}</div>
+          </div>`;
+      }).join('');
+
+      wrap.querySelectorAll('[data-nav-edit]').forEach(btn => btn.addEventListener('click', () => openNavItemModal(btn.getAttribute('data-nav-edit'))));
+      wrap.querySelectorAll('[data-nav-delete]').forEach(btn => btn.addEventListener('click', () => deleteNavItem(btn.getAttribute('data-nav-delete'))));
+      wrap.querySelectorAll('[data-nav-toggle]').forEach(cb => cb.addEventListener('change', () => toggleNavItemEnabled(cb.getAttribute('data-nav-toggle'), cb.checked)));
+      wrap.querySelectorAll('[data-nav-up]').forEach(btn => btn.addEventListener('click', () => moveNavItem(btn.getAttribute('data-nav-up'), -1)));
+      wrap.querySelectorAll('[data-nav-down]').forEach(btn => btn.addEventListener('click', () => moveNavItem(btn.getAttribute('data-nav-down'), 1)));
+    }
+
+    function navItemRowHTML(it, idx, total) {
+      const dest = it.destinationType === 'external' ? `${esc(it.link)} (external)` : it.destinationType === 'custom' ? `${esc(it.link)} (custom path)` : esc(it.link);
+      const roles = (it.roles && it.roles.length) ? it.roles.map(r => (NAV_ROLE_CHOICES.find(x => x.value === r) || {}).label || r).join(', ') : 'All roles';
+      return `
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;background:#fff;">
+          <div style="display:flex;flex-direction:column;gap:2px;">
+            <button type="button" class="btn" style="padding:2px 8px;font-size:11px;" data-nav-up="${it.id}" ${idx === 0 ? 'disabled' : ''}>&uarr;</button>
+            <button type="button" class="btn" style="padding:2px 8px;font-size:11px;" data-nav-down="${it.id}" ${idx === total - 1 ? 'disabled' : ''}>&darr;</button>
+          </div>
+          <div style="width:32px;height:32px;border-radius:6px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;color:var(--brand-primary);flex-shrink:0;"><i class="bi ${esc(it.icon || 'bi-link-45deg')}"></i></div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:700;font-size:13px;">${esc(it.name)}${it.enabled === false ? ' <span class="hint" style="color:var(--danger)">(disabled)</span>' : ''}</div>
+            <div class="hint" style="margin:2px 0 0;">${dest} &middot; ${esc(roles)}</div>
+          </div>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--subtext);text-transform:none;font-weight:500;">
+            <input type="checkbox" data-nav-toggle="${it.id}" ${it.enabled !== false ? 'checked' : ''} style="width:auto" /> Enabled
+          </label>
+          <button type="button" class="btn" data-nav-edit="${it.id}">Edit</button>
+          <button type="button" class="btn danger" data-nav-delete="${it.id}">Delete</button>
+        </div>`;
+    }
+
+    async function toggleNavItemEnabled(id, enabled) {
+      try {
+        const res = await fetch('/api/nav-config', { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, enabled }) });
+        if (!res.ok) throw new Error(await res.text());
+        const item = navItemsCache.find(i => i.id === id);
+        if (item) item.enabled = enabled;
+        renderNavSections();
+      } catch (err) { alert('Failed to update: ' + err.message); loadNavItems(); }
+    }
+
+    async function deleteNavItem(id) {
+      const item = navItemsCache.find(i => i.id === id);
+      if (!confirm(`Delete navigation item "${item ? item.name : ''}"? This cannot be undone.`)) return;
+      try {
+        const res = await fetch('/api/nav-config?id=' + encodeURIComponent(id), { method: 'DELETE', credentials: 'include' });
+        if (!res.ok) throw new Error(await res.text());
+        await loadNavItems();
+      } catch (err) { alert('Failed to delete: ' + err.message); }
+    }
+
+    async function moveNavItem(id, dir) {
+      const item = navItemsCache.find(i => i.id === id);
+      if (!item) return;
+      const section = item.section || 'tools';
+      const siblings = navItemsCache.filter(i => (i.section || 'tools') === section).sort((a, b) => (a.order || 0) - (b.order || 0));
+      const pos = siblings.findIndex(i => i.id === id);
+      const swapPos = pos + dir;
+      if (swapPos < 0 || swapPos >= siblings.length) return;
+      const other = siblings[swapPos];
+      const tmp = item.order;
+      item.order = other.order;
+      other.order = tmp;
+      try {
+        const res = await fetch('/api/nav-config', {
+          method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'reorder', items: [{ id: item.id, order: item.order, section }, { id: other.id, order: other.order, section }] })
+        });
+        if (!res.ok) throw new Error(await res.text());
+        renderNavSections();
+      } catch (err) { alert('Failed to reorder: ' + err.message); loadNavItems(); }
+    }
+
+    function navUpdateLinkFieldVisibility() {
+      const type = document.getElementById('navItemDestType').value;
+      document.getElementById('navItemLinkProjectWrap').style.display = type === 'project' ? '' : 'none';
+      document.getElementById('navItemLinkCustomWrap').style.display = type === 'custom' ? '' : 'none';
+      document.getElementById('navItemLinkExternalWrap').style.display = type === 'external' ? '' : 'none';
+    }
+
+    function navPopulateProjectPageSelect(currentId, currentLink) {
+      const usedPages = {};
+      navItemsCache.forEach(i => {
+        if (i.id !== currentId && i.destinationType === 'project' && i.link) usedPages[i.link] = true;
+      });
+      const sel = document.getElementById('navItemLinkProject');
+      sel.innerHTML = NAV_KNOWN_PROJECT_PAGES.map(page => {
+        const already = usedPages[page] && page !== currentLink;
+        return `<option value="${esc(page)}"${page === currentLink ? ' selected' : ''}>${esc(page)}${already ? ' (Already Used)' : ''}</option>`;
+      }).join('');
+    }
+
+    function navPopulateIconGrid(filter) {
+      const grid = document.getElementById('navIconGrid');
+      const f = (filter || '').toLowerCase().trim();
+      const list = f ? NAV_ICON_CHOICES.filter(i => i.indexOf(f) !== -1) : NAV_ICON_CHOICES;
+      grid.innerHTML = list.map(icon => `<button type="button" class="btn" data-icon="${icon}" title="${icon}" aria-label="${icon}" style="padding:8px;font-size:16px;">${'<i class="bi ' + icon + '" aria-hidden="true"></i>'}</button>`).join('') || '<div class="hint">No matching icons.</div>';
+      grid.querySelectorAll('[data-icon]').forEach(btn => btn.addEventListener('click', () => {
+        const icon = btn.getAttribute('data-icon');
+        document.getElementById('navItemIcon').value = icon;
+        document.getElementById('navItemIconPreview').innerHTML = `<i class="bi ${icon}"></i>`;
+        document.getElementById('navIconPicker').style.display = 'none';
+      }));
+    }
+
+    function openNavItemModal(id) {
+      const item = id ? navItemsCache.find(i => i.id === id) : null;
+      document.getElementById('navItemModalTitle').textContent = item ? 'Edit Navigation Item' : 'Add Navigation Item';
+      document.getElementById('navItemId').value = item ? item.id : '';
+      document.getElementById('navItemName').value = item ? item.name : '';
+      document.getElementById('navItemSection').value = item ? (item.section || 'tools') : 'tools';
+      document.getElementById('navItemIcon').value = item ? (item.icon || 'bi-link-45deg') : 'bi-link-45deg';
+      document.getElementById('navItemIconPreview').innerHTML = `<i class="bi ${item ? (item.icon || 'bi-link-45deg') : 'bi-link-45deg'}"></i>`;
+      document.getElementById('navItemDestType').value = item ? item.destinationType : 'project';
+      document.getElementById('navItemEnabled').checked = item ? item.enabled !== false : true;
+      document.getElementById('navIconPicker').style.display = 'none';
+      document.getElementById('navIconSearch').value = '';
+      navPopulateIconGrid('');
+
+      navPopulateProjectPageSelect(item ? item.id : null, item ? item.link : null);
+      document.getElementById('navItemLinkCustom').value = (item && item.destinationType === 'custom') ? item.link : '';
+      document.getElementById('navItemLinkExternal').value = (item && item.destinationType === 'external') ? item.link : '';
+      navUpdateLinkFieldVisibility();
+
+      const rolesWrap = document.getElementById('navItemRoles');
+      const selectedRoles = (item && item.roles) || [];
+      rolesWrap.innerHTML = NAV_ROLE_CHOICES.map(r => `
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text);text-transform:none;font-weight:500;">
+          <input type="checkbox" value="${r.value}" ${selectedRoles.indexOf(r.value) !== -1 ? 'checked' : ''} style="width:auto" /> ${esc(r.label)}
+        </label>`).join('');
+
+      document.getElementById('navItemModal').classList.add('show');
+    }
+
+    async function saveNavItem() {
+      const id = document.getElementById('navItemId').value;
+      const name = document.getElementById('navItemName').value.trim();
+      const destinationType = document.getElementById('navItemDestType').value;
+      let link = '';
+      if (destinationType === 'project') link = document.getElementById('navItemLinkProject').value;
+      else if (destinationType === 'custom') link = document.getElementById('navItemLinkCustom').value.trim().replace(/^\/+/, '');
+      else {
+        link = document.getElementById('navItemLinkExternal').value.trim();
+        try { new URL(link); } catch (e) { alert('Enter a valid external URL, including https://'); return; }
+      }
+      if (!name) { alert('Name is required.'); return; }
+      if (!link) { alert('A destination is required.'); return; }
+
+      const roles = Array.from(document.querySelectorAll('#navItemRoles input:checked')).map(cb => cb.value);
+      const body = {
+        name, link, destinationType,
+        section: document.getElementById('navItemSection').value,
+        icon: document.getElementById('navItemIcon').value || 'bi-link-45deg',
+        enabled: document.getElementById('navItemEnabled').checked,
+        roles,
+      };
+
+      const saveBtn = document.getElementById('navItemSaveBtn');
+      saveBtn.disabled = true; const origText = saveBtn.textContent; saveBtn.textContent = 'Saving…';
+      try {
+        let res;
+        if (id) { res = await fetch('/api/nav-config', { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ id }, body)) }); }
+        else { res = await fetch('/api/nav-config', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); }
+        if (!res.ok) throw new Error(await res.text());
+        document.getElementById('navItemModal').classList.remove('show');
+        await loadNavItems();
+      } catch (err) {
+        alert('Failed to save: ' + err.message);
+      }
+      saveBtn.disabled = false; saveBtn.textContent = origText;
+    }
+
+    document.getElementById('navAddItemBtn').addEventListener('click', () => openNavItemModal(null));
+    document.getElementById('navItemModalClose').addEventListener('click', () => document.getElementById('navItemModal').classList.remove('show'));
+    document.getElementById('navItemCancelBtn').addEventListener('click', () => document.getElementById('navItemModal').classList.remove('show'));
+    document.getElementById('navItemSaveBtn').addEventListener('click', saveNavItem);
+    document.getElementById('navItemDestType').addEventListener('change', navUpdateLinkFieldVisibility);
+    document.getElementById('navItemIconPickBtn').addEventListener('click', () => {
+      const picker = document.getElementById('navIconPicker');
+      picker.style.display = picker.style.display === 'none' ? '' : 'none';
+    });
+    document.getElementById('navIconSearch').addEventListener('input', (e) => navPopulateIconGrid(e.target.value));
+    document.getElementById('navItemModal').addEventListener('mousedown', (e) => { if (e.target === e.currentTarget) e.currentTarget.classList.remove('show'); });
 
     // Tab switching
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -1957,6 +2279,7 @@ Capstone Management Partners`;
     origTabClick.forEach(btn => {
       btn.addEventListener('click', () => {
         if (btn.getAttribute('data-tab') === 'properties') renderPropertyList();
+        if (btn.getAttribute('data-tab') === 'navigation') loadNavItems();
       });
     });
 
@@ -1966,5 +2289,6 @@ Capstone Management Partners`;
 /* Inactivity Auto-Logout (12h) */
 (function(){var T=12*60*60*1000,K='mmp_last_activity';function u(){try{localStorage.setItem(K,Date.now().toString())}catch(e){}}function c(){try{var l=parseInt(localStorage.getItem(K)||'0',10);if(l&&(Date.now()-l)>T){localStorage.removeItem(K);fetch('/api/auth-logout',{method:'POST',credentials:'include'}).catch(function(){});window.location.href='index.html';}}catch(e){}}u();['mousedown','keydown','scroll','touchstart'].forEach(function(e){document.addEventListener(e,u,{passive:true})});setInterval(c,60000);c()})();
 </script>
+<script src="standard-nav.js"></script>
 </body>
 </html>
