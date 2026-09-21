@@ -2014,6 +2014,27 @@ async function generateExecExport() {
     BANDS.forEach(b => bandCounts[b.label] = 0);
     visible.forEach(r => { if (bandCounts[r.band] !== undefined) bandCounts[r.band]++; });
 
+    // Applicant type breakdown (Total is visible.length; buckets like
+    // "First Year" / "Transfer" fall out naturally, blank values group
+    // under "Unknown")
+    const appTypeCounts = {};
+    visible.forEach(r => {
+      const key = r.appType || 'Unknown';
+      appTypeCounts[key] = (appTypeCounts[key] || 0) + 1;
+    });
+
+    // Deposits paid — anyone whose status indicates a deposit was paid,
+    // including admits who later declined after paying
+    const depositsPaid = visible.filter(r => (r.status || '').includes('Paid')).length;
+
+    // Housing interest breakdown
+    const housingCounts = { Yes: 0, No: 0, Unknown: 0 };
+    visible.forEach(r => {
+      if (r.housing === 'Yes') housingCounts.Yes++;
+      else if (r.housing === 'No') housingCounts.No++;
+      else housingCounts.Unknown++;
+    });
+
     // Capture the preview map (user has already framed it)
     const mapCanvas = await capturePreviewMap();
 
@@ -2024,7 +2045,10 @@ async function generateExecExport() {
     // Build the export layout
     const container = document.getElementById('execExportCanvas');
     container.style.width = PAGE_W + 'px';
-    container.innerHTML = buildExecExportHTML(title, subtitle, exportDate, bandCounts, visible.length, showFilters, PAGE_W, PAGE_H);
+    container.innerHTML = buildExecExportHTML({
+      title, subtitle, exportDate, bandCounts, appTypeCounts, depositsPaid, housingCounts,
+      totalVisible: visible.length, showFilters, pageW: PAGE_W, pageH: PAGE_H
+    });
 
     // Insert map image
     const mapSlot = container.querySelector('#exec-map-slot');
@@ -2076,110 +2100,147 @@ async function generateExecExport() {
   }
 }
 
-async function capturePreviewMap() {
+// Resolves once every tile layer on the map has finished loading its
+// currently-visible tiles (or after maxWait, whichever comes first).
+// Using a fixed timeout alone was unreliable — on slower connections or
+// wide zoomed-out views, tiles hadn't finished painting before the
+// screenshot was taken, producing gray/blank patches in the export.
+function waitForMapTilesLoaded(map, maxWait) {
   return new Promise((resolve) => {
-    if (!execPreviewMap) { resolve(null); return; }
-    // Wait for tiles to finish loading
-    setTimeout(() => {
-      const mapEl = document.getElementById('execPreviewMap');
-      html2canvas(mapEl, {
-        useCORS: true,
-        allowTaint: true,
-        scale: 2,
-        logging: false,
-        backgroundColor: '#f1f5f9'
-      }).then(canvas => resolve(canvas)).catch(() => resolve(null));
-    }, 800);
+    const layers = [];
+    map.eachLayer(l => { if (l instanceof L.TileLayer) layers.push(l); });
+    const stillLoading = layers.filter(l => typeof l.isLoading === 'function' && l.isLoading());
+    if (!stillLoading.length) { resolve(); return; }
+
+    let settled = false;
+    const finish = () => { if (!settled) { settled = true; resolve(); } };
+    let pending = stillLoading.length;
+    stillLoading.forEach(l => l.once('load', () => { pending--; if (pending <= 0) finish(); }));
+    setTimeout(finish, maxWait);
   });
 }
 
-function buildExecExportHTML(title, subtitle, exportDate, bandCounts, totalVisible, showFilters, pageW, pageH) {
+async function capturePreviewMap() {
+  if (!execPreviewMap) return null;
+
+  execPreviewMap.invalidateSize();
+  await waitForMapTilesLoaded(execPreviewMap, 4000);
+  // Small settle delay so the browser has painted the last tiles/markers
+  await new Promise(r => setTimeout(r, 250));
+
+  try {
+    const mapEl = document.getElementById('execPreviewMap');
+    // useCORS (without allowTaint) works cleanly here: the Esri basemap
+    // sends `Access-Control-Allow-Origin: *`, so this produces a clean,
+    // untainted canvas we can safely call toDataURL() on.
+    return await html2canvas(mapEl, {
+      useCORS: true,
+      scale: 3,
+      logging: false,
+      backgroundColor: '#f1f5f9'
+    });
+  } catch (e) {
+    console.warn('Map capture failed:', e);
+    return null;
+  }
+}
+
+// Reusable sidebar "card" — a titled block with a divider, used for each
+// stat section in the exec report sidebar.
+function execCard(title, innerHtml, opts) {
+  opts = opts || {};
+  const borderTop = opts.first ? '' : 'border-top:1px solid #e2e8f0;padding-top:18px;';
+  return `<div style="${borderTop}">
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:10px">${escHtml(title)}</div>
+    ${innerHtml}
+  </div>`;
+}
+
+function execStatRow(label, count, total, color) {
+  const pct = total ? Math.round(count / total * 100) : 0;
+  return `<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;font-size:13px">
+    <span style="color:#334155;font-weight:500${color ? `;display:flex;align-items:center;gap:7px` : ''}">${color ? `<span style="width:10px;height:10px;border-radius:50%;background:${color};display:inline-block;flex-shrink:0"></span>` : ''}${escHtml(label)}</span>
+    <span style="font-weight:700;color:#0f172a">${formatNum(count)} <span style="color:#94a3b8;font-weight:400">(${pct}%)</span></span>
+  </div>`;
+}
+
+function buildExecExportHTML(opts) {
+  const {
+    title, subtitle, exportDate, bandCounts, appTypeCounts, depositsPaid, housingCounts,
+    totalVisible, showFilters, pageW, pageH
+  } = opts;
+
   const filterText = showFilters ? getFilterSummaryText() : '';
-  // Calculate map height: total page minus header(~90px) minus KPI bar(~80px) minus footer(~50px) minus filter row(~36px if shown)
-  const filterRowH = (showFilters && filterText !== 'No filters applied — showing all records') ? 36 : 0;
-  const mapH = pageH - 90 - 76 - 46 - filterRowH;
+  const appTypeEntries = Object.entries(appTypeCounts).sort((a, b) => b[1] - a[1]);
+  const depositsPct = totalVisible ? Math.round(depositsPaid / totalVisible * 100) : 0;
 
   return `
   <div style="font-family:'Inter',system-ui,-apple-system,sans-serif;width:${pageW}px;height:${pageH}px;background:#fff;color:#0f172a;display:flex;flex-direction:column;overflow:hidden">
     <!-- Header -->
-    <div style="background:linear-gradient(135deg,#4b2e83 0%,#32174f 100%);color:#fff;padding:22px 40px 18px;display:flex;justify-content:space-between;align-items:flex-start;flex-shrink:0">
+    <div style="background:linear-gradient(135deg,#4b2e83 0%,#32174f 100%);color:#fff;padding:20px 40px 16px;display:flex;justify-content:space-between;align-items:flex-start;flex-shrink:0">
       <div>
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;opacity:0.6;margin-bottom:4px">University of Washington Bothell</div>
         <div style="font-size:26px;font-weight:800;letter-spacing:-0.5px;line-height:1.15">${escHtml(title)}</div>
         ${subtitle ? `<div style="font-size:14px;opacity:0.75;margin-top:2px;font-weight:500">${escHtml(subtitle)}</div>` : ''}
       </div>
       <div style="text-align:right;flex-shrink:0">
-        <div style="font-size:12px;opacity:0.7;font-weight:500">${exportDate}</div>
-        <div style="font-size:11px;opacity:0.45;margin-top:2px">Residential Village at Bothell, WA</div>
+        <div style="font-size:32px;font-weight:800;line-height:1">${formatNum(totalVisible)}</div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.7">Total Displayed</div>
       </div>
     </div>
 
-    <!-- KPI Bar -->
-    <div style="display:flex;gap:0;border-bottom:1px solid #e2e8f0;flex-shrink:0">
-      <div style="flex:1;text-align:center;padding:14px 12px;border-right:1px solid #e2e8f0">
-        <div style="font-size:28px;font-weight:800;color:#4b2e83">${formatNum(totalVisible)}</div>
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;margin-top:1px">Total Displayed</div>
-      </div>
-      <div style="flex:1;text-align:center;padding:14px 12px;border-right:1px solid #e2e8f0;border-left:3px solid #22c55e">
-        <div style="font-size:24px;font-weight:800;color:#22c55e">${formatNum(bandCounts['0–10 mi'])}</div>
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-top:1px">0–10 mi</div>
-      </div>
-      <div style="flex:1;text-align:center;padding:14px 12px;border-right:1px solid #e2e8f0;border-left:3px solid #f97316">
-        <div style="font-size:24px;font-weight:800;color:#f97316">${formatNum(bandCounts['10–50 mi'])}</div>
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-top:1px">10–50 mi</div>
-      </div>
-      <div style="flex:1;text-align:center;padding:14px 12px;border-right:1px solid #e2e8f0;border-left:3px solid #ef4444">
-        <div style="font-size:24px;font-weight:800;color:#ef4444">${formatNum(bandCounts['50–100 mi'])}</div>
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-top:1px">50–100 mi</div>
-      </div>
-      <div style="flex:1;text-align:center;padding:14px 12px;border-left:3px solid #8b5cf6">
-        <div style="font-size:24px;font-weight:800;color:#8b5cf6">${formatNum(bandCounts['100+ mi'])}</div>
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-top:1px">100+ mi</div>
-      </div>
-    </div>
+    <!-- Filter summary — always shown so the report is self-documenting -->
+    ${showFilters ? `
+    <div style="padding:7px 40px;background:#f8fafc;border-bottom:1px solid #e2e8f0;flex-shrink:0">
+      <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-right:6px">Filters Applied:</span>
+      <span style="font-size:11px;color:#4b2e83;font-weight:600">${escHtml(filterText)}</span>
+    </div>` : ''}
 
-    <!-- Map + Legend (fills remaining space) -->
+    <!-- Map + Stats sidebar (fills remaining space) -->
     <div style="display:flex;flex:1;overflow:hidden">
       <!-- Map -->
       <div style="flex:1;position:relative;background:#f1f5f9">
         <div id="exec-map-slot" style="width:100%;height:100%"></div>
+        <div style="position:absolute;left:12px;bottom:12px;background:rgba(255,255,255,0.92);border-radius:8px;padding:8px 12px;display:flex;gap:14px;box-shadow:0 2px 8px rgba(0,0,0,0.12)">
+          ${BANDS.map(b => `<div style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:${b.color};display:inline-block"></span><span style="font-size:11px;font-weight:600;color:#334155">${b.label}</span></div>`).join('')}
+        </div>
       </div>
-      <!-- Legend sidebar -->
-      <div style="width:220px;border-left:1px solid #e2e8f0;padding:18px 16px;display:flex;flex-direction:column;gap:14px;background:#fafbfc;flex-shrink:0">
-        <div>
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:10px">Distance Legend</div>
-          <div style="display:flex;flex-direction:column;gap:7px">
-            <div style="display:flex;align-items:center;gap:8px"><div style="width:12px;height:12px;border-radius:50%;background:#22c55e;flex-shrink:0"></div><span style="font-size:12px;font-weight:600">0–10 miles</span></div>
-            <div style="display:flex;align-items:center;gap:8px"><div style="width:12px;height:12px;border-radius:50%;background:#f97316;flex-shrink:0"></div><span style="font-size:12px;font-weight:600">10–50 miles</span></div>
-            <div style="display:flex;align-items:center;gap:8px"><div style="width:12px;height:12px;border-radius:50%;background:#ef4444;flex-shrink:0"></div><span style="font-size:12px;font-weight:600">50–100 miles</span></div>
-            <div style="display:flex;align-items:center;gap:8px"><div style="width:12px;height:12px;border-radius:50%;background:#8b5cf6;flex-shrink:0"></div><span style="font-size:12px;font-weight:600">100+ miles</span></div>
+      <!-- Stats sidebar — centered stack so it stays visually balanced
+           against the full page height regardless of content length -->
+      <div style="width:320px;border-left:1px solid #e2e8f0;padding:16px 22px;display:flex;flex-direction:column;justify-content:center;gap:24px;background:#fafbfc;flex-shrink:0;overflow:hidden">
+
+        ${execCard('Applicant Overview', `
+          <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
+            <span style="font-size:30px;font-weight:800;color:#4b2e83">${formatNum(totalVisible)}</span>
+            <span style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.4px">Total Applicants</span>
           </div>
-        </div>
-        <div style="border-top:1px solid #e2e8f0;padding-top:12px">
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:6px">Origin</div>
-          <div style="font-size:12px;font-weight:600;color:#0f172a">Residential Village</div>
-          <div style="font-size:10px;color:#64748b;margin-top:1px">Bothell, WA 98011</div>
-        </div>
-        <div style="border-top:1px solid #e2e8f0;padding-top:12px">
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:6px">Band Breakdown</div>
-          ${BANDS.map(b => {
-            const count = bandCounts[b.label] || 0;
-            const pct = totalVisible ? Math.round(count / totalVisible * 100) : 0;
-            return `<div style="display:flex;align-items:center;justify-content:space-between;padding:3px 0;font-size:11px">
-              <span style="color:#64748b">${b.label}</span>
-              <span style="font-weight:700">${formatNum(count)} <span style="color:#94a3b8;font-weight:400">(${pct}%)</span></span>
-            </div>`;
-          }).join('')}
-        </div>
+          ${appTypeEntries.map(([label, count]) => execStatRow(label, count, totalVisible)).join('')}
+        `, { first: true })}
+
+        ${execCard('Deposits Paid', `
+          <div style="display:flex;align-items:baseline;gap:8px">
+            <span style="font-size:30px;font-weight:800;color:#22c55e">${formatNum(depositsPaid)}</span>
+            <span style="font-size:12px;color:#94a3b8;font-weight:600">(${depositsPct}% of total)</span>
+          </div>
+        `)}
+
+        ${execCard('Campus Housing Interest', `
+          ${execStatRow('Interested', housingCounts.Yes, totalVisible, '#4b2e83')}
+          ${execStatRow('Not Interested', housingCounts.No, totalVisible, '#cbd5e1')}
+          ${housingCounts.Unknown ? execStatRow('Unknown', housingCounts.Unknown, totalVisible, '#e2e8f0') : ''}
+        `)}
+
+        ${execCard('Distance Breakdown', `
+          ${BANDS.map(b => execStatRow(b.label, bandCounts[b.label] || 0, totalVisible, b.color)).join('')}
+        `)}
+
+        ${execCard('Origin', `
+          <div style="font-size:13px;font-weight:600;color:#0f172a">Residential Village</div>
+          <div style="font-size:11px;color:#64748b;margin-top:1px">17927 113th Ave NE, Bothell, WA 98011</div>
+        `)}
+
       </div>
     </div>
-
-    <!-- Filter summary (conditional) -->
-    ${showFilters && filterText !== 'No filters applied — showing all records' ? `
-    <div style="padding:8px 40px;background:#f8fafc;border-top:1px solid #e2e8f0;flex-shrink:0">
-      <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-right:6px">Filters:</span>
-      <span style="font-size:11px;color:#4b2e83;font-weight:500">${escHtml(filterText)}</span>
-    </div>` : ''}
 
     <!-- Footer -->
     <div style="padding:10px 40px;background:#fafbfc;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
