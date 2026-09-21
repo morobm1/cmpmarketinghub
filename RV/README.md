@@ -43,10 +43,31 @@ An interactive admissions radius mapping dashboard for the University of Washing
 
 ## Refreshing the Dataset
 
+There are two ways to bring in a new extract:
+
+**A. In the browser (fastest, no terminal needed)**
+1. Click **New Session** in the left rail (this clears the view without affecting anything you've saved).
+2. Click **Upload Excel File** and choose the new spreadsheet. Rows are geocoded instantly using the cached zip/city lookups already shipped in `geocode-cache.json` and anything saved in your browser's `localStorage`.
+3. Review the map/table and the "Dataset Comparison" popup showing what changed vs. the previous view.
+4. Click **Save Dataset**, give it a name, and it's persisted for everyone opening the page.
+5. Rows whose zip/city aren't already in the cache won't have coordinates (see the "Data Quality" warning) — use option B below to geocode those before saving if completeness matters.
+
+**B. Pre-processing on the command line (best geocoding coverage)**
 1. Place the new Excel file in the `RV/` directory
 2. Run: `node geocode.js "New_File_Name.xlsx"`
-3. The script will use cached geocoding results for known locations and only query new ones
-4. Refresh the browser to see updated data
+3. The script will use cached geocoding results for known locations and live-geocode (via Nominatim) anything new, updating `geocode-cache.json`
+4. Refresh the browser, upload the same file (or let it load as the default `data.json`), and click **Save Dataset** to persist it
+
+## Dataset Sessions: Save & New Session
+
+The dashboard keeps a clear separation between the **dataset that's currently on screen** and what is **permanently saved**.
+
+- **Save Dataset** — Persists everything currently loaded (whether it's the default preprocessed data or a file you just uploaded) to the shared backend (MongoDB via a Netlify Function) under a name you choose. The saved dataset becomes the one loaded by default the next time anyone opens the page. You can save as many named datasets as you like (e.g., "Autumn 2026 — March Extract", "Test Batch A") and switch between them from **Saved Datasets…**.
+- **New Session** — Clears the map/table so you can upload a different Excel file to evaluate. This is purely a working view: it never merges with whatever was loaded before, and it does **not** touch anything you've already saved. Nothing is written to the shared backend until you explicitly click **Save Dataset** again.
+- **Saved Datasets…** — Lists every dataset saved so far with the record count and save date. Use **Load** to switch the map to a saved dataset (this also marks it as the one shown by default going forward), **Rename** to relabel it, or **Delete** to remove it.
+- The status pill at the top of the left rail always shows what you're currently looking at: a saved dataset, an unsaved session (uploaded but not saved), or the default preprocessed `data.json`.
+
+Uploading a new Excel file (via **Upload Excel File**) always *replaces* the records on screen — it is never combined/merged with whatever was previously displayed, whether that was a saved dataset or another upload. If a previous dataset was on screen, an informational "Dataset Comparison" popup shows what changed (new/removed records) purely for your reference; it does not save or alter anything.
 
 ## Export Features
 
@@ -82,9 +103,10 @@ A dedicated workflow for generating vendor-ready mailing list files.
 |------|-------------|
 | `index.html` | Main interactive web application |
 | `geocode.js` | Node.js data preprocessor |
-| `data.json` | Pre-processed geocoded data (generated) |
+| `data.json` | Pre-processed geocoded data (generated) — used only as a fallback if no dataset has been saved yet |
 | `geocode-cache.json` | Geocoding cache (generated) |
 | `ALL Admits for Autumn 2026_as of 3_13_2026.xlsx` | Source Excel file |
+| `../netlify/functions/rv-data.js` | Backend API for saved datasets, dataset diff snapshots, and mailer history (MongoDB-backed) |
 
 ## Dependencies
 
@@ -98,6 +120,10 @@ A dedicated workflow for generating vendor-ready mailing list files.
 - **SheetJS** — Client-side Excel parsing (for file re-uploads and XLSX export)
 - **html2canvas** — Map and layout capture for PNG export
 - **jsPDF** — PDF document generation
+
+### Basemap
+- Tiles are served by Esri's free **World Light Gray Canvas** basemap (`server.arcgisonline.com`), which does not require an API key.
+- This replaced CARTO's `basemaps.cartocdn.com` tiles, which now require a CARTO account/API key (see carto.com/basemaps/apikey) and were showing an "API key required" tile error.
 
 ## Assumptions & Fallback Logic
 

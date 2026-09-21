@@ -2,6 +2,7 @@ import { getDb, ObjectId } from './_db.js';
 
 const SNAPSHOTS_COL = 'rv_snapshots';
 const MAILERS_COL = 'rv_mailers';
+const DATASETS_COL = 'rv_datasets';
 
 export const handler = async (event, context) => {
   const headers = {
@@ -80,6 +81,100 @@ export const handler = async (event, context) => {
       }
 
       return { statusCode: 201, headers, body: JSON.stringify({ success: true, id: doc.id }) };
+    }
+
+    // ═══════════════════════════════════════════════════
+    //  DATASETS (saved / named data sets, each fully self-contained)
+    // ═══════════════════════════════════════════════════
+
+    // GET /rv-data/datasets — list saved datasets (metadata only, no records)
+    if (event.httpMethod === 'GET' && resource === 'datasets' && !resourceId) {
+      const col = db.collection(DATASETS_COL);
+      const datasets = await col.find({})
+        .project({ records: 0 })
+        .sort({ createdAt: -1 })
+        .toArray();
+      return { statusCode: 200, headers, body: JSON.stringify(datasets) };
+    }
+
+    // GET /rv-data/datasets/active — get the currently active dataset (with records)
+    if (event.httpMethod === 'GET' && resource === 'datasets' && resourceId === 'active') {
+      const col = db.collection(DATASETS_COL);
+      const ds = await col.findOne({ active: true });
+      return { statusCode: 200, headers, body: JSON.stringify(ds || null) };
+    }
+
+    // GET /rv-data/datasets/:id — get one specific dataset (with records)
+    if (event.httpMethod === 'GET' && resource === 'datasets' && resourceId) {
+      const col = db.collection(DATASETS_COL);
+      let ds;
+      try {
+        ds = await col.findOne({ _id: new ObjectId(resourceId) });
+      } catch (e) {
+        ds = await col.findOne({ id: parseInt(resourceId) });
+      }
+      if (!ds) return { statusCode: 404, headers, body: JSON.stringify({ error: 'Dataset not found' }) };
+      return { statusCode: 200, headers, body: JSON.stringify(ds) };
+    }
+
+    // POST /rv-data/datasets — save a new dataset and mark it active
+    if (event.httpMethod === 'POST' && resource === 'datasets') {
+      const col = db.collection(DATASETS_COL);
+      const body = JSON.parse(event.body || '{}');
+      if (!body.name || !Array.isArray(body.records)) {
+        return { statusCode: 400, headers, body: JSON.stringify({ error: 'name and records are required' }) };
+      }
+      const doc = {
+        id: Date.now(),
+        name: String(body.name).slice(0, 200),
+        sourceFile: body.sourceFile || 'Unknown',
+        recordCount: body.records.length,
+        bandCounts: body.bandCounts || {},
+        records: body.records,
+        active: true,
+        createdAt: new Date().toISOString()
+      };
+      // Only one dataset may be active at a time
+      await col.updateMany({}, { $set: { active: false } });
+      await col.insertOne(doc);
+      return { statusCode: 201, headers, body: JSON.stringify({ success: true, id: doc.id }) };
+    }
+
+    // PUT /rv-data/datasets/:id — activate or rename a saved dataset
+    if (event.httpMethod === 'PUT' && resource === 'datasets' && resourceId) {
+      const col = db.collection(DATASETS_COL);
+      const body = JSON.parse(event.body || '{}');
+
+      const findFilter = (() => {
+        try { return { _id: new ObjectId(resourceId) }; } catch (e) { return { id: parseInt(resourceId) }; }
+      })();
+
+      if (body.activate) {
+        await col.updateMany({}, { $set: { active: false } });
+        const updateFields = { active: true, updatedAt: new Date().toISOString() };
+        if (body.name !== undefined) updateFields.name = String(body.name).slice(0, 200);
+        const result = await col.updateOne(findFilter, { $set: updateFields });
+        if (result.matchedCount === 0) return { statusCode: 404, headers, body: JSON.stringify({ error: 'Dataset not found' }) };
+        return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
+      }
+
+      const updateFields = { updatedAt: new Date().toISOString() };
+      if (body.name !== undefined) updateFields.name = String(body.name).slice(0, 200);
+      const result = await col.updateOne(findFilter, { $set: updateFields });
+      if (result.matchedCount === 0) return { statusCode: 404, headers, body: JSON.stringify({ error: 'Dataset not found' }) };
+      return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
+    }
+
+    // DELETE /rv-data/datasets/:id — delete a saved dataset
+    if (event.httpMethod === 'DELETE' && resource === 'datasets' && resourceId) {
+      const col = db.collection(DATASETS_COL);
+      let result;
+      try {
+        result = await col.deleteOne({ _id: new ObjectId(resourceId) });
+      } catch (e) {
+        result = await col.deleteOne({ id: parseInt(resourceId) });
+      }
+      return { statusCode: 200, headers, body: JSON.stringify({ success: true, deletedCount: result.deletedCount }) };
     }
 
     // ═══════════════════════════════════════════════════

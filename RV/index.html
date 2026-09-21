@@ -122,6 +122,30 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;bac
 .data-quality{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:12px;color:#92400e}
 .data-quality svg{width:16px;height:16px;flex-shrink:0}
 
+/* Dataset Status Pill */
+.dataset-status{padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg)}
+.dataset-status.saved{border-color:#bbf7d0;background:#f0fdf4}
+.dataset-status.session{border-color:#fde68a;background:#fffbeb}
+.dataset-status.default{border-color:var(--border);background:var(--bg)}
+.dataset-status-label{font-size:12px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px}
+.dataset-status-label .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dataset-status.saved .dot{background:#22c55e}
+.dataset-status.session .dot{background:#f59e0b}
+.dataset-status.default .dot{background:#94a3b8}
+.dataset-status-meta{font-size:11px;color:var(--subtext);margin-top:3px}
+
+/* Saved Datasets list */
+.dataset-card{padding:12px 14px;border-radius:var(--radius);border:1px solid var(--border);background:#fff;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;transition:all .15s}
+.dataset-card:hover{border-color:#cbd5e1;box-shadow:var(--shadow-sm)}
+.dataset-card.is-active{border-color:#22c55e;background:#f0fdf4}
+.dataset-card-info{flex:1;min-width:0}
+.dataset-card-name{font-size:13px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px}
+.dataset-card-meta{font-size:11px;color:var(--subtext);margin-top:3px}
+.dataset-card-actions{display:flex;gap:6px;flex-shrink:0}
+.dataset-card-actions button{padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:11px;font-weight:600;cursor:pointer;color:var(--text);transition:all .15s;white-space:nowrap}
+.dataset-card-actions button:hover{background:#f1f5f9;border-color:#cbd5e1}
+.active-tag{display:inline-block;padding:1px 8px;border-radius:999px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;background:#dcfce7;color:#166534}
+
 /* ── MAIN AREA ──────────────────────────────────────── */
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
 
@@ -362,6 +386,40 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;bac
     </div>
 
     <div class="rail-scroll">
+      <!-- Dataset Session -->
+      <div class="section" id="datasetSection">
+        <div class="section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+          Dataset
+        </div>
+        <div class="dataset-status" id="datasetStatus">
+          <div class="dataset-status-label" id="datasetStatusLabel">Loading…</div>
+          <div class="dataset-status-meta" id="datasetStatusMeta"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
+          <button class="btn primary" id="saveDatasetBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Save Dataset
+          </button>
+          <button class="btn" id="newSessionBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+            New Session
+          </button>
+          <button class="btn" id="openSavedDatasets">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            Saved Datasets…
+          </button>
+        </div>
+        <div style="margin-top:12px">
+          <label class="btn" style="cursor:pointer" for="fileInput">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Upload Excel File
+          </label>
+          <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none">
+          <p style="font-size:11px;color:var(--subtext);margin-top:6px;text-align:center">Uploading replaces the records currently on screen — it never merges with prior data. Click <strong>Save Dataset</strong> when you're ready to keep it.</p>
+        </div>
+      </div>
+
       <!-- KPI Section -->
       <div class="section" id="kpiSection">
         <div class="section-title">
@@ -510,19 +568,6 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;bac
         </div>
       </div>
 
-      <!-- Upload New File -->
-      <div class="section">
-        <div class="section-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          Update Dataset
-        </div>
-        <label class="btn" style="cursor:pointer" for="fileInput">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          Upload New Excel File
-        </label>
-        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none">
-        <p style="font-size:11px;color:var(--subtext);margin-top:6px;text-align:center">Re-run <code>node geocode.js</code> after uploading for best results</p>
-      </div>
     </div>
 
     <div class="rail-footer">
@@ -908,6 +953,55 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;bac
   </div>
 </div>
 
+<!-- ═══ SAVE DATASET MODAL ══════════════════════════════════════ -->
+<div class="modal-overlay" id="saveDatasetModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Save Dataset
+      </h2>
+      <button class="modal-close" id="saveDatasetClose">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="exec-form-group">
+        <label>Dataset Name</label>
+        <input type="text" id="saveDatasetName" placeholder="e.g., Autumn 2026 — March Extract">
+      </div>
+      <p style="font-size:12px;color:var(--subtext);margin-top:10px" id="saveDatasetInfo"></p>
+      <p style="font-size:11px;color:var(--subtext);margin-top:10px">Saving stores this dataset centrally so anyone opening this page can load it later. It becomes the dataset shown by default the next time this page is opened.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" id="saveDatasetCancel">Cancel</button>
+      <button class="btn primary" id="saveDatasetConfirm">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SAVED DATASETS MODAL ════════════════════════════════════ -->
+<div class="modal-overlay" id="savedDatasetsModal">
+  <div class="modal wide">
+    <div class="modal-header">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        Saved Datasets
+      </h2>
+      <button class="modal-close" id="savedDatasetsClose">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="savedDatasetsList"></div>
+      <div id="savedDatasetsEmpty" style="text-align:center;padding:40px;color:var(--subtext)">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:0.3;margin-bottom:8px"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px">No saved datasets yet</div>
+        <div style="font-size:12px">Use "Save Dataset" to store the data currently on screen.</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" id="savedDatasetsDismiss">Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- Hidden export render container -->
 <div id="execExportCanvas"></div>
 
@@ -935,6 +1029,21 @@ const BANDS = [
 const RADIUS_MILES = [10, 50, 100];
 const MILES_TO_METERS = 1609.344;
 
+// Light gray basemap (Esri, no API key required — replaces CARTO which now
+// requires an API key for its hosted basemaps: carto.com/basemaps/apikey)
+function addBasemap(targetMap) {
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors',
+    maxZoom: 19,
+    maxNativeZoom: 16
+  }).addTo(targetMap);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+    attribution: '',
+    maxZoom: 19,
+    maxNativeZoom: 16
+  }).addTo(targetMap);
+}
+
 // ══════════════════════════════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════════════════════════════
@@ -943,6 +1052,9 @@ let filteredRecords = [];
 let map, markerCluster, originMarker;
 let radiusCircles = [];
 let sortCol = 'distance', sortDir = 'asc';
+
+// Dataset session state: { source: 'default'|'saved'|'session'|'empty', id, name, sourceFile, savedAt, recordCount }
+let currentDatasetMeta = { source: 'empty' };
 
 // Filter state
 let selectedStatuses = new Set();
@@ -956,9 +1068,10 @@ let activeBands = new Set(BANDS.map(b => b.label));
 // ══════════════════════════════════════════════════════════════════
 async function init() {
   initMap();
-  await loadData();
+  await loadInitialData();
   initFilters();
   applyFilters();
+  updateDatasetStatusUI();
   hideLoading();
 }
 
@@ -982,11 +1095,7 @@ function initMap() {
     minZoom: 3
   });
 
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
-    subdomains: 'abcd',
-    maxZoom: 19
-  }).addTo(map);
+  addBasemap(map);
 
   // Origin marker
   const originIcon = L.divIcon({
@@ -1129,33 +1238,57 @@ function updateMapMarkers() {
 // ══════════════════════════════════════════════════════════════════
 //  DATA LOADING
 // ══════════════════════════════════════════════════════════════════
-async function loadData() {
+async function loadInitialData() {
+  setLoadingStatus('Loading saved dataset...');
+
+  // 1. Prefer a centrally saved dataset (marked active), if one exists.
+  try {
+    const active = await apiGet('datasets/active');
+    if (active && Array.isArray(active.records) && active.records.length) {
+      allRecords = active.records;
+      currentDatasetMeta = {
+        source: 'saved',
+        id: active.id || active._id,
+        name: active.name,
+        sourceFile: active.sourceFile,
+        savedAt: active.createdAt,
+        recordCount: active.records.length
+      };
+      console.log(`Loaded saved dataset "${active.name}" (${allRecords.length} records)`);
+      return;
+    }
+  } catch (e) { console.warn('Could not reach saved dataset API:', e); }
+
+  // 2. Fall back to the preprocessed data.json shipped with the app.
   setLoadingStatus('Loading preprocessed data...');
   try {
     const resp = await fetch('data.json');
     if (!resp.ok) throw new Error('No data.json found');
     const data = await resp.json();
     allRecords = data.records;
+    currentDatasetMeta = {
+      source: 'default',
+      name: data.meta?.sourceFile || 'data.json',
+      recordCount: allRecords.length
+    };
     console.log(`Loaded ${allRecords.length} records from data.json`);
-    // Save initial snapshot if none exists (async, non-blocking)
-    (async () => {
-      try {
-        const existing = await getLastSnapshot();
-        if (!existing) {
-          await saveDatasetSnapshot(allRecords, data.meta?.sourceFile || 'data.json');
-        }
-      } catch (e) { console.warn('Initial snapshot save error:', e); }
-    })();
   } catch (e) {
     console.warn('data.json not found, waiting for file upload');
     allRecords = [];
+    currentDatasetMeta = { source: 'empty' };
   }
 }
 
 function processExcelFile(file) {
   setLoadingStatus('Processing Excel file...');
   document.getElementById('loadingOverlay').classList.remove('hidden');
-  
+
+  // Snapshot of whatever was on screen before this upload, used purely for
+  // the in-browser diff preview below. Nothing is persisted here — data is
+  // only saved centrally when the user clicks "Save Dataset".
+  const previousRecords = allRecords;
+  const previousMeta = currentDatasetMeta;
+
   const reader = new FileReader();
   reader.onload = function(e) {
     try {
@@ -1206,22 +1339,29 @@ function processExcelFile(file) {
             
             return record;
           });
-          
+
+          // This upload becomes an unsaved working session — it replaces
+          // (never merges with) whatever was previously on screen, and is
+          // not written anywhere until the user clicks "Save Dataset".
+          currentDatasetMeta = { source: 'session', sourceFile: file.name, recordCount: allRecords.length };
+
           initFilters();
           applyFilters();
+          updateDatasetStatusUI();
           hideLoading();
-          
-          // Dataset diff tracking (async, non-blocking)
-          (async () => {
-            try {
-              const oldSnap = await getLastSnapshot();
-              const diff = compareDatasets(oldSnap, allRecords);
-              await saveDatasetSnapshot(allRecords, file.name);
-              if (oldSnap) {
-                setTimeout(() => showDiffModal(diff, oldSnap), 300);
-              }
-            } catch (e) { console.warn('Diff tracking error:', e); }
-          })();
+
+          // Show an in-browser diff vs. whatever was previously displayed
+          // (purely informational — nothing is saved as part of this).
+          if (previousRecords.length) {
+            const prevSnap = {
+              date: previousMeta.savedAt || new Date().toISOString(),
+              filename: previousMeta.name || previousMeta.sourceFile || 'Previous view',
+              recordCount: previousRecords.length,
+              fingerprints: previousRecords.map(getRecordFingerprint)
+            };
+            const diff = compareDatasets(prevSnap, allRecords);
+            setTimeout(() => showDiffModal(diff, prevSnap), 300);
+          }
         });
     } catch (err) {
       alert('Error reading Excel file: ' + err.message);
@@ -1264,40 +1404,30 @@ function getBandLabel(dist) {
 // ══════════════════════════════════════════════════════════════════
 //  FILTERS
 // ══════════════════════════════════════════════════════════════════
-function initFilters() {
-  // Get unique values
-  const statuses = [...new Set(allRecords.map(r => r.status).filter(Boolean))].sort();
-  const appTypes = [...new Set(allRecords.map(r => r.appType).filter(Boolean))].sort();
-  
-  selectedStatuses = new Set(statuses);
-  selectedAppTypes = new Set(appTypes);
-  
-  // Build multi-selects
-  buildMultiSelect('statusFilter', statuses, selectedStatuses);
-  buildMultiSelect('appTypeFilter', appTypes, selectedAppTypes);
-  
-  // Build legend
-  buildLegend();
-  
-  // Event listeners
+// One-time event bindings that don't depend on which dataset is loaded.
+// Called exactly once at boot so repeated dataset switches (upload, save,
+// new session, load saved dataset) never stack duplicate listeners.
+function bindStaticEventListeners() {
   document.getElementById('housingFilter').addEventListener('change', function() {
     housingFilter = this.value;
     applyFilters();
   });
-  
+
   document.getElementById('citySearch').addEventListener('input', debounce(function() {
     citySearch = this.value.toLowerCase().trim();
     applyFilters();
   }, 200));
-  
+
   document.getElementById('resetBtn').addEventListener('click', resetFilters);
   document.getElementById('fileInput').addEventListener('change', function(e) {
-    if (e.target.files[0]) processExcelFile(e.target.files[0]);
+    const file = e.target.files[0];
+    if (file) processExcelFile(file);
+    e.target.value = ''; // allow re-selecting the same file later
   });
-  
+
   // Table toggle
   document.getElementById('tableToggle').addEventListener('click', toggleTable);
-  
+
   // Table sorting
   document.querySelectorAll('.data-table th').forEach(th => {
     th.addEventListener('click', () => {
@@ -1307,22 +1437,52 @@ function initFilters() {
       updateTable();
     });
   });
-  
+
   // Export buttons
   document.getElementById('exportCSV').addEventListener('click', exportCSV);
   document.getElementById('exportSummary').addEventListener('click', exportSummary);
+}
+
+// Rebuilds everything that depends on which dataset is currently loaded.
+// Safe to call repeatedly (upload, save, new session, load saved dataset).
+function initFilters() {
+  // Get unique values
+  const statuses = [...new Set(allRecords.map(r => r.status).filter(Boolean))].sort();
+  const appTypes = [...new Set(allRecords.map(r => r.appType).filter(Boolean))].sort();
+
+  selectedStatuses = new Set(statuses);
+  selectedAppTypes = new Set(appTypes);
+  housingFilter = 'all';
+  citySearch = '';
+  activeBands = new Set(BANDS.map(b => b.label));
+  document.getElementById('housingFilter').value = 'all';
+  document.getElementById('citySearch').value = '';
+
+  // Build multi-selects
+  buildMultiSelect('statusFilter', statuses, selectedStatuses);
+  buildMultiSelect('appTypeFilter', appTypes, selectedAppTypes);
   
+  // Build legend
+  buildLegend();
+
   // Data quality
   const failedCount = allRecords.filter(r => !r.geocoded).length;
+  const dqSection = document.getElementById('dataQualitySection');
   if (failedCount > 0) {
-    document.getElementById('dataQualitySection').style.display = 'block';
+    dqSection.style.display = 'block';
     document.getElementById('failedCount').textContent = failedCount;
+  } else {
+    dqSection.style.display = 'none';
   }
 }
 
 function buildMultiSelect(containerId, options, selectedSet) {
   const container = document.getElementById(containerId);
-  const btn = container.querySelector('.multi-btn');
+  // Clone-and-replace the button to strip any listeners from a previous
+  // dataset load (this function is re-run every time the dataset changes).
+  const oldBtn = container.querySelector('.multi-btn');
+  const btn = oldBtn.cloneNode(true);
+  oldBtn.replaceWith(btn);
   const dropdown = container.querySelector('.multi-dropdown');
   
   let html = '';
@@ -1727,11 +1887,7 @@ function initExecPreviewMap() {
     minZoom: 2
   });
 
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    attribution: '',
-    subdomains: 'abcd',
-    maxZoom: 19
-  }).addTo(execPreviewMap);
+  addBasemap(execPreviewMap);
 
   // Origin marker
   const originIcon = L.divIcon({
@@ -2606,26 +2762,6 @@ function getRecordFingerprint(r) {
   return { key: getRecordKey(r), status: r.status, appType: r.appType, city: r.city, state: r.state, zip: r.zip, band: r.band };
 }
 
-async function saveDatasetSnapshot(records, filename) {
-  const fingerprints = records.map(getRecordFingerprint);
-  const snapshot = {
-    date: new Date().toISOString(),
-    filename: filename || 'Unknown',
-    recordCount: records.length,
-    fingerprints: fingerprints
-  };
-  await apiPost('snapshots', snapshot);
-  return snapshot;
-}
-
-async function getLastSnapshot() {
-  return await apiGet('snapshots/latest');
-}
-
-async function getAllSnapshots() {
-  return (await apiGet('snapshots')) || [];
-}
-
 function compareDatasets(oldSnap, newRecords) {
   if (!oldSnap) return { newRecords: newRecords.map(r => ({...r, _diff: 'new'})), removedKeys: [], unchangedCount: 0, newCount: newRecords.length, removedCount: 0 };
 
@@ -2708,6 +2844,219 @@ function initDiffModal() {
   document.getElementById('diffClose').addEventListener('click', () => modal.classList.remove('active'));
   document.getElementById('diffDismiss').addEventListener('click', () => modal.classList.remove('active'));
   modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  DATASET SAVE / SESSION MANAGEMENT
+// ══════════════════════════════════════════════════════════════════
+
+function updateDatasetStatusUI() {
+  const box = document.getElementById('datasetStatus');
+  const label = document.getElementById('datasetStatusLabel');
+  const meta = document.getElementById('datasetStatusMeta');
+  const m = currentDatasetMeta || { source: 'empty' };
+
+  box.classList.remove('saved', 'session', 'default');
+
+  if (m.source === 'saved') {
+    box.classList.add('saved');
+    label.innerHTML = `<span class="dot"></span> Saved: ${escHtml(m.name || 'Untitled')}`;
+    meta.textContent = `${formatNum(m.recordCount || allRecords.length)} records${m.savedAt ? ' · saved ' + new Date(m.savedAt).toLocaleDateString() : ''}`;
+  } else if (m.source === 'session') {
+    box.classList.add('session');
+    label.innerHTML = `<span class="dot"></span> Unsaved session`;
+    meta.textContent = `${escHtml(m.sourceFile || 'Uploaded file')} · ${formatNum(m.recordCount || allRecords.length)} records · not saved yet`;
+  } else if (m.source === 'default') {
+    box.classList.add('default');
+    label.innerHTML = `<span class="dot"></span> Default dataset`;
+    meta.textContent = `${escHtml(m.name || 'data.json')} · ${formatNum(m.recordCount || allRecords.length)} records · click Save Dataset to keep it centrally`;
+  } else {
+    box.classList.add('default');
+    label.innerHTML = `<span class="dot"></span> No data loaded`;
+    meta.textContent = 'Upload an Excel file to get started';
+  }
+}
+
+function initDatasetControls() {
+  // ── Save Dataset ──────────────────────────────────────────────
+  const saveModal = document.getElementById('saveDatasetModal');
+  const saveNameInput = document.getElementById('saveDatasetName');
+  const saveInfo = document.getElementById('saveDatasetInfo');
+
+  document.getElementById('saveDatasetBtn').addEventListener('click', () => {
+    if (!allRecords.length) { alert('There is no data loaded to save yet.'); return; }
+    const suggested = currentDatasetMeta && currentDatasetMeta.source === 'saved'
+      ? currentDatasetMeta.name
+      : `${(currentDatasetMeta && (currentDatasetMeta.sourceFile || currentDatasetMeta.name)) || 'Admit Radius Data'} — ${dateSlug()}`;
+    saveNameInput.value = suggested;
+    saveInfo.textContent = `${formatNum(allRecords.length)} records will be saved.`;
+    saveModal.classList.add('active');
+    setTimeout(() => saveNameInput.focus(), 50);
+  });
+
+  const closeSaveModal = () => saveModal.classList.remove('active');
+  document.getElementById('saveDatasetClose').addEventListener('click', closeSaveModal);
+  document.getElementById('saveDatasetCancel').addEventListener('click', closeSaveModal);
+  saveModal.addEventListener('click', (e) => { if (e.target === saveModal) closeSaveModal(); });
+
+  document.getElementById('saveDatasetConfirm').addEventListener('click', async () => {
+    const name = saveNameInput.value.trim();
+    if (!name) { alert('Please enter a name for this dataset.'); return; }
+    const confirmBtn = document.getElementById('saveDatasetConfirm');
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Saving…';
+    try {
+      const bandCounts = {};
+      BANDS.forEach(b => bandCounts[b.label] = 0);
+      allRecords.forEach(r => { if (bandCounts[r.band] !== undefined) bandCounts[r.band]++; });
+
+      const result = await apiPost('datasets', {
+        name,
+        sourceFile: (currentDatasetMeta && (currentDatasetMeta.sourceFile || currentDatasetMeta.name)) || 'Uploaded dataset',
+        records: allRecords,
+        bandCounts
+      });
+      if (!result || !result.success) throw new Error('Save failed');
+
+      currentDatasetMeta = {
+        source: 'saved',
+        id: result.id,
+        name,
+        savedAt: new Date().toISOString(),
+        recordCount: allRecords.length
+      };
+      updateDatasetStatusUI();
+      closeSaveModal();
+    } catch (err) {
+      console.error('Save dataset error:', err);
+      alert('Could not save the dataset. Please check your connection and try again.');
+    } finally {
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = 'Save';
+    }
+  });
+
+  // ── New Session ───────────────────────────────────────────────
+  document.getElementById('newSessionBtn').addEventListener('click', startNewSession);
+
+  // ── Saved Datasets list ──────────────────────────────────────
+  const listModal = document.getElementById('savedDatasetsModal');
+  document.getElementById('openSavedDatasets').addEventListener('click', () => {
+    renderSavedDatasetsList();
+    listModal.classList.add('active');
+  });
+  const closeListModal = () => listModal.classList.remove('active');
+  document.getElementById('savedDatasetsClose').addEventListener('click', closeListModal);
+  document.getElementById('savedDatasetsDismiss').addEventListener('click', closeListModal);
+  listModal.addEventListener('click', (e) => { if (e.target === listModal) closeListModal(); });
+}
+
+function startNewSession() {
+  const proceed = confirm(
+    'Start a new session?\n\nThe map and table will clear so you can upload a different Excel file to evaluate. ' +
+    'This will NOT be combined with your current data, and any previously Saved Dataset is left untouched until you click "Save Dataset" again.'
+  );
+  if (!proceed) return;
+
+  allRecords = [];
+  filteredRecords = [];
+  currentDatasetMeta = { source: 'empty' };
+
+  initFilters();
+  applyFilters();
+  updateDatasetStatusUI();
+}
+
+let _savedDatasetsCache = [];
+
+async function renderSavedDatasetsList() {
+  const listEl = document.getElementById('savedDatasetsList');
+  const emptyEl = document.getElementById('savedDatasetsEmpty');
+  listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--subtext);font-size:12px">Loading…</div>';
+  emptyEl.style.display = 'none';
+
+  const datasets = (await apiGet('datasets')) || [];
+  _savedDatasetsCache = datasets;
+
+  if (!datasets.length) {
+    listEl.innerHTML = '';
+    emptyEl.style.display = '';
+    return;
+  }
+
+  listEl.innerHTML = datasets.map(ds => {
+    const id = ds.id || ds._id;
+    const dateStr = new Date(ds.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return `<div class="dataset-card ${ds.active ? 'is-active' : ''}" data-id="${id}">
+      <div class="dataset-card-info">
+        <div class="dataset-card-name">${escHtml(ds.name)} ${ds.active ? '<span class="active-tag">Active</span>' : ''}</div>
+        <div class="dataset-card-meta">${formatNum(ds.recordCount || 0)} records · saved ${dateStr}${ds.sourceFile ? ' · ' + escHtml(ds.sourceFile) : ''}</div>
+      </div>
+      <div class="dataset-card-actions">
+        <button data-action="load" data-id="${id}">Load</button>
+        <button data-action="rename" data-id="${id}">Rename</button>
+        <button data-action="delete" data-id="${id}" style="color:#ef4444">Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Event delegation avoids embedding arbitrary dataset names into inline
+  // attributes (dataset names come from free-text user input).
+  listEl.querySelectorAll('.dataset-card-actions button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.id;
+      if (btn.dataset.action === 'load') loadSavedDataset(id);
+      else if (btn.dataset.action === 'rename') renameSavedDataset(id);
+      else if (btn.dataset.action === 'delete') deleteSavedDataset(id);
+    });
+  });
+}
+
+async function loadSavedDataset(id) {
+  const ds = await apiGet(`datasets/${id}`);
+  if (!ds || !Array.isArray(ds.records)) { alert('Could not load that dataset.'); return; }
+
+  if (allRecords.length && currentDatasetMeta && currentDatasetMeta.source === 'session') {
+    const proceed = confirm('You have an unsaved session on screen. Loading a saved dataset will discard it (nothing has been saved for the current session). Continue?');
+    if (!proceed) return;
+  }
+
+  allRecords = ds.records;
+  currentDatasetMeta = {
+    source: 'saved',
+    id: ds.id || ds._id,
+    name: ds.name,
+    sourceFile: ds.sourceFile,
+    savedAt: ds.createdAt,
+    recordCount: ds.records.length
+  };
+
+  // Mark it active so this is what loads by default next time the page opens
+  try { await apiPut(`datasets/${ds.id || ds._id}`, { activate: true }); } catch (e) { console.warn('Could not mark dataset active:', e); }
+
+  initFilters();
+  applyFilters();
+  updateDatasetStatusUI();
+  document.getElementById('savedDatasetsModal').classList.remove('active');
+}
+
+async function renameSavedDataset(id) {
+  const existing = _savedDatasetsCache.find(ds => String(ds.id || ds._id) === String(id));
+  const currentName = existing ? existing.name : '';
+  const name = prompt('Rename dataset:', currentName);
+  if (!name || !name.trim() || name.trim() === currentName) return;
+  await apiPut(`datasets/${id}`, { name: name.trim() });
+  if (currentDatasetMeta && currentDatasetMeta.source === 'saved' && String(currentDatasetMeta.id) === String(id)) {
+    currentDatasetMeta.name = name.trim();
+    updateDatasetStatusUI();
+  }
+  renderSavedDatasetsList();
+}
+
+async function deleteSavedDataset(id) {
+  if (!confirm('Delete this saved dataset? This cannot be undone.')) return;
+  await apiDelete(`datasets/${id}`);
+  renderSavedDatasetsList();
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -2968,10 +3317,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.location.href = '../index.html';
     return;
   }
+  bindStaticEventListeners();
   initExecExport();
   initMailBuilder();
   initDiffModal();
   initMailerHistory();
+  initDatasetControls();
   await init();
 });
 
