@@ -9,6 +9,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Sanitizes rich-text announcement HTML (bold/underline/color/images/video embeds) before it is
+       ever injected into the page, so a compromised manager account can't use the announcement
+       composer to store/execute a script-based XSS payload against RAs viewing the board. -->
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
   <style>
     :root{
       /* Default theme: The Harbour at Occ (theharbourocc.com) reference palette.
@@ -268,6 +272,51 @@
     .rl-pill.blue{background:#eff6ff;color:#1d4ed8}
     .rl-pill.purple{background:#f5f3ff;color:#6d28d9}
 
+    /* ===== Announcement Board (Facebook-style feed + rich composer) ===== */
+    .rl-ann-composer{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+    .rl-ann-composer-fake{flex:1;text-align:left;padding:10px 16px;border-radius:999px;border:1px solid var(--rl-border);background:#f1f5f9;color:var(--rl-subtext);font-size:13px;cursor:pointer;font-family:inherit}
+    .rl-ann-composer-fake:hover{background:#e2e8f0}
+
+    .rl-ann-toolbar{display:flex;align-items:center;gap:3px;flex-wrap:wrap;padding:6px;background:#f8fafc;border:1px solid var(--rl-border);border-bottom:none;border-radius:8px 8px 0 0;position:relative}
+    .rl-ann-tool-btn{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:30px;padding:0 8px;border:1px solid transparent;border-radius:6px;background:transparent;cursor:pointer;font-size:13px;color:var(--rl-text)}
+    .rl-ann-tool-btn:hover{background:#e2e8f0;border-color:var(--rl-border)}
+    .rl-ann-tool-btn.active{background:var(--rl-secondary);color:#1a1000;border-color:var(--rl-secondary)}
+    .rl-ann-tool-sep{width:1px;height:20px;background:var(--rl-border);margin:0 4px;flex-shrink:0}
+    .rl-ann-tool-color{display:inline-flex;align-items:center;justify-content:center;position:relative;width:30px;height:30px;border-radius:6px;cursor:pointer;font-weight:800;font-size:13px;color:var(--rl-text)}
+    .rl-ann-tool-color:hover{background:#e2e8f0}
+    .rl-ann-tool-color input[type=color]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;border:none;padding:0}
+    .rl-ann-tool-size{height:30px;border-radius:6px;border:1px solid var(--rl-border);font-size:12px;padding:0 4px;background:#fff;cursor:pointer;font-family:inherit;color:var(--rl-text)}
+
+    .rl-ann-popover{position:absolute;top:calc(100% + 6px);left:0;z-index:30;background:#fff;border:1px solid var(--rl-border);border-radius:10px;box-shadow:0 10px 28px rgba(0,0,0,.18);padding:14px;width:280px}
+    .rl-ann-popover-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+    .rl-ann-popover-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--rl-subtext)}
+    .rl-ann-popover-close{background:none;border:none;font-size:14px;color:var(--rl-subtext);cursor:pointer;line-height:1;padding:2px}
+    .rl-ann-popover input[type=text]{width:100%;padding:8px 10px;border:1px solid var(--rl-border);border-radius:6px;font-size:13px;margin-bottom:10px;box-sizing:border-box;font-family:inherit}
+    .rl-ann-popover-row{display:flex;align-items:center;gap:8px}
+    .rl-ann-popover-or{font-size:10px;color:var(--rl-subtext);text-transform:uppercase;font-weight:700}
+    .rl-ann-popover-hint{font-size:11px;color:var(--rl-subtext);margin-top:10px;line-height:1.4}
+
+    .rl-ann-body{min-height:120px;max-height:420px;overflow-y:auto;border:1px solid var(--rl-border);border-radius:0 0 8px 8px;padding:12px;font-size:14px;line-height:1.5;background:#fff;outline:none;position:relative}
+    .rl-ann-body:focus{border-color:var(--rl-primary);box-shadow:0 0 0 3px rgba(0,45,106,.08)}
+    .rl-ann-body-empty:before{content:attr(data-placeholder);color:var(--rl-subtext);pointer-events:none}
+    .rl-ann-body img,.rl-ann-body video{max-width:100%;border-radius:8px;display:block;margin:8px 0}
+    .rl-ann-video-embed{position:relative;padding-top:56.25%;margin:8px 0;border-radius:8px;overflow:hidden;background:#000}
+    .rl-ann-video-embed iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+
+    .rl-ann-feed{display:flex;flex-direction:column;gap:14px;max-height:min(1500px,calc(100vh - 320px));overflow-y:auto;padding:2px 4px 2px 2px;scroll-behavior:smooth}
+    .rl-ann-card{border:1px solid var(--rl-border);border-radius:14px;background:#fff;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+    .rl-ann-card.pinned{border-color:var(--rl-secondary);box-shadow:0 0 0 2px rgba(249,146,57,.18)}
+    .rl-ann-card-head{display:flex;align-items:flex-start;gap:10px;padding:14px 16px 6px}
+    .rl-ann-avatar{flex-shrink:0;width:38px;height:38px;border-radius:50%;background:var(--rl-primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}
+    .rl-ann-card-headtext{flex:1;min-width:0}
+    .rl-ann-card-title{font-weight:800;font-size:15px;color:var(--rl-text);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .rl-ann-card-meta{font-size:12px;color:var(--rl-subtext);margin-top:1px}
+    .rl-ann-card-actions{display:flex;gap:4px;flex-shrink:0}
+    .rl-ann-card-body{padding:4px 16px 16px;font-size:14px;line-height:1.55;color:var(--rl-text);word-break:break-word;white-space:pre-wrap}
+    .rl-ann-icon-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--rl-border);background:#fff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;color:var(--rl-subtext)}
+    .rl-ann-icon-btn:hover{background:#f8fafc;color:var(--rl-text)}
+    .rl-ann-icon-btn.danger:hover{background:var(--rl-danger-bg);color:var(--rl-danger);border-color:#fecaca}
+
     .rl-loading{padding:24px;text-align:center;color:var(--rl-subtext);font-size:13px}
     table.rl-table{width:100%;border-collapse:collapse;font-size:13px}
     table.rl-table th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--rl-subtext);padding:8px 10px;border-bottom:1px solid var(--rl-border)}
@@ -522,37 +571,80 @@
         <div class="rl-panel">
           <div class="rl-panel-header">
             <h2>Announcements</h2>
-            <button class="rl-btn primary hidden" id="annAddBtn">+ Post Announcement</button>
           </div>
           <div class="rl-panel-body">
+            <div class="rl-ann-composer hidden" id="annComposerCollapsed">
+              <div class="rl-ann-avatar" id="annComposerAvatar">?</div>
+              <button type="button" class="rl-ann-composer-fake" id="annComposerOpenBtn">Share an update with your team…</button>
+            </div>
+
             <div class="rl-form hidden" id="annForm">
               <input type="hidden" id="annId" />
-              <div class="rl-wizard-progress"></div>
-
-              <div class="rl-wizard-step-panel">
-                <div class="rl-wizard-step-title">Step 1 · Content</div>
-                <div class="rl-form-grid">
-                  <div class="rl-field full"><label>Title</label><input id="annTitle" maxlength="140" data-required /></div>
-                  <div class="rl-field full"><label>Message</label><textarea id="annMessage" data-required></textarea></div>
-                  <div class="rl-field"><label><input type="checkbox" id="annPinned" style="width:auto;margin-right:6px" />Pin to top</label></div>
-                </div>
+              <div class="rl-field full" style="margin-bottom:12px">
+                <label>Title</label>
+                <input id="annTitle" maxlength="140" data-required placeholder="Announcement title" />
               </div>
 
-              <div class="rl-wizard-step-panel">
-                <div class="rl-wizard-step-title">Step 2 · Review &amp; Post</div>
-                <dl class="rl-wizard-review" id="annReview"></dl>
+              <div class="rl-ann-toolbar" id="annToolbar">
+                <button type="button" class="rl-ann-tool-btn" data-cmd="bold" title="Bold"><b>B</b></button>
+                <button type="button" class="rl-ann-tool-btn" data-cmd="italic" title="Italic"><i>I</i></button>
+                <button type="button" class="rl-ann-tool-btn" data-cmd="underline" title="Underline"><u>U</u></button>
+                <span class="rl-ann-tool-sep"></span>
+                <label class="rl-ann-tool-color" title="Text color">A<input type="color" id="annColorPicker" value="#002D6A" /></label>
+                <select class="rl-ann-tool-size" id="annSizeSelect" title="Text size">
+                  <option value="">Size</option>
+                  <option value="2">Small</option>
+                  <option value="3">Normal</option>
+                  <option value="5">Large</option>
+                  <option value="7">Huge</option>
+                </select>
+                <button type="button" class="rl-ann-tool-btn" id="annClearFormatBtn" title="Clear formatting">Tx</button>
+                <span class="rl-ann-tool-sep"></span>
+                <button type="button" class="rl-ann-tool-btn" id="annInsertImageBtn" title="Insert image or GIF">🖼️ Image/GIF</button>
+                <button type="button" class="rl-ann-tool-btn" id="annInsertVideoBtn" title="Insert video">🎬 Video</button>
+
+                <div class="rl-ann-popover hidden" id="annImagePopover">
+                  <div class="rl-ann-popover-head">
+                    <span class="rl-ann-popover-title">Insert Image / GIF</span>
+                    <button type="button" class="rl-ann-popover-close" id="annImagePopoverClose">&times;</button>
+                  </div>
+                  <input type="text" id="annImageUrlInput" placeholder="Paste an image or GIF URL…" />
+                  <div class="rl-ann-popover-row">
+                    <button type="button" class="rl-btn sm primary" id="annImageUrlInsertBtn">Insert URL</button>
+                    <span class="rl-ann-popover-or">or</span>
+                    <button type="button" class="rl-btn sm" id="annImageUploadBtn">Upload File</button>
+                  </div>
+                  <div class="rl-ann-popover-hint">Animated GIFs work via URL or upload. Max 8MB per upload.</div>
+                </div>
+
+                <div class="rl-ann-popover hidden" id="annVideoPopover">
+                  <div class="rl-ann-popover-head">
+                    <span class="rl-ann-popover-title">Insert Video</span>
+                    <button type="button" class="rl-ann-popover-close" id="annVideoPopoverClose">&times;</button>
+                  </div>
+                  <input type="text" id="annVideoUrlInput" placeholder="YouTube, Vimeo, or direct video URL…" />
+                  <div class="rl-ann-popover-row">
+                    <button type="button" class="rl-btn sm primary" id="annVideoUrlInsertBtn">Insert URL</button>
+                    <span class="rl-ann-popover-or">or</span>
+                    <button type="button" class="rl-btn sm" id="annVideoUploadBtn">Upload File</button>
+                  </div>
+                  <div class="rl-ann-popover-hint">YouTube/Vimeo links embed automatically. Uploaded files max 4.5MB — use a link for longer videos.</div>
+                </div>
+              </div>
+              <div class="rl-ann-body" id="annBody" contenteditable="true" data-placeholder="Write your announcement…"></div>
+              <input type="file" id="annImageFileInput" accept="image/*" class="hidden" />
+              <input type="file" id="annVideoFileInput" accept="video/*" class="hidden" />
+
+              <div class="rl-field" style="margin-top:12px">
+                <label style="text-transform:none;font-size:12px"><input type="checkbox" id="annPinned" style="width:auto;margin-right:6px" />Pin to top of the board</label>
               </div>
 
-              <div class="rl-wizard-nav">
-                <button class="rl-btn" data-wizard-back>&larr; Back</button>
-                <div style="display:flex;gap:8px">
-                  <button class="rl-btn" id="annCancelBtn">Cancel</button>
-                  <button class="rl-btn primary" data-wizard-next>Next &rarr;</button>
-                  <button class="rl-btn primary" id="annSaveBtn">Post Announcement</button>
-                </div>
+              <div class="rl-form-actions">
+                <button class="rl-btn" id="annCancelBtn">Cancel</button>
+                <button class="rl-btn primary" id="annSaveBtn">Post Announcement</button>
               </div>
             </div>
-            <div id="annList"><div class="rl-loading">Loading…</div></div>
+            <div class="rl-ann-feed" id="annList"><div class="rl-loading">Loading…</div></div>
           </div>
         </div>
       </section>
@@ -1452,6 +1544,8 @@
     function renderHeaderIdentity(){
       els.username.textContent = me.username;
       els.roleBadge.textContent = ROLE_LABELS[me.role] || me.role;
+      const avatar = document.getElementById('annComposerAvatar');
+      if (avatar) avatar.textContent = (me.username || '?').charAt(0).toUpperCase();
     }
 
     function renderPropertySwitcher(){
@@ -1587,7 +1681,8 @@
     }
 
     function setupPermissions(){
-      document.getElementById('annAddBtn').classList.toggle('hidden', !isManager);
+      document.getElementById('annComposerCollapsed').classList.toggle('hidden', !isManager);
+      if (!isManager) document.getElementById('annForm').classList.add('hidden');
       document.getElementById('rosterAddBtn').classList.toggle('hidden', !isManager);
       document.getElementById('curAddBtn').classList.toggle('hidden', !isManager);
       document.getElementById('sopAddBtn').classList.toggle('hidden', !isManager);
@@ -1797,23 +1892,61 @@
     }
 
     // ==================== ANNOUNCEMENTS ====================
+    // Rich-text composer (bold/italic/underline/color/size + inline image/GIF/video
+    // insertion via URL or upload) posting into a Facebook-style scrollable feed.
+    // The composer produces sanitized HTML that both the composer (when editing)
+    // and the feed re-run through DOMPurify before ever touching innerHTML, so a
+    // malicious payload stored in the DB (however it got there) can't execute here.
+    const ANN_SANITIZE_CONFIG = {
+      ALLOWED_TAGS: ['b','strong','i','em','u','span','p','div','br','a','img','iframe','video','source','ul','ol','li','font','mark'],
+      ALLOWED_ATTR: ['style','href','target','rel','src','alt','title','width','height','controls','allow','allowfullscreen','frameborder','size','color','type','poster','class','contenteditable'],
+      ALLOW_DATA_ATTR: false,
+    };
+    if (window.DOMPurify) {
+      DOMPurify.addHook('uponSanitizeElement', (node, data) => {
+        if (data.tagName === 'iframe') {
+          const src = node.getAttribute && node.getAttribute('src') || '';
+          if (!/^https:\/\/(www\.youtube\.com\/embed\/|player\.vimeo\.com\/video\/)/.test(src)) node.remove();
+        }
+      });
+    }
+    function sanitizeAnnHtml(html){
+      return window.DOMPurify ? DOMPurify.sanitize(html || '', ANN_SANITIZE_CONFIG) : esc(html || '');
+    }
+
+    function relTime(iso){
+      if (!iso) return '';
+      const diffMs = Date.now() - new Date(iso).getTime();
+      const mins = Math.round(diffMs / 60000);
+      if (mins < 1) return 'Just now';
+      if (mins < 60) return mins + 'm ago';
+      const hrs = Math.round(mins / 60);
+      if (hrs < 24) return hrs + 'h ago';
+      const days = Math.round(hrs / 24);
+      if (days < 7) return days + 'd ago';
+      return fmtDate(iso);
+    }
+
     async function loadAnnouncements(){
       const list = document.getElementById('annList');
       list.innerHTML = '<div class="rl-loading">Loading…</div>';
       let docs = [];
       try { docs = await apiFetch('/reslife-announcements' + propParam()); } catch (e) { list.innerHTML = '<div class="rl-empty">Failed to load announcements.</div>'; return; }
-      if (docs.length === 0) { list.innerHTML = '<div class="rl-empty">No announcements yet.</div>'; return; }
+      if (docs.length === 0) { list.innerHTML = '<div class="rl-empty">No announcements yet. Be the first to post an update!</div>'; return; }
       list.innerHTML = docs.map(a => `
-        <div class="rl-item">
-          <div class="rl-item-main">
-            <div class="rl-item-title">${a.pinned ? '<span class="rl-pill pinned">Pinned</span>' : ''}${esc(a.title)}</div>
-            <div class="rl-item-meta">By ${esc(a.createdBy)} · ${fmtDate(a.createdAt)}</div>
-            <div class="rl-item-body">${esc(a.message)}</div>
+        <div class="rl-ann-card ${a.pinned ? 'pinned' : ''}">
+          <div class="rl-ann-card-head">
+            <div class="rl-ann-avatar">${esc((a.createdBy || '?').charAt(0).toUpperCase())}</div>
+            <div class="rl-ann-card-headtext">
+              <div class="rl-ann-card-title">${a.pinned ? '<span class="rl-pill pinned">📌 Pinned</span>' : ''}${esc(a.title)}</div>
+              <div class="rl-ann-card-meta">${esc(a.createdBy)} · ${relTime(a.createdAt)}${a.updatedAt && a.updatedAt !== a.createdAt ? ' · edited' : ''}</div>
+            </div>
+            ${isManager ? `<div class="rl-ann-card-actions">
+              <button class="rl-ann-icon-btn" data-ann-edit="${a.id}" title="Edit">✎</button>
+              <button class="rl-ann-icon-btn danger" data-ann-del="${a.id}" title="Delete">🗑</button>
+            </div>` : ''}
           </div>
-          ${isManager ? `<div class="rl-item-actions">
-            <button class="rl-btn sm" data-ann-edit="${a.id}">Edit</button>
-            <button class="rl-btn sm danger" data-ann-del="${a.id}">Delete</button>
-          </div>` : ''}
+          <div class="rl-ann-card-body">${sanitizeAnnHtml(a.message)}</div>
         </div>
       `).join('');
       list.querySelectorAll('[data-ann-edit]').forEach(btn => btn.addEventListener('click', () => {
@@ -1827,39 +1960,192 @@
       }));
     }
 
+    function annCloseAllPopovers(){
+      document.getElementById('annImagePopover').classList.add('hidden');
+      document.getElementById('annVideoPopover').classList.add('hidden');
+    }
+
+    function annUpdatePlaceholderState(){
+      const body = document.getElementById('annBody');
+      const empty = body.textContent.trim() === '' && !body.querySelector('img,video,iframe');
+      body.classList.toggle('rl-ann-body-empty', empty);
+    }
+
     function openAnnouncementForm(a){
       document.getElementById('annId').value = a ? a.id : '';
       document.getElementById('annTitle').value = a ? a.title : '';
-      document.getElementById('annMessage').value = a ? a.message : '';
+      document.getElementById('annBody').innerHTML = a ? sanitizeAnnHtml(a.message) : '';
       document.getElementById('annPinned').checked = a ? !!a.pinned : false;
+      annCloseAllPopovers();
+      annUpdatePlaceholderState();
+      document.getElementById('annComposerCollapsed').classList.add('hidden');
       toggleForm('annForm', true);
-      resetWizard('annForm');
+      document.getElementById('annTitle').focus();
     }
 
-    function renderAnnReview(){
-      document.getElementById('annReview').innerHTML =
-        reviewRow('Title', document.getElementById('annTitle').value) +
-        reviewRow('Message', document.getElementById('annMessage').value) +
-        reviewRow('Pinned', document.getElementById('annPinned').checked ? 'Yes' : 'No');
+    function closeAnnouncementForm(){
+      toggleForm('annForm', false);
+      annCloseAllPopovers();
+      if (isManager) document.getElementById('annComposerCollapsed').classList.remove('hidden');
+    }
+
+    // ---- Formatting toolbar: save/restore the contenteditable selection so that
+    // clicking a toolbar button, color swatch, or popover field (which momentarily
+    // steals focus) still applies the command where the cursor actually was. ----
+    let annSavedRange = null;
+    function annSaveSelection(){
+      const sel = window.getSelection();
+      if (sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0);
+        if (document.getElementById('annBody').contains(range.commonAncestorContainer)) annSavedRange = range.cloneRange();
+      }
+    }
+    function annRestoreSelection(){
+      const body = document.getElementById('annBody');
+      body.focus();
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      if (annSavedRange) {
+        sel.addRange(annSavedRange);
+      } else {
+        const range = document.createRange();
+        range.selectNodeContents(body);
+        range.collapse(false);
+        sel.addRange(range);
+      }
+    }
+    function annExec(cmd, value){
+      annRestoreSelection();
+      document.execCommand(cmd, false, value || null);
+      annSaveSelection();
+      document.getElementById('annBody').focus();
+      annUpdatePlaceholderState();
+    }
+    function annInsertHtmlAtCursor(html){
+      annRestoreSelection();
+      document.execCommand('insertHTML', false, html);
+      annSaveSelection();
+      document.getElementById('annBody').focus();
+      annUpdatePlaceholderState();
+    }
+    // execCommand('fontSize') outputs legacy <font size="N"> tags — convert them to
+    // <span style="font-size:...px"> so output stays consistent CSS-driven markup.
+    function normalizeFontSizeTags(container){
+      const sizeMap = { '1': '10px', '2': '13px', '3': '16px', '4': '18px', '5': '24px', '6': '32px', '7': '48px' };
+      container.querySelectorAll('font[size]').forEach(f => {
+        const span = document.createElement('span');
+        span.style.fontSize = sizeMap[f.getAttribute('size')] || '16px';
+        span.innerHTML = f.innerHTML;
+        f.replaceWith(span);
+      });
+    }
+
+    function parseVideoEmbed(url){
+      const yt = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{6,})/);
+      if (yt) return `<div class="rl-ann-video-embed" contenteditable="false"><iframe src="https://www.youtube.com/embed/${esc(yt[1])}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen frameborder="0"></iframe></div>`;
+      const vm = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+      if (vm) return `<div class="rl-ann-video-embed" contenteditable="false"><iframe src="https://player.vimeo.com/video/${esc(vm[1])}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen frameborder="0"></iframe></div>`;
+      return `<video controls style="max-width:100%;border-radius:8px;display:block;margin:8px 0" src="${esc(url)}"></video>`;
+    }
+
+    async function annUploadFile(file){
+      const qs = 'property=' + encodeURIComponent(currentProperty) + '&filename=' + encodeURIComponent(file.name);
+      const res = await fetch('/api/upload-file?' + qs, {
+        method: 'POST',
+        headers: { 'Content-Type': file.type || 'application/octet-stream' },
+        body: file,
+      });
+      if (!res.ok) { let msg = 'Upload failed'; try { msg = await res.text(); } catch (e) {} throw new Error(msg); }
+      return res.json();
     }
 
     function bindAnnouncementForm(){
-      document.getElementById('annAddBtn').addEventListener('click', () => openAnnouncementForm(null));
-      document.getElementById('annCancelBtn').addEventListener('click', () => toggleForm('annForm', false));
+      document.getElementById('annComposerOpenBtn').addEventListener('click', () => openAnnouncementForm(null));
+      document.getElementById('annCancelBtn').addEventListener('click', closeAnnouncementForm);
       document.getElementById('annSaveBtn').addEventListener('click', async () => {
         const id = document.getElementById('annId').value;
         const title = document.getElementById('annTitle').value.trim();
-        const message = document.getElementById('annMessage').value.trim();
+        const bodyEl = document.getElementById('annBody');
+        const hasContent = bodyEl.textContent.trim() !== '' || !!bodyEl.querySelector('img,video,iframe');
+        const message = sanitizeAnnHtml(bodyEl.innerHTML);
         const pinned = document.getElementById('annPinned').checked;
-        if (!title || !message) { alert('Title and message are required'); return; }
+        if (!title) { alert('Please add a title.'); return; }
+        if (!hasContent) { alert('Please write a message or attach an image/video.'); return; }
+        const saveBtn = document.getElementById('annSaveBtn');
+        saveBtn.disabled = true;
         try {
           if (id) await apiFetch('/reslife-announcements', { method: 'PUT', body: JSON.stringify({ id, property: currentProperty, title, message, pinned }) });
           else await apiFetch('/reslife-announcements', { method: 'POST', body: JSON.stringify({ property: currentProperty, title, message, pinned }) });
-          toggleForm('annForm', false);
+          closeAnnouncementForm();
           await loadAnnouncements();
-        } catch (e) { alert('Save failed: ' + e.message); }
+        } catch (e) { alert('Failed to post: ' + e.message); }
+        saveBtn.disabled = false;
       });
-      initWizard('annForm', ['Content', 'Review'], { saveBtnId: 'annSaveBtn', onReview: renderAnnReview });
+
+      const body = document.getElementById('annBody');
+      body.addEventListener('mouseup', annSaveSelection);
+      body.addEventListener('keyup', annSaveSelection);
+      body.addEventListener('input', () => { annSaveSelection(); annUpdatePlaceholderState(); });
+
+      document.querySelectorAll('#annToolbar [data-cmd]').forEach(btn => {
+        btn.addEventListener('click', () => annExec(btn.getAttribute('data-cmd')));
+      });
+      document.getElementById('annColorPicker').addEventListener('input', (e) => annExec('foreColor', e.target.value));
+      document.getElementById('annSizeSelect').addEventListener('change', (e) => {
+        const val = e.target.value;
+        e.target.value = '';
+        if (!val) return;
+        annExec('fontSize', val);
+        normalizeFontSizeTags(body);
+      });
+      document.getElementById('annClearFormatBtn').addEventListener('click', () => annExec('removeFormat'));
+
+      const imgBtn = document.getElementById('annInsertImageBtn');
+      const imgPop = document.getElementById('annImagePopover');
+      const vidBtn = document.getElementById('annInsertVideoBtn');
+      const vidPop = document.getElementById('annVideoPopover');
+      imgBtn.addEventListener('click', () => { annSaveSelection(); vidPop.classList.add('hidden'); imgPop.classList.toggle('hidden'); });
+      vidBtn.addEventListener('click', () => { annSaveSelection(); imgPop.classList.add('hidden'); vidPop.classList.toggle('hidden'); });
+      document.getElementById('annImagePopoverClose').addEventListener('click', () => imgPop.classList.add('hidden'));
+      document.getElementById('annVideoPopoverClose').addEventListener('click', () => vidPop.classList.add('hidden'));
+
+      document.getElementById('annImageUrlInsertBtn').addEventListener('click', () => {
+        const input = document.getElementById('annImageUrlInput');
+        const url = input.value.trim();
+        if (!url) return;
+        if (!/^https?:\/\//i.test(url)) { alert('Please enter a valid image URL starting with http(s)://'); return; }
+        annInsertHtmlAtCursor(`<img src="${esc(url)}" alt="">`);
+        input.value = '';
+        imgPop.classList.add('hidden');
+      });
+      document.getElementById('annImageUploadBtn').addEventListener('click', () => document.getElementById('annImageFileInput').click());
+      document.getElementById('annImageFileInput').addEventListener('change', async (e) => {
+        const file = e.target.files[0]; e.target.value = '';
+        if (!file) return;
+        if (file.size > 8 * 1024 * 1024) { alert('Images must be under 8MB.'); return; }
+        try { const { url } = await annUploadFile(file); annInsertHtmlAtCursor(`<img src="${url}" alt="">`); }
+        catch (err) { alert('Upload failed: ' + err.message); }
+        imgPop.classList.add('hidden');
+      });
+
+      document.getElementById('annVideoUrlInsertBtn').addEventListener('click', () => {
+        const input = document.getElementById('annVideoUrlInput');
+        const url = input.value.trim();
+        if (!url) return;
+        if (!/^https?:\/\//i.test(url)) { alert('Please enter a valid video URL starting with http(s)://'); return; }
+        annInsertHtmlAtCursor(parseVideoEmbed(url));
+        input.value = '';
+        vidPop.classList.add('hidden');
+      });
+      document.getElementById('annVideoUploadBtn').addEventListener('click', () => document.getElementById('annVideoFileInput').click());
+      document.getElementById('annVideoFileInput').addEventListener('change', async (e) => {
+        const file = e.target.files[0]; e.target.value = '';
+        if (!file) return;
+        if (file.size > 4.5 * 1024 * 1024) { alert('Uploaded videos must be under 4.5MB — for longer videos, paste a YouTube or Vimeo link instead.'); return; }
+        try { const { url } = await annUploadFile(file); annInsertHtmlAtCursor(`<video controls style="max-width:100%;border-radius:8px;display:block;margin:8px 0" src="${url}"></video>`); }
+        catch (err) { alert('Upload failed: ' + err.message); }
+        vidPop.classList.add('hidden');
+      });
     }
 
     // ==================== DUTY ROSTER ====================

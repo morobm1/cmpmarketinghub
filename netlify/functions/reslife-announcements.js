@@ -31,6 +31,8 @@ export async function handler(event) {
       const body = JSON.parse(event.body || '{}');
       const { property, title, message, pinned } = body;
       if (!property || !title || !message) return { statusCode: 400, body: 'Missing property/title/message' };
+      if (String(title).length > 140) return { statusCode: 400, body: 'Title too long (140 char max)' };
+      if (String(message).length > 50000) return { statusCode: 400, body: 'Message too long' };
       if (!canManageReslifeProperty(user, property)) return { statusCode: 403, body: 'Forbidden' };
       const now = new Date().toISOString();
       const doc = { property, title, message, pinned: !!pinned, createdBy: user.sub, createdAt: now, updatedAt: now };
@@ -43,6 +45,8 @@ export async function handler(event) {
       const body = JSON.parse(event.body || '{}');
       const { id, property, title, message, pinned } = body;
       if (!id || !property) return { statusCode: 400, body: 'Missing id/property' };
+      if (title !== undefined && String(title).length > 140) return { statusCode: 400, body: 'Title too long (140 char max)' };
+      if (message !== undefined && String(message).length > 50000) return { statusCode: 400, body: 'Message too long' };
       if (!canManageReslifeProperty(user, property)) return { statusCode: 403, body: 'Forbidden' };
       const updates = { updatedAt: new Date().toISOString() };
       if (title !== undefined) updates.title = title;
