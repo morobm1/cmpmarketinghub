@@ -63,6 +63,12 @@
     .rl-username{font-size:13px;font-weight:600;opacity:.9}
     .rl-logout-btn{background:transparent;border:1.5px solid rgba(255,255,255,.6);color:#fff;padding:8px 16px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:all .15s}
     .rl-logout-btn:hover{background:#fff;color:var(--rl-primary)}
+    .rl-view-toggle-btn{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.6);color:#fff;padding:7px 14px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .15s}
+    .rl-view-toggle-btn:hover{background:rgba(255,255,255,.22)}
+    .rl-view-toggle-btn.active{background:var(--rl-secondary);border-color:var(--rl-secondary);color:#1a1000}
+    .rl-preview-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#fef3c7;border:1px solid #f59e0b;color:#78350f;padding:10px 16px;border-radius:8px;margin-bottom:16px;font-size:13px;font-weight:700}
+    .rl-preview-banner button{background:#78350f;color:#fff;border:none;padding:7px 14px;border-radius:6px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;flex-shrink:0}
+    .rl-preview-banner button:hover{filter:brightness(1.2)}
 
     /* ===== Vertical Sidebar Navigation ===== */
     :root{ --rl-nav-w:250px; --rl-nav-w-collapsed:64px; }
@@ -361,6 +367,9 @@
       </div>
       <div class="rl-header-right">
         <select id="rlPropertySwitcher" class="rl-property-switcher hidden"></select>
+        <button class="rl-view-toggle-btn hidden" id="rlViewToggleBtn" type="button" title="Preview the Reslife Hub exactly as an RA sees it">
+          <span id="rlViewToggleIcon">&#128065;</span><span id="rlViewToggleLabel">Preview RA View</span>
+        </button>
         <span class="rl-role-badge" id="rlRoleBadge">—</span>
         <span class="rl-username" id="rlUsername"></span>
         <button class="rl-logout-btn" id="rlLogoutBtn">Log Out</button>
@@ -463,6 +472,10 @@
     </aside>
 
     <main id="rlMain">
+      <div class="rl-preview-banner hidden" id="rlPreviewBanner">
+        <span>&#128065; You're previewing the Reslife Hub exactly as an RA would see it. Manager and admin controls are hidden.</span>
+        <button type="button" id="rlPreviewBannerExitBtn">Exit RA Preview</button>
+      </div>
       <!-- ================= ANNOUNCEMENTS ================= -->
       <!-- ================= DASHBOARD ================= -->
       <section class="rl-tab-content active" id="tab-dashboard">
@@ -1328,6 +1341,9 @@
     let currentProperty = null;    // property NAME string currently in view
     let isManager = false;         // reslife-rec / reslife-admin / admin
     let isAdminTier = false;       // reslife-admin / admin
+    let realIsManager = false;     // isManager for this user's actual account role (never overridden by preview)
+    let realIsAdminTier = false;   // isAdminTier for this user's actual account role (never overridden by preview)
+    let viewingAsRA = false;       // true while an Admin/REC/Reslife Admin is previewing the RA-standard view
 
     const els = {
       authGate: document.getElementById('rlAuthGate'),
@@ -1339,6 +1355,10 @@
       username: document.getElementById('rlUsername'),
       logoutBtn: document.getElementById('rlLogoutBtn'),
       usersTabBtn: document.getElementById('rlUsersTabBtn'),
+      viewToggleBtn: document.getElementById('rlViewToggleBtn'),
+      viewToggleLabel: document.getElementById('rlViewToggleLabel'),
+      previewBanner: document.getElementById('rlPreviewBanner'),
+      previewBannerExitBtn: document.getElementById('rlPreviewBannerExitBtn'),
     };
 
     function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -1378,6 +1398,8 @@
 
       isManager = me.role === 'admin' || me.role === 'reslife-rec' || me.role === 'reslife-admin';
       isAdminTier = me.role === 'admin' || me.role === 'reslife-admin';
+      realIsManager = isManager;
+      realIsAdminTier = isAdminTier;
 
       // Resolve which properties this user may view
       try {
@@ -1402,11 +1424,7 @@
       renderHeaderIdentity();
       await applyBrandTheme();
 
-      if (isAdminTier) els.usersTabBtn.classList.remove('hidden');
       if (me.role === 'admin') {
-        var marketingHubBtn = document.getElementById('rlMarketingHubBtn');
-        if (marketingHubBtn) marketingHubBtn.classList.remove('hidden');
-        document.getElementById('seedPanel').classList.remove('hidden');
         document.getElementById('seedRunBtn').addEventListener('click', async () => {
           const btn = document.getElementById('seedRunBtn');
           btn.disabled = true; btn.textContent = 'Loading…';
@@ -1421,7 +1439,8 @@
       }
       setupTabs();
       setupSidebarToggle();
-      setupPermissions();
+      setupRoleViewToggle();
+      applyRoleView();
       bindAllForms();
 
       els.authGate.classList.add('hidden');
@@ -1568,24 +1587,65 @@
     }
 
     function setupPermissions(){
-      if (isManager) {
-        document.getElementById('annAddBtn').classList.remove('hidden');
-        document.getElementById('rosterAddBtn').classList.remove('hidden');
-        document.getElementById('curAddBtn').classList.remove('hidden');
-        document.getElementById('sopAddBtn').classList.remove('hidden');
-        document.getElementById('trainAddBtn').classList.remove('hidden');
-        document.getElementById('trainSubTracking').classList.remove('hidden');
-      }
+      document.getElementById('annAddBtn').classList.toggle('hidden', !isManager);
+      document.getElementById('rosterAddBtn').classList.toggle('hidden', !isManager);
+      document.getElementById('curAddBtn').classList.toggle('hidden', !isManager);
+      document.getElementById('sopAddBtn').classList.toggle('hidden', !isManager);
+      document.getElementById('trainAddBtn').classList.toggle('hidden', !isManager);
+      document.getElementById('trainSubTracking').classList.toggle('hidden', !isManager);
       // Incident + maintenance + program proposal "add" is available to every Reslife role + admin
       document.getElementById('incAddBtn').classList.remove('hidden');
       document.getElementById('mrAddBtn').classList.remove('hidden');
-      if (isAdminTier) {
-        document.getElementById('dirAddBtn').classList.remove('hidden');
-        document.getElementById('contactAddBtn').classList.remove('hidden');
-        // Creating a new Collateral Group (committee) is Admin-tier only — see
-        // netlify/functions/reslife-committees.js. REC/Committee Lead can still
-        // edit their own group's operational details.
-        document.getElementById('commAddBtn').classList.remove('hidden');
+      document.getElementById('dirAddBtn').classList.toggle('hidden', !isAdminTier);
+      document.getElementById('contactAddBtn').classList.toggle('hidden', !isAdminTier);
+      // Creating a new Collateral Group (committee) is Admin-tier only — see
+      // netlify/functions/reslife-committees.js. REC/Committee Lead can still
+      // edit their own group's operational details.
+      document.getElementById('commAddBtn').classList.toggle('hidden', !isAdminTier);
+    }
+
+    // ==================== ADMIN/REC/RESLIFE-ADMIN "PREVIEW AS RA" TOGGLE ====================
+    // Lets Admin, REC, and Reslife Admin accounts flip the whole hub into the
+    // exact read-only shape an RA sees, so they can double-check how newly
+    // posted content (announcements, SOPs, curriculum items, etc.) will look
+    // before an RA ever logs in. This never changes the account's real role
+    // or its API permissions — it only recomputes the same isManager /
+    // isAdminTier booleans that every render function already branches on,
+    // then re-renders the current tab. Server-side checks in the
+    // reslife-*.js functions remain the real authority either way.
+    function setupRoleViewToggle(){
+      if (realIsManager) els.viewToggleBtn.classList.remove('hidden');
+      els.viewToggleBtn.addEventListener('click', toggleRAPreview);
+      els.previewBannerExitBtn.addEventListener('click', toggleRAPreview);
+    }
+
+    function applyRoleView(){
+      isManager = viewingAsRA ? false : realIsManager;
+      isAdminTier = viewingAsRA ? false : realIsAdminTier;
+
+      els.usersTabBtn.classList.toggle('hidden', !isAdminTier);
+      const marketingHubBtn = document.getElementById('rlMarketingHubBtn');
+      if (marketingHubBtn) marketingHubBtn.classList.toggle('hidden', !(me.role === 'admin' && !viewingAsRA));
+      const seedPanel = document.getElementById('seedPanel');
+      if (seedPanel) seedPanel.classList.toggle('hidden', !(me.role === 'admin' && !viewingAsRA));
+
+      setupPermissions();
+
+      els.roleBadge.textContent = viewingAsRA ? (ROLE_LABELS['reslife-ra'] + ' (Preview)') : (ROLE_LABELS[me.role] || me.role);
+      els.previewBanner.classList.toggle('hidden', !viewingAsRA);
+      els.viewToggleBtn.classList.toggle('active', viewingAsRA);
+      els.viewToggleLabel.textContent = viewingAsRA ? 'Exit RA Preview' : 'Preview RA View';
+    }
+
+    async function toggleRAPreview(){
+      viewingAsRA = !viewingAsRA;
+      applyRoleView();
+      // "Manage Users" is admin-tier only and disappears in RA preview — bounce
+      // to the dashboard instead of leaving an inaccessible tab active.
+      if (viewingAsRA && activeTabKey() === 'users') {
+        goToTab('dashboard');
+      } else {
+        await loadCurrentTabData();
       }
     }
 
@@ -1657,7 +1717,7 @@
     async function loadDashboard(){
       document.getElementById('dashHeroTitle').textContent = currentProperty;
       document.getElementById('dashHeroSub').textContent =
-        'Signed in as ' + me.username + ' (' + (ROLE_LABELS[me.role] || me.role) + ') — everything your Resident Life team needs for this property, in one place.';
+        'Signed in as ' + me.username + ' (' + (viewingAsRA ? ROLE_LABELS['reslife-ra'] : (ROLE_LABELS[me.role] || me.role)) + ') — everything your Resident Life team needs for this property, in one place.';
 
       const grid = document.getElementById('dashStatGrid');
       const annBox = document.getElementById('dashAnnList');
