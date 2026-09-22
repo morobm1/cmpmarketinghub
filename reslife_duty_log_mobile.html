@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Duty Log</title>
+  <meta name="description" content="Mobile Duty Log — bookmark this page to your phone's home screen">
+
+  <!-- ===== Home-screen "app" meta tags (iOS + Android/Chrome) =====
+       There is no service worker or offline caching here (a lightweight
+       bookmark, not a full PWA) — this just makes "Add to Home Screen"
+       launch full-screen with no browser chrome and a real app icon,
+       on both iPhone (Safari "Add to Home Screen") and Android/Chrome
+       ("Install app" / "Add to Home screen"). -->
+  <link rel="manifest" href="reslife_manifest.json">
+  <meta name="theme-color" content="#002D6A">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Duty Log">
+  <link rel="apple-touch-icon" href="reslife_icon_192.png">
+  <link rel="icon" href="reslife_icon_192.png">
+
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --p:#002D6A; --pd:#001a40; --sec:#F99239;
+      --bg:#f4f6f9; --panel:#fff; --border:#e2e8f0; --text:#0f172a; --sub:#64748b;
+      --danger:#dc2626; --danger-bg:#fee2e2; --success:#16a34a; --success-bg:#dcfce7; --warn:#b45309; --warn-bg:#fef3c7;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:Montserrat,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:var(--bg); color:var(--text);
+      /* Respects the iPhone notch/home-indicator safe areas when launched full-screen */
+      padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom);
+      -webkit-tap-highlight-color:transparent;
+    }
+    .hidden{display:none !important}
+    a{color:var(--p)}
+
+    #authGate{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;text-align:center;color:var(--sub);font-size:14px}
+
+    header{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,var(--p),var(--pd));color:#fff;padding:14px 16px calc(14px + env(safe-area-inset-top)) 16px;padding-top:calc(14px + env(safe-area-inset-top));display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+    .hd-title{font-weight:800;font-size:15px;letter-spacing:.3px}
+    .hd-sub{font-size:11px;opacity:.85;margin-top:1px}
+    .hd-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+    .icon-btn{position:relative;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.4);color:#fff;width:36px;height:36px;border-radius:9px;font-size:16px;display:flex;align-items:center;justify-content:center}
+    .icon-btn .dot{position:absolute;top:-3px;right:-3px;width:9px;height:9px;border-radius:50%;background:var(--sec);border:1.5px solid var(--p)}
+    select.prop-switcher{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:8px;font-size:12px;padding:6px 8px;max-width:120px}
+    select.prop-switcher option{color:#000}
+
+    main{max-width:640px;margin:0 auto;padding:14px 14px 40px}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
+    .card h2{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--p);margin:0 0 10px}
+    .muted{color:var(--sub);font-size:12.5px}
+
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--border);background:#fff;color:var(--text);padding:11px 14px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+    .btn.primary{background:var(--p);border-color:var(--p);color:#fff}
+    .btn.primary:hover{filter:brightness(1.08)}
+    .btn.danger{background:#fff;border-color:#fecaca;color:var(--danger)}
+    .btn.block{width:100%}
+    .btn.big{padding:16px;font-size:15px;border-radius:12px}
+    .btn:disabled{opacity:.55;cursor:default}
+    .btn.sm{padding:7px 10px;font-size:12.5px;border-radius:8px}
+
+    .pill{display:inline-flex;align-items:center;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;padding:3px 9px;border-radius:999px}
+    .pill.draft{background:#eff6ff;color:#1d4ed8}
+    .pill.submitted{background:var(--success-bg);color:var(--success)}
+    .pill.reopened{background:var(--warn-bg);color:var(--warn)}
+    .pill.edit-req{background:#fdf2f8;color:#be185d}
+
+    .field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+    .field label{font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.5px}
+    .field input,.field select,.field textarea{padding:11px 12px;border:1px solid var(--border);border-radius:9px;font-size:15px;font-family:inherit;color:var(--text);background:#fff;width:100%}
+    .field textarea{resize:vertical;min-height:70px}
+    .checkrow{display:flex;align-items:center;gap:8px;font-size:13.5px;padding:4px 0}
+    .checkrow input{width:20px;height:20px;flex-shrink:0}
+
+    .entry-card{border:1px solid var(--border);border-radius:11px;padding:12px 14px;margin-bottom:9px;background:#fbfcfe}
+    .entry-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:3px}
+    .entry-title{font-weight:800;font-size:13.5px}
+    .entry-meta{font-size:11.5px;color:var(--sub);margin-bottom:5px}
+    .entry-preview{font-size:13px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+    .entry-actions{display:flex;gap:6px;flex-shrink:0}
+
+    .history-item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border)}
+    .history-item:last-child{border-bottom:none}
+    .history-main{min-width:0}
+    .history-date{font-weight:700;font-size:13.5px}
+    .history-meta{font-size:11.5px;color:var(--sub);margin-top:2px}
+
+    .notif-panel{position:fixed;top:56px;right:10px;left:10px;max-width:400px;margin:0 auto;max-height:70vh;overflow-y:auto;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 14px 34px rgba(0,0,0,.22);z-index:60}
+    .notif-head{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+    .notif-item{padding:12px 14px;border-bottom:1px solid var(--border);font-size:12.5px}
+    .notif-item:last-child{border-bottom:none}
+    .notif-item.unread{background:#eff6ff}
+    .notif-title{font-weight:700;margin-bottom:2px}
+    .notif-meta{font-size:11px;color:var(--sub);margin-top:4px}
+
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,10,25,.5);display:flex;align-items:flex-end;justify-content:center;z-index:80;opacity:0;pointer-events:none;transition:opacity .15s}
+    .modal-overlay.show{opacity:1;pointer-events:auto}
+    .modal{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:640px;max-height:92vh;overflow-y:auto;padding:18px 18px calc(18px + env(safe-area-inset-bottom))}
+    @media(min-width:660px){ .modal-overlay{align-items:center} .modal{border-radius:16px;max-height:85vh} }
+    .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+    .modal-header h3{margin:0;font-size:16px}
+    .modal-close{background:none;border:none;font-size:22px;color:var(--sub);cursor:pointer;line-height:1;padding:4px}
+    .modal-footer{display:flex;gap:10px;margin-top:14px}
+
+    .save-indicator{font-size:11px;color:var(--sub);display:inline-flex;align-items:center;gap:5px}
+    .save-indicator .dot{width:7px;height:7px;border-radius:50%;background:var(--sub)}
+    .save-indicator.saving .dot{background:#f59e0b}
+    .save-indicator.saved .dot{background:var(--success)}
+    .save-indicator.offline .dot{background:var(--danger)}
+
+    .empty{padding:20px;text-align:center;color:var(--sub);font-size:13px}
+    .loading{padding:20px;text-align:center;color:var(--sub);font-size:13px}
+    .footer-link{display:block;text-align:center;font-size:12px;color:var(--sub);margin-top:6px;padding:10px}
+  </style>
+</head>
+<body>
+  <div id="authGate">Loading…</div>
+
+  <div id="app" class="hidden">
+    <header>
+      <div>
+        <div class="hd-title" id="hdPropertyName">Duty Log</div>
+        <div class="hd-sub" id="hdUserLine"></div>
+      </div>
+      <div class="hd-actions">
+        <select class="prop-switcher hidden" id="propSwitcher"></select>
+        <div style="position:relative">
+          <button class="icon-btn" id="bellBtn" type="button">&#128276;<span class="dot hidden" id="bellDot"></span></button>
+        </div>
+        <button class="icon-btn" id="logoutBtn" type="button" title="Log out">&#10132;</button>
+      </div>
+    </header>
+
+    <div class="notif-panel hidden" id="notifPanel"></div>
+
+    <main>
+      <div class="card" id="todayCard"><div class="loading">Loading…</div></div>
+
+      <div class="card">
+        <h2>History</h2>
+        <div id="historyBox"><div class="loading">Loading…</div></div>
+      </div>
+
+      <a class="footer-link" href="reslife_hub.html?tab=dutylog">Open full Reslife Hub (desktop tools) &rarr;</a>
+    </main>
+  </div>
+
+  <!-- Add/Edit entry -->
+  <div class="modal-overlay" id="entryModalOverlay">
+    <div class="modal">
+      <div class="modal-header"><h3 id="entryModalTitle">New Duty Entry</h3><button class="modal-close" id="entryModalCloseBtn">&times;</button></div>
+      <div id="entryModalBody"></div>
+      <div class="modal-footer">
+        <span class="save-indicator" id="entrySaveIndicator"><span class="dot"></span><span class="txt">Saved</span></span>
+        <button class="btn primary" id="entryDoneBtn" style="margin-left:auto">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Report viewer (history entries) -->
+  <div class="modal-overlay" id="reportModalOverlay">
+    <div class="modal">
+      <div class="modal-header"><h3>Duty Log Report</h3><button class="modal-close" id="reportModalCloseBtn">&times;</button></div>
+      <div id="reportModalBody"></div>
+    </div>
+  </div>
+
+  <script>
+    const RESLIFE_ROLES = ['reslife-ra', 'reslife-rec', 'reslife-admin'];
+    const DEFAULT_CONFIG = {
+      callerTitles: ['Resident', 'Guest', 'Parent / Family Member', 'RA', 'REC', 'Security / Campus Safety', 'Maintenance Staff', 'Other Staff', 'Witness', 'Other'],
+      incidentTypes: ['Noise Complaint', 'Lockout', 'Resident Concern', 'Maintenance Issue', 'Wellness Check', 'Policy Violation', 'Facility / Safety Issue', 'Medical', 'Mental Health', 'Alcohol / Drug', 'Other'],
+      documentationTypes: ['None Required', 'Incident Report', 'Service Request', 'Other'],
+      deadlineTime: '09:00', timezone: 'America/New_York', irFormLink: 'reslife_incident_report.html', howToWriteIrLink: 'reslife_incident_report.html',
+    };
+
+    let me = null, isManager = false;
+    let myProperties = [], currentProperty = '';
+    let dlConfig = null, dlRoster = [];
+    let activeSession = null;
+    let notifications = [];
+    let currentEntryId = null;
+    let pendingFieldTimer = null;
+
+    function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    function fmtDate(iso){ if(!iso) return ''; try{ return new Date(iso).toLocaleString([], { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }); }catch(e){ return iso; } }
+    function fmtClock(iso){ if (!iso) return ''; try { return new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); } catch (e) { return ''; } }
+    function fmtTime12(hhmm){ if (!hhmm) return ''; const parts = hhmm.split(':'); const h = parseInt(parts[0], 10), m = parts[1]; const ap = h >= 12 ? 'PM' : 'AM'; const h12 = ((h + 11) % 12) + 1; return `${h12}:${m} ${ap}`; }
+    function fmtDutyDateLong(dateStr){ if (!dateStr) return ''; const [y, m, d] = dateStr.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }); }
+    function fmtDutyDateShort(dateStr){ if (!dateStr) return ''; const [y, m, d] = dateStr.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); }
+    function localDateStr(d){ d = d || new Date(); const off = d.getTimezoneOffset(); return new Date(d.getTime() - off * 60000).toISOString().slice(0, 10); }
+    function localTimeStr(d){ d = d || new Date(); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
+    function uid(){ return 'e-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8); }
+    function propParam(){ return '?property=' + encodeURIComponent(currentProperty); }
+
+    async function apiFetch(path, opts = {}) {
+      const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+      const res = await fetch('/api' + path, Object.assign({ credentials: 'include' }, opts, { headers }));
+      if (!res.ok) {
+        let msg = 'Request failed';
+        try { msg = await res.text(); } catch (e) {}
+        const err = new Error(msg || ('HTTP ' + res.status));
+        err.status = res.status;
+        throw err;
+      }
+      const text = await res.text();
+      return text ? JSON.parse(text) : null;
+    }
+
+    // ---- Recovery-only local snapshot (server is always the source of truth;
+    // this only survives a totally-offline reload of this bookmark) ----
+    function snapKey(){ return 'reslife_dl_mobile_snapshot_' + currentProperty; }
+    function saveSnapshot(s){ try { localStorage.setItem(snapKey(), JSON.stringify(s)); } catch (e) {} }
+    function loadSnapshot(){ try { const raw = localStorage.getItem(snapKey()); return raw ? JSON.parse(raw) : null; } catch (e) { return null; } }
+
+    // ==================== AUTH / INIT ====================
+    async function init(){
+      try {
+        const meRes = await fetch('/api/me', { credentials: 'include' });
+        if (!meRes.ok) { window.location.href = 'index.html?redirect=' + encodeURIComponent('reslife_duty_log_mobile.html' + window.location.search); return; }
+        me = await meRes.json();
+      } catch (e) {
+        window.location.href = 'index.html?redirect=' + encodeURIComponent('reslife_duty_log_mobile.html' + window.location.search);
+        return;
+      }
+      const allowed = RESLIFE_ROLES.includes(me.role) || me.role === 'admin';
+      if (!allowed) { window.location.href = 'mmp_calendar_app.html'; return; }
+      isManager = me.role === 'admin' || me.role === 'reslife-rec' || me.role === 'reslife-admin';
+
+      let allProperties = [];
+      try { allProperties = await apiFetch('/properties'); } catch (e) { allProperties = []; }
+      if (me.role === 'admin' || me.properties === '*') myProperties = allProperties.map(p => p.name);
+      else myProperties = Array.isArray(me.properties) ? me.properties.filter(p => allProperties.some(ap => ap.name === p)) : [];
+
+      if (myProperties.length === 0) {
+        document.getElementById('authGate').textContent = 'Your account is not tied to a property yet. Contact your Reslife Admin.';
+        return;
+      }
+      currentProperty = localStorage.getItem('reslife_current_property') || '';
+      if (!myProperties.includes(currentProperty)) currentProperty = myProperties[0];
+
+      document.getElementById('authGate').classList.add('hidden');
+      document.getElementById('app').classList.remove('hidden');
+      document.getElementById('hdUserLine').textContent = me.username;
+      renderPropertySwitcher();
+      bindHeaderControls();
+      await loadAll();
+    }
+
+    function renderPropertySwitcher(){
+      const sel = document.getElementById('propSwitcher');
+      document.getElementById('hdPropertyName').textContent = currentProperty;
+      if (myProperties.length <= 1) { sel.classList.add('hidden'); return; }
+      sel.classList.remove('hidden');
+      sel.innerHTML = myProperties.map(p => `<option value="${esc(p)}" ${p === currentProperty ? 'selected' : ''}>${esc(p)}</option>`).join('');
+      sel.onchange = async () => {
+        currentProperty = sel.value;
+        try { localStorage.setItem('reslife_current_property', currentProperty); } catch (e) {}
+        document.getElementById('hdPropertyName').textContent = currentProperty;
+        await loadAll();
+      };
+    }
+
+    function bindHeaderControls(){
+      document.getElementById('logoutBtn').addEventListener('click', async () => {
+        try { await fetch('/api/auth-logout', { method: 'POST', credentials: 'include' }); } catch (e) {}
+        window.location.href = 'index.html';
+      });
+      document.getElementById('bellBtn').addEventListener('click', () => {
+        const panel = document.getElementById('notifPanel');
+        if (panel.classList.contains('hidden')) { renderNotifPanel(); panel.classList.remove('hidden'); } else panel.classList.add('hidden');
+      });
+      document.addEventListener('click', (e) => { if (!e.target.closest('#notifPanel') && !e.target.closest('#bellBtn')) document.getElementById('notifPanel').classList.add('hidden'); });
+      document.getElementById('entryModalCloseBtn').addEventListener('click', closeEntryModal);
+      document.getElementById('entryDoneBtn').addEventListener('click', closeEntryModal);
+      document.getElementById('entryModalOverlay').addEventListener('mousedown', (e) => { if (e.target === e.currentTarget) closeEntryModal(); });
+      document.getElementById('reportModalCloseBtn').addEventListener('click', () => document.getElementById('reportModalOverlay').classList.remove('show'));
+      document.getElementById('reportModalOverlay').addEventListener('mousedown', (e) => { if (e.target === e.currentTarget) e.currentTarget.classList.remove('show'); });
+    }
+
+    async function loadAll(){
+      try { dlConfig = await apiFetch('/reslife-duty-log' + propParam() + '&config=1'); } catch (e) { dlConfig = DEFAULT_CONFIG; }
+      try { dlRoster = await apiFetch('/reslife-duty-log' + propParam() + '&roster=1'); } catch (e) { dlRoster = []; }
+      await refreshTodaySession();
+      await loadHistory();
+      await loadNotifications();
+    }
+
+    // ==================== NOTIFICATIONS ====================
+    async function loadNotifications(){
+      try { notifications = await apiFetch('/reslife-duty-log-notifications' + propParam()); } catch (e) { notifications = []; }
+      document.getElementById('bellDot').classList.toggle('hidden', notifications.filter(n => !n.read).length === 0);
+    }
+    function notifIcon(type){
+      if (type === 'auto_submitted' || type === 'auto_submitted_manager') return '⏱️';
+      if (type === 'missed_log' || type === 'missed_log_manager') return '⚠️';
+      if (type === 'edit_requested') return '🔓';
+      if (type === 'edit_unlocked') return '✅';
+      return '🔔';
+    }
+    function renderNotifPanel(){
+      const panel = document.getElementById('notifPanel');
+      const head = `<div class="notif-head"><strong style="font-size:12.5px">Notifications</strong><button class="btn sm" id="markAllReadBtn">Mark all read</button></div>`;
+      panel.innerHTML = head + (notifications.length === 0
+        ? '<div class="empty">No notifications yet.</div>'
+        : notifications.map(n => `
+          <div class="notif-item ${n.read ? '' : 'unread'}" data-notif-id="${n.id}" data-session-id="${n.sessionId || ''}">
+            <div class="notif-title">${notifIcon(n.type)} ${esc(n.title)}</div>
+            <div>${esc(n.message)}</div>
+            <div class="notif-meta">${fmtDate(n.createdAt)}</div>
+          </div>`).join(''));
+      const markAllBtn = document.getElementById('markAllReadBtn');
+      if (markAllBtn) markAllBtn.addEventListener('click', async () => {
+        try { await apiFetch('/reslife-duty-log-notifications', { method: 'PUT', body: JSON.stringify({ property: currentProperty, action: 'markAllRead' }) }); await loadNotifications(); renderNotifPanel(); } catch (e) {}
+      });
+      panel.querySelectorAll('[data-notif-id]').forEach(el => el.addEventListener('click', async () => {
+        const notifId = el.getAttribute('data-notif-id'), sessionId = el.getAttribute('data-session-id');
+        try { await apiFetch('/reslife-duty-log-notifications', { method: 'PUT', body: JSON.stringify({ property: currentProperty, action: 'markRead', id: notifId }) }); await loadNotifications(); } catch (e) {}
+        document.getElementById('notifPanel').classList.add('hidden');
+        if (sessionId) openReportModal(sessionId);
+      }));
+    }
+
+    // ==================== TODAY'S SESSION ====================
+    function isOwner(s){ return !!(s && me && s.primary_ra_username === me.username); }
+    function isEditable(s){ return !!(s && (s.status === 'draft' || s.status === 'reopened')); }
+
+    async function refreshTodaySession(){
+      const todayStr = localDateStr();
+      let sessions = null;
+      try { sessions = await apiFetch('/reslife-duty-log' + propParam()); }
+      catch (e) {
+        const cached = loadSnapshot();
+        if (cached && cached.duty_date === todayStr) { activeSession = cached; renderTodayCard(); return; }
+        document.getElementById('todayCard').innerHTML = '<div class="empty">Unable to reach the server and no local copy is available. Check your connection.</div>';
+        return;
+      }
+      activeSession = sessions.find(s => s.duty_date === todayStr) || null;
+      if (activeSession) saveSnapshot(activeSession);
+      renderTodayCard();
+    }
+
+    function renderTodayCard(){
+      const box = document.getElementById('todayCard');
+      const s = activeSession;
+      if (!s) {
+        box.innerHTML = `
+          <h2>${esc(fmtDutyDateLong(localDateStr()))}</h2>
+          <p class="muted" style="margin-top:-6px">No Duty Log started yet today.</p>
+          <button class="btn primary big block" id="startBtn">Start Today's Duty Log</button>`;
+        document.getElementById('startBtn').addEventListener('click', async () => {
+          const btn = document.getElementById('startBtn'); btn.disabled = true; btn.textContent = 'Starting…';
+          try {
+            activeSession = await apiFetch('/reslife-duty-log', { method: 'POST', body: JSON.stringify({ property: currentProperty, action: 'start', duty_date: localDateStr() }) });
+            saveSnapshot(activeSession);
+            renderTodayCard();
+          } catch (e) { alert('Failed to start: ' + e.message); btn.disabled = false; btn.textContent = "Start Today's Duty Log"; }
+        });
+        return;
+      }
+
+      if (s.status === 'submitted') {
+        box.innerHTML = `
+          <h2>${esc(fmtDutyDateLong(s.duty_date))}</h2>
+          <div style="font-size:16px;font-weight:800;margin-bottom:4px">&#10003; Duty Log Submitted</div>
+          <div class="muted">Submitted at ${esc(fmtClock(s.submitted_at))}${s.auto_submitted ? ' (auto-submitted)' : ''}</div>
+          <div class="muted" style="margin-top:2px">${s.no_incidents ? 'No Calls / Incidents to Report' : (s.entries || []).length + ' call(s)/incident(s) recorded'}</div>
+          ${s.edit_requested ? '<div class="pill edit-req" style="margin-top:10px">Edit Requested — awaiting REC/Admin</div>' : ''}
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <button class="btn sm" id="viewTodayReportBtn">View Report</button>
+            ${!isManager && isOwner(s) && !s.edit_requested ? '<button class="btn sm" id="requestEditBtn">Request Edit Unlock</button>' : ''}
+          </div>`;
+        document.getElementById('viewTodayReportBtn').addEventListener('click', () => openReportModal(s.id));
+        const reqBtn = document.getElementById('requestEditBtn');
+        if (reqBtn) reqBtn.addEventListener('click', () => requestEdit(s.id, renderTodayCard));
+        return;
+      }
+
+      const mine = isOwner(s);
+      if (!mine && !isManager) {
+        box.innerHTML = `
+          <h2>${esc(fmtDutyDateLong(s.duty_date))}</h2>
+          <div style="font-weight:700">Today's Duty Log Already Started</div>
+          <div class="muted">Started by ${esc(s.primary_ra_username)}. Only they (or REC/Admin) can add entries.</div>`;
+        return;
+      }
+
+      renderEditableToday(s);
+    }
+
+    function renderEditableToday(s){
+      const box = document.getElementById('todayCard');
+      const statusPill = s.status === 'reopened' ? '<span class="pill reopened">Reopened</span>' : '<span class="pill draft">Draft</span>';
+      const entries = (s.entries || []).slice().sort((a, b) => (a.incident_time || '').localeCompare(b.incident_time || ''));
+
+      let partnerOptions = '<option value="">Select…</option>' + dlRoster.filter(u => u.username !== s.primary_ra_username)
+        .map(u => `<option value="${esc(u.username)}" ${s.duty_partner_username === u.username ? 'selected' : ''}>${esc(u.label)}</option>`).join('');
+      if (s.duty_partner_username && !dlRoster.some(u => u.username === s.duty_partner_username)) {
+        partnerOptions += `<option value="${esc(s.duty_partner_username)}" selected>${esc(s.duty_partner_username)}</option>`;
+      }
+
+      box.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <h2 style="margin-bottom:2px">${esc(fmtDutyDateLong(s.duty_date))}</h2>
+          ${statusPill}
+        </div>
+        <div class="field"><label>Duty Partner</label><select id="partnerSel">${partnerOptions}</select></div>
+        <label class="checkrow"><input type="checkbox" id="noIncidentsChk" ${s.no_incidents ? 'checked' : ''} ${entries.length ? 'disabled' : ''}/> No Calls / Incidents to Report</label>
+        <div id="entriesBox" style="margin-top:10px">
+          ${entries.length === 0 ? '<div class="muted" style="padding:8px 0">No entries yet.</div>' : entries.map(entryCardHTML).join('')}
+        </div>
+        <button class="btn primary big block" id="addEntryBtn" style="margin-top:6px">+ Add Call / Incident</button>
+        <button class="btn big block" id="submitBtn" style="margin-top:10px">Submit Daily Duty Log</button>
+      `;
+
+      document.getElementById('partnerSel').addEventListener('change', (e) => mutateSession({ duty_partner_username: e.target.value }));
+      document.getElementById('noIncidentsChk').addEventListener('change', async (e) => {
+        try { await mutateSession({ no_incidents: e.target.checked }); }
+        catch (err) { e.target.checked = !e.target.checked; alert(err.message); }
+      });
+      box.querySelectorAll('[data-edit-entry]').forEach(btn => btn.addEventListener('click', () => openEntryModal(btn.getAttribute('data-edit-entry'))));
+      box.querySelectorAll('[data-del-entry]').forEach(btn => btn.addEventListener('click', () => deleteEntry(btn.getAttribute('data-del-entry'))));
+
+      document.getElementById('addEntryBtn').addEventListener('click', async () => {
+        const id = uid();
+        const entry = { id, incident_date: localDateStr(), incident_time: localTimeStr(), caller_name: '', caller_title: '', location: '', incident_type: '', reason_for_call: '', follow_up: '', documentation_type: '' };
+        activeSession.entries = (activeSession.entries || []).concat([entry]);
+        activeSession.no_incidents = false;
+        renderTodayCard();
+        try { await apiFetch('/reslife-duty-log', { method: 'PUT', body: JSON.stringify({ id: s.id, property: currentProperty, action: 'addEntry', entry }) }); }
+        catch (e) { /* left in local state; a later save on any field will retry via updateEntry */ }
+        openEntryModal(id);
+      });
+
+      document.getElementById('submitBtn').addEventListener('click', handleSubmit);
+    }
+
+    function entryCardHTML(e){
+      return `<div class="entry-card">
+        <div class="entry-top">
+          <div>
+            <div class="entry-title">${esc(fmtTime12(e.incident_time))} &middot; ${esc(e.incident_type || 'Untitled')}</div>
+            <div class="entry-meta">${esc(e.location || 'No location')}${e.caller_name ? ' &middot; ' + esc(e.caller_name) : ''}</div>
+          </div>
+          <div class="entry-actions">
+            <button class="btn sm" data-edit-entry="${esc(e.id)}">Edit</button>
+            <button class="btn sm danger" data-del-entry="${esc(e.id)}">&times;</button>
+          </div>
+        </div>
+        ${e.reason_for_call ? `<div class="entry-preview">${esc(e.reason_for_call)}</div>` : ''}
+      </div>`;
+    }
+
+    async function mutateSession(payload){
+      if (!activeSession) return;
+      Object.assign(activeSession, payload);
+      renderTodayCard();
+      await apiFetch('/reslife-duty-log', { method: 'PUT', body: JSON.stringify(Object.assign({ id: activeSession.id, property: currentProperty, action: 'updateSession' }, payload)) });
+      saveSnapshot(activeSession);
+    }
+
+    async function deleteEntry(entryId){
+      if (!confirm('Remove this entry?')) return;
+      activeSession.entries = (activeSession.entries || []).filter(e => e.id !== entryId);
+      renderTodayCard();
+      try { await apiFetch('/reslife-duty-log', { method: 'PUT', body: JSON.stringify({ id: activeSession.id, property: currentProperty, action: 'deleteEntry', entryId }) }); saveSnapshot(activeSession); }
+      catch (e) { alert('Failed to delete: ' + e.message); await refreshTodaySession(); }
+    }
+
+    // ---- Entry modal ----
+    function setSaveIndicator(state, text){
+      const el = document.getElementById('entrySaveIndicator');
+      el.className = 'save-indicator ' + state;
+      el.querySelector('.txt').textContent = text;
+    }
+
+    function openEntryModal(entryId){
+      currentEntryId = entryId;
+      const entry = (activeSession.entries || []).find(e => e.id === entryId);
+      if (!entry) return;
+      const cfg = dlConfig || DEFAULT_CONFIG;
+      document.getElementById('entryModalTitle').textContent = 'Duty Entry — ' + fmtTime12(entry.incident_time);
+      const opts = (list, val) => (list || []).map(o => `<option value="${esc(o)}" ${o === val ? 'selected' : ''}>${esc(o)}</option>`).join('');
+      document.getElementById('entryModalBody').innerHTML = `
+        <div class="field"><label>Time</label><input type="time" data-f="incident_time" value="${esc(entry.incident_time)}" /></div>
+        <div class="field"><label>Caller Name</label><input type="text" data-f="caller_name" value="${esc(entry.caller_name)}" /></div>
+        <div class="field"><label>Caller Title</label><select data-f="caller_title"><option value="">Select…</option>${opts(cfg.callerTitles, entry.caller_title)}</select></div>
+        <div class="field"><label>Location</label><input type="text" data-f="location" value="${esc(entry.location)}" /></div>
+        <div class="field"><label>Incident Type</label><select data-f="incident_type"><option value="">Select…</option>${opts(cfg.incidentTypes, entry.incident_type)}</select></div>
+        <div class="field"><label>Initial Reason for Call</label><textarea data-f="reason_for_call">${esc(entry.reason_for_call)}</textarea></div>
+        <div class="field"><label>Response / Follow-Up</label><textarea data-f="follow_up">${esc(entry.follow_up)}</textarea></div>
+        <div class="field"><label>Documentation</label><select data-f="documentation_type"><option value="">Select…</option>${opts(cfg.documentationTypes, entry.documentation_type)}</select></div>
+      `;
+      document.getElementById('entryModalBody').querySelectorAll('[data-f]').forEach(el => {
+        const eventName = (el.tagName === 'SELECT') ? 'change' : 'input';
+        el.addEventListener(eventName, () => scheduleFieldSave(el));
+      });
+      setSaveIndicator('saved', 'Saved');
+      document.getElementById('entryModalOverlay').classList.add('show');
+    }
+
+    function scheduleFieldSave(el){
+      setSaveIndicator('saving', 'Saving…');
+      clearTimeout(pendingFieldTimer);
+      pendingFieldTimer = setTimeout(() => flushFieldSave(), 500);
+    }
+    async function flushFieldSave(){
+      clearTimeout(pendingFieldTimer);
+      if (!currentEntryId) return;
+      const body = document.getElementById('entryModalBody');
+      const patch = {};
+      body.querySelectorAll('[data-f]').forEach(el => { patch[el.getAttribute('data-f')] = el.value; });
+      const entry = (activeSession.entries || []).find(e => e.id === currentEntryId);
+      if (entry) Object.assign(entry, patch);
+      try {
+        await apiFetch('/reslife-duty-log', { method: 'PUT', body: JSON.stringify({ id: activeSession.id, property: currentProperty, action: 'updateEntry', entryId: currentEntryId, entry: patch }) });
+        setSaveIndicator('saved', 'Saved');
+        saveSnapshot(activeSession);
+      } catch (e) {
+        setSaveIndicator('offline', e.status ? ('Error: ' + e.message) : 'Offline — will retry');
+      }
+    }
+    function closeEntryModal(){
+      flushFieldSave();
+      document.getElementById('entryModalOverlay').classList.remove('show');
+      currentEntryId = null;
+      renderTodayCard();
+    }
+    document.addEventListener('visibilitychange', () => { if (document.hidden && currentEntryId) flushFieldSave(); });
+    window.addEventListener('pagehide', () => { if (currentEntryId) flushFieldSave(); });
+
+    // ---- Submit ----
+    async function handleSubmit(){
+      const s = activeSession;
+      const entryCount = (s.entries || []).length;
+      if (!s.no_incidents && entryCount === 0) { alert('Add at least one entry, or check "No Calls / Incidents to Report" before submitting.'); return; }
+      if (!confirm('Submit today\'s Duty Log? Once submitted, you will need a REC/Admin to unlock it before you can edit it again.')) return;
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true; btn.textContent = 'Submitting…';
+      try {
+        await apiFetch('/reslife-duty-log', { method: 'PUT', body: JSON.stringify({ id: s.id, property: currentProperty, action: 'submit' }) });
+        await refreshTodaySession();
+        await loadHistory();
+      } catch (e) { alert('Failed to submit: ' + e.message); btn.disabled = false; btn.textContent = 'Submit Daily Duty Log'; }
+    }
+
+    // ==================== HISTORY ====================
+    async function loadHistory(){
+      const box = document.getElementById('historyBox');
+      let sessions = [];
+      try { sessions = await apiFetch('/reslife-duty-log' + propParam()); } catch (e) { box.innerHTML = '<div class="empty">Failed to load history.</div>'; return; }
+      const today = localDateStr();
+      const past = sessions.filter(s => s.duty_date !== today);
+      box.innerHTML = past.length === 0 ? '<div class="empty">No prior Duty Logs yet.</div>' : past.map(s => {
+        const statusPill = s.status === 'submitted' ? '<span class="pill submitted">Submitted</span>' : s.status === 'reopened' ? '<span class="pill reopened">Reopened</span>' : '<span class="pill draft">Draft</span>';
+        const editReqBadge = s.edit_requested ? ' <span class="pill edit-req">Edit Requested</span>' : '';
+        return `<div class="history-item">
+          <div class="history-main">
+            <div class="history-date">${esc(fmtDutyDateShort(s.duty_date))} ${statusPill}${editReqBadge}</div>
+            <div class="history-meta">${s.no_incidents ? 'No calls/incidents' : (s.entries || []).length + ' call(s)/incident(s)'}</div>
+          </div>
+          <button class="btn sm" data-view="${esc(s.id)}">View</button>
+        </div>`;
+      }).join('');
+      box.querySelectorAll('[data-view]').forEach(btn => btn.addEventListener('click', () => openReportModal(btn.getAttribute('data-view'))));
+    }
+
+    // ==================== REPORT VIEWER + REQUEST EDIT ====================
+    async function openReportModal(sessionId){
+      let s = null;
+      try { s = await apiFetch('/reslife-duty-log' + propParam() + '&id=' + encodeURIComponent(sessionId)); }
+      catch (e) { alert('Could not load this report: ' + e.message); return; }
+      renderReportContent(s);
+      document.getElementById('reportModalOverlay').classList.add('show');
+    }
+
+    function renderReportContent(s){
+      const entries = (s.entries || []).slice().sort((a, b) => (a.incident_time || '').localeCompare(b.incident_time || ''));
+      const statusLine = s.status === 'submitted' ? `Submitted ${esc(fmtDate(s.submitted_at))}${s.auto_submitted ? ' (auto-submitted)' : ''}`
+        : s.status === 'reopened' ? `Reopened ${esc(fmtDate(s.reopened_at))} — editable again`
+        : 'Draft — not yet submitted';
+      const entriesHTML = entries.length === 0
+        ? `<p class="muted">${s.no_incidents ? 'No Calls / Incidents to Report.' : 'No entries recorded.'}</p>`
+        : entries.map((e, i) => `
+          <div class="entry-card">
+            <div class="entry-title">Incident ${i + 1} &middot; ${esc(fmtTime12(e.incident_time))} &middot; ${esc(e.incident_type || '—')}</div>
+            <div class="entry-meta">Location: ${esc(e.location || '—')} &middot; Caller: ${esc(e.caller_name || '—')}</div>
+            <div class="entry-preview" style="-webkit-line-clamp:unset">${esc(e.reason_for_call || '—')}</div>
+          </div>`).join('');
+      const canRequestEdit = !isManager && s.primary_ra_username === me.username && s.status === 'submitted' && !s.edit_requested;
+      document.getElementById('reportModalBody').innerHTML = `
+        <div class="muted" style="margin-bottom:2px">${esc(fmtDutyDateLong(s.duty_date))}</div>
+        <div style="font-weight:700;margin-bottom:2px">Duty RA: ${esc(s.primary_ra_username)}${s.duty_partner_username ? ' &middot; Partner: ' + esc(s.duty_partner_username) : ''}</div>
+        <div class="muted" style="margin-bottom:12px">${statusLine}${s.edit_requested ? ' &middot; <span style="color:#be185d;font-weight:700">Edit requested</span>' : ''}</div>
+        ${entriesHTML}
+        ${canRequestEdit ? '<button class="btn block" id="reportRequestEditBtn" style="margin-top:12px">Request Edit Unlock</button>' : ''}
+      `;
+      const reqBtn = document.getElementById('reportRequestEditBtn');
+      if (reqBtn) reqBtn.addEventListener('click', () => requestEdit(s.id, () => renderReportContent(Object.assign(s, { edit_requested: true }))));
+    }
+
+    async function requestEdit(sessionId, onDone){
+      if (!confirm("Ask REC/Admin to unlock this submitted Duty Log so you can edit it?")) return;
+      try {
+        await apiFetch('/reslife-duty-log', { method: 'PUT', body: JSON.stringify({ id: sessionId, property: currentProperty, action: 'requestEdit' }) });
+        await loadHistory();
+        if (onDone) onDone();
+      } catch (e) { alert('Failed to send request: ' + e.message); }
+    }
+
+    init();
+  </script>
+</body>
+</html>

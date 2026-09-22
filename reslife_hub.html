@@ -331,6 +331,20 @@
     .rl-pill.dl-reopened{background:var(--rl-warn-bg);color:#b45309}
     .rl-pill.dl-missing{background:var(--rl-danger-bg);color:var(--rl-danger)}
     .rl-pill.dl-notstarted{background:#f1f5f9;color:#475569}
+    .rl-pill.dl-edit-requested{background:#fdf2f8;color:#be185d}
+
+    .rl-dl-bell-btn{position:relative;background:#fff;border:1px solid var(--rl-border);color:var(--rl-text);width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:15px}
+    .rl-dl-bell-btn:hover{background:#f8fafc}
+    .rl-dl-bell-dot{position:absolute;top:-3px;right:-3px;width:9px;height:9px;border-radius:50%;background:var(--rl-danger);border:1.5px solid #fff}
+    .rl-dl-notif-panel{position:absolute;top:44px;right:0;width:320px;max-height:420px;overflow-y:auto;background:#fff;border:1px solid var(--rl-border);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.18);z-index:70}
+    .rl-dl-notif-head{padding:10px 14px;border-bottom:1px solid var(--rl-border);display:flex;justify-content:space-between;align-items:center}
+    .rl-dl-notif-item{padding:12px 14px;border-bottom:1px solid var(--rl-border);font-size:12.5px;cursor:pointer}
+    .rl-dl-notif-item:last-child{border-bottom:none}
+    .rl-dl-notif-item:hover{background:#f8fafc}
+    .rl-dl-notif-item.unread{background:#eff6ff}
+    .rl-dl-notif-item.unread:hover{background:#e0edff}
+    .rl-dl-notif-title{font-weight:700;margin-bottom:2px;color:var(--rl-text)}
+    .rl-dl-notif-meta{font-size:11px;color:var(--rl-subtext);margin-top:4px}
 
     .dl-today-card{background:var(--rl-panel);border:1px solid var(--rl-border);border-radius:14px;padding:20px;margin-bottom:18px}
     .dl-today-date{font-size:12px;font-weight:700;color:var(--rl-subtext);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
@@ -347,6 +361,27 @@
 
     .dl-session-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
     @media(max-width:640px){.dl-session-fields{grid-template-columns:1fr}}
+
+    /* ===== Duty Log — mobile/tablet view =====
+       The composer (today's card, add/submit buttons) is already full-width/
+       sticky by design above. This block specifically reflows the REC/Admin
+       filter bar and wide report table — the two genuinely desktop-oriented
+       pieces of the tab — into a stacked, touch-friendly layout below 820px,
+       matching the phone/tablet experience of reslife_duty_log_mobile.html. */
+    @media(max-width:820px){
+      .dl-filter-bar{flex-direction:column;align-items:stretch}
+      .dl-filter-bar .rl-field{min-width:0;width:100%}
+      .rl-stat-grid{grid-template-columns:repeat(2,1fr)}
+      #dlTableBox table.rl-table thead{display:none}
+      #dlTableBox table.rl-table, #dlTableBox table.rl-table tbody,
+      #dlTableBox table.rl-table tr, #dlTableBox table.rl-table td{display:block;width:100%}
+      #dlTableBox table.rl-table{border:none}
+      #dlTableBox table.rl-table tr{border:1px solid var(--rl-border);border-radius:10px;margin-bottom:10px;padding:6px 12px;background:#fff}
+      #dlTableBox table.rl-table td{border-bottom:1px solid #f1f5f9;padding:8px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:right}
+      #dlTableBox table.rl-table td:last-child{border-bottom:none;justify-content:flex-end}
+      #dlTableBox table.rl-table td::before{content:attr(data-label);font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--rl-subtext);text-align:left;flex-shrink:0}
+    }
+    @media(max-width:420px){.rl-stat-grid{grid-template-columns:1fr}}
 
     .dl-entry-card{border:1px solid var(--rl-border);border-radius:12px;padding:14px 16px;margin-bottom:10px;background:#fff}
     .dl-entry-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:4px}
@@ -854,6 +889,10 @@
         <div class="rl-panel">
           <div class="rl-panel-header">
             <div><h2>My Duty Log</h2><p>Open today's log, add calls/incidents as they happen, and submit at the end of your duty period. Nothing here ever auto-closes on you — it stays open and editable until you submit it.</p></div>
+            <div style="position:relative;flex-shrink:0">
+              <button class="rl-dl-bell-btn" id="dlBellBtn" title="Duty Log notifications" type="button">&#128276;<span class="rl-dl-bell-dot hidden" id="dlBellDot"></span></button>
+              <div id="dlNotifPanel" class="rl-dl-notif-panel hidden"></div>
+            </div>
           </div>
           <div class="rl-panel-body" id="dutyLogActiveBox"><div class="rl-loading">Loading…</div></div>
         </div>
@@ -908,9 +947,22 @@
                 <div class="rl-field full"><label>Incident Types (comma-separated)</label><textarea id="dlsIncidentTypes"></textarea></div>
                 <div class="rl-field full"><label>Documentation Types (comma-separated)</label><textarea id="dlsDocTypes"></textarea></div>
                 <div class="rl-field"><label>Daily Deadline</label><input type="time" id="dlsDeadline" /></div>
+                <div class="rl-field">
+                  <label>Property Timezone</label>
+                  <select id="dlsTimezone">
+                    <option value="America/New_York">Eastern (New York)</option>
+                    <option value="America/Chicago">Central (Chicago)</option>
+                    <option value="America/Denver">Mountain (Denver)</option>
+                    <option value="America/Phoenix">Mountain — no DST (Phoenix)</option>
+                    <option value="America/Los_Angeles">Pacific (Los Angeles)</option>
+                    <option value="America/Anchorage">Alaska (Anchorage)</option>
+                    <option value="Pacific/Honolulu">Hawaii (Honolulu)</option>
+                  </select>
+                </div>
                 <div class="rl-field"><label>Incident Report Form Link</label><input type="text" id="dlsIrFormLink" /></div>
                 <div class="rl-field full"><label>"How to Write an IR" Link</label><input type="text" id="dlsHowToLink" /></div>
               </div>
+              <div class="rl-ann-popover-hint" style="margin:-6px 0 10px">Timezone controls the 11:59 PM auto-submit/missed-log check for this property's Duty Log.</div>
               <div class="rl-form-actions"><button class="rl-btn primary" id="dlsSaveBtn">Save Duty Log Settings</button></div>
             </div>
           </div>
@@ -948,6 +1000,8 @@
             <h3>Duty Log Report</h3>
             <div style="display:flex;gap:8px;align-items:center">
               <button class="rl-btn sm" id="dlReportPrintBtn">Print</button>
+              <button class="rl-btn sm" id="dlReportRequestEditBtn" style="display:none">Request Edit Unlock</button>
+              <span class="rl-pill dl-edit-requested" id="dlReportEditPendingBadge" style="display:none">Edit Requested</span>
               <button class="rl-btn sm danger hidden" id="dlReportReopenBtn">Reopen</button>
               <button class="rl-modal-close" id="dlReportModalCloseBtn">&times;</button>
             </div>
@@ -1538,7 +1592,16 @@
       els.authGate.classList.add('hidden');
       els.app.classList.remove('hidden');
 
-      await loadCurrentTabData();
+      // Deep-link support (e.g. reslife_hub.html?tab=dutylog) so a bookmarked/
+      // home-screen shortcut — see reslife_duty_log_mobile.html — can jump a
+      // returning user straight into a specific tab instead of always landing
+      // on the Dashboard first.
+      const deepLinkTab = new URLSearchParams(window.location.search).get('tab');
+      if (deepLinkTab && document.querySelector('.rl-nav-item[data-tab="' + deepLinkTab + '"]:not(.hidden)')) {
+        goToTab(deepLinkTab);
+      } else {
+        await loadCurrentTabData();
+      }
     }
 
     function renderHeaderIdentity(){
@@ -2232,12 +2295,13 @@
       callerTitles: ['Resident', 'Guest', 'Parent / Family Member', 'RA', 'REC', 'Security / Campus Safety', 'Maintenance Staff', 'Other Staff', 'Witness', 'Other'],
       incidentTypes: ['Noise Complaint', 'Lockout', 'Resident Concern', 'Maintenance Issue', 'Wellness Check', 'Policy Violation', 'Facility / Safety Issue', 'Medical', 'Mental Health', 'Alcohol / Drug', 'Other'],
       documentationTypes: ['None Required', 'Incident Report', 'Service Request', 'Other'],
-      deadlineTime: '09:00', irFormLink: 'reslife_incident_report.html', howToWriteIrLink: 'reslife_incident_report.html',
+      deadlineTime: '09:00', timezone: 'America/New_York', irFormLink: 'reslife_incident_report.html', howToWriteIrLink: 'reslife_incident_report.html',
     };
     let dlConfig = null;
     let dlRoster = [];
     let dlActiveSession = null;
     let dlCurrentEntryId = null;
+    let dlNotifications = [];
     let dlSyncRetryTimer = null;
     let dlAdminAllSessions = [];
     let dlReportSession = null;
@@ -2330,8 +2394,51 @@
       renderDutyResources();
       await refreshTodaySession();
       await loadDutyLogHistory();
+      await loadDlNotifications();
       if (isManager) await loadDutyLogDashboard();
       if (isAdminTier) renderDlSettingsForm();
+    }
+
+    // ---- Duty Log notifications (private to the RA + REC/Admin they're addressed to) ----
+    async function loadDlNotifications(){
+      try { dlNotifications = await apiFetch('/reslife-duty-log-notifications' + propParam()); } catch (e) { dlNotifications = []; }
+      const dot = document.getElementById('dlBellDot');
+      if (dot) dot.classList.toggle('hidden', dlNotifications.filter(n => !n.read).length === 0);
+    }
+
+    function dlNotifIcon(type){
+      if (type === 'auto_submitted' || type === 'auto_submitted_manager') return '⏱️';
+      if (type === 'missed_log' || type === 'missed_log_manager') return '⚠️';
+      if (type === 'edit_requested') return '🔓';
+      if (type === 'edit_unlocked') return '✅';
+      return '🔔';
+    }
+
+    function renderDlNotifPanel(){
+      const panel = document.getElementById('dlNotifPanel');
+      const head = `<div class="rl-dl-notif-head"><strong style="font-size:12.5px">Duty Log Notifications</strong><button class="rl-btn sm" id="dlMarkAllReadBtn">Mark all read</button></div>`;
+      if (dlNotifications.length === 0) {
+        panel.innerHTML = head + '<div class="rl-empty" style="padding:20px 14px">No notifications yet.</div>';
+      } else {
+        panel.innerHTML = head + dlNotifications.map(n => `
+          <div class="rl-dl-notif-item ${n.read ? '' : 'unread'}" data-notif-id="${n.id}" data-session-id="${n.sessionId || ''}">
+            <div class="rl-dl-notif-title">${dlNotifIcon(n.type)} ${esc(n.title)}</div>
+            <div>${esc(n.message)}</div>
+            <div class="rl-dl-notif-meta">${fmtDate(n.createdAt)}</div>
+          </div>
+        `).join('');
+      }
+      const markAllBtn = document.getElementById('dlMarkAllReadBtn');
+      if (markAllBtn) markAllBtn.addEventListener('click', async () => {
+        try { await apiFetch('/reslife-duty-log-notifications', { method: 'PUT', body: JSON.stringify({ property: currentProperty, action: 'markAllRead' }) }); await loadDlNotifications(); renderDlNotifPanel(); } catch (e) {}
+      });
+      panel.querySelectorAll('[data-notif-id]').forEach(el => el.addEventListener('click', async () => {
+        const notifId = el.getAttribute('data-notif-id');
+        const sessionId = el.getAttribute('data-session-id');
+        try { await apiFetch('/reslife-duty-log-notifications', { method: 'PUT', body: JSON.stringify({ property: currentProperty, action: 'markRead', id: notifId }) }); await loadDlNotifications(); } catch (e) {}
+        document.getElementById('dlNotifPanel').classList.add('hidden');
+        if (sessionId) openReportModal(sessionId);
+      }));
     }
 
     function renderDlSettingsForm(){
@@ -2340,6 +2447,7 @@
       document.getElementById('dlsIncidentTypes').value = (cfg.incidentTypes || []).join(', ');
       document.getElementById('dlsDocTypes').value = (cfg.documentationTypes || []).join(', ');
       document.getElementById('dlsDeadline').value = cfg.deadlineTime || '09:00';
+      document.getElementById('dlsTimezone').value = cfg.timezone || 'America/New_York';
       document.getElementById('dlsIrFormLink').value = cfg.irFormLink || '';
       document.getElementById('dlsHowToLink').value = cfg.howToWriteIrLink || '';
     }
@@ -2352,6 +2460,7 @@
         incidentTypes: csvToList(document.getElementById('dlsIncidentTypes').value),
         documentationTypes: csvToList(document.getElementById('dlsDocTypes').value),
         deadlineTime: document.getElementById('dlsDeadline').value || '09:00',
+        timezone: document.getElementById('dlsTimezone').value || 'America/New_York',
         irFormLink: document.getElementById('dlsIrFormLink').value.trim(),
         howToWriteIrLink: document.getElementById('dlsHowToLink').value.trim(),
       };
@@ -2658,10 +2767,11 @@
     }
     function dlHistoryCardHTML(s){
       const statusPill = s.status === 'submitted' ? '<span class="rl-pill dl-submitted">Submitted</span>' : s.status === 'reopened' ? '<span class="rl-pill dl-reopened">Reopened</span>' : '<span class="rl-pill dl-draft">Draft</span>';
+      const editReqBadge = s.edit_requested ? ' <span class="rl-pill dl-edit-requested">Edit Requested</span>' : '';
       return `<div class="rl-item">
         <div class="rl-item-main">
-          <div class="rl-item-title">${esc(fmtDutyDateShort(s.duty_date))} ${statusPill}</div>
-          <div class="rl-item-meta">${s.no_incidents ? 'No calls/incidents reported' : (s.entries || []).length + ' call(s)/incident(s)'}${s.submitted_at ? ' · Submitted ' + fmtDate(s.submitted_at) : ''}</div>
+          <div class="rl-item-title">${esc(fmtDutyDateShort(s.duty_date))} ${statusPill}${editReqBadge}</div>
+          <div class="rl-item-meta">${s.no_incidents ? 'No calls/incidents reported' : (s.entries || []).length + ' call(s)/incident(s)'}${s.submitted_at ? ' · Submitted ' + fmtDate(s.submitted_at) : ''}${s.auto_submitted ? ' (auto)' : ''}</div>
         </div>
         <div class="rl-item-actions"><button class="rl-btn sm" data-dl-view="${esc(s.id)}">View</button></div>
       </div>`;
@@ -2699,6 +2809,7 @@
       const openDrafts = all.filter(s => s.status === 'draft' || s.status === 'reopened').length;
       const missing = computeMissingDates(all, 14, (dlConfig || DL_DEFAULT_CONFIG_FALLBACK).deadlineTime);
       const incidentsThisWeek = all.filter(s => s.duty_date >= weekAgoStr).reduce((sum, s) => sum + (s.entries || []).length, 0);
+      const editRequests = all.filter(s => s.edit_requested).length;
 
       const cards = [
         { label: 'Today', value: todayStatus, color: 'var(--rl-primary)' },
@@ -2706,6 +2817,7 @@
         { label: 'Open Drafts', value: openDrafts, color: '#1d4ed8' },
         { label: 'Past Due / Missing', value: missing.length, color: 'var(--rl-danger)' },
         { label: 'Incidents This Week', value: incidentsThisWeek, color: 'var(--rl-secondary)' },
+        { label: 'Edit Requests', value: editRequests, color: '#be185d' },
       ];
       grid.innerHTML = cards.map(c => `<div class="rl-stat-card" style="--rl-stat-color:${c.color}"><div class="rl-stat-value">${esc(String(c.value))}</div><div class="rl-stat-label">${esc(c.label)}</div></div>`).join('');
 
@@ -2742,19 +2854,30 @@
     function dutyDateOf(row){ return row.kind === 'missing' ? row.date : row.session.duty_date; }
     function dlTableRowHTML(row){
       if (row.kind === 'missing') {
-        return `<tr><td>${esc(fmtDutyDateShort(row.date))}</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td><span class="rl-pill dl-missing">Missing</span></td><td>&mdash;</td></tr>`;
+        return `<tr>
+          <td data-label="Duty Date">${esc(fmtDutyDateShort(row.date))}</td>
+          <td data-label="Duty RA">&mdash;</td>
+          <td data-label="Duty Partner">&mdash;</td>
+          <td data-label="# Incidents">&mdash;</td>
+          <td data-label="Last Updated">&mdash;</td>
+          <td data-label="Submitted At">&mdash;</td>
+          <td data-label="Status"><span class="rl-pill dl-missing">Missing</span></td>
+          <td data-label="">&mdash;</td>
+        </tr>`;
       }
       const s = row.session;
       const statusPill = s.status === 'submitted' ? '<span class="rl-pill dl-submitted">Submitted</span>' : s.status === 'reopened' ? '<span class="rl-pill dl-reopened">Reopened</span>' : '<span class="rl-pill dl-draft">Draft</span>';
+      const autoBadge = s.auto_submitted ? ' <span class="rl-pill" style="background:#f1f5f9;color:#475569" title="Automatically submitted at 11:59 PM">Auto</span>' : '';
+      const editReqBadge = s.edit_requested ? ' <span class="rl-pill dl-edit-requested">Edit Requested</span>' : '';
       return `<tr>
-        <td>${esc(fmtDutyDateShort(s.duty_date))}</td>
-        <td>${esc(s.primary_ra_username)}</td>
-        <td>${esc(s.duty_partner_username || '—')}</td>
-        <td>${s.no_incidents ? '0 (none reported)' : (s.entries || []).length}</td>
-        <td>${s.last_saved_at ? esc(fmtDate(s.last_saved_at)) : '—'}</td>
-        <td>${s.submitted_at ? esc(fmtDate(s.submitted_at)) : '—'}</td>
-        <td>${statusPill}</td>
-        <td><button class="rl-btn sm" data-dl-view="${esc(s.id)}">View</button></td>
+        <td data-label="Duty Date">${esc(fmtDutyDateShort(s.duty_date))}</td>
+        <td data-label="Duty RA">${esc(s.primary_ra_username)}</td>
+        <td data-label="Duty Partner">${esc(s.duty_partner_username || '—')}</td>
+        <td data-label="# Incidents">${s.no_incidents ? '0 (none reported)' : (s.entries || []).length}</td>
+        <td data-label="Last Updated">${s.last_saved_at ? esc(fmtDate(s.last_saved_at)) : '—'}</td>
+        <td data-label="Submitted At">${s.submitted_at ? esc(fmtDate(s.submitted_at)) : '—'}</td>
+        <td data-label="Status">${statusPill}${autoBadge}${editReqBadge}</td>
+        <td data-label=""><button class="rl-btn sm" data-dl-view="${esc(s.id)}">View</button></td>
       </tr>`;
     }
 
@@ -2803,11 +2926,15 @@
       dlReportSession = s;
       renderReportContent(s);
       document.getElementById('dlReportReopenBtn').classList.toggle('hidden', !(isManager && s.status === 'submitted'));
+      const isOwner = s.primary_ra_username === me.username;
+      const canRequestEdit = !isManager && isOwner && s.status === 'submitted' && !s.edit_requested;
+      document.getElementById('dlReportRequestEditBtn').style.display = canRequestEdit ? '' : 'none';
+      document.getElementById('dlReportEditPendingBadge').style.display = s.edit_requested ? '' : 'none';
       document.getElementById('dlReportModalOverlay').classList.add('show');
     }
     function renderReportContent(s){
       const entries = (s.entries || []).slice().sort((a, b) => (a.incident_time || '').localeCompare(b.incident_time || ''));
-      const statusLine = s.status === 'submitted' ? `Submitted: ${esc(fmtDate(s.submitted_at))}${s.submitted_by_username ? ' by ' + esc(s.submitted_by_username) : ''}`
+      const statusLine = s.status === 'submitted' ? `Submitted: ${esc(fmtDate(s.submitted_at))}${s.auto_submitted ? ' (auto-submitted at 11:59 PM)' : s.submitted_by_username ? ' by ' + esc(s.submitted_by_username) : ''}${s.edit_requested ? ' · <span style="color:#be185d;font-weight:700">Edit requested — awaiting REC/Admin</span>' : ''}`
         : s.status === 'reopened' ? `Reopened ${esc(fmtDate(s.reopened_at))}${s.reopened_by_username ? ' by ' + esc(s.reopened_by_username) : ''} — editable again`
         : 'Draft — not yet submitted';
       const entriesHTML = entries.length === 0
@@ -2847,6 +2974,22 @@
       } catch (e) { alert('Failed to reopen: ' + e.message); }
     }
 
+    async function dlHandleRequestEditFromReport(){
+      if (!dlReportSession) return;
+      if (!confirm('Ask REC/Admin to unlock this submitted Duty Log so you can edit it?')) return;
+      const btn = document.getElementById('dlReportRequestEditBtn');
+      btn.disabled = true;
+      try {
+        await apiFetch('/reslife-duty-log', { method: 'PUT', body: JSON.stringify({ id: dlReportSession.id, property: currentProperty, action: 'requestEdit' }) });
+        dlReportSession.edit_requested = true;
+        document.getElementById('dlReportRequestEditBtn').style.display = 'none';
+        document.getElementById('dlReportEditPendingBadge').style.display = '';
+        renderReportContent(dlReportSession);
+        await loadDutyLogHistory();
+      } catch (e) { alert('Failed to send request: ' + e.message); }
+      btn.disabled = false;
+    }
+
     function bindDutyLogStaticControls(){
       document.getElementById('dlEntryDoneBtn').addEventListener('click', closeEntryModal);
       document.getElementById('dlEntryModalCloseBtn').addEventListener('click', closeEntryModal);
@@ -2855,6 +2998,7 @@
       document.getElementById('dlReportModalCloseBtn').addEventListener('click', () => document.getElementById('dlReportModalOverlay').classList.remove('show'));
       document.getElementById('dlReportPrintBtn').addEventListener('click', () => window.print());
       document.getElementById('dlReportReopenBtn').addEventListener('click', dlHandleReopenFromReport);
+      document.getElementById('dlReportRequestEditBtn').addEventListener('click', dlHandleRequestEditFromReport);
       document.getElementById('dlEntryModalOverlay').addEventListener('mousedown', (e) => { if (e.target === e.currentTarget) closeEntryModal(); });
       document.getElementById('dlSubmitModalOverlay').addEventListener('mousedown', (e) => { if (e.target === e.currentTarget) e.currentTarget.classList.remove('show'); });
       document.getElementById('dlReportModalOverlay').addEventListener('mousedown', (e) => { if (e.target === e.currentTarget) e.currentTarget.classList.remove('show'); });
@@ -2865,6 +3009,11 @@
         loadDutyLogTable();
       });
       document.getElementById('dlsSaveBtn').addEventListener('click', saveDlSettings);
+      document.getElementById('dlBellBtn').addEventListener('click', () => {
+        const panel = document.getElementById('dlNotifPanel');
+        if (panel.classList.contains('hidden')) { renderDlNotifPanel(); panel.classList.remove('hidden'); } else panel.classList.add('hidden');
+      });
+      document.addEventListener('click', (e) => { if (!e.target.closest('#dlNotifPanel') && !e.target.closest('#dlBellBtn')) document.getElementById('dlNotifPanel').classList.add('hidden'); });
     }
 
     // ==================== GUEST LOG ====================

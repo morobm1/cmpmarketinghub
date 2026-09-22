@@ -1,6 +1,6 @@
 import { verifyReqAuth } from './_auth.js';
 import { getDb, ObjectId } from './_db.js';
-import { canAccessReslifeProperty, canAdminReslifeProperty, canManageReslifeProperty, isReslifeManager, refreshReslifeUser, json } from './_reslife.js';
+import { canAccessReslifeProperty, canAdminReslifeProperty, canManageReslifeProperty, isReslifeManager, refreshReslifeUser, managersForReslifeProperty, notifyDutyLog, json } from './_reslife.js';
 
 /**
  * Reslife Hub — Duty Log (Harbour Duty Log 26-27, normalized)
@@ -21,9 +21,14 @@ import { canAccessReslifeProperty, canAdminReslifeProperty, canManageReslifeProp
  * GET  ?property=X&config=1                      - configurable options (caller titles, incident types, etc.)
  * GET  ?property=X&roster=1                      - active RA/REC usernames+labels for the Duty Partner picker
  * POST { property, action:'start' }              - create-or-resume today's session (one per property/day)
- * PUT  { id, property, action, ... }              - addEntry / updateEntry / deleteEntry / updateSession / submit / reopen
+ * PUT  { id, property, action, ... }              - addEntry / updateEntry / deleteEntry / updateSession / submit / reopen / requestEdit
  * PUT  { property, action:'updateConfig', config } - admin tier only
  * DELETE ?id=X&property=Y                        - remove a session (manager tier only; correcting a mistake)
+ *
+ * Auto-submit + missed-log detection run out-of-band in the scheduled
+ * reslife-duty-log-autosubmit.js function (property-local 11:59pm), which
+ * reads `config.timezone` below and writes the same in-app notifications
+ * (reslife_duty_log_notifications) that requestEdit/reopen use here.
  */
 
 const DOCUMENTATION_TYPES = ['None Required', 'Incident Report', 'Service Request', 'Other'];
@@ -33,6 +38,7 @@ const DEFAULT_CONFIG = {
   incidentTypes: ['Noise Complaint', 'Lockout', 'Resident Concern', 'Maintenance Issue', 'Wellness Check', 'Policy Violation', 'Facility / Safety Issue', 'Medical', 'Mental Health', 'Alcohol / Drug', 'Other'],
   documentationTypes: DOCUMENTATION_TYPES,
   deadlineTime: '09:00', // 24h local time; "This log should be updated by 9:00 AM every day."
+  timezone: 'America/New_York', // IANA zone used by reslife-duty-log-autosubmit.js for this property's 11:59pm boundary
   irFormLink: 'reslife_incident_report.html',
   howToWriteIrLink: 'reslife_incident_report.html',
 };
@@ -178,12 +184,16 @@ export async function handler(event) {
         status: 'draft',
         no_incidents: false,
         entries: [],
+        auto_submitted: false,
         started_at: now,
         last_saved_at: now,
         submitted_at: null,
         submitted_by_username: null,
         reopened_at: null,
         reopened_by_username: null,
+        edit_requested: false,
+        edit_requested_at: null,
+        edit_requested_by_username: null,
         created_by_username: user.sub,
         last_edited_by_username: user.sub,
         last_edited_at: now,
@@ -296,6 +306,28 @@ export async function handler(event) {
         return json(200, { success: true, submitted_at: now });
       }
 
+      if (action === 'requestEdit') {
+        // RA-initiated: "I need to fix something on an already-submitted log."
+        // Never grants edit access itself — it only alerts REC/Admin, who must
+        // explicitly `reopen` the session (below) before it becomes editable again.
+        if (!isOwner && !manager) return { statusCode: 403, body: 'Forbidden' };
+        if (existing.status !== 'submitted') return { statusCode: 409, body: 'Only a submitted Duty Log can have an edit requested' };
+        if (existing.edit_requested) return json(200, { success: true, already_requested: true });
+        updates.edit_requested = true;
+        updates.edit_requested_at = now;
+        updates.edit_requested_by_username = user.sub;
+        await col.updateOne({ _id: new ObjectId(id), property }, { $set: updates });
+        const recipients = await managersForReslifeProperty(db, property);
+        if (user.role === 'admin') recipients.push(user.sub); // harmless self-notify if a site admin ever requests on someone else's behalf
+        await notifyDutyLog(
+          db, property, recipients, 'edit_requested',
+          'Duty Log edit requested',
+          `${user.sub} requested an edit unlock for the ${existing.duty_date} Duty Log.`,
+          { sessionId: id, dutyDate: existing.duty_date }
+        );
+        return json(200, { success: true, edit_requested_at: now });
+      }
+
       if (action === 'reopen') {
         if (!canAdminReslifeProperty(user, property) && !canManageReslifeProperty(user, property)) {
           return { statusCode: 403, body: 'Only REC/Admin can reopen a submitted Duty Log' };
@@ -304,7 +336,21 @@ export async function handler(event) {
         updates.status = 'reopened';
         updates.reopened_at = now;
         updates.reopened_by_username = user.sub;
+        const hadRequest = !!existing.edit_requested;
+        if (hadRequest) {
+          updates.edit_requested = false;
+          updates.edit_request_resolved_at = now;
+          updates.edit_request_resolved_by_username = user.sub;
+        }
         await col.updateOne({ _id: new ObjectId(id), property }, { $set: updates });
+        if (existing.primary_ra_username && existing.primary_ra_username !== user.sub) {
+          await notifyDutyLog(
+            db, property, [existing.primary_ra_username], 'edit_unlocked',
+            'Duty Log unlocked for editing',
+            `${user.sub} ${hadRequest ? 'approved your edit request and unlocked' : 'unlocked'} the ${existing.duty_date} Duty Log. You can edit it again now.`,
+            { sessionId: id, dutyDate: existing.duty_date }
+          );
+        }
         return json(200, { success: true, reopened_at: now });
       }
 

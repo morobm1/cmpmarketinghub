@@ -63,12 +63,20 @@
           let data = null;
           try { data = await res.json(); } catch(e) {}
           const RESLIFE_ROLES = ['reslife-ra', 'reslife-rec', 'reslife-admin'];
-          // Reslife accounts ALWAYS go to the Reslife Hub, regardless of any
-          // leftover ?redirect= left behind by a Marketing Hub page's own
-          // auth guard (e.g. someone bookmarked a Marketing Hub page) — a
-          // Reslife account has zero access to Marketing Hub pages, so
-          // honoring that redirect would silently strand them there.
-          if (data && data.user && RESLIFE_ROLES.includes(data.user.role)) { window.location.href = 'reslife_hub.html'; return; }
+          // Reslife accounts ALWAYS land on a Reslife Hub page, regardless of any
+          // leftover ?redirect= left behind by a Marketing Hub page's own auth
+          // guard (e.g. someone bookmarked a Marketing Hub page) — a Reslife
+          // account has zero access to Marketing Hub pages, so honoring that
+          // redirect would silently strand them there. The one exception is a
+          // same-origin deep link into a Reslife Hub page itself (e.g. the
+          // bookmarkable reslife_duty_log_mobile.html sending users straight
+          // back into reslife_hub.html?tab=dutylog after login) — allow-listed
+          // by prefix so this can never become an open redirect.
+          const RESLIFE_REDIRECT_OK = /^reslife_(hub|duty_log_mobile)\.html(\?|$)/;
+          if (data && data.user && RESLIFE_ROLES.includes(data.user.role)) {
+            window.location.href = (redir && RESLIFE_REDIRECT_OK.test(redir)) ? redir : 'reslife_hub.html';
+            return;
+          }
           if (redir) { window.location.href = redir; return; }
           if (data && data.user && data.user.role === 'maintenance') { window.location.href = 'custom_tools.html'; return; }
           window.location.href = 'mmp_calendar_app.html';
@@ -99,10 +107,15 @@
         if (me.ok){
           const data = await me.json();
           const RESLIFE_ROLES = ['reslife-ra', 'reslife-rec', 'reslife-admin'];
-          // Same rule as the login handler above: Reslife accounts always go
-          // to the Reslife Hub first, before any leftover ?redirect= is honored.
-          if (RESLIFE_ROLES.includes(data.role)) { window.location.href = 'reslife_hub.html'; return; }
           const redir=new URLSearchParams(window.location.search).get('redirect');
+          // Same allow-listed exception as the login handler above: honor a
+          // same-origin deep link into a Reslife Hub page, else always default
+          // to reslife_hub.html — never a leftover Marketing Hub ?redirect=.
+          const RESLIFE_REDIRECT_OK = /^reslife_(hub|duty_log_mobile)\.html(\?|$)/;
+          if (RESLIFE_ROLES.includes(data.role)) {
+            window.location.href = (redir && RESLIFE_REDIRECT_OK.test(redir)) ? redir : 'reslife_hub.html';
+            return;
+          }
           if (redir) { window.location.href = redir; return; }
           window.location.href = (data.role === 'maintenance') ? 'custom_tools.html' : 'mmp_calendar_app.html';
         }
