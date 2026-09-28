@@ -69,6 +69,18 @@ The dashboard keeps a clear separation between the **dataset that's currently on
 
 Uploading a new Excel file (via **Upload Excel File**) always *replaces* the records on screen — it is never combined/merged with whatever was previously displayed, whether that was a saved dataset or another upload. If a previous dataset was on screen, an informational "Dataset Comparison" popup shows what changed (new/removed records) purely for your reference; it does not save or alter anything.
 
+## Client Portal Links
+
+Give an external client their own secure, read-only view of a filtered slice of the data — without giving them access to this admin dashboard or any other part of the site.
+
+- **Access**: Click **Create Client Link** in the Export Tools section of the left rail.
+- **What gets shared**: A frozen snapshot of whatever is currently filtered/displayed on your screen at the moment you click Create. It does not update later — refresh it by creating a new link (or ask to extend this feature to support re-syncing, if that becomes needed).
+- **Comparison view (optional)**: You can pick two Saved Datasets to give the client a fixed, side-by-side comparison (maps + delta tables). The client cannot upload files or choose different datasets themselves.
+- **Export (optional)**: If enabled, the client can download a polished PDF report and an aggregate summary CSV (counts/breakdowns only — no per-student names or addresses).
+- **Credentials**: A username you choose plus an auto-generated password are shown exactly once after creation — copy them immediately, they cannot be retrieved again (only reset).
+- **Managing links**: Click **View existing client links…** inside the Create Client Link dialog to see every link created, copy its URL again, reset its password, revoke/reactivate it, or delete it permanently.
+- **Isolation**: The client portal (`client.html`) is a completely separate page with its own login form and its own authentication system (`netlify/functions/rv-client-portal.js`), signed with a dedicated secret (`RV_CLIENT_JWT_SECRET`, see `.env.example`) that is entirely independent of staff logins. A client credential only ever unlocks that one portal's frozen data — it cannot be used to reach this dashboard, any other Marketing Hub tool, or any other client's portal.
+
 ## Export Features
 
 ### Executive Map Report Export
@@ -101,12 +113,14 @@ A dedicated workflow for generating vendor-ready mailing list files.
 
 | File | Description |
 |------|-------------|
-| `index.html` | Main interactive web application |
+| `index.html` | Main interactive web application (staff-only, requires site login) |
+| `client.html` | Read-only client portal page — one file serves every client link, parameterized by `?p=<slug>`; has its own separate login |
 | `geocode.js` | Node.js data preprocessor |
 | `data.json` | Pre-processed geocoded data (generated) — used only as a fallback if no dataset has been saved yet |
 | `geocode-cache.json` | Geocoding cache (generated) |
 | `ALL Admits for Autumn 2026_as of 3_13_2026.xlsx` | Source Excel file |
 | `../netlify/functions/rv-data.js` | Backend API for saved datasets, dataset diff snapshots, and mailer history (MongoDB-backed) |
+| `../netlify/functions/rv-client-portal.js` | Backend API for creating/managing client portal links and serving the client-side login + data (isolated auth, MongoDB-backed) |
 
 ## Dependencies
 

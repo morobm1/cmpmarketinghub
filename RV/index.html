@@ -649,6 +649,13 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;bac
               <span class="btn-desc">View past mailers, send status, overlap</span>
             </div>
           </button>
+          <button class="btn-export" id="openClientLink">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <div>
+              <span>Create Client Link</span>
+              <span class="btn-desc">Secure, login-protected portal for a client</span>
+            </div>
+          </button>
         </div>
       </div>
 
@@ -1102,6 +1109,122 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;bac
     </div>
     <div class="modal-footer">
       <button class="btn" id="savedDatasetsDismiss">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CREATE CLIENT LINK MODAL ═══════════════════════════════ -->
+<div class="modal-overlay" id="clientLinkModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Create Client Link
+      </h2>
+      <button class="modal-close" id="clientLinkClose">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="exec-form-group">
+        <label>Client Name</label>
+        <input type="text" id="cpClientName" placeholder="e.g., ABC University Partners">
+      </div>
+      <div class="exec-form-group" style="margin-top:12px">
+        <label>Client Username</label>
+        <input type="text" id="cpUsername" placeholder="e.g., abc-partners">
+      </div>
+      <p style="font-size:12px;color:var(--subtext);margin-top:10px" id="cpDataInfo"></p>
+
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+        <label class="dm-checkbox-row" style="padding:4px 0">
+          <input type="checkbox" id="cpAllowExport" checked> Allow client to export (Executive Report + summary CSV)
+        </label>
+        <label class="dm-checkbox-row" style="padding:4px 0">
+          <input type="checkbox" id="cpAllowCompare"> Include a comparison view
+        </label>
+        <p style="font-size:11px;color:var(--subtext);margin:2px 0 0 26px" id="cpCompareHint"></p>
+      </div>
+
+      <div id="cpCompareFields" style="display:none;margin-top:10px;padding:12px;background:#f8fafc;border-radius:8px;border:1px solid var(--border)">
+        <div class="dm-filter-grid">
+          <div class="dm-filter-group">
+            <label>Comparison Dataset A</label>
+            <select id="cpCompareA"></select>
+          </div>
+          <div class="dm-filter-group">
+            <label>Comparison Dataset B</label>
+            <select id="cpCompareB"></select>
+          </div>
+        </div>
+        <p style="font-size:11px;color:var(--subtext);margin-top:8px">Both must be Saved Datasets. The client will see this fixed comparison only — they cannot upload files or pick other data.</p>
+      </div>
+
+      <p style="font-size:12px;margin-top:16px">
+        <a href="#" id="cpViewExisting" style="color:var(--brand);font-weight:600;text-decoration:none">View existing client links…</a>
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" id="cpCancel">Cancel</button>
+      <button class="btn primary" id="cpCreate">Create Client Link</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CLIENT LINK CREATED (credentials shown once) ══════════════ -->
+<div class="modal-overlay" id="clientLinkResultModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Client Link Created</h2>
+      <button class="modal-close" id="cpResultClose">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="dm-warning warn" style="margin-bottom:14px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Save these credentials now — the password will not be shown again.
+      </div>
+      <div class="exec-form-group">
+        <label>Portal URL</label>
+        <div style="display:flex;gap:6px">
+          <input type="text" id="cpResultUrl" readonly style="flex:1">
+          <button class="btn" id="cpCopyUrl" style="width:auto">Copy</button>
+        </div>
+      </div>
+      <div class="exec-form-group" style="margin-top:10px">
+        <label>Username</label>
+        <div style="display:flex;gap:6px">
+          <input type="text" id="cpResultUsername" readonly style="flex:1">
+          <button class="btn" id="cpCopyUsername" style="width:auto">Copy</button>
+        </div>
+      </div>
+      <div class="exec-form-group" style="margin-top:10px">
+        <label>Password</label>
+        <div style="display:flex;gap:6px">
+          <input type="text" id="cpResultPassword" readonly style="flex:1">
+          <button class="btn" id="cpCopyPassword" style="width:auto">Copy</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn primary" id="cpResultDone">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CLIENT LINKS MANAGEMENT ════════════════════════════════ -->
+<div class="modal-overlay" id="clientLinksListModal">
+  <div class="modal wide">
+    <div class="modal-header">
+      <h2>Client Portal Links</h2>
+      <button class="modal-close" id="cpListClose">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="cpLinksList"></div>
+      <div id="cpLinksEmpty" style="display:none;text-align:center;padding:40px;color:var(--subtext)">
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px">No client links created yet</div>
+        <div style="font-size:12px">Use "Create Client Link" to give an external client their own secure portal.</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" id="cpListDismiss">Close</button>
     </div>
   </div>
 </div>
@@ -3653,6 +3776,271 @@ function buildStandaloneMap(containerId, records) {
 }
 
 // ══════════════════════════════════════════════════════════════════
+//  CLIENT PORTAL LINKS
+//
+//  Creates login-protected, read-only portals for external clients. Backed
+//  by netlify/functions/rv-client-portal.js, which is deliberately isolated
+//  from the staff auth system (separate secret, separate cookie, separate
+//  collection) so a client credential can never grant access to anything
+//  beyond their own portal page (RV/client.html).
+// ══════════════════════════════════════════════════════════════════
+const CLIENT_PORTAL_API = '/.netlify/functions/rv-client-portal';
+
+async function cpFetch(method, path, data) {
+  try {
+    const opts = { method };
+    if (data !== undefined) {
+      opts.headers = { 'Content-Type': 'application/json' };
+      opts.body = JSON.stringify(data);
+    }
+    const resp = await fetch(`${CLIENT_PORTAL_API}${path}`, opts);
+    let body = null;
+    try { body = await resp.json(); } catch (e) {}
+    return { ok: resp.ok, status: resp.status, body };
+  } catch (e) {
+    return { ok: false, status: 0, body: null };
+  }
+}
+
+function initClientPortal() {
+  const createModal = document.getElementById('clientLinkModal');
+  const resultModal = document.getElementById('clientLinkResultModal');
+  const listModal = document.getElementById('clientLinksListModal');
+
+  document.getElementById('openClientLink').addEventListener('click', openClientLinkModal);
+  document.getElementById('clientLinkClose').addEventListener('click', () => createModal.classList.remove('active'));
+  document.getElementById('cpCancel').addEventListener('click', () => createModal.classList.remove('active'));
+  createModal.addEventListener('click', (e) => { if (e.target === createModal) createModal.classList.remove('active'); });
+
+  document.getElementById('cpAllowCompare').addEventListener('change', (e) => {
+    document.getElementById('cpCompareFields').style.display = e.target.checked ? 'block' : 'none';
+  });
+
+  document.getElementById('cpClientName').addEventListener('input', (e) => {
+    const usernameEl = document.getElementById('cpUsername');
+    if (!usernameEl.dataset.touched) usernameEl.value = slugify(e.target.value);
+  });
+  document.getElementById('cpUsername').addEventListener('input', (e) => { e.target.dataset.touched = '1'; });
+
+  document.getElementById('cpCreate').addEventListener('click', submitClientLink);
+
+  document.getElementById('cpViewExisting').addEventListener('click', (e) => {
+    e.preventDefault();
+    createModal.classList.remove('active');
+    openClientLinksList();
+  });
+
+  // Result modal (credentials shown once)
+  const closeResult = () => resultModal.classList.remove('active');
+  document.getElementById('cpResultClose').addEventListener('click', closeResult);
+  document.getElementById('cpResultDone').addEventListener('click', closeResult);
+  document.getElementById('cpCopyUrl').addEventListener('click', () => copyInputValue('cpResultUrl', 'cpCopyUrl'));
+  document.getElementById('cpCopyUsername').addEventListener('click', () => copyInputValue('cpResultUsername', 'cpCopyUsername'));
+  document.getElementById('cpCopyPassword').addEventListener('click', () => copyInputValue('cpResultPassword', 'cpCopyPassword'));
+
+  // Management list modal
+  const closeList = () => listModal.classList.remove('active');
+  document.getElementById('cpListClose').addEventListener('click', closeList);
+  document.getElementById('cpListDismiss').addEventListener('click', closeList);
+  listModal.addEventListener('click', (e) => { if (e.target === listModal) closeList(); });
+}
+
+function clientPortalUrlForSlug(slug) {
+  const basePath = window.location.pathname.replace(/index\.html$/, '');
+  return `${window.location.origin}${basePath}client.html?p=${encodeURIComponent(slug)}`;
+}
+
+async function openClientLinkModal() {
+  document.getElementById('cpClientName').value = '';
+  const usernameEl = document.getElementById('cpUsername');
+  usernameEl.value = '';
+  delete usernameEl.dataset.touched;
+  document.getElementById('cpAllowExport').checked = true;
+  const compareCb = document.getElementById('cpAllowCompare');
+  compareCb.checked = false;
+  document.getElementById('cpCompareFields').style.display = 'none';
+
+  const count = filteredRecords.length;
+  document.getElementById('cpDataInfo').textContent = count
+    ? `This portal will show your current filtered view: ${formatNum(count)} record${count === 1 ? '' : 's'}.`
+    : 'No records are currently displayed — adjust your filters before creating a client link.';
+
+  const datasets = (await apiGet('datasets')) || [];
+  const optsHtml = datasets.map(ds => `<option value="${ds.id || ds._id}">${escHtml(ds.name)}</option>`).join('');
+  document.getElementById('cpCompareA').innerHTML = optsHtml;
+  document.getElementById('cpCompareB').innerHTML = optsHtml;
+
+  const hint = document.getElementById('cpCompareHint');
+  if (datasets.length < 2) {
+    compareCb.checked = false;
+    compareCb.disabled = true;
+    hint.textContent = 'Save at least two datasets to enable a comparison view.';
+  } else {
+    compareCb.disabled = false;
+    hint.textContent = '';
+  }
+
+  document.getElementById('clientLinkModal').classList.add('active');
+}
+
+async function submitClientLink() {
+  const clientName = document.getElementById('cpClientName').value.trim();
+  const username = document.getElementById('cpUsername').value.trim();
+  const allowExport = document.getElementById('cpAllowExport').checked;
+  const allowCompare = document.getElementById('cpAllowCompare').checked;
+
+  if (!clientName) { alert('Please enter a client name.'); return; }
+  if (!username) { alert('Please enter a username.'); return; }
+  if (!filteredRecords.length) { alert('There is no data currently displayed to share.'); return; }
+
+  let comparePayload = null;
+  if (allowCompare) {
+    const idA = document.getElementById('cpCompareA').value;
+    const idB = document.getElementById('cpCompareB').value;
+    if (!idA || !idB) { alert('Please pick two datasets to compare.'); return; }
+    if (idA === idB) { alert('Please pick two different datasets to compare.'); return; }
+    const [dsA, dsB] = await Promise.all([apiGet(`datasets/${idA}`), apiGet(`datasets/${idB}`)]);
+    if (!dsA || !Array.isArray(dsA.records) || !dsB || !Array.isArray(dsB.records)) {
+      alert('Could not load the selected comparison datasets.');
+      return;
+    }
+    comparePayload = {
+      a: { name: dsA.name, records: dsA.records },
+      b: { name: dsB.name, records: dsB.records }
+    };
+  }
+
+  const createBtn = document.getElementById('cpCreate');
+  createBtn.disabled = true;
+  createBtn.textContent = 'Creating…';
+
+  const payload = {
+    clientName, username, allowExport, allowCompare,
+    primary: {
+      name: (currentDatasetMeta && (currentDatasetMeta.name || currentDatasetMeta.sourceFile)) || 'Admit Radius Data',
+      records: filteredRecords
+    },
+    compare: comparePayload
+  };
+
+  const res = await cpFetch('POST', '/admin/portals', payload);
+
+  createBtn.disabled = false;
+  createBtn.textContent = 'Create Client Link';
+
+  if (!res.ok) {
+    alert((res.body && res.body.error) || 'Could not create the client link.');
+    return;
+  }
+
+  document.getElementById('clientLinkModal').classList.remove('active');
+
+  document.getElementById('cpResultUrl').value = clientPortalUrlForSlug(res.body.slug);
+  document.getElementById('cpResultUsername').value = res.body.username;
+  document.getElementById('cpResultPassword').value = res.body.password;
+  document.getElementById('clientLinkResultModal').classList.add('active');
+}
+
+function copyInputValue(inputId, btnId) {
+  const el = document.getElementById(inputId);
+  el.select();
+  const done = () => {
+    if (!btnId) return;
+    const btn = document.getElementById(btnId);
+    const original = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = original; }, 1500);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(el.value).then(done).catch(() => { try { document.execCommand('copy'); done(); } catch (e) {} });
+  } else {
+    try { document.execCommand('copy'); done(); } catch (e) {}
+  }
+}
+
+async function openClientLinksList() {
+  const listEl = document.getElementById('cpLinksList');
+  const emptyEl = document.getElementById('cpLinksEmpty');
+  listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--subtext);font-size:12px">Loading…</div>';
+  emptyEl.style.display = 'none';
+
+  const res = await cpFetch('GET', '/admin/portals');
+  const portals = (res.ok && Array.isArray(res.body)) ? res.body : [];
+
+  if (!portals.length) {
+    listEl.innerHTML = '';
+    emptyEl.style.display = '';
+  } else {
+    listEl.innerHTML = portals.map(p => {
+      const id = p.id || p._id;
+      const dateStr = new Date(p.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      return `<div class="mailer-card" data-id="${id}">
+        <div class="mailer-card-header">
+          <div>
+            <div class="mailer-card-title">${escHtml(p.clientName)}</div>
+            <div class="mailer-card-date">Created ${dateStr} · Username: ${escHtml(p.username)}</div>
+          </div>
+          <span class="mailer-status-badge ${p.status === 'active' ? 'sent' : 'draft'}">${p.status === 'active' ? 'Active' : 'Revoked'}</span>
+        </div>
+        <div class="mailer-card-meta">
+          <span>${formatNum(p.primaryRecordCount || 0)} records</span>
+          <span>${p.allowExport ? 'Export allowed' : 'No export'}</span>
+          <span>${p.allowCompare ? 'Comparison enabled' : 'Single view only'}</span>
+        </div>
+        <div class="mailer-card-actions">
+          <button data-action="copy" data-id="${id}">Copy Link</button>
+          <button data-action="reset" data-id="${id}">Reset Password</button>
+          <button data-action="toggle" data-id="${id}" data-status="${p.status}">${p.status === 'active' ? 'Revoke' : 'Reactivate'}</button>
+          <button data-action="delete" data-id="${id}" style="color:#ef4444">Delete</button>
+        </div>
+      </div>`;
+    }).join('');
+
+    const portalById = {};
+    portals.forEach(p => { portalById[p.id || p._id] = p; });
+
+    listEl.querySelectorAll('.mailer-card-actions button').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const action = btn.dataset.action;
+        const id = btn.dataset.id;
+        const portal = portalById[id];
+
+        if (action === 'copy') {
+          copyToClipboardSilently(clientPortalUrlForSlug(portal.slug));
+          const original = btn.textContent;
+          btn.textContent = 'Copied!';
+          setTimeout(() => { btn.textContent = original; }, 1500);
+        } else if (action === 'reset') {
+          if (!confirm('Generate a new password for this client? The old password will stop working immediately.')) return;
+          const r = await cpFetch('PUT', `/admin/portals/${id}`, { resetPassword: true });
+          if (r.ok && r.body && r.body.password) {
+            alert(`New password for ${portal.clientName}:\n\n${r.body.password}\n\nShare this with the client now — it will not be shown again.`);
+          } else {
+            alert('Could not reset the password.');
+          }
+        } else if (action === 'toggle') {
+          const newStatus = btn.dataset.status === 'active' ? 'revoked' : 'active';
+          await cpFetch('PUT', `/admin/portals/${id}`, { status: newStatus });
+          openClientLinksList();
+        } else if (action === 'delete') {
+          if (!confirm(`Permanently delete the client link for ${portal.clientName}? They will immediately lose access.`)) return;
+          await cpFetch('DELETE', `/admin/portals/${id}`);
+          openClientLinksList();
+        }
+      });
+    });
+  }
+
+  document.getElementById('clientLinksListModal').classList.add('active');
+}
+
+function copyToClipboardSilently(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).catch(() => {});
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
 //  MAILER HISTORY & TRACKING
 // ══════════════════════════════════════════════════════════════════
 // In-memory cache of mailer history (loaded from API)
@@ -3919,6 +4307,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initDatasetPicker();
   initViewSwitch();
   initCompareView();
+  initClientPortal();
   await init();
 });
 

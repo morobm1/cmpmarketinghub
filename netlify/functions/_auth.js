@@ -32,7 +32,7 @@ export function signToken(user){
   return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES });
 }
 
-function parseCookies(event){
+export function parseCookies(event){
   const raw = event.headers.cookie || event.headers.Cookie || '';
   const out = {};
   raw.split(';').forEach(p => {
