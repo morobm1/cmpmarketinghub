@@ -324,6 +324,16 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;bac
 .exec-preset-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
 .exec-preset-chip{padding:5px 12px;border-radius:999px;border:1px solid var(--border);background:#fff;font-size:11px;font-weight:600;cursor:pointer;color:var(--subtext);transition:all .15s}
 .exec-preset-chip:hover,.exec-preset-chip.active{background:var(--brand-light);border-color:var(--brand);color:var(--brand)}
+
+/* Resident Heat Map */
+.resident-kpi-row{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.resident-kpi-card{flex:1;min-width:110px;text-align:center;padding:12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg)}
+.resident-kpi-card .v{font-size:22px;font-weight:800;color:var(--text)}
+.resident-kpi-card .l{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--subtext);margin-top:2px}
+.resident-kpi-card.band-green{border-left:3px solid var(--green)} .resident-kpi-card.band-green .v{color:var(--green)}
+.resident-kpi-card.band-orange{border-left:3px solid var(--orange)} .resident-kpi-card.band-orange .v{color:var(--orange)}
+.resident-kpi-card.band-red{border-left:3px solid var(--red)} .resident-kpi-card.band-red .v{color:var(--red)}
+.resident-kpi-card.band-purple{border-left:3px solid var(--purple)} .resident-kpi-card.band-purple .v{color:var(--purple)}
 .exec-preview{margin-top:16px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:#f8fafc}
 .exec-preview-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--subtext);padding:10px 14px;border-bottom:1px solid var(--border)}
 .exec-filter-summary{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
@@ -654,6 +664,23 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;bac
             <div>
               <span>Create Client Link</span>
               <span class="btn-desc">Secure, login-protected portal for a client</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Current Resident Heat Map -->
+      <div class="section">
+        <div class="section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-5.33-7-11a7 7 0 0 1 14 0c0 5.67-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+          Current Residents
+        </div>
+        <div class="export-btns">
+          <button class="btn-export" id="openResidentHeatmap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-5.33-7-11a7 7 0 0 1 14 0c0 5.67-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+            <div>
+              <span>Current Resident Heat Map</span>
+              <span class="btn-desc">Upload a resident roster to map where they live</span>
             </div>
           </button>
         </div>
@@ -1229,12 +1256,65 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;bac
   </div>
 </div>
 
+<!-- ═══ CURRENT RESIDENT HEAT MAP MODAL ══════════════════════════ -->
+<div class="modal-overlay" id="residentHeatmapModal">
+  <div class="modal wide" style="max-width:1180px">
+    <div class="modal-header">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-5.33-7-11a7 7 0 0 1 14 0c0 5.67-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+        Current Resident Heat Map
+      </h2>
+      <button class="modal-close" id="residentHeatmapClose">&times;</button>
+    </div>
+    <div class="modal-body">
+
+      <div id="residentUploadPrompt" style="text-align:center;padding:36px 20px">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--brand);opacity:0.4;margin-bottom:14px"><path d="M12 21s-7-5.33-7-11a7 7 0 0 1 14 0c0 5.67-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+        <h3 style="font-size:16px;font-weight:700;margin-bottom:8px">Upload Current Resident Data</h3>
+        <p style="font-size:13px;color:var(--subtext);max-width:520px;margin:0 auto 18px;line-height:1.6">
+          Upload your current resident roster (.xlsx). Headers should start on <strong>row 6</strong> with columns
+          <strong>Name, Occupant Type, Bldg-Unit, Street Line1, Street Line2, Street Line3, City, State/Province, Postal Code, Country</strong> (A–J), with resident rows starting on <strong>row 7</strong>.
+        </p>
+        <label class="btn primary" style="cursor:pointer;width:auto;display:inline-flex" for="residentFileInput">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Upload Resident Data Sheet
+        </label>
+        <input type="file" id="residentFileInput" accept=".xlsx,.xls,.csv" style="display:none">
+      </div>
+
+      <div id="residentMapView" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+          <div id="residentSummary" style="font-size:13px;color:var(--subtext);font-weight:500"></div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <div id="residentViewSwitch" style="display:flex;gap:6px">
+              <button class="exec-preset-chip active" type="button" data-view="radius">Radius View</button>
+              <button class="exec-preset-chip" type="button" data-view="heat">Heat Map</button>
+            </div>
+            <label class="btn" style="cursor:pointer;width:auto" for="residentFileInput">Upload Different File</label>
+          </div>
+        </div>
+        <div class="resident-kpi-row" id="residentKpiRow"></div>
+        <div id="residentMapEl" style="height:560px;border-radius:var(--radius-lg);border:2px solid var(--border);overflow:hidden"></div>
+        <div class="data-quality" id="residentDataQuality" style="display:none;margin-top:12px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span><strong id="residentFailedCount">0</strong> resident(s) could not be geocoded (unrecognized zip/city) and are excluded from the map.</span>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn" id="residentHeatmapDismiss">Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- Hidden export render container -->
 <div id="execExportCanvas"></div>
 
 <!-- Libraries -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -4041,6 +4121,286 @@ function copyToClipboardSilently(text) {
 }
 
 // ══════════════════════════════════════════════════════════════════
+//  CURRENT RESIDENT HEAT MAP
+//
+//  A standalone, ephemeral tool: upload a current-resident roster (not an
+//  admissions extract) and see where residents live relative to the
+//  Residential Village, as both a radius/band map and a density heat map.
+//  Nothing here is saved/persisted or sent anywhere — it lives only in the
+//  browser for the duration of the modal, same lifetime as a plain file
+//  preview. Column headers start on row 6, resident rows start on row 7.
+// ══════════════════════════════════════════════════════════════════
+let residentRecords = [];
+let residentMap = null;
+let residentMarkerCluster = null;
+let residentHeatLayer = null;
+let residentMapMode = 'radius';
+
+// Header matching is case/spacing-insensitive (e.g. "Occupant type" vs
+// "Occupant Type" both resolve), since exact header capitalization can
+// vary slightly between exported rosters.
+const RESIDENT_COLUMN_ALIASES = {
+  name: ['name'],
+  occupantType: ['occupant type'],
+  bldgUnit: ['bldg-unit', 'bldg unit'],
+  street1: ['street line1', 'street line 1'],
+  street2: ['street line2', 'street line 2'],
+  street3: ['street line3', 'street line 3'],
+  city: ['city'],
+  state: ['state/province', 'state / province', 'state'],
+  zip: ['postal code', 'zip', 'zip code', 'zipcode'],
+  country: ['country']
+};
+
+function normalizeHeaderKey(k) {
+  return String(k == null ? '' : k).trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function normalizeResidentRow(row) {
+  const lowerMap = {};
+  Object.keys(row).forEach(k => { lowerMap[normalizeHeaderKey(k)] = row[k]; });
+  const out = {};
+  Object.entries(RESIDENT_COLUMN_ALIASES).forEach(([field, aliases]) => {
+    let value = '';
+    for (const alias of aliases) {
+      if (lowerMap[alias] !== undefined && lowerMap[alias] !== '') { value = lowerMap[alias]; break; }
+    }
+    out[field] = value;
+  });
+  return out;
+}
+
+// Parses the resident roster: headers on row 6 (0-based index 5), so
+// sheet_to_json's `range` option skips straight to that row for headers,
+// with every following row treated as data (row 7 onward).
+function parseResidentExcelFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Could not read the file'));
+    reader.onload = function(e) {
+      try {
+        const wb = XLSX.read(e.target.result, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rawData = XLSX.utils.sheet_to_json(ws, { range: 5, defval: '' });
+
+        let cache = {};
+        try { cache = JSON.parse(localStorage.getItem('uwb-geocode-cache') || '{}'); } catch (err) {}
+
+        fetch('geocode-cache.json')
+          .then(r => r.ok ? r.json() : {})
+          .catch(() => ({}))
+          .then(fileCache => {
+            cache = { ...fileCache, ...cache };
+
+            const records = rawData.map((rawRow, idx) => {
+              const row = normalizeResidentRow(rawRow);
+              const zip = cleanZip(row.zip);
+              const city = cleanStr(row.city);
+              const state = cleanStr(row.state);
+              const key = zip ? `zip:${zip}` : `cs:${city}|${state}`;
+              const geo = cache[key];
+
+              const record = {
+                id: idx + 1,
+                name: cleanStr(row.name),
+                occupantType: cleanStr(row.occupantType),
+                bldgUnit: cleanStr(row.bldgUnit),
+                street1: cleanStr(row.street1),
+                street2: cleanStr(row.street2),
+                street3: cleanStr(row.street3),
+                city, state, zip,
+                country: cleanStr(row.country),
+                lat: geo ? geo.lat : null,
+                lng: geo ? geo.lng : null,
+                geocoded: !!geo
+              };
+
+              if (record.lat && record.lng) {
+                record.distance = Math.round(haversine(ORIGIN.lat, ORIGIN.lng, record.lat, record.lng) * 10) / 10;
+                record.band = getBandLabel(record.distance);
+              } else {
+                record.distance = null;
+                record.band = 'Unknown';
+              }
+
+              return record;
+            }).filter(r => r.name || r.street1 || r.zip || r.city); // drop blank trailing rows
+
+            resolve(records);
+          });
+      } catch (err) {
+        reject(err);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function computeResidentStats(records) {
+  const total = records.length;
+  const geocoded = records.filter(r => r.geocoded).length;
+  const bandCounts = {};
+  BANDS.forEach(b => bandCounts[b.label] = 0);
+  records.forEach(r => { if (bandCounts[r.band] !== undefined) bandCounts[r.band]++; });
+  return { total, geocoded, bandCounts };
+}
+
+function initResidentHeatmap() {
+  const modal = document.getElementById('residentHeatmapModal');
+
+  document.getElementById('openResidentHeatmap').addEventListener('click', () => {
+    modal.classList.add('active');
+    setTimeout(() => { if (residentMap) residentMap.invalidateSize(); }, 100);
+  });
+
+  const closeModal = () => modal.classList.remove('active');
+  document.getElementById('residentHeatmapClose').addEventListener('click', closeModal);
+  document.getElementById('residentHeatmapDismiss').addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+  document.getElementById('residentFileInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) processResidentFile(file);
+    e.target.value = '';
+  });
+
+  document.querySelectorAll('#residentViewSwitch .exec-preset-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#residentViewSwitch .exec-preset-chip').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      setResidentMapMode(btn.dataset.view);
+    });
+  });
+}
+
+function processResidentFile(file) {
+  setLoadingStatus('Processing resident data...');
+  document.getElementById('loadingOverlay').classList.remove('hidden');
+
+  parseResidentExcelFile(file).then(records => {
+    hideLoading();
+    if (!records.length) {
+      alert('No resident rows were found starting at row 7. Please check that the file matches the expected column layout.');
+      return;
+    }
+    residentRecords = records;
+    renderResidentView();
+  }).catch(err => {
+    hideLoading();
+    alert('Error reading the resident file: ' + err.message);
+  });
+}
+
+function renderResidentView() {
+  document.getElementById('residentUploadPrompt').style.display = 'none';
+  document.getElementById('residentMapView').style.display = 'block';
+
+  const stats = computeResidentStats(residentRecords);
+
+  document.getElementById('residentSummary').textContent =
+    `${formatNum(stats.total)} resident${stats.total === 1 ? '' : 's'} loaded · ${formatNum(stats.geocoded)} mapped`;
+
+  document.getElementById('residentKpiRow').innerHTML = `
+    <div class="resident-kpi-card"><div class="v">${formatNum(stats.total)}</div><div class="l">Total Residents</div></div>
+    ${BANDS.map(b => `<div class="resident-kpi-card band-${b.cssClass}"><div class="v">${formatNum(stats.bandCounts[b.label])}</div><div class="l">${b.label}</div></div>`).join('')}
+  `;
+
+  const failed = stats.total - stats.geocoded;
+  const dq = document.getElementById('residentDataQuality');
+  if (failed > 0) {
+    dq.style.display = 'flex';
+    document.getElementById('residentFailedCount').textContent = formatNum(failed);
+  } else {
+    dq.style.display = 'none';
+  }
+
+  buildResidentMap();
+}
+
+function buildResidentMap() {
+  if (residentMap) { residentMap.remove(); residentMap = null; residentMarkerCluster = null; residentHeatLayer = null; }
+
+  residentMap = L.map('residentMapEl', { center: [ORIGIN.lat, ORIGIN.lng], zoom: 7, zoomControl: true, maxZoom: 18, minZoom: 2 });
+  addBasemap(residentMap);
+
+  const originIcon = L.divIcon({
+    className: '',
+    html: '<div style="position:relative"><div class="origin-marker"></div></div>',
+    iconSize: [16, 16], iconAnchor: [8, 8]
+  });
+  L.marker([ORIGIN.lat, ORIGIN.lng], { icon: originIcon, zIndexOffset: 1000 })
+    .bindPopup('<div style="font-size:12px;font-weight:700;color:var(--brand)">Residential Village</div><div style="font-size:11px;color:#64748b;margin-top:2px">17927 113th Ave NE<br>Bothell, WA 98011</div>')
+    .addTo(residentMap);
+
+  RADIUS_MILES.forEach(miles => {
+    L.circle([ORIGIN.lat, ORIGIN.lng], {
+      radius: miles * MILES_TO_METERS, color: 'rgba(75,46,131,0.25)', weight: 1.5,
+      fillColor: 'rgba(75,46,131,0.03)', fillOpacity: 1, dashArray: '6,4', interactive: false
+    }).addTo(residentMap);
+  });
+
+  const geocodedRecords = residentRecords.filter(r => r.lat && r.lng);
+
+  // Radius/band cluster layer — no names shown in popups, consistent with
+  // the privacy approach used throughout the rest of this tool.
+  residentMarkerCluster = L.markerClusterGroup({
+    maxClusterRadius: 50, showCoverageOnHover: false, zoomToBoundsOnClick: true,
+    iconCreateFunction: function(c) {
+      const count = c.getChildCount();
+      let dim = 36; if (count > 100) dim = 50; else if (count > 30) dim = 42;
+      const children = c.getAllChildMarkers();
+      const bc = {}; children.forEach(m => { const b = m.options.bandColor || '#8b5cf6'; bc[b] = (bc[b] || 0) + 1; });
+      const dominant = Object.entries(bc).sort((a, b) => b[1] - a[1])[0][0];
+      return L.divIcon({
+        html: `<div style="background:${dominant};color:#fff;width:${dim}px;height:${dim}px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:${count > 999 ? 11 : 13}px;font-family:Inter,sans-serif;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3)">${count > 999 ? Math.round(count / 100) / 10 + 'k' : count}</div>`,
+        className: '', iconSize: [dim, dim], iconAnchor: [dim / 2, dim / 2]
+      });
+    }
+  });
+
+  const markers = geocodedRecords.map(r => {
+    const band = getBandForDistance(r.distance);
+    const color = band ? band.color : '#8b5cf6';
+    const marker = L.marker([r.lat, r.lng], { icon: createMarkerIcon(color), bandColor: color });
+    marker.bindPopup(`<div style="min-width:160px;font-size:12px">
+      <div style="font-weight:700;margin-bottom:4px">${escHtml(r.occupantType || 'Resident')}</div>
+      <div style="color:#64748b">${escHtml(r.city || '—')}${r.state ? ', ' + escHtml(r.state) : ''} ${escHtml(r.zip || '')}</div>
+      ${r.distance != null ? `<div style="margin-top:6px;font-weight:700;color:${color}">${r.distance.toFixed(1)} mi from Bothell</div>` : ''}
+    </div>`, { maxWidth: 240 });
+    return marker;
+  });
+  residentMarkerCluster.addLayers(markers);
+
+  // Heat map layer — weight of 1 per resident, so overlapping zip-code
+  // centroids naturally accumulate into hotter areas.
+  const heatPoints = geocodedRecords.map(r => [r.lat, r.lng, 1]);
+  residentHeatLayer = L.heatLayer(heatPoints, {
+    radius: 22, blur: 18, maxZoom: 12,
+    gradient: { 0.2: '#4b2e83', 0.4: '#8b5cf6', 0.6: '#f97316', 0.8: '#ef4444', 1.0: '#fbbf24' }
+  });
+
+  if (geocodedRecords.length) {
+    const bounds = L.latLngBounds(geocodedRecords.map(r => [r.lat, r.lng])).extend([ORIGIN.lat, ORIGIN.lng]);
+    residentMap.fitBounds(bounds, { padding: [30, 30] });
+  }
+
+  setResidentMapMode(residentMapMode);
+  residentMap.invalidateSize();
+}
+
+function setResidentMapMode(mode) {
+  residentMapMode = mode;
+  if (!residentMap) return;
+  if (mode === 'heat') {
+    if (residentMarkerCluster) residentMap.removeLayer(residentMarkerCluster);
+    if (residentHeatLayer) residentMap.addLayer(residentHeatLayer);
+  } else {
+    if (residentHeatLayer) residentMap.removeLayer(residentHeatLayer);
+    if (residentMarkerCluster) residentMap.addLayer(residentMarkerCluster);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
 //  MAILER HISTORY & TRACKING
 // ══════════════════════════════════════════════════════════════════
 // In-memory cache of mailer history (loaded from API)
@@ -4308,6 +4668,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initViewSwitch();
   initCompareView();
   initClientPortal();
+  initResidentHeatmap();
   await init();
 });
 
