@@ -1,8 +1,10 @@
 import { getDb, ObjectId } from './_db.js';
+import { verifyReqAuth } from './_auth.js';
 
 const SNAPSHOTS_COL = 'rv_snapshots';
 const MAILERS_COL = 'rv_mailers';
 const DATASETS_COL = 'rv_datasets';
+const RESIDENT_DATASET_COL = 'rv_resident_dataset';
 
 export const handler = async (event, context) => {
   const headers = {
@@ -175,6 +177,54 @@ export const handler = async (event, context) => {
         result = await col.deleteOne({ id: parseInt(resourceId) });
       }
       return { statusCode: 200, headers, body: JSON.stringify({ success: true, deletedCount: result.deletedCount }) };
+    }
+
+    // ═══════════════════════════════════════════════════
+    //  RESIDENT DATASET (single persisted current-resident roster)
+    //
+    //  Unlike the admissions `datasets` resource (multiple named saves),
+    //  there is only ever one stored resident dataset — each upload
+    //  replaces it. Current residents' home addresses are sensitive, so
+    //  (unlike the rest of this file) every route here requires a staff
+    //  session via verifyReqAuth().
+    // ═══════════════════════════════════════════════════
+    if (resource === 'resident-dataset') {
+      const staff = verifyReqAuth(event);
+      if (!staff) return { statusCode: 401, headers, body: JSON.stringify({ error: 'Unauthorized' }) };
+
+      const col = db.collection(RESIDENT_DATASET_COL);
+
+      // GET /rv-data/resident-dataset — fetch the current stored roster, if any
+      if (event.httpMethod === 'GET') {
+        const doc = await col.findOne({ _key: 'current' });
+        return { statusCode: 200, headers, body: JSON.stringify(doc || null) };
+      }
+
+      // POST /rv-data/resident-dataset — replace the stored roster
+      if (event.httpMethod === 'POST') {
+        const body = JSON.parse(event.body || '{}');
+        if (!Array.isArray(body.records) || !body.records.length) {
+          return { statusCode: 400, headers, body: JSON.stringify({ error: 'records is required and must be non-empty' }) };
+        }
+        const doc = {
+          _key: 'current',
+          sourceFile: body.sourceFile || 'Unknown',
+          recordCount: body.records.length,
+          records: body.records,
+          uploadedAt: new Date().toISOString(),
+          uploadedBy: staff.sub || null
+        };
+        await col.updateOne({ _key: 'current' }, { $set: doc }, { upsert: true });
+        return { statusCode: 200, headers, body: JSON.stringify({ success: true, recordCount: doc.recordCount }) };
+      }
+
+      // DELETE /rv-data/resident-dataset — clear the stored roster
+      if (event.httpMethod === 'DELETE') {
+        await col.deleteOne({ _key: 'current' });
+        return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
+      }
+
+      return { statusCode: 404, headers, body: JSON.stringify({ error: 'Not found' }) };
     }
 
     // ═══════════════════════════════════════════════════
