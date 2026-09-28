@@ -176,7 +176,7 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;bac
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 
 <script>
 (function() {
@@ -544,18 +544,29 @@ function renderReportCharts(specs) {
   });
 }
 
-function reportChartPanel(title, canvasId, heightPx) {
-  return `<div style="flex:1;background:#fafbfc;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;min-width:0">
-    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;margin-bottom:8px">${escHtml(title)}</div>
-    <div style="flex:1;position:relative;height:${heightPx}px"><canvas id="${canvasId}"></canvas></div>
-  </div>`;
+// Elevated "card" style shared by every report panel — soft shadow instead
+// of a flat border, mirroring the internal admin dashboard's report style.
+function reportCard(innerHtml, flexGrow) {
+  return `<div style="flex:${flexGrow || 1};background:#fff;border-radius:14px;box-shadow:0 1px 2px rgba(15,23,42,0.04),0 1px 8px rgba(15,23,42,0.06);padding:16px 18px;display:flex;flex-direction:column;min-width:0;overflow:hidden">${innerHtml}</div>`;
+}
+
+function reportChartPanel(title, canvasId, flexGrow) {
+  return reportCard(`
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;margin-bottom:10px;flex-shrink:0">${escHtml(title)}</div>
+    <div style="flex:1;position:relative;min-height:0"><canvas id="${canvasId}"></canvas></div>
+  `, flexGrow);
 }
 
 function reportKpiCallout(value, label, color) {
-  return `<div style="flex:1;background:#fafbfc;border:1px solid #e2e8f0;border-left:4px solid ${color};border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;justify-content:center">
-    <div style="font-size:30px;font-weight:800;color:${color};line-height:1">${value}</div>
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-top:4px">${escHtml(label)}</div>
-  </div>`;
+  return reportCard(`
+    <div style="display:flex;align-items:center;gap:12px;height:100%">
+      <div style="width:4px;align-self:stretch;background:${color};border-radius:2px;flex-shrink:0"></div>
+      <div>
+        <div style="font-size:26px;font-weight:800;color:#0f172a;line-height:1.1">${value}</div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-top:3px">${escHtml(label)}</div>
+      </div>
+    </div>
+  `);
 }
 
 async function exportPdfReport() {
@@ -595,41 +606,45 @@ async function exportPdfReport() {
     const container = document.getElementById('execExportCanvas');
     container.style.width = PAGE_W + 'px';
     container.innerHTML = `
-      <div style="font-family:'Inter',system-ui,-apple-system,sans-serif;width:${PAGE_W}px;height:${PAGE_H}px;background:#fff;color:#0f172a;display:flex;flex-direction:column;overflow:hidden">
-        <div style="background:linear-gradient(135deg,#4b2e83 0%,#32174f 100%);color:#fff;padding:20px 40px 16px;display:flex;justify-content:space-between;align-items:flex-start;flex-shrink:0">
+      <div style="font-family:'Inter',system-ui,-apple-system,sans-serif;width:${PAGE_W}px;height:${PAGE_H}px;background:#f1f2f6;color:#0f172a;display:flex;flex-direction:column;overflow:hidden">
+        <div style="background:linear-gradient(135deg,#4b2e83 0%,#32174f 100%);color:#fff;padding:22px 40px 18px;display:flex;justify-content:space-between;align-items:flex-start;flex-shrink:0">
           <div>
             <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;opacity:0.6;margin-bottom:4px">University of Washington Bothell</div>
-            <div style="font-size:26px;font-weight:800;letter-spacing:-0.5px">${escHtml(portalData.clientName)} — Admit Radius Report</div>
+            <div style="font-size:27px;font-weight:800;letter-spacing:-0.5px">${escHtml(portalData.clientName)} — Admit Radius Report</div>
           </div>
           <div style="text-align:right;flex-shrink:0">
-            <div style="font-size:32px;font-weight:800;line-height:1">${formatNum(stats.total)}</div>
+            <div style="font-size:34px;font-weight:800;line-height:1">${formatNum(stats.total)}</div>
             <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.7">Total Displayed</div>
           </div>
         </div>
 
-        <!-- Map (compact) + KPI callouts -->
-        <div style="display:flex;gap:18px;padding:18px 32px 0;flex-shrink:0">
-          <div style="flex:1.3;position:relative;background:#f1f5f9;border-radius:12px;overflow:hidden;height:400px">
-            <div id="exec-map-slot" style="width:100%;height:100%"></div>
-            <div style="position:absolute;left:12px;bottom:12px;background:rgba(255,255,255,0.92);border-radius:8px;padding:7px 11px;display:flex;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,0.12)">
-              ${BANDS.map(b => `<div style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:50%;background:${b.color};display:inline-block"></span><span style="font-size:10px;font-weight:600;color:#334155">${b.label}</span></div>`).join('')}
-            </div>
-          </div>
-          <div style="width:270px;flex-shrink:0;display:flex;flex-direction:column;gap:12px">
+        <div style="flex:1;display:flex;flex-direction:column;padding:20px 32px;gap:16px;overflow:hidden">
+          <!-- KPI strip -->
+          <div style="display:flex;gap:16px;flex:0 0 96px">
             ${reportKpiCallout(formatNum(stats.total), 'Total Displayed', '#4b2e83')}
             ${reportKpiCallout(`${formatNum(stats.depositsPaid)} <span style="font-size:14px;color:#94a3b8;font-weight:600">(${depositsPct}%)</span>`, 'Deposits Paid', '#22c55e')}
             ${reportKpiCallout(`${topBand.label} <span style="font-size:14px;color:#94a3b8;font-weight:600">(${topBandPct}%)</span>`, 'Largest Distance Band', topBand.color)}
           </div>
+
+          <!-- Map paired directly with the radius/distance analysis (hero row) -->
+          <div style="display:flex;gap:16px;flex:1.5">
+            <div style="flex:1.4;position:relative;background:#f1f5f9;border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,0.04),0 1px 8px rgba(15,23,42,0.06)">
+              <div id="exec-map-slot" style="width:100%;height:100%"></div>
+              <div style="position:absolute;left:12px;bottom:12px;background:rgba(255,255,255,0.92);border-radius:8px;padding:7px 11px;display:flex;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,0.12)">
+                ${BANDS.map(b => `<div style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:50%;background:${b.color};display:inline-block"></span><span style="font-size:10px;font-weight:600;color:#334155">${b.label}</span></div>`).join('')}
+              </div>
+            </div>
+            ${reportChartPanel('Distance Breakdown — Radius Analysis', 'chart-band', 1)}
+          </div>
+
+          <!-- Secondary breakdowns -->
+          <div style="display:flex;gap:16px;flex:1">
+            ${reportChartPanel('Application Type', 'chart-apptype', 1)}
+            ${reportChartPanel('Campus Housing Interest', 'chart-housing', 1)}
+          </div>
         </div>
 
-        <!-- Analysis charts -->
-        <div style="display:flex;gap:18px;padding:18px 32px;flex:1;overflow:hidden">
-          ${reportChartPanel('Distance Breakdown', 'chart-band', 230)}
-          ${reportChartPanel('Application Type', 'chart-apptype', 230)}
-          ${reportChartPanel('Campus Housing Interest', 'chart-housing', 230)}
-        </div>
-
-        <div style="padding:10px 40px;background:#fafbfc;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
+        <div style="padding:10px 40px;background:#fff;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
           <div style="font-size:9px;color:#94a3b8;max-width:80%;line-height:1.4">Distances calculated from Bothell, WA via Haversine formula on geocoded locations. No personal names or contact details included.</div>
           <div style="font-size:9px;color:#94a3b8;text-align:right;white-space:nowrap">Generated ${exportDate}</div>
         </div>
