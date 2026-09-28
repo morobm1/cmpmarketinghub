@@ -1302,6 +1302,7 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;bac
 <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 
 <script>
 (function() {
@@ -2338,6 +2339,75 @@ function computeDatasetStats(records) {
   return { total, bandCounts, appTypeCounts, statusCounts, depositsPaid, housingCounts };
 }
 
+// ══════════════════════════════════════════════════════════════════
+//  SHARED REPORT CHARTING (used by the Admissions, Resident, and
+//  Client Portal Executive Reports so all three stay visually consistent)
+// ══════════════════════════════════════════════════════════════════
+let _reportChartInstances = [];
+const REPORT_PALETTE = ['#4b2e83', '#8b5cf6', '#f97316', '#22c55e', '#ef4444', '#0ea5e9', '#eab308', '#ec4899', '#14b8a6', '#a3a3a3'];
+
+function destroyReportCharts() {
+  _reportChartInstances.forEach(c => { try { c.destroy(); } catch (e) {} });
+  _reportChartInstances = [];
+}
+
+// Renders Chart.js charts into already-inserted <canvas> elements.
+// animation:false guarantees each chart is fully drawn synchronously, so
+// html2canvas captures the finished chart rather than a mid-animation frame.
+function renderReportCharts(specs) {
+  destroyReportCharts();
+  specs.forEach(spec => {
+    const canvas = document.getElementById(spec.canvasId);
+    if (!canvas) return;
+    const isBar = spec.type === 'bar';
+    const chart = new Chart(canvas.getContext('2d'), {
+      type: spec.type,
+      data: {
+        labels: spec.labels,
+        datasets: [{
+          data: spec.data,
+          backgroundColor: spec.colors,
+          borderWidth: isBar ? 0 : 2,
+          borderColor: '#ffffff',
+          borderRadius: isBar ? 4 : 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        layout: { padding: 4 },
+        plugins: {
+          legend: isBar ? { display: false } : {
+            position: 'right',
+            labels: { boxWidth: 10, padding: 8, font: { size: 10, family: 'Inter' }, color: '#334155' }
+          },
+          tooltip: { enabled: false }
+        },
+        scales: isBar ? {
+          x: { grid: { display: false }, ticks: { font: { size: 10, family: 'Inter' }, color: '#64748b' } },
+          y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 10, family: 'Inter' }, color: '#64748b', precision: 0 } }
+        } : undefined
+      }
+    });
+    _reportChartInstances.push(chart);
+  });
+}
+
+function reportChartPanel(title, canvasId, heightPx) {
+  return `<div style="flex:1;background:#fafbfc;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;min-width:0">
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;margin-bottom:8px">${escHtml(title)}</div>
+    <div style="flex:1;position:relative;height:${heightPx}px"><canvas id="${canvasId}"></canvas></div>
+  </div>`;
+}
+
+function reportKpiCallout(value, label, color) {
+  return `<div style="flex:1;background:#fafbfc;border:1px solid #e2e8f0;border-left:4px solid ${color};border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;justify-content:center">
+    <div style="font-size:30px;font-weight:800;color:${color};line-height:1">${value}</div>
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-top:4px">${escHtml(label)}</div>
+  </div>`;
+}
+
 async function generateExecExport() {
   const loading = document.getElementById('execLoading');
   const generateBtn = document.getElementById('execGenerate');
@@ -2379,6 +2449,35 @@ async function generateExecExport() {
       mapSlot.appendChild(mapImg);
     }
 
+    // Render the analysis charts into the canvases just inserted above
+    const housingEntries = [
+      ['Interested', housingCounts.Yes, '#4b2e83'],
+      ['Not Interested', housingCounts.No, '#cbd5e1']
+    ];
+    if (housingCounts.Unknown) housingEntries.push(['Unknown', housingCounts.Unknown, '#e2e8f0']);
+    const appTypeEntries = Object.entries(appTypeCounts).sort((a, b) => b[1] - a[1]);
+
+    renderReportCharts([
+      {
+        canvasId: 'chart-band', type: 'bar',
+        labels: BANDS.map(b => b.label),
+        data: BANDS.map(b => bandCounts[b.label] || 0),
+        colors: BANDS.map(b => b.color)
+      },
+      {
+        canvasId: 'chart-apptype', type: 'doughnut',
+        labels: appTypeEntries.map(([label]) => label),
+        data: appTypeEntries.map(([, count]) => count),
+        colors: appTypeEntries.map((_, i) => REPORT_PALETTE[i % REPORT_PALETTE.length])
+      },
+      {
+        canvasId: 'chart-housing', type: 'doughnut',
+        labels: housingEntries.map(e => e[0]),
+        data: housingEntries.map(e => e[1]),
+        colors: housingEntries.map(e => e[2])
+      }
+    ]);
+
     // Wait for render
     await new Promise(r => setTimeout(r, 400));
 
@@ -2407,6 +2506,7 @@ async function generateExecExport() {
       link.click();
     }
 
+    destroyReportCharts();
     container.innerHTML = '';
     // Close the modal and clean up preview map
     if (execPreviewMap) { execPreviewMap.remove(); execPreviewMap = null; execPreviewCluster = null; }
@@ -2414,6 +2514,7 @@ async function generateExecExport() {
   } catch (err) {
     console.error('Export error:', err);
     alert('Export failed: ' + err.message);
+    destroyReportCharts();
   } finally {
     loading.classList.remove('active');
     generateBtn.disabled = false;
@@ -2465,25 +2566,6 @@ async function capturePreviewMap() {
   }
 }
 
-// Reusable sidebar "card" — a titled block with a divider, used for each
-// stat section in the exec report sidebar.
-function execCard(title, innerHtml, opts) {
-  opts = opts || {};
-  const borderTop = opts.first ? '' : 'border-top:1px solid #e2e8f0;padding-top:18px;';
-  return `<div style="${borderTop}">
-    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:10px">${escHtml(title)}</div>
-    ${innerHtml}
-  </div>`;
-}
-
-function execStatRow(label, count, total, color) {
-  const pct = total ? Math.round(count / total * 100) : 0;
-  return `<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;font-size:13px">
-    <span style="color:#334155;font-weight:500${color ? `;display:flex;align-items:center;gap:7px` : ''}">${color ? `<span style="width:10px;height:10px;border-radius:50%;background:${color};display:inline-block;flex-shrink:0"></span>` : ''}${escHtml(label)}</span>
-    <span style="font-weight:700;color:#0f172a">${formatNum(count)} <span style="color:#94a3b8;font-weight:400">(${pct}%)</span></span>
-  </div>`;
-}
-
 function buildExecExportHTML(opts) {
   const {
     title, subtitle, exportDate, bandCounts, appTypeCounts, depositsPaid, housingCounts,
@@ -2491,8 +2573,9 @@ function buildExecExportHTML(opts) {
   } = opts;
 
   const filterText = showFilters ? getFilterSummaryText() : '';
-  const appTypeEntries = Object.entries(appTypeCounts).sort((a, b) => b[1] - a[1]);
   const depositsPct = totalVisible ? Math.round(depositsPaid / totalVisible * 100) : 0;
+  const topBand = BANDS.slice().sort((a, b) => (bandCounts[b.label] || 0) - (bandCounts[a.label] || 0))[0];
+  const topBandPct = totalVisible ? Math.round((bandCounts[topBand.label] || 0) / totalVisible * 100) : 0;
 
   return `
   <div style="font-family:'Inter',system-ui,-apple-system,sans-serif;width:${pageW}px;height:${pageH}px;background:#fff;color:#0f172a;display:flex;flex-direction:column;overflow:hidden">
@@ -2516,50 +2599,26 @@ function buildExecExportHTML(opts) {
       <span style="font-size:11px;color:#4b2e83;font-weight:600">${escHtml(filterText)}</span>
     </div>` : ''}
 
-    <!-- Map + Stats sidebar (fills remaining space) -->
-    <div style="display:flex;flex:1;overflow:hidden">
-      <!-- Map -->
-      <div style="flex:1;position:relative;background:#f1f5f9">
+    <!-- Map (compact) + KPI callouts -->
+    <div style="display:flex;gap:18px;padding:18px 32px 0;flex-shrink:0">
+      <div style="flex:1.3;position:relative;background:#f1f5f9;border-radius:12px;overflow:hidden;height:400px">
         <div id="exec-map-slot" style="width:100%;height:100%"></div>
-        <div style="position:absolute;left:12px;bottom:12px;background:rgba(255,255,255,0.92);border-radius:8px;padding:8px 12px;display:flex;gap:14px;box-shadow:0 2px 8px rgba(0,0,0,0.12)">
-          ${BANDS.map(b => `<div style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:${b.color};display:inline-block"></span><span style="font-size:11px;font-weight:600;color:#334155">${b.label}</span></div>`).join('')}
+        <div style="position:absolute;left:12px;bottom:12px;background:rgba(255,255,255,0.92);border-radius:8px;padding:7px 11px;display:flex;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,0.12)">
+          ${BANDS.map(b => `<div style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:50%;background:${b.color};display:inline-block"></span><span style="font-size:10px;font-weight:600;color:#334155">${b.label}</span></div>`).join('')}
         </div>
       </div>
-      <!-- Stats sidebar — centered stack so it stays visually balanced
-           against the full page height regardless of content length -->
-      <div style="width:320px;border-left:1px solid #e2e8f0;padding:16px 22px;display:flex;flex-direction:column;justify-content:center;gap:24px;background:#fafbfc;flex-shrink:0;overflow:hidden">
-
-        ${execCard('Applicant Overview', `
-          <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
-            <span style="font-size:30px;font-weight:800;color:#4b2e83">${formatNum(totalVisible)}</span>
-            <span style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.4px">Total Applicants</span>
-          </div>
-          ${appTypeEntries.map(([label, count]) => execStatRow(label, count, totalVisible)).join('')}
-        `, { first: true })}
-
-        ${execCard('Deposits Paid', `
-          <div style="display:flex;align-items:baseline;gap:8px">
-            <span style="font-size:30px;font-weight:800;color:#22c55e">${formatNum(depositsPaid)}</span>
-            <span style="font-size:12px;color:#94a3b8;font-weight:600">(${depositsPct}% of total)</span>
-          </div>
-        `)}
-
-        ${execCard('Campus Housing Interest', `
-          ${execStatRow('Interested', housingCounts.Yes, totalVisible, '#4b2e83')}
-          ${execStatRow('Not Interested', housingCounts.No, totalVisible, '#cbd5e1')}
-          ${housingCounts.Unknown ? execStatRow('Unknown', housingCounts.Unknown, totalVisible, '#e2e8f0') : ''}
-        `)}
-
-        ${execCard('Distance Breakdown', `
-          ${BANDS.map(b => execStatRow(b.label, bandCounts[b.label] || 0, totalVisible, b.color)).join('')}
-        `)}
-
-        ${execCard('Origin', `
-          <div style="font-size:13px;font-weight:600;color:#0f172a">Residential Village</div>
-          <div style="font-size:11px;color:#64748b;margin-top:1px">17927 113th Ave NE, Bothell, WA 98011</div>
-        `)}
-
+      <div style="width:270px;flex-shrink:0;display:flex;flex-direction:column;gap:12px">
+        ${reportKpiCallout(formatNum(totalVisible), 'Total Displayed', '#4b2e83')}
+        ${reportKpiCallout(`${formatNum(depositsPaid)} <span style="font-size:14px;color:#94a3b8;font-weight:600">(${depositsPct}%)</span>`, 'Deposits Paid', '#22c55e')}
+        ${reportKpiCallout(`${topBand.label} <span style="font-size:14px;color:#94a3b8;font-weight:600">(${topBandPct}%)</span>`, 'Largest Distance Band', topBand.color)}
       </div>
+    </div>
+
+    <!-- Analysis charts -->
+    <div style="display:flex;gap:18px;padding:18px 32px;flex:1;overflow:hidden">
+      ${reportChartPanel('Distance Breakdown', 'chart-band', 230)}
+      ${reportChartPanel('Application Type', 'chart-apptype', 230)}
+      ${reportChartPanel('Campus Housing Interest', 'chart-housing', 230)}
     </div>
 
     <!-- Footer -->
@@ -4476,6 +4535,9 @@ async function generateResidentExecReport() {
 
     const PAGE_W = 2112, PAGE_H = 1632;
     const occupantEntries = Object.entries(stats.occupantTypeCounts).sort((a, b) => b[1] - a[1]);
+    const topBand = BANDS.slice().sort((a, b) => (stats.bandCounts[b.label] || 0) - (stats.bandCounts[a.label] || 0))[0];
+    const topBandPct = stats.total ? Math.round((stats.bandCounts[topBand.label] || 0) / stats.total * 100) : 0;
+    const coveragePct = stats.total ? Math.round(stats.geocoded / stats.total * 100) : 0;
 
     const container = document.getElementById('execExportCanvas');
     container.style.width = PAGE_W + 'px';
@@ -4492,20 +4554,29 @@ async function generateResidentExecReport() {
             <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.7">Total Residents</div>
           </div>
         </div>
-        <div style="display:flex;flex:1;overflow:hidden">
-          <div style="flex:1;position:relative;background:#f1f5f9"><div id="exec-map-slot" style="width:100%;height:100%"></div></div>
-          <div style="width:320px;border-left:1px solid #e2e8f0;padding:16px 22px;display:flex;flex-direction:column;justify-content:center;gap:24px;background:#fafbfc;flex-shrink:0;overflow:hidden">
-            ${execCard('Distance Breakdown', `
-              ${BANDS.map(b => execStatRow(b.label, stats.bandCounts[b.label] || 0, stats.total, b.color)).join('')}
-            `, { first: true })}
-            ${execCard('Occupant Type', `
-              ${occupantEntries.map(([label, count]) => execStatRow(label, count, stats.total)).join('')}
-            `)}
-            ${execCard('Geocoding Coverage', `
-              <div style="font-size:22px;font-weight:800;color:#4b2e83">${formatNum(stats.geocoded)} <span style="font-size:12px;color:#94a3b8;font-weight:600">of ${formatNum(stats.total)} mapped</span></div>
-            `)}
+
+        <!-- Map (compact) + KPI callouts -->
+        <div style="display:flex;gap:18px;padding:18px 32px 0;flex-shrink:0">
+          <div style="flex:1.3;position:relative;background:#f1f5f9;border-radius:12px;overflow:hidden;height:400px">
+            <div id="exec-map-slot" style="width:100%;height:100%"></div>
+            <div style="position:absolute;left:12px;bottom:12px;background:rgba(255,255,255,0.92);border-radius:8px;padding:7px 11px;display:flex;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,0.12)">
+              ${BANDS.map(b => `<div style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:50%;background:${b.color};display:inline-block"></span><span style="font-size:10px;font-weight:600;color:#334155">${b.label}</span></div>`).join('')}
+            </div>
+          </div>
+          <div style="width:270px;flex-shrink:0;display:flex;flex-direction:column;gap:12px">
+            ${reportKpiCallout(formatNum(stats.total), 'Total Residents', '#4b2e83')}
+            ${reportKpiCallout(`${formatNum(stats.geocoded)} <span style="font-size:14px;color:#94a3b8;font-weight:600">(${coveragePct}%)</span>`, 'Geocoded &amp; Mapped', '#22c55e')}
+            ${reportKpiCallout(`${topBand.label} <span style="font-size:14px;color:#94a3b8;font-weight:600">(${topBandPct}%)</span>`, 'Largest Distance Band', topBand.color)}
           </div>
         </div>
+
+        <!-- Analysis charts -->
+        <div style="display:flex;gap:18px;padding:18px 32px;flex:1;overflow:hidden">
+          ${reportChartPanel('Distance Breakdown', 'chart-band', 230)}
+          ${reportChartPanel('Occupant Type', 'chart-occupant', 230)}
+          ${reportChartPanel('Geocoding Coverage', 'chart-coverage', 230)}
+        </div>
+
         <div style="padding:10px 40px;background:#fafbfc;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
           <div style="font-size:9px;color:#94a3b8;max-width:80%;line-height:1.4">Distances calculated from Bothell, WA (47.7596, -122.1892) via Haversine formula on geocoded locations. No resident names included.</div>
           <div style="font-size:9px;color:#94a3b8;text-align:right;white-space:nowrap">Generated ${exportDate}</div>
@@ -4520,6 +4591,27 @@ async function generateResidentExecReport() {
       mapSlot.appendChild(img);
     }
 
+    renderReportCharts([
+      {
+        canvasId: 'chart-band', type: 'bar',
+        labels: BANDS.map(b => b.label),
+        data: BANDS.map(b => stats.bandCounts[b.label] || 0),
+        colors: BANDS.map(b => b.color)
+      },
+      {
+        canvasId: 'chart-occupant', type: 'doughnut',
+        labels: occupantEntries.map(([label]) => label),
+        data: occupantEntries.map(([, count]) => count),
+        colors: occupantEntries.map((_, i) => REPORT_PALETTE[i % REPORT_PALETTE.length])
+      },
+      {
+        canvasId: 'chart-coverage', type: 'doughnut',
+        labels: ['Geocoded', 'Not Geocoded'],
+        data: [stats.geocoded, stats.total - stats.geocoded],
+        colors: ['#4b2e83', '#e2e8f0']
+      }
+    ]);
+
     await new Promise(r => setTimeout(r, 400));
     const canvas = await html2canvas(container, { scale: 1, useCORS: true, backgroundColor: '#ffffff', logging: false, width: PAGE_W, height: PAGE_H, windowWidth: PAGE_W });
 
@@ -4528,10 +4620,12 @@ async function generateResidentExecReport() {
     pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 11, 8.5);
     pdf.save(`current-resident-analysis-${dateSlug()}.pdf`);
 
+    destroyReportCharts();
     container.innerHTML = '';
   } catch (err) {
     console.error('Resident report export error:', err);
     alert('Export failed: ' + err.message);
+    destroyReportCharts();
   } finally {
     if (tempMap) tempMap.remove();
     if (tempContainer) tempContainer.remove();

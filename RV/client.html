@@ -176,6 +176,7 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;bac
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 
 <script>
 (function() {
@@ -493,6 +494,70 @@ function waitForMapTilesLoaded(map, maxWait) {
   });
 }
 
+// Shared chart helpers, mirroring the internal admin dashboard's report
+// charting so the client-downloaded report matches the same analytical style.
+let _reportChartInstances = [];
+const REPORT_PALETTE = ['#4b2e83', '#8b5cf6', '#f97316', '#22c55e', '#ef4444', '#0ea5e9', '#eab308', '#ec4899', '#14b8a6', '#a3a3a3'];
+
+function destroyReportCharts() {
+  _reportChartInstances.forEach(c => { try { c.destroy(); } catch (e) {} });
+  _reportChartInstances = [];
+}
+
+function renderReportCharts(specs) {
+  destroyReportCharts();
+  specs.forEach(spec => {
+    const canvas = document.getElementById(spec.canvasId);
+    if (!canvas) return;
+    const isBar = spec.type === 'bar';
+    const chart = new Chart(canvas.getContext('2d'), {
+      type: spec.type,
+      data: {
+        labels: spec.labels,
+        datasets: [{
+          data: spec.data,
+          backgroundColor: spec.colors,
+          borderWidth: isBar ? 0 : 2,
+          borderColor: '#ffffff',
+          borderRadius: isBar ? 4 : 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        layout: { padding: 4 },
+        plugins: {
+          legend: isBar ? { display: false } : {
+            position: 'right',
+            labels: { boxWidth: 10, padding: 8, font: { size: 10, family: 'Inter' }, color: '#334155' }
+          },
+          tooltip: { enabled: false }
+        },
+        scales: isBar ? {
+          x: { grid: { display: false }, ticks: { font: { size: 10, family: 'Inter' }, color: '#64748b' } },
+          y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 10, family: 'Inter' }, color: '#64748b', precision: 0 } }
+        } : undefined
+      }
+    });
+    _reportChartInstances.push(chart);
+  });
+}
+
+function reportChartPanel(title, canvasId, heightPx) {
+  return `<div style="flex:1;background:#fafbfc;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;min-width:0">
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;margin-bottom:8px">${escHtml(title)}</div>
+    <div style="flex:1;position:relative;height:${heightPx}px"><canvas id="${canvasId}"></canvas></div>
+  </div>`;
+}
+
+function reportKpiCallout(value, label, color) {
+  return `<div style="flex:1;background:#fafbfc;border:1px solid #e2e8f0;border-left:4px solid ${color};border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;justify-content:center">
+    <div style="font-size:30px;font-weight:800;color:${color};line-height:1">${value}</div>
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-top:4px">${escHtml(label)}</div>
+  </div>`;
+}
+
 async function exportPdfReport() {
   if (!portalData) return;
   const btn = document.getElementById('exportPdfBtn');
@@ -524,14 +589,8 @@ async function exportPdfReport() {
     const PAGE_W = 2112, PAGE_H = 1632;
     const appTypeEntries = Object.entries(stats.appTypeCounts).sort((a, b) => b[1] - a[1]);
     const depositsPct = stats.total ? Math.round(stats.depositsPaid / stats.total * 100) : 0;
-
-    const statRowLight = (label, count, total, color) => {
-      const pct = total ? Math.round(count / total * 100) : 0;
-      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;font-size:13px">
-        <span style="color:#334155;font-weight:500">${color ? `<span style="width:10px;height:10px;border-radius:50%;background:${color};display:inline-block;margin-right:7px"></span>` : ''}${escHtml(label)}</span>
-        <span style="font-weight:700;color:#0f172a">${formatNum(count)} <span style="color:#94a3b8;font-weight:400">(${pct}%)</span></span>
-      </div>`;
-    };
+    const topBand = BANDS.slice().sort((a, b) => (stats.bandCounts[b.label] || 0) - (stats.bandCounts[a.label] || 0))[0];
+    const topBandPct = stats.total ? Math.round((stats.bandCounts[topBand.label] || 0) / stats.total * 100) : 0;
 
     const container = document.getElementById('execExportCanvas');
     container.style.width = PAGE_W + 'px';
@@ -547,29 +606,29 @@ async function exportPdfReport() {
             <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.7">Total Displayed</div>
           </div>
         </div>
-        <div style="display:flex;flex:1;overflow:hidden">
-          <div style="flex:1;position:relative;background:#f1f5f9"><div id="exec-map-slot" style="width:100%;height:100%"></div></div>
-          <div style="width:320px;border-left:1px solid #e2e8f0;padding:16px 22px;display:flex;flex-direction:column;justify-content:center;gap:24px;background:#fafbfc;flex-shrink:0;overflow:hidden">
-            <div>
-              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:10px">Applicant Overview</div>
-              <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px"><span style="font-size:30px;font-weight:800;color:#4b2e83">${formatNum(stats.total)}</span><span style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase">Total</span></div>
-              ${appTypeEntries.map(([label, count]) => statRowLight(label, count, stats.total)).join('')}
-            </div>
-            <div style="border-top:1px solid #e2e8f0;padding-top:18px">
-              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:10px">Deposits Paid</div>
-              <div style="font-size:30px;font-weight:800;color:#22c55e">${formatNum(stats.depositsPaid)} <span style="font-size:12px;color:#94a3b8;font-weight:600">(${depositsPct}%)</span></div>
-            </div>
-            <div style="border-top:1px solid #e2e8f0;padding-top:18px">
-              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:10px">Campus Housing Interest</div>
-              ${statRowLight('Interested', stats.housingCounts.Yes, stats.total, '#4b2e83')}
-              ${statRowLight('Not Interested', stats.housingCounts.No, stats.total, '#cbd5e1')}
-            </div>
-            <div style="border-top:1px solid #e2e8f0;padding-top:18px">
-              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:10px">Distance Breakdown</div>
-              ${BANDS.map(b => statRowLight(b.label, stats.bandCounts[b.label] || 0, stats.total, b.color)).join('')}
+
+        <!-- Map (compact) + KPI callouts -->
+        <div style="display:flex;gap:18px;padding:18px 32px 0;flex-shrink:0">
+          <div style="flex:1.3;position:relative;background:#f1f5f9;border-radius:12px;overflow:hidden;height:400px">
+            <div id="exec-map-slot" style="width:100%;height:100%"></div>
+            <div style="position:absolute;left:12px;bottom:12px;background:rgba(255,255,255,0.92);border-radius:8px;padding:7px 11px;display:flex;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,0.12)">
+              ${BANDS.map(b => `<div style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:50%;background:${b.color};display:inline-block"></span><span style="font-size:10px;font-weight:600;color:#334155">${b.label}</span></div>`).join('')}
             </div>
           </div>
+          <div style="width:270px;flex-shrink:0;display:flex;flex-direction:column;gap:12px">
+            ${reportKpiCallout(formatNum(stats.total), 'Total Displayed', '#4b2e83')}
+            ${reportKpiCallout(`${formatNum(stats.depositsPaid)} <span style="font-size:14px;color:#94a3b8;font-weight:600">(${depositsPct}%)</span>`, 'Deposits Paid', '#22c55e')}
+            ${reportKpiCallout(`${topBand.label} <span style="font-size:14px;color:#94a3b8;font-weight:600">(${topBandPct}%)</span>`, 'Largest Distance Band', topBand.color)}
+          </div>
         </div>
+
+        <!-- Analysis charts -->
+        <div style="display:flex;gap:18px;padding:18px 32px;flex:1;overflow:hidden">
+          ${reportChartPanel('Distance Breakdown', 'chart-band', 230)}
+          ${reportChartPanel('Application Type', 'chart-apptype', 230)}
+          ${reportChartPanel('Campus Housing Interest', 'chart-housing', 230)}
+        </div>
+
         <div style="padding:10px 40px;background:#fafbfc;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
           <div style="font-size:9px;color:#94a3b8;max-width:80%;line-height:1.4">Distances calculated from Bothell, WA via Haversine formula on geocoded locations. No personal names or contact details included.</div>
           <div style="font-size:9px;color:#94a3b8;text-align:right;white-space:nowrap">Generated ${exportDate}</div>
@@ -584,6 +643,33 @@ async function exportPdfReport() {
       mapSlot.appendChild(img);
     }
 
+    const housingEntries = [
+      ['Interested', stats.housingCounts.Yes, '#4b2e83'],
+      ['Not Interested', stats.housingCounts.No, '#cbd5e1']
+    ];
+    if (stats.housingCounts.Unknown) housingEntries.push(['Unknown', stats.housingCounts.Unknown, '#e2e8f0']);
+
+    renderReportCharts([
+      {
+        canvasId: 'chart-band', type: 'bar',
+        labels: BANDS.map(b => b.label),
+        data: BANDS.map(b => stats.bandCounts[b.label] || 0),
+        colors: BANDS.map(b => b.color)
+      },
+      {
+        canvasId: 'chart-apptype', type: 'doughnut',
+        labels: appTypeEntries.map(([label]) => label),
+        data: appTypeEntries.map(([, count]) => count),
+        colors: appTypeEntries.map((_, i) => REPORT_PALETTE[i % REPORT_PALETTE.length])
+      },
+      {
+        canvasId: 'chart-housing', type: 'doughnut',
+        labels: housingEntries.map(e => e[0]),
+        data: housingEntries.map(e => e[1]),
+        colors: housingEntries.map(e => e[2])
+      }
+    ]);
+
     await new Promise(r => setTimeout(r, 400));
     const canvas = await html2canvas(container, { scale: 1, useCORS: true, backgroundColor: '#ffffff', logging: false, width: PAGE_W, height: PAGE_H, windowWidth: PAGE_W });
 
@@ -592,10 +678,12 @@ async function exportPdfReport() {
     pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 11, 8.5);
     pdf.save(`${slugify(portalData.clientName)}-admit-radius-report.pdf`);
 
+    destroyReportCharts();
     container.innerHTML = '';
   } catch (err) {
     console.error('Export error:', err);
     alert('Export failed: ' + err.message);
+    destroyReportCharts();
   } finally {
     btn.disabled = false;
     btn.innerHTML = original;
