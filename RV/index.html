@@ -1211,10 +1211,12 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;bac
         <label class="dm-checkbox-row" style="padding:4px 0">
           <input type="checkbox" id="cpAllowExport" checked> Allow client to export (Executive Report + summary CSV)
         </label>
-        <label class="dm-checkbox-row" style="padding:4px 0">
-          <input type="checkbox" id="cpAllowCompare"> Include a comparison view
-        </label>
-        <p style="font-size:11px;color:var(--subtext);margin:2px 0 0 26px" id="cpCompareHint"></p>
+        <div id="cpCompareRow">
+          <label class="dm-checkbox-row" style="padding:4px 0">
+            <input type="checkbox" id="cpAllowCompare"> Include a comparison view
+          </label>
+          <p style="font-size:11px;color:var(--subtext);margin:2px 0 0 26px" id="cpCompareHint"></p>
+        </div>
       </div>
 
       <div id="cpCompareFields" style="display:none;margin-top:10px;padding:12px;background:#f8fafc;border-radius:8px;border:1px solid var(--border)">
@@ -4113,12 +4115,17 @@ async function cpFetch(method, path, data) {
   }
 }
 
+// Which source the Create Client Link modal is currently configured for —
+// set right before the modal opens, from whichever button triggered it.
+let clientLinkContext = 'admissions';
+
 function initClientPortal() {
   const createModal = document.getElementById('clientLinkModal');
   const resultModal = document.getElementById('clientLinkResultModal');
   const listModal = document.getElementById('clientLinksListModal');
 
-  document.getElementById('openClientLink').addEventListener('click', openClientLinkModal);
+  document.getElementById('openClientLink').addEventListener('click', () => openClientLinkModal('admissions'));
+  document.getElementById('openClientLinkResident').addEventListener('click', () => openClientLinkModal('resident'));
   document.getElementById('clientLinkClose').addEventListener('click', () => createModal.classList.remove('active'));
   document.getElementById('cpCancel').addEventListener('click', () => createModal.classList.remove('active'));
   createModal.addEventListener('click', (e) => { if (e.target === createModal) createModal.classList.remove('active'); });
@@ -4161,7 +4168,9 @@ function clientPortalUrlForSlug(slug) {
   return `${window.location.origin}${basePath}client.html?p=${encodeURIComponent(slug)}`;
 }
 
-async function openClientLinkModal() {
+async function openClientLinkModal(context) {
+  clientLinkContext = context === 'resident' ? 'resident' : 'admissions';
+
   document.getElementById('cpClientName').value = '';
   const usernameEl = document.getElementById('cpUsername');
   usernameEl.value = '';
@@ -4170,39 +4179,57 @@ async function openClientLinkModal() {
   const compareCb = document.getElementById('cpAllowCompare');
   compareCb.checked = false;
   document.getElementById('cpCompareFields').style.display = 'none';
+  const compareRow = document.getElementById('cpCompareRow');
 
-  const count = filteredRecords.length;
-  document.getElementById('cpDataInfo').textContent = count
-    ? `This portal will show your current filtered view: ${formatNum(count)} record${count === 1 ? '' : 's'}.`
-    : 'No records are currently displayed — adjust your filters before creating a client link.';
-
-  const datasets = (await apiGet('datasets')) || [];
-  const optsHtml = datasets.map(ds => `<option value="${ds.id || ds._id}">${escHtml(ds.name)}</option>`).join('');
-  document.getElementById('cpCompareA').innerHTML = optsHtml;
-  document.getElementById('cpCompareB').innerHTML = optsHtml;
-
-  const hint = document.getElementById('cpCompareHint');
-  if (datasets.length < 2) {
-    compareCb.checked = false;
-    compareCb.disabled = true;
-    hint.textContent = 'Save at least two datasets to enable a comparison view.';
+  if (clientLinkContext === 'resident') {
+    // Comparison view isn't supported for resident portals — there's no
+    // saved-dataset-versioning feature for resident rosters to compare.
+    compareRow.style.display = 'none';
+    const count = residentRecords.length;
+    document.getElementById('cpDataInfo').textContent = count
+      ? `This portal will show your current resident view: ${formatNum(count)} record${count === 1 ? '' : 's'}.`
+      : 'No resident data is currently loaded — upload a resident roster before creating a client link.';
   } else {
-    compareCb.disabled = false;
-    hint.textContent = '';
+    compareRow.style.display = '';
+    const count = filteredRecords.length;
+    document.getElementById('cpDataInfo').textContent = count
+      ? `This portal will show your current filtered view: ${formatNum(count)} record${count === 1 ? '' : 's'}.`
+      : 'No records are currently displayed — adjust your filters before creating a client link.';
+
+    const datasets = (await apiGet('datasets')) || [];
+    const optsHtml = datasets.map(ds => `<option value="${ds.id || ds._id}">${escHtml(ds.name)}</option>`).join('');
+    document.getElementById('cpCompareA').innerHTML = optsHtml;
+    document.getElementById('cpCompareB').innerHTML = optsHtml;
+
+    const hint = document.getElementById('cpCompareHint');
+    if (datasets.length < 2) {
+      compareCb.checked = false;
+      compareCb.disabled = true;
+      hint.textContent = 'Save at least two datasets to enable a comparison view.';
+    } else {
+      compareCb.disabled = false;
+      hint.textContent = '';
+    }
   }
 
   document.getElementById('clientLinkModal').classList.add('active');
 }
 
 async function submitClientLink() {
+  const isResident = clientLinkContext === 'resident';
+  const sourceRecords = isResident ? residentRecords : filteredRecords;
+
   const clientName = document.getElementById('cpClientName').value.trim();
   const username = document.getElementById('cpUsername').value.trim();
   const allowExport = document.getElementById('cpAllowExport').checked;
-  const allowCompare = document.getElementById('cpAllowCompare').checked;
+  const allowCompare = isResident ? false : document.getElementById('cpAllowCompare').checked;
 
   if (!clientName) { alert('Please enter a client name.'); return; }
   if (!username) { alert('Please enter a username.'); return; }
-  if (!filteredRecords.length) { alert('There is no data currently displayed to share.'); return; }
+  if (!sourceRecords.length) {
+    alert(isResident ? 'There is no resident data currently loaded to share.' : 'There is no data currently displayed to share.');
+    return;
+  }
 
   let comparePayload = null;
   if (allowCompare) {
@@ -4226,10 +4253,12 @@ async function submitClientLink() {
   createBtn.textContent = 'Creating…';
 
   const payload = {
-    clientName, username, allowExport, allowCompare,
+    clientName, username, allowExport, allowCompare, type: clientLinkContext,
     primary: {
-      name: (currentDatasetMeta && (currentDatasetMeta.name || currentDatasetMeta.sourceFile)) || 'Admit Radius Data',
-      records: filteredRecords
+      name: isResident
+        ? (residentSourceLabel || 'Current Resident Analysis')
+        : ((currentDatasetMeta && (currentDatasetMeta.name || currentDatasetMeta.sourceFile)) || 'Admit Radius Data'),
+      records: sourceRecords
     },
     compare: comparePayload
   };
@@ -4285,10 +4314,11 @@ async function openClientLinksList() {
     listEl.innerHTML = portals.map(p => {
       const id = p.id || p._id;
       const dateStr = new Date(p.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      const isResidentPortal = p.type === 'resident';
       return `<div class="mailer-card" data-id="${id}">
         <div class="mailer-card-header">
           <div>
-            <div class="mailer-card-title">${escHtml(p.clientName)}</div>
+            <div class="mailer-card-title">${escHtml(p.clientName)} <span class="active-tag" style="background:${isResidentPortal ? '#ede9fe' : '#dbeafe'};color:${isResidentPortal ? '#5b21b6' : '#1e40af'}">${isResidentPortal ? 'Resident' : 'Admissions'}</span></div>
             <div class="mailer-card-date">Created ${dateStr} · Username: ${escHtml(p.username)}</div>
           </div>
           <span class="mailer-status-badge ${p.status === 'active' ? 'sent' : 'draft'}">${p.status === 'active' ? 'Active' : 'Revoked'}</span>
@@ -4660,10 +4690,10 @@ function buildResidentMap() {
     gradient: { 0.2: '#4b2e83', 0.4: '#8b5cf6', 0.6: '#f97316', 0.8: '#ef4444', 1.0: '#fbbf24' }
   });
 
-  if (geocodedRecords.length) {
-    const bounds = L.latLngBounds(geocodedRecords.map(r => [r.lat, r.lng])).extend([ORIGIN.lat, ORIGIN.lng]);
-    residentMap.fitBounds(bounds, { padding: [30, 30] });
-  }
+  // Default view is zoomed to Washington — most residents originate
+  // locally/regionally, so that's the most useful starting frame. Users can
+  // still pan/zoom out manually to see farther-away markers.
+  residentMap.fitBounds(WA_BOUNDS);
 
   setResidentMapMode(residentMapMode);
   residentMap.invalidateSize();
@@ -4906,13 +4936,17 @@ function generateResidentFindings(a) {
 // One compact card holding up to 4 short findings — replaces the previous
 // design of several oversized standalone insight cards.
 function residentFindingsCard(findings, flexGrow) {
+  const accentColors = ['#4b2e83', '#22c55e', '#8b5cf6', '#f97316'];
   return reportCard(`
-    <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:10px;flex-shrink:0">Executive Findings</div>
-    <div style="display:flex;flex-direction:column;gap:12px;flex:1;justify-content:center">
-      ${findings.map(f => `
-        <div>
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#4b2e83;margin-bottom:2px">${escHtml(f.heading)}</div>
-          <div style="font-size:11.5px;color:#334155;line-height:1.45">${escHtml(f.text)}</div>
+    <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:12px;flex-shrink:0">Executive Findings</div>
+    <div style="display:flex;flex-direction:column;gap:14px;flex:1;justify-content:space-evenly">
+      ${findings.map((f, i) => `
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="width:4px;border-radius:2px;align-self:stretch;background:${accentColors[i % accentColors.length]};flex-shrink:0"></div>
+          <div style="min-width:0">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-bottom:3px">${escHtml(f.heading)}</div>
+            <div style="font-size:12px;color:#1e293b;line-height:1.5">${escHtml(f.text)}</div>
+          </div>
         </div>
       `).join('')}
     </div>
@@ -5019,21 +5053,32 @@ function residentCityTable(title, rows, flexGrow) {
 function residentOriginMixPanel(regionCounts, total, flexGrow, canvasId) {
   canvasId = canvasId || 'chart-region';
   const colors = { 'Washington': '#4b2e83', 'Other U.S.': '#8b5cf6', 'International': '#f97316', 'Unknown': '#cbd5e1' };
+  const entries = Object.entries(regionCounts).filter(([, c]) => c > 0);
+  // Fixed-size donut (not aspect-ratio dependent) with a plain side-by-side
+  // legend list — more robust than a centered/wrapped legend under the
+  // chart, which could crowd or overlap at narrower card widths.
   return reportCard(`
-    <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:2px;flex-shrink:0">Resident Origin Mix</div>
-    <div style="flex:1;display:flex;align-items:center;justify-content:center;min-height:0">
-      <div style="position:relative;width:100%;max-width:290px;aspect-ratio:1/1">
-        <canvas id="${canvasId}"></canvas>
+    <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:12px;flex-shrink:0">Resident Origin Mix</div>
+    <div style="flex:1;display:flex;align-items:center;gap:20px;min-height:0">
+      <div style="position:relative;width:150px;height:150px;flex-shrink:0">
+        <canvas id="${canvasId}" width="150" height="150"></canvas>
         <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none">
-          <div style="font-size:27px;font-weight:800;color:#0f172a">${formatNum(total)}</div>
-          <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;color:#94a3b8;letter-spacing:0.4px">Total Residents</div>
+          <div style="font-size:21px;font-weight:800;color:#0f172a;line-height:1">${formatNum(total)}</div>
+          <div style="font-size:8px;font-weight:700;text-transform:uppercase;color:#94a3b8;letter-spacing:0.3px;margin-top:2px">Total</div>
         </div>
       </div>
-    </div>
-    <div style="display:flex;justify-content:center;flex-wrap:wrap;gap:14px;margin-top:10px;flex-shrink:0">
-      ${Object.entries(regionCounts).filter(([, c]) => c > 0).map(([label]) =>
-        `<div style="display:flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:50%;background:${colors[label]};display:inline-block"></span><span style="font-size:11px;font-weight:600;color:#334155">${escHtml(label)}</span></div>`
-      ).join('')}
+      <div style="flex:1;display:flex;flex-direction:column;gap:11px;min-width:0">
+        ${entries.map(([label, count]) => {
+          const pct = total ? Math.round(count / total * 100) : 0;
+          return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <div style="display:flex;align-items:center;gap:7px;min-width:0">
+              <span style="width:10px;height:10px;border-radius:50%;background:${colors[label]};flex-shrink:0"></span>
+              <span style="font-size:12px;font-weight:600;color:#334155;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(label)}</span>
+            </div>
+            <span style="font-size:12.5px;font-weight:800;color:#0f172a;white-space:nowrap;flex-shrink:0">${formatNum(count)} <span style="color:#94a3b8;font-weight:500">(${pct}%)</span></span>
+          </div>`;
+        }).join('')}
+      </div>
     </div>
   `, flexGrow);
 }
