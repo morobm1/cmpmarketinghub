@@ -132,6 +132,27 @@ function statsSummaryCsv(records) {
   return csv;
 }
 
+function residentSummaryCsv(records) {
+  const bandOrder = ['0–10 mi', '10–50 mi', '50–100 mi', '100+ mi'];
+  const bandCounts = {}; bandOrder.forEach(b => bandCounts[b] = 0);
+  const occupantTypeCounts = {};
+  let mapped = 0;
+  records.forEach(r => {
+    if (bandCounts[r.band] !== undefined) bandCounts[r.band]++;
+    const ot = r.occupantType || 'Unknown'; occupantTypeCounts[ot] = (occupantTypeCounts[ot] || 0) + 1;
+    if (r.lat && r.lng) mapped++;
+  });
+
+  let csv = 'Metric,Value\n';
+  csv += `Total Residents,${records.length}\n`;
+  csv += `Mapped Residents,${mapped}\n`;
+  csv += '\nDistance Band,Count\n';
+  bandOrder.forEach(b => { csv += `${b},${bandCounts[b]}\n`; });
+  csv += '\nOccupant Type,Count\n';
+  Object.entries(occupantTypeCounts).forEach(([k, v]) => { csv += `"${k}",${v}\n`; });
+  return csv;
+}
+
 export const handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return json(204, {});
 
@@ -193,6 +214,7 @@ export const handler = async (event) => {
           username,
           passwordHash,
           status: 'active',
+          type: body.type === 'resident' ? 'resident' : 'admissions',
           allowExport: !!body.allowExport,
           allowCompare: !!body.allowCompare,
           primary: {
@@ -287,6 +309,7 @@ export const handler = async (event) => {
 
       return json(200, {
         clientName: portal.clientName,
+        type: portal.type || 'admissions',
         allowExport: !!portal.allowExport,
         allowCompare: !!portal.allowCompare,
         primary: portal.primary,
