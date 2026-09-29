@@ -246,20 +246,7 @@ function computeStats(records) {
   return { total, bandCounts, appTypeCounts, statusCounts, housingCounts, depositsPaid };
 }
 
-function buildMap(containerId, records) {
-  const map = L.map(containerId, { center: [ORIGIN.lat, ORIGIN.lng], zoom: 7, zoomControl: true, maxZoom: 18, minZoom: 2 });
-  addBasemap(map);
-
-  const originIcon = L.divIcon({ className: '', html: '<div style="position:relative"><div class="origin-marker"></div></div>', iconSize: [16, 16], iconAnchor: [8, 8] });
-  L.marker([ORIGIN.lat, ORIGIN.lng], { icon: originIcon, zIndexOffset: 1000 }).addTo(map);
-
-  RADIUS_MILES.forEach(miles => {
-    L.circle([ORIGIN.lat, ORIGIN.lng], {
-      radius: miles * MILES_TO_METERS, color: 'rgba(75,46,131,0.25)', weight: 1.5,
-      fillColor: 'rgba(75,46,131,0.03)', fillOpacity: 1, dashArray: '6,4', interactive: false
-    }).addTo(map);
-  });
-
+function buildBandMarkerCluster(records) {
   const cluster = L.markerClusterGroup({
     maxClusterRadius: 50, showCoverageOnHover: false, zoomToBoundsOnClick: true,
     iconCreateFunction: function(c) {
@@ -283,14 +270,156 @@ function buildMap(containerId, records) {
     markers.push(L.marker([r.lat, r.lng], { icon: createMarkerIcon(band.color), bandColor: band.color }));
   });
   cluster.addLayers(markers);
+  return cluster;
+}
+
+function buildMap(containerId, records) {
+  const map = L.map(containerId, { center: [ORIGIN.lat, ORIGIN.lng], zoom: 7, zoomControl: true, maxZoom: 18, minZoom: 2 });
+  addBasemap(map);
+
+  const originIcon = L.divIcon({ className: '', html: '<div style="position:relative"><div class="origin-marker"></div></div>', iconSize: [16, 16], iconAnchor: [8, 8] });
+  L.marker([ORIGIN.lat, ORIGIN.lng], { icon: originIcon, zIndexOffset: 1000 }).addTo(map);
+
+  RADIUS_MILES.forEach(miles => {
+    L.circle([ORIGIN.lat, ORIGIN.lng], {
+      radius: miles * MILES_TO_METERS, color: 'rgba(75,46,131,0.25)', weight: 1.5,
+      fillColor: 'rgba(75,46,131,0.03)', fillOpacity: 1, dashArray: '6,4', interactive: false
+    }).addTo(map);
+  });
+
+  const cluster = buildBandMarkerCluster(records);
   map.addLayer(cluster);
 
-  if (markers.length) {
-    const bounds = L.latLngBounds(markers.map(m => m.getLatLng())).extend([ORIGIN.lat, ORIGIN.lng]);
+  const geocoded = records.filter(r => r.lat && r.lng);
+  if (geocoded.length) {
+    const bounds = L.latLngBounds(geocoded.map(r => [r.lat, r.lng])).extend([ORIGIN.lat, ORIGIN.lng]);
     map.fitBounds(bounds, { padding: [24, 24] });
   }
   map.invalidateSize();
   return map;
+}
+
+// Builds a map locked to one of the three report zoom tiers (Washington,
+// USA, Global) — mirrors the internal admin dashboard's report maps.
+const WA_BOUNDS = [[45.4, -124.9], [49.1, -116.7]];
+const USA_BOUNDS = [[24.2, -125.2], [49.6, -66.5]];
+
+function buildScopedMap(containerId, records, scope) {
+  const map = L.map(containerId, { zoomControl: false, attributionControl: false });
+  addBasemap(map);
+
+  const originIcon = L.divIcon({ className: '', html: '<div style="position:relative"><div class="origin-marker"></div></div>', iconSize: [16, 16], iconAnchor: [8, 8] });
+  L.marker([ORIGIN.lat, ORIGIN.lng], { icon: originIcon, zIndexOffset: 1000 }).addTo(map);
+
+  if (scope === 'wa') {
+    RADIUS_MILES.forEach(miles => {
+      L.circle([ORIGIN.lat, ORIGIN.lng], {
+        radius: miles * MILES_TO_METERS, color: 'rgba(75,46,131,0.25)', weight: 1.5,
+        fillColor: 'rgba(75,46,131,0.03)', fillOpacity: 1, dashArray: '6,4', interactive: false
+      }).addTo(map);
+    });
+  }
+
+  const cluster = buildBandMarkerCluster(records);
+  map.addLayer(cluster);
+
+  if (scope === 'wa') {
+    map.fitBounds(WA_BOUNDS);
+  } else if (scope === 'usa') {
+    map.fitBounds(USA_BOUNDS);
+  } else {
+    const geocoded = records.filter(r => r.lat && r.lng);
+    if (geocoded.length) {
+      const bounds = L.latLngBounds(geocoded.map(r => [r.lat, r.lng])).extend([ORIGIN.lat, ORIGIN.lng]);
+      map.fitBounds(bounds, { padding: [40, 40] });
+    } else {
+      map.setView([ORIGIN.lat, ORIGIN.lng], 3);
+    }
+  }
+  map.invalidateSize();
+  return map;
+}
+
+async function captureScopedMap(records, scope) {
+  const tempContainer = document.createElement('div');
+  tempContainer.style.cssText = 'position:fixed;left:-9999px;top:0;width:1400px;height:900px';
+  document.body.appendChild(tempContainer);
+
+  const map = buildScopedMap(tempContainer, records, scope);
+  await waitForMapTilesLoaded(map, 4500);
+  await new Promise(r => setTimeout(r, 250));
+
+  let canvas = null;
+  try {
+    canvas = await html2canvas(tempContainer, { useCORS: true, scale: 2, logging: false, backgroundColor: '#f1f5f9' });
+  } catch (e) {
+    console.warn(`Map capture failed for scope "${scope}":`, e);
+  }
+  map.remove();
+  tempContainer.remove();
+  return canvas;
+}
+
+let _waCountyLookup = null;
+async function loadWaCountyLookup() {
+  if (_waCountyLookup) return _waCountyLookup;
+  try {
+    const resp = await fetch('wa-county-lookup.json');
+    _waCountyLookup = resp.ok ? await resp.json() : {};
+  } catch (e) {
+    console.warn('Could not load WA county lookup:', e);
+    _waCountyLookup = {};
+  }
+  return _waCountyLookup;
+}
+
+function computeGeoAnalysis(records, countyLookup) {
+  const geocoded = records.filter(r => r.lat && r.lng);
+  const waRecords = geocoded.filter(r => r.state === 'WA');
+
+  const waCountyCounts = {};
+  waRecords.forEach(r => {
+    const county = (countyLookup && countyLookup[r.zip]) || 'Unknown County';
+    waCountyCounts[county] = (waCountyCounts[county] || 0) + 1;
+  });
+
+  const waCityCounts = {};
+  waRecords.forEach(r => {
+    const key = r.city || 'Unknown';
+    waCityCounts[key] = (waCityCounts[key] || 0) + 1;
+  });
+
+  const stateCounts = {};
+  geocoded.forEach(r => {
+    const key = r.state || 'Unknown';
+    stateCounts[key] = (stateCounts[key] || 0) + 1;
+  });
+
+  const cityStateMap = {};
+  geocoded.forEach(r => {
+    const key = `${r.city || 'Unknown'}, ${r.state || '—'}`;
+    if (!cityStateMap[key]) cityStateMap[key] = { count: 0, distSum: 0 };
+    cityStateMap[key].count++;
+    cityStateMap[key].distSum += (r.distance || 0);
+  });
+
+  const toRanked = (obj) => Object.entries(obj).map(([label, count]) => ({ label, count })).sort((a, b) => b.count - a.count);
+  const cityStateRanked = Object.entries(cityStateMap)
+    .map(([label, v]) => ({ label, count: v.count, extra: `${Math.round(v.distSum / v.count)} mi` }))
+    .sort((a, b) => b.count - a.count);
+
+  const farthest = geocoded.reduce((max, r) => (r.distance != null && r.distance > max ? r.distance : max), 0);
+
+  return {
+    totalGeocoded: geocoded.length,
+    waTotal: waRecords.length,
+    waCountyRanked: toRanked(waCountyCounts),
+    waCityRanked: toRanked(waCityCounts),
+    stateRanked: toRanked(stateCounts),
+    statesRepresented: Object.keys(stateCounts).length,
+    cityStateRanked,
+    farthestDistance: farthest
+  };
 }
 
 function statRow(label, count, total, color) {
@@ -569,6 +698,85 @@ function reportKpiCallout(value, label, color) {
   `);
 }
 
+function reportRankTable(title, rows, valueHeader) {
+  if (!rows.length) {
+    return reportCard(`
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;margin-bottom:10px">${escHtml(title)}</div>
+      <div style="font-size:12px;color:#94a3b8">No data available</div>
+    `);
+  }
+  const rowsHtml = rows.map((r, i) => `
+    <tr>
+      <td style="padding:5px 0;width:22px;color:#94a3b8;font-weight:700;font-size:11px">${i + 1}</td>
+      <td style="padding:5px 0;font-weight:500;color:#334155">${escHtml(r.label)}</td>
+      <td style="padding:5px 0;text-align:right;font-weight:700;color:#0f172a">${formatNum(r.count)}</td>
+      ${r.extra !== undefined ? `<td style="padding:5px 0 5px 12px;text-align:right;color:#94a3b8;font-weight:500">${escHtml(String(r.extra))}</td>` : ''}
+    </tr>`).join('');
+  return reportCard(`
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;margin-bottom:10px;flex-shrink:0">${escHtml(title)}</div>
+    <table style="width:100%;border-collapse:collapse;font-size:12.5px">
+      <thead><tr>
+        <th></th><th></th>
+        <th style="text-align:right;font-size:9px;font-weight:700;text-transform:uppercase;color:#94a3b8;padding-bottom:4px">Count</th>
+        ${valueHeader ? `<th style="text-align:right;font-size:9px;font-weight:700;text-transform:uppercase;color:#94a3b8;padding-bottom:4px;padding-left:12px">${escHtml(valueHeader)}</th>` : ''}
+      </tr></thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>
+  `);
+}
+
+function reportPageShell(opts) {
+  const { title, subtitle, pageLabel, totalLabel, totalValue, exportDate, bodyHtml, pageW, pageH } = opts;
+  return `
+  <div style="font-family:'Inter',system-ui,-apple-system,sans-serif;width:${pageW}px;height:${pageH}px;background:#f1f2f6;color:#0f172a;display:flex;flex-direction:column;overflow:hidden">
+    <div style="background:linear-gradient(135deg,#4b2e83 0%,#32174f 100%);color:#fff;padding:22px 40px 18px;display:flex;justify-content:space-between;align-items:flex-start;flex-shrink:0">
+      <div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;opacity:0.6;margin-bottom:4px">University of Washington Bothell</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="font-size:27px;font-weight:800;letter-spacing:-0.5px;line-height:1.15">${escHtml(title)}</div>
+          ${pageLabel ? `<span style="background:rgba(255,255,255,0.18);padding:3px 12px;border-radius:999px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;white-space:nowrap">${escHtml(pageLabel)}</span>` : ''}
+        </div>
+        ${subtitle ? `<div style="font-size:14px;opacity:0.75;margin-top:2px;font-weight:500">${escHtml(subtitle)}</div>` : ''}
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:34px;font-weight:800;line-height:1">${totalValue}</div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.7">${escHtml(totalLabel)}</div>
+      </div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;padding:20px 32px;gap:16px;overflow:hidden">
+      ${bodyHtml}
+    </div>
+    <div style="padding:10px 40px;background:#fff;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
+      <div style="font-size:9px;color:#94a3b8;max-width:80%;line-height:1.4">Distances calculated from Bothell, WA via Haversine formula on geocoded locations. No personal names or contact details included.</div>
+      <div style="font-size:9px;color:#94a3b8;text-align:right;white-space:nowrap">Generated ${exportDate}</div>
+    </div>
+  </div>`;
+}
+
+async function renderReportPage(container, pageW, pageH, shellOpts, mapCanvas, chartSpecs) {
+  container.innerHTML = reportPageShell({ ...shellOpts, pageW, pageH });
+
+  if (mapCanvas) {
+    const mapSlot = container.querySelector('#exec-map-slot');
+    if (mapSlot) {
+      const img = document.createElement('img');
+      img.src = mapCanvas.toDataURL('image/png');
+      img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
+      mapSlot.appendChild(img);
+    }
+  }
+
+  if (chartSpecs && chartSpecs.length) renderReportCharts(chartSpecs);
+
+  await new Promise(r => setTimeout(r, 400));
+  const canvas = await html2canvas(container, {
+    scale: 1, useCORS: true, backgroundColor: '#ffffff', logging: false,
+    width: pageW, height: pageH, windowWidth: pageW
+  });
+  destroyReportCharts();
+  return canvas;
+}
+
 async function exportPdfReport() {
   if (!portalData) return;
   const btn = document.getElementById('exportPdfBtn');
@@ -580,120 +788,120 @@ async function exportPdfReport() {
     const records = portalData.primary.records;
     const stats = computeStats(records);
     const exportDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-
-    // Build an off-screen map to capture, framed to fit the data
-    const tempContainer = document.createElement('div');
-    tempContainer.style.cssText = 'position:fixed;left:-9999px;top:0;width:1200px;height:800px';
-    document.body.appendChild(tempContainer);
-    const tempMap = buildMap(tempContainer, records);
-    tempMap.invalidateSize();
-    await waitForMapTilesLoaded(tempMap, 4000);
-    await new Promise(r => setTimeout(r, 250));
-
-    let mapCanvas = null;
-    try {
-      mapCanvas = await html2canvas(tempContainer, { useCORS: true, scale: 2, logging: false, backgroundColor: '#f1f5f9' });
-    } catch (e) { console.warn('Map capture failed:', e); }
-    tempMap.remove();
-    tempContainer.remove();
+    const countyLookup = await loadWaCountyLookup();
+    const geo = computeGeoAnalysis(records, countyLookup);
 
     const PAGE_W = 2112, PAGE_H = 1632;
-    const appTypeEntries = Object.entries(stats.appTypeCounts).sort((a, b) => b[1] - a[1]);
-    const depositsPct = stats.total ? Math.round(stats.depositsPaid / stats.total * 100) : 0;
-    const topBand = BANDS.slice().sort((a, b) => (stats.bandCounts[b.label] || 0) - (stats.bandCounts[a.label] || 0))[0];
-    const topBandPct = stats.total ? Math.round((stats.bandCounts[topBand.label] || 0) / stats.total * 100) : 0;
-
     const container = document.getElementById('execExportCanvas');
     container.style.width = PAGE_W + 'px';
-    container.innerHTML = `
-      <div style="font-family:'Inter',system-ui,-apple-system,sans-serif;width:${PAGE_W}px;height:${PAGE_H}px;background:#f1f2f6;color:#0f172a;display:flex;flex-direction:column;overflow:hidden">
-        <div style="background:linear-gradient(135deg,#4b2e83 0%,#32174f 100%);color:#fff;padding:22px 40px 18px;display:flex;justify-content:space-between;align-items:flex-start;flex-shrink:0">
-          <div>
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;opacity:0.6;margin-bottom:4px">University of Washington Bothell</div>
-            <div style="font-size:27px;font-weight:800;letter-spacing:-0.5px">${escHtml(portalData.clientName)} — Admit Radius Report</div>
-          </div>
-          <div style="text-align:right;flex-shrink:0">
-            <div style="font-size:34px;font-weight:800;line-height:1">${formatNum(stats.total)}</div>
-            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.7">Total Displayed</div>
+
+    const shellBase = {
+      title: `${portalData.clientName} — Admit Radius Report`, subtitle: '', exportDate,
+      totalLabel: 'Total Displayed', totalValue: formatNum(stats.total), pageW: PAGE_W, pageH: PAGE_H
+    };
+    const pageCanvases = [];
+
+    // ── Page 1: Washington View ─────────────────────────────────
+    const waPct = stats.total ? Math.round(geo.waTotal / stats.total * 100) : 0;
+    const waMapCanvas = await captureScopedMap(records, 'wa');
+    pageCanvases.push(await renderReportPage(container, PAGE_W, PAGE_H, {
+      ...shellBase, pageLabel: 'Washington View',
+      bodyHtml: `
+        <div style="display:flex;gap:16px;flex:0 0 96px">
+          ${reportKpiCallout(formatNum(geo.waTotal), 'Washington Applicants', '#4b2e83')}
+          ${reportKpiCallout(`${waPct}%`, 'Share of Total', '#22c55e')}
+          ${reportKpiCallout(geo.waCountyRanked[0] ? geo.waCountyRanked[0].label : '—', 'Top County', '#f97316')}
+        </div>
+        <div style="flex:1.6;position:relative;background:#f1f5f9;border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,0.04),0 1px 8px rgba(15,23,42,0.06)">
+          <div id="exec-map-slot" style="width:100%;height:100%"></div>
+          <div style="position:absolute;left:12px;bottom:12px;background:rgba(255,255,255,0.92);border-radius:8px;padding:7px 11px;display:flex;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,0.12)">
+            ${BANDS.map(b => `<div style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:50%;background:${b.color};display:inline-block"></span><span style="font-size:10px;font-weight:600;color:#334155">${b.label}</span></div>`).join('')}
           </div>
         </div>
+        <div style="display:flex;gap:16px;flex:1">
+          ${reportRankTable('Top Washington Counties', geo.waCountyRanked.slice(0, 8))}
+          ${reportRankTable('Top Washington Cities', geo.waCityRanked.slice(0, 8))}
+        </div>`
+    }, waMapCanvas, null));
 
-        <div style="flex:1;display:flex;flex-direction:column;padding:20px 32px;gap:16px;overflow:hidden">
-          <!-- KPI strip -->
-          <div style="display:flex;gap:16px;flex:0 0 96px">
-            ${reportKpiCallout(formatNum(stats.total), 'Total Displayed', '#4b2e83')}
-            ${reportKpiCallout(`${formatNum(stats.depositsPaid)} <span style="font-size:14px;color:#94a3b8;font-weight:600">(${depositsPct}%)</span>`, 'Deposits Paid', '#22c55e')}
-            ${reportKpiCallout(`${topBand.label} <span style="font-size:14px;color:#94a3b8;font-weight:600">(${topBandPct}%)</span>`, 'Largest Distance Band', topBand.color)}
-          </div>
-
-          <!-- Map paired directly with the radius/distance analysis (hero row) -->
-          <div style="display:flex;gap:16px;flex:1.5">
-            <div style="flex:1.4;position:relative;background:#f1f5f9;border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,0.04),0 1px 8px rgba(15,23,42,0.06)">
-              <div id="exec-map-slot" style="width:100%;height:100%"></div>
-              <div style="position:absolute;left:12px;bottom:12px;background:rgba(255,255,255,0.92);border-radius:8px;padding:7px 11px;display:flex;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,0.12)">
-                ${BANDS.map(b => `<div style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:50%;background:${b.color};display:inline-block"></span><span style="font-size:10px;font-weight:600;color:#334155">${b.label}</span></div>`).join('')}
-              </div>
-            </div>
-            ${reportChartPanel('Distance Breakdown — Radius Analysis', 'chart-band', 1)}
-          </div>
-
-          <!-- Secondary breakdowns -->
-          <div style="display:flex;gap:16px;flex:1">
-            ${reportChartPanel('Application Type', 'chart-apptype', 1)}
-            ${reportChartPanel('Campus Housing Interest', 'chart-housing', 1)}
-          </div>
+    // ── Page 2: USA View ───────────────────────────────────────
+    const usaMapCanvas = await captureScopedMap(records, 'usa');
+    pageCanvases.push(await renderReportPage(container, PAGE_W, PAGE_H, {
+      ...shellBase, pageLabel: 'USA View',
+      bodyHtml: `
+        <div style="display:flex;gap:16px;flex:0 0 96px">
+          ${reportKpiCallout(formatNum(geo.totalGeocoded), 'Total Mapped', '#4b2e83')}
+          ${reportKpiCallout(formatNum(geo.statesRepresented), 'States Represented', '#22c55e')}
+          ${reportKpiCallout(geo.stateRanked[0] ? geo.stateRanked[0].label : '—', 'Top State', '#f97316')}
         </div>
-
-        <div style="padding:10px 40px;background:#fff;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
-          <div style="font-size:9px;color:#94a3b8;max-width:80%;line-height:1.4">Distances calculated from Bothell, WA via Haversine formula on geocoded locations. No personal names or contact details included.</div>
-          <div style="font-size:9px;color:#94a3b8;text-align:right;white-space:nowrap">Generated ${exportDate}</div>
+        <div style="flex:1.6;position:relative;background:#f1f5f9;border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,0.04),0 1px 8px rgba(15,23,42,0.06)">
+          <div id="exec-map-slot" style="width:100%;height:100%"></div>
         </div>
-      </div>`;
+        <div style="display:flex;gap:16px;flex:1">
+          ${reportRankTable('Top 5 States', geo.stateRanked.slice(0, 5))}
+          ${reportChartPanel('Distance Breakdown — Radius Analysis', 'chart-band', 1)}
+        </div>`
+    }, usaMapCanvas, [{
+      canvasId: 'chart-band', type: 'bar',
+      labels: BANDS.map(b => b.label), data: BANDS.map(b => stats.bandCounts[b.label] || 0), colors: BANDS.map(b => b.color)
+    }]));
 
-    const mapSlot = container.querySelector('#exec-map-slot');
-    if (mapCanvas) {
-      const img = document.createElement('img');
-      img.src = mapCanvas.toDataURL('image/png');
-      img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
-      mapSlot.appendChild(img);
-    }
+    // ── Page 3: Global View ────────────────────────────────────
+    const globalMapCanvas = await captureScopedMap(records, 'global');
+    pageCanvases.push(await renderReportPage(container, PAGE_W, PAGE_H, {
+      ...shellBase, pageLabel: 'Global View',
+      bodyHtml: `
+        <div style="display:flex;gap:16px;flex:0 0 96px">
+          ${reportKpiCallout(formatNum(geo.totalGeocoded), 'Total Mapped', '#4b2e83')}
+          ${reportKpiCallout(`${formatNum(geo.farthestDistance)} mi`, 'Farthest Distance', '#ef4444')}
+          ${reportKpiCallout(formatNum(geo.statesRepresented), 'States / Regions', '#8b5cf6')}
+        </div>
+        <div style="flex:1.6;position:relative;background:#f1f5f9;border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,0.04),0 1px 8px rgba(15,23,42,0.06)">
+          <div id="exec-map-slot" style="width:100%;height:100%"></div>
+        </div>
+        <div style="display:flex;gap:16px;flex:1">
+          ${reportRankTable('Top Cities Nationwide', geo.cityStateRanked.slice(0, 8), 'Avg Distance')}
+        </div>`
+    }, globalMapCanvas, null));
 
+    // ── Page 4: Detailed Rankings ──────────────────────────────
     const housingEntries = [
       ['Interested', stats.housingCounts.Yes, '#4b2e83'],
       ['Not Interested', stats.housingCounts.No, '#cbd5e1']
     ];
     if (stats.housingCounts.Unknown) housingEntries.push(['Unknown', stats.housingCounts.Unknown, '#e2e8f0']);
+    const appTypeEntries = Object.entries(stats.appTypeCounts).sort((a, b) => b[1] - a[1]);
 
-    renderReportCharts([
-      {
-        canvasId: 'chart-band', type: 'bar',
-        labels: BANDS.map(b => b.label),
-        data: BANDS.map(b => stats.bandCounts[b.label] || 0),
-        colors: BANDS.map(b => b.color)
-      },
+    pageCanvases.push(await renderReportPage(container, PAGE_W, PAGE_H, {
+      ...shellBase, pageLabel: 'Detailed Rankings',
+      bodyHtml: `
+        <div style="display:flex;gap:16px;flex:1.4">
+          ${reportRankTable('Top Cities by Applicant Count', geo.cityStateRanked.slice(0, 15), 'Avg Distance')}
+        </div>
+        <div style="display:flex;gap:16px;flex:1">
+          ${reportChartPanel('Application Type', 'chart-apptype', 1)}
+          ${reportChartPanel('Campus Housing Interest', 'chart-housing', 1)}
+        </div>`
+    }, null, [
       {
         canvasId: 'chart-apptype', type: 'doughnut',
-        labels: appTypeEntries.map(([label]) => label),
-        data: appTypeEntries.map(([, count]) => count),
+        labels: appTypeEntries.map(([label]) => label), data: appTypeEntries.map(([, count]) => count),
         colors: appTypeEntries.map((_, i) => REPORT_PALETTE[i % REPORT_PALETTE.length])
       },
       {
         canvasId: 'chart-housing', type: 'doughnut',
-        labels: housingEntries.map(e => e[0]),
-        data: housingEntries.map(e => e[1]),
-        colors: housingEntries.map(e => e[2])
+        labels: housingEntries.map(e => e[0]), data: housingEntries.map(e => e[1]), colors: housingEntries.map(e => e[2])
       }
-    ]);
-
-    await new Promise(r => setTimeout(r, 400));
-    const canvas = await html2canvas(container, { scale: 1, useCORS: true, backgroundColor: '#ffffff', logging: false, width: PAGE_W, height: PAGE_H, windowWidth: PAGE_W });
+    ]));
 
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation: 'landscape', unit: 'in', format: 'letter' });
-    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 11, 8.5);
+    pageCanvases.forEach((canvas, i) => {
+      if (i > 0) pdf.addPage();
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 11, 8.5);
+    });
     pdf.save(`${slugify(portalData.clientName)}-admit-radius-report.pdf`);
 
-    destroyReportCharts();
     container.innerHTML = '';
   } catch (err) {
     console.error('Export error:', err);
