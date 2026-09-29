@@ -4519,7 +4519,7 @@ function buildResidentMap() {
     iconSize: [16, 16], iconAnchor: [8, 8]
   });
   L.marker([ORIGIN.lat, ORIGIN.lng], { icon: originIcon, zIndexOffset: 1000 })
-    .bindPopup('<div style="font-size:12px;font-weight:700;color:var(--brand)">Residential Village</div><div style="font-size:11px;color:#64748b;margin-top:2px">17927 113th Ave NE<br>Bothell, WA 98011</div>')
+    .bindPopup('<div style="font-size:12px;font-weight:700;color:var(--brand)">Residential Village</div><div style="font-size:11px;color:#64748b;margin-top:2px">18612 Beardslee Blvd<br>Bothell, WA 98011</div>')
     .addTo(residentMap);
 
   RADIUS_MILES.forEach(miles => {
@@ -4571,10 +4571,355 @@ function setResidentMapMode(mode) {
   }
 }
 
-// One-page PDF report for the current resident roster — mirrors the
-// admissions Executive Map Report's layout/helpers (execCard/execStatRow/
-// waitForMapTilesLoaded), always rendering a clean radius/band map
-// regardless of whether Heat Map is currently selected on screen.
+// ══════════════════════════════════════════════════════════════════
+//  RESIDENT EXECUTIVE REPORT — DATA TRANSFORMATION
+//
+//  Pure analytics layer for the 2-page executive PDF. This does NOT
+//  recompute anything the live Resident view already relies on
+//  (computeResidentStats / buildResidentMap stay untouched) — it derives
+//  a purpose-built, denormalized analytics object from the same
+//  `residentRecords` array so every number on the report traces back to
+//  the same geocoded dataset already shown on screen.
+// ══════════════════════════════════════════════════════════════════
+const RESIDENT_DISTANCE_BINS = [
+  { label: '0–50 mi', min: 0, max: 50 },
+  { label: '51–200 mi', min: 51, max: 200 },
+  { label: '201–500 mi', min: 201, max: 500 },
+  { label: '501–1,000 mi', min: 501, max: 1000 },
+  { label: '1,000+ mi', min: 1001, max: Infinity }
+];
+
+function isRecordInternational(r) {
+  const c = (r.country || '').trim().toUpperCase();
+  if (!c) return false;
+  return !['US', 'USA', 'U.S.', 'U.S.A.', 'UNITED STATES', 'UNITED STATES OF AMERICA'].includes(c);
+}
+function isRecordWashington(r) {
+  return (r.state || '').trim().toUpperCase() === 'WA';
+}
+
+function computeResidentReportAnalytics(records, countyLookup) {
+  const totalResidents = records.length;
+  const geocodedRecords = records.filter(r => r.lat && r.lng);
+  const mappedResidents = geocodedRecords.length;
+  const geocodingPercentage = totalResidents ? Math.round(mappedResidents / totalResidents * 100) : 0;
+
+  // Washington / out-of-state split uses the parsed State field directly —
+  // this does NOT require successful geocoding, so it reconciles exactly:
+  // washingtonResidents + outOfStateResidents === totalResidents.
+  const washingtonResidents = records.filter(isRecordWashington).length;
+  const washingtonPercentage = totalResidents ? Math.round(washingtonResidents / totalResidents * 100) : 0;
+  const outOfStateResidents = totalResidents - washingtonResidents;
+  const outOfStatePercentage = totalResidents ? Math.round(outOfStateResidents / totalResidents * 100) : 0;
+
+  // County/city/state breakdowns require geocoding (they're paired with
+  // map visuals and distance figures), so they're scoped to mapped records.
+  const waGeocoded = geocodedRecords.filter(isRecordWashington);
+  const waMappedCount = waGeocoded.length;
+  const waUnmappedCount = Math.max(0, washingtonResidents - waMappedCount);
+
+  const countyCounts = {};
+  waGeocoded.forEach(r => {
+    const c = (countyLookup && countyLookup[r.zip]) || 'Unknown County';
+    countyCounts[c] = (countyCounts[c] || 0) + 1;
+  });
+  const counties = Object.entries(countyCounts)
+    .map(([label, count]) => ({ label, count, pct: waMappedCount ? Math.round(count / waMappedCount * 100) : 0 }))
+    .sort((a, b) => b.count - a.count);
+
+  const waCityCounts = {};
+  waGeocoded.forEach(r => { const k = r.city || 'Unknown'; waCityCounts[k] = (waCityCounts[k] || 0) + 1; });
+  const waCities = Object.entries(waCityCounts)
+    .map(([label, count]) => ({ label, count, pct: waMappedCount ? Math.round(count / waMappedCount * 100) : 0 }))
+    .sort((a, b) => b.count - a.count);
+
+  const stateCounts = {};
+  geocodedRecords.forEach(r => { const k = (r.state || 'Unknown').toUpperCase(); stateCounts[k] = (stateCounts[k] || 0) + 1; });
+  const states = Object.entries(stateCounts)
+    .map(([label, count]) => ({ label, count, pct: totalResidents ? Math.round(count / totalResidents * 100) : 0 }))
+    .sort((a, b) => b.count - a.count);
+  const statesRepresented = states.length;
+  const topNonWaState = states.find(s => s.label !== 'WA') || null;
+
+  const cityMap = {};
+  geocodedRecords.forEach(r => {
+    const region = isRecordInternational(r) ? (cleanStr(r.country) || 'International') : (r.state || '—');
+    const key = `${r.city || 'Unknown'}|${region}`;
+    if (!cityMap[key]) cityMap[key] = { city: r.city || 'Unknown', region, count: 0, distSum: 0 };
+    cityMap[key].count++;
+    cityMap[key].distSum += (r.distance || 0);
+  });
+  const cities = Object.values(cityMap)
+    .map(v => ({ label: `${v.city}, ${v.region}`, city: v.city, region: v.region, count: v.count, avgDistance: Math.round(v.distSum / v.count) }))
+    .sort((a, b) => b.count - a.count);
+
+  const topCounty = counties[0] || null;
+  const topWaCity = waCities[0] || null;
+
+  const internationalCount = records.filter(isRecordInternational).length;
+  const hasInternational = internationalCount > 0;
+  const countryCounts = {};
+  records.forEach(r => { if (isRecordInternational(r)) { const k = cleanStr(r.country) || 'Unknown'; countryCounts[k] = (countryCounts[k] || 0) + 1; } });
+  const countries = Object.entries(countryCounts).map(([label, count]) => ({ label, count })).sort((a, b) => b.count - a.count);
+
+  const regionCounts = { 'Washington': 0, 'Other U.S.': 0, 'International': 0 };
+  records.forEach(r => {
+    if (isRecordWashington(r)) regionCounts['Washington']++;
+    else if (isRecordInternational(r)) regionCounts['International']++;
+    else regionCounts['Other U.S.']++;
+  });
+
+  const distanceBuckets = RESIDENT_DISTANCE_BINS.map(bin => {
+    const count = geocodedRecords.filter(r => r.distance != null && r.distance >= bin.min && r.distance <= bin.max).length;
+    return { label: bin.label, count, pct: mappedResidents ? Math.round(count / mappedResidents * 100) : 0 };
+  });
+
+  const farthestDistance = geocodedRecords.reduce((max, r) => (r.distance != null && r.distance > max ? r.distance : max), 0);
+  const farthestRecord = geocodedRecords.find(r => r.distance === farthestDistance) || null;
+
+  return {
+    totalResidents, mappedResidents, geocodingPercentage,
+    washingtonResidents, washingtonPercentage, outOfStateResidents, outOfStatePercentage,
+    waMappedCount, waUnmappedCount, topCounty, topWaCity, counties, waCities,
+    states, statesRepresented, topNonWaState, cities,
+    regionCounts, countries, hasInternational, internationalCount,
+    distanceBuckets, farthestDistance, farthestRecord
+  };
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  RESIDENT EXECUTIVE REPORT — INSIGHT ENGINE
+//
+//  Deterministic, template-based sentences generated only from the
+//  analytics object above — no invented numbers, no subjective claims.
+// ══════════════════════════════════════════════════════════════════
+function generateResidentInsights(a) {
+  const insights = [];
+
+  if (a.totalResidents > 0) {
+    if (a.washingtonPercentage >= 80) {
+      insights.push({ title: 'Local Representation', text: `${a.washingtonPercentage}% of residents are from Washington State, indicating a highly concentrated local resident population.` });
+    } else {
+      insights.push({ title: 'Local Representation', text: `${a.washingtonPercentage}% of residents are from Washington State; the remaining ${a.outOfStatePercentage}% are from outside the state.` });
+    }
+  }
+
+  if (a.topCounty) {
+    insights.push({ title: 'County Concentration', text: `${a.topCounty.label} represents ${a.topCounty.pct}% of mapped Washington residents and is the largest county of origin.` });
+  }
+
+  if (a.topWaCity) {
+    insights.push({ title: 'Regional Concentration', text: `${a.topWaCity.label} is the most common Washington city of origin, accounting for ${a.topWaCity.pct}% of mapped Washington residents.` });
+  }
+
+  insights.push({ title: 'Out-of-State Reach', text: `Residents outside Washington represent ${a.outOfStatePercentage}% of the resident population (${formatNum(a.outOfStateResidents)} of ${formatNum(a.totalResidents)}).` });
+
+  return insights;
+}
+
+function generateResidentWorldInsights(a) {
+  const insights = [];
+
+  insights.push({ title: 'Strong Local Presence', text: `${a.washingtonPercentage}% of residents are from Washington State.` });
+
+  if (a.topNonWaState) {
+    insights.push({ title: 'National Representation', text: `Mapped residents represent ${formatNum(a.statesRepresented)} state${a.statesRepresented === 1 ? '' : 's'}, with ${a.topNonWaState.label} the leading state outside Washington (${formatNum(a.topNonWaState.count)} residents).` });
+  } else {
+    insights.push({ title: 'National Representation', text: `Mapped residents represent ${formatNum(a.statesRepresented)} state${a.statesRepresented === 1 ? '' : 's'}.` });
+  }
+
+  if (a.hasInternational) {
+    insights.push({ title: 'International Reach', text: `${formatNum(a.internationalCount)} resident${a.internationalCount === 1 ? '' : 's'} identified from outside the United States, representing ${a.countries.length} countr${a.countries.length === 1 ? 'y' : 'ies'}.` });
+  }
+
+  if (a.farthestRecord) {
+    const loc = [a.farthestRecord.city, a.farthestRecord.state || a.farthestRecord.country].filter(Boolean).join(', ');
+    insights.push({ title: 'Geographic Reach', text: `The farthest mapped resident is ${formatNum(a.farthestDistance)} miles away${loc ? ' (' + loc + ')' : ''}.` });
+  }
+
+  return insights;
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  RESIDENT EXECUTIVE REPORT — PRESENTATION COMPONENTS
+// ══════════════════════════════════════════════════════════════════
+function residentInsightCard(title, text, color) {
+  return reportCard(`
+    <div style="display:flex;gap:10px;height:100%">
+      <div style="width:3px;align-self:stretch;background:${color || '#4b2e83'};border-radius:2px;flex-shrink:0"></div>
+      <div>
+        <div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-bottom:4px">${escHtml(title)}</div>
+        <div style="font-size:12.5px;color:#334155;line-height:1.5">${escHtml(text)}</div>
+      </div>
+    </div>
+  `);
+}
+
+function residentInsightPanel(insights, flexGrow) {
+  return `<div style="flex:${flexGrow || 1};display:flex;flex-direction:column;gap:10px;min-width:0">
+    ${insights.map(i => residentInsightCard(i.title, i.text, '#4b2e83')).join('')}
+  </div>`;
+}
+
+function residentTopCountyCard(county) {
+  if (!county) return reportKpiCallout('—', 'Top County', '#f97316');
+  return reportCard(`
+    <div style="display:flex;align-items:center;gap:12px;height:100%">
+      <div style="width:4px;align-self:stretch;background:#f97316;border-radius:2px;flex-shrink:0"></div>
+      <div style="min-width:0">
+        <div style="font-size:19px;font-weight:800;color:#0f172a;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(county.label)}</div>
+        <div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-top:3px">Top County</div>
+        <div style="font-size:10.5px;color:#94a3b8;margin-top:2px">${formatNum(county.count)} residents · ${county.pct}% of WA</div>
+      </div>
+    </div>
+  `);
+}
+
+function residentRankedTable(title, subtitle, rows, barColor, flexGrow) {
+  const maxCount = rows.length ? rows[0].count : 0;
+  const rowsHtml = rows.map((r, i) => `
+    <tr>
+      <td style="padding:5px 8px 5px 0;width:18px;color:#94a3b8;font-weight:700;font-size:10.5px">${i + 1}</td>
+      <td style="padding:5px 8px 5px 0;font-weight:500;color:#334155;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:0">${escHtml(r.label)}</td>
+      <td style="padding:5px 0;width:90px">
+        <div style="background:#eef1f6;border-radius:3px;height:7px;overflow:hidden">
+          <div style="background:${barColor || '#4b2e83'};height:100%;width:${maxCount ? Math.max(4, Math.round(r.count / maxCount * 100)) : 0}%;border-radius:3px"></div>
+        </div>
+      </td>
+      <td style="padding:5px 0 5px 10px;text-align:right;font-weight:700;color:#0f172a;font-size:12px;white-space:nowrap">${formatNum(r.count)}</td>
+      <td style="padding:5px 0 5px 8px;text-align:right;color:#94a3b8;font-weight:600;font-size:10.5px;white-space:nowrap">${r.pct}%</td>
+    </tr>`).join('');
+
+  return reportCard(`
+    <div style="flex-shrink:0;margin-bottom:6px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b">${escHtml(title)}</div>
+      ${subtitle ? `<div style="font-size:10.5px;color:#94a3b8;margin-top:1px">${escHtml(subtitle)}</div>` : ''}
+    </div>
+    <table style="width:100%;border-collapse:collapse;table-layout:fixed">
+      <tbody>${rowsHtml || `<tr><td style="padding:14px 0;color:#94a3b8;font-size:12px">No data available</td></tr>`}</tbody>
+    </table>
+  `, flexGrow);
+}
+
+function residentCityTable(title, rows, flexGrow) {
+  const rowsHtml = rows.map((r, i) => `
+    <tr>
+      <td style="padding:5px 8px 5px 0;width:18px;color:#94a3b8;font-weight:700;font-size:10.5px">${i + 1}</td>
+      <td style="padding:5px 8px 5px 0;font-weight:500;color:#334155;font-size:12px">${escHtml(r.city)}</td>
+      <td style="padding:5px 8px 5px 0;color:#64748b;font-size:11px">${escHtml(r.region)}</td>
+      <td style="padding:5px 0 5px 10px;text-align:right;font-weight:700;color:#0f172a;font-size:12px">${formatNum(r.count)}</td>
+      <td style="padding:5px 0 5px 10px;text-align:right;color:#94a3b8;font-weight:600;font-size:10.5px;white-space:nowrap">${formatNum(r.avgDistance)} mi</td>
+    </tr>`).join('');
+
+  return reportCard(`
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;margin-bottom:8px;flex-shrink:0">${escHtml(title)}</div>
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr>
+        <th></th><th></th><th></th>
+        <th style="text-align:right;font-size:9px;font-weight:700;text-transform:uppercase;color:#94a3b8;padding-bottom:4px">Residents</th>
+        <th style="text-align:right;font-size:9px;font-weight:700;text-transform:uppercase;color:#94a3b8;padding-bottom:4px;padding-left:10px">Distance</th>
+      </tr></thead>
+      <tbody>${rowsHtml || `<tr><td colspan="5" style="padding:14px 0;color:#94a3b8;font-size:12px">No data available</td></tr>`}</tbody>
+    </table>
+  `, flexGrow);
+}
+
+function residentRegionDonutPanel(regionCounts, total, flexGrow) {
+  return reportCard(`
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;margin-bottom:4px;flex-shrink:0">Regional Distribution</div>
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;min-height:0">
+      <div style="position:relative;width:100%;max-width:230px;aspect-ratio:1/1">
+        <canvas id="chart-region"></canvas>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none">
+          <div style="font-size:22px;font-weight:800;color:#0f172a">${formatNum(total)}</div>
+          <div style="font-size:8.5px;font-weight:700;text-transform:uppercase;color:#94a3b8;letter-spacing:0.4px">Residents</div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:center;gap:14px;margin-top:8px;flex-shrink:0">
+      ${Object.entries(regionCounts).filter(([, c]) => c > 0).map(([label], i) => {
+        const colors = { 'Washington': '#4b2e83', 'Other U.S.': '#8b5cf6', 'International': '#f97316' };
+        return `<div style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:${colors[label]};display:inline-block"></span><span style="font-size:10px;font-weight:600;color:#334155">${escHtml(label)}</span></div>`;
+      }).join('')}
+    </div>
+  `, flexGrow);
+}
+
+function residentDistancePanel(title, buckets, note, flexGrow) {
+  return reportCard(`
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;margin-bottom:8px;flex-shrink:0">${escHtml(title)}</div>
+    <div style="flex:1;position:relative;min-height:0"><canvas id="chart-distance"></canvas></div>
+    ${note ? `<div style="font-size:9.5px;color:#94a3b8;margin-top:8px;flex-shrink:0;line-height:1.4">${escHtml(note)}</div>` : ''}
+  `, flexGrow);
+}
+
+// Shared 2-page shell: solid purple header (no logos/photography per brand
+// requirements), KPI row, then whatever body content each page supplies.
+function residentReportPageShell(opts) {
+  const { subtitleBadge, address, exportDate, kpiHtml, bodyHtml, pageW, pageH } = opts;
+  return `
+  <div style="font-family:'Inter',system-ui,-apple-system,sans-serif;width:${pageW}px;height:${pageH}px;background:#f4f5f7;color:#0f172a;display:flex;flex-direction:column;overflow:hidden">
+    <div style="background:linear-gradient(120deg,#3d2569 0%,#4b2e83 55%,#5b3a99 100%);color:#fff;padding:26px 44px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
+      <div>
+        <div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:2px;opacity:0.65;margin-bottom:5px">University of Washington Bothell</div>
+        <div style="display:flex;align-items:baseline;gap:12px">
+          <div style="font-size:25px;font-weight:800;letter-spacing:-0.4px">Current Resident Analysis</div>
+          <span style="background:rgba(255,255,255,0.16);padding:3px 12px;border-radius:999px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;white-space:nowrap">${escHtml(subtitleBadge)}</span>
+        </div>
+        <div style="font-size:12.5px;opacity:0.8;margin-top:4px;font-weight:500">Residential Village · ${escHtml(address)}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:11px;font-weight:600;opacity:0.75">Generated</div>
+        <div style="font-size:13px;font-weight:700;margin-top:2px">${escHtml(exportDate)}</div>
+      </div>
+    </div>
+
+    <div style="padding:18px 32px 0;flex-shrink:0">
+      <div style="display:flex;gap:14px">${kpiHtml}</div>
+    </div>
+
+    <div style="flex:1;display:flex;flex-direction:column;padding:16px 32px 20px;gap:14px;overflow:hidden">
+      ${bodyHtml}
+    </div>
+
+    <div style="padding:9px 40px;background:#fff;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
+      <div style="font-size:9px;color:#94a3b8;max-width:80%;line-height:1.4">
+        Distances calculated from Residential Village, ${escHtml(address)}, via Haversine formula on geocoded resident locations. Aggregated data only — no resident names or individual addresses included.
+      </div>
+      <div style="font-size:9px;color:#94a3b8;text-align:right;white-space:nowrap">Page reflects the currently loaded resident roster</div>
+    </div>
+  </div>`;
+}
+
+async function renderResidentReportPage(container, pageW, pageH, shellOpts, mapCanvas, chartSpecs) {
+  container.innerHTML = residentReportPageShell({ ...shellOpts, pageW, pageH });
+
+  if (mapCanvas) {
+    const mapSlot = container.querySelector('#exec-map-slot');
+    if (mapSlot) {
+      const img = document.createElement('img');
+      img.src = mapCanvas.toDataURL('image/png');
+      img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
+      mapSlot.appendChild(img);
+    }
+  }
+
+  if (chartSpecs && chartSpecs.length) renderReportCharts(chartSpecs);
+
+  await new Promise(r => setTimeout(r, 400));
+  const canvas = await html2canvas(container, {
+    scale: 1, useCORS: true, backgroundColor: '#ffffff', logging: false,
+    width: pageW, height: pageH, windowWidth: pageW
+  });
+  destroyReportCharts();
+  return canvas;
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  RESIDENT EXECUTIVE REPORT — 2-PAGE PDF GENERATION
+// ══════════════════════════════════════════════════════════════════
+const RESIDENTIAL_VILLAGE_ADDRESS = '18612 Beardslee Blvd, Bothell, WA 98011';
+
 async function generateResidentExecReport() {
   if (!residentRecords.length) { alert('Upload resident data first.'); return; }
 
@@ -4584,105 +4929,111 @@ async function generateResidentExecReport() {
   btn.textContent = 'Generating…';
 
   try {
-    const stats = computeResidentStats(residentRecords);
     const exportDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     const countyLookup = await loadWaCountyLookup();
-    const geo = computeGeoAnalysis(residentRecords, countyLookup);
+    const a = computeResidentReportAnalytics(residentRecords, countyLookup);
 
     const PAGE_W = 2112, PAGE_H = 1632;
     const container = document.getElementById('execExportCanvas');
     container.style.width = PAGE_W + 'px';
-
-    const shellBase = {
-      title: 'Current Resident Analysis', subtitle: residentSourceLabel, exportDate, showFilters: false, filterText: '',
-      totalLabel: 'Total Residents', totalValue: formatNum(stats.total), pageW: PAGE_W, pageH: PAGE_H
-    };
     const pageCanvases = [];
 
-    // ── Page 1: Washington View ─────────────────────────────────
-    const waPct = stats.total ? Math.round(geo.waTotal / stats.total * 100) : 0;
+    // ── PAGE 1: Executive Summary / Washington Market ───────────
     const waMapCanvas = await captureScopedMap(residentRecords, 'wa');
-    pageCanvases.push(await renderReportPage(container, PAGE_W, PAGE_H, {
-      ...shellBase, pageLabel: 'Washington View',
+    const page1Insights = generateResidentInsights(a);
+    const waNote = a.waUnmappedCount > 0
+      ? `${formatNum(a.waUnmappedCount)} additional Washington resident${a.waUnmappedCount === 1 ? '' : 's'} could not be mapped to a county.`
+      : '';
+
+    const page1Kpi = [
+      reportKpiCallout(formatNum(a.totalResidents), 'Total Residents', '#4b2e83'),
+      reportKpiCallout(`${formatNum(a.washingtonResidents)} <span style="font-size:14px;color:#94a3b8;font-weight:600">(${a.washingtonPercentage}%)</span>`, 'Washington Residents', '#22c55e'),
+      reportKpiCallout(`${formatNum(a.outOfStateResidents)} <span style="font-size:14px;color:#94a3b8;font-weight:600">(${a.outOfStatePercentage}%)</span>`, 'Out-of-State Residents', '#8b5cf6'),
+      residentTopCountyCard(a.topCounty),
+      reportKpiCallout(`${formatNum(a.mappedResidents)} <span style="font-size:14px;color:#94a3b8;font-weight:600">(${a.geocodingPercentage}%)</span>`, 'Geocoding Coverage', '#0ea5e9')
+    ].join('');
+
+    pageCanvases.push(await renderResidentReportPage(container, PAGE_W, PAGE_H, {
+      subtitleBadge: 'Executive Report', address: RESIDENTIAL_VILLAGE_ADDRESS, exportDate, kpiHtml: page1Kpi,
       bodyHtml: `
-        <div style="display:flex;gap:16px;flex:0 0 96px">
-          ${reportKpiCallout(formatNum(geo.waTotal), 'Washington Residents', '#4b2e83')}
-          ${reportKpiCallout(`${waPct}%`, 'Share of Total', '#22c55e')}
-          ${reportKpiCallout(geo.waCountyRanked[0] ? geo.waCountyRanked[0].label : '—', 'Top County', '#f97316')}
-        </div>
-        <div style="flex:1.6;position:relative;background:#f1f5f9;border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,0.04),0 1px 8px rgba(15,23,42,0.06)">
-          <div id="exec-map-slot" style="width:100%;height:100%"></div>
-          <div style="position:absolute;left:12px;bottom:12px;background:rgba(255,255,255,0.92);border-radius:8px;padding:7px 11px;display:flex;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,0.12)">
-            ${BANDS.map(b => `<div style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:50%;background:${b.color};display:inline-block"></span><span style="font-size:10px;font-weight:600;color:#334155">${b.label}</span></div>`).join('')}
+        <div style="display:flex;gap:14px;flex:1.7">
+          <div style="flex:1.5;position:relative;background:#f1f5f9;border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,0.04),0 1px 8px rgba(15,23,42,0.06)">
+            <div id="exec-map-slot" style="width:100%;height:100%"></div>
+            <div style="position:absolute;top:12px;left:14px;background:rgba(255,255,255,0.94);border-radius:8px;padding:7px 12px;box-shadow:0 2px 8px rgba(0,0,0,0.1)">
+              <div style="font-size:12px;font-weight:800;color:#0f172a">Washington Residents by County</div>
+              <div style="font-size:10.5px;color:#64748b;margin-top:1px">${formatNum(a.washingtonResidents)} residents across Washington counties</div>
+            </div>
+            <div style="position:absolute;left:14px;bottom:12px;background:rgba(255,255,255,0.92);border-radius:8px;padding:7px 11px;display:flex;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,0.12)">
+              ${BANDS.map(b => `<div style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:50%;background:${b.color};display:inline-block"></span><span style="font-size:10px;font-weight:600;color:#334155">${b.label}</span></div>`).join('')}
+            </div>
           </div>
+          ${residentRankedTable('Top Washington Counties', waNote, a.counties.slice(0, 8), '#4b2e83', 1)}
+          ${residentInsightPanel(page1Insights, 1)}
         </div>
-        <div style="display:flex;gap:16px;flex:1">
-          ${reportRankTable('Top Washington Counties', geo.waCountyRanked.slice(0, 8))}
-          ${reportRankTable('Top Washington Cities', geo.waCityRanked.slice(0, 8))}
+        <div style="display:flex;gap:14px;flex:1">
+          ${residentRankedTable('Top States by Resident Count', '', a.states.slice(0, 10), '#8b5cf6', 1)}
+          ${residentRegionDonutPanel(a.regionCounts, a.totalResidents, 0.85)}
+          ${residentDistancePanel('Distance Distribution', a.distanceBuckets, `Distance from Residential Village, ${RESIDENTIAL_VILLAGE_ADDRESS}`, 1)}
         </div>`
-    }, waMapCanvas, null));
-
-    // ── Page 2: USA View ───────────────────────────────────────
-    const usaMapCanvas = await captureScopedMap(residentRecords, 'usa');
-    pageCanvases.push(await renderReportPage(container, PAGE_W, PAGE_H, {
-      ...shellBase, pageLabel: 'USA View',
-      bodyHtml: `
-        <div style="display:flex;gap:16px;flex:0 0 96px">
-          ${reportKpiCallout(formatNum(geo.totalGeocoded), 'Total Mapped', '#4b2e83')}
-          ${reportKpiCallout(formatNum(geo.statesRepresented), 'States Represented', '#22c55e')}
-          ${reportKpiCallout(geo.stateRanked[0] ? geo.stateRanked[0].label : '—', 'Top State', '#f97316')}
-        </div>
-        <div style="flex:1.6;position:relative;background:#f1f5f9;border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,0.04),0 1px 8px rgba(15,23,42,0.06)">
-          <div id="exec-map-slot" style="width:100%;height:100%"></div>
-        </div>
-        <div style="display:flex;gap:16px;flex:1">
-          ${reportRankTable('Top 5 States', geo.stateRanked.slice(0, 5))}
-          ${reportChartPanel('Distance Breakdown — Radius Analysis', 'chart-band', 1)}
-        </div>`
-    }, usaMapCanvas, [{
-      canvasId: 'chart-band', type: 'bar',
-      labels: BANDS.map(b => b.label), data: BANDS.map(b => stats.bandCounts[b.label] || 0), colors: BANDS.map(b => b.color)
-    }]));
-
-    // ── Page 3: Global View ────────────────────────────────────
-    const globalMapCanvas = await captureScopedMap(residentRecords, 'global');
-    pageCanvases.push(await renderReportPage(container, PAGE_W, PAGE_H, {
-      ...shellBase, pageLabel: 'Global View',
-      bodyHtml: `
-        <div style="display:flex;gap:16px;flex:0 0 96px">
-          ${reportKpiCallout(formatNum(geo.totalGeocoded), 'Total Mapped', '#4b2e83')}
-          ${reportKpiCallout(`${formatNum(geo.farthestDistance)} mi`, 'Farthest Distance', '#ef4444')}
-          ${reportKpiCallout(formatNum(geo.statesRepresented), 'States / Regions', '#8b5cf6')}
-        </div>
-        <div style="flex:1.6;position:relative;background:#f1f5f9;border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,0.04),0 1px 8px rgba(15,23,42,0.06)">
-          <div id="exec-map-slot" style="width:100%;height:100%"></div>
-        </div>
-        <div style="display:flex;gap:16px;flex:1">
-          ${reportRankTable('Top Cities Nationwide', geo.cityStateRanked.slice(0, 8), 'Avg Distance')}
-        </div>`
-    }, globalMapCanvas, null));
-
-    // ── Page 4: Detailed Rankings ──────────────────────────────
-    const occupantEntries = Object.entries(stats.occupantTypeCounts).sort((a, b) => b[1] - a[1]);
-    pageCanvases.push(await renderReportPage(container, PAGE_W, PAGE_H, {
-      ...shellBase, pageLabel: 'Detailed Rankings',
-      bodyHtml: `
-        <div style="display:flex;gap:16px;flex:1.4">
-          ${reportRankTable('Top Cities by Resident Count', geo.cityStateRanked.slice(0, 15), 'Avg Distance')}
-        </div>
-        <div style="display:flex;gap:16px;flex:1">
-          ${reportChartPanel('Occupant Type', 'chart-occupant', 1)}
-          ${reportChartPanel('Geocoding Coverage', 'chart-coverage', 1)}
-        </div>`
-    }, null, [
+    }, waMapCanvas, [
       {
-        canvasId: 'chart-occupant', type: 'doughnut',
-        labels: occupantEntries.map(([label]) => label), data: occupantEntries.map(([, count]) => count),
-        colors: occupantEntries.map((_, i) => REPORT_PALETTE[i % REPORT_PALETTE.length])
+        canvasId: 'chart-region', type: 'doughnut',
+        labels: Object.keys(a.regionCounts).filter(k => a.regionCounts[k] > 0),
+        data: Object.entries(a.regionCounts).filter(([, c]) => c > 0).map(([, c]) => c),
+        colors: Object.keys(a.regionCounts).filter(k => a.regionCounts[k] > 0).map(k => ({ 'Washington': '#4b2e83', 'Other U.S.': '#8b5cf6', 'International': '#f97316' }[k]))
       },
       {
-        canvasId: 'chart-coverage', type: 'doughnut',
-        labels: ['Geocoded', 'Not Geocoded'], data: [stats.geocoded, stats.total - stats.geocoded], colors: ['#4b2e83', '#e2e8f0']
+        canvasId: 'chart-distance', type: 'bar',
+        labels: a.distanceBuckets.map(b => b.label),
+        data: a.distanceBuckets.map(b => b.count),
+        colors: ['#4b2e83', '#6d4aa3', '#8b5cf6', '#c4b5fd', '#e5deff']
+      }
+    ]));
+
+    // ── PAGE 2: World View / Geographic Reach ────────────────────
+    const globalMapCanvas = await captureScopedMap(residentRecords, 'global');
+    const page2Insights = generateResidentWorldInsights(a);
+
+    const fifthKpi = a.hasInternational
+      ? reportKpiCallout(formatNum(a.internationalCount), 'International Residents', '#f97316')
+      : reportKpiCallout(formatNum(a.cities.length), 'Cities Represented', '#f97316');
+
+    const page2Kpi = [
+      reportKpiCallout(formatNum(a.totalResidents), 'Total Residents', '#4b2e83'),
+      reportKpiCallout(`${formatNum(a.mappedResidents)} <span style="font-size:14px;color:#94a3b8;font-weight:600">(${a.geocodingPercentage}%)</span>`, 'Total Mapped', '#22c55e'),
+      reportKpiCallout(formatNum(a.statesRepresented), 'States / Regions Represented', '#8b5cf6'),
+      reportKpiCallout(`${formatNum(a.farthestDistance)} mi`, 'Farthest Resident Distance', '#ef4444'),
+      fifthKpi
+    ].join('');
+
+    const rightPanel2 = a.hasInternational
+      ? residentRankedTable('Countries Represented', '', a.countries.slice(0, 8).map(c => ({ label: c.label, count: c.count, pct: a.internationalCount ? Math.round(c.count / a.internationalCount * 100) : 0 })), '#f97316', 1)
+      : residentDistancePanel('Distance Distribution', a.distanceBuckets, `Distance from Residential Village, ${RESIDENTIAL_VILLAGE_ADDRESS}`, 1);
+
+    pageCanvases.push(await renderResidentReportPage(container, PAGE_W, PAGE_H, {
+      subtitleBadge: 'World View', address: RESIDENTIAL_VILLAGE_ADDRESS, exportDate, kpiHtml: page2Kpi,
+      bodyHtml: `
+        <div style="display:flex;gap:14px;flex:1.7">
+          <div style="flex:1.6;position:relative;background:#f1f5f9;border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,0.04),0 1px 8px rgba(15,23,42,0.06)">
+            <div id="exec-map-slot" style="width:100%;height:100%"></div>
+            <div style="position:absolute;top:12px;left:14px;background:rgba(255,255,255,0.94);border-radius:8px;padding:7px 12px;box-shadow:0 2px 8px rgba(0,0,0,0.1)">
+              <div style="font-size:12px;font-weight:800;color:#0f172a">Global Resident Distribution</div>
+              <div style="font-size:10.5px;color:#64748b;margin-top:1px">${formatNum(a.mappedResidents)} mapped residents across ${formatNum(a.statesRepresented)} state${a.statesRepresented === 1 ? '' : 's'}/regions</div>
+            </div>
+          </div>
+          ${residentInsightPanel(page2Insights, 1)}
+        </div>
+        <div style="display:flex;gap:14px;flex:1">
+          ${residentRankedTable('Top U.S. States', '', a.states.slice(0, 10), '#8b5cf6', 1)}
+          ${residentCityTable('Top Cities', a.cities.slice(0, 10), 1.15)}
+          ${rightPanel2}
+        </div>`
+    }, globalMapCanvas, a.hasInternational ? null : [
+      {
+        canvasId: 'chart-distance', type: 'bar',
+        labels: a.distanceBuckets.map(b => b.label),
+        data: a.distanceBuckets.map(b => b.count),
+        colors: ['#4b2e83', '#6d4aa3', '#8b5cf6', '#c4b5fd', '#e5deff']
       }
     ]));
 
