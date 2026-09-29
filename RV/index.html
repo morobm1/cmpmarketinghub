@@ -89,12 +89,14 @@
 .compare-map-el{height:420px;width:100%}
 
 /* ── RESIDENT VIEW ──────────────────────────────────── */
-.resident-view{display:flex;flex-direction:column;height:calc(100vh - 40px);overflow-y:auto;background:var(--bg);padding:24px 28px}
-.resident-view-header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:20px}
-.resident-view-header h2{font-size:19px;font-weight:800;color:var(--text)}
+.resident-view{display:flex;flex-direction:column;height:calc(100vh - 40px);overflow-y:auto;background:#f6f7fa;padding:24px 28px}
+.resident-view-header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:18px}
+.resident-view-header h2{font-size:20px;font-weight:800;color:var(--text)}
 .resident-view-header .sub{font-size:12px;color:var(--subtext);margin-top:3px}
 .resident-view-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.resident-map-el{height:600px;width:100%;border-radius:var(--radius-lg);border:2px solid var(--border);overflow:hidden}
+.resident-map-el{height:620px;width:100%;border-radius:14px;overflow:hidden;position:relative;background:#eef1f6;box-shadow:0 1px 2px rgba(15,23,42,0.05),0 2px 10px rgba(15,23,42,0.07);flex:1.3}
+.resident-main-row{display:flex;gap:16px;margin-bottom:16px;align-items:stretch}
+.resident-bottom-row{display:flex;gap:16px;align-items:stretch}
 
 /* ── RESET & BASE ───────────────────────────────────── */
 *{margin:0;padding:0;box-sizing:border-box}
@@ -334,14 +336,7 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;bac
 .exec-preset-chip:hover,.exec-preset-chip.active{background:var(--brand-light);border-color:var(--brand);color:var(--brand)}
 
 /* Resident Heat Map */
-.resident-kpi-row{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
-.resident-kpi-card{flex:1;min-width:110px;text-align:center;padding:12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg)}
-.resident-kpi-card .v{font-size:22px;font-weight:800;color:var(--text)}
-.resident-kpi-card .l{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--subtext);margin-top:2px}
-.resident-kpi-card.band-green{border-left:3px solid var(--green)} .resident-kpi-card.band-green .v{color:var(--green)}
-.resident-kpi-card.band-orange{border-left:3px solid var(--orange)} .resident-kpi-card.band-orange .v{color:var(--orange)}
-.resident-kpi-card.band-red{border-left:3px solid var(--red)} .resident-kpi-card.band-red .v{color:var(--red)}
-.resident-kpi-card.band-purple{border-left:3px solid var(--purple)} .resident-kpi-card.band-purple .v{color:var(--purple)}
+.resident-kpi-row{display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap;align-items:stretch}
 .exec-preview{margin-top:16px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:#f8fafc}
 .exec-preview-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--subtext);padding:10px 14px;border-bottom:1px solid var(--border)}
 .exec-filter-summary{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
@@ -789,8 +784,9 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;bac
 
   <div id="residentMapView" style="display:none">
     <div class="resident-kpi-row" id="residentKpiRow"></div>
-    <div id="residentMapEl" class="resident-map-el"></div>
-    <div class="data-quality" id="residentDataQuality" style="display:none;margin-top:12px">
+    <div class="resident-main-row" id="residentMainRow"></div>
+    <div class="resident-bottom-row" id="residentBottomRow"></div>
+    <div class="data-quality" id="residentDataQuality" style="display:none;margin-top:16px">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
       <span><strong id="residentFailedCount">0</strong> resident(s) could not be geocoded (unrecognized zip/city) and are excluded from the map.</span>
     </div>
@@ -2293,51 +2289,75 @@ const barValueLabelPlugin = {
 // "count (pct%)" label past the end of each bar via barValueLabelPlugin.
 // Both are opt-in and default to the previous vertical-bar behavior, so
 // existing callers (admissions/compare reports) are unaffected.
+// Builds one Chart.js instance from a spec, or null if its canvas isn't in
+// the DOM. Shared by both the PDF-export chart lifecycle (renderReportCharts
+// / destroyReportCharts, scoped to the temporary off-screen export canvas)
+// and the live Residents dashboard's chart lifecycle (renderLiveCharts /
+// destroyLiveCharts, scoped to the persistent on-screen page) — these are
+// tracked in separate arrays specifically so generating a PDF can never
+// wipe out charts currently shown on screen, and vice versa.
+function buildChartFromSpec(spec) {
+  const canvas = document.getElementById(spec.canvasId);
+  if (!canvas) return null;
+  const isBar = spec.type === 'bar';
+  const horizontal = isBar && !!spec.horizontal;
+
+  return new Chart(canvas.getContext('2d'), {
+    type: spec.type,
+    data: {
+      labels: spec.labels,
+      datasets: [{
+        data: spec.data,
+        backgroundColor: spec.colors,
+        borderWidth: isBar ? 0 : 2,
+        borderColor: '#ffffff',
+        borderRadius: isBar ? 5 : 0,
+        labelPcts: spec.pcts || null
+      }]
+    },
+    options: {
+      indexAxis: horizontal ? 'y' : 'x',
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      layout: { padding: horizontal ? { right: 64, top: 4, bottom: 4, left: 4 } : 4 },
+      plugins: {
+        legend: isBar ? { display: false } : {
+          position: 'right',
+          labels: { boxWidth: 11, padding: 10, font: { size: 11, family: 'Inter' }, color: '#334155' }
+        },
+        tooltip: { enabled: false }
+      },
+      scales: !isBar ? undefined : (horizontal ? {
+        x: { beginAtZero: true, display: false, grid: { display: false } },
+        y: { grid: { display: false }, ticks: { font: { size: 11.5, family: 'Inter', weight: '600' }, color: '#334155' } }
+      } : {
+        x: { grid: { display: false }, ticks: { font: { size: 10, family: 'Inter' }, color: '#64748b' } },
+        y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 10, family: 'Inter' }, color: '#64748b', precision: 0 } }
+      })
+    },
+    plugins: spec.showValueLabels ? [barValueLabelPlugin] : []
+  });
+}
+
 function renderReportCharts(specs) {
   destroyReportCharts();
   specs.forEach(spec => {
-    const canvas = document.getElementById(spec.canvasId);
-    if (!canvas) return;
-    const isBar = spec.type === 'bar';
-    const horizontal = isBar && !!spec.horizontal;
+    const chart = buildChartFromSpec(spec);
+    if (chart) _reportChartInstances.push(chart);
+  });
+}
 
-    const chart = new Chart(canvas.getContext('2d'), {
-      type: spec.type,
-      data: {
-        labels: spec.labels,
-        datasets: [{
-          data: spec.data,
-          backgroundColor: spec.colors,
-          borderWidth: isBar ? 0 : 2,
-          borderColor: '#ffffff',
-          borderRadius: isBar ? 5 : 0,
-          labelPcts: spec.pcts || null
-        }]
-      },
-      options: {
-        indexAxis: horizontal ? 'y' : 'x',
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: false,
-        layout: { padding: horizontal ? { right: 64, top: 4, bottom: 4, left: 4 } : 4 },
-        plugins: {
-          legend: isBar ? { display: false } : {
-            position: 'right',
-            labels: { boxWidth: 11, padding: 10, font: { size: 11, family: 'Inter' }, color: '#334155' }
-          },
-          tooltip: { enabled: false }
-        },
-        scales: !isBar ? undefined : (horizontal ? {
-          x: { beginAtZero: true, display: false, grid: { display: false } },
-          y: { grid: { display: false }, ticks: { font: { size: 11.5, family: 'Inter', weight: '600' }, color: '#334155' } }
-        } : {
-          x: { grid: { display: false }, ticks: { font: { size: 10, family: 'Inter' }, color: '#64748b' } },
-          y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 10, family: 'Inter' }, color: '#64748b', precision: 0 } }
-        })
-      },
-      plugins: spec.showValueLabels ? [barValueLabelPlugin] : []
-    });
-    _reportChartInstances.push(chart);
+let _liveChartInstances = [];
+function destroyLiveCharts() {
+  _liveChartInstances.forEach(c => { try { c.destroy(); } catch (e) {} });
+  _liveChartInstances = [];
+}
+function renderLiveCharts(specs) {
+  destroyLiveCharts();
+  specs.forEach(spec => {
+    const chart = buildChartFromSpec(spec);
+    if (chart) _liveChartInstances.push(chart);
   });
 }
 
@@ -2778,7 +2798,12 @@ function slugify(str) {
 
 function dateSlug() {
   const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const date = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  // Include time so regenerating an export the same day never reuses a
+  // filename — that ambiguity ("is this the old or new file?") is exactly
+  // what makes stale-export confusion possible.
+  const time = `${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}`;
+  return `${date}-${time}`;
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -4438,17 +4463,6 @@ function parseResidentExcelFile(file) {
   });
 }
 
-function computeResidentStats(records) {
-  const total = records.length;
-  const geocoded = records.filter(r => r.geocoded).length;
-  const bandCounts = {};
-  BANDS.forEach(b => bandCounts[b.label] = 0);
-  records.forEach(r => { if (bandCounts[r.band] !== undefined) bandCounts[r.band]++; });
-  const occupantTypeCounts = {};
-  records.forEach(r => { const k = r.occupantType || 'Unknown'; occupantTypeCounts[k] = (occupantTypeCounts[k] || 0) + 1; });
-  return { total, geocoded, bandCounts, occupantTypeCounts };
-}
-
 let residentDataLoadAttempted = false;
 let residentSourceLabel = '';
 
@@ -4488,7 +4502,7 @@ async function enterResidentView() {
     if (saved && Array.isArray(saved.records) && saved.records.length) {
       residentRecords = saved.records;
       residentSourceLabel = saved.sourceFile || 'Saved resident data';
-      renderResidentView();
+      await renderResidentView();
     }
   } catch (e) {
     console.warn('Could not load stored resident dataset:', e);
@@ -4518,29 +4532,76 @@ function processResidentFile(file) {
       console.warn('Resident dataset upload succeeded locally but could not be saved centrally.');
     }
 
+    await renderResidentView();
     hideLoading();
-    renderResidentView();
   }).catch(err => {
     hideLoading();
     alert('Error reading the resident file: ' + err.message);
   });
 }
 
-function renderResidentView() {
+// Live on-screen Residents dashboard — built from the exact same analytics
+// (computeResidentReportAnalytics) and presentation components (reportCard/
+// reportKpiCallout/residentRankedTable/residentFindingsCard/etc.) used by
+// the Executive Report PDF, so what you browse on screen and what you
+// export are visually and numerically consistent.
+let residentCountyLookupCache = null;
+
+async function renderResidentView() {
   document.getElementById('residentUploadPrompt').style.display = 'none';
   document.getElementById('residentMapView').style.display = 'block';
   document.getElementById('residentViewActions').style.display = 'flex';
   document.getElementById('residentViewSubtitle').textContent =
     residentSourceLabel ? `Source: ${residentSourceLabel}` : 'Where current residents live, relative to the Residential Village';
 
-  const stats = computeResidentStats(residentRecords);
+  if (!residentCountyLookupCache) residentCountyLookupCache = await loadWaCountyLookup();
+  const a = computeResidentReportAnalytics(residentRecords, residentCountyLookupCache);
+  const findings = generateResidentFindings(a);
 
-  document.getElementById('residentKpiRow').innerHTML = `
-    <div class="resident-kpi-card"><div class="v">${formatNum(stats.total)}</div><div class="l">Total Residents</div></div>
-    ${BANDS.map(b => `<div class="resident-kpi-card band-${b.cssClass}"><div class="v">${formatNum(stats.bandCounts[b.label])}</div><div class="l">${b.label}</div></div>`).join('')}
+  document.getElementById('residentKpiRow').innerHTML = [
+    reportKpiCallout(formatNum(a.totalResidents), 'Total Residents', '#4b2e83'),
+    reportKpiCallout(`${formatNum(a.washingtonResidents)} <span style="font-size:14px;color:#94a3b8;font-weight:600">(${a.washingtonPercentage}%)</span>`, 'Washington Residents', '#22c55e'),
+    reportKpiCallout(`${formatNum(a.outOfStateResidents)} <span style="font-size:14px;color:#94a3b8;font-weight:600">(${a.outOfStatePercentage}%)</span>`, 'Outside Washington', '#8b5cf6'),
+    residentTopCountyCard(a.topCounty),
+    reportKpiCallout(`${formatNum(a.mappedResidents)} <span style="font-size:14px;color:#94a3b8;font-weight:600">(${a.geocodingPercentage}%)</span>`, 'Geocoding Coverage', '#0ea5e9')
+  ].join('');
+
+  document.getElementById('residentMainRow').innerHTML = `
+    <div class="resident-map-el">
+      <div id="residentMapEl" style="width:100%;height:100%"></div>
+      <div style="position:absolute;left:16px;bottom:14px;background:rgba(255,255,255,0.94);border-radius:8px;padding:8px 12px;display:flex;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,0.12)">
+        ${BANDS.map(b => `<div style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:50%;background:${b.color};display:inline-block"></span><span style="font-size:10.5px;font-weight:600;color:#334155">${b.label}</span></div>`).join('')}
+      </div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:16px;min-width:0">
+      ${residentRankedTable('Top Washington Counties', '% of mapped Washington residents', a.counties.slice(0, 8), '#4b2e83', 1.15)}
+      ${residentFindingsCard(findings, 1)}
+    </div>
   `;
 
-  const failed = stats.total - stats.geocoded;
+  document.getElementById('residentBottomRow').innerHTML = `
+    ${residentRankedTable('Top Washington Cities', '% of mapped Washington residents', a.waCities.slice(0, 8), '#22c55e', 1)}
+    ${residentOriginMixPanel(a.regionCounts, a.totalResidents, 1, 'chart-region-live')}
+    ${residentDistancePanel('Distance Distribution', a.distanceBuckets, `Distance measured from Residential Village, ${RESIDENTIAL_VILLAGE_ADDRESS}`, 1, 'chart-distance-live')}
+  `;
+
+  renderLiveCharts([
+    {
+      canvasId: 'chart-region-live', type: 'doughnut',
+      labels: Object.keys(a.regionCounts).filter(k => a.regionCounts[k] > 0),
+      data: Object.entries(a.regionCounts).filter(([, c]) => c > 0).map(([, c]) => c),
+      colors: Object.keys(a.regionCounts).filter(k => a.regionCounts[k] > 0).map(k => ({ 'Washington': '#4b2e83', 'Other U.S.': '#8b5cf6', 'International': '#f97316', 'Unknown': '#cbd5e1' }[k]))
+    },
+    {
+      canvasId: 'chart-distance-live', type: 'bar', horizontal: true, showValueLabels: true,
+      labels: a.distanceBuckets.map(b => b.label),
+      data: a.distanceBuckets.map(b => b.count),
+      pcts: a.distanceBuckets.map(b => b.pct),
+      colors: DISTANCE_CHART_COLORS
+    }
+  ]);
+
+  const failed = a.totalResidents - a.mappedResidents;
   const dq = document.getElementById('residentDataQuality');
   if (failed > 0) {
     dq.style.display = 'flex';
@@ -4617,14 +4678,13 @@ function setResidentMapMode(mode) {
 }
 
 // ══════════════════════════════════════════════════════════════════
-//  RESIDENT EXECUTIVE REPORT — DATA TRANSFORMATION
+//  RESIDENT ANALYTICS (shared by the live on-screen dashboard and the
+//  2-page Executive Report PDF)
 //
-//  Pure analytics layer for the 2-page executive PDF. This does NOT
-//  recompute anything the live Resident view already relies on
-//  (computeResidentStats / buildResidentMap stay untouched) — it derives
-//  a purpose-built, denormalized analytics object from the same
-//  `residentRecords` array so every number on the report traces back to
-//  the same geocoded dataset already shown on screen.
+//  A purpose-built, denormalized analytics object derived from the same
+//  `residentRecords` array (buildResidentMap's live Leaflet map stays
+//  untouched) — every number shown on screen or in the exported PDF
+//  traces back to this single computation.
 // ══════════════════════════════════════════════════════════════════
 const RESIDENT_DISTANCE_BINS = [
   { label: '0–50 mi', min: 0, max: 50 },
@@ -4952,13 +5012,14 @@ function residentCityTable(title, rows, flexGrow) {
   `, flexGrow);
 }
 
-function residentOriginMixPanel(regionCounts, total, flexGrow) {
+function residentOriginMixPanel(regionCounts, total, flexGrow, canvasId) {
+  canvasId = canvasId || 'chart-region';
   const colors = { 'Washington': '#4b2e83', 'Other U.S.': '#8b5cf6', 'International': '#f97316', 'Unknown': '#cbd5e1' };
   return reportCard(`
     <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:2px;flex-shrink:0">Resident Origin Mix</div>
     <div style="flex:1;display:flex;align-items:center;justify-content:center;min-height:0">
       <div style="position:relative;width:100%;max-width:290px;aspect-ratio:1/1">
-        <canvas id="chart-region"></canvas>
+        <canvas id="${canvasId}"></canvas>
         <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none">
           <div style="font-size:27px;font-weight:800;color:#0f172a">${formatNum(total)}</div>
           <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;color:#94a3b8;letter-spacing:0.4px">Total Residents</div>
@@ -4973,10 +5034,11 @@ function residentOriginMixPanel(regionCounts, total, flexGrow) {
   `, flexGrow);
 }
 
-function residentDistancePanel(title, buckets, note, flexGrow) {
+function residentDistancePanel(title, buckets, note, flexGrow, canvasId) {
+  canvasId = canvasId || 'chart-distance';
   return reportCard(`
     <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:8px;flex-shrink:0">${escHtml(title)}</div>
-    <div style="flex:1;position:relative;min-height:0"><canvas id="chart-distance"></canvas></div>
+    <div style="flex:1;position:relative;min-height:0"><canvas id="${canvasId}"></canvas></div>
     ${note ? `<div style="font-size:9.5px;color:#94a3b8;margin-top:8px;flex-shrink:0;line-height:1.4">${escHtml(note)}</div>` : ''}
   `, flexGrow);
 }
