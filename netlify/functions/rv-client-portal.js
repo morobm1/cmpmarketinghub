@@ -329,7 +329,7 @@ export const handler = async (event) => {
       const requestedSlug = (event.queryStringParameters || {}).slug;
       if (requestedSlug && requestedSlug !== portal.slug) return json(401, { error: 'Session does not match this portal link' });
 
-      const csv = statsSummaryCsv(portal.primary.records);
+      const csv = portal.type === 'resident' ? residentSummaryCsv(portal.primary.records) : statsSummaryCsv(portal.primary.records);
       return {
         statusCode: 200,
         headers: {
