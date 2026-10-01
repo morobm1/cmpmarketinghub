@@ -174,7 +174,11 @@
         { q: 'Is the apartment furnished?', a: 'Yes. Residents bring personal items like linens and cookware.' },
       ],
       CONTACTS: [
-        { fact: null, ask: 'Harbour office phone, email and office hours.' },
+        { fact: 'Address: 1369 Adams Avenue, Costa Mesa, CA' },
+        { fact: 'Phone: 714-643-5100 · Text: 833-622-3602' },
+        { fact: 'Email: live@theharbourocc.com' },
+        { fact: 'Resident portal: theharbourocc.residentportal.com' },
+        { fact: null, ask: 'Office hours.' },
       ],
     },
 
@@ -196,9 +200,22 @@
       { category: 'Emergency Information',      title: 'Emergency: call 911',           url: 'tel:911', note: 'Add Harbour after-hours / on-call number.' },
     ],
 
+    // ── Entrata email shell (matches the live Harbour Entrata template exactly) ──
+    email: {
+      colors: { accent: '#f58220', navy: '#103b78', page: '#eef2f6', text: '#42566b', heroText: '#e5edf7', border: '#dfe6ed', calloutBg: '#fff8f2', footerText: '#dce6f2' },
+      font: 'arial,helvetica,sans-serif',
+      logo: 'https://medialibrarycf.entrata.com/2342/MLv3/2025/09/17/085551/68cacbf730bb8875.jpg',
+      logoAlt: 'The Harbour at Orange Coast College',
+      siteUrl: 'https://theharbourocc.com/',
+      portalUrl: 'https://theharbourocc.residentportal.com/auth',
+      orgName: 'The Harbour at Orange Coast College',
+      signature: { name: 'The Harbour Team', line: 'On-Campus Student Housing at Orange Coast College' },
+      footer: { name: 'The Harbour at Orange Coast College', address: '1369 Adams Avenue • Costa Mesa, CA', phone: '714-643-5100', phoneHref: '+17146435100', text: '833-622-3602', textHref: '+18336223602', email: 'live@theharbourocc.com', site: 'theharbourocc.com' },
+    },
+
     defaults: {
       ctaUrl: 'https://theharbourocc.com',
-      contact: '',          // e.g. office email/phone — intentionally blank until verified
+      contact: '714-643-5100 • live@theharbourocc.com',
       footer: 'The Harbour at OCC  •  theharbourocc.com',
       hashtags: ['#TheHarbourOCC', '#OCCPirates', '#OrangeCoastCollege', '#CostaMesa', '#StudentLiving'],
       emailSignoff: 'The Harbour ResLife Team',

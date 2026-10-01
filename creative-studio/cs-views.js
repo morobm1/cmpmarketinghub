@@ -226,13 +226,13 @@
       <div style="font-size:12.5px;color:var(--ui-muted)">${esc(c.purpose)}</div>
       ${c.verify ? '<div class="cs-verify">Emergency template — staff must verify final language before sending.</div>' : ''}
       <div class="cs-comm-preview">${esc(c.subject ? 'Subject: ' + c.subject + '\n\n' : '')}${esc(preview)}</div>
-      <div class="cs-comm-actions"><button class="cs-btn sm" data-comm="${c.id}">Use This Template</button><button class="cs-btn ghost sm" data-comm-copy="${c.id}">Copy</button></div>
+      <div class="cs-comm-actions"><button class="cs-btn sm" data-comm="${c.id}">Use This Template</button><button class="cs-btn ghost sm" data-comm-copy="${c.id}">${c.channel === 'email' ? 'Copy HTML' : 'Copy'}</button></div>
     </div>`;
   }
   CS.commCard = commCard;
   function bindComms(root) {
     root.querySelectorAll('[data-comm]').forEach(b => b.onclick = () => CS.openCommunication(b.getAttribute('data-comm')));
-    root.querySelectorAll('[data-comm-copy]').forEach(b => b.onclick = () => { const c = CS.data.communications.find(x => x.id === b.getAttribute('data-comm-copy')); CS.copy(c.channel === 'social' ? `${c.caption}\n\n${c.hashtags || ''}` : (c.subject ? `Subject: ${c.subject}\n\n` : '') + c.body); });
+    root.querySelectorAll('[data-comm-copy]').forEach(b => b.onclick = () => { const c = CS.data.communications.find(x => x.id === b.getAttribute('data-comm-copy')); CS.copy(c.channel === 'social' ? `${c.caption}\n\n${c.hashtags || ''}` : c.channel === 'email' && c.email ? CS.email.html(c.email) : c.body); });
   }
 
   V.communications = (channel) => {
@@ -260,6 +260,11 @@
   // Text-channel editor (email / sms / social copy) with AI options and terminology check.
   CS.openCommunication = (id, preset) => {
     const c = preset || CS.data.communications.find(x => x.id === id); if (!c) return;
+    if (c.channel === 'email') {
+      const e = c.email || { subject: c.subject || c.title, preheader: '', eyebrow: 'Resident Update', headline: c.title, intro: '', greeting: '', paragraphs: String(c.body || '').split(/\n\s*\n/).map(x => x.trim()).filter(Boolean), steps: [], closing: '' };
+      CS.email.editor(Object.assign({}, e, { verify: c.verify || e.verify }), { title: c.title, purpose: c.purpose, audience: c.audience, projectId: c.projectId });
+      return;
+    }
     const isSocial = c.channel === 'social', isSms = c.channel === 'sms';
     CS.modal(`
       <div class="cs-card-meta"><span class="cs-chip fmt">${isSms ? 'SMS' : isSocial ? 'Social' : 'Email'}</span><span class="cs-chip">${esc(c.audience)}</span></div>

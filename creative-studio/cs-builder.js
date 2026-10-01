@@ -83,6 +83,7 @@
   };
   CS.openProject = function (id) {
     const p = CS.state.projects.find(x => x.id === id) || (CS.state.archived || []).find(x => x.id === id); if (!p) return;
+    if (p.type === 'email' && p.content && p.content.email) { CS.email.editor(p.content.email, { title: p.name, projectId: p.id, folder: p.folder }); return; }
     if (['email', 'sms', 'social'].includes(p.type) && !['post', 'story', 'sign', 'letter', 'notice'].includes(p.format)) {
       CS.openCommunication(null, { id: p.id, title: p.name, channel: p.type, audience: 'Residents', purpose: 'Saved project', subject: p.type === 'email' ? (p.content.subject || '') : undefined, body: p.content.body || '', caption: p.content.body || '', graphicCopy: p.content.headline || '' });
       return;
@@ -271,6 +272,7 @@
   }
 
   function showConverted(out) {
+    if (out.convert === 'email' && B) { CS.email.editor(CS.email.fromContent(B.content, { audience: B.audience }), { title: B.name + ' — Email', audience: B.audience, folder: 'Resident Communications' }); return; }
     const label = out.convert === 'sms' ? 'SMS Version' : out.convert === 'email' ? 'Email Version' : 'Social Caption';
     CS.modal(`
       <h2 style="margin:0 0 12px;color:var(--brand-primary);font-weight:900">${label}</h2>
@@ -343,7 +345,8 @@
         { label: 'Instagram Story', format: 'story', layout: 'event', content: Object.assign({}, base, { subheadline: base.subheadline }) },
         { label: 'Digital Sign', format: 'sign', layout: 'event', content: Object.assign({}, base, { subheadline: base.subheadline }) },
       ];
-      const email = (await CS.aiRewriteFields(base, 'Create Email Version', 'email', aud));
+      const emailObj = CS.email.fromContent(base, { audience: aud, eyebrow: 'Community Event' });
+      const email = { subject: emailObj.subject, body: CS.email.text(emailObj), html: CS.email.html(emailObj), obj: emailObj };
       const sms = (await CS.aiRewriteFields(base, 'Create SMS Version', 'sms', aud));
       const social = (await CS.aiRewriteFields(base, 'Create Social Caption', 'social', aud));
       CS.state.campaign = { campaignId, name, pieces, email, sms, social };
@@ -351,15 +354,17 @@
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;flex-wrap:wrap"><h2 style="margin:0;color:var(--brand-primary)">${esc(name)}</h2><button class="cs-btn navy sm" id="cpSaveAll">Save all to My Projects</button></div>
         <div class="cs-campaign-grid">${pieces.map((p, i) => { const th = CS.render.thumbHTML(p); return `<div class="cs-card"><div class="cs-thumb ${th.cls}" data-cp-open="${i}">${th.html}<div class="cs-thumb-actions"><button class="cs-btn sm" data-cp-open="${i}">Edit</button><button class="cs-btn ghost sm" data-cp-dl="${i}">Download</button></div></div><div class="cs-card-body"><b>${p.label}</b></div></div>`; }).join('')}</div>
         <div class="cs-grid wide" style="margin-top:18px">
-          <div class="cs-text-out"><b style="color:var(--brand-primary)">Resident Email</b><small style="color:var(--ui-muted)">Subject: ${esc(email.subject || '')}</small><pre>${esc(email.body || '')}</pre><button class="cs-btn ghost sm" data-cp-copy="email">Copy</button></div>
+          <div class="cs-text-out"><b style="color:var(--brand-primary)">Resident Email <span class="cs-chip fmt">Entrata</span></b><small style="color:var(--ui-muted)">Subject: ${esc(email.subject || '')}</small><div style="border-radius:10px;overflow:hidden;border:1px solid var(--ui-border);height:220px"><iframe id="cpEmailFrame" style="width:200%;height:440px;border:0;transform:scale(.5);transform-origin:top left"></iframe></div><div style="display:flex;gap:6px"><button class="cs-btn sm" data-cp-email-edit="1">Edit email</button><button class="cs-btn ghost sm" data-cp-copy="email">Copy HTML</button></div></div>
           <div class="cs-text-out"><b style="color:var(--brand-primary)">SMS Reminder <span class="cs-chip">${(sms.body || '').length} chars</span></b><div class="cs-phone"><div class="cs-bubble">${esc(sms.body || '')}</div></div><button class="cs-btn ghost sm" data-cp-copy="sms">Copy</button></div>
           <div class="cs-text-out"><b style="color:var(--brand-primary)">Instagram Caption</b><pre>${esc((social.body || '') + '\n\n' + (social.hashtags || ''))}</pre><button class="cs-btn ghost sm" data-cp-copy="social">Copy</button></div>
         </div>`;
       const out = $('#cpOut');
       requestAnimationFrame(() => CS.render.scaleThumbs(out));
+      $('#cpEmailFrame').srcdoc = `<!doctype html><html><body style="margin:0">${email.html}</body></html>`;
+      out.querySelector('[data-cp-email-edit]').onclick = () => CS.email.editor(email.obj, { title: name + ' — Email', audience: aud, folder: 'Resident Communications' });
       out.querySelectorAll('[data-cp-open]').forEach(b => b.onclick = e => { e.stopPropagation(); const p = pieces[+b.getAttribute('data-cp-open')]; CS.openBuilder({ name: `${name} — ${p.label}`, format: p.format, layout: p.layout, content: JSON.parse(JSON.stringify(p.content)), folder: 'Events', campaignId }); });
       out.querySelectorAll('[data-cp-dl]').forEach(b => b.onclick = e => { e.stopPropagation(); const p = pieces[+b.getAttribute('data-cp-dl')]; CS.exportDesign(p, `${name} ${p.label}`, 'png'); });
-      out.querySelectorAll('[data-cp-copy]').forEach(b => b.onclick = () => { const k = b.getAttribute('data-cp-copy'); CS.copy(k === 'email' ? `Subject: ${email.subject}\n\n${email.body}` : k === 'sms' ? sms.body : `${social.body}\n\n${social.hashtags || ''}`); });
+      out.querySelectorAll('[data-cp-copy]').forEach(b => b.onclick = () => { const k = b.getAttribute('data-cp-copy'); CS.copy(k === 'email' ? email.html : k === 'sms' ? sms.body : `${social.body}\n\n${social.hashtags || ''}`); });
       $('#cpSaveAll').onclick = async () => {
         $('#cpSaveAll').disabled = true;
         try {
@@ -369,7 +374,7 @@
             CS.state.projects.unshift(r);
           }
           for (const [k, o] of [['email', email], ['sms', sms], ['social', social]]) {
-            const r = await CS.api('/reslife-creative-projects', { method: 'POST', body: JSON.stringify({ propertyId: CS.propertyId, name: `${name} — ${k === 'email' ? 'Email' : k === 'sms' ? 'SMS' : 'Caption'}`, type: k, format: k, folder: k === 'social' ? 'Social Media' : 'Resident Communications', content: { subject: o.subject || '', body: k === 'social' ? `${o.body}\n\n${o.hashtags || ''}` : o.body, headline: name }, campaignId }) });
+            const r = await CS.api('/reslife-creative-projects', { method: 'POST', body: JSON.stringify({ propertyId: CS.propertyId, name: `${name} — ${k === 'email' ? 'Email' : k === 'sms' ? 'SMS' : 'Caption'}`, type: k, format: k, folder: k === 'social' ? 'Social Media' : 'Resident Communications', content: { subject: o.subject || '', body: k === 'social' ? `${o.body}\n\n${o.hashtags || ''}` : o.body, headline: name, email: k === 'email' ? o.obj : undefined }, campaignId }) });
             CS.state.projects.unshift(r);
           }
           CS.toast('Campaign saved to My Projects');
