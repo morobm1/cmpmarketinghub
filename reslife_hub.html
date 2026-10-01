@@ -1188,9 +1188,19 @@
         <div class="rl-panel">
           <div class="rl-panel-header">
             <h2>Resident Directory</h2>
-            <button class="rl-btn primary hidden" id="dirAddBtn">+ Add Resident</button>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="rl-btn hidden" id="dirImportUnitsBtn" title="Excel: Column A = Unit, Column B = Unit Type">Import Unit Report</button>
+              <button class="rl-btn hidden" id="dirImportRosterBtn" title="Excel: A = Name, B = Unit, C = Email, D = Phone">Import Resident Roster</button>
+              <button class="rl-btn primary hidden" id="dirAddBtn">+ Add Resident</button>
+            </div>
+            <input type="file" id="dirUnitsFile" accept=".xlsx,.xls,.csv" class="hidden" />
+            <input type="file" id="dirRosterFile" accept=".xlsx,.xls,.csv" class="hidden" />
           </div>
           <div class="rl-panel-body">
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+              <input id="dirSearch" placeholder="Search name, unit, email…" style="flex:1;min-width:200px;padding:8px 10px;border:1px solid var(--rl-border);border-radius:8px" />
+              <span id="dirInvSummary" style="font-size:12px;color:var(--rl-subtext)"></span>
+            </div>
             <div class="rl-form hidden" id="dirForm">
               <input type="hidden" id="dirId" />
               <div class="rl-wizard-progress"></div>
@@ -1228,6 +1238,18 @@
               </div>
             </div>
             <div id="dirList"><div class="rl-loading">Loading…</div></div>
+          </div>
+        </div>
+        <div class="rl-modal-overlay" id="resModalOverlay">
+          <div class="rl-modal wide">
+            <div class="rl-modal-header">
+              <div style="display:flex;align-items:center;gap:10px">
+                <button class="rl-btn sm hidden" id="resModalBack" title="Back (Backspace)">&larr; Back</button>
+                <h3 id="resModalTitle">Resident</h3>
+              </div>
+              <button class="rl-modal-close" id="resModalClose" aria-label="Close">&times;</button>
+            </div>
+            <div class="rl-modal-body" id="resModalBody"></div>
           </div>
         </div>
       </section>
@@ -1801,6 +1823,8 @@
       document.getElementById('incAddBtn').classList.remove('hidden');
       document.getElementById('mrAddBtn').classList.remove('hidden');
       document.getElementById('dirAddBtn').classList.toggle('hidden', !isAdminTier);
+      document.getElementById('dirImportUnitsBtn').classList.toggle('hidden', !isAdminTier);
+      document.getElementById('dirImportRosterBtn').classList.toggle('hidden', !isAdminTier);
       document.getElementById('contactAddBtn').classList.toggle('hidden', !isAdminTier);
       // Creating a new Collateral Group (committee) is Admin-tier only — see
       // netlify/functions/reslife-committees.js. REC/Committee Lead can still
@@ -3299,24 +3323,62 @@
     }
 
     // ==================== RESIDENT DIRECTORY ====================
+    let dirDocs = [];
+    let dirUnits = [];
+    // "7417-A", "7417-A1", "7417 - B2" -> "7417". Same base unit + different bed = roommates.
+    function baseUnitOf(u){
+      const s = String(u || '').trim();
+      const i = s.lastIndexOf('-');
+      return (i > 0 ? s.slice(0, i) : s).trim().toUpperCase();
+    }
+    function unitTypeOf(u){
+      const full = String(u || '').trim().toUpperCase(), base = baseUnitOf(u);
+      const hit = dirUnits.find(x => String(x.unit).trim().toUpperCase() === full) || dirUnits.find(x => String(x.unit).trim().toUpperCase() === base) || dirUnits.find(x => baseUnitOf(x.unit) === base);
+      return hit ? hit.unitType : '';
+    }
+    function roommatesOf(d){
+      const base = baseUnitOf(d.unit || d.room);
+      if (!base) return [];
+      return dirDocs.filter(x => x.id !== d.id && baseUnitOf(x.unit || x.room) === base);
+    }
+
     async function loadDirectory(){
       const list = document.getElementById('dirList');
       list.innerHTML = '<div class="rl-loading">Loading…</div>';
-      let docs = [];
-      try { docs = await apiFetch('/reslife-directory' + propParam()); } catch (e) { list.innerHTML = '<div class="rl-empty">Failed to load directory.</div>'; return; }
-      if (docs.length === 0) { list.innerHTML = '<div class="rl-empty">No residents on file yet.</div>'; return; }
-      list.innerHTML = `<table class="rl-table"><thead><tr><th>Resident</th><th>Room</th><th>Unit</th><th>Phone</th><th>Email</th><th>Notes</th>${isAdminTier ? '<th></th>' : ''}</tr></thead><tbody>` +
+      try {
+        const [docs, units] = await Promise.all([
+          apiFetch('/reslife-directory' + propParam()),
+          apiFetch('/reslife-unit-inventory' + propParam()).catch(() => []),
+        ]);
+        dirDocs = docs; dirUnits = units || [];
+      } catch (e) { list.innerHTML = '<div class="rl-empty">Failed to load directory.</div>'; return; }
+      const occupied = new Set(dirDocs.map(d => baseUnitOf(d.unit || d.room)).filter(Boolean));
+      document.getElementById('dirInvSummary').textContent = dirUnits.length
+        ? `${dirUnits.length} units in inventory · ${dirDocs.length} residents · ${occupied.size} occupied units`
+        : `${dirDocs.length} residents · no unit inventory imported`;
+      renderDirectoryList();
+    }
+
+    function renderDirectoryList(){
+      const list = document.getElementById('dirList');
+      const q = (document.getElementById('dirSearch').value || '').trim().toLowerCase();
+      const docs = q ? dirDocs.filter(d => [d.residentName, d.unit, d.room, d.email, d.phone].some(v => String(v || '').toLowerCase().includes(q))) : dirDocs;
+      if (docs.length === 0) { list.innerHTML = `<div class="rl-empty">${dirDocs.length ? 'No matches.' : 'No residents on file yet.'}</div>`; return; }
+      list.innerHTML = `<table class="rl-table"><thead><tr><th>Resident</th><th>Unit</th><th>Unit Type</th><th>Phone</th><th>Email</th><th>Notes</th>${isAdminTier ? '<th></th>' : ''}</tr></thead><tbody>` +
         docs.map(d => `
           <tr>
-            <td>${esc(d.residentName)}</td>
-            <td>${esc(d.room || '')}</td>
-            <td>${esc(d.unit || '')}</td>
+            <td><a href="#" data-dir-open="${d.id}" style="font-weight:700;color:var(--rl-primary, #0b5cab)">${esc(d.residentName)}</a></td>
+            <td>${esc(d.unit || d.room || '')}</td>
+            <td>${esc(unitTypeOf(d.unit || d.room))}</td>
             <td>${esc(d.phone || '')}</td>
             <td>${esc(d.email || '')}</td>
             <td>${esc(d.notes || '')}</td>
             ${isAdminTier ? `<td style="white-space:nowrap"><button class="rl-btn sm" data-dir-edit="${d.id}">Edit</button> <button class="rl-btn sm danger" data-dir-del="${d.id}">Delete</button></td>` : ''}
           </tr>
         `).join('') + '</tbody></table>';
+      list.querySelectorAll('[data-dir-open]').forEach(a => a.addEventListener('click', ev => {
+        ev.preventDefault(); resHistoryStack = []; openResidentModal(a.getAttribute('data-dir-open'));
+      }));
       list.querySelectorAll('[data-dir-edit]').forEach(btn => btn.addEventListener('click', () => {
         const d = docs.find(x => x.id === btn.getAttribute('data-dir-edit'));
         if (d) openDirectoryForm(d);
@@ -3350,7 +3412,158 @@
         reviewRow('Notes', document.getElementById('dirNotes').value);
     }
 
+    // ---------- Excel imports ----------
+    function readSheetRows(file){
+      return new Promise((resolve, reject) => {
+        const fr = new FileReader();
+        fr.onload = e => {
+          try {
+            const wb = XLSX.read(e.target.result, { type: 'array' });
+            const ws = wb.Sheets[wb.SheetNames[0]];
+            resolve(XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false }));
+          } catch (err) { reject(err); }
+        };
+        fr.onerror = () => reject(fr.error);
+        fr.readAsArrayBuffer(file);
+      });
+    }
+    // Drop a header row if the first cell looks like a label rather than data.
+    function stripHeader(rows, re){
+      rows = rows.filter(r => r.some(c => String(c).trim() !== ''));
+      if (rows.length && re.test(String(rows[0][0]).trim())) rows.shift();
+      return rows;
+    }
+
+    async function importUnitReport(file){
+      try {
+        const rows = stripHeader(await readSheetRows(file), /^unit\b/i)
+          .map(r => ({ unit: String(r[0] || '').trim(), unitType: String(r[1] || '').trim() }))
+          .filter(r => r.unit);
+        if (!rows.length) { alert('No units found. Expected Column A = Unit, Column B = Unit Type.'); return; }
+        if (!confirm(`Import ${rows.length} units into ${currentProperty}? This replaces the existing unit inventory.`)) return;
+        const r = await apiFetch('/reslife-unit-inventory', { method: 'POST', body: JSON.stringify({ property: currentProperty, action: 'import', rows }) });
+        alert(`Imported ${r.imported} units.`);
+        await loadDirectory();
+      } catch (e) { alert('Unit import failed: ' + e.message); }
+    }
+
+    async function importRoster(file){
+      try {
+        const rows = stripHeader(await readSheetRows(file), /^(resident\s*)?name\b/i)
+          .map(r => ({ residentName: String(r[0] || '').trim(), unit: String(r[1] || '').trim(), email: String(r[2] || '').trim(), phone: String(r[3] || '').trim() }))
+          .filter(r => r.residentName);
+        if (!rows.length) { alert('No residents found. Expected A = Name, B = Unit, C = Email, D = Phone.'); return; }
+        if (dirUnits.length) {
+          const known = new Set(dirUnits.map(u => String(u.unit).trim().toUpperCase()));
+          const knownBase = new Set(dirUnits.map(u => baseUnitOf(u.unit)));
+          const unknown = rows.filter(r => r.unit && !known.has(r.unit.toUpperCase()) && !knownBase.has(baseUnitOf(r.unit)));
+          if (unknown.length && !confirm(`${unknown.length} roster row(s) reference units not in the unit inventory (e.g. ${unknown.slice(0, 3).map(r => r.unit).join(', ')}). Continue anyway?`)) return;
+        }
+        if (!confirm(`Import ${rows.length} residents? Existing residents with the same name are updated; their history is kept.`)) return;
+        const r = await apiFetch('/reslife-directory', { method: 'POST', body: JSON.stringify({ property: currentProperty, action: 'import', rows }) });
+        alert(`Roster imported: ${r.created} added, ${r.updated} updated.`);
+        await loadDirectory();
+      } catch (e) { alert('Roster import failed: ' + e.message); }
+    }
+
+    // ---------- Resident profile modal ----------
+    let resHistoryStack = [];
+    let resCurrentId = null;
+    function fmtDT(s){ if (!s) return ''; const d = new Date(s); return isNaN(d) ? esc(s) : d.toLocaleString(); }
+    function resSection(title, inner, count){
+      return `<div style="margin-top:18px"><h4 style="margin:0 0 8px;font-size:14px;font-weight:800">${title}${count != null ? ` <span style="color:var(--rl-subtext);font-weight:600">(${count})</span>` : ''}</h4>${inner}</div>`;
+    }
+    function resItems(items, fn){
+      if (!items || !items.length) return '<div class="rl-empty" style="padding:8px 0">None on file.</div>';
+      return '<div style="display:flex;flex-direction:column;gap:6px">' + items.map(i => `<div style="border:1px solid var(--rl-border);border-radius:8px;padding:8px 10px;font-size:13px">${fn(i)}</div>`).join('') + '</div>';
+    }
+
+    function closeResidentModal(){
+      document.getElementById('resModalOverlay').classList.remove('show');
+      resHistoryStack = []; resCurrentId = null;
+    }
+
+    async function openResidentModal(id, fromBack){
+      const d = dirDocs.find(x => x.id === id);
+      if (!d) return;
+      if (!fromBack && resCurrentId && resCurrentId !== id) resHistoryStack.push(resCurrentId);
+      resCurrentId = id;
+      document.getElementById('resModalOverlay').classList.add('show');
+      document.getElementById('resModalBack').classList.toggle('hidden', resHistoryStack.length === 0);
+      document.getElementById('resModalTitle').textContent = d.residentName;
+      const body = document.getElementById('resModalBody');
+      const unit = d.unit || d.room || '';
+      const mates = roommatesOf(d);
+      const matesHTML = mates.length
+        ? '<div style="display:flex;flex-wrap:wrap;gap:8px">' + mates.map(m => `<a href="#" class="rl-btn sm" data-res-mate="${m.id}" title="${esc(m.residentName)}${m.email ? ' — ' + esc(m.email) : ''}">${esc(m.residentName)} <span style="color:var(--rl-subtext)">(${esc(m.unit || m.room)})</span></a>`).join('') + '</div>'
+        : '<div class="rl-empty" style="padding:8px 0">No roommates on file.</div>';
+
+      body.innerHTML = `
+        <dl class="rl-wizard-review">
+          ${reviewRow('Unit / Bed', unit)}${reviewRow('Unit Type', unitTypeOf(unit))}${reviewRow('Email', d.email || '')}${reviewRow('Phone', d.phone || '')}${d.notes ? reviewRow('Notes', d.notes) : ''}
+        </dl>
+        ${resSection('Roommates', matesHTML, mates.length)}
+        <div id="resHistory"><div class="rl-loading">Loading history…</div></div>`;
+      body.querySelectorAll('[data-res-mate]').forEach(a => a.addEventListener('click', ev => { ev.preventDefault(); openResidentModal(a.getAttribute('data-res-mate')); }));
+
+      let h = { incidents: [], dutyLog: [], guestLog: [], keyLog: [] };
+      try { h = await apiFetch('/reslife-directory' + propParam() + '&id=' + encodeURIComponent(id) + '&history=1'); } catch (e) {}
+      if (resCurrentId !== id) return; // user navigated away
+      const fresh = dirDocs.find(x => x.id === id) || d;
+      const vm = (fresh.violationMeetings || []).slice().reverse();
+      const bn = (fresh.behaviorNotes || []).slice().reverse();
+
+      document.getElementById('resHistory').innerHTML =
+        resSection('Incident Reports', resItems(h.incidents, i => `<strong>${esc(i.date)}</strong> · ${esc(i.severity || '')} · ${esc(i.status || '')}<div>${esc(i.description || '')}</div>`), h.incidents.length) +
+        resSection('Violation Meetings', resItems(vm, v => `<strong>${esc(v.date)}</strong> · by ${esc(v.recordedBy)}<div>${esc(v.summary)}</div>`) +
+          (isManager ? `<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><input type="date" id="resVmDate" value="${new Date().toISOString().slice(0,10)}" /><input id="resVmSummary" placeholder="Meeting summary" style="flex:1;min-width:180px" /><button class="rl-btn sm primary" id="resVmAdd">Add</button></div>` : ''), vm.length) +
+        resSection('Habits, Interactions &amp; Notes', resItems(bn, n => `<strong>${esc(n.date)}</strong> · by ${esc(n.recordedBy)}<div>${esc(n.note)}</div>`) +
+          (isManager ? `<div style="display:flex;gap:6px;margin-top:8px"><textarea id="resNoteText" rows="2" placeholder="Habits, interactions, observations…" style="flex:1"></textarea><button class="rl-btn sm primary" id="resNoteAdd">Add</button></div>` : ''), bn.length) +
+        resSection('Duty Log Mentions', resItems(h.dutyLog, e => `<strong>${esc(e.date)} ${esc(e.time || '')}</strong> · ${esc(e.type || '')}${e.location ? ' · ' + esc(e.location) : ''}<div>${esc(e.reason || '')}</div>${e.followUp ? `<div style="color:var(--rl-subtext)">Follow-up: ${esc(e.followUp)}</div>` : ''}`), h.dutyLog.length) +
+        resSection('Guest Log', resItems(h.guestLog, g => `<strong>${esc(g.guestName)}</strong> · ${esc((g.status || '').replace('_', ' '))}${g.purpose ? ' · ' + esc(g.purpose) : ''}<div style="color:var(--rl-subtext)">In: ${fmtDT(g.checkInTime) || '—'} · Out: ${fmtDT(g.checkOutTime) || '—'}</div>`), h.guestLog.length) +
+        resSection('Key / Lock Entries', resItems(h.keyLog, k => `<strong>${esc(k.date)}</strong> · ${esc(k.entryType)} <span style="color:var(--rl-subtext)">(${esc(k.source || '')})</span><div>${esc(k.details || '')}</div>`) +
+          `<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><select id="resKeyType"><option>Lockout</option><option>Key Issued</option><option>Key Returned</option><option>Lost Key</option><option>Lock Change</option><option>Other</option></select><input id="resKeyDetails" placeholder="Details" style="flex:1;min-width:180px" /><button class="rl-btn sm primary" id="resKeyAdd">Add</button></div>`, h.keyLog.length);
+
+      const put = async (payload) => apiFetch('/reslife-directory', { method: 'PUT', body: JSON.stringify(Object.assign({ id, property: currentProperty }, payload)) });
+      const refresh = async () => { dirDocs = await apiFetch('/reslife-directory' + propParam()); openResidentModal(id, true); };
+      const vmBtn = document.getElementById('resVmAdd');
+      if (vmBtn) vmBtn.addEventListener('click', async () => {
+        const summary = document.getElementById('resVmSummary').value.trim();
+        if (!summary) return alert('Enter a summary');
+        try { await put({ action: 'addViolationMeeting', date: document.getElementById('resVmDate').value, summary }); await refresh(); } catch (e) { alert('Failed: ' + e.message); }
+      });
+      const noteBtn = document.getElementById('resNoteAdd');
+      if (noteBtn) noteBtn.addEventListener('click', async () => {
+        const note = document.getElementById('resNoteText').value.trim();
+        if (!note) return alert('Enter a note');
+        try { await put({ action: 'addBehaviorNote', note }); await refresh(); } catch (e) { alert('Failed: ' + e.message); }
+      });
+      document.getElementById('resKeyAdd').addEventListener('click', async () => {
+        try { await put({ action: 'addKeyEntry', entryType: document.getElementById('resKeyType').value, details: document.getElementById('resKeyDetails').value.trim() }); await refresh(); } catch (e) { alert('Failed: ' + e.message); }
+      });
+    }
+
+    function residentModalBack(){
+      if (!resHistoryStack.length) return;
+      openResidentModal(resHistoryStack.pop(), true);
+    }
+
     function bindDirectoryForm(){
+      document.getElementById('dirSearch').addEventListener('input', renderDirectoryList);
+      document.getElementById('dirImportUnitsBtn').addEventListener('click', () => document.getElementById('dirUnitsFile').click());
+      document.getElementById('dirImportRosterBtn').addEventListener('click', () => document.getElementById('dirRosterFile').click());
+      document.getElementById('dirUnitsFile').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) importUnitReport(f); });
+      document.getElementById('dirRosterFile').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) importRoster(f); });
+      document.getElementById('resModalClose').addEventListener('click', closeResidentModal);
+      document.getElementById('resModalBack').addEventListener('click', residentModalBack);
+      document.getElementById('resModalOverlay').addEventListener('click', e => { if (e.target.id === 'resModalOverlay') closeResidentModal(); });
+      document.addEventListener('keydown', e => {
+        if (!document.getElementById('resModalOverlay').classList.contains('show')) return;
+        const tag = (e.target.tagName || '').toLowerCase();
+        if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+        if (e.key === 'Escape') closeResidentModal();
+        else if (e.key === 'Backspace') { e.preventDefault(); residentModalBack(); }
+      });
       document.getElementById('dirAddBtn').addEventListener('click', () => openDirectoryForm(null));
       document.getElementById('dirCancelBtn').addEventListener('click', () => toggleForm('dirForm', false));
       document.getElementById('dirSaveBtn').addEventListener('click', async () => {

@@ -33,13 +33,58 @@ export async function handler(event) {
       const { property } = event.queryStringParameters || {};
       if (!property) return { statusCode: 400, body: 'Missing property' };
       if (!canAccessReslifeProperty(user, property)) return { statusCode: 403, body: 'Forbidden' };
-      const docs = await col.find({ property }).sort({ room: 1, residentName: 1 }).toArray();
+      const { id, history } = event.queryStringParameters || {};
+
+      // ── Resident history: incidents, duty log mentions, guest log, key/lock entries ──
+      if (id && history) {
+        const res = await col.findOne({ _id: new ObjectId(id), property });
+        if (!res) return { statusCode: 404, body: 'Not found' };
+        return json(200, await buildHistory(db, property, res));
+      }
+
+      const docs = await col.find({ property }).sort({ unit: 1, room: 1, residentName: 1 }).toArray();
       docs.forEach(d => { d.id = d._id.toString(); });
       return json(200, docs);
     }
 
     if (event.httpMethod === 'POST') {
       const body = JSON.parse(event.body || '{}');
+
+      // ── Bulk roster import: upsert by resident name + unit (keeps existing history) ──
+      if (body.action === 'import') {
+        const { property } = body;
+        if (!property) return { statusCode: 400, body: 'Missing property' };
+        if (!canAdminReslifeProperty(user, property)) return { statusCode: 403, body: 'Forbidden' };
+        const rows = (Array.isArray(body.rows) ? body.rows : [])
+          .map(r => ({
+            residentName: String(r.residentName || '').trim(),
+            unit: String(r.unit || '').trim(),
+            email: String(r.email || '').trim(),
+            phone: String(r.phone || '').trim(),
+          }))
+          .filter(r => r.residentName);
+        if (!rows.length) return { statusCode: 400, body: 'No valid rows (each row needs a name)' };
+        const now = new Date().toISOString();
+        const existing = await col.find({ property }).toArray();
+        const keyOf = (n, u) => n.toLowerCase().replace(/\s+/g, ' ') + '|' + u.toLowerCase();
+        const byKey = new Map(existing.map(d => [keyOf(d.residentName || '', d.unit || ''), d]));
+        const byName = new Map(existing.map(d => [(d.residentName || '').toLowerCase().replace(/\s+/g, ' '), d]));
+        let created = 0, updated = 0;
+        const ops = [];
+        for (const r of rows) {
+          const match = byKey.get(keyOf(r.residentName, r.unit)) || byName.get(r.residentName.toLowerCase().replace(/\s+/g, ' '));
+          if (match) {
+            ops.push({ updateOne: { filter: { _id: match._id }, update: { $set: { residentName: r.residentName, unit: r.unit, room: r.unit, email: r.email || match.email || '', phone: r.phone || match.phone || '', updatedBy: user.sub, updatedAt: now } } } });
+            updated++;
+          } else {
+            ops.push({ insertOne: { document: { property, residentName: r.residentName, room: r.unit, unit: r.unit, phone: r.phone, email: r.email, notes: '', violationMeetings: [], behaviorNotes: [], keyLog: [], updatedBy: user.sub, createdAt: now, updatedAt: now } } });
+            created++;
+          }
+        }
+        if (ops.length) await col.bulkWrite(ops);
+        return json(200, { created, updated });
+      }
+
       const { property, residentName, room, unit, phone, email, notes } = body;
       if (!property || !residentName) return { statusCode: 400, body: 'Missing property/residentName' };
       if (!canAdminReslifeProperty(user, property)) return { statusCode: 403, body: 'Forbidden' };
@@ -60,6 +105,18 @@ export async function handler(event) {
       if (!id || !property) return { statusCode: 400, body: 'Missing id/property' };
 
       // ── Append a violation meeting or behavior note (manager tier only) ──
+      // ── Key / lock entry (any Reslife role with property access) ──
+      if (action === 'addKeyEntry') {
+        if (!canAccessReslifeProperty(user, property)) return { statusCode: 403, body: 'Forbidden' };
+        const { entryType, details, date } = body;
+        if (!entryType) return { statusCode: 400, body: 'Missing entryType' };
+        const now = new Date().toISOString();
+        const entry = { id: new ObjectId().toString(), date: date || now.slice(0, 10), entryType, details: details || '', recordedBy: user.sub, createdAt: now };
+        const r = await col.updateOne({ _id: new ObjectId(id), property }, { $push: { keyLog: entry }, $set: { updatedAt: now, updatedBy: user.sub } });
+        if (!r.matchedCount) return { statusCode: 404, body: 'Not found' };
+        return json(200, entry);
+      }
+
       if (action === 'addViolationMeeting' || action === 'addBehaviorNote') {
         if (!canManageReslifeProperty(user, property)) return { statusCode: 403, body: 'Forbidden' };
         const existing = await col.findOne({ _id: new ObjectId(id), property });
@@ -107,4 +164,49 @@ export async function handler(event) {
   } catch (e) {
     return { statusCode: 500, body: e.message };
   }
+}
+
+const norm = s => String(s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+
+/**
+ * Gathers everything on file that references a resident. Matching is by
+ * name (case-insensitive) and, where a unit/room field exists, by exact unit.
+ */
+async function buildHistory(db, property, res) {
+  const name = norm(res.residentName);
+  const unit = norm(res.unit || res.room);
+  const nameRe = new RegExp(name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/ /g, '\\s+'), 'i');
+  const unitMatch = v => unit && norm(v) === unit;
+  const textHasName = v => name && nameRe.test(String(v || ''));
+
+  const [incidents, guests, sessions] = await Promise.all([
+    db.collection('reslife_incidents').find({ property }).sort({ createdAt: -1 }).limit(1000).toArray(),
+    db.collection('reslife_guest_log').find({ property }).sort({ createdAt: -1 }).limit(2000).toArray(),
+    db.collection('reslife_duty_sessions').find({ property }).sort({ duty_date: -1 }).limit(730).toArray(),
+  ]);
+
+  const incidentHits = incidents
+    .filter(i => norm(i.residentName) === name || textHasName(i.residentName) || textHasName(i.description))
+    .map(i => ({ id: i._id.toString(), date: (i.createdAt || '').slice(0, 10), severity: i.severity, status: i.status, room: i.room, description: i.description }));
+
+  const guestHits = guests
+    .filter(g => norm(g.hostResident) === name || textHasName(g.hostResident) || (unitMatch(g.room) && !g.hostResident))
+    .map(g => ({ id: g._id.toString(), guestName: g.guestName, room: g.room, status: g.status, purpose: g.purpose, checkInTime: g.checkInTime, checkOutTime: g.checkOutTime, createdAt: g.createdAt }));
+
+  const dutyHits = [];
+  const lockouts = [];
+  for (const s of sessions) {
+    for (const e of (s.entries || [])) {
+      const hit = norm(e.caller_name) === name || textHasName(e.caller_name) || textHasName(e.reason_for_call) || textHasName(e.follow_up) || textHasName(e.location) || unitMatch(e.location);
+      if (!hit) continue;
+      const rec = { sessionId: s._id.toString(), date: e.incident_date || s.duty_date, time: e.incident_time, type: e.incident_type, location: e.location, caller: e.caller_name, reason: e.reason_for_call, followUp: e.follow_up, by: e.entered_by_username };
+      dutyHits.push(rec);
+      if (/lock|key/i.test(e.incident_type || '')) lockouts.push({ id: 'duty-' + e.id, date: rec.date, entryType: e.incident_type, details: e.reason_for_call || '', recordedBy: e.entered_by_username, source: 'Duty Log' });
+    }
+  }
+
+  const keyLog = [...(res.keyLog || []).map(k => ({ ...k, source: 'Manual' })), ...lockouts]
+    .sort((a, b) => String(b.date).localeCompare(String(a.date)));
+
+  return { incidents: incidentHits, dutyLog: dutyHits, guestLog: guestHits, keyLog };
 }
