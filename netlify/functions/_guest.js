@@ -62,22 +62,51 @@ export async function getSettings(db, property, create) {
   return s || { property, notifyEmails: DEFAULT_NOTIFY, kioskKey: null, checkinAfter: '19:00' };
 }
 
-/** Find a resident by exact (normalized) name + unit/bed. Contact must match if the record has it on file. */
-export async function matchResident(db, property, { name, unit, contact }) {
-  const n = normName(name), u = normUnit(unit);
-  if (!n || !u) return null;
-  const candidates = await db.collection('reslife_directory').find({ property }).project({ residentName: 1, unit: 1, room: 1, email: 1, phone: 1 }).toArray();
-  const hit = candidates.find(r => normName(r.residentName) === n && (normUnit(r.unit) === u || normUnit(r.room) === u));
-  if (!hit) return null;
-  const c = String(contact || '').trim();
-  if (c) {
-    const emailOk = hit.email && c.includes('@') && hit.email.trim().toLowerCase() === c.toLowerCase();
-    const phoneOk = hit.phone && digits(c).length >= 7 && digits(hit.phone) === digits(c);
-    if ((hit.email || hit.phone) && !emailOk && !phoneOk) return null;
-  }
-  return hit;
+// Unit/bed compare key: letters+digits only, so "7417-A", "7417 a", "7417A", "#7417-a" all match.
+export const unitKey = s => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+// Name compare: word sets, so "Lee, Jordan" (Entrata Last, First) matches "Jordan Lee".
+const nameWords = s => normName(s).split(' ').filter(Boolean);
+function nameMatches(entered, onFile) {
+  const a = nameWords(entered), b = nameWords(onFile);
+  if (!a.length || !b.length) return false;
+  if ([...a].sort().join(' ') === [...b].sort().join(' ')) return true;            // same words, any order
+  // Allow a missing/extra middle name: first + last words of either order must both appear.
+  const first = a[0], last = a[a.length - 1];
+  return a.length >= 2 && b.includes(first) && b.includes(last) && Math.abs(a.length - b.length) <= 1;
 }
 
+/**
+ * Find a resident by full name + unit/bed. If the resident types an email and an email is on file,
+ * it must match; same for phone. (If that kind of contact isn't on file, name + unit is enough.)
+ * Returns { resident } on success or { reason } explaining why it failed (reason is for staff diagnostics only).
+ */
+export async function findResident(db, property, { name, unit, contact }) {
+  const uk = unitKey(unit);
+  if (!nameWords(name).length || !uk) return { reason: 'Name and unit are required.' };
+  const all = await db.collection('reslife_directory').find({ property }).project({ residentName: 1, unit: 1, room: 1, email: 1, phone: 1 }).toArray();
+  if (!all.length) return { reason: `The Resident Directory for "${property}" is empty — import the roster first.` };
+  const inUnit = all.filter(r => unitKey(r.unit) === uk || unitKey(r.room) === uk);
+  if (!inUnit.length) {
+    // Common case: directory has the base unit only ("7417") while the resident typed "7417-A", or vice versa.
+    const base = uk.replace(/[A-Z]\d{0,2}$/, '');
+    const loose = all.filter(r => [r.unit, r.room].some(v => { const k = unitKey(v); return k && (k === base || k.replace(/[A-Z]\d{0,2}$/, '') === uk); }));
+    if (!loose.length) return { reason: `No resident has unit "${unit}" in the directory.` };
+    inUnit.push(...loose);
+  }
+  const hit = inUnit.find(r => nameMatches(name, r.residentName));
+  if (!hit) return { reason: `Unit "${unit}" found, but no name matched. On file for that unit: ${inUnit.map(r => r.residentName).join(', ')}.` };
+  const c = String(contact || '').trim();
+  if (c) {
+    if (c.includes('@')) {
+      if (hit.email && hit.email.trim().toLowerCase() !== c.toLowerCase()) return { reason: `Name and unit matched, but the email didn’t match the one on file (${maskEmail(hit.email)}).` };
+    } else if (digits(c).length >= 7) {
+      if (hit.phone && digits(hit.phone) !== digits(c)) return { reason: `Name and unit matched, but the phone didn’t match the one on file (…${digits(hit.phone).slice(-4)}).` };
+    }
+  }
+  return { resident: hit };
+}
+const maskEmail = e => { const [u, d] = String(e).split('@'); return (u || '').slice(0, 2) + '•••@' + (d || ''); };
+export async function matchResident(db, property, q) { return (await findResident(db, property, q)).resident || null; }
 /** Record the visit on the resident's directory record. */
 export async function recordVisitOnResident(db, property, residentId, entry) {
   if (!residentId) return;

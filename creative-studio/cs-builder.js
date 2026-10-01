@@ -83,6 +83,7 @@
   };
   CS.openProject = function (id) {
     const p = CS.state.projects.find(x => x.id === id) || (CS.state.archived || []).find(x => x.id === id); if (!p) return;
+    if (p.type === 'entrata') { CS.go('entrata', p.id); return; }
     if (p.type === 'email' && p.content && p.content.email) { CS.email.editor(p.content.email, { title: p.name, projectId: p.id, folder: p.folder }); return; }
     if (['email', 'sms', 'social'].includes(p.type) && !['post', 'story', 'sign', 'letter', 'notice'].includes(p.format)) {
       CS.openCommunication(null, { id: p.id, title: p.name, channel: p.type, audience: 'Residents', purpose: 'Saved project', subject: p.type === 'email' ? (p.content.subject || '') : undefined, body: p.content.body || '', caption: p.content.body || '', graphicCopy: p.content.headline || '' });

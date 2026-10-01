@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import { verifyReqAuth } from './_auth.js';
 import { getDb, ObjectId } from './_db.js';
 import { canAccessReslifeProperty, canModifyReslifeRecord, isReslifeManager, refreshReslifeUser, json } from './_reslife.js';
-import { ID_TYPES, DURATIONS, DEFAULT_NOTIFY, expectedOut, cleanPhoto, getSettings, recordVisitOnResident, sendGuestEmail, guestEmailHtml } from './_guest.js';
+import { findResident, ID_TYPES, DURATIONS, DEFAULT_NOTIFY, expectedOut, cleanPhoto, getSettings, recordVisitOnResident, sendGuestEmail, guestEmailHtml } from './_guest.js';
 
 /**
  * Reslife Hub — Guest Log (staff side). The public front-desk kiosk lives in reslife-guest-kiosk.js.
@@ -43,6 +43,11 @@ export async function handler(event) {
       if (q.settings) {
         const s = await getSettings(db, property, isMgr(user));
         return json(200, { notifyEmails: s.notifyEmails || DEFAULT_NOTIFY, checkinAfter: s.checkinAfter || '19:00', kioskKey: isMgr(user) ? s.kioskKey : null, canEdit: isMgr(user), idTypes: ID_TYPES, durations: Object.entries(DURATIONS).map(([k, v]) => ({ key: k, label: v.label })) });
+      }
+      if (q.diagnose) {
+        if (!isMgr(user)) return { statusCode: 403, body: 'Forbidden' };
+        const r = await findResident(db, property, { name: q.name, unit: q.unit, contact: q.contact });
+        return json(200, r.resident ? { ok: true, message: `Match: ${r.resident.residentName} (${r.resident.unit || r.resident.room}) — this would pass at the kiosk.` } : { ok: false, message: r.reason });
       }
       if (q.id && q.photo) {
         const d = await col.findOne({ _id: new ObjectId(q.id), property }, { projection: { idPhoto: 1, idType: 1, guestName: 1 } });

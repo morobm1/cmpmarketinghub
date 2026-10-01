@@ -33,7 +33,7 @@
   CS.card = card;
 
   function projectCard(p) {
-    const th = p.thumbnail ? `<img src="${p.thumbnail}" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top">` : CS.render.thumbHTML({ format: p.format, layout: p.layout, content: p.content }).html;
+    const th = p.type === 'entrata' ? `<div class="cs-entrata-thumb"><b>HTML</b><span>Entrata</span></div>` : (p.type === 'email' || p.type === 'sms' || p.type === 'social') && !p.thumbnail ? `<div class="cs-entrata-thumb"><b>${p.type === 'sms' ? 'SMS' : p.type === 'social' ? 'POST' : 'EMAIL'}</b><span>${esc(p.name)}</span></div>` : p.thumbnail ? `<img src="${p.thumbnail}" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top">` : CS.render.thumbHTML({ format: p.format, layout: p.layout, content: p.content }).html;
     const cls = p.format === 'post' ? 'sq' : p.format === 'story' ? 'story' : p.format === 'sign' ? 'sign' : '';
     return `<div class="cs-card">
       <div class="cs-thumb ${cls}" data-open-project="${p.id}">${th}</div>

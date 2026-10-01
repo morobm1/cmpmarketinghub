@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { getDb, ObjectId } from './_db.js';
 import { json } from './_reslife.js';
-import { ID_TYPES, DURATIONS, normName, normUnit, validUnitFormat, expectedOut, cleanPhoto, matchResident, recordVisitOnResident, sendGuestEmail, guestEmailHtml } from './_guest.js';
+import { ID_TYPES, DURATIONS, normName, normUnit, unitKey, expectedOut, cleanPhoto, matchResident, recordVisitOnResident, sendGuestEmail, guestEmailHtml } from './_guest.js';
 
 /**
  * Reslife Guest Kiosk — PUBLIC endpoint used by guest_checkin.html (front-desk iPad + resident pre-registration links).
@@ -53,7 +53,7 @@ export async function handler(event) {
       const fails = s.fails || [];
       const recent = fails.filter(t => now - new Date(t) < 10 * 60e3);
       if (recent.length >= MAX_FAILS) return json(429, { ok: false, error: 'Too many attempts. Please ask the front desk for assistance.' });
-      if (!validUnitFormat(body.unit)) return json(400, { ok: false, error: 'Please enter your unit like 1234-A or 1234-A1.' });
+      if (unitKey(body.unit).length < 2) return json(400, { ok: false, error: 'Please enter your unit like 1234-A or 1234-A1.' });
       const r = await matchResident(db, s.property, { name: body.name, unit: body.unit, contact: body.contact });
       if (!r) {
         await db.collection('reslife_guest_settings').updateOne({ _id: s._id }, { $set: { fails: [...recent, now.toISOString()] } });
