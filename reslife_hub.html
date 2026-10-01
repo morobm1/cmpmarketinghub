@@ -461,6 +461,13 @@
     .mr-sop ol{margin:0 0 8px 18px;padding:0}.mr-sop li{margin-bottom:3px}
     .mr-sop .mr-sop-doc{border-top:1px dashed #fcd34d;padding-top:8px;margin-top:8px}
     .mr-sop .mr-sop-doc summary{cursor:pointer;font-weight:700}
+    .mr-entrata{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;border:1px solid var(--rl-border);background:#f8fafc;border-radius:10px;padding:10px 12px}
+    .mr-entrata-title{width:100%;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--rl-subtext)}
+    .mr-entrata label{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;cursor:pointer}
+    .mr-entrata input[type=checkbox]{width:16px;height:16px}
+    .mr-entrata #mrWorkOrderNum{padding:6px 10px;border:1px solid var(--rl-border);border-radius:8px;font:inherit;font-size:13px;min-width:180px}
+    .mr-check{font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:999px}
+    .mr-check.ok{background:#dcfce7;color:#166534}.mr-check.no{background:#fee2e2;color:#991b1b}
     .mr-toolbar{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
     .mr-card{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;border:1px solid var(--rl-border);border-left:4px solid var(--mr-accent,#0d9488);border-radius:12px;padding:10px 14px;background:#fff;margin-bottom:8px}
     .mr-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;background:#f1f5f9;color:#334155}
@@ -1332,6 +1339,14 @@
                       <select id="mrKeyItem"><option value="">Select…</option><option>Unit Key</option><option>Bedroom Key</option><option>Mailbox Key</option><option>Fob / Access Card</option><option>Temporary Key</option></select>
                     </div>
                     <div class="rl-field full"><label>Note <span style="font-weight:400;color:var(--rl-subtext)">(optional)</span></label><input id="mrNotes" maxlength="200" placeholder="Short note if needed" /></div>
+                    <div class="rl-field full">
+                      <div class="mr-entrata">
+                        <div class="mr-entrata-title">Entrata Confirmation</div>
+                        <label><input type="checkbox" id="mrEntrataNoted" /> Documented in Entrata resident notes</label>
+                        <label><input type="checkbox" id="mrWorkOrder" /> Work order submitted in Entrata</label>
+                        <input id="mrWorkOrderNum" class="hidden" placeholder="Work order # (optional)" maxlength="40" />
+                      </div>
+                    </div>
                   </div>
                   <aside class="mr-sop" id="mrSop"></aside>
                 </div>
@@ -3536,6 +3551,8 @@
               ${what ? `<span><strong>${esc(what)}</strong></span>` : ''}
               ${m.unit || m.location ? `<span>Unit ${esc(m.unit || m.location)}</span>` : ''}
               <span>By ${esc(m.reportedBy)} · ${fmtDate(m.createdAt)}</span>
+              <span class="mr-check ${m.entrataNoted ? 'ok' : 'no'}">${m.entrataNoted ? '✓' : '✗'} Entrata notes</span>
+              <span class="mr-check ${m.workOrderSubmitted ? 'ok' : 'no'}">${m.workOrderSubmitted ? '✓' : '✗'} Work order${m.workOrderNumber ? ' #' + esc(m.workOrderNumber) : ''}</span>
             </div>
             ${m.notes || m.description ? `<div class="mr-meta" style="margin-top:3px;color:var(--rl-text)">${esc(m.notes || m.description)}</div>` : ''}
           </div>
@@ -3570,6 +3587,10 @@
       document.getElementById('mrKeyAction').value = m ? (m.keyAction || '') : '';
       document.getElementById('mrKeyItem').value = m ? (m.keyItem || '') : '';
       document.getElementById('mrNotes').value = m ? (m.notes || m.description || '') : '';
+      document.getElementById('mrEntrataNoted').checked = !!(m && m.entrataNoted);
+      document.getElementById('mrWorkOrder').checked = !!(m && m.workOrderSubmitted);
+      document.getElementById('mrWorkOrderNum').value = m ? (m.workOrderNumber || '') : '';
+      document.getElementById('mrWorkOrderNum').classList.toggle('hidden', !(m && m.workOrderSubmitted));
       setMrType(m ? m.type : 'maintenance');
       toggleForm('mrForm', true);
       resetWizard('mrForm');
@@ -3586,6 +3607,9 @@
         category: type === 'maintenance' ? g('mrCategory') : '', area: type === 'maintenance' ? g('mrArea') : '', priority: type === 'maintenance' ? g('mrPriority') : '',
         keyAction: type === 'key' ? g('mrKeyAction') : '', keyItem: type === 'key' ? g('mrKeyItem') : '',
         notes: g('mrNotes'),
+        entrataNoted: document.getElementById('mrEntrataNoted').checked,
+        workOrderSubmitted: document.getElementById('mrWorkOrder').checked,
+        workOrderNumber: document.getElementById('mrWorkOrder').checked ? g('mrWorkOrderNum') : '',
       };
     }
 
@@ -3596,12 +3620,15 @@
         reviewRow('Resident', p.residentName) + reviewRow('Unit', p.unit) +
         (p.type === 'key' ? reviewRow('Key Request', p.keyAction) + reviewRow('Item', p.keyItem)
           : reviewRow('Category', p.category) + reviewRow('Area', p.area) + reviewRow('Priority', p.priority)) +
-        reviewRow('Note', p.notes);
+        reviewRow('Note', p.notes) +
+        reviewRow('Entrata Notes', p.entrataNoted ? 'Yes' : 'No') +
+        reviewRow('Work Order', p.workOrderSubmitted ? 'Submitted' + (p.workOrderNumber ? ' (#' + p.workOrderNumber + ')' : '') : 'No');
     }
 
     function bindMaintenanceForm(){
       document.querySelectorAll('[data-mr-type]').forEach(b => b.addEventListener('click', () => setMrType(b.getAttribute('data-mr-type'))));
       document.getElementById('mrResident').addEventListener('change', () => fillMrUnitOptions(''));
+      document.getElementById('mrWorkOrder').addEventListener('change', e => document.getElementById('mrWorkOrderNum').classList.toggle('hidden', !e.target.checked));
       ['mrSearch', 'mrFilterType', 'mrFilterStatus'].forEach(id => document.getElementById(id).addEventListener(id === 'mrSearch' ? 'input' : 'change', renderMaintenance));
       document.getElementById('mrAddBtn').addEventListener('click', () => openMaintenanceForm(null));
       document.getElementById('mrCancelBtn').addEventListener('click', () => toggleForm('mrForm', false));

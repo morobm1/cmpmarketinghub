@@ -5,12 +5,17 @@ import { canAccessReslifeProperty, canModifyReslifeRecord, isReslifeManager, ref
 const TYPES = ['maintenance', 'key'];
 const STATUSES = ['open', 'in-progress', 'resolved'];
 // Structured (dropdown) fields. residentId links the request to a reslife_directory record.
-const FIELDS = ['residentId', 'residentName', 'unit', 'area', 'category', 'priority', 'keyAction', 'keyItem', 'notes'];
+const FIELDS = ['residentId', 'residentName', 'unit', 'area', 'category', 'priority', 'keyAction', 'keyItem', 'notes', 'workOrderNumber'];
 function pickFields(body, onlyDefined) {
   const out = {};
   for (const f of FIELDS) {
     if (body[f] !== undefined) out[f] = String(body[f] || '').trim();
     else if (!onlyDefined) out[f] = '';
+  }
+  // Entrata confirmation checkboxes
+  for (const f of ['entrataNoted', 'workOrderSubmitted']) {
+    if (body[f] !== undefined) out[f] = !!body[f];
+    else if (!onlyDefined) out[f] = false;
   }
   return out;
 }
