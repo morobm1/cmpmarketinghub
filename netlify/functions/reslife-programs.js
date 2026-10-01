@@ -3,7 +3,11 @@ import { getDb, ObjectId } from './_db.js';
 import { canAccessReslifeProperty, canModifyReslifeRecord, isReslifeManager, refreshReslifeUser, json } from './_reslife.js';
 
 const TYPES = ['active', 'passive'];
-const STATUSES = ['proposed', 'approved', 'completed'];
+// draft (red) → proposed = pending approval (yellow) → approved / completed (green)
+const STATUSES = ['draft', 'proposed', 'approved', 'completed'];
+const isMgr = u => u.role === 'admin' || isReslifeManager(u.role);
+// Stations: [{ station, people, location, job }] (legacy plain strings are converted)
+const cleanStations = arr => (Array.isArray(arr) ? arr : []).map(s => typeof s === 'string' ? { station: s, people: '', location: '', job: '' } : { station: String(s.station || '').trim(), people: String(s.people || '').trim(), location: String(s.location || '').trim(), job: String(s.job || '').trim() }).filter(s => s.station || s.people || s.job);
 
 /**
  * Reslife Hub — Program Proposals (Active / Passive Programming)
@@ -30,7 +34,10 @@ export async function handler(event) {
       const { property } = event.queryStringParameters || {};
       if (!property) return { statusCode: 400, body: 'Missing property' };
       if (!canAccessReslifeProperty(user, property)) return { statusCode: 403, body: 'Forbidden' };
-      const docs = await col.find({ property }).sort({ eventDate: 1, createdAt: -1 }).toArray();
+      // Drafts and pending proposals: creator + REC/Admin only. Approved/completed: everyone.
+      const filter = { property };
+      if (!isMgr(user)) filter.$or = [{ createdBy: user.sub }, { status: { $in: ['approved', 'completed'] } }];
+      const docs = await col.find(filter).sort({ eventDate: 1, createdAt: -1 }).toArray();
       docs.forEach(d => { d.id = d._id.toString(); });
       return json(200, docs);
     }
@@ -50,9 +57,9 @@ export async function handler(event) {
         location: location || '',
         description: description || '',
         budget: typeof budget === 'number' ? budget : (parseFloat(budget) || 0),
-        stations: Array.isArray(stations) ? stations : [],
+        stations: cleanStations(stations),
         shoppingList: Array.isArray(shoppingList) ? shoppingList : [],
-        status: 'proposed',
+        status: body.status === 'draft' ? 'draft' : 'proposed',
         createdBy: user.sub,
         createdAt: now,
         updatedAt: now,
@@ -78,14 +85,16 @@ export async function handler(event) {
       if (location !== undefined) updates.location = location;
       if (description !== undefined) updates.description = description;
       if (budget !== undefined) updates.budget = typeof budget === 'number' ? budget : (parseFloat(budget) || 0);
-      if (stations !== undefined) updates.stations = Array.isArray(stations) ? stations : [];
+      if (stations !== undefined) updates.stations = cleanStations(stations);
       if (shoppingList !== undefined) updates.shoppingList = Array.isArray(shoppingList) ? shoppingList : [];
 
-      if (status !== undefined) {
-        if (!(user.role === 'admin' || isReslifeManager(user.role))) {
-          return { statusCode: 403, body: 'Only managers can change program status' };
-        }
+      if (status !== undefined && status !== existing.status) {
+        const ownDraftFlow = existing.createdBy === user.sub && ['draft', 'proposed'].includes(status) && ['draft', 'proposed'].includes(existing.status);
+        if (!isMgr(user) && !ownDraftFlow) return { statusCode: 403, body: 'Only an REC or Admin can approve programs' };
         updates.status = STATUSES.includes(status) ? status : 'proposed';
+        if (updates.status === 'approved') { updates.approvedBy = user.sub; updates.approvedAt = updates.updatedAt; }
+      } else if (!isMgr(user) && ['approved', 'completed'].includes(existing.status) && (title !== undefined || eventDate !== undefined || description !== undefined)) {
+        updates.status = 'proposed'; // RA edits to an approved program go back for approval
       }
 
       await col.updateOne({ _id: new ObjectId(id), property }, { $set: updates });

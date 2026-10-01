@@ -1,6 +1,11 @@
 import { verifyReqAuth } from './_auth.js';
 import { getDb } from './_db.js';
 
+// Reslife approval rules: RA/REC uploads start 'pending' until an Admin or REC approves.
+// Other roles (marketing, admins) publish immediately. Legacy assets without a status count as approved.
+const RESLIFE_REVIEWERS = ['admin', 'reslife-admin', 'reslife-rec'];
+const NEEDS_APPROVAL = ['reslife-ra', 'reslife-rec'];
+
 export async function handler(event) {
   const user = verifyReqAuth(event);
   if (!user) return { statusCode: 401, body: 'Unauthorized' };
@@ -26,7 +31,9 @@ export async function handler(event) {
         }
       }
 
-      const assets = await collection.find({ property }).toArray();
+      const filter = { property };
+      if (user.role === 'reslife-ra') filter.$or = [{ uploadedBy: user.sub }, { uploadedBy: user.username }, { status: { $ne: 'pending' } }];
+      const assets = await collection.find(filter).toArray();
       
       // Map _id to id for frontend compatibility
       const result = assets.map(asset => ({
@@ -62,7 +69,9 @@ export async function handler(event) {
       const assetsToInsert = assets.map(asset => ({
         ...asset,
         property,
-        uploadedBy: user.username,
+        uploadedBy: user.username || user.sub,
+        status: NEEDS_APPROVAL.includes(user.role) ? 'pending' : 'approved',
+        sharedWith: ['reslife-admin', 'reslife-rec'],
         uploadedAt: asset.uploadedAt || new Date().toISOString()
       }));
 
@@ -92,6 +101,15 @@ export async function handler(event) {
       }
 
       const { id, ...updateData } = asset;
+      const existing = await collection.findOne({ id, property });
+      const me = user.username || user.sub;
+      if (updateData.status && existing && updateData.status !== (existing.status || 'approved')) {
+        if (!RESLIFE_REVIEWERS.includes(user.role)) return { statusCode: 403, body: 'Only an Admin or REC can approve' };
+        if (existing.uploadedBy === me && user.role === 'reslife-rec') return { statusCode: 403, body: 'Another Admin or REC must approve your upload' };
+        updateData.reviewedBy = me; updateData.reviewedAt = new Date().toISOString();
+      } else if (existing && NEEDS_APPROVAL.includes(user.role) && existing.uploadedBy !== me && user.role === 'reslife-ra') {
+        return { statusCode: 403, body: 'You can only edit your own uploads' };
+      }
       await collection.updateOne(
         { id, property },
         { $set: { ...updateData, updatedAt: new Date().toISOString(), updatedBy: user.username } }
@@ -120,6 +138,10 @@ export async function handler(event) {
         }
       }
 
+      if (user.role === 'reslife-ra') {
+        const ex = await collection.findOne({ id, property });
+        if (ex && ex.uploadedBy !== (user.username || user.sub)) return { statusCode: 403, body: 'You can only delete your own uploads' };
+      }
       await collection.deleteOne({ id, property });
       
       return { 

@@ -38,9 +38,11 @@
     return `<div class="cs-card">
       <div class="cs-thumb ${cls}" data-open-project="${p.id}">${th}</div>
       <div class="cs-card-body"><b>${esc(p.name)}</b>
-        <div class="cs-card-meta"><span class="cs-chip fmt">${esc(CS.fmtLabel(p.format))}</span><span class="cs-chip ${p.status === 'final' ? 'ok' : p.status === 'in-review' ? 'warn' : ''}">${esc(p.status)}</span>${p.folder ? `<span class="cs-chip">${esc(p.folder)}</span>` : ''}</div>
+        <div class="cs-card-meta"><span class="cs-chip fmt">${esc(CS.fmtLabel(p.format))}</span><span class="cs-chip ${p.status === 'final' ? 'ok' : p.status === 'pending' ? 'warn' : ''}">${esc(CS.statusLabel(p.status))}</span>${p.folder ? `<span class="cs-chip">${esc(p.folder)}</span>` : ''}</div>
         <div style="font-size:11.5px;color:var(--ui-muted);margin-top:6px">Edited ${new Date(p.updatedAt).toLocaleDateString([], { month: 'short', day: 'numeric' })} by ${esc(p.updatedBy || p.createdBy)}</div>
       </div>
+      ${CS.canApprove(p) ? `<div class="cs-proj-actions" style="padding-bottom:6px"><button class="cs-btn xs navy" data-approve="${p.id}">Approve</button><button class="cs-btn danger xs" data-reject="${p.id}">Send back</button></div>` : ''}
+      ${p.status === 'draft' && p.reviewNote ? `<div style="margin:0 14px 8px;font-size:11.5px;background:#fef2f2;color:#991b1b;border-radius:8px;padding:6px 8px">Sent back: ${esc(p.reviewNote)}</div>` : ''}
       <div class="cs-proj-actions">
         <button class="cs-btn xs" data-open-project="${p.id}">Edit</button>
         <button class="cs-btn ghost xs" data-dup-project="${p.id}">Duplicate</button>
@@ -51,6 +53,13 @@
   }
 
   function bindProjects(root) {
+    root.querySelectorAll('[data-approve],[data-reject]').forEach(b => b.onclick = async () => {
+      const approve = b.hasAttribute('data-approve'); const id = b.getAttribute(approve ? 'data-approve' : 'data-reject');
+      let note = '';
+      if (!approve) { note = prompt('What should be changed? (sent to the creator)') || ''; if (note === null) return; }
+      try { await CS.api('/reslife-creative-projects', { method: 'PUT', body: JSON.stringify({ propertyId: CS.propertyId, id, action: approve ? 'approve' : 'reject', note }) }); const p = CS.state.projects.find(x => x.id === id); if (p) { p.status = approve ? 'final' : 'draft'; p.reviewNote = note; p.approvedBy = approve ? CS.user.username : ''; } CS.toast(approve ? 'Approved' : 'Sent back to creator'); CS.go(CS.state.view); }
+      catch (e) { CS.toast('Review failed: ' + e.message); }
+    });
     root.querySelectorAll('[data-open-project]').forEach(b => b.onclick = () => CS.openProject(b.getAttribute('data-open-project')));
     root.querySelectorAll('[data-dup-project]').forEach(b => b.onclick = async () => {
       try { const p = await CS.api('/reslife-creative-projects', { method: 'POST', body: JSON.stringify({ propertyId: CS.propertyId, action: 'duplicate', id: b.getAttribute('data-dup-project') }) }); CS.state.projects.unshift(p); CS.toast('Duplicated'); CS.go(CS.state.view); } catch (e) { CS.toast('Duplicate failed'); }
@@ -90,6 +99,7 @@
       </div>
     </section>
 
+    ${(() => { const n = CS.state.projects.filter(p => CS.canApprove(p)).length; return n ? `<div class="cs-panel" style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;border-color:#fde68a;background:#fffbeb"><b style="color:#92400e">${n} creative${n > 1 ? 's' : ''} waiting for your approval</b><button class="cs-btn sm" data-go="projects" data-arg="pending">Review now</button></div>` : ''; })()}
     <div class="cs-panel" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:6px;background:var(--brand-sand);border:none">
       <b style="color:var(--brand-primary);white-space:nowrap">&#10022; AI Assistant</b>
       <input class="cs-input" id="csHomeAi" style="flex:1;min-width:260px;background:#fff" placeholder="e.g. “Make me a flyer for a resident game night next Thursday at 7 PM in the community room”" />
@@ -381,7 +391,7 @@
   };
 
   // ───────────── PROJECTS ─────────────
-  V.projects = () => `
+  V.projects = (arg) => (arg === 'pending' && (CS.state.projectFolder = '__pending'), `
     <div class="cs-page-h" style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap"><div><h1>My Projects</h1><p>Everything your team has saved for ${esc(CS.cfg.shortName)}.</p></div><button class="cs-btn" data-go="create">+ New Project</button></div>
     <div class="cs-proj-layout">
       <div>
@@ -389,19 +399,21 @@
         <div style="display:flex;gap:6px;margin-top:10px"><input class="cs-input" id="csNewFolder" placeholder="New folder" style="padding:8px 10px;font-size:13px"><button class="cs-btn sm" id="csAddFolder">Add</button></div>
       </div>
       <div><input class="cs-input" id="csProjSearch" placeholder="Search projects…" style="margin-bottom:16px;max-width:360px"><div id="csProjGrid"></div></div>
-    </div>`;
+    </div>`);
   V.after_projects = async () => {
     const folderNames = () => [...new Set([...CS.cfg.projectFolders, ...CS.state.folders.map(f => f.name)])];
     const drawFolders = () => {
       const all = CS.state.projects;
-      const items = [['all', 'All projects', all.length], ...folderNames().map(n => [n, n, all.filter(p => p.folder === n).length]), ['__none', 'Unfiled', all.filter(p => !p.folder).length], ['__archived', 'Archived', (CS.state.archived || []).length]];
+      const items = [['all', 'All projects', all.length], ['__pending', CS.isManager() ? 'Pending approval' : 'My pending', all.filter(p => p.status === 'pending').length], ['__final', 'Approved', all.filter(p => p.status === 'final').length], ['__drafts', 'Drafts', all.filter(p => p.status === 'draft').length], ...folderNames().map(n => [n, n, all.filter(p => p.folder === n).length]), ['__none', 'Unfiled', all.filter(p => !p.folder).length], ['__archived', 'Archived', (CS.state.archived || []).length]];
       CS.$('#csFolders').innerHTML = items.map(([k, l, n]) => `<button class="${CS.state.projectFolder === k ? 'active' : ''}" data-folder="${esc(k)}"><span>${esc(l)}</span><small>${n}</small></button>`).join('');
       CS.$('#csFolders').querySelectorAll('[data-folder]').forEach(b => b.onclick = async () => { CS.state.projectFolder = b.getAttribute('data-folder'); if (CS.state.projectFolder === '__archived') { try { CS.state.archived = await CS.api('/reslife-creative-projects?archived=1&propertyId=' + CS.propertyId); } catch (e) { CS.state.archived = []; } } drawFolders(); drawGrid(); });
     };
     const drawGrid = () => {
       const f = CS.state.projectFolder, q = CS.$('#csProjSearch').value.trim().toLowerCase();
       let list = f === '__archived' ? (CS.state.archived || []) : CS.state.projects;
-      if (f === '__none') list = list.filter(p => !p.folder); else if (f !== 'all' && f !== '__archived') list = list.filter(p => p.folder === f);
+      const st = { __pending: 'pending', __final: 'final', __drafts: 'draft' }[f];
+      if (st) list = list.filter(p => p.status === st);
+      else if (f === '__none') list = list.filter(p => !p.folder); else if (f !== 'all' && f !== '__archived') list = list.filter(p => p.folder === f);
       if (q) list = list.filter(p => (p.name + ' ' + p.type).toLowerCase().includes(q));
       const grid = CS.$('#csProjGrid');
       grid.innerHTML = list.length ? `<div class="cs-grid">${list.map(projectCard).join('')}</div>` : '<div class="cs-empty"><b>Nothing here yet</b>Save a design from the builder and choose this folder.</div>';

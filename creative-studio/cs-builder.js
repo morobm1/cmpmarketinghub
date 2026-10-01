@@ -106,8 +106,9 @@
         <span class="cs-chip fmt" id="bFmt">${esc(CS.fmtLabel(B.format))}</span>
         <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <select class="cs-select" id="bFolder" style="width:auto;padding:7px 10px;font-size:13px"><option value="">No folder</option>${[...new Set([...CS.cfg.projectFolders, ...CS.state.folders.map(f => f.name)])].map(f => `<option${f === B.folder ? ' selected' : ''}>${esc(f)}</option>`).join('')}</select>
-          <select class="cs-select" id="bStatus" style="width:auto;padding:7px 10px;font-size:13px">${['draft', 'in-review', 'final'].map(s => `<option value="${s}"${s === B.status ? ' selected' : ''}>${s === 'in-review' ? 'In review' : s[0].toUpperCase() + s.slice(1)}</option>`).join('')}</select>
-          <button class="cs-btn ghost sm" id="bSave">Save</button>
+          <span class="cs-chip ${B.status === 'final' ? 'ok' : B.status === 'pending' ? 'warn' : ''}" id="bStatusChip">${esc(CS.statusLabel(B.status))}</span>
+          <button class="cs-btn ghost sm" id="bSave">Save Draft</button>
+          <button class="cs-btn navy sm" id="bFinal">${esc(CS.finalLabel())}</button>
           <div style="position:relative">
             <button class="cs-btn sm" id="bExport">Download &#9662;</button>
             <div id="bExportMenu" class="hidden" style="position:absolute;right:0;top:calc(100% + 6px);background:#fff;border:1px solid var(--ui-border);border-radius:14px;box-shadow:var(--shadow-hover);padding:6px;min-width:220px;z-index:5">
@@ -137,8 +138,8 @@
     $('#bBack').onclick = closeBuilder;
     $('#bName').oninput = e => { B.name = e.target.value; };
     $('#bFolder').onchange = e => { B.folder = e.target.value; };
-    $('#bStatus').onchange = e => { B.status = e.target.value; };
-    $('#bSave').onclick = save;
+    $('#bSave').onclick = () => save('draft');
+    $('#bFinal').onclick = () => save('final');
     $('#bExport').onclick = e => { e.stopPropagation(); $('#bExportMenu').classList.toggle('hidden'); };
     el.querySelectorAll('[data-exp]').forEach(b => b.onclick = () => { $('#bExportMenu').classList.add('hidden'); CS.exportDesign(doc(), B.name, b.getAttribute('data-exp')); });
     el.addEventListener('click', e => { if (!e.target.closest('#bExport')) $('#bExportMenu') && $('#bExportMenu').classList.add('hidden'); });
@@ -289,22 +290,25 @@
     };
   }
 
-  async function save() {
-    const btn = $('#bSave'); btn.disabled = true; btn.textContent = 'Saving…';
+  async function save(kind) {
+    const btn = kind === 'final' ? $('#bFinal') : $('#bSave'); const label = btn.textContent; btn.disabled = true; btn.textContent = 'Saving…';
+    B.status = kind === 'final' ? 'final' : 'draft';
     try {
       const thumb = await thumbnail(doc());
       const payload = { propertyId: CS.propertyId, name: B.name, type: isSocialFmt() ? 'social' : B.format === 'notice' ? 'notice' : 'flyer', format: B.format, layout: B.layout, templateId: B.templateId || '', folder: B.folder, status: B.status, content: B.content, thumbnail: thumb, campaignId: B.campaignId || '' };
       if (B.projectId) {
-        await CS.api('/reslife-creative-projects', { method: 'PUT', body: JSON.stringify(Object.assign({ id: B.projectId }, payload)) });
+        const r = await CS.api('/reslife-creative-projects', { method: 'PUT', body: JSON.stringify(Object.assign({ id: B.projectId }, payload)) });
+        B.status = r.status || B.status;
         const i = CS.state.projects.findIndex(x => x.id === B.projectId);
-        if (i >= 0) CS.state.projects[i] = Object.assign(CS.state.projects[i], payload, { updatedAt: new Date().toISOString(), updatedBy: CS.user.username });
+        if (i >= 0) CS.state.projects[i] = Object.assign(CS.state.projects[i], payload, { status: B.status, updatedAt: new Date().toISOString(), updatedBy: CS.user.username });
       } else {
         const p = await CS.api('/reslife-creative-projects', { method: 'POST', body: JSON.stringify(payload) });
-        B.projectId = p.id; CS.state.projects.unshift(p);
+        B.projectId = p.id; B.status = p.status; CS.state.projects.unshift(p);
       }
-      CS.toast('Saved to My Projects');
+      const chip = $('#bStatusChip'); chip.textContent = CS.statusLabel(B.status); chip.className = 'cs-chip ' + (B.status === 'final' ? 'ok' : B.status === 'pending' ? 'warn' : '');
+      CS.toast(B.status === 'pending' ? 'Submitted — pending approval by an Admin or REC' : B.status === 'final' ? 'Saved as final' : 'Draft saved');
     } catch (e) { CS.toast('Save failed: ' + e.message); }
-    btn.disabled = false; btn.textContent = 'Save';
+    btn.disabled = false; btn.textContent = label;
   }
 
   // ───────── CAMPAIGNS ─────────

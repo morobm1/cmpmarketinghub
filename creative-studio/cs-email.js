@@ -212,7 +212,8 @@
             <button class="cs-btn" id="emCopyHtml">Copy HTML for Entrata</button>
             <button class="cs-btn ghost" id="emCopyRich">Copy formatted</button>
             <button class="cs-btn ghost" id="emDownload">Download .html</button>
-            <button class="cs-btn ghost" id="emSave">Save to My Projects</button>
+            <button class="cs-btn ghost" id="emSave">Save Draft</button>
+            <button class="cs-btn navy" id="emFinal">${esc(CS.finalLabel())}</button>
           </div>
           <p style="font-size:12px;color:var(--ui-muted);margin:8px 0 0">In Entrata, open the message editor’s <b>Source / HTML</b> view and paste. Replace any highlighted [[placeholders]] before sending.</p>
         </div>
@@ -240,15 +241,18 @@
     CS.$('#emCopyHtml').onclick = () => { read(); CS.copy(html(e)); };
     CS.$('#emCopyRich').onclick = async () => { read(); try { await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html(e)], { type: 'text/html' }), 'text/plain': new Blob([text(e)], { type: 'text/plain' }) })]); CS.toast('Formatted email copied'); } catch (x) { CS.toast('Rich copy blocked — use Copy HTML'); } };
     CS.$('#emDownload').onclick = () => { read(); const blob = new Blob([`<!doctype html>\n<html><head>${html(e).match(/^[\s\S]*?<\/style>/)[0]}</head><body style="margin:0">${html(e).replace(/^[\s\S]*?<\/style>/, '')}</body></html>`], { type: 'text/html' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = (e.headline || 'email').toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 50) + '.html'; a.click(); URL.revokeObjectURL(a.href); };
-    CS.$('#emSave').onclick = async () => {
+    const saveEmail = async (kind) => {
       read();
       try {
-        const body = { propertyId: CS.propertyId, name: meta.title || e.headline || 'Email', type: 'email', format: 'email', folder: meta.folder || 'Resident Communications', content: { email: e, subject: e.subject, body: text(e), headline: e.headline } };
-        if (meta.projectId) { await CS.api('/reslife-creative-projects', { method: 'PUT', body: JSON.stringify(Object.assign({ id: meta.projectId }, body)) }); const p = CS.state.projects.find(x => x.id === meta.projectId); if (p) Object.assign(p, body, { updatedAt: new Date().toISOString() }); }
-        else { const p = await CS.api('/reslife-creative-projects', { method: 'POST', body: JSON.stringify(body) }); CS.state.projects.unshift(p); meta.projectId = p.id; }
-        CS.toast('Saved to My Projects');
+        const body = { propertyId: CS.propertyId, name: meta.title || e.headline || 'Email', type: 'email', format: 'email', status: kind, folder: meta.folder || 'Resident Communications', content: { email: e, subject: e.subject, body: text(e), headline: e.headline } };
+        let status;
+        if (meta.projectId) { const r = await CS.api('/reslife-creative-projects', { method: 'PUT', body: JSON.stringify(Object.assign({ id: meta.projectId }, body)) }); status = r.status; const p = CS.state.projects.find(x => x.id === meta.projectId); if (p) Object.assign(p, body, { status, updatedAt: new Date().toISOString() }); }
+        else { const p = await CS.api('/reslife-creative-projects', { method: 'POST', body: JSON.stringify(body) }); status = p.status; CS.state.projects.unshift(p); meta.projectId = p.id; }
+        CS.toast(status === 'pending' ? 'Submitted — pending approval by an Admin or REC' : status === 'final' ? 'Saved as final' : 'Draft saved');
       } catch (x) { CS.toast('Save failed: ' + x.message); }
     };
+    CS.$('#emSave').onclick = () => saveEmail('draft');
+    CS.$('#emFinal').onclick = () => saveEmail('final');
     box.querySelectorAll('#emAi [data-a]').forEach(b => b.onclick = async () => {
       read();
       const action = b.getAttribute('data-a');

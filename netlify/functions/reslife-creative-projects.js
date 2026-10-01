@@ -26,7 +26,22 @@ import { refreshReslifeUser, json } from './_reslife.js';
 const PROPERTY_ALIASES = {
   'harbour-occ': ['the harbour at occ', 'the harbour', 'harbour at occ', 'the-harbour-at-occ', 'harbour-occ'],
 };
-const STATUSES = ['draft', 'in-review', 'final', 'archived'];
+const STATUSES = ['draft', 'pending', 'final', 'archived'];
+const MANAGER_ROLES = ['admin', 'reslife-admin', 'reslife-rec'];
+const SHARED_WITH = ['reslife-admin', 'reslife-rec']; // every creative is visible to Admins + RECs by default
+
+/**
+ * Approval workflow:
+ *  - Anyone can save drafts.
+ *  - Saving as final by an RA or REC → status 'pending' until an Admin or REC (other than the creator,
+ *    unless they are an Admin) approves it. Admins' finals are approved immediately.
+ *  - Editing an approved final as RA/REC sends it back to 'pending'.
+ * Visibility: Admins/RECs see every project; RAs see their own plus approved finals.
+ */
+function resolveStatus(user, requested) {
+  if (requested === 'final' || requested === 'pending') return (user.role === 'admin' || user.role === 'reslife-admin') ? 'final' : 'pending';
+  return STATUSES.includes(requested) ? requested : 'draft';
+}
 
 function canUseProperty(user, propertyId) {
   if (!PROPERTY_ALIASES[propertyId]) return false;
@@ -68,7 +83,8 @@ export async function handler(event) {
         return json(200, { templateIds: doc ? doc.templateIds : [] });
       }
       const filter = { propertyId };
-      filter.status = q.archived ? 'archived' : { $ne: 'archived' };
+      filter.status = q.archived ? 'archived' : (q.pending ? 'pending' : { $ne: 'archived' });
+      if (!MANAGER_ROLES.includes(user.role)) filter.$or = [{ createdBy: user.sub }, { status: 'final' }];
       const docs = await projects.find(filter).sort({ updatedAt: -1 }).limit(500).toArray();
       docs.forEach(d => { d.id = d._id.toString(); });
       return json(200, docs);
@@ -87,7 +103,7 @@ export async function handler(event) {
         const src = await projects.findOne({ _id: new ObjectId(body.id), propertyId });
         if (!src) return { statusCode: 404, body: 'Not found' };
         delete src._id;
-        Object.assign(src, { name: src.name + ' (copy)', status: 'draft', createdBy: user.sub, updatedBy: user.sub, createdAt: now, updatedAt: now });
+        Object.assign(src, { name: src.name + ' (copy)', status: 'draft', approvedBy: '', approvedAt: '', reviewNote: '', sharedWith: SHARED_WITH, createdBy: user.sub, updatedBy: user.sub, createdAt: now, updatedAt: now });
         const r = await projects.insertOne(src);
         src.id = r.insertedId.toString();
         return json(200, src);
@@ -100,12 +116,17 @@ export async function handler(event) {
         layout: body.layout || '',
         templateId: body.templateId || '',
         folder: body.folder || '',
-        status: STATUSES.includes(body.status) ? body.status : 'draft',
+        status: resolveStatus(user, body.status),
+        sharedWith: SHARED_WITH,
+        approvedBy: '', approvedAt: '', reviewNote: '',
+        submittedAt: '',
         content: body.content || {},
         campaignId: body.campaignId || '',
         thumbnail: typeof body.thumbnail === 'string' && body.thumbnail.length < MAX_THUMB ? body.thumbnail : '',
         createdBy: user.sub, updatedBy: user.sub, createdAt: now, updatedAt: now,
       };
+      if (doc.status === 'final') { doc.approvedBy = user.sub; doc.approvedAt = now; }
+      if (doc.status === 'pending') doc.submittedAt = now;
       const r = await projects.insertOne(doc);
       doc.id = r.insertedId.toString();
       return json(200, doc);
@@ -118,18 +139,42 @@ export async function handler(event) {
         return json(200, { templateIds });
       }
       if (!body.id) return { statusCode: 400, body: 'Missing id' };
+      const existing = await projects.findOne({ _id: new ObjectId(body.id), propertyId });
+      if (!existing) return { statusCode: 404, body: 'Not found' };
+      const isMgr = MANAGER_ROLES.includes(user.role);
+      const isAdminTier = user.role === 'admin' || user.role === 'reslife-admin';
+
+      if (body.action === 'approve' || body.action === 'reject') {
+        if (!isMgr) return { statusCode: 403, body: 'Only an Admin or REC can review creatives' };
+        if (existing.createdBy === user.sub && !isAdminTier) return { statusCode: 403, body: 'Another Admin or REC must approve your own creative' };
+        const approve = body.action === 'approve';
+        await projects.updateOne({ _id: existing._id }, { $set: { status: approve ? 'final' : 'draft', approvedBy: approve ? user.sub : '', approvedAt: approve ? now : '', reviewNote: String(body.note || ''), reviewedBy: user.sub, reviewedAt: now, updatedAt: now } });
+        return json(200, { success: true, status: approve ? 'final' : 'draft' });
+      }
+
+      if (!isMgr && existing.createdBy !== user.sub) return { statusCode: 403, body: 'You can only edit your own creatives' };
       const updates = { updatedAt: now, updatedBy: user.sub };
       ['name', 'type', 'format', 'layout', 'templateId', 'folder', 'content', 'campaignId'].forEach(f => { if (body[f] !== undefined) updates[f] = body[f]; });
-      if (body.status !== undefined && STATUSES.includes(body.status)) updates.status = body.status;
+      if (body.status !== undefined) {
+        updates.status = body.status === 'archived' ? 'archived' : resolveStatus(user, body.status);
+        if (updates.status === 'pending' && existing.status !== 'pending') updates.submittedAt = now;
+        if (updates.status === 'final' && existing.status !== 'final') { updates.approvedBy = user.sub; updates.approvedAt = now; }
+      } else if (existing.status === 'final' && !isAdminTier && (body.content !== undefined || body.name !== undefined)) {
+        updates.status = 'pending'; updates.submittedAt = now; // edits to approved work need re-approval
+      }
       if (typeof body.thumbnail === 'string' && body.thumbnail.length < MAX_THUMB) updates.thumbnail = body.thumbnail;
       const r = await projects.updateOne({ _id: new ObjectId(body.id), propertyId }, { $set: updates });
       if (!r.matchedCount) return { statusCode: 404, body: 'Not found' };
-      return json(200, { success: true, updatedAt: now });
+      return json(200, { success: true, updatedAt: now, status: updates.status || existing.status });
     }
 
     if (event.httpMethod === 'DELETE') {
       if (!q.id) return { statusCode: 400, body: 'Missing id' };
       const col = resource === 'folders' ? folders : projects;
+      if (resource !== 'folders' && !MANAGER_ROLES.includes(user.role)) {
+        const ex = await projects.findOne({ _id: new ObjectId(q.id), propertyId });
+        if (ex && ex.createdBy !== user.sub) return { statusCode: 403, body: 'Forbidden' };
+      }
       await col.deleteOne({ _id: new ObjectId(q.id), propertyId });
       return json(200, { success: true });
     }

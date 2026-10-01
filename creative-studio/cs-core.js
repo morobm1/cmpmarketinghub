@@ -14,6 +14,11 @@
     graphic: id => ((CS.cfg.graphics || []).find(g => g.id === id) || {}).src || '',
     fmtLabel: f => (CS.data.formats[f] || {}).label || f,
     isAdmin: () => CS.user && (CS.user.role === 'admin' || CS.user.role === 'reslife-admin'),
+    isManager: () => CS.user && ['admin', 'reslife-admin', 'reslife-rec'].includes(CS.user.role),
+    // Label for the 'final' save action: Admin finals publish immediately; RA/REC finals go to approval.
+    finalLabel: () => (CS.user && (CS.user.role === 'admin' || CS.user.role === 'reslife-admin')) ? 'Save as Final' : 'Submit for Approval',
+    statusLabel: s => ({ draft: 'Draft', pending: 'Pending approval', final: 'Approved', archived: 'Archived', 'in-review': 'Pending approval' }[s] || s),
+    canApprove: p => CS.isManager() && p.status === 'pending' && (p.createdBy !== CS.user.username || CS.isAdmin()),
     toast(msg) {
       const t = $('#csToast'); t.textContent = msg; t.classList.remove('hidden');
       clearTimeout(t._h); t._h = setTimeout(() => t.classList.add('hidden'), 2600);
