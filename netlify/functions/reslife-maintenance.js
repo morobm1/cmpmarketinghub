@@ -4,6 +4,16 @@ import { canAccessReslifeProperty, canModifyReslifeRecord, isReslifeManager, ref
 
 const TYPES = ['maintenance', 'key'];
 const STATUSES = ['open', 'in-progress', 'resolved'];
+// Structured (dropdown) fields. residentId links the request to a reslife_directory record.
+const FIELDS = ['residentId', 'residentName', 'unit', 'area', 'category', 'priority', 'keyAction', 'keyItem', 'notes'];
+function pickFields(body, onlyDefined) {
+  const out = {};
+  for (const f of FIELDS) {
+    if (body[f] !== undefined) out[f] = String(body[f] || '').trim();
+    else if (!onlyDefined) out[f] = '';
+  }
+  return out;
+}
 
 /**
  * Reslife Hub — Maintenance / Key Request Log
@@ -33,14 +43,16 @@ export async function handler(event) {
     if (event.httpMethod === 'POST') {
       const body = JSON.parse(event.body || '{}');
       const { property, type, location, description } = body;
-      if (!property || !description) return { statusCode: 400, body: 'Missing property/description' };
+      if (!property) return { statusCode: 400, body: 'Missing property' };
+      if (!description && !body.residentName && !body.category && !body.keyAction) return { statusCode: 400, body: 'Missing request details' };
       if (!canAccessReslifeProperty(user, property)) return { statusCode: 403, body: 'Forbidden' };
       const now = new Date().toISOString();
       const doc = {
         property,
         type: TYPES.includes(type) ? type : 'maintenance',
         location: location || '',
-        description,
+        description: description || '',
+        ...pickFields(body),
         status: 'open',
         reportedBy: user.sub,
         createdAt: now,
@@ -65,6 +77,7 @@ export async function handler(event) {
       if (type !== undefined && TYPES.includes(type)) updates.type = type;
       if (location !== undefined) updates.location = location;
       if (description !== undefined) updates.description = description;
+      Object.assign(updates, pickFields(body, true));
 
       if (status !== undefined) {
         if (!(user.role === 'admin' || isReslifeManager(user.role))) {

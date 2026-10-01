@@ -179,11 +179,22 @@ async function buildHistory(db, property, res) {
   const unitMatch = v => unit && norm(v) === unit;
   const textHasName = v => name && nameRe.test(String(v || ''));
 
-  const [incidents, guests, sessions] = await Promise.all([
+  const resId = res._id.toString();
+  const [incidents, guests, sessions, requests] = await Promise.all([
     db.collection('reslife_incidents').find({ property }).sort({ createdAt: -1 }).limit(1000).toArray(),
     db.collection('reslife_guest_log').find({ property }).sort({ createdAt: -1 }).limit(2000).toArray(),
     db.collection('reslife_duty_sessions').find({ property }).sort({ duty_date: -1 }).limit(730).toArray(),
+    db.collection('reslife_maintenance_requests').find({ property, residentId: resId }).sort({ createdAt: -1 }).toArray(),
   ]);
+
+  const maintenance = requests.filter(r => r.type !== 'key').map(r => ({
+    id: r._id.toString(), date: (r.createdAt || '').slice(0, 10), category: r.category, area: r.area, priority: r.priority,
+    status: r.status, unit: r.unit, notes: r.notes || r.description || '', reportedBy: r.reportedBy,
+  }));
+  const keyRequests = requests.filter(r => r.type === 'key').map(r => ({
+    id: 'req-' + r._id.toString(), date: (r.createdAt || '').slice(0, 10), entryType: r.keyAction || 'Key request',
+    details: [r.keyItem, r.status, r.notes || r.description].filter(Boolean).join(' · '), recordedBy: r.reportedBy, source: 'Key Request',
+  }));
 
   const incidentHits = incidents
     .filter(i => norm(i.residentName) === name || textHasName(i.residentName) || textHasName(i.description))
@@ -205,8 +216,8 @@ async function buildHistory(db, property, res) {
     }
   }
 
-  const keyLog = [...(res.keyLog || []).map(k => ({ ...k, source: 'Manual' })), ...lockouts]
+  const keyLog = [...(res.keyLog || []).map(k => ({ ...k, source: 'Manual' })), ...keyRequests, ...lockouts]
     .sort((a, b) => String(b.date).localeCompare(String(a.date)));
 
-  return { incidents: incidentHits, dutyLog: dutyHits, guestLog: guestHits, keyLog };
+  return { incidents: incidentHits, dutyLog: dutyHits, guestLog: guestHits, keyLog, maintenance };
 }
