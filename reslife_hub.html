@@ -753,6 +753,7 @@
       #dlPrintArea{position:absolute;left:0;top:0;width:100%}
     }
   </style>
+  <link rel="stylesheet" href="schedule/sched.css" />
 </head>
 <body>
 
@@ -821,9 +822,9 @@
           <span class="rl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
           <span class="rl-nav-label">Committees</span>
         </button>
-        <button class="rl-nav-item" data-tab="roster" data-label="Duty Roster">
+        <button class="rl-nav-item" data-tab="roster" data-label="Schedule &amp; On-Call">
           <span class="rl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M12 14v3l2 1"/></svg></span>
-          <span class="rl-nav-label">Duty Roster</span>
+          <span class="rl-nav-label">Schedule &amp; On-Call</span>
         </button>
         <button class="rl-nav-item" data-tab="dutylog" data-label="Duty Log">
           <span class="rl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15l2 2 4-4"/></svg></span>
@@ -914,7 +915,7 @@
             <div id="dashAnnList"><div class="rl-loading">Loading…</div></div>
           </div>
           <div class="rl-panel">
-            <div class="rl-panel-header"><h2>Upcoming Duty Shifts</h2></div>
+            <div class="rl-panel-header"><h2>On Call Now</h2><button class="rl-btn sm" onclick="goToTab('roster')">View Schedule</button></div>
             <div id="dashRosterList"><div class="rl-loading">Loading…</div></div>
           </div>
           <div class="rl-panel">
@@ -1248,49 +1249,12 @@
         </div>
       </section>
 
-      <!-- ================= DUTY ROSTER ================= -->
-      <section class="rl-tab-content" id="tab-roster">
-        <div class="rl-panel">
-          <div class="rl-panel-header">
-            <h2>Duty / On-Call Roster</h2>
-            <button class="rl-btn primary hidden" id="rosterAddBtn">+ Add Shift</button>
-          </div>
-          <div class="rl-panel-body">
-            <div class="rl-form hidden" id="rosterForm">
-              <input type="hidden" id="rosterId" />
-              <div class="rl-wizard-progress"></div>
-
-              <div class="rl-wizard-step-panel">
-                <div class="rl-wizard-step-title">Step 1 · Shift Details</div>
-                <div class="rl-form-grid cols-3">
-                  <div class="rl-field"><label>Assigned To</label><input id="rosterAssignedTo" placeholder="RA name" data-required /></div>
-                  <div class="rl-field"><label>Shift Start</label><input id="rosterStart" type="datetime-local" data-required /></div>
-                  <div class="rl-field"><label>Shift End</label><input id="rosterEnd" type="datetime-local" data-required /></div>
-                  <div class="rl-field full"><label>Notes</label><input id="rosterNotes" placeholder="Optional" /></div>
-                </div>
-              </div>
-
-              <div class="rl-wizard-step-panel">
-                <div class="rl-wizard-step-title">Step 2 · Review</div>
-                <dl class="rl-wizard-review" id="rosterReview"></dl>
-              </div>
-
-              <div class="rl-wizard-nav">
-                <button class="rl-btn" data-wizard-back>&larr; Back</button>
-                <div style="display:flex;gap:8px">
-                  <button class="rl-btn" id="rosterCancelBtn">Cancel</button>
-                  <button class="rl-btn primary" data-wizard-next>Next &rarr;</button>
-                  <button class="rl-btn primary" id="rosterSaveBtn">Save Shift</button>
-                </div>
-              </div>
-            </div>
-            <div id="rosterList"><div class="rl-loading">Loading…</div></div>
-          </div>
-        </div>
-      </section>
+      <!-- ================= SCHEDULE & ON-CALL (replaces Duty Roster; tab key 'roster' kept so old links work) ================= -->
+      <section class="rl-tab-content" id="tab-roster"><div id="schedRoot"></div></section>
 
       <!-- ================= DUTY LOG ================= -->
       <section class="rl-tab-content" id="tab-dutylog">
+        <div id="dlShiftBanner"></div>
         <!-- My Duty Log (every Reslife role has their own daily log) -->
         <div class="rl-panel">
           <div class="rl-panel-header">
@@ -2305,8 +2269,8 @@
       if (tab === 'announcements') return loadAnnouncements();
       if (tab === 'programs') return loadPrograms();
       if (tab === 'committees') return loadCommittees();
-      if (tab === 'roster') return loadRoster();
-      if (tab === 'dutylog') return loadDutyLogTab();
+      if (tab === 'roster') return window.SchedUI && SchedUI.load();
+      if (tab === 'dutylog') { if (window.SchedUI) SchedUI.dutyLogBanner(document.getElementById('dlShiftBanner')); return loadDutyLogTab(); }
       if (tab === 'guestlog') return loadGuestLogTab();
       if (tab === 'incidents') return loadIncidents();
       if (tab === 'maintenance') return loadMaintenance();
@@ -2469,7 +2433,7 @@
         safe(apiFetch('/reslife-announcements' + propParam())),
         safe(apiFetch('/reslife-incidents' + propParam())),
         safe(apiFetch('/reslife-maintenance' + propParam())),
-        safe(apiFetch('/reslife-roster' + propParam())),
+        Promise.resolve([]),
         safe(apiFetch('/reslife-maxient-reports' + propParam())),
         safe(apiFetch('/reslife-programs' + propParam())),
         safe(apiFetch('/reslife-committees' + propParam())),
@@ -2481,13 +2445,13 @@
       const openRequests = maintenance.filter(m => m.status !== 'resolved').length;
       const activePrograms = programs.filter(p => p.status !== 'completed').length;
       const now = Date.now();
-      const upcomingShifts = roster.filter(r => new Date(r.shiftEnd).getTime() >= now)
-        .sort((a, b) => new Date(a.shiftStart) - new Date(b.shiftStart));
+      const schedOv = window.SchedUI ? await SchedUI.dashboardWidget(rosterBox) : null;
+      const upcomingShifts = schedOv ? schedOv.myNext : [];
 
       const stats = [
         { key: 'incidents', label: 'Open Incidents', value: openIncidents, color: 'var(--rl-danger)', icon: '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>' },
         { key: 'maintenance', label: 'Open Maintenance & Keys', value: openRequests, color: 'var(--rl-warn)', icon: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>' },
-        { key: 'roster', label: 'Upcoming Duty Shifts', value: upcomingShifts.length, color: 'var(--rl-primary)', icon: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M12 14v3l2 1"/>' },
+        { key: 'roster', label: 'My Upcoming Shifts', value: upcomingShifts.length, color: 'var(--rl-primary)', icon: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M12 14v3l2 1"/>' },
         { key: 'programs', label: 'Active Program Proposals', value: activePrograms, color: 'var(--rl-success)', icon: '<path d="M9 14l2 2 4-4"/><rect x="3" y="4" width="18" height="16" rx="2"/>' },
         { key: 'committees', label: 'Committees', value: committees.length, color: '#7c3aed', icon: '<circle cx="9" cy="7" r="4"/><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>' },
         { key: 'sops', label: 'SOP Library Entries', value: sops.length, color: '#0891b2', icon: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>' },
@@ -2511,12 +2475,7 @@
         </div>
       `).join('');
 
-      rosterBox.innerHTML = upcomingShifts.length === 0 ? '<div class="rl-empty">No upcoming shifts scheduled.</div>' : upcomingShifts.slice(0, 5).map(r => `
-        <div class="rl-mini-item">
-          <div class="rl-mini-item-title">${esc(r.assignedTo)}</div>
-          <div class="rl-mini-item-meta">${fmtDate(r.shiftStart)} – ${fmtDate(r.shiftEnd)}</div>
-        </div>
-      `).join('');
+
 
       if (maxientReports.length === 0) {
         incidentReportsBox.innerHTML = '<div class="rl-empty">No incident reports yet.</div>';
@@ -2790,81 +2749,6 @@
         catch (err) { alert('Upload failed: ' + err.message); }
         vidPop.classList.add('hidden');
       });
-    }
-
-    // ==================== DUTY ROSTER ====================
-    async function loadRoster(){
-      const list = document.getElementById('rosterList');
-      list.innerHTML = '<div class="rl-loading">Loading…</div>';
-      let docs = [];
-      try { docs = await apiFetch('/reslife-roster' + propParam()); } catch (e) { list.innerHTML = '<div class="rl-empty">Failed to load roster.</div>'; return; }
-      if (docs.length === 0) { list.innerHTML = '<div class="rl-empty">No shifts scheduled yet.</div>'; return; }
-      list.innerHTML = `<table class="rl-table"><thead><tr><th>Assigned To</th><th>Start</th><th>End</th><th>Notes</th>${isManager ? '<th></th>' : ''}</tr></thead><tbody>` +
-        docs.map(r => `
-          <tr>
-            <td>${esc(r.assignedTo)}</td>
-            <td>${fmtDate(r.shiftStart)}</td>
-            <td>${fmtDate(r.shiftEnd)}</td>
-            <td>${esc(r.notes || '')}</td>
-            ${isManager ? `<td style="white-space:nowrap"><button class="rl-btn sm" data-roster-edit="${r.id}">Edit</button> <button class="rl-btn sm danger" data-roster-del="${r.id}">Delete</button></td>` : ''}
-          </tr>
-        `).join('') + '</tbody></table>';
-      list.querySelectorAll('[data-roster-edit]').forEach(btn => btn.addEventListener('click', () => {
-        const r = docs.find(x => x.id === btn.getAttribute('data-roster-edit'));
-        if (r) openRosterForm(r);
-      }));
-      list.querySelectorAll('[data-roster-del]').forEach(btn => btn.addEventListener('click', async () => {
-        if (!confirm('Delete this shift?')) return;
-        try { await apiFetch('/reslife-roster?id=' + btn.getAttribute('data-roster-del') + '&property=' + encodeURIComponent(currentProperty), { method: 'DELETE' }); await loadRoster(); }
-        catch (e) { alert('Failed to delete: ' + e.message); }
-      }));
-    }
-
-    function toLocalInputValue(iso){
-      if (!iso) return '';
-      const d = new Date(iso);
-      if (isNaN(d)) return '';
-      const pad = n => String(n).padStart(2, '0');
-      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    }
-
-    function openRosterForm(r){
-      document.getElementById('rosterId').value = r ? r.id : '';
-      document.getElementById('rosterAssignedTo').value = r ? r.assignedTo : '';
-      document.getElementById('rosterStart').value = r ? toLocalInputValue(r.shiftStart) : '';
-      document.getElementById('rosterEnd').value = r ? toLocalInputValue(r.shiftEnd) : '';
-      document.getElementById('rosterNotes').value = r ? (r.notes || '') : '';
-      toggleForm('rosterForm', true);
-      resetWizard('rosterForm');
-    }
-
-    function renderRosterReview(){
-      document.getElementById('rosterReview').innerHTML =
-        reviewRow('Assigned To', document.getElementById('rosterAssignedTo').value) +
-        reviewRow('Shift Start', fmtDate(document.getElementById('rosterStart').value)) +
-        reviewRow('Shift End', fmtDate(document.getElementById('rosterEnd').value)) +
-        reviewRow('Notes', document.getElementById('rosterNotes').value);
-    }
-
-    function bindRosterForm(){
-      document.getElementById('rosterAddBtn').addEventListener('click', () => openRosterForm(null));
-      document.getElementById('rosterCancelBtn').addEventListener('click', () => toggleForm('rosterForm', false));
-      document.getElementById('rosterSaveBtn').addEventListener('click', async () => {
-        const id = document.getElementById('rosterId').value;
-        const assignedTo = document.getElementById('rosterAssignedTo').value.trim();
-        const shiftStart = document.getElementById('rosterStart').value;
-        const shiftEnd = document.getElementById('rosterEnd').value;
-        const notes = document.getElementById('rosterNotes').value.trim();
-        if (!assignedTo || !shiftStart || !shiftEnd) { alert('Assigned To, Start, and End are required'); return; }
-        try {
-          const payload = { property: currentProperty, assignedTo, shiftStart: new Date(shiftStart).toISOString(), shiftEnd: new Date(shiftEnd).toISOString(), notes };
-          if (id) await apiFetch('/reslife-roster', { method: 'PUT', body: JSON.stringify(Object.assign({ id }, payload)) });
-          else await apiFetch('/reslife-roster', { method: 'POST', body: JSON.stringify(payload) });
-          toggleForm('rosterForm', false);
-          await loadRoster();
-        } catch (e) { alert('Save failed: ' + e.message); }
-      });
-      initWizard('rosterForm', ['Shift Details', 'Review'], { saveBtnId: 'rosterSaveBtn', onReview: renderRosterReview });
     }
 
     // ==================== DUTY LOG ====================
@@ -6147,7 +6031,6 @@ Success looks like: [Attendance goal, feedback, new faces]`;
       bindProgramForm();
       bindCommitteeForm();
       bindMinutesForm();
-      bindRosterForm();
       bindDutyLogStaticControls();
       bindIncidentForm();
       bindMaintenanceForm();
@@ -6186,5 +6069,7 @@ Success looks like: [Attendance goal, feedback, new faces]`;
 
     init();
   </script>
+  <script src="schedule/sched-core.js"></script>
+  <script src="schedule/sched-manage.js"></script>
 </body>
 </html>
