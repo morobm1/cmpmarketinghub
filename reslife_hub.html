@@ -1309,13 +1309,21 @@
       </section>
 
       <!-- ================= SOP LIBRARY ================= -->
-      <!-- Embeds the full-featured SOP Library app (same rich editor, file
-           attachments, acknowledgement tracking, and Excel import/export as
-           the Marketing Hub SOP Library), reading/writing the same `sops`
-           MongoDB collection, scoped to the current Reslife property. -->
+      <!-- Opens the full-featured SOP Library as its own page (same rich
+           editor, file attachments, acknowledgement tracking, and Excel
+           import/export as the Marketing Hub SOP Library), reading/writing
+           the same `sops` MongoDB collection, scoped to the current Reslife
+           property. A standalone page (not an iframe) avoids any CSP /
+           X-Frame-Options complications entirely. -->
       <section class="rl-tab-content" id="tab-sops">
-        <div class="rl-panel" style="padding:0;overflow:hidden">
-          <iframe id="sopLibraryFrame" title="SOP Library" style="width:100%;height:calc(100vh - 220px);min-height:600px;border:none;display:block"></iframe>
+        <div class="rl-panel">
+          <div class="rl-panel-header">
+            <h2>SOP Library</h2>
+          </div>
+          <div class="rl-panel-body" style="text-align:center;padding:48px 24px">
+            <p style="color:var(--rl-subtext);margin-bottom:20px">Opens the full SOP Library for <strong id="sopLibraryPropertyLabel"></strong> in a new tab — rich editor, file attachments, staff acknowledgement tracking, and Excel import/export.</p>
+            <a class="rl-btn primary" id="sopLibraryOpenBtn" style="text-decoration:none" href="#" target="_blank" rel="noopener">Open SOP Library &nearr;</a>
+          </div>
         </div>
       </section>
 
@@ -3818,19 +3826,17 @@
     }
 
     // ==================== SOP LIBRARY ====================
-    // Full-featured SOP Library, embedded via iframe so it can reuse the
-    // exact same rich editor / file-upload / acknowledgement-tracking app
-    // as the Marketing Hub SOP Library (reslife_sop_library.html), reading
-    // and writing the same `sops` MongoDB collection. We just need to load
-    // (and reload on property switch) the iframe with the current property.
-    let sopFrameLoadedFor = null; // property the iframe was last loaded for
-
+    // Full-featured SOP Library, opened as its own standalone page so it can
+    // reuse the exact same rich editor / file-upload / acknowledgement-
+    // tracking app as the Marketing Hub SOP Library (reslife_sop_library.html),
+    // reading and writing the same `sops` MongoDB collection. We just point
+    // the "Open" link at the current property each time the tab is shown.
     async function loadSopLibraryFrame(){
-      const frame = document.getElementById('sopLibraryFrame');
-      if (!frame) return;
-      if (sopFrameLoadedFor === currentProperty && frame.getAttribute('src')) return; // already showing this property
-      sopFrameLoadedFor = currentProperty;
-      frame.src = 'reslife_sop_library.html?property=' + encodeURIComponent(currentProperty);
+      const btn = document.getElementById('sopLibraryOpenBtn');
+      const label = document.getElementById('sopLibraryPropertyLabel');
+      if (!btn) return;
+      btn.href = 'reslife_sop_library.html?property=' + encodeURIComponent(currentProperty);
+      if (label) label.textContent = currentProperty;
     }
 
     // ==================== TRAINING MODULES ====================

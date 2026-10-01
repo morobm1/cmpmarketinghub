@@ -305,20 +305,28 @@ export async function handler(event) {
       if (!id) return { statusCode: 400, body: 'id is required' };
       if (!title) return { statusCode: 400, body: 'Title is required' };
 
+      const existing = await col.findOne({ _id: new ObjectId(id) });
+      if (!existing) return { statusCode: 404, body: 'Not found' };
+
+      // Resolve the requested new scope once, falling back to the existing
+      // scope when the caller omits sopType/property (e.g. a title-only
+      // edit). This same resolved value is used for both the authorization
+      // check below and the actual $set, so they can never disagree.
+      const newSopType = sopType && ['company', 'site'].includes(sopType) ? sopType : existing.sopType;
+      const newProperty = newSopType === 'company' ? null : (property || existing.property || null);
+
       if (user.role !== 'admin') {
-        const existing = await col.findOne({ _id: new ObjectId(id) });
-        if (!existing) return { statusCode: 404, body: 'Not found' };
         // Must be allowed to manage both the SOP's existing scope and its
         // requested new scope, so a Reslife manager can't use an edit to
         // move an SOP into company-wide or another property.
-        const newSopType = sopType && ['company', 'site'].includes(sopType) ? sopType : existing.sopType;
-        const newProperty = newSopType === 'company' ? null : (property || existing.property);
         if (!canReslifeWriteSop(user, existing.sopType, existing.property) || !canReslifeWriteSop(user, newSopType, newProperty)) {
           return { statusCode: 403, body: 'Forbidden' };
         }
       }
 
       const updates = {
+        sopType: newSopType,
+        property: newProperty,
         title: title.trim(),
         category: (category || 'General').trim(),
         department: (department || '').trim(),
@@ -338,19 +346,13 @@ export async function handler(event) {
         updatedAt: new Date()
       };
 
-      // Allow changing sopType and property
-      if (sopType && ['company', 'site'].includes(sopType)) {
-        updates.sopType = sopType;
-        updates.property = sopType === 'company' ? null : (property || null);
-      }
-
       await col.updateOne({ _id: new ObjectId(id) }, { $set: updates });
 
-      const updated = await col.findOne({ _id: new ObjectId(id) });
-      if (updated) {
-        updated.id = updated._id.toString();
-        delete updated._id;
-      }
+      // Build the response by merging in memory instead of re-querying —
+      // `existing` plus the fields we just set is exactly the updated doc.
+      const updated = Object.assign({}, existing, updates);
+      updated.id = updated._id.toString();
+      delete updated._id;
       return { statusCode: 200, body: JSON.stringify(updated) };
     }
 

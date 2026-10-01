@@ -2,13 +2,30 @@ import { verifyReqAuth } from './_auth.js';
 import { getDb, ObjectId } from './_db.js';
 import { isReslifeManager, refreshReslifeUser } from './_reslife.js';
 
-// Site-wide admin, or Reslife manager tier (reslife-rec / reslife-admin),
-// may upload/delete SOP attachments. Files aren't property-scoped on their
-// own (sop-files is a flat attachment store keyed by file id, same as the
-// marketing hub), so this only gates *who* may upload/delete, matching the
-// write permission used for the owning SOP in sops.js.
-function canManageSopFiles(user) {
-  return user.role === 'admin' || isReslifeManager(user.role);
+// Site-wide admin may upload/delete any SOP attachment, unscoped, as before.
+// Reslife manager tier (reslife-rec / reslife-admin) may only upload a file
+// tagged with one of their own properties, and may only delete a file
+// tagged with one of their own properties. Files are often uploaded before
+// the owning SOP document exists yet (e.g. pasting a step screenshot while
+// still filling out the create wizard), so we can't require a sopId link at
+// upload time — instead the file itself is tagged with the uploader's
+// chosen `property`, and that tag is what DELETE checks against, closing
+// the cross-property/cross-tenant gap without breaking that upload flow.
+function reslifeProps(user) {
+  return Array.isArray(user.properties) ? user.properties : [];
+}
+function canUploadSopFile(user, property) {
+  if (user.role === 'admin') return true;
+  if (!isReslifeManager(user.role)) return false;
+  return !!property && reslifeProps(user).includes(property);
+}
+function canDeleteSopFile(user, file) {
+  if (user.role === 'admin') return true;
+  if (!isReslifeManager(user.role)) return false;
+  // Files uploaded before this property-tagging fix (or by admin) have no
+  // `property` tag; Reslife managers may not delete those ambiguous/legacy
+  // files, only ones explicitly tagged with one of their own properties.
+  return !!file.property && reslifeProps(user).includes(file.property);
 }
 
 /* ──────────────────────────────────────────────
@@ -21,6 +38,7 @@ function canManageSopFiles(user) {
      contentType: String,
      size: Number,
      data: Binary (base64 stored),
+     property: String | null,  // Reslife uploads only; null/absent for marketing-hub (admin) uploads
      uploadedBy: String,
      uploadedAt: Date
    }
@@ -64,13 +82,12 @@ export async function handler(event) {
       };
     }
 
-    // ─── POST: upload file (admin, or Reslife manager tier) ───
+    // ─── POST: upload file (admin, or Reslife manager tier for their own property) ───
     if (method === 'POST') {
-      if (!canManageSopFiles(user)) return { statusCode: 403, body: 'Forbidden' };
-
       const body = JSON.parse(event.body || '{}');
-      const { filename, contentType, data } = body;
+      const { filename, contentType, data, property } = body;
 
+      if (!canUploadSopFile(user, property)) return { statusCode: 403, body: 'Forbidden' };
       if (!data) return { statusCode: 400, body: 'data (base64) is required' };
       if (!filename) return { statusCode: 400, body: 'filename is required' };
 
@@ -85,6 +102,7 @@ export async function handler(event) {
         contentType: contentType || 'application/octet-stream',
         size: rawSize,
         data: data, // base64 string
+        property: user.role === 'admin' ? null : property,
         uploadedBy: user.sub,
         uploadedAt: new Date()
       };
@@ -104,12 +122,16 @@ export async function handler(event) {
       };
     }
 
-    // ─── DELETE: remove file (admin, or Reslife manager tier) ───
+    // ─── DELETE: remove file (admin, or Reslife manager tier for their own property) ───
     if (method === 'DELETE') {
-      if (!canManageSopFiles(user)) return { statusCode: 403, body: 'Forbidden' };
       const body = JSON.parse(event.body || '{}');
       const { id } = body;
       if (!id) return { statusCode: 400, body: 'id is required' };
+      if (user.role !== 'admin') {
+        const file = await col.findOne({ _id: new ObjectId(id) });
+        if (!file) return { statusCode: 404, body: 'Not found' };
+        if (!canDeleteSopFile(user, file)) return { statusCode: 403, body: 'Forbidden' };
+      }
       await col.deleteOne({ _id: new ObjectId(id) });
       return { statusCode: 200, body: JSON.stringify({ deleted: true }) };
     }

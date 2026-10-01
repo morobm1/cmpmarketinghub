@@ -353,8 +353,8 @@ header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;p
 </div>
 
 <!-- No standalone login view: this page is always embedded inside
-     reslife_hub.html, which already gates auth. showLogin() redirects the
-     top-level window to the login flow instead of rendering a form here. -->
+     reslife_hub.html, which already gates auth. showLogin() redirects to
+     the login flow instead of rendering a form here. -->
 
 <!-- App Header -->
 <header id="appHeader" style="display:none">
@@ -364,6 +364,7 @@ header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;p
   </div>
   <div class="header-controls">
     <span id="propertyBadge" class="company-name" style="font-weight:600"></span>
+    <button class="header-btn" onclick="location.href='reslife_hub.html'">&larr; Back to Reslife Hub</button>
   </div>
   <span class="company-name">Capstone Management Partners — Reslife Hub</span>
 </header>
@@ -541,16 +542,10 @@ async function apiFetch(path, opts = {}) {
 function showBoot() { document.getElementById('bootLoader').style.display = 'flex'; }
 function hideBoot() { document.getElementById('bootLoader').style.display = 'none'; }
 function showLogin() {
-  // This page is always embedded inside reslife_hub.html, which already
-  // gates auth. If the session is missing/expired here, bounce the parent
-  // window (not just the iframe) back to the login flow.
+  // This page is opened as its own tab/window from reslife_hub.html's SOP
+  // Library tab (not embedded). If the session is missing/expired here,
+  // send the user to the login flow, back to Reslife Hub afterward.
   hideBoot();
-  try {
-    if (window.top && window.top !== window.self) {
-      window.top.location.href = 'index.html?redirect=reslife_hub.html';
-      return;
-    }
-  } catch (e) {}
   location.href = 'index.html?redirect=reslife_hub.html';
 }
 function showApp() {
@@ -573,12 +568,11 @@ async function checkSession() {
 }
 
 // ===== RESLIFE PROPERTY CONTEXT =====
-// This page has no login/property-switcher UI of its own — it's embedded
-// via iframe in reslife_hub.html's SOP Library tab, which already resolved
-// the signed-in user's current property. We read that same property out of
-// localStorage (shared key, same-origin) so both stay in sync, and also
-// accept a `?property=` query param (set by the parent on iframe load) as
-// the most immediate source of truth.
+// This page has no login/property-switcher UI of its own — it's opened from
+// reslife_hub.html's SOP Library tab, which already resolved the signed-in
+// user's current property and passes it via `?property=` on the link. We
+// also fall back to the shared `reslife_current_property` localStorage key
+// (same-origin) in case the page is reopened/refreshed without that param.
 function resolveCurrentProperty() {
   try {
     const qp = new URLSearchParams(window.location.search).get('property');
@@ -589,12 +583,6 @@ function resolveCurrentProperty() {
     if (stored) return stored;
   } catch (e) {}
   return '';
-}
-
-function getUserProperties() {
-  if (!currentUser) return [];
-  if (currentUser.role === 'admin' || currentUser.properties === '*') return currentProperty ? [currentProperty] : [];
-  return Array.isArray(currentUser.properties) ? currentUser.properties : [];
 }
 
 // "Manager tier" for the SOP library = reslife-rec / reslife-admin / site-wide admin.
@@ -619,12 +607,7 @@ async function loadAllSops() {
 
 // ===== NAVIGATION =====
 // Reslife Hub has no company-wide SOP concept — every SOP here is 'site'
-// type, scoped to currentProperty. Kept as a function (always empty) so
-// the shared renderNav()/viewSop() logic below needs no further changes.
-function getCompanySops() {
-  return [];
-}
-
+// type, scoped to currentProperty.
 function getSiteSops() {
   return allSops.filter(s => s.sopType === 'site' && s.property === currentProperty);
 }
@@ -934,7 +917,8 @@ async function uploadSopFile(file) {
           body: JSON.stringify({
             filename: file.name,
             contentType: file.type,
-            data: base64
+            data: base64,
+            property: currentProperty
           })
         });
         const result = await res.json();
