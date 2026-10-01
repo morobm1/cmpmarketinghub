@@ -1,5 +1,6 @@
 import { verifyReqAuth } from './_auth.js';
 import { getDb, ObjectId } from './_db.js';
+import { notify } from './_notify.js';
 import { canAccessReslifeProperty, canModifyReslifeRecord, isReslifeManager, refreshReslifeUser, json } from './_reslife.js';
 
 const TYPES = ['active', 'passive'];
@@ -93,6 +94,10 @@ export async function handler(event) {
         if (!isMgr(user) && !ownDraftFlow) return { statusCode: 403, body: 'Only an REC or Admin can approve programs' };
         updates.status = STATUSES.includes(status) ? status : 'proposed';
         if (updates.status === 'approved') { updates.approvedBy = user.sub; updates.approvedAt = updates.updatedAt; }
+        if (existing.createdBy && existing.createdBy !== user.sub) {
+          const msg = { approved: 'was approved', draft: 'was sent back for changes', completed: 'was marked completed' }[updates.status];
+          if (msg) await notify(db, { property, to: existing.createdBy, title: `Program ${msg}: ${existing.title}`, message: `Updated by ${user.sub}.`, type: 'program', link: 'programs', createdBy: user.sub });
+        }
       } else if (!isMgr(user) && ['approved', 'completed'].includes(existing.status) && (title !== undefined || eventDate !== undefined || description !== undefined)) {
         updates.status = 'proposed'; // RA edits to an approved program go back for approval
       }

@@ -500,8 +500,83 @@
     .prog-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
     .prog-details{grid-column:1/-1;border-top:1px dashed var(--rl-border);padding-top:10px;font-size:13px}
     @media (max-width:700px){.prog-card{grid-template-columns:56px 1fr}.prog-actions{grid-column:1/-1;justify-content:flex-start}}
-    /* Manage users */
-    .um-stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+    /* Notifications */
+    .nt-wrap{position:relative}
+    .nt-bell{position:relative;width:40px;height:40px;border-radius:50%;border:1.5px solid rgba(255,255,255,.4);background:rgba(255,255,255,.08);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s}
+    .nt-bell:hover{background:rgba(255,255,255,.2)}
+    .nt-bell.has svg{animation:ntRing 2.4s ease-in-out infinite;transform-origin:50% 10%}
+    @keyframes ntRing{0%,80%,100%{transform:rotate(0)}84%{transform:rotate(14deg)}88%{transform:rotate(-12deg)}92%{transform:rotate(8deg)}96%{transform:rotate(-4deg)}}
+    .nt-badge{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#ef4444;color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid var(--rl-primary)}
+    .nt-panel{position:absolute;right:0;top:calc(100% + 10px);width:380px;max-width:92vw;background:#fff;color:var(--rl-text);border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,.25);z-index:400;overflow:hidden}
+    .nt-panel-head{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--rl-border);background:#f8fafc}
+    .nt-panel-head b{font-size:14px;color:var(--rl-primary)}
+    .nt-link{border:none;background:none;color:var(--rl-primary);font:inherit;font-size:12px;font-weight:700;cursor:pointer;margin-left:8px}
+    .nt-list{max-height:60vh;overflow:auto}
+    .nt-item{display:flex;gap:10px;padding:12px 14px;border-bottom:1px solid #f1f5f9;cursor:pointer}
+    .nt-item:hover{background:#f8fafc}
+    .nt-item.unread{background:#fff8f0}
+    .nt-item.unread .nt-body b::after{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--rl-secondary);margin-left:6px;vertical-align:middle}
+    .nt-item.urgent{border-left:3px solid #ef4444}
+    .nt-ico{width:32px;height:32px;border-radius:50%;background:#eef2f7;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px}
+    .nt-body{display:flex;flex-direction:column;gap:2px;min-width:0}
+    .nt-body b{font-size:13.5px}
+    .nt-body span{font-size:12.5px;color:#475569;white-space:pre-wrap;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+    .nt-body small{font-size:11px;color:var(--rl-subtext)}
+    .nt-empty{padding:30px;text-align:center;color:var(--rl-subtext);font-size:13px}
+    .nt-toasts{position:fixed;top:76px;right:18px;z-index:500;display:flex;flex-direction:column;gap:10px;max-width:360px}
+    .nt-toast{display:flex;gap:10px;align-items:flex-start;background:#fff;border-left:4px solid var(--rl-secondary);border-radius:12px;padding:12px 14px;box-shadow:0 14px 34px rgba(0,0,0,.2);cursor:pointer;animation:ntIn .25s ease-out;transition:opacity .5s,transform .5s}
+    .nt-toast.urgent{border-left-color:#ef4444}
+    .nt-toast.out{opacity:0;transform:translateX(20px)}
+    .nt-toast b{display:block;font-size:13.5px;color:var(--rl-primary)}
+    .nt-toast span{font-size:12.5px;color:#475569}
+    .nt-toast button{margin-left:auto;border:none;background:none;font-size:18px;cursor:pointer;color:#94a3b8}
+    @keyframes ntIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:none}}
+    .nt-push-btn{margin-top:14px;border:none;background:var(--rl-secondary);color:#1a1000;font:inherit;font-weight:800;font-size:13.5px;padding:10px 18px;border-radius:999px;cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,.18)}
+    .nt-push-btn:hover{filter:brightness(1.05)}
+    .nt-alert-modal{max-width:540px;margin-top:10vh}
+    #ntAlertModal{z-index:600}
+    /* Guest log */    .gl-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .gl-nav{display:flex;gap:6px;align-items:center}
+    .gl-nav b{min-width:190px;text-align:center;font-size:14px;color:var(--rl-primary)}
+    .gl-toolbar input{flex:1;min-width:220px;padding:8px 10px;border:1px solid var(--rl-border);border-radius:8px;font:inherit;font-size:13px}
+    .gl-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    @media (max-width:1000px){.gl-cols{grid-template-columns:1fr}}
+    .gl-count{display:inline-block;min-width:22px;padding:1px 8px;border-radius:999px;background:var(--rl-secondary);color:#fff;font-size:12px;margin-left:6px;vertical-align:middle}
+    .gl-count:empty{display:none}
+    .gl-card{display:grid;grid-template-columns:42px 1fr auto;gap:12px;align-items:center;border:1px solid var(--rl-border);border-left:4px solid #94a3b8;border-radius:12px;padding:10px 12px;margin-bottom:8px;background:#fff}
+    .gl-card.st-preregistered{border-left-color:#7c3aed}.gl-card.st-checked_in{border-left-color:#16a34a}.gl-card.overdue{border-left-color:#dc2626;background:#fff7f7}
+    .gl-av{width:40px;height:40px;border-radius:50%;background:#e0ecfb;color:var(--rl-primary);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px}
+    .gl-name{font-weight:800;font-size:14.5px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+    .gl-meta{font-size:12.5px;color:var(--rl-subtext);margin-top:2px}
+    .gl-meta a{color:var(--rl-primary)}
+    .gl-st{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:2px 8px;border-radius:999px;background:#f1f5f9;color:#475569}
+    .gl-st.preregistered{background:#ede9fe;color:#5b21b6}.gl-st.checked_in{background:#dcfce7;color:#166534}.gl-st.overdue{background:#fee2e2;color:#991b1b}
+    .gl-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+    @media (max-width:700px){.gl-card{grid-template-columns:40px 1fr}.gl-actions{grid-column:1/-1;justify-content:flex-start}}
+    .gl-week{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+    @media (max-width:900px){.gl-week{grid-template-columns:1fr}}
+    .gl-wday{border:1px solid var(--rl-border);border-radius:12px;padding:8px;min-height:160px;background:#fff;display:flex;flex-direction:column;gap:6px}
+    .gl-wday.today{border-color:var(--rl-secondary);box-shadow:0 0 0 2px rgba(249,146,57,.2)}
+    .gl-wday-h{display:flex;align-items:baseline;gap:6px;border-bottom:1px solid var(--rl-border);padding-bottom:6px}
+    .gl-wday-h b{font-size:12px;text-transform:uppercase;color:var(--rl-subtext)}.gl-wday-h span{font-size:18px;font-weight:800;color:var(--rl-primary)}.gl-wday-h em{margin-left:auto;font-style:normal;font-size:11px;font-weight:800;color:var(--rl-secondary)}
+    .gl-chip{border:none;text-align:left;border-radius:8px;padding:6px 8px;cursor:pointer;font:inherit;display:flex;flex-direction:column;gap:1px;background:#f1f5f9}
+    .gl-chip b{font-size:12px}.gl-chip span{font-size:11px;color:var(--rl-subtext)}
+    .gl-chip.preregistered{background:#ede9fe}.gl-chip.checked_in{background:#dcfce7}
+    .gl-none{color:#cbd5e1;text-align:center;font-size:12px;margin-top:10px}
+    .gl-mini{border:none;text-align:left;font:inherit;font-size:11px;font-weight:700;padding:3px 6px;border-radius:6px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff;background:#64748b}
+    .gl-mini.preregistered{background:#7c3aed}.gl-mini.checked_in{background:#16a34a}
+    .gl-more{border:none;background:none;font:inherit;font-size:11px;font-weight:700;color:var(--rl-primary);cursor:pointer;text-align:left;padding:0 4px}
+    .gl-seg{display:inline-flex;border:1px solid var(--rl-border);border-radius:999px;overflow:hidden;margin-bottom:16px}
+    .gl-seg button{border:none;background:#fff;padding:9px 18px;font:inherit;font-weight:700;font-size:13px;cursor:pointer}
+    .gl-seg button.on{background:var(--rl-secondary);color:#fff}
+    .gl-picked{margin-top:8px;background:#f0f7ff;border:1px solid #c9dcf2;border-radius:10px;padding:8px 12px;font-size:13px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .gl-picked .rl-btn{margin-left:auto}
+    .gl-photo{display:flex;gap:12px;align-items:flex-start}
+    .gl-photo-prev{width:220px;aspect-ratio:16/10;border:2px dashed var(--rl-border);border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--rl-subtext);font-size:12px;overflow:hidden;background:#f8fafc}
+    .gl-photo-prev img{width:100%;height:100%;object-fit:cover}
+    .gl-link{display:flex;gap:6px}
+    .gl-link input{flex:1;padding:8px 10px;border:1px solid var(--rl-border);border-radius:8px;font:inherit;font-size:12.5px;background:#f8fafc}
+    /* Manage users */    .um-stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
     .um-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
     .um-toolbar input,.um-toolbar select{padding:8px 10px;border:1px solid var(--rl-border);border-radius:8px;font:inherit;font-size:13px}
     .um-toolbar input{flex:1;min-width:220px}
@@ -698,6 +773,13 @@
         <button class="rl-view-toggle-btn hidden" id="rlViewToggleBtn" type="button" title="Preview the Reslife Hub exactly as an RA sees it">
           <span id="rlViewToggleIcon">&#128065;</span><span id="rlViewToggleLabel">Preview RA View</span>
         </button>
+        <div class="nt-wrap">
+          <button class="nt-bell" id="ntBell" type="button" aria-label="Notifications" title="Notifications"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="nt-badge hidden" id="ntBadge">0</span></button>
+          <div class="nt-panel hidden" id="ntPanel">
+            <div class="nt-panel-head"><b>Notifications</b><div><button type="button" id="ntSound" class="nt-link" title="Toggle alert sound">Sound: on</button><button type="button" id="ntReadAll" class="nt-link">Mark all read</button></div></div>
+            <div class="nt-list" id="ntList"><div class="nt-empty">Loading…</div></div>
+          </div>
+        </div>
         <span class="rl-role-badge" id="rlRoleBadge">—</span>
         <span class="rl-username" id="rlUsername"></span>
         <button class="rl-logout-btn" id="rlLogoutBtn">Log Out</button>
@@ -808,6 +890,7 @@
             <div class="rl-hero-eyebrow">Reslife Hub</div>
             <div class="rl-hero-title" id="dashHeroTitle">Welcome back</div>
             <div class="rl-hero-sub" id="dashHeroSub">Everything your Resident Life team needs for this property, in one place.</div>
+            <button type="button" class="nt-push-btn hidden" id="ntPushBtn">&#128227; Push Announcement</button>
           </div>
         </div>
 
@@ -1337,37 +1420,84 @@
       <section class="rl-tab-content" id="tab-guestlog">
         <div class="rl-panel">
           <div class="rl-panel-header">
-            <div><h2>Log a Guest</h2><p>One form, filled out once — pre-register ahead of a visit, or log a guest as they arrive.</p></div>
+            <div><h2>Guest Log</h2><p>Front-desk kiosk check-ins, staff entries and resident pre-registrations — all in one place.</p></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="rl-btn" id="glKioskBtn" title="Open the front-desk check-in page">Open Kiosk</button>
+              <button class="rl-btn" id="glInviteBtn">Send Pre-Registration Link</button>
+              <button class="rl-btn primary" id="glAddBtn">+ Log a Guest</button>
+              <button class="rl-btn hidden" id="glSettingsBtn" title="Notification emails & kiosk settings">Settings</button>
+            </div>
           </div>
           <div class="rl-panel-body">
-            <div class="field-grid cols-3">
-              <div class="field"><label>Guest Name</label><input id="guestName" /></div>
-              <div class="field"><label>Host Resident</label>
-                <div class="searchbox-wrap"><input type="text" id="guestHost" autocomplete="off" placeholder="Search resident directory…" /><div class="searchbox-results hidden" id="guestHostResults"></div></div>
-              </div>
-              <div class="field"><label>Building</label><input id="guestBuilding" /></div>
-              <div class="field"><label>Room / Unit</label><input id="guestRoom" /></div>
-              <div class="field"><label>Purpose (optional)</label><input id="guestPurpose" /></div>
-              <div class="field"><label><input type="checkbox" id="guestPreRegister" style="width:auto;margin-right:6px" />Pre-register (not arrived yet)</label></div>
-              <div class="field full"><label>Entrata Notes <span class="rec">Placeholder — no live Entrata sync</span></label><textarea id="guestEntrataNotes" placeholder="No Entrata integration exists yet — paste/type any relevant Entrata notes here manually for now."></textarea></div>
-            </div>
-            <div class="rl-form-actions" style="margin-top:14px">
-              <button class="rl-btn primary" id="guestSubmitBtn">Log Guest</button>
+            <div class="um-stats" id="glStats"></div>
+            <div class="gl-toolbar">
+              <div class="pp-viewtoggle" style="margin-left:0"><button type="button" class="active" data-gl-view="today">Today</button><button type="button" data-gl-view="week">Week</button><button type="button" data-gl-view="month">Month</button></div>
+              <div class="gl-nav"><button class="rl-btn sm" data-gl-nav="-1">&larr;</button><b id="glRangeLabel"></b><button class="rl-btn sm" data-gl-nav="1">&rarr;</button><button class="rl-btn sm" data-gl-nav="0">Today</button></div>
+              <input id="glSearch" placeholder="Search guest, resident or unit…" />
             </div>
           </div>
         </div>
 
-        <div class="rl-panel">
-          <div class="rl-panel-header"><h2>Pre-Registered (Expected)</h2></div>
-          <div class="rl-panel-body" id="guestPreregBox"><div class="rl-loading">Loading…</div></div>
+        <div class="gl-cols">
+          <div class="rl-panel">
+            <div class="rl-panel-header"><h2>Pre-Registered <span class="gl-count" id="glPreCount"></span></h2></div>
+            <div class="rl-panel-body" id="guestPreregBox"><div class="rl-loading">Loading…</div></div>
+          </div>
+          <div class="rl-panel">
+            <div class="rl-panel-header"><h2>Currently On Property <span class="gl-count" id="glActiveCount"></span></h2></div>
+            <div class="rl-panel-body" id="guestActiveBox"><div class="rl-loading">Loading…</div></div>
+          </div>
         </div>
         <div class="rl-panel">
-          <div class="rl-panel-header"><h2>Currently On Property</h2></div>
-          <div class="rl-panel-body" id="guestActiveBox"><div class="rl-loading">Loading…</div></div>
+          <div class="rl-panel-header"><h2 id="glViewTitle">Today’s Guest Activity</h2></div>
+          <div class="rl-panel-body" id="guestViewBox"><div class="rl-loading">Loading…</div></div>
         </div>
-        <div class="rl-panel">
-          <div class="rl-panel-header"><h2>Recent Checked-Out Guests</h2></div>
-          <div class="rl-panel-body" id="guestHistoryBox"><div class="rl-loading">Loading…</div></div>
+
+        <!-- Manual entry -->
+        <div class="pp-overlay" id="glModal">
+          <div class="pp-modal" style="max-width:860px">
+            <div class="pp-head"><div class="pp-head-ico">&#9787;</div><div><h3>Log a Guest</h3><p>Enter a guest for a resident — check in now or pre-register.</p></div><button type="button" class="pp-close" data-gl-close>&times;</button></div>
+            <div style="padding:22px 26px">
+              <div class="gl-seg"><button type="button" class="on" data-gl-mode="now">Check in now</button><button type="button" data-gl-mode="pre">Pre-register</button></div>
+              <div class="rl-form-grid cols-3">
+                <div class="rl-field full"><label>Resident *</label>
+                  <div class="searchbox-wrap"><input type="text" id="glResident" autocomplete="off" placeholder="Search name or unit…" /><div class="searchbox-results hidden" id="glResidentResults"></div></div>
+                  <div class="gl-picked hidden" id="glPicked"></div>
+                </div>
+                <div class="rl-field"><label>Guest full name *</label><input id="glGuestName" /></div>
+                <div class="rl-field"><label>Guest phone</label><input id="glGuestPhone" inputmode="tel" /></div>
+                <div class="rl-field"><label>Guest email</label><input id="glGuestEmail" inputmode="email" /></div>
+                <div class="rl-field"><label>ID type *</label><select id="glIdType"><option value="">Select…</option><option>Driver's License</option><option>State ID</option><option>Student ID</option></select></div>
+                <div class="rl-field"><label>Length of stay</label><select id="glDuration"></select></div>
+                <div class="rl-field hidden" id="glDateWrap"><label>Expected date</label><input type="date" id="glDate" /></div>
+                <div class="rl-field full"><label>Photo of ID</label>
+                  <div class="gl-photo"><div class="gl-photo-prev" id="glPhotoPrev">No photo yet</div>
+                    <div style="display:flex;flex-direction:column;gap:6px"><button type="button" class="rl-btn sm" id="glPhotoBtn">Take / upload photo</button><button type="button" class="rl-btn sm hidden" id="glPhotoClear">Remove</button><small style="color:var(--rl-subtext)">Driver’s License, State ID or Student ID.</small></div>
+                  </div>
+                  <input type="file" id="glPhotoFile" accept="image/*" capture="environment" class="hidden" />
+                </div>
+                <div class="rl-field full"><label>Notes (optional)</label><input id="glNotes" placeholder="Anything staff should know" /></div>
+              </div>
+              <label class="um-check"><input type="checkbox" id="glNotify" checked /> Email the resident and the property inboxes</label>
+            </div>
+            <div class="rl-modal-footer"><button class="rl-btn" data-gl-close>Cancel</button><button class="rl-btn primary" id="glSaveBtn">Check In Guest</button></div>
+          </div>
+        </div>
+
+        <!-- Pre-registration link -->
+        <div class="pp-overlay" id="glInviteModal">
+          <div class="pp-modal" style="max-width:640px">
+            <div class="pp-head"><div class="pp-head-ico">&#9993;</div><div><h3>Pre-Registration Link</h3><p>Send a resident a link to register their guest ahead of time.</p></div><button type="button" class="pp-close" data-gl-close>&times;</button></div>
+            <div style="padding:22px 26px" id="glInviteBody"></div>
+          </div>
+        </div>
+
+        <!-- Settings -->
+        <div class="pp-overlay" id="glSettingsModal">
+          <div class="pp-modal" style="max-width:640px">
+            <div class="pp-head"><div class="pp-head-ico">&#9881;</div><div><h3>Guest Log Settings</h3><p>Who gets notified and how the kiosk works.</p></div><button type="button" class="pp-close" data-gl-close>&times;</button></div>
+            <div style="padding:22px 26px" id="glSettingsBody"></div>
+          </div>
         </div>
       </section>
 
@@ -1905,8 +2035,24 @@
     </main>
   </div>
 
-  <script>
-    // ==================== STATE ====================
+  <!-- Push announcement (REC/Admin) -->
+  <div class="pp-overlay" id="ntPushModal">
+    <div class="pp-modal" style="max-width:620px">
+      <div class="pp-head"><div class="pp-head-ico">&#128227;</div><div><h3>Push Announcement</h3><p>Sends an instant alert to the Hub banner.</p></div><button type="button" class="pp-close" data-nt-close>&times;</button></div>
+      <div style="padding:22px 26px">
+        <div class="rl-field"><label>Send to</label><select id="ntTo"></select></div>
+        <div class="rl-field" style="margin-top:12px"><label>Title *</label><input id="ntTitle" maxlength="140" placeholder="e.g. Staff meeting moved to 7 PM" /></div>
+        <div class="rl-field" style="margin-top:12px"><label>Message</label><textarea id="ntMsg" rows="4" placeholder="Details…"></textarea></div>
+        <div class="gl-seg" style="margin-top:12px"><button type="button" class="on" data-nt-pri="normal">Normal</button><button type="button" data-nt-pri="urgent">Urgent (pop-up)</button></div>
+      </div>
+      <div class="rl-modal-footer"><button class="rl-btn" data-nt-close>Cancel</button><button class="rl-btn primary" id="ntSend">Send Now</button></div>
+    </div>
+  </div>
+  <!-- Incoming alert -->
+  <div class="nt-toasts" id="ntToasts"></div>
+  <div class="pp-overlay" id="ntAlertModal"><div class="pp-modal nt-alert-modal"><div class="pp-head"><div class="pp-head-ico">&#128227;</div><div><h3 id="ntAlertTitle">Announcement</h3><p id="ntAlertFrom"></p></div></div><div style="padding:22px 26px;font-size:15px;line-height:1.55;white-space:pre-wrap" id="ntAlertMsg"></div><div class="rl-modal-footer"><button class="rl-btn primary" id="ntAlertOk">Got it</button></div></div></div>
+
+  <script>    // ==================== STATE ====================
     const RESLIFE_ROLES = ['reslife-ra', 'reslife-rec', 'reslife-admin'];
     const ROLE_LABELS = { 'reslife-ra':'Reslife - RA', 'reslife-rec':'Reslife - REC', 'reslife-admin':'Reslife Admin', admin:'Site Admin' };
     let me = null;                 // { username, role, properties }
@@ -2019,6 +2165,7 @@
 
       els.authGate.classList.add('hidden');
       els.app.classList.remove('hidden');
+      initNotifications();
 
       // Deep-link support (e.g. reslife_hub.html?tab=dutylog) so a bookmarked/
       // home-screen shortcut — see reslife_duty_log_mobile.html — can jump a
@@ -2209,6 +2356,7 @@
     function applyRoleView(){
       isManager = viewingAsRA ? false : realIsManager;
       isAdminTier = viewingAsRA ? false : realIsAdminTier;
+      const pushBtn = document.getElementById('ntPushBtn'); if (pushBtn) pushBtn.classList.toggle('hidden', !isManager);
 
       els.usersTabBtn.classList.toggle('hidden', !isManager);
       const marketingHubBtn = document.getElementById('rlMarketingHubBtn');
@@ -3451,80 +3599,262 @@
 
     // ==================== GUEST LOG ====================
     let guestResidentDirectory = [];
+    let glAll = [], glSettings = null, glView = 'today', glAnchor = new Date(), glMode = 'now', glPickedRes = null, glPhoto = '';
+    const GL_DUR = [['1h', '1 hour'], ['2h', '2 hours'], ['3h', '3 hours'], ['4h', '4 hours'], ['evening', 'Until 11:00 PM'], ['overnight', 'Overnight']];
+    const glDay = d => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+    const glKey = d => { const x = new Date(d); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`; };
+    // The day a guest entry "belongs" to: check-in time, else expected date, else created.
+    const glDateOf = g => g.checkInTime ? glKey(g.checkInTime) : (g.expectedDate || glKey(g.createdAt));
+    const glTime = iso => iso ? new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '';
+    function glKioskUrl(){ return glSettings && glSettings.kioskKey ? `${location.origin}/guest_checkin.html?k=${glSettings.kioskKey}` : ''; }
+
     async function loadGuestLogTab(){
-      if (guestResidentDirectory.length === 0) { try { guestResidentDirectory = await apiFetch('/reslife-directory' + propParam()); } catch (e) { guestResidentDirectory = []; } }
+      try { guestResidentDirectory = await apiFetch('/reslife-directory' + propParam()); } catch (e) { guestResidentDirectory = []; }
+      try { glSettings = await apiFetch('/reslife-guest-log' + propParam() + '&settings=1'); } catch (e) { glSettings = null; }
       bindGuestFormOnce();
+      document.getElementById('glSettingsBtn').classList.toggle('hidden', !(glSettings && glSettings.canEdit));
       await loadGuestLists();
     }
+
+    function glRange(){
+      const a = glDay(glAnchor);
+      if (glView === 'today') return { from: a, to: new Date(a.getTime() + 864e5), label: a.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' }) };
+      if (glView === 'week') { const s = new Date(a); s.setDate(a.getDate() - a.getDay()); const e = new Date(s); e.setDate(s.getDate() + 7); return { from: s, to: e, label: `${s.toLocaleDateString([], { month: 'short', day: 'numeric' })} – ${new Date(e - 864e5).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}` }; }
+      const s = new Date(a.getFullYear(), a.getMonth(), 1), e = new Date(a.getFullYear(), a.getMonth() + 1, 1);
+      return { from: s, to: e, label: s.toLocaleDateString([], { month: 'long', year: 'numeric' }) };
+    }
+
+    function guestCardHTML(g, showActions){
+      const overdue = g.status === 'checked_in' && g.expectedOut && new Date(g.expectedOut) < new Date();
+      const srcLabel = { kiosk: 'Kiosk', staff: 'Staff', prelink: 'Resident link' }[g.source] || '';
+      return `<div class="gl-card st-${esc(g.status)}${overdue ? ' overdue' : ''}">
+        <div class="gl-av">${esc((g.guestName || '?').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase())}</div>
+        <div class="gl-main">
+          <div class="gl-name">${esc(g.guestName)} <span class="gl-st ${esc(g.status)}">${esc({ preregistered: 'Pre-registered', checked_in: 'On property', checked_out: 'Checked out' }[g.status] || g.status)}</span>${overdue ? '<span class="gl-st overdue">Past expected time</span>' : ''}</div>
+          <div class="gl-meta">Visiting <b>${g.residentId && guestResidentDirectory.some(r => r.id === g.residentId) ? `<a href="#" data-gl-res="${esc(g.residentId)}">${esc(g.hostResident || '—')}</a>` : esc(g.hostResident || '—')}</b>${g.room ? ' · ' + esc(g.room) : ''}${g.guestPhone ? ' · ' + esc(g.guestPhone) : ''}${g.guestEmail ? ' · ' + esc(g.guestEmail) : ''}</div>
+          <div class="gl-meta">${g.checkInTime ? `In ${glTime(g.checkInTime)}` : (g.expectedDate ? `Expected ${esc(g.expectedDate)}` : '')}${g.expectedOut && g.status === 'checked_in' ? ` · until ${glTime(g.expectedOut)}` : ''}${g.checkOutTime ? ` · Out ${glTime(g.checkOutTime)}` : ''}${g.durationLabel ? ` · ${esc(g.durationLabel)}` : ''}${g.idType ? ` · ${esc(g.idType)}` : ''}${srcLabel ? ` · via ${srcLabel}` : ''}</div>
+        </div>
+        <div class="gl-actions">
+          ${g.hasIdPhoto ? `<button class="rl-btn sm" data-gl-id="${g.id}">View ID</button>` : ''}
+          ${showActions && g.status === 'preregistered' ? `<button class="rl-btn sm primary" data-checkin="${g.id}">Check In</button>` : ''}
+          ${showActions && g.status === 'checked_in' ? `<button class="rl-btn sm" data-checkout="${g.id}">Check Out</button>` : ''}
+        </div>
+      </div>`;
+    }
+
+    async function loadGuestLists(){
+      try { glAll = await apiFetch('/reslife-guest-log' + propParam()); } catch (e) { glAll = []; }
+      renderGuestLists();
+    }
+
+    function renderGuestLists(){
+      const q = document.getElementById('glSearch').value.trim().toLowerCase();
+      const match = g => !q || [g.guestName, g.hostResident, g.room, g.guestPhone, g.guestEmail].some(v => String(v || '').toLowerCase().includes(q));
+      const todayK = glKey(new Date());
+      const prereg = glAll.filter(g => g.status === 'preregistered' && match(g)).sort((a, b) => String(a.expectedDate).localeCompare(String(b.expectedDate)));
+      const active = glAll.filter(g => g.status === 'checked_in' && match(g));
+      const todayCount = glAll.filter(g => g.checkInTime && glKey(g.checkInTime) === todayK).length;
+      document.getElementById('glStats').innerHTML = [['On property', active.length], ['Expected today', glAll.filter(g => g.status === 'preregistered' && g.expectedDate === todayK).length], ['Check-ins today', todayCount], ['Pre-registered', prereg.length], ['Past expected time', active.filter(g => g.expectedOut && new Date(g.expectedOut) < new Date()).length]]
+        .map(([l, v]) => `<div class="prog-stat"><b>${v}</b><span>${l}</span></div>`).join('');
+      document.getElementById('glPreCount').textContent = prereg.length || '';
+      document.getElementById('glActiveCount').textContent = active.length || '';
+      document.getElementById('guestPreregBox').innerHTML = prereg.length ? prereg.map(g => guestCardHTML(g, true)).join('') : '<div class="rl-empty">No pre-registered guests.</div>';
+      document.getElementById('guestActiveBox').innerHTML = active.length ? active.map(g => guestCardHTML(g, true)).join('') : '<div class="rl-empty">No guests currently on property.</div>';
+
+      const r = glRange();
+      document.getElementById('glRangeLabel').textContent = r.label;
+      const inRange = glAll.filter(g => { const k = glDateOf(g); return k >= glKey(r.from) && k < glKey(r.to) && match(g); });
+      const box = document.getElementById('guestViewBox');
+      document.getElementById('glViewTitle').textContent = glView === 'today' ? 'Guest Activity — ' + r.label : glView === 'week' ? 'This Week' : 'Monthly Calendar';
+      if (glView === 'today') {
+        const list = inRange.sort((a, b) => String(b.checkInTime || b.createdAt).localeCompare(String(a.checkInTime || a.createdAt)));
+        box.innerHTML = list.length ? list.map(g => guestCardHTML(g, true)).join('') : '<div class="rl-empty">No guest activity on this day.</div>';
+      } else if (glView === 'week') {
+        let html = '<div class="gl-week">';
+        for (let i = 0; i < 7; i++) {
+          const d = new Date(r.from); d.setDate(r.from.getDate() + i); const k = glKey(d);
+          const items = inRange.filter(g => glDateOf(g) === k);
+          html += `<div class="gl-wday${k === todayK ? ' today' : ''}"><div class="gl-wday-h"><b>${d.toLocaleDateString([], { weekday: 'short' })}</b><span>${d.getDate()}</span><em>${items.length || ''}</em></div>${items.map(g => `<button class="gl-chip ${esc(g.status)}" data-gl-open="${g.id}"><b>${esc(g.guestName)}</b><span>${esc(g.hostResident || '')} ${g.checkInTime ? '· ' + glTime(g.checkInTime) : ''}</span></button>`).join('') || '<div class="gl-none">—</div>'}</div>`;
+        }
+        box.innerHTML = html + '</div>';
+      } else {
+        const start = new Date(r.from); start.setDate(1 - r.from.getDay());
+        let cells = '';
+        for (let i = 0; i < 42; i++) {
+          const d = new Date(start); d.setDate(start.getDate() + i);
+          if (i >= 35 && d.getMonth() !== r.from.getMonth()) break;
+          const k = glKey(d); const items = glAll.filter(g => glDateOf(g) === k && match(g));
+          cells += `<div class="pp-cal-day${d.getMonth() !== r.from.getMonth() ? ' out' : ''}${k === todayK ? ' today' : ''}" data-gl-day="${k}"><span class="pp-cal-num">${d.getDate()}</span>${items.slice(0, 3).map(g => `<button class="gl-mini ${esc(g.status)}" data-gl-open="${g.id}">${esc(g.guestName)}</button>`).join('')}${items.length > 3 ? `<button class="gl-more" data-gl-goday="${k}">+${items.length - 3} more</button>` : ''}</div>`;
+        }
+        box.innerHTML = `<div class="pp-cal">${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => `<div class="pp-cal-dow">${d}</div>`).join('')}${cells}</div><div class="pp-legend" style="margin-top:10px"><span><i class="pp-dot" style="background:#7c3aed"></i>Pre-registered</span><span><i class="pp-dot" style="background:#16a34a"></i>On property</span><span><i class="pp-dot" style="background:#64748b"></i>Checked out</span></div>`;
+      }
+      bindGuestCards(document.getElementById('tab-guestlog'));
+    }
+
+    function bindGuestCards(root){
+      root.querySelectorAll('[data-checkin]').forEach(btn => btn.onclick = async () => {
+        try { await apiFetch('/reslife-guest-log', { method: 'PUT', body: JSON.stringify({ id: btn.getAttribute('data-checkin'), property: currentProperty, action: 'checkIn' }) }); await loadGuestLists(); } catch (e) { alert('Failed: ' + e.message); }
+      });
+      root.querySelectorAll('[data-checkout]').forEach(btn => btn.onclick = async () => {
+        try { await apiFetch('/reslife-guest-log', { method: 'PUT', body: JSON.stringify({ id: btn.getAttribute('data-checkout'), property: currentProperty, action: 'checkOut' }) }); await loadGuestLists(); } catch (e) { alert('Failed: ' + e.message); }
+      });
+      root.querySelectorAll('[data-gl-id]').forEach(btn => btn.onclick = async () => {
+        try { const r = await apiFetch('/reslife-guest-log' + propParam() + '&id=' + btn.getAttribute('data-gl-id') + '&photo=1'); glShowPanel('glInviteModal', `<h3 style="margin:0 0 4px;color:var(--rl-primary)">${esc(r.guestName)}</h3><p style="margin:0 0 12px;color:var(--rl-subtext)">${esc(r.idType || 'ID')}</p>${r.idPhoto ? `<img src="${r.idPhoto}" style="width:100%;border-radius:12px;border:1px solid var(--rl-border)">` : '<div class="rl-empty">No photo on file.</div>'}`); }
+        catch (e) { alert('Could not load ID: ' + e.message); }
+      });
+      root.querySelectorAll('[data-gl-open]').forEach(btn => btn.onclick = () => { const g = glAll.find(x => x.id === btn.getAttribute('data-gl-open')); if (g) { glShowPanel('glInviteModal', guestCardHTML(g, true)); bindGuestCards(document.getElementById('glInviteModal')); } });
+      root.querySelectorAll('[data-gl-goday]').forEach(btn => btn.onclick = () => { glAnchor = new Date(btn.getAttribute('data-gl-goday') + 'T12:00'); glSetView('today'); });
+      root.querySelectorAll('[data-gl-res]').forEach(a => a.onclick = ev => { ev.preventDefault(); if (typeof openResidentModal === 'function') { dirDocs = guestResidentDirectory; resHistoryStack = []; openResidentModal(a.getAttribute('data-gl-res')); } });
+    }
+    function glShowPanel(id, html){
+      const m = document.getElementById(id);
+      if (id === 'glInviteModal') { m.querySelector('h3').textContent = 'Guest'; m.querySelector('.pp-head p').textContent = ''; }
+      document.getElementById(id === 'glInviteModal' ? 'glInviteBody' : 'glSettingsBody').innerHTML = html;
+      m.classList.add('show');
+    }
+    function glSetView(v){ glView = v; document.querySelectorAll('[data-gl-view]').forEach(b => b.classList.toggle('active', b.getAttribute('data-gl-view') === v)); renderGuestLists(); }
+
+    // ---------- Manual entry ----------
+    function glOpenEntry(mode){
+      glMode = mode || 'now'; glPickedRes = null; glPhoto = '';
+      ['glResident', 'glGuestName', 'glGuestPhone', 'glGuestEmail', 'glNotes'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('glIdType').value = ''; document.getElementById('glDuration').value = '2h';
+      document.getElementById('glDate').value = glKey(new Date()); document.getElementById('glPicked').classList.add('hidden');
+      document.getElementById('glPhotoPrev').innerHTML = 'No photo yet'; document.getElementById('glPhotoClear').classList.add('hidden');
+      glSetMode(glMode);
+      const m = document.getElementById('glModal'); m.classList.add('show'); m.querySelector('.pp-head h3').textContent = 'Log a Guest';
+      setTimeout(() => document.getElementById('glResident').focus(), 50);
+    }
+    function glSetMode(mode){
+      glMode = mode;
+      document.querySelectorAll('[data-gl-mode]').forEach(b => b.classList.toggle('on', b.getAttribute('data-gl-mode') === mode));
+      document.getElementById('glDateWrap').classList.toggle('hidden', mode !== 'pre');
+      document.getElementById('glSaveBtn').textContent = mode === 'pre' ? 'Pre-Register Guest' : 'Check In Guest';
+    }
+    function glPick(r){
+      glPickedRes = r;
+      document.getElementById('glResident').value = '';
+      document.getElementById('glPicked').innerHTML = `<b>${esc(r.residentName)}</b> · ${esc(r.unit || r.room || '')}${r.email ? ' · ' + esc(r.email) : ''} <button type="button" class="rl-btn sm" id="glUnpick">Change</button>`;
+      document.getElementById('glPicked').classList.remove('hidden');
+      document.getElementById('glUnpick').onclick = () => { glPickedRes = null; document.getElementById('glPicked').classList.add('hidden'); document.getElementById('glResident').focus(); };
+    }
+    function glCompress(file){
+      return new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => { const img = new Image(); img.onload = () => { const sc = Math.min(1, 1100 / Math.max(img.width, img.height)); const c = document.createElement('canvas'); c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); res(c.toDataURL('image/jpeg', 0.72)); }; img.onerror = rej; img.src = fr.result; }; fr.onerror = rej; fr.readAsDataURL(file); });
+    }
+    async function glSaveEntry(){
+      const g = id => document.getElementById(id).value.trim();
+      if (!glPickedRes) return alert('Choose the resident from the directory.');
+      if (g('glGuestName').split(/\s+/).length < 2) return alert('Enter the guest’s full first and last name.');
+      if (glMode === 'now' && !g('glIdType')) return alert('Choose the ID type.');
+      if (glMode === 'pre' && !g('glDate')) return alert('Choose the expected date.');
+      const btn = document.getElementById('glSaveBtn'); btn.disabled = true;
+      try {
+        await apiFetch('/reslife-guest-log', { method: 'POST', body: JSON.stringify({ property: currentProperty, residentId: glPickedRes.id, guestName: g('glGuestName'), guestPhone: g('glGuestPhone'), guestEmail: g('glGuestEmail'), idType: g('glIdType'), idPhoto: glPhoto, duration: g('glDuration'), purpose: g('glNotes'), preRegister: glMode === 'pre', expectedDate: g('glDate'), notify: document.getElementById('glNotify').checked }) });
+        document.getElementById('glModal').classList.remove('show');
+        await loadGuestLists();
+      } catch (e) { alert('Save failed: ' + e.message); }
+      btn.disabled = false;
+    }
+
+    // ---------- Pre-registration link ----------
+    function glOpenInvite(){
+      const m = document.getElementById('glInviteModal');
+      m.querySelector('h3').textContent = 'Pre-Registration Link'; m.querySelector('.pp-head p').textContent = 'Send a resident a link to register their guest ahead of time.';
+      document.getElementById('glInviteBody').innerHTML = `
+        <div class="rl-form-grid cols-3">
+          <div class="rl-field full"><label>Resident *</label><select id="glInvRes"><option value="">Select resident…</option>${guestResidentDirectory.slice().sort((a, b) => String(a.residentName).localeCompare(String(b.residentName))).map(r => `<option value="${r.id}">${esc(r.residentName)} — ${esc(r.unit || r.room || '')}</option>`).join('')}</select></div>
+          <div class="rl-field"><label>Expected visit date</label><input type="date" id="glInvDate" value="${glKey(new Date())}" /></div>
+          <div class="rl-field"><label>Link valid for</label><select id="glInvDays"><option value="3">3 days</option><option value="7" selected>7 days</option><option value="14">14 days</option></select></div>
+        </div>
+        <div class="um-import-note" style="margin:6px 0 14px">The resident enters their guest’s details and ID photo. <b>The guest must still check in at the front desk${glSettings && glSettings.checkinAfter ? ' after ' + fmtTime12(glSettings.checkinAfter) : ''}</b> — they’ll appear under Pre-Registered.</div>
+        <button class="rl-btn primary" id="glInvGo">Generate Link</button>
+        <div id="glInvOut" style="margin-top:14px"></div>`;
+      m.classList.add('show');
+      document.getElementById('glInvGo').onclick = async () => {
+        const rid = document.getElementById('glInvRes').value; if (!rid) return alert('Choose a resident.');
+        try {
+          const r = await apiFetch('/reslife-guest-log', { method: 'POST', body: JSON.stringify({ property: currentProperty, action: 'invite', residentId: rid, expectedDate: document.getElementById('glInvDate').value, days: document.getElementById('glInvDays').value }) });
+          const url = `${location.origin}/guest_checkin.html?invite=${encodeURIComponent(r.code)}`;
+          const first = (r.residentName || '').split(' ')[0];
+          const subject = `Pre-register your guest at ${currentProperty}`;
+          const text = `Hi ${first},\n\nUse this link to pre-register your guest${r.expectedDate ? ' for ' + r.expectedDate : ''}:\n${url}\n\nYou'll enter your guest's name, contact info and a photo of their ID. Your guest will still need to check in at the front desk${glSettings && glSettings.checkinAfter ? ' after ' + fmtTime12(glSettings.checkinAfter) : ''} when they arrive.\n\nThis link expires ${new Date(r.expiresAt).toLocaleDateString()}.\n\nThanks,\n${currentProperty} ResLife`;
+          document.getElementById('glInvOut').innerHTML = `<div class="gl-link"><input readonly value="${esc(url)}" id="glInvUrl" /><button class="rl-btn sm" id="glInvCopy">Copy link</button></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+              ${r.residentEmail ? `<button class="rl-btn primary sm" id="glInvGmail">Email ${esc(first)} in Gmail</button>` : '<span class="um-warn">No email on file for this resident — copy the link and text it.</span>'}
+              <button class="rl-btn sm" id="glInvCopyMsg">Copy message</button>
+            </div>`;
+          document.getElementById('glInvCopy').onclick = () => navigator.clipboard.writeText(url).then(() => alert('Link copied'));
+          document.getElementById('glInvCopyMsg').onclick = () => navigator.clipboard.writeText(text).then(() => alert('Message copied'));
+          const gm = document.getElementById('glInvGmail'); if (gm) gm.onclick = () => window.open('https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(r.residentEmail) + '&su=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(text), '_blank', 'noopener');
+        } catch (e) { alert('Could not create link: ' + e.message); }
+      };
+    }
+
+    // ---------- Settings (REC/Admin) ----------
+    function glOpenSettings(){
+      const s = glSettings || {};
+      glShowPanel('glSettingsModal', `
+        <div class="rl-field"><label>Notification emails</label><textarea id="glSetEmails" rows="3" placeholder="one per line">${esc((s.notifyEmails || []).join('\n'))}</textarea><small style="color:var(--rl-subtext)">Every check-in and pre-registration is emailed to the resident plus these addresses.</small></div>
+        <div class="rl-field" style="margin-top:12px"><label>Front-desk check-in required after</label><input type="time" id="glSetAfter" value="${esc(s.checkinAfter || '19:00')}" style="max-width:180px" /></div>
+        <div class="rl-field" style="margin-top:12px"><label>Kiosk link (open on the front-desk iPad)</label>
+          <div class="gl-link"><input readonly value="${esc(glKioskUrl())}" /><button class="rl-btn sm" id="glSetCopy">Copy</button><button class="rl-btn sm" id="glSetOpen">Open</button></div>
+          <button class="rl-btn sm danger" id="glSetRegen" style="margin-top:8px">Generate a new kiosk link</button><small style="display:block;color:var(--rl-subtext);margin-top:4px">Do this if the link was shared outside the front desk. The old link stops working.</small>
+        </div>
+        <div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end"><button class="rl-btn primary" id="glSetSave">Save settings</button></div>`);
+      const save = async (extra) => {
+        const emails = document.getElementById('glSetEmails').value.split(/[\n,;]+/).map(e => e.trim()).filter(Boolean);
+        const r = await apiFetch('/reslife-guest-log', { method: 'PUT', body: JSON.stringify(Object.assign({ property: currentProperty, action: 'settings', notifyEmails: emails, checkinAfter: document.getElementById('glSetAfter').value }, extra || {})) });
+        glSettings = Object.assign({}, glSettings, { notifyEmails: r.notifyEmails, checkinAfter: r.checkinAfter, kioskKey: r.kioskKey });
+      };
+      document.getElementById('glSetSave').onclick = async () => { try { await save(); document.getElementById('glSettingsModal').classList.remove('show'); } catch (e) { alert('Save failed: ' + e.message); } };
+      document.getElementById('glSetCopy').onclick = () => navigator.clipboard.writeText(glKioskUrl()).then(() => alert('Kiosk link copied'));
+      document.getElementById('glSetOpen').onclick = () => window.open(glKioskUrl(), '_blank');
+      document.getElementById('glSetRegen').onclick = async () => { if (!confirm('Generate a new kiosk link? The current one will stop working.')) return; try { await save({ regenerateKey: true }); glOpenSettings(); } catch (e) { alert('Failed: ' + e.message); } };
+    }
+
     let guestFormBound = false;
     function bindGuestFormOnce(){
       if (guestFormBound) return;
       guestFormBound = true;
-      const hostInput = document.getElementById('guestHost');
-      const hostResults = document.getElementById('guestHostResults');
-      hostInput.addEventListener('input', (e) => {
-        const q = e.target.value.trim().toLowerCase();
-        if (!q) { hostResults.classList.add('hidden'); return; }
-        const matches = guestResidentDirectory.filter(r => (r.residentName || '').toLowerCase().includes(q)).slice(0, 6);
-        if (matches.length === 0) { hostResults.classList.add('hidden'); return; }
-        hostResults.innerHTML = matches.map((r, i) => `<div class="searchbox-result" data-mi="${i}"><div>${esc(r.residentName)}</div><div class="sr-sub">${esc(r.room || r.unit || '')}</div></div>`).join('');
-        hostResults.classList.remove('hidden');
-        hostResults.querySelectorAll('.searchbox-result').forEach(row => row.addEventListener('click', () => {
-          const r = matches[parseInt(row.dataset.mi, 10)];
-          hostInput.value = r.residentName;
-          if (r.unit) document.getElementById('guestBuilding').value = r.unit;
-          if (r.room) document.getElementById('guestRoom').value = r.room;
-          hostResults.classList.add('hidden');
-        }));
+      document.getElementById('glDuration').innerHTML = GL_DUR.map(([k, l]) => `<option value="${k}"${k === '2h' ? ' selected' : ''}>${l}</option>`).join('');
+      document.getElementById('glAddBtn').onclick = () => glOpenEntry('now');
+      document.getElementById('glInviteBtn').onclick = glOpenInvite;
+      document.getElementById('glSettingsBtn').onclick = glOpenSettings;
+      document.getElementById('glKioskBtn').onclick = () => {
+        const u = glKioskUrl();
+        if (u) window.open(u, '_blank');
+        else alert('The kiosk link hasn’t been set up yet. Ask an REC or Admin to open Guest Log → Settings once to create it.');
+      };
+      document.querySelectorAll('[data-gl-mode]').forEach(b => b.onclick = () => glSetMode(b.getAttribute('data-gl-mode')));
+      document.querySelectorAll('[data-gl-view]').forEach(b => b.onclick = () => glSetView(b.getAttribute('data-gl-view')));
+      document.querySelectorAll('[data-gl-nav]').forEach(b => b.onclick = () => {
+        const n = +b.getAttribute('data-gl-nav');
+        if (n === 0) glAnchor = new Date();
+        else if (glView === 'today') glAnchor = new Date(glAnchor.getTime() + n * 864e5);
+        else if (glView === 'week') glAnchor = new Date(glAnchor.getTime() + n * 7 * 864e5);
+        else glAnchor = new Date(glAnchor.getFullYear(), glAnchor.getMonth() + n, 1);
+        renderGuestLists();
       });
-      document.addEventListener('click', (e) => { if (!e.target.closest('#guestHost') && !e.target.closest('#guestHostResults')) hostResults.classList.add('hidden'); });
-
-      document.getElementById('guestSubmitBtn').addEventListener('click', async () => {
-        const guestName = document.getElementById('guestName').value.trim();
-        if (!guestName) { alert('Guest name is required.'); return; }
-        const payload = {
-          property: currentProperty, guestName, hostResident: document.getElementById('guestHost').value.trim(),
-          building: document.getElementById('guestBuilding').value.trim(), room: document.getElementById('guestRoom').value.trim(),
-          purpose: document.getElementById('guestPurpose').value.trim(), entrataNotes: document.getElementById('guestEntrataNotes').value.trim(),
-          preRegister: document.getElementById('guestPreRegister').checked,
-        };
-        try {
-          await apiFetch('/reslife-guest-log', { method: 'POST', body: JSON.stringify(payload) });
-          ['guestName', 'guestHost', 'guestBuilding', 'guestRoom', 'guestPurpose', 'guestEntrataNotes'].forEach(id => document.getElementById(id).value = '');
-          document.getElementById('guestPreRegister').checked = false;
-          await loadGuestLists();
-        } catch (e) { alert('Failed to log guest: ' + e.message); }
+      document.getElementById('glSearch').addEventListener('input', renderGuestLists);
+      document.querySelectorAll('[data-gl-close]').forEach(b => b.onclick = () => b.closest('.pp-overlay').classList.remove('show'));
+      ['glModal', 'glInviteModal', 'glSettingsModal'].forEach(id => document.getElementById(id).addEventListener('mousedown', e => { if (e.target.id === id) e.target.classList.remove('show'); }));
+      document.getElementById('glSaveBtn').onclick = glSaveEntry;
+      // Resident search
+      const input = document.getElementById('glResident'), results = document.getElementById('glResidentResults');
+      input.addEventListener('input', () => {
+        const q = input.value.trim().toLowerCase();
+        if (!q) { results.classList.add('hidden'); return; }
+        const m = guestResidentDirectory.filter(r => (r.residentName || '').toLowerCase().includes(q) || String(r.unit || r.room || '').toLowerCase().includes(q)).slice(0, 8);
+        if (!m.length) { results.innerHTML = '<div class="searchbox-result"><div class="sr-sub">No residents match</div></div>'; results.classList.remove('hidden'); return; }
+        results.innerHTML = m.map((r, i) => `<div class="searchbox-result" data-mi="${i}"><div>${esc(r.residentName)}</div><div class="sr-sub">${esc(r.unit || r.room || '')}</div></div>`).join('');
+        results.classList.remove('hidden');
+        results.querySelectorAll('[data-mi]').forEach(row => row.onclick = () => { glPick(m[+row.dataset.mi]); results.classList.add('hidden'); });
       });
-    }
-    function guestCardHTML(g, showActions){
-      return `<div class="rl-item">
-        <div class="rl-item-main">
-          <div class="rl-item-title">${esc(g.guestName)} <span class="rl-pill ${g.status === 'checked_in' ? 'open' : (g.status === 'preregistered' ? 'purple' : 'resolved')}">${esc(g.status.replace('_', ' '))}</span></div>
-          <div class="rl-item-meta">${g.hostResident ? 'Visiting ' + esc(g.hostResident) : 'No host specified'}${g.building ? ' · ' + esc(g.building) : ''}${g.room ? ' ' + esc(g.room) : ''} · Logged by ${esc(g.loggedBy)}</div>
-          ${g.checkInTime ? `<div class="rl-item-meta">Checked in ${fmtDate(g.checkInTime)}${g.checkOutTime ? ' · Checked out ' + fmtDate(g.checkOutTime) : ''}</div>` : ''}
-          ${g.purpose ? `<div class="rl-item-body">${esc(g.purpose)}</div>` : ''}
-        </div>
-        ${showActions ? `<div class="rl-item-actions">
-          ${g.status === 'preregistered' ? `<button class="rl-btn sm primary" data-checkin="${g.id}">Check In</button>` : ''}
-          ${g.status === 'checked_in' ? `<button class="rl-btn sm" data-checkout="${g.id}">Check Out</button>` : ''}
-        </div>` : ''}
-      </div>`;
-    }
-    async function loadGuestLists(){
-      let all = [];
-      try { all = await apiFetch('/reslife-guest-log' + propParam()); } catch (e) { all = []; }
-      const prereg = all.filter(g => g.status === 'preregistered');
-      const active = all.filter(g => g.status === 'checked_in');
-      const history = all.filter(g => g.status === 'checked_out').slice(0, 25);
-      document.getElementById('guestPreregBox').innerHTML = prereg.length === 0 ? '<div class="rl-empty">No pre-registered guests expected.</div>' : prereg.map(g => guestCardHTML(g, true)).join('');
-      document.getElementById('guestActiveBox').innerHTML = active.length === 0 ? '<div class="rl-empty">No guests currently on property.</div>' : active.map(g => guestCardHTML(g, true)).join('');
-      document.getElementById('guestHistoryBox').innerHTML = history.length === 0 ? '<div class="rl-empty">No checked-out guests yet.</div>' : history.map(g => guestCardHTML(g, false)).join('');
-      document.querySelectorAll('[data-checkin]').forEach(btn => btn.addEventListener('click', async () => {
-        try { await apiFetch('/reslife-guest-log', { method: 'PUT', body: JSON.stringify({ id: btn.getAttribute('data-checkin'), property: currentProperty, action: 'checkIn' }) }); await loadGuestLists(); } catch (e) { alert('Failed: ' + e.message); }
-      }));
-      document.querySelectorAll('[data-checkout]').forEach(btn => btn.addEventListener('click', async () => {
-        try { await apiFetch('/reslife-guest-log', { method: 'PUT', body: JSON.stringify({ id: btn.getAttribute('data-checkout'), property: currentProperty, action: 'checkOut' }) }); await loadGuestLists(); } catch (e) { alert('Failed: ' + e.message); }
-      }));
+      document.addEventListener('click', e => { if (!e.target.closest('#glResident') && !e.target.closest('#glResidentResults')) results.classList.add('hidden'); });
+      // ID photo
+      document.getElementById('glPhotoBtn').onclick = () => document.getElementById('glPhotoFile').click();
+      document.getElementById('glPhotoFile').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; glPhoto = await glCompress(f); document.getElementById('glPhotoPrev').innerHTML = `<img src="${glPhoto}" alt="ID">`; document.getElementById('glPhotoClear').classList.remove('hidden'); };
+      document.getElementById('glPhotoClear').onclick = () => { glPhoto = ''; document.getElementById('glPhotoPrev').innerHTML = 'No photo yet'; document.getElementById('glPhotoClear').classList.add('hidden'); };
     }
 
     // ==================== INCIDENT REPORTS ====================
@@ -5200,7 +5530,16 @@ Success looks like: [Attendance goal, feedback, new faces]`;
     // tracking app as the Marketing Hub SOP Library (reslife_sop_library.html),
     // reading and writing the same `sops` MongoDB collection. We just point
     // the "Open" link at the current property each time the tab is shown.
+    // The SOP Library nav item opens the SOP page directly (no intermediate tab).
+    document.addEventListener('click', e => {
+      const b = e.target.closest('.rl-nav-item[data-tab="sops"]');
+      if (!b) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+      location.href = 'reslife_sop_library.html?property=' + encodeURIComponent(currentProperty || '');
+    }, true);
     async function loadSopLibraryFrame(){
+      // Reached only via a saved/deep-linked tab: send the user straight to the SOP page.
+      if (currentProperty) { location.href = 'reslife_sop_library.html?property=' + encodeURIComponent(currentProperty); return; }
       const btn = document.getElementById('sopLibraryOpenBtn');
       const label = document.getElementById('sopLibraryPropertyLabel');
       if (!btn) return;
@@ -5208,6 +5547,132 @@ Success looks like: [Attendance goal, feedback, new faces]`;
       if (label) label.textContent = currentProperty;
     }
 
+    // ==================== NOTIFICATIONS ====================
+    // Bell in the header (everyone), instant alerts via polling every 20s, chime + toast for new items,
+    // pop-up for urgent announcements. REC/Admin can push announcements from the dashboard.
+    let ntItems = [], ntTimer = null, ntPri = 'normal', ntAudio = null;
+    const NT_SEEN_KEY = () => 'rl_nt_seen_' + (me ? me.username : '');
+    const ntSoundOn = () => localStorage.getItem('rl_nt_sound') !== 'off';
+
+    function ntChime(){
+      if (!ntSoundOn()) return;
+      try {
+        ntAudio = ntAudio || new (window.AudioContext || window.webkitAudioContext)();
+        const t = ntAudio.currentTime;
+        [[880, 0], [1320, .14]].forEach(([f, d]) => {
+          const o = ntAudio.createOscillator(), g = ntAudio.createGain();
+          o.type = 'sine'; o.frequency.value = f;
+          g.gain.setValueAtTime(0.0001, t + d); g.gain.exponentialRampToValueAtTime(0.25, t + d + .02); g.gain.exponentialRampToValueAtTime(0.0001, t + d + .45);
+          o.connect(g).connect(ntAudio.destination); o.start(t + d); o.stop(t + d + .5);
+        });
+      } catch (e) {}
+    }
+    function ntAgo(iso){ const s = (Date.now() - new Date(iso)) / 1000; if (s < 60) return 'just now'; if (s < 3600) return Math.floor(s / 60) + 'm ago'; if (s < 86400) return Math.floor(s / 3600) + 'h ago'; return new Date(iso).toLocaleDateString(); }
+
+    function ntRender(){
+      const unread = ntItems.filter(n => !n.read).length;
+      const badge = document.getElementById('ntBadge');
+      badge.textContent = unread > 9 ? '9+' : unread; badge.classList.toggle('hidden', !unread);
+      document.getElementById('ntBell').classList.toggle('has', !!unread);
+      document.getElementById('ntSound').textContent = 'Sound: ' + (ntSoundOn() ? 'on' : 'off');
+      const list = document.getElementById('ntList');
+      list.innerHTML = ntItems.length ? ntItems.map(n => `
+        <div class="nt-item${n.read ? '' : ' unread'}${n.priority === 'urgent' ? ' urgent' : ''}" data-nt="${n.id}">
+          <div class="nt-ico">${n.type === 'announcement' ? '&#128227;' : n.type === 'program' ? '&#9733;' : n.type === 'creative' ? '&#9998;' : '&#128276;'}</div>
+          <div class="nt-body"><b>${esc(n.title)}</b>${n.message ? `<span>${esc(n.message)}</span>` : ''}<small>${n.createdBy ? 'From ' + esc(n.createdBy) + ' · ' : ''}${ntAgo(n.createdAt)}${n.broadcast ? ' · Everyone' : ''}</small></div>
+        </div>`).join('') : '<div class="nt-empty">You’re all caught up.</div>';
+      list.querySelectorAll('[data-nt]').forEach(el => el.onclick = () => {
+        const n = ntItems.find(x => x.id === el.getAttribute('data-nt'));
+        ntMarkRead([n.id]);
+        if (n.link) { if (/\.html/.test(n.link)) location.href = n.link; else { document.getElementById('ntPanel').classList.add('hidden'); goToTab(n.link); } }
+        else if (n.type === 'announcement') ntShowAlert(n);
+      });
+    }
+
+    async function ntPoll(initial){
+      if (!me) return;
+      let r; try { r = await apiFetch('/reslife-notifications'); } catch (e) { return; }
+      const seen = new Set(JSON.parse(localStorage.getItem(NT_SEEN_KEY()) || '[]'));
+      const fresh = r.items.filter(n => !n.read && !seen.has(n.id));
+      ntItems = r.items;
+      ntRender();
+      if (fresh.length) {
+        if (!initial || fresh.some(n => Date.now() - new Date(n.createdAt) < 10 * 60e3)) {
+          ntChime();
+          fresh.slice(0, 3).forEach(ntToast);
+          const urgent = fresh.find(n => n.priority === 'urgent');
+          if (urgent) ntShowAlert(urgent);
+          if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
+            try { new Notification(fresh[0].title, { body: fresh[0].message || 'New Reslife Hub notification', icon: document.getElementById('rlLogoImg').src || undefined }); } catch (e) {}
+          }
+        }
+        fresh.forEach(n => seen.add(n.id));
+        localStorage.setItem(NT_SEEN_KEY(), JSON.stringify([...seen].slice(-300)));
+      }
+    }
+    function ntToast(n){
+      const box = document.getElementById('ntToasts');
+      const el = document.createElement('div');
+      el.className = 'nt-toast' + (n.priority === 'urgent' ? ' urgent' : '');
+      el.innerHTML = `<div class="nt-ico">&#128276;</div><div><b>${esc(n.title)}</b>${n.message ? `<span>${esc(n.message.slice(0, 120))}${n.message.length > 120 ? '…' : ''}</span>` : ''}</div><button type="button" aria-label="Dismiss">&times;</button>`;
+      el.querySelector('button').onclick = e => { e.stopPropagation(); el.remove(); };
+      el.onclick = () => { el.remove(); document.getElementById('ntPanel').classList.remove('hidden'); };
+      box.appendChild(el);
+      setTimeout(() => el.classList.add('out'), 7000); setTimeout(() => el.remove(), 7600);
+    }
+    function ntShowAlert(n){
+      document.getElementById('ntAlertTitle').textContent = n.title;
+      document.getElementById('ntAlertFrom').textContent = (n.createdBy ? 'From ' + n.createdBy + ' · ' : '') + new Date(n.createdAt).toLocaleString();
+      document.getElementById('ntAlertMsg').textContent = n.message || '';
+      document.getElementById('ntAlertModal').classList.add('show');
+      document.getElementById('ntAlertOk').onclick = () => { document.getElementById('ntAlertModal').classList.remove('show'); ntMarkRead([n.id]); };
+    }
+    async function ntMarkRead(ids){
+      ntItems.forEach(n => { if (!ids || ids.includes(n.id)) n.read = true; }); ntRender();
+      try { await apiFetch('/reslife-notifications', { method: 'PUT', body: JSON.stringify(ids ? { action: 'read', ids } : { action: 'readAll' }) }); } catch (e) {}
+    }
+
+    async function ntOpenPush(){
+      const sel = document.getElementById('ntTo');
+      sel.innerHTML = '<option value="*">Everyone at ' + esc(currentProperty) + '</option>';
+      try {
+        const staff = await apiFetch('/reslife-notifications?recipients=1&property=' + encodeURIComponent(currentProperty));
+        sel.innerHTML += staff.filter(u => u.username !== me.username).map(u => `<option value="${esc(u.username)}">${esc(u.fullName || u.username)} (${esc((ROLE_LABELS[u.role] || u.role).replace('Reslife - ', ''))})</option>`).join('');
+      } catch (e) {}
+      document.getElementById('ntTitle').value = ''; document.getElementById('ntMsg').value = '';
+      ntPri = 'normal'; document.querySelectorAll('[data-nt-pri]').forEach(b => b.classList.toggle('on', b.getAttribute('data-nt-pri') === 'normal'));
+      document.getElementById('ntPushModal').classList.add('show');
+      setTimeout(() => document.getElementById('ntTitle').focus(), 50);
+    }
+
+    function initNotifications(){
+      if (initNotifications.done) return; initNotifications.done = true;
+      const bell = document.getElementById('ntBell'), panel = document.getElementById('ntPanel');
+      bell.onclick = e => { e.stopPropagation(); panel.classList.toggle('hidden'); if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); };
+      document.addEventListener('click', e => { if (!e.target.closest('.nt-wrap')) panel.classList.add('hidden'); });
+      document.getElementById('ntReadAll').onclick = () => ntMarkRead(null);
+      document.getElementById('ntSound').onclick = () => { localStorage.setItem('rl_nt_sound', ntSoundOn() ? 'off' : 'on'); ntRender(); if (ntSoundOn()) ntChime(); };
+      document.getElementById('ntPushBtn').onclick = ntOpenPush;
+      document.querySelectorAll('[data-nt-close]').forEach(b => b.onclick = () => document.getElementById('ntPushModal').classList.remove('show'));
+      document.querySelectorAll('[data-nt-pri]').forEach(b => b.onclick = () => { ntPri = b.getAttribute('data-nt-pri'); document.querySelectorAll('[data-nt-pri]').forEach(x => x.classList.toggle('on', x === b)); });
+      document.getElementById('ntSend').onclick = async () => {
+        const title = document.getElementById('ntTitle').value.trim();
+        if (!title) return alert('Add a title.');
+        const btn = document.getElementById('ntSend'); btn.disabled = true;
+        try {
+          const r = await apiFetch('/reslife-notifications', { method: 'POST', body: JSON.stringify({ property: currentProperty, to: document.getElementById('ntTo').value, title, message: document.getElementById('ntMsg').value.trim(), priority: ntPri }) });
+          document.getElementById('ntPushModal').classList.remove('show');
+          alert(`Announcement sent${document.getElementById('ntTo').value === '*' ? ' to everyone' : ''}. Staff with the Hub open will be alerted within ~20 seconds.`);
+          ntPoll();
+        } catch (e) { alert('Send failed: ' + e.message); }
+        btn.disabled = false;
+      };
+      // Browsers block sound until the first click — unlock audio on first interaction.
+      document.addEventListener('pointerdown', () => { try { ntAudio = ntAudio || new (window.AudioContext || window.webkitAudioContext)(); ntAudio.resume(); } catch (e) {} }, { once: true });
+      ntPoll(true);
+      ntTimer = setInterval(() => { if (!document.hidden) ntPoll(); }, 20000);
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) ntPoll(); });
+    }
     // ==================== TRAINING MODULES ====================
     let trainDocs = [];
     let myProgressDocs = [];

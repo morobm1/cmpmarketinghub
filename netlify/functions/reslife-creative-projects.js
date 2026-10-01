@@ -1,6 +1,7 @@
 import { verifyReqAuth } from './_auth.js';
 import { getDb, ObjectId } from './_db.js';
 import { refreshReslifeUser, json } from './_reslife.js';
+import { notify } from './_notify.js';
 
 /**
  * Reslife Creative Studio — projects, folders and favorites (per property).
@@ -149,6 +150,10 @@ export async function handler(event) {
         if (existing.createdBy === user.sub && !isAdminTier) return { statusCode: 403, body: 'Another Admin or REC must approve your own creative' };
         const approve = body.action === 'approve';
         await projects.updateOne({ _id: existing._id }, { $set: { status: approve ? 'final' : 'draft', approvedBy: approve ? user.sub : '', approvedAt: approve ? now : '', reviewNote: String(body.note || ''), reviewedBy: user.sub, reviewedAt: now, updatedAt: now } });
+        const propName = (Array.isArray(user.properties) && user.properties.find(n => PROPERTY_ALIASES[propertyId].includes(String(n).toLowerCase()))) || '';
+        const owner = await db.collection('users').findOne({ username: existing.createdBy }, { projection: { properties: 1 } });
+        const ownerProp = owner && Array.isArray(owner.properties) ? owner.properties.find(n => PROPERTY_ALIASES[propertyId].includes(String(n).toLowerCase())) : '';
+        if (ownerProp || propName) await notify(db, { property: ownerProp || propName, to: existing.createdBy, title: `Creative ${approve ? 'approved' : 'sent back'}: ${existing.name}`, message: body.note ? 'Note: ' + body.note : '', type: 'creative', link: 'reslife_creative_studio.html#projects', createdBy: user.sub });
         return json(200, { success: true, status: approve ? 'final' : 'draft' });
       }
 

@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#103b78" />
+  <title>Guest Check-In &bull; The Harbour at Orange Coast College</title>
+  <link rel="icon" href="/properties/harbour-occ/logos/harbour-icon.jpg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    :root{--navy:#103b78;--navy-2:#0b2c5c;--orange:#f58220;--orange-2:#ff9a3d;--sky:#e8f1fb;--sand:#fff8f2;--text:#1d2b3a;--muted:#5b6b7d;--line:#dfe6ed;--ok:#16a34a;--bad:#dc2626}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{margin:0;height:100%}
+    body{font-family:'Montserrat',system-ui,sans-serif;color:var(--text);background:#fff;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+    .hidden{display:none!important}
+    button,input,select{font-family:inherit}
+
+    /* Header — mirrors theharbourocc.com: white bar, color logo, orange accent */
+    .top{position:relative;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 4vw;background:#fff;box-shadow:0 2px 18px rgba(16,59,120,.08)}
+    .top::before{content:'';position:absolute;left:0;right:0;top:0;height:6px;background:var(--orange)}
+    .top img{height:52px;width:auto;display:block}
+    .top-right{display:flex;align-items:center;gap:14px}
+    .top-tag{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--navy)}
+    .btn-new{border:2px solid var(--navy);background:#fff;color:var(--navy);font-weight:800;font-size:14px;padding:10px 18px;border-radius:999px;cursor:pointer}
+    .btn-new:active{transform:scale(.97)}
+
+    /* Layout */
+    .stage{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);min-height:calc(100vh - 84px)}
+    @media (max-width:900px){.stage{grid-template-columns:1fr}.hero{min-height:260px}}
+    .hero{position:relative;background:var(--navy) url('/properties/harbour-occ/photos/rooftop-terrace-0235.webp') center/cover;color:#fff;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end}
+    .hero::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,44,92,.15) 0%,rgba(11,44,92,.55) 45%,rgba(11,44,92,.94) 100%)}
+    .hero-inner{position:relative;z-index:1;padding:48px 4vw 120px}
+    .eyebrow{display:inline-block;font-size:13px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--orange-2);margin-bottom:14px}
+    .hero h1{margin:0 0 14px;font-size:clamp(34px,4.6vw,60px);font-weight:900;line-height:1.02;letter-spacing:-.01em}
+    .hero p{margin:0;font-size:18px;line-height:1.55;max-width:520px;opacity:.94;font-weight:500}
+    .hero-steps{display:flex;gap:10px;margin-top:26px;flex-wrap:wrap}
+    .hero-steps span{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);padding:8px 14px;border-radius:999px}
+    .hero-steps span b{width:22px;height:22px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;font-size:12px}
+    .hero-steps span.on{background:#fff;color:var(--navy)}
+    .wave{position:absolute;left:0;right:0;bottom:-2px;height:110px;z-index:1}
+
+    .panel{display:flex;align-items:flex-start;justify-content:center;padding:44px 4vw 60px;background:#fff;position:relative}
+    .card{width:100%;max-width:560px}
+    .card h2{margin:0 0 6px;font-size:30px;font-weight:900;color:var(--navy);line-height:1.1}
+    .card .sub{margin:0 0 26px;font-size:16px;color:var(--muted);line-height:1.5}
+    .divider{width:90px;height:12px;margin:0 0 22px;background:url('/properties/harbour-occ/brand-kit/graphics/coastal-divider.svg') left/contain no-repeat}
+
+    .field{margin-bottom:18px}
+    .field label{display:block;font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--navy);margin-bottom:8px}
+    .field small{display:block;font-size:13px;color:var(--muted);margin-top:6px;font-weight:500}
+    .input{width:100%;font-size:20px;padding:16px 18px;border:2px solid var(--line);border-radius:14px;background:#fff;color:var(--text);transition:border-color .15s,box-shadow .15s}
+    .input:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 4px rgba(245,130,32,.15)}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    @media (max-width:560px){.row{grid-template-columns:1fr}}
+
+    .choices{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .choices.dur{grid-template-columns:repeat(3,1fr)}
+    @media (max-width:560px){.choices,.choices.dur{grid-template-columns:1fr 1fr}}
+    .choice{border:2px solid var(--line);background:#fff;border-radius:14px;padding:14px 10px;font-size:15px;font-weight:700;color:var(--text);cursor:pointer;text-align:center;line-height:1.25;min-height:58px}
+    .choice.on{border-color:var(--orange);background:var(--sand);color:var(--navy);box-shadow:0 0 0 3px rgba(245,130,32,.15)}
+
+    .cta{width:100%;border:none;border-radius:999px;background:var(--orange);color:#fff;font-size:20px;font-weight:800;padding:19px 24px;cursor:pointer;box-shadow:0 10px 24px rgba(245,130,32,.32);margin-top:8px;transition:transform .1s,filter .15s}
+    .cta:active{transform:scale(.98)}
+    .cta:disabled{filter:grayscale(.4);opacity:.6}
+    .ghost{width:100%;border:2px solid var(--line);background:#fff;color:var(--navy);border-radius:999px;font-size:16px;font-weight:800;padding:14px;cursor:pointer;margin-top:10px}
+
+    .alert{display:flex;gap:12px;align-items:flex-start;border-radius:14px;padding:16px 18px;font-size:16px;font-weight:600;line-height:1.45;margin-bottom:18px}
+    .alert.bad{background:#fef2f2;color:#991b1b;border:2px solid #fecaca}
+    .alert.info{background:var(--sky);color:var(--navy);border:2px solid #c9dcf2}
+    .alert b{display:block;font-size:17px}
+    .alert i{font-style:normal;font-size:22px;line-height:1}
+
+    /* ID capture */
+    .cam{position:relative;border:2px dashed #b9c7d6;border-radius:18px;background:#f6f9fc;overflow:hidden;aspect-ratio:16/10;display:flex;align-items:center;justify-content:center}
+    .cam video,.cam img{width:100%;height:100%;object-fit:cover;display:block}
+    .cam .frame{position:absolute;inset:12% 10%;border:3px solid rgba(255,255,255,.9);border-radius:14px;box-shadow:0 0 0 999px rgba(11,44,92,.35);pointer-events:none}
+    .cam-empty{text-align:center;color:var(--muted);font-weight:700;font-size:15px;padding:20px}
+    .cam-empty svg{display:block;margin:0 auto 10px}
+    .cam-actions{display:flex;gap:10px;margin-top:10px}
+    .cam-actions button{flex:1;border:2px solid var(--navy);background:#fff;color:var(--navy);font-weight:800;font-size:15px;padding:13px;border-radius:999px;cursor:pointer}
+    .cam-actions button.primary{background:var(--navy);color:#fff}
+
+    .pending{display:flex;flex-direction:column;gap:10px;margin-bottom:18px}
+    .pending button{display:flex;justify-content:space-between;align-items:center;border:2px solid var(--line);background:#fff;border-radius:14px;padding:16px 18px;font-size:17px;font-weight:800;color:var(--navy);cursor:pointer;text-align:left}
+    .pending button span{font-size:13px;color:var(--muted);font-weight:600}
+    .pending button.on{border-color:var(--orange);background:var(--sand)}
+
+    .hello{display:flex;align-items:center;gap:14px;background:var(--sky);border-radius:16px;padding:14px 16px;margin-bottom:22px}
+    .hello .av{width:48px;height:48px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;flex-shrink:0}
+    .hello b{display:block;font-size:17px;color:var(--navy)}
+    .hello span{font-size:14px;color:var(--muted);font-weight:600}
+
+    /* Confirmation */
+    .done{text-align:center;padding-top:10px}
+    .check{width:96px;height:96px;border-radius:50%;background:var(--ok);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;box-shadow:0 14px 30px rgba(22,163,74,.3);animation:pop .35s ease-out}
+    @keyframes pop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
+    .done h2{font-size:34px}
+    .ticket{margin:22px auto 0;max-width:420px;border-radius:18px;border:2px solid var(--line);overflow:hidden;text-align:left}
+    .ticket div{display:flex;justify-content:space-between;gap:12px;padding:12px 18px;border-top:1px solid var(--line);font-size:15px}
+    .ticket div:first-child{border-top:none;background:var(--navy);color:#fff;font-weight:800}
+    .ticket b{color:var(--navy)}
+    .ticket div:first-child b{color:#fff}
+    .count{margin-top:22px;font-size:14px;color:var(--muted);font-weight:600}
+    .ring{display:inline-flex;width:38px;height:38px;border-radius:50%;border:3px solid var(--orange);align-items:center;justify-content:center;font-weight:900;color:var(--navy);margin-right:6px;vertical-align:middle}
+
+    .foot{background:var(--navy);color:#dce6f2;text-align:center;font-size:13px;padding:16px;line-height:1.6}
+    .foot b{color:#fff}
+    .idle{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:12px 20px;border-radius:999px;font-weight:700;font-size:14px;box-shadow:0 12px 30px rgba(0,0,0,.25);z-index:50}
+    .spin{display:inline-block;width:20px;height:20px;border:3px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:s 1s linear infinite;vertical-align:-4px;margin-right:8px}
+    @keyframes s{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+  <header class="top">
+    <img src="/properties/harbour-occ/logos/harbour-logo-color.png" alt="The Harbour at Orange Coast College" />
+    <div class="top-right">
+      <span class="top-tag" id="modeTag">Guest Check-In</span>
+      <button class="btn-new" id="newSession" type="button">New Session</button>
+    </div>
+  </header>
+
+  <main class="stage">
+    <section class="hero">
+      <div class="hero-inner">
+        <span class="eyebrow" id="heroEyebrow">Welcome to The Harbour</span>
+        <h1 id="heroTitle">Checking in a guest?</h1>
+        <p id="heroText">Residents, sign in your visitor here. It only takes a minute — we’ll confirm your residency, capture your guest’s ID, and let you know when they’re all set.</p>
+        <div class="hero-steps" id="heroSteps">
+          <span data-s="1" class="on"><b>1</b>Verify resident</span>
+          <span data-s="2"><b>2</b>Guest details</span>
+          <span data-s="3"><b>3</b>Confirmed</span>
+        </div>
+      </div>
+      <svg class="wave" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0 60 C200 10 400 10 600 60 S1000 110 1200 60 L1200 120 L0 120 Z" fill="#f58220"/><path d="M0 92 C220 52 420 52 640 92 S1000 132 1200 88 L1200 120 L0 120 Z" fill="#ffffff"/></svg>
+    </section>
+
+    <section class="panel">
+      <!-- Loading / error -->
+      <div class="card" id="vBoot"><h2>Loading…</h2></div>
+
+      <!-- Step 1: verify -->
+      <form class="card hidden" id="vVerify" autocomplete="off">
+        <h2>Resident verification</h2>
+        <div class="divider"></div>
+        <p class="sub">Enter your information exactly as it appears on your Harbour account.</p>
+        <div id="verifyErr"></div>
+        <div class="field"><label for="fName">Full name</label><input class="input" id="fName" autocomplete="off" autocapitalize="words" placeholder="First and last name" required /><small>Use your full legal name as it appears in your resident portal.</small></div>
+        <div class="field"><label for="fUnit">Unit &amp; bed</label><input class="input" id="fUnit" autocomplete="off" autocapitalize="characters" placeholder="1234-A" required /><small>Format: 1234-A or 1234-A1</small></div>
+        <div class="field"><label for="fContact">Email or phone on file</label><input class="input" id="fContact" autocomplete="off" inputmode="email" placeholder="you@email.com or (714) 555-0100" required /></div>
+        <button class="cta" type="submit" id="verifyBtn">Continue</button>
+      </form>
+
+      <!-- Step 2: guest -->
+      <form class="card hidden" id="vGuest" autocomplete="off">
+        <div class="hello"><div class="av" id="helloAv">H</div><div><b id="helloName">Hi!</b><span id="helloUnit"></span></div></div>
+        <div id="inviteNote"></div>
+        <div id="pendingWrap" class="hidden">
+          <div class="field"><label>Pre-registered guests</label></div>
+          <div class="pending" id="pendingList"></div>
+          <p class="sub" style="margin:-6px 0 18px;font-size:14px">Or enter a new guest below.</p>
+        </div>
+        <h2 id="guestTitle">Your guest</h2>
+        <div class="divider"></div>
+        <div id="guestErr"></div>
+        <div id="newGuestFields">
+          <div class="field"><label for="gName">Guest full name</label><input class="input" id="gName" autocapitalize="words" placeholder="First and last name" /></div>
+          <div class="row">
+            <div class="field"><label for="gPhone">Guest phone</label><input class="input" id="gPhone" inputmode="tel" placeholder="(714) 555-0100" /></div>
+            <div class="field"><label for="gEmail">Guest email</label><input class="input" id="gEmail" inputmode="email" placeholder="guest@email.com" /></div>
+          </div>
+          <div class="field"><label>Type of ID</label><div class="choices" id="idChoices"></div></div>
+        </div>
+        <div class="field" id="idPhotoField">
+          <label>Photo of guest’s ID</label>
+          <div class="cam" id="cam">
+            <div class="cam-empty" id="camEmpty"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#103b78" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8" cy="12" r="2.5"/><path d="M13 10h6M13 14h4"/></svg>Hold the ID flat inside the frame.<br>Driver’s License, State ID or Student ID.</div>
+            <video id="camVideo" class="hidden" playsinline autoplay muted></video>
+            <img id="camShot" class="hidden" alt="Captured ID" />
+            <div class="frame hidden" id="camFrame"></div>
+          </div>
+          <div class="cam-actions">
+            <button type="button" class="primary" id="camStart">Open Camera</button>
+            <button type="button" class="hidden primary" id="camSnap">Capture</button>
+            <button type="button" class="hidden" id="camRetake">Retake</button>
+            <button type="button" id="camUploadBtn">Upload Photo</button>
+          </div>
+          <input type="file" id="camFile" accept="image/*" capture="environment" class="hidden" />
+        </div>
+        <div class="field" id="dateField"><label for="gDate">Visit date</label><input class="input" type="date" id="gDate" /></div>
+        <div class="field"><label>How long will your guest stay?</label><div class="choices dur" id="durChoices"></div></div>
+        <button class="cta" type="submit" id="guestBtn">Check In Guest</button>
+        <button class="ghost" type="button" id="backBtn">Start over</button>
+      </form>
+
+      <!-- Step 3: done -->
+      <div class="card done hidden" id="vDone">
+        <div class="check"><svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></div>
+        <h2 id="doneTitle">You’re all set!</h2>
+        <p class="sub" id="doneText"></p>
+        <div class="ticket" id="ticket"></div>
+        <div class="count" id="countWrap"><span class="ring" id="countNum">30</span>This screen will reset automatically.</div>
+        <button class="cta" type="button" id="doneNew" style="max-width:420px">Start a New Check-In</button>
+      </div>
+    </section>
+  </main>
+  <footer class="foot"><b>The Harbour at Orange Coast College</b> &bull; 1369 Adams Avenue, Costa Mesa, CA &bull; 714-643-5100 &bull; theharbourocc.com</footer>
+  <div class="idle hidden" id="idle"></div>
+
+  <script>
+  (function () {
+    const API = '/api/reslife-guest-kiosk';
+    const params = new URLSearchParams(location.search);
+    const KEY = params.get('k') || localStorage.getItem('harbourKioskKey') || '';
+    const INVITE = params.get('invite') || '';
+    if (params.get('k')) localStorage.setItem('harbourKioskKey', params.get('k')); // remember on the front-desk iPad
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const RESET_MS = 30000;
+    const S = { cfg: null, token: '', resident: null, idType: '', duration: '2h', photo: '', preregId: '', stream: null, timer: null, countdown: null };
+
+    async function call(payload) {
+      const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      let j = {}; try { j = await r.json(); } catch (e) {}
+      if (!r.ok || !j.ok) throw new Error(j.error || 'Something went wrong. Please ask the front desk for assistance.');
+      return j;
+    }
+    function show(id) { ['vBoot', 'vVerify', 'vGuest', 'vDone'].forEach(v => $(v).classList.toggle('hidden', v !== id)); const step = { vVerify: 1, vGuest: 2, vDone: 3 }[id] || 1; document.querySelectorAll('#heroSteps [data-s]').forEach(s => s.classList.toggle('on', +s.dataset.s === step)); window.scrollTo(0, 0); }
+    function err(box, msg) { $(box).innerHTML = msg ? `<div class="alert bad"><i>!</i><div><b>${esc(msg)}</b>${/front desk/i.test(msg) ? '' : ''}</div></div>` : ''; }
+    function chips(box, items, current, onPick) {
+      $(box).innerHTML = items.map(it => `<button type="button" class="choice${it.key === current ? ' on' : ''}" data-k="${esc(it.key)}">${esc(it.label)}</button>`).join('');
+      $(box).querySelectorAll('[data-k]').forEach(b => b.onclick = () => { $(box).querySelectorAll('[data-k]').forEach(x => x.classList.toggle('on', x === b)); onPick(b.dataset.k); touch(); });
+    }
+
+    // ── Inactivity: clear the kiosk 30s after the last touch (kiosk mode only) ──
+    function touch() {
+      if (INVITE) return;
+      clearTimeout(S.timer); $('idle').classList.add('hidden');
+      const active = !$('vGuest').classList.contains('hidden') || ['fName', 'fUnit', 'fContact'].some(id => $(id).value);
+      if (!active || !$('vDone').classList.contains('hidden')) return;
+      S.timer = setTimeout(() => { $('idle').textContent = 'Clearing for privacy…'; $('idle').classList.remove('hidden'); setTimeout(reset, 1500); }, RESET_MS);
+    }
+    ['pointerdown', 'keydown', 'input'].forEach(e => document.addEventListener(e, touch, { passive: true }));
+
+    function stopCam() { if (S.stream) { S.stream.getTracks().forEach(t => t.stop()); S.stream = null; } }
+    function resetCam() {
+      stopCam(); S.photo = '';
+      $('camVideo').classList.add('hidden'); $('camShot').classList.add('hidden'); $('camFrame').classList.add('hidden'); $('camEmpty').classList.remove('hidden');
+      $('camStart').classList.remove('hidden'); $('camSnap').classList.add('hidden'); $('camRetake').classList.add('hidden'); $('camUploadBtn').classList.remove('hidden');
+    }
+    function reset() {
+      clearTimeout(S.timer); clearInterval(S.countdown); $('idle').classList.add('hidden');
+      if (INVITE) { location.reload(); return; }
+      S.token = ''; S.resident = null; S.idType = ''; S.duration = '2h'; S.preregId = '';
+      document.querySelectorAll('input').forEach(i => { if (i.type !== 'file') i.value = ''; });
+      err('verifyErr', ''); err('guestErr', ''); resetCam();
+      show('vVerify'); setTimeout(() => $('fName').focus(), 50);
+    }
+
+    // ── Photo: live camera with framing guide, or upload. Compressed to a ~1100px JPEG. ──
+    function compress(src) {
+      return new Promise((res, rej) => {
+        const img = new Image();
+        img.onload = () => { const max = 1100, sc = Math.min(1, max / Math.max(img.width, img.height)); const c = document.createElement('canvas'); c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); res(c.toDataURL('image/jpeg', 0.72)); };
+        img.onerror = rej; img.src = src;
+      });
+    }
+    function setShot(data) {
+      S.photo = data; stopCam();
+      $('camShot').src = data; $('camShot').classList.remove('hidden'); $('camVideo').classList.add('hidden'); $('camFrame').classList.add('hidden'); $('camEmpty').classList.add('hidden');
+      $('camStart').classList.add('hidden'); $('camSnap').classList.add('hidden'); $('camRetake').classList.remove('hidden'); $('camUploadBtn').classList.add('hidden');
+    }
+    $('camStart').onclick = async () => {
+      try {
+        S.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false });
+        const v = $('camVideo'); v.srcObject = S.stream; v.classList.remove('hidden'); $('camFrame').classList.remove('hidden'); $('camEmpty').classList.add('hidden');
+        $('camStart').classList.add('hidden'); $('camSnap').classList.remove('hidden'); $('camUploadBtn').classList.add('hidden');
+      } catch (e) { $('camFile').click(); }
+    };
+    $('camSnap').onclick = async () => {
+      const v = $('camVideo'); const c = document.createElement('canvas'); c.width = v.videoWidth; c.height = v.videoHeight;
+      c.getContext('2d').drawImage(v, 0, 0); setShot(await compress(c.toDataURL('image/jpeg', 0.9)));
+    };
+    $('camRetake').onclick = () => { resetCam(); $('camStart').click(); };
+    $('camUploadBtn').onclick = () => $('camFile').click();
+    $('camFile').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; const r = new FileReader(); r.onload = async () => setShot(await compress(r.result)); r.readAsDataURL(f); };
+
+    // ── Step 1: verify ──
+    $('vVerify').onsubmit = async e => {
+      e.preventDefault(); err('verifyErr', '');
+      const name = $('fName').value.trim(), unit = $('fUnit').value.trim().toUpperCase(), contact = $('fContact').value.trim();
+      if (name.split(/\s+/).length < 2) return err('verifyErr', 'Please enter your full first and last name.');
+      if (!/^\d{2,6}\s*-\s*[A-Za-z]\d{0,2}$/.test(unit)) return err('verifyErr', 'Please enter your unit like 1234-A or 1234-A1.');
+      if (!contact) return err('verifyErr', 'Please enter the email or phone number on your account.');
+      const b = $('verifyBtn'); b.disabled = true; b.innerHTML = '<span class="spin"></span>Checking…';
+      try {
+        const r = await call({ action: 'verify', k: KEY, name, unit, contact });
+        S.token = r.token; S.resident = r;
+        openGuest(r.firstName, r.unit, r.pending || []);
+      } catch (x) { err('verifyErr', x.message); }
+      b.disabled = false; b.textContent = 'Continue';
+    };
+
+    function openGuest(first, unit, pending) {
+      $('helloAv').textContent = (first || 'H')[0].toUpperCase();
+      $('helloName').textContent = `Hi ${first}!`;
+      $('helloUnit').textContent = `Unit ${unit} · verified resident`;
+      chips('idChoices', (S.cfg.idTypes || ["Driver's License", 'State ID', 'Student ID']).map(t => ({ key: t, label: t })), S.idType, k => S.idType = k);
+      chips('durChoices', S.cfg.durations, S.duration, k => S.duration = k);
+      $('pendingWrap').classList.toggle('hidden', !pending.length);
+      $('pendingList').innerHTML = pending.map(p => `<button type="button" data-pre="${esc(p.id)}" data-hasid="${p.hasId ? 1 : 0}">${esc(p.guestName)}<span>${p.expectedDate ? 'Expected ' + esc(p.expectedDate) : 'Pre-registered'} · tap to check in</span></button>`).join('');
+      $('pendingList').querySelectorAll('[data-pre]').forEach(b => b.onclick = () => {
+        const on = !b.classList.contains('on');
+        $('pendingList').querySelectorAll('[data-pre]').forEach(x => x.classList.remove('on'));
+        b.classList.toggle('on', on); S.preregId = on ? b.dataset.pre : '';
+        $('newGuestFields').classList.toggle('hidden', on);
+        $('guestTitle').textContent = on ? 'Confirm pre-registered guest' : 'Your guest';
+        $('idPhotoField').querySelector('label').textContent = on && b.dataset.hasid === '1' ? 'Photo of guest’s ID (optional — already on file)' : 'Photo of guest’s ID';
+      });
+      $('dateField').classList.toggle('hidden', !INVITE);
+      $('guestBtn').textContent = INVITE ? 'Pre-Register Guest' : 'Check In Guest';
+      show('vGuest'); touch();
+    }
+
+    // ── Step 2: submit guest ──
+    $('vGuest').onsubmit = async e => {
+      e.preventDefault(); err('guestErr', '');
+      const pre = !!S.preregId;
+      const p = { guestName: $('gName').value.trim(), guestPhone: $('gPhone').value.trim(), guestEmail: $('gEmail').value.trim(), idType: S.idType, idPhoto: S.photo, duration: S.duration };
+      if (!pre) {
+        if (p.guestName.split(/\s+/).length < 2) return err('guestErr', 'Please enter your guest’s full first and last name.');
+        if (!p.guestPhone && !p.guestEmail) return err('guestErr', 'Please enter a phone number or email for your guest.');
+        if (!p.idType) return err('guestErr', 'Please choose the type of ID.');
+        if (!p.idPhoto) return err('guestErr', 'Please take a clear photo of your guest’s ID.');
+      }
+      if (INVITE && !$('gDate').value) return err('guestErr', 'Please choose the visit date.');
+      const b = $('guestBtn'), label = b.textContent; b.disabled = true; b.innerHTML = '<span class="spin"></span>Submitting…';
+      try {
+        const r = INVITE ? await call(Object.assign({ action: 'prereg', invite: INVITE, expectedDate: $('gDate').value }, p))
+                         : await call(Object.assign({ action: 'checkin', token: S.token, preregId: S.preregId || undefined }, p));
+        stopCam(); done(r.entry);
+      } catch (x) { err('guestErr', x.message); if (/expired|start again/i.test(x.message)) setTimeout(reset, 3000); }
+      b.disabled = false; b.textContent = label;
+    };
+    $('backBtn').onclick = reset;
+
+    // ── Step 3: confirmation + 30s auto-clear ──
+    function done(en) {
+      clearTimeout(S.timer);
+      const fmt = iso => iso ? new Date(iso).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—';
+      if (INVITE) {
+        $('doneTitle').textContent = 'Guest pre-registered!';
+        $('doneText').innerHTML = `Thanks, ${esc(en.residentFirst)}. Your guest is on the list for <b>${esc(en.expectedDate)}</b>. <b>They still need to check in at the front desk${S.cfg.checkinAfter ? ' after ' + esc(t12(S.cfg.checkinAfter)) : ''}.</b> A confirmation was sent to your email.`;
+        $('ticket').innerHTML = `<div><span>Guest</span><b>${esc(en.guestName)}</b></div><div><span>Resident</span><b>${esc(en.residentFirst)} · ${esc(en.unit)}</b></div><div><span>Visit date</span><b>${esc(en.expectedDate)}</b></div>`;
+        $('countWrap').classList.add('hidden'); $('doneNew').textContent = 'Pre-register another guest';
+      } else {
+        $('doneTitle').textContent = 'You’re all set!';
+        $('doneText').innerHTML = `<b>${esc(en.guestName)}</b> is checked in. A confirmation was sent to your email. Please remember you’re responsible for your guest while they’re at The Harbour.`;
+        $('ticket').innerHTML = `<div><span>Guest</span><b>${esc(en.guestName)}</b></div><div><span>Visiting</span><b>${esc(en.residentFirst)} · ${esc(en.unit)}</b></div><div><span>Checked in</span><b>${fmt(en.checkInTime)}</b></div><div><span>Expected departure</span><b>${fmt(en.expectedOut)}</b></div>`;
+        let n = 30; $('countNum').textContent = n; $('countWrap').classList.remove('hidden');
+        clearInterval(S.countdown);
+        S.countdown = setInterval(() => { n--; $('countNum').textContent = n; if (n <= 0) { clearInterval(S.countdown); reset(); } }, 1000);
+      }
+      show('vDone');
+    }
+    const t12 = hhmm => { const [h, m] = String(hhmm).split(':').map(Number); return `${(h % 12) || 12}:${String(m || 0).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`; };
+    $('doneNew').onclick = reset;
+    $('newSession').onclick = reset;
+
+    // ── Boot ──
+    (async function boot() {
+      try {
+        if (!KEY && !INVITE) throw new Error('This kiosk isn’t set up yet. Please ask the front desk for assistance.');
+        S.cfg = await call(INVITE ? { action: 'config', invite: INVITE } : { action: 'config', k: KEY });
+        S.cfg.durations = S.cfg.durations || [{ key: '1h', label: '1 hour' }, { key: '2h', label: '2 hours' }, { key: '3h', label: '3 hours' }, { key: '4h', label: '4 hours' }, { key: 'evening', label: 'Until 11:00 PM' }, { key: 'overnight', label: 'Overnight (leaves tomorrow morning)' }];
+        if (INVITE) {
+          $('modeTag').textContent = 'Guest Pre-Registration';
+          $('newSession').classList.add('hidden');
+          $('heroEyebrow').textContent = 'Expecting a visitor?';
+          $('heroTitle').textContent = 'Pre-register your guest';
+          $('heroText').textContent = `Add your guest’s details and ID ahead of time. Your guest will still need to check in at the front desk${S.cfg.checkinAfter ? ' after ' + t12(S.cfg.checkinAfter) : ''} when they arrive.`;
+          document.querySelector('#heroSteps [data-s="1"]').innerHTML = '<b>1</b>Guest details';
+          document.querySelector('#heroSteps [data-s="2"]').innerHTML = '<b>2</b>ID photo';
+          $('inviteNote').innerHTML = `<div class="alert info"><i>i</i><div><b>Front desk check-in still required</b>When your guest arrives${S.cfg.checkinAfter ? ' after ' + esc(t12(S.cfg.checkinAfter)) : ''}, they’ll check in at the front desk — you’ll just tap their name.</div></div>`;
+          $('gDate').value = S.cfg.expectedDate || new Date().toISOString().slice(0, 10);
+          $('gDate').min = new Date().toISOString().slice(0, 10);
+          openGuest(S.cfg.resident.firstName, S.cfg.resident.unit, []);
+        } else {
+          show('vVerify');
+        }
+      } catch (x) {
+        $('vBoot').innerHTML = `<h2>We can’t start check-in</h2><div class="divider"></div><div class="alert bad"><i>!</i><div><b>${esc(x.message)}</b></div></div>`;
+      }
+    })();
+  })();
+  </script>
+</body>
+</html>

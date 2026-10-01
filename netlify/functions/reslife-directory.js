@@ -182,7 +182,7 @@ async function buildHistory(db, property, res) {
   const resId = res._id.toString();
   const [incidents, guests, sessions, requests] = await Promise.all([
     db.collection('reslife_incidents').find({ property }).sort({ createdAt: -1 }).limit(1000).toArray(),
-    db.collection('reslife_guest_log').find({ property }).sort({ createdAt: -1 }).limit(2000).toArray(),
+    db.collection('reslife_guest_log').find({ property }, { projection: { idPhoto: 0 } }).sort({ createdAt: -1 }).limit(2000).toArray(),
     db.collection('reslife_duty_sessions').find({ property }).sort({ duty_date: -1 }).limit(730).toArray(),
     db.collection('reslife_maintenance_requests').find({ property, residentId: resId }).sort({ createdAt: -1 }).toArray(),
   ]);
@@ -201,8 +201,8 @@ async function buildHistory(db, property, res) {
     .map(i => ({ id: i._id.toString(), date: (i.createdAt || '').slice(0, 10), severity: i.severity, status: i.status, room: i.room, description: i.description }));
 
   const guestHits = guests
-    .filter(g => norm(g.hostResident) === name || textHasName(g.hostResident) || (unitMatch(g.room) && !g.hostResident))
-    .map(g => ({ id: g._id.toString(), guestName: g.guestName, room: g.room, status: g.status, purpose: g.purpose, checkInTime: g.checkInTime, checkOutTime: g.checkOutTime, createdAt: g.createdAt }));
+    .filter(g => g.residentId === resId || norm(g.hostResident) === name || textHasName(g.hostResident) || (unitMatch(g.room) && !g.hostResident))
+    .map(g => ({ id: g._id.toString(), guestName: g.guestName, room: g.room, status: g.status, purpose: g.purpose || g.durationLabel || '', checkInTime: g.checkInTime, checkOutTime: g.checkOutTime, createdAt: g.createdAt, expectedDate: g.expectedDate, idType: g.idType, source: g.source }));
 
   const dutyHits = [];
   const lockouts = [];
