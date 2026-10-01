@@ -1,5 +1,23 @@
 import { verifyReqAuth } from './_auth.js';
 import { getDb, ObjectId } from './_db.js';
+import { isReslifeRole, isReslifeManager, refreshReslifeUser } from './_reslife.js';
+
+// Site-wide admin keeps full, unrestricted access everywhere.
+// Reslife roles (reslife-ra / reslife-rec / reslife-admin) get a
+// property-scoped slice of the same `sops` collection:
+//   - read: any Reslife role, limited to sopType:'site' docs for their own properties
+//   - write (create/edit/delete): manager tier only (reslife-rec / reslife-admin),
+//     and only for sopType:'site' docs scoped to one of their own properties.
+// Reslife roles can never create/view company-wide SOPs or other properties' SOPs.
+function reslifeProps(user) {
+  return Array.isArray(user.properties) ? user.properties : [];
+}
+function canReslifeWriteSop(user, sopType, property) {
+  if (!isReslifeRole(user.role)) return false;
+  if (!isReslifeManager(user.role)) return false;
+  if (sopType !== 'site' || !property) return false;
+  return reslifeProps(user).includes(property);
+}
 
 /* ──────────────────────────────────────────────
    SOP Library API
@@ -135,6 +153,11 @@ export async function handler(event) {
   const col = db.collection('sops');
   const method = event.httpMethod;
 
+  // Reslife role/property claims can go stale between login and now
+  // (e.g. a Reslife Admin reassigns a REC to a new property) — refresh
+  // from the DB so access checks below are never based on a stale JWT.
+  if (isReslifeRole(user.role)) await refreshReslifeUser(db, user);
+
   // Auto-seed on first access
   await ensureSeedSops(col);
 
@@ -147,8 +170,14 @@ export async function handler(event) {
       if (qs.id) {
         const doc = await col.findOne({ _id: new ObjectId(qs.id) });
         if (!doc) return { statusCode: 404, body: 'Not found' };
-        // Access check: company SOPs visible to all; site SOPs only to admin or assigned users
-        if (doc.sopType === 'site' && user.role !== 'admin') {
+        if (isReslifeRole(user.role)) {
+          // Reslife roles can only ever view their own properties' site SOPs —
+          // never company-wide, never another property's SOPs.
+          if (doc.sopType !== 'site' || !reslifeProps(user).includes(doc.property)) {
+            return { statusCode: 403, body: 'Forbidden' };
+          }
+        } else if (doc.sopType === 'site' && user.role !== 'admin') {
+          // Access check: company SOPs visible to all; site SOPs only to admin or assigned users
           const userProps = user.properties === '*' ? null : (user.properties || []);
           if (userProps && !userProps.includes(doc.property)) {
             return { statusCode: 403, body: 'Forbidden' };
@@ -172,8 +201,22 @@ export async function handler(event) {
         filter.property = qs.property;
       }
 
-      // For non-admin users requesting site SOPs, restrict to their assigned properties
-      if (user.role !== 'admin' && (!qs.sopType || qs.sopType === 'site')) {
+      if (isReslifeRole(user.role)) {
+        // Reslife roles are always locked to sopType:'site' + their own
+        // properties, regardless of what the caller asked for. They never
+        // see Capstone company-wide SOPs or other departments' site SOPs.
+        const userProps = reslifeProps(user);
+        filter.sopType = 'site';
+        if (qs.property) {
+          if (!userProps.includes(qs.property)) {
+            return { statusCode: 200, body: JSON.stringify([]) };
+          }
+          filter.property = qs.property;
+        } else {
+          filter.property = { $in: userProps };
+        }
+      } else if (user.role !== 'admin' && (!qs.sopType || qs.sopType === 'site')) {
+        // For non-admin marketing-hub users requesting site SOPs, restrict to their assigned properties
         const userProps = user.properties === '*' ? null : (user.properties || []);
         if (userProps) {
           if (qs.sopType === 'site') {
@@ -207,10 +250,8 @@ export async function handler(event) {
       return { statusCode: 200, body: JSON.stringify(result) };
     }
 
-    // ─── POST: create new SOP (admin only) ───
+    // ─── POST: create new SOP (admin, or Reslife manager tier for their own property) ───
     if (method === 'POST') {
-      if (user.role !== 'admin') return { statusCode: 403, body: 'Admin only' };
-
       const body = JSON.parse(event.body || '{}');
       const { sopType, property, title, category, department, system, content, purpose, whenToUse, stepsData, expectedResults, bestPractices, trainingUrl, relatedDocs, steps, resources, owner, lastReviewed } = body;
 
@@ -220,6 +261,10 @@ export async function handler(event) {
       }
       if (sopType === 'site' && !property) {
         return { statusCode: 400, body: 'property is required for site SOPs' };
+      }
+
+      if (user.role !== 'admin' && !canReslifeWriteSop(user, sopType, property)) {
+        return { statusCode: 403, body: 'Forbidden' };
       }
 
       const doc = {
@@ -252,15 +297,26 @@ export async function handler(event) {
       return { statusCode: 200, body: JSON.stringify(doc) };
     }
 
-    // ─── PUT: update SOP (admin only) ───
+    // ─── PUT: update SOP (admin, or Reslife manager tier for their own property) ───
     if (method === 'PUT') {
-      if (user.role !== 'admin') return { statusCode: 403, body: 'Admin only' };
-
       const body = JSON.parse(event.body || '{}');
       const { id, sopType, property, title, category, department, system, content, purpose, whenToUse, stepsData, expectedResults, bestPractices, trainingUrl, relatedDocs, steps, resources, owner, lastReviewed } = body;
 
       if (!id) return { statusCode: 400, body: 'id is required' };
       if (!title) return { statusCode: 400, body: 'Title is required' };
+
+      if (user.role !== 'admin') {
+        const existing = await col.findOne({ _id: new ObjectId(id) });
+        if (!existing) return { statusCode: 404, body: 'Not found' };
+        // Must be allowed to manage both the SOP's existing scope and its
+        // requested new scope, so a Reslife manager can't use an edit to
+        // move an SOP into company-wide or another property.
+        const newSopType = sopType && ['company', 'site'].includes(sopType) ? sopType : existing.sopType;
+        const newProperty = newSopType === 'company' ? null : (property || existing.property);
+        if (!canReslifeWriteSop(user, existing.sopType, existing.property) || !canReslifeWriteSop(user, newSopType, newProperty)) {
+          return { statusCode: 403, body: 'Forbidden' };
+        }
+      }
 
       const updates = {
         title: title.trim(),
@@ -298,13 +354,19 @@ export async function handler(event) {
       return { statusCode: 200, body: JSON.stringify(updated) };
     }
 
-    // ─── DELETE: remove SOP (admin only) ───
+    // ─── DELETE: remove SOP (admin, or Reslife manager tier for their own property) ───
     if (method === 'DELETE') {
-      if (user.role !== 'admin') return { statusCode: 403, body: 'Admin only' };
-
       const body = JSON.parse(event.body || '{}');
       const { id } = body;
       if (!id) return { statusCode: 400, body: 'id is required' };
+
+      if (user.role !== 'admin') {
+        const existing = await col.findOne({ _id: new ObjectId(id) });
+        if (!existing) return { statusCode: 404, body: 'Not found' };
+        if (!canReslifeWriteSop(user, existing.sopType, existing.property)) {
+          return { statusCode: 403, body: 'Forbidden' };
+        }
+      }
 
       await col.deleteOne({ _id: new ObjectId(id) });
       return { statusCode: 200, body: JSON.stringify({ deleted: true }) };

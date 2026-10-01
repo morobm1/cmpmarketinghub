@@ -1,5 +1,27 @@
 import { verifyReqAuth } from './_auth.js';
 import { getDb, ObjectId } from './_db.js';
+import { isReslifeRole, isReslifeManager, refreshReslifeUser } from './_reslife.js';
+
+// Site-wide admin, or Reslife manager tier (reslife-rec / reslife-admin),
+// may manage acknowledgement groups/assignments. Reslife managers are
+// further restricted (per-SOP) to SOPs scoped to one of their own
+// properties — see assertReslifeCanManageSop below.
+function canManageAckGroups(user) {
+  return user.role === 'admin' || isReslifeManager(user.role);
+}
+
+// For actions scoped to a specific sopId (assignment, dashboard row),
+// Reslife managers may only act on sopType:'site' SOPs for their own
+// properties. Returns true if allowed, false if the caller should get 403.
+async function canManageSopAcks(db, user, sopId) {
+  if (user.role === 'admin') return true;
+  if (!isReslifeManager(user.role)) return false;
+  if (!sopId || !ObjectId.isValid(sopId)) return false;
+  const sop = await db.collection('sops').findOne({ _id: new ObjectId(sopId) });
+  if (!sop || sop.sopType !== 'site' || !sop.property) return false;
+  const userProps = Array.isArray(user.properties) ? user.properties : [];
+  return userProps.includes(sop.property);
+}
 
 /* ──────────────────────────────────────────────────────────────
    SOP Acknowledgement API
@@ -90,6 +112,8 @@ export async function handler(event) {
   const qs = event.queryStringParameters || {};
   const action = qs.action || '';
 
+  if (isReslifeRole(user.role)) await refreshReslifeUser(db, user);
+
   try {
     // ═══════════════════════════════════════════
     // GROUPS
@@ -105,7 +129,7 @@ export async function handler(event) {
     }
 
     if (action === 'group' && method === 'POST') {
-      if (user.role !== 'admin') return cors(JSON.stringify({ error: 'Admin only' }), 403);
+      if (!canManageAckGroups(user)) return cors(JSON.stringify({ error: 'Forbidden' }), 403);
       const body = JSON.parse(event.body || '{}');
       const { id, name, members } = body;
       if (!name || !name.trim()) return cors(JSON.stringify({ error: 'Group name required' }), 400);
@@ -142,7 +166,7 @@ export async function handler(event) {
     }
 
     if (action === 'group' && method === 'DELETE') {
-      if (user.role !== 'admin') return cors(JSON.stringify({ error: 'Admin only' }), 403);
+      if (!canManageAckGroups(user)) return cors(JSON.stringify({ error: 'Forbidden' }), 403);
       const id = qs.id;
       if (!id) return cors(JSON.stringify({ error: 'id required' }), 400);
       await db.collection('sopAckGroups').deleteOne({ _id: new ObjectId(id) });
@@ -187,10 +211,10 @@ export async function handler(event) {
     }
 
     if (action === 'assignment' && method === 'POST') {
-      if (user.role !== 'admin') return cors(JSON.stringify({ error: 'Admin only' }), 403);
       const body = JSON.parse(event.body || '{}');
       const { sopId, staff, groupIds } = body;
       if (!sopId) return cors(JSON.stringify({ error: 'sopId required' }), 400);
+      if (!(await canManageSopAcks(db, user, sopId))) return cors(JSON.stringify({ error: 'Forbidden' }), 403);
 
       const cleanStaff = (staff || [])
         .filter(s => s.name && s.name.trim())
@@ -291,6 +315,7 @@ export async function handler(event) {
     if (action === 'records' && method === 'GET') {
       const sopId = qs.sopId;
       if (!sopId) return cors(JSON.stringify({ error: 'sopId required' }), 400);
+      if (!(await canManageSopAcks(db, user, sopId))) return cors(JSON.stringify({ error: 'Forbidden' }), 403);
       const records = await db.collection('sopAckRecords')
         .find({ sopId }).sort({ acknowledgedAt: -1 }).toArray();
       const result = records.map(r => {
@@ -300,18 +325,21 @@ export async function handler(event) {
     }
 
     // ═══════════════════════════════════════════
-    // DASHBOARD (admin: all SOPs with ack status summary)
+    // DASHBOARD (admin: all SOPs; Reslife manager: their own properties' SOPs only)
     // ═══════════════════════════════════════════
 
     if (action === 'dashboard' && method === 'GET') {
-      if (user.role !== 'admin') return cors(JSON.stringify({ error: 'Admin only' }), 403);
+      if (!canManageAckGroups(user)) return cors(JSON.stringify({ error: 'Forbidden' }), 403);
 
       // Get all assignments
       const assignments = await db.collection('sopAckAssignments').find({}).toArray();
       // Get all records
       const allRecords = await db.collection('sopAckRecords').find({}).toArray();
       // Get all SOPs for title reference
-      const sops = await db.collection('sops').find({}, { projection: { title: 1, sopType: 1, property: 1 } }).toArray();
+      const sopFilter = user.role === 'admin'
+        ? {}
+        : { sopType: 'site', property: { $in: Array.isArray(user.properties) ? user.properties : [] } };
+      const sops = await db.collection('sops').find(sopFilter, { projection: { title: 1, sopType: 1, property: 1 } }).toArray();
       const sopMap = {};
       for (const s of sops) { sopMap[s._id.toString()] = s; }
 
@@ -324,6 +352,11 @@ export async function handler(event) {
 
       const dashboard = [];
       for (const a of assignments) {
+        // Skip assignments whose SOP isn't visible to this user (e.g. a
+        // Reslife manager viewing the dashboard must never see rows for
+        // other properties' or marketing-hub company-wide SOPs).
+        if (!sopMap[a.sopId]) continue;
+
         const staffList = await resolveStaffList(db, a);
         if (staffList.length === 0) continue;
 

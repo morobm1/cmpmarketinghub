@@ -1,5 +1,15 @@
 import { verifyReqAuth } from './_auth.js';
 import { getDb, ObjectId } from './_db.js';
+import { isReslifeManager, refreshReslifeUser } from './_reslife.js';
+
+// Site-wide admin, or Reslife manager tier (reslife-rec / reslife-admin),
+// may upload/delete SOP attachments. Files aren't property-scoped on their
+// own (sop-files is a flat attachment store keyed by file id, same as the
+// marketing hub), so this only gates *who* may upload/delete, matching the
+// write permission used for the owning SOP in sops.js.
+function canManageSopFiles(user) {
+  return user.role === 'admin' || isReslifeManager(user.role);
+}
 
 /* ──────────────────────────────────────────────
    SOP File Upload/Serve API
@@ -30,6 +40,8 @@ export async function handler(event) {
     const col = db.collection('sopFiles');
     const method = event.httpMethod;
 
+    if (isReslifeManager(user.role)) await refreshReslifeUser(db, user);
+
     // ─── GET: serve file ───
     if (method === 'GET') {
       const { id } = event.queryStringParameters || {};
@@ -52,9 +64,9 @@ export async function handler(event) {
       };
     }
 
-    // ─── POST: upload file (admin only) ───
+    // ─── POST: upload file (admin, or Reslife manager tier) ───
     if (method === 'POST') {
-      if (user.role !== 'admin') return { statusCode: 403, body: 'Admin only' };
+      if (!canManageSopFiles(user)) return { statusCode: 403, body: 'Forbidden' };
 
       const body = JSON.parse(event.body || '{}');
       const { filename, contentType, data } = body;
@@ -92,9 +104,9 @@ export async function handler(event) {
       };
     }
 
-    // ─── DELETE: remove file (admin only) ───
+    // ─── DELETE: remove file (admin, or Reslife manager tier) ───
     if (method === 'DELETE') {
-      if (user.role !== 'admin') return { statusCode: 403, body: 'Admin only' };
+      if (!canManageSopFiles(user)) return { statusCode: 403, body: 'Forbidden' };
       const body = JSON.parse(event.body || '{}');
       const { id } = body;
       if (!id) return { statusCode: 400, body: 'id is required' };

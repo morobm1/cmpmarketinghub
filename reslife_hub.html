@@ -1309,56 +1309,13 @@
       </section>
 
       <!-- ================= SOP LIBRARY ================= -->
+      <!-- Embeds the full-featured SOP Library app (same rich editor, file
+           attachments, acknowledgement tracking, and Excel import/export as
+           the Marketing Hub SOP Library), reading/writing the same `sops`
+           MongoDB collection, scoped to the current Reslife property. -->
       <section class="rl-tab-content" id="tab-sops">
-        <div class="rl-panel">
-          <div class="rl-panel-header">
-            <h2>SOP Library</h2>
-            <button class="rl-btn primary hidden" id="sopAddBtn">+ Add SOP</button>
-          </div>
-          <div class="rl-panel-body">
-            <div class="rl-form hidden" id="sopForm">
-              <input type="hidden" id="sopId" />
-              <div class="rl-wizard-progress"></div>
-
-              <div class="rl-wizard-step-panel">
-                <div class="rl-wizard-step-title">Step 1 · Title &amp; Category</div>
-                <div class="rl-form-grid cols-3">
-                  <div class="rl-field full"><label>Title</label><input id="sopTitle" placeholder="e.g., Duty Coverage Swap Procedure" data-required /></div>
-                  <div class="rl-field"><label>Category</label>
-                    <select id="sopCategory">
-                      <option>Programming</option><option>Recruitment &amp; Selection</option><option>Duty &amp; Coverage</option>
-                      <option>Incident Response</option><option>Administrative</option><option>General</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <div class="rl-wizard-step-panel">
-                <div class="rl-wizard-step-title">Step 2 · Procedure &amp; Reference Link</div>
-                <div class="rl-form-grid">
-                  <div class="rl-field full"><label>Procedure / Content</label><textarea id="sopContent" placeholder="Write the SOP here, or leave blank and just link an external doc below." style="min-height:160px" data-required></textarea></div>
-                  <div class="rl-field full"><label>Reference Link (optional)</label><input id="sopLinkUrl" placeholder="https://docs.google.com/..." /></div>
-                </div>
-              </div>
-
-              <div class="rl-wizard-step-panel">
-                <div class="rl-wizard-step-title">Step 3 · Review</div>
-                <dl class="rl-wizard-review" id="sopReview"></dl>
-              </div>
-
-              <div class="rl-wizard-nav">
-                <button class="rl-btn" data-wizard-back>&larr; Back</button>
-                <div style="display:flex;gap:8px">
-                  <button class="rl-btn" id="sopCancelBtn">Cancel</button>
-                  <button class="rl-btn primary" data-wizard-next>Next &rarr;</button>
-                  <button class="rl-btn primary" id="sopSaveBtn">Save SOP</button>
-                </div>
-              </div>
-            </div>
-
-            <input type="text" id="sopSearch" placeholder="Search SOPs by title or category…" style="width:100%;padding:10px 14px;border:1px solid var(--rl-border);border-radius:8px;font-size:13px;margin-bottom:16px;font-family:inherit">
-            <div id="sopList"><div class="rl-loading">Loading…</div></div>
-          </div>
+        <div class="rl-panel" style="padding:0;overflow:hidden">
+          <iframe id="sopLibraryFrame" title="SOP Library" style="width:100%;height:calc(100vh - 220px);min-height:600px;border:none;display:block"></iframe>
         </div>
       </section>
 
@@ -1738,7 +1695,7 @@
       if (tab === 'directory') return loadDirectory();
       if (tab === 'contacts') return loadContacts();
       if (tab === 'curriculum') return loadCurriculum();
-      if (tab === 'sops') return loadSops();
+      if (tab === 'sops') return loadSopLibraryFrame();
       if (tab === 'training') return loadTraining();
       if (tab === 'users') return loadReslifeUsers();
     }
@@ -1748,7 +1705,6 @@
       if (!isManager) document.getElementById('annForm').classList.add('hidden');
       document.getElementById('rosterAddBtn').classList.toggle('hidden', !isManager);
       document.getElementById('curAddBtn').classList.toggle('hidden', !isManager);
-      document.getElementById('sopAddBtn').classList.toggle('hidden', !isManager);
       document.getElementById('trainAddBtn').classList.toggle('hidden', !isManager);
       document.getElementById('trainSubTracking').classList.toggle('hidden', !isManager);
       // Incident + maintenance + program proposal "add" is available to every Reslife role + admin
@@ -1892,7 +1848,7 @@
         safe(apiFetch('/reslife-maxient-reports' + propParam())),
         safe(apiFetch('/reslife-programs' + propParam())),
         safe(apiFetch('/reslife-committees' + propParam())),
-        safe(apiFetch('/reslife-sops' + propParam())),
+        safe(apiFetch('/sops?sopType=site&property=' + encodeURIComponent(currentProperty))),
         safe(apiFetch('/reslife-training' + propParam())),
       ]);
 
@@ -3862,89 +3818,19 @@
     }
 
     // ==================== SOP LIBRARY ====================
-    let sopDocs = [];
+    // Full-featured SOP Library, embedded via iframe so it can reuse the
+    // exact same rich editor / file-upload / acknowledgement-tracking app
+    // as the Marketing Hub SOP Library (reslife_sop_library.html), reading
+    // and writing the same `sops` MongoDB collection. We just need to load
+    // (and reload on property switch) the iframe with the current property.
+    let sopFrameLoadedFor = null; // property the iframe was last loaded for
 
-    async function loadSops(){
-      const list = document.getElementById('sopList');
-      list.innerHTML = '<div class="rl-loading">Loading…</div>';
-      try { sopDocs = await apiFetch('/reslife-sops' + propParam()); } catch (e) { list.innerHTML = '<div class="rl-empty">Failed to load SOP library.</div>'; return; }
-      renderSops(document.getElementById('sopSearch').value);
-    }
-
-    function renderSops(query){
-      const list = document.getElementById('sopList');
-      const q = (query || '').trim().toLowerCase();
-      const filtered = sopDocs.filter(s => !q || s.title.toLowerCase().includes(q) || (s.category || '').toLowerCase().includes(q));
-      if (filtered.length === 0) { list.innerHTML = '<div class="rl-empty">No SOPs found.</div>'; return; }
-
-      const byCategory = {};
-      filtered.forEach(s => { (byCategory[s.category || 'General'] = byCategory[s.category || 'General'] || []).push(s); });
-
-      list.innerHTML = Object.keys(byCategory).sort().map(cat => `
-        <div style="margin-bottom:18px">
-          <div style="font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--rl-subtext);margin-bottom:8px">${esc(cat)}</div>
-          ${byCategory[cat].map(s => `
-            <div class="rl-item">
-              <div class="rl-item-main">
-                <div class="rl-item-title">${esc(s.title)}</div>
-                <div class="rl-item-meta">Updated by ${esc(s.updatedBy || s.createdBy)} · ${fmtDate(s.updatedAt || s.createdAt)}${s.linkUrl ? ` · <a href="${esc(s.linkUrl)}" target="_blank" rel="noopener">Reference Link</a>` : ''}</div>
-                ${s.content ? `<div class="rl-item-body">${esc(s.content)}</div>` : ''}
-              </div>
-              ${isManager ? `<div class="rl-item-actions"><button class="rl-btn sm" data-sop-edit="${s.id}">Edit</button><button class="rl-btn sm danger" data-sop-del="${s.id}">Delete</button></div>` : ''}
-            </div>
-          `).join('')}
-        </div>
-      `).join('');
-
-      list.querySelectorAll('[data-sop-edit]').forEach(btn => btn.addEventListener('click', () => {
-        const s = sopDocs.find(x => x.id === btn.getAttribute('data-sop-edit'));
-        if (s) openSopForm(s);
-      }));
-      list.querySelectorAll('[data-sop-del]').forEach(btn => btn.addEventListener('click', async () => {
-        if (!confirm('Delete this SOP?')) return;
-        try { await apiFetch('/reslife-sops?id=' + btn.getAttribute('data-sop-del') + '&property=' + encodeURIComponent(currentProperty), { method: 'DELETE' }); await loadSops(); }
-        catch (e) { alert('Failed to delete: ' + e.message); }
-      }));
-    }
-
-    function openSopForm(s){
-      document.getElementById('sopId').value = s ? s.id : '';
-      document.getElementById('sopTitle').value = s ? s.title : '';
-      document.getElementById('sopCategory').value = s ? (s.category || 'General') : 'General';
-      document.getElementById('sopContent').value = s ? (s.content || '') : '';
-      document.getElementById('sopLinkUrl').value = s ? (s.linkUrl || '') : '';
-      toggleForm('sopForm', true);
-      resetWizard('sopForm');
-    }
-
-    function renderSopReview(){
-      document.getElementById('sopReview').innerHTML =
-        reviewRow('Title', document.getElementById('sopTitle').value) +
-        reviewRow('Category', document.getElementById('sopCategory').value) +
-        reviewRow('Procedure / Content', document.getElementById('sopContent').value) +
-        reviewRow('Reference Link', document.getElementById('sopLinkUrl').value);
-    }
-
-    function bindSopForm(){
-      document.getElementById('sopAddBtn').addEventListener('click', () => openSopForm(null));
-      document.getElementById('sopCancelBtn').addEventListener('click', () => toggleForm('sopForm', false));
-      document.getElementById('sopSearch').addEventListener('input', (e) => renderSops(e.target.value));
-      document.getElementById('sopSaveBtn').addEventListener('click', async () => {
-        const id = document.getElementById('sopId').value;
-        const title = document.getElementById('sopTitle').value.trim();
-        const category = document.getElementById('sopCategory').value;
-        const content = document.getElementById('sopContent').value.trim();
-        const linkUrl = document.getElementById('sopLinkUrl').value.trim();
-        if (!title) { alert('Title is required'); return; }
-        try {
-          const payload = { property: currentProperty, title, category, content, linkUrl };
-          if (id) await apiFetch('/reslife-sops', { method: 'PUT', body: JSON.stringify(Object.assign({ id }, payload)) });
-          else await apiFetch('/reslife-sops', { method: 'POST', body: JSON.stringify(payload) });
-          toggleForm('sopForm', false);
-          await loadSops();
-        } catch (e) { alert('Save failed: ' + e.message); }
-      });
-      initWizard('sopForm', ['Title & Category', 'Procedure', 'Review'], { saveBtnId: 'sopSaveBtn', onReview: renderSopReview });
+    async function loadSopLibraryFrame(){
+      const frame = document.getElementById('sopLibraryFrame');
+      if (!frame) return;
+      if (sopFrameLoadedFor === currentProperty && frame.getAttribute('src')) return; // already showing this property
+      sopFrameLoadedFor = currentProperty;
+      frame.src = 'reslife_sop_library.html?property=' + encodeURIComponent(currentProperty);
     }
 
     // ==================== TRAINING MODULES ====================
@@ -4243,7 +4129,6 @@
       bindDirectoryForm();
       bindContactForm();
       bindCurriculumForm();
-      bindSopForm();
       bindTrainingForm();
       if (isAdminTier) bindUserForm();
     }

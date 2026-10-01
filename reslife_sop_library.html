@@ -1,0 +1,2640 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SOP Library • Reslife Hub</title>
+  <link rel="preconnect" href="https://use.typekit.net" crossorigin>
+  <link rel="preconnect" href="https://p.typekit.net" crossorigin>
+  <link rel="stylesheet" href="https://use.typekit.net/hqv8hwr.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <meta name="description" content="Standard Operating Procedures library for Capstone Management Partners" />
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <style>
+:root{
+  --brand-primary:#446472;
+  --brand-accent:#ffb732;
+  --brand-accent-2:#52d5ff;
+  --brand-gray:#929497;
+  --page-bg:#f8fafc;
+  --bg:#ffffff;
+  --panel:#ffffff;
+  --text:#1e293b;
+  --subtext:#64748b;
+  --accent:var(--brand-accent-2);
+  --accent-2:var(--brand-accent);
+  --good:#22c55e;
+  --warn:#ffb732;
+  --bad:#ef4444;
+  --border:#e2e8f0;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'Open Sans',system-ui,-apple-system,sans-serif;background:var(--page-bg);color:var(--text);font-size:14px;line-height:1.5}
+
+/* ===== BOOT / LOGIN ===== */
+#bootLoader{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;z-index:200;font-family:Roboto,Arial,sans-serif}
+#loginView{min-height:100vh;display:none;align-items:center;justify-content:center;padding:20px}
+.login-card{background:#fff;border:1px solid var(--border);border-radius:14px;max-width:420px;width:100%;box-shadow:0 1px 3px rgba(0,0,0,.06);padding:32px}
+.login-card h3{margin:0 0 20px;font-size:18px;font-weight:700;color:var(--text)}
+.login-card label{font-size:12px;color:var(--subtext);display:block;margin-bottom:6px;font-weight:600}
+.login-card input{width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);font-size:14px;margin-bottom:12px}
+.login-card input:focus{outline:none;border-color:var(--brand-accent-2);box-shadow:0 0 0 3px rgba(82,213,255,.15)}
+.login-card button{width:100%;padding:10px;border-radius:8px;border:none;background:var(--brand-primary);color:#fff;font-size:14px;font-weight:600;cursor:pointer}
+.login-card button:hover{background:#3b5561}
+.login-card .mini{font-size:11px;color:var(--subtext)}
+.login-card .err{color:#ef4444;font-size:12px;display:none;margin-top:8px}
+
+/* ===== HEADER ===== */
+header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px}
+.brand .logo-img{height:28px;width:auto}
+.brand .title{color:#ffb732;font-family:zooja-pro,Arial,sans-serif;font-size:clamp(32px,4vw,48px);line-height:1}
+.header-controls{display:flex;align-items:center;gap:12px;margin-left:auto}
+.header-btn{background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;transition:all .15s}
+.header-btn:hover{background:#f8fafc;border-color:#cbd5e1}
+.company-name{font-size:12px;color:var(--subtext);font-weight:500}
+
+/* ===== LAYOUT ===== */
+.app-container{display:grid;grid-template-columns:300px 1fr;height:calc(100vh - 60px);overflow:hidden}
+@media(max-width:1024px){.app-container{grid-template-columns:1fr}}
+
+/* ===== SIDEBAR ===== */
+.sidebar{background:#fff;border-right:1px solid var(--border);overflow-y:auto;padding:0;display:flex;flex-direction:column}
+.sidebar-header{padding:14px 20px;font-size:16px;font-weight:700;color:#111827;font-family:Roboto,Arial,sans-serif;border-bottom:1px solid var(--border)}
+.search-box{padding:12px 16px;border-bottom:1px solid var(--border)}
+.search-box input{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px}
+.search-box input:focus{outline:none;border-color:var(--brand-accent-2);box-shadow:0 0 0 3px rgba(82,213,255,.15)}
+
+/* Site selector for admins */
+.site-selector{padding:10px 16px;border-bottom:1px solid var(--border);background:#f8fafc}
+.site-selector label{font-size:11px;font-weight:700;color:var(--subtext);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;display:block}
+.site-selector select{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:#fff}
+.site-selector select:focus{outline:none;border-color:var(--brand-accent-2)}
+
+.nav-scroll{flex:1;overflow-y:auto;padding:8px 0}
+.nav-group-title{padding:12px 20px 6px;font-size:11px;font-weight:700;color:var(--subtext);text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:8px}
+.nav-group-title .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.nav-group-title .dot.company{background:var(--brand-accent-2)}
+.nav-group-title .dot.site{background:var(--brand-accent)}
+.nav-section{margin-bottom:2px}
+.nav-scroll .nav-section-title{padding:8px 20px;font-size:13px;font-weight:700;color:#374151;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all .15s;user-select:none}
+.nav-scroll .nav-section-title:hover{background:#f1f5f9;color:#111827}
+.nav-scroll .nav-section-title .icon{font-size:10px;transition:transform .2s}
+.nav-scroll .nav-section-title.collapsed .icon{transform:rotate(-90deg)}
+.nav-scroll .nav-items{display:block;overflow:hidden;transition:max-height .3s ease}
+.nav-scroll .nav-items.collapsed{max-height:0!important}
+.nav-scroll .sop-nav-link{display:block;padding:10px 20px 10px 36px;font-size:13px;color:#0f172a !important;font-weight:600;cursor:pointer;transition:all .15s;border-left:3px solid transparent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid #e2e8f0;background:#f8fafc;text-decoration:none}
+.nav-scroll .sop-nav-link:hover{background:#dbeafe;color:#1e3a5f !important;border-left-color:#446472}
+.nav-scroll .sop-nav-link.active{background:#bae6fd;color:#0c4a6e !important;border-left-color:var(--brand-accent-2);font-weight:700}
+.nav-empty{padding:12px 20px;font-size:12px;color:var(--subtext);font-style:italic}
+
+/* Admin create button */
+.sidebar-actions{padding:12px 16px;border-top:1px solid var(--border);background:#fff}
+.sidebar-actions button{width:100%;padding:10px;border-radius:8px;border:none;background:var(--brand-primary);color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s}
+.sidebar-actions button:hover{background:#3b5561}
+.sidebar-actions .btn-upload-excel{background:#fff;color:var(--brand-primary);border:1.5px solid var(--brand-primary);margin-top:8px}
+.sidebar-actions .btn-upload-excel:hover{background:#f0f7fa}
+
+/* Excel Upload Modal */
+.upload-zone{border:2px dashed var(--border);border-radius:12px;padding:32px 20px;text-align:center;cursor:pointer;transition:all .2s;background:#f8fafc;margin-bottom:16px}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--brand-accent-2);background:#f0faff}
+.upload-zone .upload-icon{font-size:36px;margin-bottom:8px}
+.upload-zone p{font-size:13px;color:var(--subtext);margin:4px 0}
+.upload-zone .upload-hint{font-size:11px;color:#94a3b8}
+.upload-file-name{font-size:13px;font-weight:600;color:var(--brand-primary);margin:8px 0}
+.upload-progress{margin:16px 0}
+.upload-progress .prog-bar{height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden}
+.upload-progress .prog-fill{height:100%;background:var(--brand-accent-2);border-radius:3px;transition:width .3s}
+.upload-progress .prog-text{font-size:12px;color:var(--subtext);margin-top:6px}
+.upload-results{max-height:200px;overflow-y:auto;font-size:12px;margin-top:12px;border:1px solid var(--border);border-radius:8px;padding:10px}
+.upload-results .res-ok{color:#16a34a}
+.upload-results .res-err{color:#ef4444}
+.upload-results div{padding:3px 0;border-bottom:1px solid #f1f5f9}
+.upload-template-section{background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px}
+.upload-template-section h4{margin:0 0 8px;font-size:14px;font-weight:700}
+.upload-template-section p{font-size:12px;color:var(--subtext);margin:4px 0}
+.upload-template-section .col-list{display:grid;grid-template-columns:1fr 1fr;gap:2px 16px;margin:10px 0;font-size:12px}
+.upload-template-section .col-list .req{font-weight:700;color:var(--text)}
+.upload-template-section .col-list .opt{color:var(--subtext)}
+.btn-dl-template{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:1px solid var(--brand-primary);border-radius:6px;background:#fff;color:var(--brand-primary);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;margin-top:8px}
+.btn-dl-template:hover{background:var(--brand-primary);color:#fff}
+
+/* Related Documents */
+.doc-card{display:flex;gap:8px;align-items:center;margin-bottom:8px;padding:10px;border:1px solid var(--border);border-radius:8px;background:#fafbfc}
+.doc-card input{flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px}
+.doc-card input:focus{outline:none;border-color:var(--brand-accent-2);box-shadow:0 0 0 3px rgba(82,213,255,.15)}
+.doc-card .doc-name{flex:1;min-width:120px}
+.doc-card .doc-url{flex:2}
+.doc-card .doc-remove{background:none;border:none;color:#ef4444;font-size:16px;cursor:pointer;padding:4px 8px;border-radius:4px;flex-shrink:0;width:auto;margin:0}
+.doc-card .doc-remove:hover{background:#fef2f2}
+.add-doc-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1px dashed var(--border);border-radius:6px;background:#fff;color:var(--brand-primary);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;margin-top:4px}
+.add-doc-btn:hover{border-color:var(--brand-accent-2);background:#f0faff}
+.related-docs-view{background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:16px 20px;margin:16px 0}
+.related-docs-view h4{margin:0 0 10px;font-size:14px;font-weight:700;color:#0c4a6e;display:flex;align-items:center;gap:8px}
+.related-docs-view a{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:#fff;border:1px solid #bae6fd;border-radius:6px;color:#0369a1;font-size:13px;font-weight:600;text-decoration:none;margin:4px 6px 4px 0;transition:all .15s}
+.related-docs-view a:hover{background:#e0f2fe;border-color:#7dd3fc}
+
+/* ===== CONTENT AREA ===== */
+.content-area{overflow-y:auto;padding:32px;background:#f8fafc}
+.content-wrapper{max-width:900px;margin:0 auto;background:#fff;border:1px solid var(--border);border-radius:14px;padding:40px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+
+/* Typography */
+.content-wrapper h1{font-size:32px;color:#111827;margin:0 0 16px;font-weight:800;font-family:Roboto,Arial,sans-serif;line-height:1.2}
+.content-wrapper h2{font-size:24px;color:#111827;margin:32px 0 16px;font-weight:700;font-family:Roboto,Arial,sans-serif;border-bottom:2px solid var(--border);padding-bottom:12px}
+.content-wrapper h3{font-size:18px;color:#374151;margin:24px 0 12px;font-weight:700;font-family:Roboto,Arial,sans-serif}
+.content-wrapper h4{font-size:16px;color:#4b5563;margin:20px 0 10px;font-weight:700;font-family:Roboto,Arial,sans-serif}
+.content-wrapper p{margin:12px 0;line-height:1.7;color:#374151}
+.content-wrapper ul,.content-wrapper ol{margin:12px 0 12px 28px;line-height:1.8;color:#374151}
+.content-wrapper li{margin:8px 0}
+.content-wrapper ul ul,.content-wrapper ol ol{margin:8px 0 8px 24px}
+.content-wrapper strong{color:#111827;font-weight:700}
+.content-wrapper em{font-style:italic}
+.content-wrapper code{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:4px;padding:2px 6px;font-size:13px;color:#be123c;font-family:'Courier New',monospace}
+.content-wrapper pre{background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:16px;overflow-x:auto;margin:16px 0}
+.content-wrapper pre code{background:none;border:none;padding:0;color:#111827}
+.content-wrapper blockquote{border-left:4px solid var(--brand-accent-2);padding-left:20px;margin:20px 0;color:var(--subtext);font-style:italic}
+.content-wrapper table{width:100%;border-collapse:collapse;margin:20px 0;font-size:13px}
+.content-wrapper table th{background:#f8fafc;border:1px solid var(--border);padding:12px;text-align:left;font-weight:700;color:#111827}
+.content-wrapper table td{border:1px solid var(--border);padding:12px;color:#374151}
+.content-wrapper table tr:nth-child(even){background:#fafbfc}
+.content-wrapper hr{border:none;border-top:2px solid var(--border);margin:32px 0}
+.content-wrapper a{color:var(--brand-accent-2);text-decoration:none;font-weight:600}
+.content-wrapper a:hover{text-decoration:underline}
+
+/* Badges */
+.badge{display:inline-block;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:600;margin:4px 4px 4px 0}
+.badge.category{background:rgba(82,213,255,.15);color:#0b5d7a;border:1px solid rgba(82,213,255,.35)}
+.badge.department{background:rgba(255,183,50,.15);color:#8a5800;border:1px solid rgba(255,183,50,.40)}
+.badge.status{background:rgba(34,197,94,.15);color:#065f46;border:1px solid rgba(34,197,94,.35)}
+.badge.company-badge{background:rgba(82,213,255,.12);color:#0b5d7a;border:1px solid rgba(82,213,255,.30)}
+.badge.site-badge{background:rgba(255,183,50,.12);color:#8a5800;border:1px solid rgba(255,183,50,.35)}
+
+/* Info Box */
+.info-box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:16px;margin:20px 0}
+.info-box.warning{background:#fffbeb;border-color:#fde68a}
+.info-box.success{background:#f0fdf4;border-color:#bbf7d0}
+.info-box h4{margin:0 0 8px;color:#111827}
+
+/* Step Numbers */
+.step-number{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:var(--brand-accent-2);color:#0b1b24;border-radius:50%;font-weight:700;font-size:14px;margin-right:8px}
+
+/* Admin toolbar on content */
+.admin-toolbar{display:flex;gap:10px;margin-bottom:20px;max-width:900px;margin-left:auto;margin-right:auto;flex-wrap:wrap;align-items:center}
+.admin-toolbar button{padding:8px 16px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;background:#fff;color:var(--text)}
+.admin-toolbar button:hover{background:#f8fafc;border-color:#cbd5e1}
+.admin-toolbar .btn-edit{color:var(--brand-primary);border-color:var(--brand-primary)}
+.admin-toolbar .btn-edit:hover{background:#eef6f9}
+.admin-toolbar .btn-delete{color:#ef4444;border-color:#ef4444}
+.admin-toolbar .btn-delete:hover{background:#fef2f2}
+.admin-toolbar .sop-type-badge{font-size:12px;font-weight:600;padding:4px 12px;border-radius:999px}
+
+/* ===== MODAL ===== */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+.modal-backdrop.open{display:flex}
+.modal{background:#fff;border:1px solid var(--border);border-radius:14px;max-width:720px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 20px 40px rgba(0,0,0,.15)}
+.modal-header{padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-header h3{margin:0;font-size:16px;color:var(--text);font-weight:700}
+.modal-header .close-btn{background:none;border:none;font-size:20px;cursor:pointer;color:var(--subtext);padding:4px 8px}
+.modal-header .close-btn:hover{color:var(--text)}
+.modal-body{padding:20px}
+.modal-body label{font-size:12px;color:var(--subtext);display:block;margin-bottom:6px;font-weight:600}
+.modal-body input,.modal-body select,.modal-body textarea{width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);font-size:14px;margin-bottom:14px;font-family:inherit}
+.modal-body input:focus,.modal-body select:focus,.modal-body textarea:focus{outline:none;border-color:var(--brand-accent-2);box-shadow:0 0 0 3px rgba(82,213,255,.15)}
+.modal-body textarea{min-height:120px;resize:vertical}
+.modal-body .row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:560px){.modal-body .row-2{grid-template-columns:1fr}}
+.modal-body .hint{font-size:11px;color:var(--subtext);margin:-10px 0 14px}
+.modal-footer{padding:16px 20px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end}
+.modal-footer button{padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border)}
+.modal-footer .btn-save{background:var(--brand-primary);color:#fff;border-color:var(--brand-primary)}
+.modal-footer .btn-save:hover{background:#3b5561}
+.modal-footer .btn-cancel{background:#fff;color:var(--text)}
+.modal-footer .btn-cancel:hover{background:#f8fafc}
+
+/* Mobile */
+.mobile-nav-toggle{display:none;position:fixed;bottom:20px;right:20px;width:56px;height:56px;background:var(--brand-primary);color:#fff;border:none;border-radius:50%;font-size:24px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:50}
+@media(max-width:1024px){
+  .mobile-nav-toggle{display:flex;align-items:center;justify-content:center}
+  .sidebar{position:fixed;left:-300px;top:60px;height:calc(100vh - 60px);width:300px;z-index:45;transition:left .3s;box-shadow:2px 0 8px rgba(0,0,0,.1)}
+  .sidebar.open{left:0}
+  .app-container{grid-template-columns:1fr}
+}
+
+/* Form section headers in modal */
+.form-section-head{font-size:14px;font-weight:700;color:#111827;font-family:Roboto,Arial,sans-serif;padding:10px 0 8px;margin-top:18px;border-bottom:2px solid var(--brand-accent-2);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.form-section-head:first-child{margin-top:0}
+.optional-tag{font-size:10px;font-weight:600;color:var(--subtext);background:#f1f5f9;border:1px solid var(--border);border-radius:999px;padding:2px 8px;text-transform:uppercase;letter-spacing:.3px}
+
+/* Step cards in modal */
+.step-card{border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;background:#fafbfc;position:relative}
+.step-card .step-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.step-card .step-num{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:var(--brand-accent-2);color:#0b1b24;border-radius:50%;font-weight:700;font-size:13px;flex-shrink:0}
+.step-card .step-title-input{flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:14px;font-weight:600}
+.step-card .step-title-input:focus{outline:none;border-color:var(--brand-accent-2);box-shadow:0 0 0 3px rgba(82,213,255,.15)}
+.step-card .step-remove{background:none;border:none;color:#ef4444;font-size:18px;cursor:pointer;padding:4px 8px;border-radius:4px;flex-shrink:0;width:auto;margin:0}
+.step-card .step-remove:hover{background:#fef2f2}
+.step-card .step-desc{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;min-height:70px;resize:vertical;font-family:inherit}
+.step-card .step-desc:focus{outline:none;border-color:var(--brand-accent-2);box-shadow:0 0 0 3px rgba(82,213,255,.15)}
+.step-card .step-desc-hint{font-size:11px;color:var(--subtext);margin-top:4px}
+.step-card .step-image-row{margin-top:10px;display:flex;gap:8px;align-items:flex-start}
+.step-card .step-image-input{flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px}
+.step-card .step-image-input:focus{outline:none;border-color:var(--brand-accent-2);box-shadow:0 0 0 3px rgba(82,213,255,.15)}
+.step-card .step-image-preview{margin-top:8px;border-radius:8px;overflow:hidden;border:1px solid var(--border);background:#f8fafc}
+.step-card .step-image-preview img{max-width:100%;max-height:240px;display:block}
+.step-card .step-image-label{font-size:11px;color:var(--subtext);font-weight:600;display:flex;align-items:center;gap:4px;margin-top:10px;margin-bottom:4px}
+.step-card .step-image-actions{display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap}
+.step-card .btn-paste-img,.step-card .btn-browse-img{padding:6px 12px;border:1px dashed var(--border);border-radius:6px;background:#fff;color:var(--brand-primary);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s}
+.step-card .btn-paste-img:hover,.step-card .btn-browse-img:hover{border-color:var(--brand-accent-2);background:#f0faff}
+.step-card .upload-status{font-size:11px;color:var(--subtext);font-style:italic}
+.doc-card .btn-upload-doc{padding:6px 12px;border:1px dashed var(--border);border-radius:6px;background:#fff;color:var(--brand-primary);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;flex-shrink:0;white-space:nowrap}
+.doc-card .btn-upload-doc:hover{border-color:var(--brand-accent-2);background:#f0faff}
+.doc-card .or-text{font-size:11px;color:var(--subtext);flex-shrink:0}
+
+.add-step-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border:2px dashed var(--border);border-radius:8px;background:#fff;color:var(--brand-primary);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;width:auto;margin-bottom:14px}
+.add-step-btn:hover{border-color:var(--brand-accent-2);background:#f0f9ff}
+
+.hidden{display:none}
+
+/* ===== ACKNOWLEDGEMENT SECTION ===== */
+.ack-section{margin-top:32px;border-top:2px solid var(--border);padding-top:24px}
+.ack-section h2{font-size:20px;color:#111827;margin:0 0 16px;font-weight:700;font-family:Roboto,Arial,sans-serif;display:flex;align-items:center;gap:10px;border-bottom:none;padding-bottom:0}
+.ack-section h2 .ack-icon{font-size:22px}
+.ack-summary{display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+.ack-stat{background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px}
+.ack-stat.complete{background:#f0fdf4;border-color:#bbf7d0;color:#065f46}
+.ack-stat.pending{background:#fffbeb;border-color:#fde68a;color:#92400e}
+.ack-staff-list{display:flex;flex-direction:column;gap:6px}
+.ack-staff-row{display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:#fff;transition:all .15s}
+.ack-staff-row:hover{background:#f8fafc}
+.ack-staff-row .ack-name{font-weight:600;font-size:14px;color:#111827;flex:1}
+.ack-staff-row .ack-email{font-size:12px;color:var(--subtext);flex:1}
+.ack-staff-row .ack-status-badge{font-size:12px;font-weight:600;padding:4px 12px;border-radius:999px;white-space:nowrap}
+.ack-staff-row .ack-status-badge.done{background:#dcfce7;color:#065f46;border:1px solid #bbf7d0}
+.ack-staff-row .ack-status-badge.waiting{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+.ack-staff-row .ack-timestamp{font-size:11px;color:var(--subtext);white-space:nowrap}
+.ack-staff-row .ack-btn{padding:6px 14px;border-radius:6px;border:1px solid var(--brand-primary);background:var(--brand-primary);color:#fff;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+.ack-staff-row .ack-btn:hover{background:#3b5561}
+.ack-staff-row .ack-btn:disabled{opacity:.5;cursor:default}
+.ack-empty{padding:16px;background:#f8fafc;border:1px dashed var(--border);border-radius:8px;text-align:center;color:var(--subtext);font-size:13px}
+
+/* ===== ACK ADMIN TOOLBAR BUTTONS ===== */
+.btn-ack-manage{color:#7c3aed;border-color:#7c3aed}
+.btn-ack-manage:hover{background:#f5f3ff}
+.btn-ack-dashboard{color:#0891b2;border-color:#0891b2}
+.btn-ack-dashboard:hover{background:#ecfeff}
+
+/* ===== ACKNOWLEDGEMENT MODAL ===== */
+.ack-modal .modal{max-width:680px}
+.ack-modal .ack-confirm-box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:20px;margin:16px 0;text-align:center}
+.ack-modal .ack-confirm-box .ack-statement{font-size:15px;font-weight:600;color:#0c4a6e;line-height:1.6;margin-bottom:16px;font-style:italic}
+.ack-modal .ack-confirm-box .ack-person{font-size:14px;color:#374151;margin-bottom:12px}
+.ack-modal .ack-confirm-box .ack-person strong{color:#111827}
+
+/* ===== ASSIGNMENT MODAL ===== */
+.assign-modal .modal{max-width:780px}
+.assign-section{margin-bottom:20px}
+.assign-section h4{font-size:14px;font-weight:700;color:#111827;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.assign-section h4 .count-badge{font-size:11px;background:#e0e7ff;color:#3730a3;border-radius:999px;padding:2px 8px;font-weight:600}
+.staff-input-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+.staff-input-row input{flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px}
+.staff-input-row input:focus{outline:none;border-color:var(--brand-accent-2);box-shadow:0 0 0 3px rgba(82,213,255,.15)}
+.staff-input-row .remove-staff-btn{background:none;border:none;color:#ef4444;font-size:18px;cursor:pointer;padding:4px 8px;border-radius:4px;width:auto;flex-shrink:0}
+.staff-input-row .remove-staff-btn:hover{background:#fef2f2}
+.add-staff-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1px dashed var(--border);border-radius:6px;background:#fff;color:var(--brand-primary);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.add-staff-btn:hover{border-color:var(--brand-accent-2);background:#f0f9ff}
+.group-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.group-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:999px;font-size:12px;font-weight:600;color:#5b21b6;cursor:pointer;transition:all .15s}
+.group-chip:hover{background:#ede9fe}
+.group-chip.selected{background:#7c3aed;color:#fff;border-color:#7c3aed}
+.group-chip .chip-count{font-size:10px;opacity:.8}
+
+/* ===== GROUP MANAGER MODAL ===== */
+.group-modal .modal{max-width:700px}
+.group-list-item{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;background:#fff}
+.group-list-item .group-info{flex:1}
+.group-list-item .group-name{font-weight:700;font-size:14px;color:#111827}
+.group-list-item .group-members-count{font-size:12px;color:var(--subtext)}
+.group-list-item .group-actions{display:flex;gap:6px}
+.group-list-item .group-actions button{padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;background:#fff;transition:all .15s}
+.group-list-item .group-actions .btn-edit-group{color:var(--brand-primary);border-color:var(--brand-primary)}
+.group-list-item .group-actions .btn-edit-group:hover{background:#eef6f9}
+.group-list-item .group-actions .btn-del-group{color:#ef4444;border-color:#ef4444}
+.group-list-item .group-actions .btn-del-group:hover{background:#fef2f2}
+
+/* ===== DASHBOARD MODAL ===== */
+.dash-modal .modal{max-width:860px}
+.dash-table{width:100%;border-collapse:collapse;font-size:13px}
+.dash-table th{background:#f8fafc;border:1px solid var(--border);padding:10px 12px;text-align:left;font-weight:700;color:#111827;font-size:12px;text-transform:uppercase;letter-spacing:.3px}
+.dash-table td{border:1px solid var(--border);padding:10px 12px;color:#374151}
+.dash-table tr:hover td{background:#f8fafc}
+.dash-table .dash-progress{display:flex;align-items:center;gap:8px}
+.dash-table .dash-bar{flex:1;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden}
+.dash-table .dash-bar-fill{height:100%;border-radius:4px;transition:width .3s}
+.dash-table .dash-bar-fill.all-done{background:#22c55e}
+.dash-table .dash-bar-fill.partial{background:#f59e0b}
+.dash-table .dash-bar-fill.none{background:#e2e8f0}
+.dash-table .dash-pct{font-size:12px;font-weight:600;white-space:nowrap;min-width:40px;text-align:right}
+.dash-filter{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.dash-filter select,.dash-filter input{padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px}
+.dash-filter input{flex:1;min-width:180px}
+  </style>
+</head>
+<body>
+
+<!-- Boot loader -->
+<div id="bootLoader">
+  <div style="display:flex;flex-direction:column;gap:6px;align-items:center">
+    <div style="font-weight:800;font-family:Roboto,Arial,sans-serif">Reslife Hub</div>
+    <div style="font-size:11px;color:#6b7280">Loading…</div>
+  </div>
+</div>
+
+<!-- No standalone login view: this page is always embedded inside
+     reslife_hub.html, which already gates auth. showLogin() redirects the
+     top-level window to the login flow instead of rendering a form here. -->
+
+<!-- App Header -->
+<header id="appHeader" style="display:none">
+  <div class="brand">
+    <img src="logo-main.svg" class="logo-img" alt="Capstone" />
+    <div class="title">SOP Library</div>
+  </div>
+  <div class="header-controls">
+    <span id="propertyBadge" class="company-name" style="font-weight:600"></span>
+  </div>
+  <span class="company-name">Capstone Management Partners — Reslife Hub</span>
+</header>
+
+<!-- Main App -->
+<div id="appMain" class="app-container" style="display:none">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">SOP Library</div>
+
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Search SOPs…" />
+    </div>
+
+    <div class="nav-scroll" id="navScroll">
+      <!-- Populated by JS -->
+    </div>
+
+    <!-- Manager (REC/Reslife Admin/Admin): create new SOP -->
+    <div class="sidebar-actions" id="sidebarActions" style="display:none">
+      <button id="createSopBtn">+ Create New SOP</button>
+      <button class="btn-upload-excel" id="uploadExcelBtn" onclick="openUploadModal()">📤 Upload Excel</button>
+    </div>
+  </aside>
+
+  <main class="content-area" id="contentArea">
+    <!-- Admin toolbar (edit/delete) shown when viewing an SOP -->
+    <div class="admin-toolbar" id="adminToolbar" style="display:none"></div>
+    <div class="content-wrapper" id="contentDisplay">
+      <!-- SOP content rendered here -->
+    </div>
+  </main>
+</div>
+
+<button class="mobile-nav-toggle" id="mobileToggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+
+<!-- Create / Edit Modal -->
+<div class="modal-backdrop" id="sopModal">
+  <div class="modal" style="max-width:800px">
+    <div class="modal-header">
+      <h3 id="modalTitle">Create New SOP</h3>
+      <button class="close-btn" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- SOP Info Header -->
+      <div class="form-section-head">SOP Information</div>
+
+      <label for="fTitle">SOP Title *</label>
+      <input id="fTitle" type="text" placeholder="e.g., Duty Coverage Swap Procedure" />
+
+      <!-- SOP type is always 'site', fixed to the current Reslife property -->
+      <input type="hidden" id="fSopType" value="site" />
+      <input type="hidden" id="fProperty" />
+
+      <div class="row-2">
+        <div>
+          <label for="fSystem">System <span class="optional-tag">Optional</span></label>
+          <select id="fSystem">
+            <option value="">— Select System —</option>
+            <option value="Entrata">Entrata</option>
+            <option value="Gmail">Gmail</option>
+            <option value="EZOS">EZOS</option>
+            <option value="Microsoft">Microsoft</option>
+            <option value="Teams">Teams</option>
+            <option value="Canva">Canva</option>
+            <option value="Maxient">Maxient</option>
+            <option value="Instagram">Instagram</option>
+            <option value="Facebook">Facebook</option>
+            <option value="TikTok">TikTok</option>
+            <option value="__other__">Other (type below)</option>
+          </select>
+          <input id="fSystemOther" type="text" placeholder="Type system name…" style="display:none" />
+        </div>
+        <div>
+          <label for="fCategory">Category</label>
+          <select id="fCategory">
+            <option value="">— Select Category —</option>
+            <option value="Programming">Programming</option>
+            <option value="Recruitment &amp; Selection">Recruitment &amp; Selection</option>
+            <option value="Duty &amp; Coverage">Duty &amp; Coverage</option>
+            <option value="Incident Response">Incident Response</option>
+            <option value="Administrative">Administrative</option>
+            <option value="General">General</option>
+            <option value="__other__">Other (type below)</option>
+          </select>
+          <input id="fCategoryOther" type="text" placeholder="Type category name…" style="display:none" />
+        </div>
+      </div>
+
+      <div class="row-2">
+        <div>
+          <label for="fDepartment">Department <span class="optional-tag">Optional</span></label>
+          <select id="fDepartment">
+            <option value="">— Select Department —</option>
+            <option value="Resident Life Staff">Resident Life Staff</option>
+            <option value="Resident Assistants">Resident Assistants</option>
+            <option value="Front Desk / Office Staff">Front Desk / Office Staff</option>
+            <option value="University Partner">University Partner</option>
+            <option value="__vendor__">Third-Party Vendor (type below)</option>
+          </select>
+          <input id="fDepartmentVendor" type="text" placeholder="Type vendor name…" style="display:none" />
+        </div>
+        <div>
+          <label>Last Updated</label>
+          <input id="fLastUpdated" type="text" readonly style="background:#f8fafc;color:var(--subtext);cursor:default" />
+          <div class="hint">Auto-populated when saved</div>
+        </div>
+      </div>
+
+      <!-- Training Video / Image -->
+      <div class="form-section-head">Training Video or Image <span class="optional-tag">Optional</span></div>
+      <label for="fTrainingUrl">Video or Image URL</label>
+      <input id="fTrainingUrl" type="text" placeholder="Paste a YouTube, Loom, Google Drive, or image URL…" />
+      <div class="hint">Supports: YouTube, Loom, Vimeo, Google Drive video links, or direct image URLs (.jpg, .png, .gif, .webp)</div>
+
+      <!-- Related Documents -->
+      <div class="form-section-head" style="margin-top:24px">Related Documents & Templates <span class="optional-tag">Optional</span></div>
+      <div class="hint" style="margin:0 0 10px">Add any documents referenced in this SOP (Google Sheets, templates, forms, etc.). <strong>The document name you enter here will be automatically hyperlinked anywhere it appears in your step descriptions.</strong> For example, if you add a document named "Bryan Flats Availability Google Sheet" and then write "Open the Bryan Flats Availability Google Sheet" in a step, those words become a clickable link to the URL you provided.</div>
+      <div id="docsContainer"></div>
+      <button type="button" class="add-doc-btn" id="addDocBtn">+ Add Document</button>
+
+      <!-- Section 1 – Purpose -->
+      <div class="form-section-head" style="margin-top:24px">Section 1 – Purpose</div>
+      <label for="fPurpose">Describe the purpose of this SOP</label>
+      <textarea id="fPurpose" placeholder="This Standard Operating Procedure outlines the process for…" style="min-height:90px"></textarea>
+
+      <!-- Section 2 – When to Use -->
+      <div class="form-section-head">Section 2 – When to Use This Process</div>
+      <label for="fWhenToUse">Describe when this process should be used</label>
+      <textarea id="fWhenToUse" placeholder="This process should be used after a resident renews their lease and needs to receive…" style="min-height:90px"></textarea>
+
+      <!-- Section 3 – Step-by-Step Instructions -->
+      <div class="form-section-head">Section 3 – Step-by-Step Instructions</div>
+      <div class="hint" style="margin:0 0 10px">Add each step below. Use the description to explain the step in detail. Start lines with • or - for bullet points.</div>
+      <div id="stepsContainer"></div>
+      <button type="button" class="add-step-btn" id="addStepBtn">+ Add Step</button>
+
+      <!-- Section 4 – Expected Results (optional) -->
+      <div class="form-section-head">Section 4 – Expected Results <span class="optional-tag">Optional</span></div>
+      <label for="fExpectedResults">What should happen after completing this SOP?</label>
+      <textarea id="fExpectedResults" placeholder="The resident receives the Renewal Interview Invitation email in their inbox…" style="min-height:80px"></textarea>
+
+      <!-- Section 5 – Best Practices (optional) -->
+      <div class="form-section-head">Section 5 – Best Practices <span class="optional-tag">Optional</span></div>
+      <label for="fBestPractices">List recommendations and tips (one per line, or use • for bullets)</label>
+      <textarea id="fBestPractices" placeholder="• Always verify the resident has renewed their lease before sending&#10;• Use the Responses template instead of typing manually&#10;• Review the email before sending" style="min-height:100px"></textarea>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" id="modalSaveBtn">Save SOP</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== GLOBALS =====
+const API = '/api';
+const RESLIFE_MANAGER_ROLES = ['reslife-rec', 'reslife-admin'];
+let currentUser = null;
+let SESSION_ACTIVE = false;
+let currentProperty = null;  // the single Reslife property this page is scoped to
+let allSops = [];           // all loaded SOPs (already scoped server-side to currentProperty)
+let selectedSopId = null;   // currently viewed SOP id
+let editingSopId = null;    // SOP being edited in modal (null = create)
+
+// ===== AUTH =====
+async function apiFetch(path, opts = {}) {
+  const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+  const res = await fetch(API + path, Object.assign({}, opts, { headers, credentials: 'include' }));
+  if (!res.ok) { const t = await res.text(); throw new Error(t || 'HTTP ' + res.status); }
+  return res;
+}
+
+function showBoot() { document.getElementById('bootLoader').style.display = 'flex'; }
+function hideBoot() { document.getElementById('bootLoader').style.display = 'none'; }
+function showLogin() {
+  // This page is always embedded inside reslife_hub.html, which already
+  // gates auth. If the session is missing/expired here, bounce the parent
+  // window (not just the iframe) back to the login flow.
+  hideBoot();
+  try {
+    if (window.top && window.top !== window.self) {
+      window.top.location.href = 'index.html?redirect=reslife_hub.html';
+      return;
+    }
+  } catch (e) {}
+  location.href = 'index.html?redirect=reslife_hub.html';
+}
+function showApp() {
+  hideBoot();
+  document.getElementById('appHeader').style.display = '';
+  document.getElementById('appMain').style.display = '';
+}
+
+async function checkSession() {
+  try {
+    const res = await fetch(API + '/me', { credentials: 'include' });
+    if (res.ok) {
+      const me = await res.json();
+      currentUser = { username: me.username, role: me.role, properties: me.properties };
+      SESSION_ACTIVE = true;
+      return true;
+    }
+  } catch (e) {}
+  return false;
+}
+
+// ===== RESLIFE PROPERTY CONTEXT =====
+// This page has no login/property-switcher UI of its own — it's embedded
+// via iframe in reslife_hub.html's SOP Library tab, which already resolved
+// the signed-in user's current property. We read that same property out of
+// localStorage (shared key, same-origin) so both stay in sync, and also
+// accept a `?property=` query param (set by the parent on iframe load) as
+// the most immediate source of truth.
+function resolveCurrentProperty() {
+  try {
+    const qp = new URLSearchParams(window.location.search).get('property');
+    if (qp) return qp;
+  } catch (e) {}
+  try {
+    const stored = localStorage.getItem('reslife_current_property');
+    if (stored) return stored;
+  } catch (e) {}
+  return '';
+}
+
+function getUserProperties() {
+  if (!currentUser) return [];
+  if (currentUser.role === 'admin' || currentUser.properties === '*') return currentProperty ? [currentProperty] : [];
+  return Array.isArray(currentUser.properties) ? currentUser.properties : [];
+}
+
+// "Manager tier" for the SOP library = reslife-rec / reslife-admin / site-wide admin.
+// reslife-ra is read-only, matching canManageReslifeProperty on the backend.
+function isAdmin() {
+  if (!currentUser) return false;
+  if (currentUser.role === 'admin') return true;
+  return RESLIFE_MANAGER_ROLES.includes(currentUser.role);
+}
+
+// ===== LOAD SOPs =====
+async function loadAllSops() {
+  if (!currentProperty) { allSops = []; return; }
+  try {
+    const res = await apiFetch('/sops?sopType=site&property=' + encodeURIComponent(currentProperty));
+    allSops = await res.json();
+  } catch (e) {
+    console.error('Failed to load SOPs:', e);
+    allSops = [];
+  }
+}
+
+// ===== NAVIGATION =====
+// Reslife Hub has no company-wide SOP concept — every SOP here is 'site'
+// type, scoped to currentProperty. Kept as a function (always empty) so
+// the shared renderNav()/viewSop() logic below needs no further changes.
+function getCompanySops() {
+  return [];
+}
+
+function getSiteSops() {
+  return allSops.filter(s => s.sopType === 'site' && s.property === currentProperty);
+}
+
+function groupByCategory(sops) {
+  const groups = {};
+  sops.forEach(s => {
+    const cat = s.category || 'General';
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(s);
+  });
+  // Sort categories
+  const sorted = {};
+  Object.keys(groups).sort().forEach(k => { sorted[k] = groups[k].sort((a, b) => (a.title || '').localeCompare(b.title || '')); });
+  return sorted;
+}
+
+function renderNav() {
+  const q = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+  const nav = document.getElementById('navScroll');
+
+  const siteSops = getSiteSops();
+
+  // Filter by search — searches title, category, system, department
+  const filterFn = s => {
+    if (!q) return true;
+    const fields = [s.title, s.category, s.department, s.system, s.purpose];
+    const hay = fields.filter(Boolean).join(' ').toLowerCase();
+    // Support multi-word: each word in query must match somewhere
+    const words = q.split(/\s+/).filter(Boolean);
+    return words.every(w => hay.includes(w));
+  };
+
+  const filteredSite = siteSops.filter(filterFn);
+
+  let html = '';
+
+  // Single section: every SOP here is scoped to currentProperty
+  html += `<div class="nav-group-title"><span class="dot site"></span> ${escHtml(currentProperty || 'Property')} SOPs</div>`;
+
+  const siteGroups = groupByCategory(filteredSite);
+  if (Object.keys(siteGroups).length === 0) {
+    html += '<div class="nav-empty">No SOPs found</div>';
+  } else {
+    for (const [cat, items] of Object.entries(siteGroups)) {
+      html += `<div class="nav-section">
+        <div class="nav-section-title" onclick="toggleNavSection(this)">${escHtml(cat)} <span class="icon">▼</span></div>
+        <div class="nav-items">`;
+      items.forEach(s => {
+        const active = s.id === selectedSopId ? ' active' : '';
+        html += `<div class="sop-nav-link${active}" data-id="${escHtml(s.id)}">${escHtml(s.title)}</div>`;
+      });
+      html += '</div></div>';
+    }
+  }
+
+  nav.innerHTML = html;
+
+  // Set max-height for nav-items
+  nav.querySelectorAll('.nav-items').forEach(el => { el.style.maxHeight = el.scrollHeight + 'px'; });
+
+  // Click handlers for SOP nav links
+  nav.querySelectorAll('.sop-nav-link[data-id]').forEach(el => {
+    el.addEventListener('click', () => viewSop(el.dataset.id));
+  });
+}
+
+function toggleNavSection(el) {
+  el.classList.toggle('collapsed');
+  const items = el.nextElementSibling;
+  if (items) items.classList.toggle('collapsed');
+}
+
+// ===== VIEW SOP =====
+function viewSop(id) {
+  const sop = allSops.find(s => s.id === id);
+  if (!sop) return;
+  selectedSopId = id;
+
+  const display = document.getElementById('contentDisplay');
+  const toolbar = document.getElementById('adminToolbar');
+
+  // Build content
+  let html = '';
+  if (sop.content) {
+    html = sop.content;
+  } else {
+    // Fallback: render from fields
+    html = `<h1>${escHtml(sop.title)}</h1>`;
+    if (sop.purpose) html += `<h2>Purpose</h2><p>${escHtml(sop.purpose)}</p>`;
+    if (sop.steps) html += `<h2>Steps</h2><pre>${escHtml(sop.steps)}</pre>`;
+    if (sop.resources) html += `<h2>Resources</h2><pre>${escHtml(sop.resources)}</pre>`;
+  }
+
+  display.innerHTML = html;
+
+  // Toolbar (badges + manager-only edit/delete)
+  const propBadge = `<span class="badge site-badge">${escHtml(sop.property || currentProperty || '')}</span>`;
+  if (isAdmin()) {
+    toolbar.innerHTML = `
+      ${propBadge}
+      ${sop.category ? '<span class="badge category">' + escHtml(sop.category) + '</span>' : ''}
+      ${sop.department ? '<span class="badge department">' + escHtml(sop.department) + '</span>' : ''}
+      <span style="flex:1"></span>
+      <button class="btn-edit" onclick="openEditModal('${escHtml(sop.id)}')">Edit</button>
+      <button class="btn-delete" onclick="deleteSop('${escHtml(sop.id)}')">Delete</button>
+      <button onclick="copySopLink('${escHtml(sop.id)}')" title="Copy shareable link">Copy Link</button>
+      <button onclick="exportWord()">Export Word</button>
+      <button onclick="exportPDF()">Export PDF</button>
+    `;
+    toolbar.style.display = 'flex';
+  } else {
+    // Read-only (RA): badges + copy link + export only
+    toolbar.innerHTML = `
+      ${propBadge}
+      ${sop.category ? '<span class="badge category">' + escHtml(sop.category) + '</span>' : ''}
+      ${sop.department ? '<span class="badge department">' + escHtml(sop.department) + '</span>' : ''}
+      <span style="flex:1"></span>
+      <button onclick="copySopLink('${escHtml(sop.id)}')" title="Copy shareable link">Copy Link</button>
+      <button onclick="exportWord()">Export Word</button>
+      <button onclick="exportPDF()">Export PDF</button>
+    `;
+    toolbar.style.display = 'flex';
+  }
+
+  renderNav();
+
+  // Close mobile sidebar
+  if (window.innerWidth <= 1024) document.getElementById('sidebar').classList.remove('open');
+}
+
+function showWelcome() {
+  selectedSopId = null;
+  document.getElementById('adminToolbar').style.display = 'none';
+
+  document.getElementById('contentDisplay').innerHTML = `
+    <h1>SOP Library</h1>
+    <p>Welcome to the <strong>${escHtml(currentProperty || '')}</strong> SOP Library, <strong>${escHtml(currentUser.username)}</strong>.</p>
+
+    <div class="info-box">
+      <h4>How It Works</h4>
+      <p>SOPs here are specific to <strong>${escHtml(currentProperty || 'your property')}</strong> and organized by category in the sidebar.</p>
+      ${isAdmin() ? '<p>As a <strong>Reslife Manager</strong>, you can create, edit, and delete SOPs for this property, attach files/screenshots, and track staff acknowledgements.</p>' : '<p>Ask your REC or Reslife Admin if you need a procedure added or updated.</p>'}
+    </div>
+
+    <h2>Getting Started</h2>
+    <p>Use the navigation on the left to browse SOPs by category. Use the search box to find specific procedures.</p>
+    ${isAdmin() ? '<p>Click <strong>"+ Create New SOP"</strong> at the bottom of the sidebar to add a new procedure.</p>' : ''}
+  `;
+  renderNav();
+}
+
+// ===== STEP MANAGEMENT =====
+let modalSteps = []; // array of { title, description, imageUrl }
+
+function addStep(title, description, imageUrl) {
+  modalSteps.push({ title: title || '', description: description || '', imageUrl: imageUrl || '' });
+  renderSteps();
+}
+
+function removeStep(idx) {
+  modalSteps.splice(idx, 1);
+  renderSteps();
+}
+
+function updateStepImagePreview(idx) {
+  const url = modalSteps[idx].imageUrl || '';
+  const previewEl = document.getElementById('stepImgPreview_' + idx);
+  if (!previewEl) return;
+  if (url && /\.(jpg|jpeg|png|gif|webp|svg|bmp)(\?|$)/i.test(url)) {
+    previewEl.innerHTML = '<img src="' + escHtml(url) + '" alt="Step ' + (idx+1) + ' screenshot" onerror="this.parentElement.innerHTML=\'<div style=padding:12px;font-size:12px;color:#ef4444>Image failed to load</div>\'" />';
+    previewEl.style.display = 'block';
+  } else if (url) {
+    previewEl.innerHTML = '<img src="' + escHtml(url) + '" alt="Step ' + (idx+1) + ' screenshot" onerror="this.parentElement.innerHTML=\'<div style=padding:12px;font-size:12px;color:#ef4444>Image failed to load</div>\'" />';
+    previewEl.style.display = 'block';
+  } else {
+    previewEl.innerHTML = '';
+    previewEl.style.display = 'none';
+  }
+}
+
+function renderSteps() {
+  const container = document.getElementById('stepsContainer');
+  container.innerHTML = modalSteps.map((step, i) => `
+    <div class="step-card" data-idx="${i}">
+      <div class="step-header">
+        <span class="step-num">${i + 1}</span>
+        <input class="step-title-input" type="text" placeholder="Step title (e.g., Log into Entrata)" value="${escHtml(step.title)}" data-field="title" data-idx="${i}" />
+        <button type="button" class="step-remove" onclick="removeStep(${i})" title="Remove step">&times;</button>
+      </div>
+      <textarea class="step-desc" placeholder="Describe this step in detail…&#10;Use • or - at the start of a line for bullet points" data-field="description" data-idx="${i}">${escHtml(step.description)}</textarea>
+      <div class="step-desc-hint">Tip: Start lines with • or - for bullet points</div>
+      <div class="step-image-label">🖼️ Screenshot / Image <span style="font-weight:400;color:#94a3b8">(optional)</span></div>
+      <div class="step-image-row">
+        <input class="step-image-input" type="text" placeholder="Paste image URL or use buttons below…" value="${escHtml(step.imageUrl)}" data-idx="${i}" />
+      </div>
+      <div class="step-image-actions">
+        <button type="button" class="btn-paste-img" data-idx="${i}" title="Click then Ctrl+V to paste a screenshot from clipboard">📋 Paste from Clipboard</button>
+        <button type="button" class="btn-browse-img" data-idx="${i}" title="Browse for an image file">📁 Browse Image</button>
+        <input type="file" class="step-file-input" data-idx="${i}" accept="image/*" style="display:none" />
+        <span class="upload-status" id="stepUploadStatus_${i}"></span>
+      </div>
+      <div class="step-image-preview" id="stepImgPreview_${i}" style="${step.imageUrl ? '' : 'display:none'}">
+        ${step.imageUrl ? '<img src="' + escHtml(step.imageUrl) + '" alt="Step ' + (i+1) + ' screenshot" onerror="this.parentElement.innerHTML=\'<div style=padding:12px;font-size:12px;color:#ef4444>Image failed to load</div>\'" />' : ''}
+      </div>
+    </div>
+  `).join('');
+
+  // Bind input events to sync back to modalSteps
+  container.querySelectorAll('.step-title-input').forEach(el => {
+    el.addEventListener('input', () => { modalSteps[parseInt(el.dataset.idx)].title = el.value; });
+  });
+  container.querySelectorAll('.step-desc').forEach(el => {
+    el.addEventListener('input', () => { modalSteps[parseInt(el.dataset.idx)].description = el.value; });
+  });
+  container.querySelectorAll('.step-image-input').forEach(el => {
+    el.addEventListener('input', () => {
+      const idx = parseInt(el.dataset.idx);
+      modalSteps[idx].imageUrl = el.value.trim();
+      updateStepImagePreview(idx);
+    });
+    // Also update preview on paste (text URL paste)
+    el.addEventListener('paste', () => {
+      setTimeout(() => {
+        const idx = parseInt(el.dataset.idx);
+        modalSteps[idx].imageUrl = el.value.trim();
+        updateStepImagePreview(idx);
+      }, 50);
+    });
+  });
+
+  // Browse image file button
+  container.querySelectorAll('.btn-browse-img').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.idx);
+      container.querySelector('.step-file-input[data-idx="' + idx + '"]').click();
+    });
+  });
+
+  // File input change handler
+  container.querySelectorAll('.step-file-input').forEach(input => {
+    input.addEventListener('change', async () => {
+      const idx = parseInt(input.dataset.idx);
+      const file = input.files[0];
+      if (!file) return;
+      await uploadStepImage(idx, file);
+    });
+  });
+
+  // Paste from clipboard button
+  container.querySelectorAll('.btn-paste-img').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const idx = parseInt(btn.dataset.idx);
+      try {
+        const items = await navigator.clipboard.read();
+        let imageBlob = null;
+        for (const item of items) {
+          const imageType = item.types.find(t => t.startsWith('image/'));
+          if (imageType) {
+            imageBlob = await item.getType(imageType);
+            break;
+          }
+        }
+        if (!imageBlob) {
+          alert('No image found in clipboard. Copy a screenshot first (e.g., Snipping Tool, Print Screen) then click this button.');
+          return;
+        }
+        const ext = imageBlob.type.split('/')[1] || 'png';
+        const file = new File([imageBlob], 'screenshot_step' + (idx + 1) + '.' + ext, { type: imageBlob.type });
+        await uploadStepImage(idx, file);
+      } catch (e) {
+        if (e.name === 'NotAllowedError') {
+          alert('Clipboard access denied. Please allow clipboard permissions or use the Browse button instead.');
+        } else {
+          alert('Could not read clipboard: ' + e.message);
+        }
+      }
+    });
+  });
+}
+
+async function uploadStepImage(idx, file) {
+  const status = document.getElementById('stepUploadStatus_' + idx);
+  const urlInput = document.querySelector('.step-image-input[data-idx="' + idx + '"]');
+  status.textContent = 'Uploading…';
+  try {
+    const result = await uploadSopFile(file);
+    modalSteps[idx].imageUrl = result.url;
+    if (urlInput) urlInput.value = result.url;
+    updateStepImagePreview(idx);
+    status.textContent = '✓ Uploaded!';
+    setTimeout(() => { status.textContent = ''; }, 3000);
+  } catch (e) {
+    status.textContent = '✗ Upload failed: ' + e.message;
+  }
+}
+
+// ===== SOP FILE UPLOAD HELPER =====
+async function uploadSopFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = async function() {
+      const base64 = reader.result.split(',')[1]; // remove data:... prefix
+      try {
+        const res = await apiFetch('/sop-files', {
+          method: 'POST',
+          body: JSON.stringify({
+            filename: file.name,
+            contentType: file.type,
+            data: base64
+          })
+        });
+        const result = await res.json();
+        resolve(result); // { id, filename, contentType, size, url }
+      } catch (e) {
+        reject(e);
+      }
+    };
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
+}
+
+// ===== RELATED DOCUMENTS MANAGEMENT =====
+let modalDocs = []; // array of { name, url }
+
+function addDoc(name, url) {
+  modalDocs.push({ name: name || '', url: url || '' });
+  renderDocs();
+}
+
+function removeDoc(idx) {
+  modalDocs.splice(idx, 1);
+  renderDocs();
+}
+
+function renderDocs() {
+  const container = document.getElementById('docsContainer');
+  container.innerHTML = modalDocs.map((doc, i) => `
+    <div class="doc-card" data-idx="${i}">
+      <input class="doc-name" type="text" placeholder="Document name (e.g., Renewal Tracker)" value="${escHtml(doc.name)}" data-idx="${i}" />
+      <input class="doc-url" type="text" placeholder="URL (e.g., https://docs.google.com/...)" value="${escHtml(doc.url)}" data-idx="${i}" />
+      <span class="or-text">or</span>
+      <button type="button" class="btn-upload-doc" data-idx="${i}">📁 Upload</button>
+      <input type="file" class="doc-file-input" data-idx="${i}" style="display:none" />
+      <button type="button" class="doc-remove" onclick="removeDoc(${i})" title="Remove document">&times;</button>
+    </div>
+  `).join('');
+
+  container.querySelectorAll('.doc-name').forEach(el => {
+    el.addEventListener('input', () => { modalDocs[parseInt(el.dataset.idx)].name = el.value; });
+  });
+  container.querySelectorAll('.doc-url').forEach(el => {
+    el.addEventListener('input', () => { modalDocs[parseInt(el.dataset.idx)].url = el.value.trim(); });
+  });
+
+  // Upload file button
+  container.querySelectorAll('.btn-upload-doc').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.idx);
+      container.querySelector('.doc-file-input[data-idx="' + idx + '"]').click();
+    });
+  });
+
+  // File input change handler
+  container.querySelectorAll('.doc-file-input').forEach(input => {
+    input.addEventListener('change', async () => {
+      const idx = parseInt(input.dataset.idx);
+      const file = input.files[0];
+      if (!file) return;
+      const btn = container.querySelector('.btn-upload-doc[data-idx="' + idx + '"]');
+      const origText = btn.textContent;
+      btn.textContent = 'Uploading…';
+      btn.disabled = true;
+      try {
+        const result = await uploadSopFile(file);
+        modalDocs[idx].url = result.url;
+        // Auto-fill name if empty
+        if (!modalDocs[idx].name) {
+          modalDocs[idx].name = file.name.replace(/\.[^/.]+$/, ''); // strip extension
+        }
+        renderDocs(); // re-render to show updated values
+      } catch (e) {
+        alert('Upload failed: ' + e.message);
+        btn.textContent = origText;
+        btn.disabled = false;
+      }
+    });
+  });
+}
+
+// ===== SYSTEM DROPDOWN =====
+function getSystemValue() {
+  const sel = document.getElementById('fSystem');
+  if (sel.value === '__other__') return document.getElementById('fSystemOther').value.trim();
+  return sel.value;
+}
+
+function setSystemValue(val) {
+  const sel = document.getElementById('fSystem');
+  const otherInput = document.getElementById('fSystemOther');
+  // Check if val matches a preset option
+  const presets = Array.from(sel.options).map(o => o.value).filter(v => v && v !== '__other__');
+  if (presets.includes(val)) {
+    sel.value = val;
+    otherInput.style.display = 'none';
+    otherInput.value = '';
+  } else if (val) {
+    sel.value = '__other__';
+    otherInput.style.display = '';
+    otherInput.value = val;
+  } else {
+    sel.value = '';
+    otherInput.style.display = 'none';
+    otherInput.value = '';
+  }
+}
+
+// ===== TEXT TO BULLET HTML =====
+function textToBulletHtml(text) {
+  if (!text) return '';
+  const lines = text.split('\n');
+  let html = '';
+  let inList = false;
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) { if (inList) { html += '</ul>\n'; inList = false; } continue; }
+    const isBullet = /^[•\-\*]\s*/.test(line);
+    if (isBullet) {
+      if (!inList) { html += '<ul>\n'; inList = true; }
+      html += '  <li>' + escHtml(line.replace(/^[•\-\*]\s*/, '')) + '</li>\n';
+    } else {
+      if (inList) { html += '</ul>\n'; inList = false; }
+      html += '<p>' + escHtml(line) + '</p>\n';
+    }
+  }
+  if (inList) html += '</ul>\n';
+  return html;
+}
+
+// ===== CATEGORY / DEPARTMENT DROPDOWN HELPERS =====
+function getCategoryValue() {
+  const sel = document.getElementById('fCategory');
+  if (sel.value === '__other__') return document.getElementById('fCategoryOther').value.trim();
+  return sel.value;
+}
+function setCategoryValue(val) {
+  const sel = document.getElementById('fCategory');
+  const other = document.getElementById('fCategoryOther');
+  const presets = Array.from(sel.options).map(o => o.value).filter(v => v && v !== '__other__');
+  if (presets.includes(val)) { sel.value = val; other.style.display = 'none'; other.value = ''; }
+  else if (val) { sel.value = '__other__'; other.style.display = ''; other.value = val; }
+  else { sel.value = ''; other.style.display = 'none'; other.value = ''; }
+}
+function getDepartmentValue() {
+  const sel = document.getElementById('fDepartment');
+  if (sel.value === '__vendor__') return 'Third-Party Vendor: ' + document.getElementById('fDepartmentVendor').value.trim();
+  return sel.value;
+}
+function setDepartmentValue(val) {
+  const sel = document.getElementById('fDepartment');
+  const vendor = document.getElementById('fDepartmentVendor');
+  const presets = Array.from(sel.options).map(o => o.value).filter(v => v && v !== '__vendor__');
+  if (presets.includes(val)) { sel.value = val; vendor.style.display = 'none'; vendor.value = ''; }
+  else if (val && val.startsWith('Third-Party Vendor:')) { sel.value = '__vendor__'; vendor.style.display = ''; vendor.value = val.replace('Third-Party Vendor:', '').trim(); }
+  else if (val) { sel.value = '__vendor__'; vendor.style.display = ''; vendor.value = val; }
+  else { sel.value = ''; vendor.style.display = 'none'; vendor.value = ''; }
+}
+
+// ===== TRAINING VIDEO/IMAGE EMBED =====
+function buildTrainingEmbed(url) {
+  if (!url) return '';
+  // Image
+  if (/\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(url)) {
+    return `<div style="margin:20px 0;text-align:center"><img src="${escHtml(url)}" alt="Training Image" style="max-width:100%;border-radius:8px;border:1px solid #e2e8f0" /></div>\n`;
+  }
+  // YouTube
+  let m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  if (m) return `<div style="position:relative;width:100%;padding-bottom:56.25%;margin:20px 0;border-radius:8px;overflow:hidden"><iframe src="https://www.youtube.com/embed/${m[1]}?rel=0" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div>\n`;
+  // Loom
+  m = url.match(/loom\.com\/(?:share|embed)\/([a-zA-Z0-9]+)/);
+  if (m) return `<div style="position:relative;width:100%;padding-bottom:56.25%;margin:20px 0;border-radius:8px;overflow:hidden"><iframe src="https://www.loom.com/embed/${m[1]}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none" allowfullscreen></iframe></div>\n`;
+  // Vimeo
+  m = url.match(/vimeo\.com\/(\d+)/);
+  if (m) return `<div style="position:relative;width:100%;padding-bottom:56.25%;margin:20px 0;border-radius:8px;overflow:hidden"><iframe src="https://player.vimeo.com/video/${m[1]}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none" allow="autoplay;fullscreen;picture-in-picture" allowfullscreen></iframe></div>\n`;
+  // Google Drive
+  m = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (m) return `<div style="position:relative;width:100%;padding-bottom:56.25%;margin:20px 0;border-radius:8px;overflow:hidden"><iframe src="https://drive.google.com/file/d/${m[1]}/preview" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none" allow="autoplay" allowfullscreen></iframe></div>\n`;
+  // Direct video
+  if (/\.(mp4|webm|mov|ogg)(\?|$)/i.test(url)) return `<div style="margin:20px 0"><video controls preload="metadata" style="width:100%;border-radius:8px"><source src="${escHtml(url)}">Your browser does not support video.</video></div>\n`;
+  // Fallback: link
+  return `<div class="info-box"><h4>Training Resource</h4><p><a href="${escHtml(url)}" target="_blank">${escHtml(url)}</a></p></div>\n`;
+}
+
+// ===== GENERATE HTML CONTENT FROM FORM =====
+function buildContentHtml(data) {
+  const { title, property, system, category, department, purpose, whenToUse, stepsData, expectedResults, bestPractices, trainingUrl, relatedDocs } = data;
+
+  let html = '';
+
+  // Title
+  const titlePrefix = property ? (property + ' – ') : '';
+  html += `<h1>${escHtml(titlePrefix)}${escHtml(title)}</h1>\n`;
+
+  // Badges
+  const badges = [];
+  if (category) badges.push(`<span class="badge category">${escHtml(category)}</span>`);
+  if (department) badges.push(`<span class="badge department">${escHtml(department)}</span>`);
+  if (badges.length) html += `<p>${badges.join(' ')}</p>\n`;
+
+  // Meta line
+  const metaParts = [];
+  if (property) metaParts.push(`<strong>Property:</strong> ${escHtml(property)}`);
+  if (system) metaParts.push(`<strong>System:</strong> ${escHtml(system)}`);
+  if (metaParts.length) html += `<p>${metaParts.join(' &nbsp;|&nbsp; ')}</p>\n`;
+
+  // Training video/image
+  if (trainingUrl) html += buildTrainingEmbed(trainingUrl);
+
+  // Related Documents section
+  if (relatedDocs && relatedDocs.length > 0) {
+    html += `\n<div class="related-docs-view">\n`;
+    html += `<h4>Related Documents &amp; Templates</h4>\n`;
+    relatedDocs.forEach(d => {
+      html += `<a href="${escHtml(d.url)}" target="_blank" rel="noopener noreferrer">${escHtml(d.name)}</a>\n`;
+    });
+    html += `</div>\n`;
+  }
+
+  // Helper: replace document names in text with hyperlinks
+  function linkifyDocNames(text) {
+    if (!relatedDocs || !relatedDocs.length) return text;
+    let result = text;
+    // Sort by name length descending to match longer names first
+    const sorted = relatedDocs.slice().sort((a, b) => b.name.length - a.name.length);
+    sorted.forEach(d => {
+      if (!d.name || !d.url) return;
+      const escaped = d.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const re = new RegExp('(?!<[^>]*?)\\b(' + escaped + ')\\b(?![^<]*?>)', 'gi');
+      result = result.replace(re, '<a href="' + escHtml(d.url) + '" target="_blank" rel="noopener noreferrer" style="color:#0369a1;font-weight:600;text-decoration:underline">$1</a>');
+    });
+    return result;
+  }
+
+  // Section 1 – Purpose
+  if (purpose) {
+    html += `\n<h2>Section 1 – Purpose</h2>\n`;
+    html += linkifyDocNames(textToBulletHtml(purpose));
+  }
+
+  // Section 2 – When to Use
+  if (whenToUse) {
+    html += `\n<h2>Section 2 – When to Use This Process</h2>\n`;
+    html += linkifyDocNames(textToBulletHtml(whenToUse));
+  }
+
+  // Section 3 – Steps
+  if (stepsData && stepsData.length > 0) {
+    html += `\n<h2>Section 3 – Step-by-Step Instructions</h2>\n`;
+    stepsData.forEach((step, i) => {
+      if (!step.title && !step.description) return;
+      html += `\n<h3><span class="step-number">${i + 1}</span> ${linkifyDocNames(escHtml(step.title))}</h3>\n`;
+      if (step.description) {
+        html += linkifyDocNames(textToBulletHtml(step.description));
+      }
+      if (step.imageUrl) {
+        html += `<div style="margin:12px 0 20px;text-align:center"><img src="${escHtml(step.imageUrl)}" alt="Step ${i + 1} screenshot" style="max-width:100%;border:1px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,.08)" /></div>\n`;
+      }
+    });
+  }
+
+  // Section 4 – Expected Results
+  if (expectedResults) {
+    html += `\n<h2>Section 4 – Expected Result</h2>\n`;
+    html += `<div class="info-box success">\n<h4>Expected Outcome</h4>\n`;
+    html += textToBulletHtml(expectedResults);
+    html += `</div>\n`;
+  }
+
+  // Section 5 – Best Practices
+  if (bestPractices) {
+    html += `\n<h2>Section 5 – Best Practices</h2>\n`;
+    html += `<div class="info-box">\n<h4>Recommendations</h4>\n`;
+    html += textToBulletHtml(bestPractices);
+    html += `</div>\n`;
+  }
+
+  // Footer
+  html += `\n<hr>\n`;
+  const footerParts = [];
+  if (property) footerParts.push(escHtml(property));
+  footerParts.push('SOP: ' + escHtml(title));
+  html += `<p><em>Document: ${footerParts.join(' – ')}</em></p>\n`;
+  const footerMeta = [];
+  if (system) footerMeta.push('System: ' + escHtml(system));
+  if (department) footerMeta.push('Department: ' + escHtml(department));
+  if (footerMeta.length) html += `<p><em>${footerMeta.join(' &nbsp;|&nbsp; ')}</em></p>\n`;
+
+  return html;
+}
+
+// ===== CREATE / EDIT MODAL =====
+// Note: SOP type is always 'site' and property is always currentProperty
+// here (see hidden #fSopType / #fProperty fields) — Reslife Hub has no
+// company-wide SOP concept and no multi-property picker in this view.
+function openCreateModal() {
+  editingSopId = null;
+  document.getElementById('modalTitle').textContent = 'Create New SOP';
+  document.getElementById('fSopType').value = 'site';
+  document.getElementById('fProperty').value = currentProperty || '';
+  document.getElementById('fTitle').value = '';
+  setCategoryValue('');
+  setDepartmentValue('');
+  document.getElementById('fTrainingUrl').value = '';
+  document.getElementById('fPurpose').value = '';
+  document.getElementById('fWhenToUse').value = '';
+  document.getElementById('fExpectedResults').value = '';
+  document.getElementById('fBestPractices').value = '';
+  document.getElementById('fLastUpdated').value = 'Will be set on save';
+  setSystemValue('');
+  modalSteps = [];
+  modalDocs = [];
+  renderDocs();
+  addStep('', '', ''); // start with one empty step
+  document.getElementById('sopModal').classList.add('open');
+}
+
+function openEditModal(id) {
+  const sop = allSops.find(s => s.id === id);
+  if (!sop) return;
+  editingSopId = id;
+  document.getElementById('modalTitle').textContent = 'Edit SOP';
+  document.getElementById('fSopType').value = 'site';
+  document.getElementById('fProperty').value = sop.property || currentProperty || '';
+  document.getElementById('fTitle').value = sop.title || '';
+  setCategoryValue(sop.category || '');
+  setDepartmentValue(sop.department || '');
+  document.getElementById('fTrainingUrl').value = sop.trainingUrl || '';
+  document.getElementById('fPurpose').value = sop.purpose || '';
+  document.getElementById('fWhenToUse').value = sop.whenToUse || '';
+  document.getElementById('fExpectedResults').value = sop.expectedResults || '';
+  document.getElementById('fBestPractices').value = sop.bestPractices || '';
+  setSystemValue(sop.system || '');
+
+  // Last updated
+  if (sop.updatedAt) {
+    const d = new Date(sop.updatedAt);
+    document.getElementById('fLastUpdated').value = d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  } else {
+    document.getElementById('fLastUpdated').value = '—';
+  }
+
+  // Related Documents
+  modalDocs = Array.isArray(sop.relatedDocs) && sop.relatedDocs.length > 0
+    ? sop.relatedDocs.map(d => ({ name: d.name || '', url: d.url || '' }))
+    : [];
+  renderDocs();
+
+  // Steps
+  modalSteps = Array.isArray(sop.stepsData) && sop.stepsData.length > 0
+    ? sop.stepsData.map(s => ({ title: s.title || '', description: s.description || '', imageUrl: s.imageUrl || '' }))
+    : [{ title: '', description: '', imageUrl: '' }];
+  renderSteps();
+
+  document.getElementById('sopModal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('sopModal').classList.remove('open');
+  editingSopId = null;
+}
+
+async function saveSopFromModal() {
+  const sopType = 'site';
+  const property = currentProperty;
+  const title = document.getElementById('fTitle').value.trim();
+  const category = getCategoryValue() || 'General';
+  const department = getDepartmentValue();
+  const system = getSystemValue();
+  const trainingUrl = document.getElementById('fTrainingUrl').value.trim();
+  const purpose = document.getElementById('fPurpose').value.trim();
+  const whenToUse = document.getElementById('fWhenToUse').value.trim();
+  const expectedResults = document.getElementById('fExpectedResults').value.trim();
+  const bestPractices = document.getElementById('fBestPractices').value.trim();
+
+  // Filter out empty steps
+  const stepsData = modalSteps.filter(s => s.title.trim() || s.description.trim());
+  // Filter out empty docs
+  const relatedDocs = modalDocs.filter(d => d.name.trim() && d.url.trim());
+
+  if (!title) { alert('Title is required.'); return; }
+  if (!property) { alert('No property is selected. Reload the page and try again.'); return; }
+
+  // Auto-generate HTML content from structured fields
+  const content = buildContentHtml({ title, property, system, category, department, purpose, whenToUse, stepsData, expectedResults, bestPractices, trainingUrl, relatedDocs });
+
+  const payload = {
+    sopType, property, title, category, department, system, content,
+    purpose, whenToUse, stepsData, expectedResults, bestPractices,
+    trainingUrl, relatedDocs,
+    steps: '', resources: '', owner: '', lastReviewed: ''
+  };
+
+  try {
+    let savedId = editingSopId;
+    if (editingSopId) {
+      await apiFetch('/sops', { method: 'PUT', body: JSON.stringify(Object.assign({ id: editingSopId }, payload)) });
+    } else {
+      const res = await apiFetch('/sops', { method: 'POST', body: JSON.stringify(payload) });
+      const created = await res.json();
+      if (created && created.id) savedId = created.id;
+    }
+    closeModal();
+    await loadAllSops();
+    if (savedId) {
+      viewSop(savedId);
+    } else {
+      showWelcome();
+    }
+  } catch (e) {
+    alert('Save failed: ' + e.message);
+  }
+}
+
+async function deleteSop(id) {
+  const sop = allSops.find(s => s.id === id);
+  if (!sop) return;
+  if (!confirm('Delete "' + sop.title + '"? This cannot be undone.')) return;
+  try {
+    await apiFetch('/sops', { method: 'DELETE', body: JSON.stringify({ id }) });
+    await loadAllSops();
+    showWelcome();
+  } catch (e) {
+    alert('Delete failed: ' + e.message);
+  }
+}
+
+// ===== HELPERS =====
+function escHtml(str) {
+  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function copySopLink(id) {
+  const url = new URL(window.location);
+  url.searchParams.set('sop', id);
+  url.hash = '';
+  const link = url.toString();
+  navigator.clipboard.writeText(link).then(() => {
+    const btn = event.target.closest ? event.target.closest('button') : event.target;
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = orig; }, 2000);
+  }).catch(() => {
+    prompt('Copy this link:', link);
+  });
+}
+
+// ===== EXPORT FUNCTIONS =====
+
+function getExportDate() {
+  return new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+}
+
+function getExportMonth() {
+  return new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+}
+
+// Convert text with bullet markers to HTML list
+function textToHtmlList(text) {
+  if (!text) return '';
+  var lines = text.split('\n');
+  var h = '';
+  var inUl = false;
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i].trim();
+    if (!line) { if (inUl) { h += '</ul>\n'; inUl = false; } continue; }
+    var isBullet = /^[\u2022\-\*]\s*/.test(line);
+    if (isBullet) {
+      if (!inUl) { h += '<ul>\n'; inUl = true; }
+      h += '<li>' + escHtml(line.replace(/^[\u2022\-\*]\s*/, '')) + '</li>\n';
+    } else {
+      if (inUl) { h += '</ul>\n'; inUl = false; }
+      h += '<p>' + escHtml(line) + '</p>\n';
+    }
+  }
+  if (inUl) h += '</ul>\n';
+  return h;
+}
+
+// Build the document body content from SOP data
+function buildExportBody(sop) {
+  var property = sop.property || 'Capstone Management Partners';
+  var title = sop.title || 'SOP Document';
+  var system = sop.system || '';
+  var department = sop.department || '';
+  var category = sop.category || '';
+  var updatedMonth = '';
+  if (sop.updatedAt) {
+    var d = new Date(sop.updatedAt);
+    updatedMonth = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  } else {
+    updatedMonth = getExportMonth();
+  }
+
+  var h = '';
+
+  // Document title with property prefix
+  h += '<h1>' + escHtml(property) + ' - ' + escHtml(title) + '</h1>\n';
+
+  // Tags line
+  var tags = [];
+  if (category) tags.push('[' + escHtml(category) + ']');
+  if (department) tags.push('[' + escHtml(department) + ']');
+  if (tags.length) h += '<p>' + tags.join(' ') + '</p>\n';
+
+  // Meta line
+  var meta = [];
+  if (property) meta.push('<b>Property:</b> ' + escHtml(property));
+  if (system) meta.push('<b>System:</b> ' + escHtml(system));
+  if (meta.length) h += '<p>' + meta.join('  |  ') + '</p>\n';
+
+  // Section 1 - Purpose
+  if (sop.purpose) {
+    h += '<h2>Section 1 - Purpose</h2>\n';
+    h += '<p>' + escHtml(sop.purpose) + '</p>\n';
+  }
+
+  // Section 2 - When to Use
+  if (sop.whenToUse) {
+    h += '<h2>Section 2 - When to Use This Process</h2>\n';
+    h += '<p>' + escHtml(sop.whenToUse) + '</p>\n';
+  }
+
+  // Section 3 - Steps
+  var steps = Array.isArray(sop.stepsData) ? sop.stepsData.filter(function(s) { return s.title || s.description; }) : [];
+  if (steps.length) {
+    h += '<h2>Section 3 - Step-by-Step Instructions</h2>\n';
+    for (var i = 0; i < steps.length; i++) {
+      var step = steps[i];
+      h += '<h3><b>' + (i + 1) + '</b> ' + escHtml(step.title || '') + '</h3>\n';
+      if (step.description) {
+        h += textToHtmlList(step.description);
+      }
+    }
+  }
+
+  // Section 4 - Expected Result
+  if (sop.expectedResults) {
+    h += '<h2>Section 4 - Expected Result</h2>\n';
+    h += '<h4>Expected Outcome</h4>\n';
+    h += '<p>' + escHtml(sop.expectedResults) + '</p>\n';
+  }
+
+  // Section 5 - Best Practices
+  if (sop.bestPractices) {
+    h += '<h2>Section 5 - Best Practices</h2>\n';
+    h += '<h4>Recommendations</h4>\n';
+    h += textToHtmlList(sop.bestPractices);
+  }
+
+  // Footer
+  h += '<hr>\n';
+  h += '<p><em>Document: ' + escHtml(property) + ' - SOP: ' + escHtml(title) + '</em></p>\n';
+  var footMeta = [];
+  if (system) footMeta.push('System: ' + escHtml(system));
+  if (department) footMeta.push('Department: ' + escHtml(department));
+  footMeta.push('Last Updated: ' + escHtml(updatedMonth));
+  h += '<p><em>' + footMeta.join('  |  ') + '</em></p>\n';
+
+  return h;
+}
+
+function exportWord() {
+  var sop = selectedSopId ? allSops.find(function(s) { return s.id === selectedSopId; }) : null;
+  if (!sop) { alert('No SOP selected to export.'); return; }
+
+  var property = sop.property || 'Capstone Management Partners';
+  var title = sop.title || 'SOP Document';
+  var system = sop.system || '';
+  var department = sop.department || '';
+  var dateStr = getExportDate();
+  var bodyContent = buildExportBody(sop);
+
+  // Build Word-compatible HTML document with cover page, headers, and footers
+  var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">\n';
+  html += '<head>\n';
+  html += '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">\n';
+  html += '<title>' + escHtml(title) + '</title>\n';
+  html += '<!--[if gte mso 9]><xml>\n';
+  html += '<w:WordDocument>\n';
+  html += '<w:View>Print</w:View>\n';
+  html += '<w:Zoom>100</w:Zoom>\n';
+  html += '<w:DoNotOptimizeForBrowser/>\n';
+  html += '</w:WordDocument>\n';
+  html += '</xml><![endif]-->\n';
+  html += '<style>\n';
+  // Page setup
+  html += '@page { size: 8.5in 11in; margin: 1in 1in 1in 1in; }\n';
+  html += '@page Section1 { mso-header-margin: 0.5in; mso-footer-margin: 0.5in; mso-header: h1; mso-footer: f1; }\n';
+  html += 'div.Section1 { page: Section1; }\n';
+  // Body styles
+  html += 'body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; line-height: 1.5; color: #000000; }\n';
+  // Cover page styles
+  html += '.cover-page { page-break-after: always; height: 100%; display: flex; flex-direction: column; }\n';
+  html += '.cover-header { text-align: right; font-style: italic; color: #666666; font-size: 10pt; padding: 20pt 0; }\n';
+  html += '.cover-content { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 100pt 40pt; }\n';
+  html += '.cover-property { font-size: 28pt; font-weight: bold; color: #446472; margin: 0 0 16pt 0; }\n';
+  html += '.cover-type { font-size: 16pt; color: #666666; margin: 0 0 24pt 0; }\n';
+  html += '.cover-title { font-size: 14pt; font-weight: bold; color: #000000; margin: 0 0 30pt 0; }\n';
+  html += '.cover-meta { font-size: 11pt; font-style: italic; color: #666666; margin: 4pt 0; }\n';
+  html += '.cover-footer { text-align: center; font-size: 9pt; color: #888888; padding: 20pt 0; border-top: 1pt solid #cccccc; }\n';
+  // Content styles
+  html += 'h1 { font-size: 14pt; font-weight: bold; color: #000000; margin: 16pt 0 8pt 0; }\n';
+  html += 'h2 { font-size: 12pt; font-weight: bold; color: #000000; margin: 18pt 0 8pt 0; border-bottom: 1pt solid #cccccc; padding-bottom: 4pt; }\n';
+  html += 'h3 { font-size: 11pt; font-weight: bold; color: #000000; margin: 12pt 0 6pt 0; }\n';
+  html += 'h4 { font-size: 11pt; font-weight: bold; color: #333333; margin: 10pt 0 4pt 0; }\n';
+  html += 'p { margin: 6pt 0; line-height: 1.5; }\n';
+  html += 'ul { margin: 6pt 0 6pt 24pt; }\n';
+  html += 'li { margin: 3pt 0; }\n';
+  html += 'hr { border: none; border-top: 1pt solid #cccccc; margin: 18pt 0; }\n';
+  html += 'em { font-style: italic; color: #666666; }\n';
+  html += 'b { font-weight: bold; }\n';
+  // Header and footer styles
+  html += '.page-header { text-align: right; font-style: italic; color: #666666; font-size: 10pt; border-bottom: 0.5pt solid #cccccc; padding-bottom: 6pt; margin-bottom: 12pt; }\n';
+  html += '.page-footer { text-align: center; font-size: 9pt; color: #888888; border-top: 0.5pt solid #cccccc; padding-top: 6pt; margin-top: 12pt; }\n';
+  html += '</style>\n';
+  html += '</head>\n';
+  html += '<body>\n';
+
+  // ===== COVER PAGE =====
+  html += '<div class="cover-page">\n';
+  html += '<div class="cover-header">Capstone Management Partners - SOP Library</div>\n';
+  html += '<div class="cover-content">\n';
+  html += '<p class="cover-property">' + escHtml(property) + '</p>\n';
+  html += '<p class="cover-type">Standard Operating Procedure</p>\n';
+  html += '<p class="cover-title">' + escHtml(property) + ' - SOP: ' + escHtml(title) + '</p>\n';
+  if (system) html += '<p class="cover-meta">System: ' + escHtml(system) + '</p>\n';
+  if (department) html += '<p class="cover-meta">Department: ' + escHtml(department) + '</p>\n';
+  html += '<p class="cover-meta">Date: ' + escHtml(dateStr) + '</p>\n';
+  html += '</div>\n';
+  html += '<div class="cover-footer">Confidential - Internal Use Only</div>\n';
+  html += '</div>\n';
+
+  // ===== CONTENT PAGES =====
+  html += '<div class="Section1">\n';
+  // Page header (will repeat on each page in Word)
+  html += '<div class="page-header">Capstone Management Partners - SOP Library</div>\n';
+  // Body content
+  html += bodyContent;
+  // Page footer
+  html += '<div class="page-footer">Confidential - Internal Use Only</div>\n';
+  html += '</div>\n';
+
+  html += '</body>\n</html>';
+
+  // Create and download the file
+  var blob = new Blob([html], { type: 'application/msword' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  var filename = (title.replace(/[^a-zA-Z0-9 _-]/g, '').replace(/\s+/g, '_') || 'SOP') + '.doc';
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function exportPDF() {
+  var sop = selectedSopId ? allSops.find(function(s) { return s.id === selectedSopId; }) : null;
+  if (!sop) { alert('No SOP selected to export.'); return; }
+
+  var property = sop.property || 'Capstone Management Partners';
+  var title = sop.title || 'SOP Document';
+  var system = sop.system || '';
+  var department = sop.department || '';
+  var dateStr = getExportDate();
+  var updatedMonth = getExportMonth();
+  var bodyContent = buildExportBody(sop);
+
+  var pdfHtml = '<!DOCTYPE html>\n<html>\n<head>\n';
+  pdfHtml += '<meta charset="utf-8">\n';
+  pdfHtml += '<title>' + escHtml(title) + '</title>\n';
+  pdfHtml += '<style>\n';
+  // Page setup
+  pdfHtml += '@page { size: letter; margin: 0.75in 0.75in 1in 0.75in; }\n';
+  pdfHtml += '@media print {\n';
+  pdfHtml += '  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }\n';
+  pdfHtml += '  .cover-page { page-break-after: always; }\n';
+  pdfHtml += '  .page-header { position: running(header); }\n';
+  pdfHtml += '  .page-footer { position: fixed; bottom: 0; left: 0; right: 0; }\n';
+  pdfHtml += '}\n';
+  // Base styles
+  pdfHtml += '* { box-sizing: border-box; margin: 0; padding: 0; }\n';
+  pdfHtml += 'body { font-family: Calibri, "Segoe UI", Arial, sans-serif; font-size: 11pt; line-height: 1.6; color: #1a1a1a; background: #fff; }\n';
+  // Cover page styles
+  pdfHtml += '.cover-page { height: 100vh; display: flex; flex-direction: column; padding: 0.75in; }\n';
+  pdfHtml += '.cover-page .cover-header { text-align: right; font-style: italic; color: #666666; font-size: 10pt; }\n';
+  pdfHtml += '.cover-page .cover-content { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }\n';
+  pdfHtml += '.cover-page .cover-property { font-size: 28pt; font-weight: bold; color: #446472; margin: 0 0 12pt 0; }\n';
+  pdfHtml += '.cover-page .cover-type { font-size: 16pt; color: #666666; margin: 0 0 20pt 0; }\n';
+  pdfHtml += '.cover-page .cover-title { font-size: 13pt; font-weight: bold; color: #000000; margin: 0 0 28pt 0; }\n';
+  pdfHtml += '.cover-page .cover-meta { font-size: 11pt; font-style: italic; color: #666666; margin: 3pt 0; }\n';
+  pdfHtml += '.cover-page .cover-footer { text-align: center; font-size: 9pt; color: #888888; padding-top: 12pt; border-top: 0.5pt solid #cccccc; }\n';
+  // Content page styles
+  pdfHtml += '.content-page { padding: 0.75in; padding-top: 0.5in; }\n';
+  pdfHtml += '.page-header { text-align: right; font-style: italic; color: #666666; font-size: 10pt; padding-bottom: 8pt; border-bottom: 0.5pt solid #cccccc; margin-bottom: 16pt; }\n';
+  pdfHtml += '.page-footer { text-align: center; font-size: 9pt; color: #888888; padding: 8pt 0.75in; border-top: 0.5pt solid #cccccc; background: #fff; }\n';
+  // Typography
+  pdfHtml += 'h1 { font-size: 14pt; font-weight: bold; color: #111; margin: 14pt 0 8pt 0; }\n';
+  pdfHtml += 'h2 { font-size: 12pt; font-weight: bold; color: #1a1a1a; margin: 18pt 0 8pt 0; padding-bottom: 4pt; border-bottom: 1pt solid #d0d0d0; }\n';
+  pdfHtml += 'h3 { font-size: 11pt; font-weight: bold; color: #222; margin: 12pt 0 6pt 0; }\n';
+  pdfHtml += 'h4 { font-size: 11pt; font-weight: bold; color: #333; margin: 10pt 0 4pt 0; }\n';
+  pdfHtml += 'p { margin: 6pt 0; line-height: 1.6; }\n';
+  pdfHtml += 'ul { margin: 6pt 0 8pt 24pt; line-height: 1.6; }\n';
+  pdfHtml += 'li { margin: 3pt 0; }\n';
+  pdfHtml += 'hr { border: none; border-top: 1pt solid #ccc; margin: 16pt 0; }\n';
+  pdfHtml += 'em { font-style: italic; color: #666; }\n';
+  pdfHtml += 'b { font-weight: bold; }\n';
+  pdfHtml += '</style>\n';
+  pdfHtml += '</head>\n<body>\n';
+
+  // ===== COVER PAGE =====
+  pdfHtml += '<div class="cover-page">\n';
+  pdfHtml += '<div class="cover-header">Capstone Management Partners - SOP Library</div>\n';
+  pdfHtml += '<div class="cover-content">\n';
+  pdfHtml += '<div class="cover-property">' + escHtml(property) + '</div>\n';
+  pdfHtml += '<div class="cover-type">Standard Operating Procedure</div>\n';
+  pdfHtml += '<div class="cover-title">' + escHtml(property) + ' - SOP: ' + escHtml(title) + '</div>\n';
+  if (system) pdfHtml += '<div class="cover-meta">System: ' + escHtml(system) + '</div>\n';
+  if (department) pdfHtml += '<div class="cover-meta">Department: ' + escHtml(department) + '</div>\n';
+  pdfHtml += '<div class="cover-meta">Date: ' + escHtml(dateStr) + '</div>\n';
+  pdfHtml += '</div>\n';
+  pdfHtml += '<div class="cover-footer">Confidential - Internal Use Only</div>\n';
+  pdfHtml += '</div>\n';
+
+  // ===== CONTENT PAGES =====
+  pdfHtml += '<div class="content-page">\n';
+  // Page header
+  pdfHtml += '<div class="page-header">Capstone Management Partners - SOP Library</div>\n';
+  // Body content
+  pdfHtml += bodyContent;
+  pdfHtml += '</div>\n';
+
+  // Fixed footer for all pages
+  pdfHtml += '<div class="page-footer">Confidential - Internal Use Only</div>\n';
+
+  pdfHtml += '<script>window.onload=function(){setTimeout(function(){window.print();},500);};<\/script>\n';
+  pdfHtml += '</body>\n</html>';
+
+  var w = window.open('', '_blank', 'width=850,height=700');
+  if (!w) { alert('Please allow popups to export PDF.'); return; }
+  w.document.open();
+  w.document.write(pdfHtml);
+  w.document.close();
+}
+
+// ===== SETUP MANAGER CONTROLS =====
+// "Admin" here means SOP-library manager tier (reslife-rec / reslife-admin /
+// site-wide admin) — see isAdmin() above. There's no site selector: this
+// page is always scoped to the single currentProperty resolved at init.
+function setupAdminControls() {
+  document.getElementById('sidebarActions').style.display = isAdmin() ? '' : 'none';
+}
+
+// ===== DEEP LINK SUPPORT =====
+function getSopIdFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('sop') || '';
+}
+
+function updateUrlForSop(id) {
+  if (!id) {
+    if (window.location.search) history.replaceState(null, '', window.location.pathname + window.location.search.replace(/[?&]sop=[^&]*/, '').replace(/^&/, '?'));
+    return;
+  }
+  const url = new URL(window.location);
+  url.searchParams.set('sop', id);
+  history.replaceState(null, '', url);
+}
+
+// Override viewSop to also update URL
+const _origViewSop = viewSop;
+viewSop = function(id) {
+  _origViewSop(id);
+  updateUrlForSop(id);
+};
+const _origShowWelcome = showWelcome;
+showWelcome = function() {
+  _origShowWelcome();
+  updateUrlForSop('');
+};
+
+// ===== INIT =====
+async function initApp() {
+  const ok = await checkSession();
+  if (!ok) { showLogin(); return; }
+
+  currentProperty = resolveCurrentProperty();
+  if (!currentProperty) {
+    showApp();
+    document.getElementById('contentDisplay').innerHTML = '<h1>No Property Selected</h1><p>Select a property in Reslife Hub, then reopen the SOP Library tab.</p>';
+    return;
+  }
+  const badge = document.getElementById('propertyBadge');
+  if (badge) badge.textContent = currentProperty;
+
+  showApp();
+  await loadAllSops();
+  setupAdminControls();
+
+  // Check for deep link
+  const deepLinkId = getSopIdFromUrl();
+  if (deepLinkId && allSops.find(s => s.id === deepLinkId)) {
+    viewSop(deepLinkId);
+  } else {
+    showWelcome();
+  }
+}
+
+// ===== EVENT BINDINGS =====
+document.getElementById('createSopBtn').addEventListener('click', openCreateModal);
+document.getElementById('modalSaveBtn').addEventListener('click', saveSopFromModal);
+document.getElementById('fSystem').addEventListener('change', function() {
+  document.getElementById('fSystemOther').style.display = this.value === '__other__' ? '' : 'none';
+});
+document.getElementById('fCategory').addEventListener('change', function() {
+  document.getElementById('fCategoryOther').style.display = this.value === '__other__' ? '' : 'none';
+});
+document.getElementById('fDepartment').addEventListener('change', function() {
+  document.getElementById('fDepartmentVendor').style.display = this.value === '__vendor__' ? '' : 'none';
+});
+document.getElementById('addStepBtn').addEventListener('click', () => addStep('', '', ''));
+document.getElementById('addDocBtn').addEventListener('click', () => addDoc('', ''));
+document.getElementById('searchInput').addEventListener('input', renderNav);
+
+// ===== ACKNOWLEDGEMENT FEATURE =====
+let ackGroups = [];           // cached groups
+let ackAssignStaff = [];      // temp staff list in assign modal
+let ackAssignGroupIds = [];   // temp selected group IDs in assign modal
+let ackAssignSopId = null;    // SOP being assigned in modal
+let ackConfirmPerson = null;  // { name, email, sopId, sopTitle }
+let editingGroupId = null;    // group being edited in group manager
+
+// ── API helpers ──
+async function ackFetch(action, opts = {}) {
+  const params = new URLSearchParams(opts.params || {});
+  params.set('action', action);
+  const url = API + '/sop-acknowledgements?' + params.toString();
+  const fetchOpts = { credentials: 'include', headers: { 'Content-Type': 'application/json' } };
+  if (opts.method) fetchOpts.method = opts.method;
+  if (opts.body) fetchOpts.body = JSON.stringify(opts.body);
+  const res = await fetch(url, fetchOpts);
+  if (!res.ok) { const t = await res.text(); throw new Error(t || 'HTTP ' + res.status); }
+  return res.json();
+}
+
+// ── Render acknowledgement section in SOP view ──
+async function renderAckSection(sopId, sopTitle) {
+  const display = document.getElementById('contentDisplay');
+  // Remove existing ack section if present
+  const existing = display.querySelector('.ack-section');
+  if (existing) existing.remove();
+
+  try {
+    const staffList = await ackFetch('resolved-staff', { params: { sopId } });
+    if (!staffList || staffList.length === 0) {
+      // No assignments — admin sees a hint, users see nothing
+      if (isAdmin()) {
+        const section = document.createElement('div');
+        section.className = 'ack-section';
+        section.innerHTML = `
+          <h2><span class="ack-icon">📋</span> Staff Acknowledgement</h2>
+          <div class="ack-empty">No staff assigned for acknowledgement. <a href="#" onclick="openAssignModal('${escHtml(sopId)}');return false" style="color:var(--brand-accent-2);font-weight:600">Assign staff now →</a></div>
+        `;
+        display.appendChild(section);
+      }
+      return;
+    }
+
+    const completed = staffList.filter(s => s.acknowledged);
+    const pending = staffList.filter(s => !s.acknowledged);
+
+    let html = `<h2><span class="ack-icon">📋</span> Staff Acknowledgement</h2>`;
+    html += `<div class="ack-summary">`;
+    html += `<div class="ack-stat complete">✅ ${completed.length} Acknowledged</div>`;
+    html += `<div class="ack-stat pending">⏳ ${pending.length} Pending</div>`;
+    html += `<div class="ack-stat" style="background:#fff">👥 ${staffList.length} Total</div>`;
+    html += `</div>`;
+
+    html += `<div class="ack-staff-list">`;
+    for (const person of staffList) {
+      html += `<div class="ack-staff-row">`;
+      html += `<div class="ack-name">${escHtml(person.name)}</div>`;
+      if (person.email) html += `<div class="ack-email">${escHtml(person.email)}</div>`;
+      if (person.acknowledged) {
+        const dt = new Date(person.acknowledgedAt);
+        const dateStr = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        const timeStr = dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+        html += `<span class="ack-status-badge done">✓ Acknowledged</span>`;
+        html += `<span class="ack-timestamp">${escHtml(dateStr)} ${escHtml(timeStr)}</span>`;
+      } else {
+        html += `<span class="ack-status-badge waiting">Pending</span>`;
+        html += `<button class="ack-btn" onclick="openAckConfirmModal('${escHtml(person.name)}','${escHtml(person.email)}','${escHtml(sopId)}',${JSON.stringify(escHtml(sopTitle)).replace(/'/g,'\\\'')})">Acknowledge</button>`;
+      }
+      html += `</div>`;
+    }
+    html += `</div>`;
+
+    if (isAdmin()) {
+      html += `<div style="margin-top:12px;display:flex;gap:8px">`;
+      html += `<button class="add-staff-btn" onclick="openAssignModal('${escHtml(sopId)}')">✏️ Manage Assignments</button>`;
+      html += `<button class="add-staff-btn" onclick="viewAckHistory('${escHtml(sopId)}')">📜 View Full History</button>`;
+      html += `</div>`;
+    }
+
+    const section = document.createElement('div');
+    section.className = 'ack-section';
+    section.innerHTML = html;
+    display.appendChild(section);
+  } catch (e) {
+    console.error('Failed to load acknowledgement data:', e);
+  }
+}
+
+// ── Ack Confirm Modal ──
+function openAckConfirmModal(name, email, sopId, sopTitle) {
+  ackConfirmPerson = { name, email, sopId, sopTitle };
+  document.getElementById('ackPersonName').textContent = name;
+  document.getElementById('ackConfirmModal').classList.add('open');
+}
+
+function closeAckConfirmModal() {
+  document.getElementById('ackConfirmModal').classList.remove('open');
+  ackConfirmPerson = null;
+}
+
+async function submitAcknowledgement() {
+  if (!ackConfirmPerson) return;
+  const btn = document.getElementById('ackSubmitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+  try {
+    await ackFetch('acknowledge', {
+      method: 'POST',
+      body: {
+        sopId: ackConfirmPerson.sopId,
+        sopTitle: ackConfirmPerson.sopTitle,
+        staffName: ackConfirmPerson.name,
+        staffEmail: ackConfirmPerson.email,
+        statement: document.getElementById('ackStatement').textContent
+      }
+    });
+    closeAckConfirmModal();
+    // Refresh ack section
+    if (selectedSopId) {
+      const sop = allSops.find(s => s.id === selectedSopId);
+      if (sop) await renderAckSection(selectedSopId, sop.title);
+    }
+  } catch (e) {
+    alert('Failed to submit acknowledgement: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'I Acknowledge';
+  }
+}
+
+// ── Assignment Modal ──
+async function openAssignModal(sopId) {
+  ackAssignSopId = sopId;
+  const sop = allSops.find(s => s.id === sopId);
+  document.getElementById('assignModalTitle').textContent = 'Assign Acknowledgements' + (sop ? ': ' + sop.title : '');
+
+  // Load current assignment
+  try {
+    const assignment = await ackFetch('assignment', { params: { sopId } });
+    ackAssignStaff = (assignment.staff || []).map(s => ({ name: s.name, email: s.email || '' }));
+    ackAssignGroupIds = assignment.groupIds || [];
+  } catch (e) {
+    ackAssignStaff = [];
+    ackAssignGroupIds = [];
+  }
+
+  if (ackAssignStaff.length === 0) addAssignStaffRow('', '');
+  renderAssignStaffList();
+
+  // Load groups
+  await loadAckGroups();
+  renderAssignGroupChips();
+
+  document.getElementById('assignModal').classList.add('open');
+}
+
+function closeAssignModal() {
+  document.getElementById('assignModal').classList.remove('open');
+  ackAssignSopId = null;
+}
+
+function addAssignStaffRow(name, email) {
+  ackAssignStaff.push({ name: name || '', email: email || '' });
+  renderAssignStaffList();
+}
+
+function removeAssignStaffRow(idx) {
+  ackAssignStaff.splice(idx, 1);
+  renderAssignStaffList();
+}
+
+function renderAssignStaffList() {
+  const container = document.getElementById('assignStaffList');
+  container.innerHTML = ackAssignStaff.map((s, i) => `
+    <div class="staff-input-row">
+      <input type="text" placeholder="Full Name" value="${escHtml(s.name)}" onchange="ackAssignStaff[${i}].name=this.value" />
+      <input type="text" placeholder="Email (optional)" value="${escHtml(s.email)}" onchange="ackAssignStaff[${i}].email=this.value" />
+      <button type="button" class="remove-staff-btn" onclick="removeAssignStaffRow(${i})">&times;</button>
+    </div>
+  `).join('');
+  document.getElementById('assignStaffCount').textContent = ackAssignStaff.filter(s => s.name.trim()).length;
+}
+
+async function loadAckGroups() {
+  try {
+    ackGroups = await ackFetch('groups');
+  } catch (e) {
+    ackGroups = [];
+  }
+}
+
+function renderAssignGroupChips() {
+  const container = document.getElementById('assignGroupChips');
+  if (ackGroups.length === 0) {
+    container.innerHTML = '<span style="font-size:12px;color:#94a3b8">No groups created yet. <a href="#" onclick="openGroupManagerModal();return false" style="color:var(--brand-accent-2)">Create one</a></span>';
+    document.getElementById('assignGroupCount').textContent = '0';
+    return;
+  }
+  container.innerHTML = ackGroups.map(g => {
+    const sel = ackAssignGroupIds.includes(g.id) ? ' selected' : '';
+    return `<div class="group-chip${sel}" onclick="toggleAssignGroup('${escHtml(g.id)}')">${escHtml(g.name)} <span class="chip-count">(${(g.members || []).length})</span></div>`;
+  }).join('');
+  document.getElementById('assignGroupCount').textContent = ackAssignGroupIds.length;
+}
+
+function toggleAssignGroup(groupId) {
+  const idx = ackAssignGroupIds.indexOf(groupId);
+  if (idx >= 0) ackAssignGroupIds.splice(idx, 1);
+  else ackAssignGroupIds.push(groupId);
+  renderAssignGroupChips();
+}
+
+async function saveAssignment() {
+  if (!ackAssignSopId) return;
+  const staff = ackAssignStaff.filter(s => s.name.trim());
+  const btn = document.getElementById('assignSaveBtn');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  try {
+    await ackFetch('assignment', {
+      method: 'POST',
+      body: { sopId: ackAssignSopId, staff, groupIds: ackAssignGroupIds }
+    });
+    closeAssignModal();
+    // Refresh ack section
+    if (selectedSopId) {
+      const sop = allSops.find(s => s.id === selectedSopId);
+      if (sop) await renderAckSection(selectedSopId, sop.title);
+    }
+  } catch (e) {
+    alert('Failed to save assignments: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Save Assignments';
+  }
+}
+
+// ── Group Manager Modal ──
+function openGroupManagerModal() {
+  editingGroupId = null;
+  resetGroupForm();
+  renderGroupList();
+  document.getElementById('groupManagerModal').classList.add('open');
+}
+
+function closeGroupManagerModal() {
+  document.getElementById('groupManagerModal').classList.remove('open');
+  // Refresh group chips if assign modal is open
+  if (document.getElementById('assignModal').classList.contains('open')) {
+    loadAckGroups().then(() => renderAssignGroupChips());
+  }
+}
+
+function resetGroupForm() {
+  editingGroupId = null;
+  document.getElementById('groupFormTitle').textContent = 'Create New Group';
+  document.getElementById('groupNameInput').value = '';
+  const container = document.getElementById('groupMembersContainer');
+  container.innerHTML = '';
+  addGroupMemberRow('', '');
+}
+
+function addGroupMemberRow(name, email) {
+  const container = document.getElementById('groupMembersContainer');
+  const idx = container.children.length;
+  const row = document.createElement('div');
+  row.className = 'staff-input-row';
+  row.innerHTML = `
+    <input type="text" placeholder="Full Name" value="${escHtml(name)}" data-field="name" />
+    <input type="text" placeholder="Email (optional)" value="${escHtml(email)}" data-field="email" />
+    <button type="button" class="remove-staff-btn" onclick="this.parentElement.remove()">&times;</button>
+  `;
+  container.appendChild(row);
+}
+
+function getGroupMembersFromForm() {
+  const rows = document.getElementById('groupMembersContainer').querySelectorAll('.staff-input-row');
+  const members = [];
+  rows.forEach(row => {
+    const name = row.querySelector('[data-field="name"]').value.trim();
+    const email = row.querySelector('[data-field="email"]').value.trim();
+    if (name) members.push({ name, email });
+  });
+  return members;
+}
+
+async function renderGroupList() {
+  await loadAckGroups();
+  const container = document.getElementById('groupListContainer');
+  if (ackGroups.length === 0) {
+    container.innerHTML = '<div style="padding:12px;color:#94a3b8;font-size:13px;text-align:center">No groups created yet.</div>';
+    return;
+  }
+  container.innerHTML = ackGroups.map(g => `
+    <div class="group-list-item">
+      <div class="group-info">
+        <div class="group-name">${escHtml(g.name)}</div>
+        <div class="group-members-count">${(g.members || []).length} member${(g.members || []).length !== 1 ? 's' : ''}: ${(g.members || []).map(m => escHtml(m.name)).join(', ')}</div>
+      </div>
+      <div class="group-actions">
+        <button class="btn-edit-group" onclick="editGroup('${escHtml(g.id)}')">Edit</button>
+        <button class="btn-del-group" onclick="deleteGroup('${escHtml(g.id)}','${escHtml(g.name)}')">Delete</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function editGroup(groupId) {
+  const g = ackGroups.find(x => x.id === groupId);
+  if (!g) return;
+  editingGroupId = groupId;
+  document.getElementById('groupFormTitle').textContent = 'Edit Group: ' + g.name;
+  document.getElementById('groupNameInput').value = g.name;
+  const container = document.getElementById('groupMembersContainer');
+  container.innerHTML = '';
+  (g.members || []).forEach(m => addGroupMemberRow(m.name, m.email));
+  if ((g.members || []).length === 0) addGroupMemberRow('', '');
+}
+
+async function saveGroup() {
+  const name = document.getElementById('groupNameInput').value.trim();
+  const members = getGroupMembersFromForm();
+  if (!name) { alert('Group name is required.'); return; }
+  if (members.length === 0) { alert('Add at least one member.'); return; }
+
+  try {
+    const payload = { name, members };
+    if (editingGroupId) payload.id = editingGroupId;
+    await ackFetch('group', { method: 'POST', body: payload });
+    resetGroupForm();
+    await renderGroupList();
+  } catch (e) {
+    alert('Failed to save group: ' + e.message);
+  }
+}
+
+async function deleteGroup(id, name) {
+  if (!confirm('Delete group "' + name + '"? This will also remove it from any SOP assignments.')) return;
+  try {
+    await ackFetch('group', { method: 'DELETE', params: { id } });
+    await renderGroupList();
+  } catch (e) {
+    alert('Failed to delete group: ' + e.message);
+  }
+}
+
+// ── Ack History Viewer ──
+async function viewAckHistory(sopId) {
+  try {
+    const records = await ackFetch('records', { params: { sopId } });
+    if (records.length === 0) {
+      alert('No acknowledgement records yet for this SOP.');
+      return;
+    }
+    let msg = 'Acknowledgement History:\n\n';
+    records.forEach(r => {
+      const dt = new Date(r.acknowledgedAt);
+      msg += `${r.staffName}${r.staffEmail ? ' (' + r.staffEmail + ')' : ''}\n`;
+      msg += `  Acknowledged: ${dt.toLocaleDateString('en-US')} ${dt.toLocaleTimeString('en-US')}\n`;
+      msg += `  Recorded by: ${r.recordedBy}\n\n`;
+    });
+    alert(msg);
+  } catch (e) {
+    alert('Failed to load history: ' + e.message);
+  }
+}
+
+// ── Dashboard Modal ──
+let dashboardData = [];
+
+async function openDashboardModal() {
+  document.getElementById('dashboardModal').classList.add('open');
+  document.getElementById('dashTableContainer').innerHTML = '<div style="text-align:center;padding:24px;color:#94a3b8">Loading…</div>';
+  try {
+    dashboardData = await ackFetch('dashboard');
+    renderDashboardTable();
+  } catch (e) {
+    document.getElementById('dashTableContainer').innerHTML = '<div style="color:#ef4444;padding:12px">Failed to load dashboard: ' + escHtml(e.message) + '</div>';
+  }
+}
+
+function closeDashboardModal() {
+  document.getElementById('dashboardModal').classList.remove('open');
+}
+
+function filterDashboard() { renderDashboardTable(); }
+
+function renderDashboardTable() {
+  const search = (document.getElementById('dashSearch').value || '').toLowerCase().trim();
+  const statusFilter = document.getElementById('dashStatusFilter').value;
+  let data = dashboardData;
+  if (search) {
+    data = data.filter(d => (d.sopTitle + ' ' + (d.property || '')).toLowerCase().includes(search));
+  }
+  if (statusFilter === 'pending') {
+    data = data.filter(d => d.pending > 0);
+  } else if (statusFilter === 'complete') {
+    data = data.filter(d => d.pending === 0);
+  }
+
+  if (data.length === 0) {
+    document.getElementById('dashTableContainer').innerHTML = '<div style="text-align:center;padding:24px;color:#94a3b8">No SOPs with acknowledgement assignments found.</div>';
+    return;
+  }
+
+  let html = `<table class="dash-table">
+    <thead><tr>
+      <th>SOP</th>
+      <th>Type</th>
+      <th style="width:120px">Progress</th>
+      <th style="width:100px">Status</th>
+      <th style="width:80px">Actions</th>
+    </tr></thead><tbody>`;
+
+  data.forEach(d => {
+    const pct = d.totalStaff > 0 ? Math.round((d.completed / d.totalStaff) * 100) : 0;
+    const barClass = pct === 100 ? 'all-done' : pct > 0 ? 'partial' : 'none';
+    const statusBadge = d.pending === 0
+      ? '<span class="ack-status-badge done" style="font-size:11px">All Complete</span>'
+      : `<span class="ack-status-badge waiting" style="font-size:11px">${d.pending} Pending</span>`;
+    const typeBadge = `<span class="badge site-badge" style="font-size:10px;padding:2px 8px">${escHtml(d.property || 'Site')}</span>`;
+
+    html += `<tr>
+      <td><a href="#" onclick="closeDashboardModal();viewSop('${escHtml(d.sopId)}');return false" style="color:var(--brand-accent-2);font-weight:600;text-decoration:none">${escHtml(d.sopTitle)}</a></td>
+      <td>${typeBadge}</td>
+      <td><div class="dash-progress"><div class="dash-bar"><div class="dash-bar-fill ${barClass}" style="width:${pct}%"></div></div><div class="dash-pct">${d.completed}/${d.totalStaff}</div></div></td>
+      <td>${statusBadge}</td>
+      <td><button onclick="closeDashboardModal();viewSop('${escHtml(d.sopId)}')" style="padding:4px 10px;border:1px solid var(--border);border-radius:4px;font-size:11px;cursor:pointer;background:#fff">View</button></td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  document.getElementById('dashTableContainer').innerHTML = html;
+}
+
+// ── Hook into viewSop to also render ack section ──
+const _origViewSopForAck = viewSop;
+viewSop = function(id) {
+  _origViewSopForAck(id);
+  const sop = allSops.find(s => s.id === id);
+  if (sop) renderAckSection(id, sop.title);
+};
+
+// ── Hook into admin toolbar to add ack buttons ──
+const _origSetupAdminControls = setupAdminControls;
+setupAdminControls = function() {
+  _origSetupAdminControls();
+  // Add dashboard button to header controls if admin
+  if (isAdmin()) {
+    const headerControls = document.querySelector('.header-controls');
+    if (headerControls && !document.getElementById('ackDashBtn')) {
+      const btn = document.createElement('button');
+      btn.id = 'ackDashBtn';
+      btn.className = 'header-btn btn-ack-dashboard';
+      btn.textContent = '📋 Ack Dashboard';
+      btn.onclick = openDashboardModal;
+      headerControls.insertBefore(btn, headerControls.firstChild);
+    }
+  }
+};
+
+// ── Hook into admin toolbar rendering in viewSop ──
+const _origViewSopToolbar = _origViewSopForAck;
+// We patch the toolbar after viewSop runs — use a MutationObserver-like approach
+// Instead, we'll hook the toolbar rendering by overriding again more precisely
+// The ack buttons in the admin toolbar are added via the renderAckSection function already
+// For the admin toolbar row, we add the "Manage Ack" button
+(function patchToolbar() {
+  const origView = viewSop;
+  viewSop = function(id) {
+    origView(id);
+    // Add ack buttons to admin toolbar
+    const toolbar = document.getElementById('adminToolbar');
+    if (toolbar && isAdmin()) {
+      if (!toolbar.querySelector('.btn-ack-manage')) {
+        const btn = document.createElement('button');
+        btn.className = 'btn-ack-manage';
+        btn.textContent = '📋 Manage Ack';
+        btn.onclick = () => openAssignModal(id);
+        // Insert before the spacer
+        const spacer = toolbar.querySelector('span[style*="flex:1"]');
+        if (spacer) toolbar.insertBefore(btn, spacer);
+        else toolbar.appendChild(btn);
+      }
+    }
+  };
+})();
+
+// Start
+(async () => { await initApp(); })();
+</script>
+<!-- ===== ACKNOWLEDGEMENT CONFIRM MODAL ===== -->
+<div class="modal-backdrop ack-modal" id="ackConfirmModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Acknowledge SOP</h3>
+      <button class="close-btn" onclick="closeAckConfirmModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="ack-confirm-box">
+        <div class="ack-person">Acknowledging as: <strong id="ackPersonName"></strong></div>
+        <div class="ack-statement" id="ackStatement">I acknowledge that I have reviewed, understand, and agree to follow this SOP/policy.</div>
+      </div>
+      <p style="font-size:12px;color:#64748b;text-align:center">This action will be recorded with a timestamp and cannot be undone.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeAckConfirmModal()">Cancel</button>
+      <button class="btn-save" id="ackSubmitBtn" onclick="submitAcknowledgement()">I Acknowledge</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ASSIGNMENT MODAL (Admin: assign staff/groups to SOP) ===== -->
+<div class="modal-backdrop assign-modal" id="assignModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="assignModalTitle">Manage Acknowledgement Assignments</h3>
+      <button class="close-btn" onclick="closeAssignModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="assign-section">
+        <h4>Individual Staff <span class="count-badge" id="assignStaffCount">0</span></h4>
+        <div id="assignStaffList"></div>
+        <button type="button" class="add-staff-btn" onclick="addAssignStaffRow('','')">+ Add Staff Member</button>
+      </div>
+      <div class="assign-section" style="margin-top:20px">
+        <h4>Staff Groups <span class="count-badge" id="assignGroupCount">0</span></h4>
+        <p style="font-size:12px;color:#64748b;margin-bottom:10px">Click groups to toggle assignment. <a href="#" onclick="openGroupManagerModal();return false" style="color:var(--brand-accent-2);font-weight:600">Manage Groups →</a></p>
+        <div class="group-chips" id="assignGroupChips">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeAssignModal()">Cancel</button>
+      <button class="btn-save" id="assignSaveBtn" onclick="saveAssignment()">Save Assignments</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== GROUP MANAGER MODAL ===== -->
+<div class="modal-backdrop group-modal" id="groupManagerModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="groupManagerTitle">Staff Groups</h3>
+      <button class="close-btn" onclick="closeGroupManagerModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="groupListContainer">
+        <!-- Populated by JS -->
+      </div>
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid #e2e8f0">
+        <h4 style="font-size:14px;font-weight:700;margin:0 0 12px" id="groupFormTitle">Create New Group</h4>
+        <label>Group Name</label>
+        <input id="groupNameInput" type="text" placeholder="e.g., Leasing Team - Property X" />
+        <label>Members (one per row)</label>
+        <div id="groupMembersContainer"></div>
+        <button type="button" class="add-staff-btn" onclick="addGroupMemberRow('','')">+ Add Member</button>
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button class="btn-save" style="padding:8px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--brand-primary);background:var(--brand-primary);color:#fff" onclick="saveGroup()">Save Group</button>
+          <button class="btn-cancel" style="padding:8px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:#fff" onclick="resetGroupForm()">Reset</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeGroupManagerModal()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DASHBOARD MODAL (Admin: pending/complete overview) ===== -->
+<div class="modal-backdrop dash-modal" id="dashboardModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Acknowledgement Dashboard</h3>
+      <button class="close-btn" onclick="closeDashboardModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="dash-filter">
+        <input type="text" id="dashSearch" placeholder="Search SOPs…" oninput="filterDashboard()" />
+        <select id="dashStatusFilter" onchange="filterDashboard()">
+          <option value="">All Status</option>
+          <option value="pending">Has Pending</option>
+          <option value="complete">All Complete</option>
+        </select>
+      </div>
+      <div id="dashTableContainer">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeDashboardModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Excel Upload Modal -->
+<div class="modal-backdrop" id="uploadModal">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-header">
+      <h3>📤 Upload SOPs from Excel</h3>
+      <button class="close-btn" onclick="closeUploadModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Template info -->
+      <div class="upload-template-section">
+        <h4>Excel Format Requirements</h4>
+        <p>Each row in the spreadsheet becomes one SOP. Use these column headers (first row):</p>
+        <div class="col-list">
+          <span class="req">title *</span><span class="opt">purpose</span>
+          <span class="opt">category</span><span class="opt">whenToUse</span>
+          <span class="opt">department</span><span class="opt">expectedResults</span>
+          <span class="opt">system</span><span class="opt">bestPractices</span>
+          <span></span><span class="opt">trainingUrl</span>
+          <span></span><span class="opt">step1Title … step10Title</span>
+          <span></span><span class="opt">step1Description … step10Description</span>
+        </div>
+        <p>Every row is created as a Site Specific SOP for the property currently open in Reslife Hub — no sopType/property columns needed.</p>
+        <p>Steps columns: <code>step1Title</code>, <code>step1Description</code>, <code>step2Title</code>, <code>step2Description</code>, etc. (up to 10).</p>
+        <button class="btn-dl-template" onclick="downloadSopTemplate()">⬇ Download Template (.xlsx)</button>
+      </div>
+
+      <!-- Drop zone -->
+      <div class="upload-zone" id="uploadZone" onclick="document.getElementById('excelFileInput').click()">
+        <div class="upload-icon">📁</div>
+        <p><strong>Click to browse</strong> or drag & drop an Excel file here</p>
+        <p class="upload-hint">Accepts .xlsx and .xls files</p>
+      </div>
+      <input type="file" id="excelFileInput" accept=".xlsx,.xls" style="display:none" onchange="handleExcelFile(this.files[0])" />
+      <div class="upload-file-name" id="uploadFileName" style="display:none"></div>
+
+      <!-- Progress -->
+      <div class="upload-progress" id="uploadProgress" style="display:none">
+        <div class="prog-bar"><div class="prog-fill" id="uploadProgFill" style="width:0%"></div></div>
+        <div class="prog-text" id="uploadProgText">Preparing…</div>
+      </div>
+
+      <!-- Results -->
+      <div class="upload-results" id="uploadResults" style="display:none"></div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeUploadModal()">Close</button>
+      <button class="btn-save" id="uploadStartBtn" onclick="startExcelUpload()" style="display:none">Upload SOPs</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== EXCEL UPLOAD FUNCTIONALITY =====
+let uploadedRows = [];
+
+function openUploadModal() {
+  uploadedRows = [];
+  document.getElementById('uploadFileName').style.display = 'none';
+  document.getElementById('uploadProgress').style.display = 'none';
+  document.getElementById('uploadResults').style.display = 'none';
+  document.getElementById('uploadResults').innerHTML = '';
+  document.getElementById('uploadStartBtn').style.display = 'none';
+  document.getElementById('excelFileInput').value = '';
+  document.getElementById('uploadModal').classList.add('open');
+}
+
+function closeUploadModal() {
+  document.getElementById('uploadModal').classList.remove('open');
+}
+
+// Drag & drop
+(function() {
+  document.addEventListener('DOMContentLoaded', function() {
+    const zone = document.getElementById('uploadZone');
+    if (!zone) return;
+    zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', function() { zone.classList.remove('drag-over'); });
+    zone.addEventListener('drop', function(e) {
+      e.preventDefault();
+      zone.classList.remove('drag-over');
+      const f = e.dataTransfer.files[0];
+      if (f) handleExcelFile(f);
+    });
+  });
+})();
+
+function handleExcelFile(file) {
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (!['xlsx', 'xls'].includes(ext)) {
+    alert('Please select an .xlsx or .xls file.');
+    return;
+  }
+
+  document.getElementById('uploadFileName').textContent = '📎 ' + file.name;
+  document.getElementById('uploadFileName').style.display = 'block';
+  document.getElementById('uploadResults').style.display = 'none';
+  document.getElementById('uploadResults').innerHTML = '';
+  document.getElementById('uploadProgress').style.display = 'none';
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const raw = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+      if (!raw.length) { alert('The spreadsheet is empty.'); return; }
+
+      // Normalize headers (lowercase, trim)
+      uploadedRows = raw.map(row => {
+        const norm = {};
+        Object.keys(row).forEach(k => { norm[k.trim().toLowerCase()] = String(row[k]).trim(); });
+        return norm;
+      });
+
+      // Validate — every row becomes a Site Specific SOP for currentProperty
+      const errors = [];
+      uploadedRows.forEach((r, i) => {
+        if (!r.title) errors.push('Row ' + (i + 2) + ': missing title');
+      });
+
+      if (errors.length) {
+        const res = document.getElementById('uploadResults');
+        res.style.display = 'block';
+        res.innerHTML = '<div style="font-weight:700;color:#ef4444;margin-bottom:8px">Validation Errors (' + errors.length + ')</div>' +
+          errors.map(e => '<div class="res-err">❌ ' + escHtml(e) + '</div>').join('');
+        document.getElementById('uploadStartBtn').style.display = 'none';
+        return;
+      }
+
+      // Show preview
+      const res = document.getElementById('uploadResults');
+      res.style.display = 'block';
+      res.innerHTML = '<div style="font-weight:600;color:#16a34a;margin-bottom:6px">✓ ' + uploadedRows.length + ' SOP(s) found and validated for ' + escHtml(currentProperty || 'this property') + '</div>' +
+        uploadedRows.map((r, i) => '<div>📄 <strong>' + escHtml(r.title) + '</strong></div>').join('');
+      document.getElementById('uploadStartBtn').style.display = '';
+
+    } catch (err) {
+      alert('Error reading Excel file: ' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// Parse step columns from a row
+function parseStepsFromRow(row) {
+  const steps = [];
+  for (let i = 1; i <= 10; i++) {
+    const t = row['step' + i + 'title'] || '';
+    const d = row['step' + i + 'description'] || '';
+    if (t || d) steps.push({ title: t, description: d });
+  }
+  return steps;
+}
+
+async function startExcelUpload() {
+  if (!uploadedRows.length) return;
+
+  const btn = document.getElementById('uploadStartBtn');
+  btn.disabled = true;
+  btn.textContent = 'Uploading…';
+
+  const prog = document.getElementById('uploadProgress');
+  const fill = document.getElementById('uploadProgFill');
+  const text = document.getElementById('uploadProgText');
+  prog.style.display = 'block';
+
+  const results = [];
+  const total = uploadedRows.length;
+
+  for (let i = 0; i < total; i++) {
+    const row = uploadedRows[i];
+    fill.style.width = Math.round(((i + 1) / total) * 100) + '%';
+    text.textContent = 'Uploading ' + (i + 1) + ' of ' + total + '…';
+
+    const sopType = 'site';
+    const property = currentProperty;
+    const title = row.title || '';
+    const category = row.category || 'General';
+    const department = row.department || '';
+    const system = row.system || '';
+    const trainingUrl = row.trainingurl || '';
+    const purpose = row.purpose || '';
+    const whenToUse = row.whentouse || '';
+    const expectedResults = row.expectedresults || '';
+    const bestPractices = row.bestpractices || '';
+    const stepsData = parseStepsFromRow(row);
+
+    // Build HTML content using same function as manual entry
+    const content = buildContentHtml({
+      title, property, system, category, department,
+      purpose, whenToUse, stepsData, expectedResults, bestPractices, trainingUrl
+    });
+
+    const payload = {
+      sopType, property, title, category, department, system, content,
+      purpose, whenToUse, stepsData, expectedResults, bestPractices, trainingUrl,
+      steps: '', resources: '', owner: '', lastReviewed: ''
+    };
+
+    try {
+      await apiFetch('/sops', { method: 'POST', body: JSON.stringify(payload) });
+      results.push({ ok: true, title });
+    } catch (e) {
+      results.push({ ok: false, title, err: e.message });
+    }
+  }
+
+  // Show results
+  text.textContent = 'Complete!';
+  const okCount = results.filter(r => r.ok).length;
+  const errCount = results.filter(r => !r.ok).length;
+
+  const res = document.getElementById('uploadResults');
+  res.style.display = 'block';
+  res.innerHTML = '<div style="font-weight:700;margin-bottom:8px">' +
+    (okCount ? '<span class="res-ok">✓ ' + okCount + ' created</span>' : '') +
+    (errCount ? ' <span class="res-err">✗ ' + errCount + ' failed</span>' : '') + '</div>' +
+    results.map(r => r.ok
+      ? '<div class="res-ok">✓ ' + escHtml(r.title) + '</div>'
+      : '<div class="res-err">✗ ' + escHtml(r.title) + ' — ' + escHtml(r.err) + '</div>'
+    ).join('');
+
+  btn.textContent = 'Upload SOPs';
+  btn.disabled = false;
+  uploadedRows = [];
+  document.getElementById('uploadStartBtn').style.display = 'none';
+
+  // Refresh SOP list
+  await loadAllSops();
+  renderNav();
+}
+
+// Download template .xlsx
+function downloadSopTemplate() {
+  const headers = [
+    'title', 'category', 'department', 'system',
+    'purpose', 'whenToUse', 'expectedResults', 'bestPractices', 'trainingUrl',
+    'step1Title', 'step1Description', 'step2Title', 'step2Description',
+    'step3Title', 'step3Description', 'step4Title', 'step4Description',
+    'step5Title', 'step5Description'
+  ];
+
+  const example = {
+    title: 'Example: Duty Coverage Swap Procedure',
+    category: 'Duty & Coverage',
+    department: 'Resident Assistants',
+    system: '',
+    purpose: 'This SOP outlines the process for swapping an assigned duty shift with another RA.',
+    whenToUse: 'When an RA is unable to cover their scheduled duty shift and needs another RA to cover it.',
+    expectedResults: 'The duty roster reflects the swap and both RAs and the REC are notified.',
+    bestPractices: '• Request swaps at least 48 hours in advance when possible\n• Always get REC approval before the swap is final\n• Confirm the new RA has reviewed any open incidents',
+    trainingUrl: '',
+    step1Title: 'Identify a coverage conflict',
+    step1Description: 'Confirm the date/time you cannot cover your assigned duty shift.',
+    step2Title: 'Find a willing RA',
+    step2Description: 'Reach out to another RA on the team who is willing and eligible to swap.',
+    step3Title: 'Submit the swap request',
+    step3Description: 'Notify your REC with both RA names and the shift being swapped.',
+    step4Title: 'Get REC approval',
+    step4Description: 'Wait for the REC to confirm the swap before treating it as final.',
+    step5Title: 'Update the roster',
+    step5Description: 'Once approved, the REC updates the Duty Roster to reflect the new assignment.'
+  };
+
+  const ws = XLSX.utils.json_to_sheet([example], { header: headers });
+  // Set column widths
+  ws['!cols'] = headers.map(h => ({ wch: h.length < 12 ? 16 : 30 }));
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'SOPs');
+  XLSX.writeFile(wb, 'SOP_Upload_Template.xlsx');
+}
+</script>
+
+</body>
+</html>
