@@ -116,6 +116,26 @@ export function json(statusCode, data) {
 }
 
 /**
+ * Unit numbers in the Resident Directory / Unit Inventory follow the
+ * property's convention of "<base unit>-<bed code>", e.g. "7417-A",
+ * "7417-A1", "7417-B2". Everything before the LAST hyphen is the base unit
+ * that determines roommates (residents sharing the same base unit are
+ * roommates of each other); everything after it is just the bed/room code
+ * within that unit. A unit string with no hyphen has no roommate grouping —
+ * it is its own base unit.
+ *
+ * Examples: "7417-A" -> "7417", "7417-A1" -> "7417", "7417-B2" -> "7417",
+ * "204" -> "204".
+ */
+export function baseUnitOf(unitStr) {
+  const s = String(unitStr || '').trim();
+  if (!s) return '';
+  const idx = s.lastIndexOf('-');
+  if (idx <= 0) return s; // no hyphen, or hyphen is the first character — treat as its own unit
+  return s.slice(0, idx).trim();
+}
+
+/**
  * Re-fetch role/properties from the DB to avoid acting on stale JWT claims
  * (mirrors the pattern used in email-brand-kits.js).
  */

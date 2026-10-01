@@ -1,13 +1,24 @@
 import { verifyReqAuth } from './_auth.js';
 import { getDb, ObjectId } from './_db.js';
-import { canAccessReslifeProperty, canAdminReslifeProperty, refreshReslifeUser, json } from './_reslife.js';
+import { canAccessReslifeProperty, canAdminReslifeProperty, canManageReslifeProperty, refreshReslifeUser, json } from './_reslife.js';
 
 /**
  * Reslife Hub — Resident Directory
- * GET    ?property=X        - list residents for a property (any Reslife role + admin, read-only for RA/REC)
- * POST                       - create resident entry (Reslife Admin / site admin only)
- * PUT                        - update resident entry (Reslife Admin / site admin only)
- * DELETE ?id=X&property=Y   - delete resident entry (Reslife Admin / site admin only)
+ *
+ * Document shape (reslife_directory collection):
+ * {
+ *   _id, property, residentName, room, unit, phone, email, notes,
+ *   violationMeetings: [{ id, date, summary, recordedBy, createdAt }],
+ *   behaviorNotes: [{ id, date, note, recordedBy, createdAt }],
+ *   updatedBy, createdAt, updatedAt
+ * }
+ *
+ * GET    ?property=X                         - list residents for a property (any Reslife role + admin, read-only for RA/REC)
+ * POST                                          - create resident entry (Reslife Admin / site admin only)
+ * PUT                                           - update resident entry (Reslife Admin / site admin only)
+ * PUT    { action: 'addViolationMeeting' }      - append a violation meeting entry (manager tier: REC/Admin/site admin)
+ * PUT    { action: 'addBehaviorNote' }          - append a behavior/interaction note (manager tier: REC/Admin/site admin)
+ * DELETE ?id=X&property=Y                     - delete resident entry (Reslife Admin / site admin only)
  */
 export async function handler(event) {
   const user = verifyReqAuth(event);
@@ -35,6 +46,7 @@ export async function handler(event) {
       const now = new Date().toISOString();
       const doc = {
         property, residentName, room: room || '', unit: unit || '', phone: phone || '', email: email || '', notes: notes || '',
+        violationMeetings: [], behaviorNotes: [],
         updatedBy: user.sub, createdAt: now, updatedAt: now,
       };
       const result = await col.insertOne(doc);
@@ -44,8 +56,33 @@ export async function handler(event) {
 
     if (event.httpMethod === 'PUT') {
       const body = JSON.parse(event.body || '{}');
-      const { id, property, residentName, room, unit, phone, email, notes } = body;
+      const { id, property, action } = body;
       if (!id || !property) return { statusCode: 400, body: 'Missing id/property' };
+
+      // ── Append a violation meeting or behavior note (manager tier only) ──
+      if (action === 'addViolationMeeting' || action === 'addBehaviorNote') {
+        if (!canManageReslifeProperty(user, property)) return { statusCode: 403, body: 'Forbidden' };
+        const existing = await col.findOne({ _id: new ObjectId(id), property });
+        if (!existing) return { statusCode: 404, body: 'Not found' };
+        const now = new Date().toISOString();
+
+        if (action === 'addViolationMeeting') {
+          const { date, summary } = body;
+          if (!summary) return { statusCode: 400, body: 'Missing summary' };
+          const entry = { id: new ObjectId().toString(), date: date || now.slice(0, 10), summary, recordedBy: user.sub, createdAt: now };
+          await col.updateOne({ _id: new ObjectId(id), property }, { $push: { violationMeetings: entry }, $set: { updatedAt: now, updatedBy: user.sub } });
+          return json(200, entry);
+        } else {
+          const { note } = body;
+          if (!note) return { statusCode: 400, body: 'Missing note' };
+          const entry = { id: new ObjectId().toString(), date: now.slice(0, 10), note, recordedBy: user.sub, createdAt: now };
+          await col.updateOne({ _id: new ObjectId(id), property }, { $push: { behaviorNotes: entry }, $set: { updatedAt: now, updatedBy: user.sub } });
+          return json(200, entry);
+        }
+      }
+
+      // ── Standard field update (Reslife Admin / site admin only) ──
+      const { residentName, room, unit, phone, email, notes } = body;
       if (!canAdminReslifeProperty(user, property)) return { statusCode: 403, body: 'Forbidden' };
       const updates = { updatedBy: user.sub, updatedAt: new Date().toISOString() };
       if (residentName !== undefined) updates.residentName = residentName;

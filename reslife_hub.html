@@ -13,6 +13,8 @@
        ever injected into the page, so a compromised manager account can't use the announcement
        composer to store/execute a script-based XSS payload against RAs viewing the board. -->
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+  <!-- Excel import/export for Resident Directory bulk uploads (Unit Inventory, Resident Roster) -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <style>
     :root{
       /* Default theme: The Harbour at Occ (theharbourocc.com) reference palette.
@@ -417,7 +419,39 @@
     .rl-modal-header h3{margin:0;font-size:16px;font-weight:800;color:var(--rl-text)}
     .rl-modal-close{background:none;border:none;font-size:22px;line-height:1;color:var(--rl-subtext);cursor:pointer;padding:0}
     .rl-modal-body{padding:18px 20px}
-    .rl-modal-footer{padding:16px 20px;border-top:1px solid var(--rl-border);display:flex;gap:10px;justify-content:flex-end}
+    .rl-modal-footer{padding:16px 20px;border-top:1px solid var(--rl-border);display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+
+    /* Select-list (multi-select checklist used by the Campus Contacts mass-email picker) */
+    .rl-select-list{background:#fff;border:1px solid var(--rl-border);border-radius:10px;overflow:hidden;max-height:360px;display:flex;flex-direction:column}
+    .rl-select-list-title{background:#f8fafc;padding:10px 14px;font-size:11px;font-weight:800;color:var(--rl-subtext);text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .rl-select-all{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;text-transform:none;letter-spacing:0;color:var(--rl-text);cursor:pointer}
+    .rl-select-all input{width:15px;height:15px;accent-color:var(--rl-primary);cursor:pointer}
+    #contactMassList{overflow-y:auto}
+    .rl-select-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #f1f5f9;font-size:13px;cursor:pointer}
+    .rl-select-item:last-child{border-bottom:none}
+    .rl-select-item:hover{background:#f8fafc}
+    .rl-select-item input[type=checkbox]{width:16px;height:16px;accent-color:var(--rl-primary);cursor:pointer;flex-shrink:0}
+    .rl-select-item .rsi-main{flex:1;min-width:0}
+    .rl-select-item .rsi-name{font-weight:700;color:var(--rl-text)}
+    .rl-select-item .rsi-sub{font-size:11px;color:var(--rl-subtext);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .rl-select-item.disabled{opacity:.5;cursor:not-allowed}
+
+    /* Campus Contacts directory (card list, searchable) */
+    .rl-contact-card{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border:1px solid var(--rl-border);border-radius:10px;margin-bottom:10px;cursor:pointer;transition:all .15s;background:#fff}
+    .rl-contact-card:hover{border-color:var(--rl-primary);box-shadow:0 2px 8px rgba(0,0,0,.06)}
+    .rl-contact-card .rcc-main{flex:1;min-width:0}
+    .rl-contact-card .rcc-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+    .rl-contact-card .rcc-dept{font-weight:800;color:var(--rl-text);font-size:14px}
+    .rl-contact-card .rcc-badge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:2px 8px;border-radius:999px;background:#eef2ff;color:#3730a3}
+    .rl-contact-card .rcc-name{font-size:13px;color:var(--rl-subtext)}
+    .rl-contact-card .rcc-meta{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px;font-size:12px;color:var(--rl-subtext)}
+    .rl-contact-card .rcc-meta a{color:var(--rl-primary)}
+    .rl-contact-card .rcc-actions{display:flex;gap:6px;flex-shrink:0;align-items:flex-start}
+    .rl-contact-detail-section{margin-bottom:16px}
+    .rl-contact-detail-section:last-child{margin-bottom:0}
+    .rl-contact-detail-section h4{margin:0 0 6px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--rl-subtext)}
+    .rl-contact-detail-section p{margin:0;font-size:13px;color:var(--rl-text);white-space:pre-wrap;line-height:1.5}
+    .rl-contact-detail-section .rl-empty-val{color:#cbd5e1}
 
     .dl-report-header{border-bottom:2px solid var(--rl-primary);padding-bottom:14px;margin-bottom:18px}
     .dl-report-header h2{margin:0 0 6px;color:var(--rl-primary);font-size:19px;font-weight:800}
@@ -1203,7 +1237,10 @@
         <div class="rl-panel">
           <div class="rl-panel-header">
             <h2>Campus Partner &amp; Department Contacts</h2>
-            <button class="rl-btn primary hidden" id="contactAddBtn">+ Add Contact</button>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="rl-btn" id="contactMassEmailBtn">✉ Email Multiple Contacts</button>
+              <button class="rl-btn primary hidden" id="contactAddBtn">+ Add Contact</button>
+            </div>
           </div>
           <div class="rl-panel-body">
             <div class="rl-form hidden" id="contactForm">
@@ -1234,7 +1271,16 @@
               </div>
 
               <div class="rl-wizard-step-panel">
-                <div class="rl-wizard-step-title">Step 3 · Review</div>
+                <div class="rl-wizard-step-title">Step 3 · Why Contact Them</div>
+                <div class="rl-form-grid">
+                  <div class="rl-field full"><label>Reason to Contact</label><textarea id="contactReason" placeholder="e.g., Reach out to Financial Aid when a resident has a question about their aid package or a billing hold affecting their housing."></textarea></div>
+                  <div class="rl-field full"><label>Capstone Contacts to Include</label><textarea id="contactCapstone" placeholder="e.g., Jane Doe (Property Manager) - jane.doe@capstone.com&#10;Include the REC on any safety-related outreach"></textarea></div>
+                </div>
+                <p class="rl-item-meta" style="margin-top:4px">List any Capstone staff (by name and/or email) who should be included/cc'd whenever someone reaches out to this contact.</p>
+              </div>
+
+              <div class="rl-wizard-step-panel">
+                <div class="rl-wizard-step-title">Step 4 · Review</div>
                 <dl class="rl-wizard-review" id="contactReview"></dl>
               </div>
 
@@ -1247,10 +1293,46 @@
                 </div>
               </div>
             </div>
+
+            <input type="text" id="contactSearch" placeholder="Search by name, department, email, or category…" style="width:100%;padding:10px 14px;border:1px solid var(--rl-border);border-radius:8px;font-size:13px;margin-bottom:16px;font-family:inherit">
             <div id="contactList"><div class="rl-loading">Loading…</div></div>
           </div>
         </div>
       </section>
+
+      <!-- Contact detail popup: reason to contact, Capstone cc list, email button -->
+      <div class="rl-modal-overlay" id="contactDetailModalOverlay">
+        <div class="rl-modal">
+          <div class="rl-modal-header"><h3 id="contactDetailTitle">Contact</h3><button class="rl-modal-close" id="contactDetailCloseBtn">&times;</button></div>
+          <div class="rl-modal-body" id="contactDetailBody"></div>
+          <div class="rl-modal-footer">
+            <button class="rl-btn" id="contactDetailCloseBtn2">Close</button>
+            <a class="rl-btn primary" id="contactDetailEmailBtn" style="text-decoration:none" href="#">✉ Email This Contact</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mass email picker: select multiple contacts, opens one mailto: with everyone combined -->
+      <div class="rl-modal-overlay" id="contactMassEmailModalOverlay">
+        <div class="rl-modal wide">
+          <div class="rl-modal-header"><h3>Email Multiple Contacts</h3><button class="rl-modal-close" id="contactMassEmailCloseBtn">&times;</button></div>
+          <div class="rl-modal-body">
+            <p class="rl-item-meta" style="margin-bottom:10px">Select the contacts you want to email. Any Capstone contacts listed on a selected contact will automatically be cc'd.</p>
+            <div class="rl-select-list">
+              <div class="rl-select-list-title">
+                <span>Campus Contacts</span>
+                <label class="rl-select-all"><input type="checkbox" id="contactMassSelectAll" /> Select All</label>
+              </div>
+              <div id="contactMassList"></div>
+            </div>
+          </div>
+          <div class="rl-modal-footer">
+            <span class="rl-item-meta" id="contactMassCount" style="margin-right:auto">0 selected</span>
+            <button class="rl-btn" id="contactMassCancelBtn">Cancel</button>
+            <a class="rl-btn primary" id="contactMassSendBtn" style="text-decoration:none" href="#">✉ Open Email</a>
+          </div>
+        </div>
+      </div>
 
       <!-- ================= CURRICULUM TRACKER ================= -->
       <section class="rl-tab-content" id="tab-curriculum">
@@ -3615,26 +3697,70 @@
     }
 
     // ==================== CAMPUS CONTACTS ====================
+    let contactDocs = [];          // all contacts loaded for the current property
+    let contactMassSelected = {};  // { [contactId]: true } for the mass-email picker
+
     async function loadContacts(){
       const list = document.getElementById('contactList');
       list.innerHTML = '<div class="rl-loading">Loading…</div>';
-      let docs = [];
-      try { docs = await apiFetch('/reslife-contacts' + propParam()); } catch (e) { list.innerHTML = '<div class="rl-empty">Failed to load contacts.</div>'; return; }
-      if (docs.length === 0) { list.innerHTML = '<div class="rl-empty">No campus contacts on file yet.</div>'; return; }
-      list.innerHTML = `<table class="rl-table"><thead><tr><th>Department</th><th>Contact</th><th>Category</th><th>Email</th><th>Phone</th><th>Notes</th>${isAdminTier ? '<th></th>' : ''}</tr></thead><tbody>` +
-        docs.map(c => `
-          <tr>
-            <td>${esc(c.department)}</td>
-            <td>${esc(c.contactName || '')}</td>
-            <td>${esc(c.category || '')}</td>
-            <td>${c.email ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : ''}</td>
-            <td>${esc(c.phone || '')}</td>
-            <td>${esc(c.notes || '')}</td>
-            ${isAdminTier ? `<td style="white-space:nowrap"><button class="rl-btn sm" data-contact-edit="${c.id}">Edit</button> <button class="rl-btn sm danger" data-contact-del="${c.id}">Delete</button></td>` : ''}
-          </tr>
-        `).join('') + '</tbody></table>';
+      try { contactDocs = await apiFetch('/reslife-contacts' + propParam()); } catch (e) { contactDocs = []; list.innerHTML = '<div class="rl-empty">Failed to load contacts.</div>'; return; }
+      renderContactList(document.getElementById('contactSearch').value);
+    }
+
+    function contactMailto(c, opts){
+      opts = opts || {};
+      const to = c.email || '';
+      const ccList = (c.capstoneContacts || '').match(/[^\s,;<>()]+@[^\s,;<>()]+\.[^\s,;<>()]+/g) || [];
+      const params = [];
+      if (ccList.length) params.push('cc=' + encodeURIComponent(ccList.join(',')));
+      const subject = opts.subject || ('Capstone Reslife — ' + (c.department || 'Campus Contact'));
+      params.push('subject=' + encodeURIComponent(subject));
+      // The to-address itself is left unencoded (standard mailto: convention —
+      // only query params like subject/cc need percent-encoding).
+      return 'mailto:' + to + (params.length ? '?' + params.join('&') : '');
+    }
+
+    function renderContactList(query){
+      const list = document.getElementById('contactList');
+      const q = (query || '').trim().toLowerCase();
+      const filtered = !q ? contactDocs : contactDocs.filter(c => {
+        const hay = [c.department, c.contactName, c.email, c.category, c.phone].filter(Boolean).join(' ').toLowerCase();
+        return hay.includes(q);
+      });
+
+      if (filtered.length === 0) {
+        list.innerHTML = `<div class="rl-empty">${contactDocs.length === 0 ? 'No campus contacts on file yet.' : 'No contacts match your search.'}</div>`;
+        return;
+      }
+
+      const sorted = filtered.slice().sort((a, b) => (a.department || '').localeCompare(b.department || ''));
+      list.innerHTML = sorted.map(c => `
+        <div class="rl-contact-card" data-contact-view="${c.id}">
+          <div class="rcc-main">
+            <div class="rcc-top">
+              <span class="rcc-dept">${esc(c.department)}</span>
+              ${c.category ? `<span class="rcc-badge">${esc(c.category)}</span>` : ''}
+            </div>
+            ${c.contactName ? `<div class="rcc-name">${esc(c.contactName)}</div>` : ''}
+            <div class="rcc-meta">
+              ${c.email ? `<a href="mailto:${esc(c.email)}" onclick="event.stopPropagation()">${esc(c.email)}</a>` : ''}
+              ${c.phone ? `<span>${esc(c.phone)}</span>` : ''}
+            </div>
+          </div>
+          <div class="rcc-actions">
+            ${c.email ? `<a class="rl-btn sm primary" style="text-decoration:none" href="${esc(contactMailto(c))}" onclick="event.stopPropagation()">✉ Email</a>` : ''}
+            ${isAdminTier ? `<button class="rl-btn sm" data-contact-edit="${c.id}" onclick="event.stopPropagation()">Edit</button>` : ''}
+            ${isAdminTier ? `<button class="rl-btn sm danger" data-contact-del="${c.id}" onclick="event.stopPropagation()">Delete</button>` : ''}
+          </div>
+        </div>
+      `).join('');
+
+      list.querySelectorAll('[data-contact-view]').forEach(card => card.addEventListener('click', () => {
+        const c = contactDocs.find(x => x.id === card.getAttribute('data-contact-view'));
+        if (c) openContactDetail(c);
+      }));
       list.querySelectorAll('[data-contact-edit]').forEach(btn => btn.addEventListener('click', () => {
-        const c = docs.find(x => x.id === btn.getAttribute('data-contact-edit'));
+        const c = contactDocs.find(x => x.id === btn.getAttribute('data-contact-edit'));
         if (c) openContactForm(c);
       }));
       list.querySelectorAll('[data-contact-del]').forEach(btn => btn.addEventListener('click', async () => {
@@ -3642,6 +3768,95 @@
         try { await apiFetch('/reslife-contacts?id=' + btn.getAttribute('data-contact-del') + '&property=' + encodeURIComponent(currentProperty), { method: 'DELETE' }); await loadContacts(); }
         catch (e) { alert('Failed to delete: ' + e.message); }
       }));
+    }
+
+    // ── Contact detail popup: reason to contact, Capstone cc list, email button ──
+    function openContactDetail(c){
+      document.getElementById('contactDetailTitle').textContent = c.department + (c.contactName ? ' — ' + c.contactName : '');
+      const body = document.getElementById('contactDetailBody');
+      const metaParts = [];
+      if (c.category) metaParts.push(esc(c.category));
+      if (c.phone) metaParts.push(esc(c.phone));
+      if (c.email) metaParts.push(`<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>`);
+      body.innerHTML = `
+        ${metaParts.length ? `<div class="rl-contact-detail-section"><p>${metaParts.join(' &nbsp;·&nbsp; ')}</p></div>` : ''}
+        <div class="rl-contact-detail-section">
+          <h4>Why Contact Them</h4>
+          <p class="${c.reasonToContact ? '' : 'rl-empty-val'}">${c.reasonToContact ? esc(c.reasonToContact) : 'No reason on file yet.'}</p>
+        </div>
+        <div class="rl-contact-detail-section">
+          <h4>Capstone Contacts to Include</h4>
+          <p class="${c.capstoneContacts ? '' : 'rl-empty-val'}">${c.capstoneContacts ? esc(c.capstoneContacts) : 'No Capstone staff listed to cc.'}</p>
+        </div>
+        ${c.notes ? `<div class="rl-contact-detail-section"><h4>Notes</h4><p>${esc(c.notes)}</p></div>` : ''}
+      `;
+      const emailBtn = document.getElementById('contactDetailEmailBtn');
+      if (c.email) {
+        emailBtn.href = contactMailto(c);
+        emailBtn.classList.remove('hidden');
+      } else {
+        emailBtn.classList.add('hidden');
+      }
+      document.getElementById('contactDetailModalOverlay').classList.add('show');
+    }
+
+    function closeContactDetail(){
+      document.getElementById('contactDetailModalOverlay').classList.remove('show');
+    }
+
+    // ── Mass email picker ──
+    function openContactMassEmailModal(){
+      contactMassSelected = {};
+      renderContactMassList();
+      document.getElementById('contactMassEmailModalOverlay').classList.add('show');
+    }
+
+    function closeContactMassEmailModal(){
+      document.getElementById('contactMassEmailModalOverlay').classList.remove('show');
+    }
+
+    function renderContactMassList(){
+      const container = document.getElementById('contactMassList');
+      const withEmail = contactDocs.filter(c => c.email);
+      if (withEmail.length === 0) {
+        container.innerHTML = '<div class="rl-empty">No contacts have an email on file yet.</div>';
+      } else {
+        container.innerHTML = withEmail.map(c => `
+          <label class="rl-select-item">
+            <input type="checkbox" data-contact-mass-id="${c.id}" ${contactMassSelected[c.id] ? 'checked' : ''} />
+            <div class="rsi-main">
+              <div class="rsi-name">${esc(c.department)}${c.contactName ? ' — ' + esc(c.contactName) : ''}</div>
+              <div class="rsi-sub">${esc(c.email)}</div>
+            </div>
+          </label>
+        `).join('');
+        container.querySelectorAll('[data-contact-mass-id]').forEach(cb => cb.addEventListener('change', () => {
+          contactMassSelected[cb.getAttribute('data-contact-mass-id')] = cb.checked;
+          updateContactMassFooter();
+        }));
+      }
+      updateContactMassFooter();
+    }
+
+    function updateContactMassFooter(){
+      const withEmail = contactDocs.filter(c => c.email);
+      const selectedIds = Object.keys(contactMassSelected).filter(id => contactMassSelected[id]);
+      document.getElementById('contactMassCount').textContent = selectedIds.length + ' selected';
+      document.getElementById('contactMassSelectAll').checked = withEmail.length > 0 && selectedIds.length === withEmail.length;
+
+      const sendBtn = document.getElementById('contactMassSendBtn');
+      if (selectedIds.length === 0) {
+        sendBtn.href = '#';
+        sendBtn.classList.add('hidden');
+        return;
+      }
+      sendBtn.classList.remove('hidden');
+      const selected = contactDocs.filter(c => selectedIds.includes(c.id));
+      const toList = [...new Set(selected.map(c => c.email).filter(Boolean))];
+      const ccList = [...new Set(selected.flatMap(c => (c.capstoneContacts || '').match(/[^\s,;<>()]+@[^\s,;<>()]+\.[^\s,;<>()]+/g) || []))];
+      const params = ['subject=' + encodeURIComponent('Capstone Reslife — ' + currentProperty)];
+      if (ccList.length) params.push('cc=' + encodeURIComponent(ccList.join(',')));
+      sendBtn.href = 'mailto:' + toList.join(',') + '?' + params.join('&');
     }
 
     function openContactForm(c){
@@ -3652,6 +3867,8 @@
       document.getElementById('contactEmail').value = c ? (c.email || '') : '';
       document.getElementById('contactPhone').value = c ? (c.phone || '') : '';
       document.getElementById('contactNotes').value = c ? (c.notes || '') : '';
+      document.getElementById('contactReason').value = c ? (c.reasonToContact || '') : '';
+      document.getElementById('contactCapstone').value = c ? (c.capstoneContacts || '') : '';
       toggleForm('contactForm', true);
       resetWizard('contactForm');
     }
@@ -3663,12 +3880,15 @@
         reviewRow('Category', document.getElementById('contactCategory').value) +
         reviewRow('Email', document.getElementById('contactEmail').value) +
         reviewRow('Phone', document.getElementById('contactPhone').value) +
-        reviewRow('Notes', document.getElementById('contactNotes').value);
+        reviewRow('Notes', document.getElementById('contactNotes').value) +
+        reviewRow('Reason to Contact', document.getElementById('contactReason').value) +
+        reviewRow('Capstone Contacts to Include', document.getElementById('contactCapstone').value);
     }
 
     function bindContactForm(){
       document.getElementById('contactAddBtn').addEventListener('click', () => openContactForm(null));
       document.getElementById('contactCancelBtn').addEventListener('click', () => toggleForm('contactForm', false));
+      document.getElementById('contactSearch').addEventListener('input', (e) => renderContactList(e.target.value));
       document.getElementById('contactSaveBtn').addEventListener('click', async () => {
         const id = document.getElementById('contactId').value;
         const department = document.getElementById('contactDept').value.trim();
@@ -3677,16 +3897,34 @@
         const email = document.getElementById('contactEmail').value.trim();
         const phone = document.getElementById('contactPhone').value.trim();
         const notes = document.getElementById('contactNotes').value.trim();
+        const reasonToContact = document.getElementById('contactReason').value.trim();
+        const capstoneContacts = document.getElementById('contactCapstone').value.trim();
         if (!department) { alert('Department / org name is required'); return; }
         try {
-          const payload = { property: currentProperty, department, contactName, category, email, phone, notes };
+          const payload = { property: currentProperty, department, contactName, category, email, phone, notes, reasonToContact, capstoneContacts };
           if (id) await apiFetch('/reslife-contacts', { method: 'PUT', body: JSON.stringify(Object.assign({ id }, payload)) });
           else await apiFetch('/reslife-contacts', { method: 'POST', body: JSON.stringify(payload) });
           toggleForm('contactForm', false);
           await loadContacts();
         } catch (e) { alert('Save failed: ' + e.message); }
       });
-      initWizard('contactForm', ['Department', 'Contact Info', 'Review'], { saveBtnId: 'contactSaveBtn', onReview: renderContactReview });
+      initWizard('contactForm', ['Department', 'Contact Info', 'Why Contact Them', 'Review'], { saveBtnId: 'contactSaveBtn', onReview: renderContactReview });
+
+      // Detail modal
+      document.getElementById('contactDetailCloseBtn').addEventListener('click', closeContactDetail);
+      document.getElementById('contactDetailCloseBtn2').addEventListener('click', closeContactDetail);
+      document.getElementById('contactDetailModalOverlay').addEventListener('mousedown', (e) => { if (e.target === e.currentTarget) closeContactDetail(); });
+
+      // Mass-email modal
+      document.getElementById('contactMassEmailBtn').addEventListener('click', openContactMassEmailModal);
+      document.getElementById('contactMassEmailCloseBtn').addEventListener('click', closeContactMassEmailModal);
+      document.getElementById('contactMassCancelBtn').addEventListener('click', closeContactMassEmailModal);
+      document.getElementById('contactMassEmailModalOverlay').addEventListener('mousedown', (e) => { if (e.target === e.currentTarget) closeContactMassEmailModal(); });
+      document.getElementById('contactMassSelectAll').addEventListener('change', (e) => {
+        const withEmail = contactDocs.filter(c => c.email);
+        withEmail.forEach(c => { contactMassSelected[c.id] = e.target.checked; });
+        renderContactMassList();
+      });
     }
 
     // ==================== CURRICULUM TRACKER ====================

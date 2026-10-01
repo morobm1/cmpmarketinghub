@@ -6,6 +6,14 @@ import { canAccessReslifeProperty, canAdminReslifeProperty, refreshReslifeUser, 
  * Reslife Hub — Campus Partner / Department Contacts
  * (modeled on "Contact info - OCC DEPTS.xlsx": department, email, category)
  *
+ * Document shape (reslife_contacts collection):
+ * {
+ *   _id, property, department, contactName, email, phone, category, notes,
+ *   reasonToContact: String,    // "Why would you contact this person" — shown in the contact detail view
+ *   capstoneContacts: String,   // free-text names/emails of internal Capstone staff to include/cc when reaching out
+ *   createdBy, createdAt, updatedAt
+ * }
+ *
  * GET    ?property=X        - list contacts (any Reslife role + admin, read-only for RA/REC)
  * POST                       - create contact (Reslife Admin / site admin only)
  * PUT                        - update contact (Reslife Admin / site admin only)
@@ -31,13 +39,15 @@ export async function handler(event) {
 
     if (event.httpMethod === 'POST') {
       const body = JSON.parse(event.body || '{}');
-      const { property, department, contactName, email, phone, category, notes } = body;
+      const { property, department, contactName, email, phone, category, notes, reasonToContact, capstoneContacts } = body;
       if (!property || !department) return { statusCode: 400, body: 'Missing property/department' };
       if (!canAdminReslifeProperty(user, property)) return { statusCode: 403, body: 'Forbidden' };
       const now = new Date().toISOString();
       const doc = {
         property, department, contactName: contactName || '', email: email || '', phone: phone || '',
-        category: category || 'Other', notes: notes || '', createdBy: user.sub, createdAt: now, updatedAt: now,
+        category: category || 'Other', notes: notes || '',
+        reasonToContact: reasonToContact || '', capstoneContacts: capstoneContacts || '',
+        createdBy: user.sub, createdAt: now, updatedAt: now,
       };
       const result = await col.insertOne(doc);
       doc.id = result.insertedId.toString();
@@ -46,7 +56,7 @@ export async function handler(event) {
 
     if (event.httpMethod === 'PUT') {
       const body = JSON.parse(event.body || '{}');
-      const { id, property, department, contactName, email, phone, category, notes } = body;
+      const { id, property, department, contactName, email, phone, category, notes, reasonToContact, capstoneContacts } = body;
       if (!id || !property) return { statusCode: 400, body: 'Missing id/property' };
       if (!canAdminReslifeProperty(user, property)) return { statusCode: 403, body: 'Forbidden' };
       const updates = { updatedAt: new Date().toISOString() };
@@ -56,6 +66,8 @@ export async function handler(event) {
       if (phone !== undefined) updates.phone = phone;
       if (category !== undefined) updates.category = category;
       if (notes !== undefined) updates.notes = notes;
+      if (reasonToContact !== undefined) updates.reasonToContact = reasonToContact;
+      if (capstoneContacts !== undefined) updates.capstoneContacts = capstoneContacts;
       await col.updateOne({ _id: new ObjectId(id), property }, { $set: updates });
       return json(200, { success: true });
     }
