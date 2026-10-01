@@ -419,6 +419,34 @@
     .rl-modal-header h3{margin:0;font-size:16px;font-weight:800;color:var(--rl-text)}
     .rl-modal-close{background:none;border:none;font-size:22px;line-height:1;color:var(--rl-subtext);cursor:pointer;padding:0}
     .rl-modal-body{padding:18px 20px}
+    /* Program proposals */
+    .prog-type-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media (max-width:700px){.prog-type-cards{grid-template-columns:1fr}}
+    .prog-type-card{display:flex;flex-direction:column;gap:6px;text-align:left;padding:12px 14px;border:2px solid var(--rl-border);border-radius:12px;background:#fff;cursor:pointer;font:inherit;color:var(--rl-text)}
+    .prog-type-card:hover{border-color:#94a3b8}
+    .prog-type-card.selected{border-color:var(--rl-primary,#0b5cab);background:#f0f7ff;box-shadow:0 0 0 3px rgba(11,92,171,.12)}
+    .ptc-title{font-weight:800;font-size:14px}
+    .ptc-desc{font-size:12.5px;line-height:1.45;color:var(--rl-subtext)}
+    .ptc-tags{font-size:11.5px;font-weight:600;color:var(--rl-text)}
+    .prog-toolbar{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+    .prog-stats{display:flex;gap:8px;flex-wrap:wrap}
+    .prog-stat{padding:8px 12px;border:1px solid var(--rl-border);border-radius:10px;background:#fff;min-width:96px}
+    .prog-stat b{display:block;font-size:18px}
+    .prog-stat span{font-size:11.5px;color:var(--rl-subtext);text-transform:uppercase;letter-spacing:.03em}
+    .prog-filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .prog-filters input[type=text],.prog-filters #progSearch{flex:1;min-width:200px}
+    .prog-filters input,.prog-filters select{padding:7px 10px;border:1px solid var(--rl-border);border-radius:8px;font:inherit;font-size:13px}
+    .prog-month-h{margin:18px 0 8px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--rl-subtext)}
+    .prog-card{display:grid;grid-template-columns:64px 1fr auto;gap:14px;align-items:start;border:1px solid var(--rl-border);border-radius:12px;padding:12px 14px;background:#fff;margin-bottom:8px}
+    .prog-date{border-radius:10px;background:#f1f5f9;text-align:center;padding:6px 0;line-height:1.1}
+    .prog-date .m{font-size:11px;font-weight:800;text-transform:uppercase;color:var(--rl-subtext)}
+    .prog-date .d{font-size:22px;font-weight:800}
+    .prog-date .w{font-size:11px;color:var(--rl-subtext)}
+    .prog-card h4{margin:0 0 4px;font-size:15px;font-weight:800;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+    .prog-meta{font-size:12.5px;color:var(--rl-subtext);display:flex;gap:12px;flex-wrap:wrap}
+    .prog-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+    .prog-details{grid-column:1/-1;border-top:1px dashed var(--rl-border);padding-top:10px;font-size:13px}
+    @media (max-width:700px){.prog-card{grid-template-columns:56px 1fr}.prog-actions{grid-column:1/-1;justify-content:flex-start}}
     .rl-modal-footer{padding:16px 20px;border-top:1px solid var(--rl-border);display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
 
     /* Select-list (multi-select checklist used by the Campus Contacts mass-email picker) */
@@ -734,13 +762,42 @@
                 <div class="rl-wizard-step-title">Step 1 · Basics</div>
                 <div class="rl-form-grid cols-3">
                   <div class="rl-field full"><label>Program Title</label><input id="progTitle" placeholder="e.g., Valentine's Day Craft Night" data-required /></div>
-                  <div class="rl-field"><label>Type</label>
-                    <select id="progType"><option value="active">Active</option><option value="passive">Passive</option></select>
+                  <div class="rl-field full"><label>Program Type</label>
+                    <input type="hidden" id="progType" value="active" />
+                    <div class="prog-type-cards">
+                      <button type="button" class="prog-type-card" data-prog-type="active">
+                        <span class="ptc-title">Active Program</span>
+                        <span class="ptc-desc">A staff-facilitated, in-person event where residents attend and participate at a set date, time and location — e.g. craft night, game tournament, cookout, floor meeting, workshop with a campus partner.</span>
+                        <span class="ptc-tags">Needs: date &amp; time · location · staffing/stations · usually a budget</span>
+                      </button>
+                      <button type="button" class="prog-type-card" data-prog-type="passive">
+                        <span class="ptc-title">Passive Program</span>
+                        <span class="ptc-desc">Self-guided education or engagement residents interact with on their own time, no facilitator required — e.g. bulletin board, door decs, info tabling, take-one flyers, grab-and-go kits, interactive poster.</span>
+                        <span class="ptc-tags">Needs: install/display date · location · materials</span>
+                      </button>
+                    </div>
                   </div>
-                  <div class="rl-field"><label>Month</label><input id="progMonth" placeholder="e.g., February" /></div>
-                  <div class="rl-field"><label>Event Date/Time</label><input id="progDate" type="datetime-local" /></div>
-                  <div class="rl-field"><label>Location</label><input id="progLocation" placeholder="e.g., Building 2-4 Courtyard" /></div>
-                  <div class="rl-field"><label>Budget ($)</label><input id="progBudget" type="number" step="0.01" placeholder="200" /></div>
+                  <div class="rl-field"><label>Month</label>
+                    <select id="progMonth">
+                      <option value="">Select month…</option>
+                      <option>January</option><option>February</option><option>March</option><option>April</option><option>May</option><option>June</option>
+                      <option>July</option><option>August</option><option>September</option><option>October</option><option>November</option><option>December</option>
+                    </select>
+                  </div>
+                  <div class="rl-field"><label id="progDateLabel">Event Date</label><input id="progDate" type="date" /></div>
+                  <div class="rl-field"><label id="progTimeLabel">Start Time</label><select id="progTime"></select></div>
+                  <div class="rl-field"><label>Location</label>
+                    <div style="display:flex;gap:6px">
+                      <select id="progLocation" style="flex:1"></select>
+                      <button type="button" class="rl-btn sm hidden" id="progAddLocBtn" title="Add a new location">+ Add</button>
+                    </div>
+                    <div class="hidden" id="progNewLocRow" style="display:flex;gap:6px;margin-top:6px">
+                      <input id="progNewLoc" placeholder="New location name" style="flex:1" />
+                      <button type="button" class="rl-btn sm primary" id="progSaveLocBtn">Save</button>
+                      <button type="button" class="rl-btn sm" id="progCancelLocBtn">Cancel</button>
+                    </div>
+                  </div>
+                  <div class="rl-field"><label>Budget ($)</label><input id="progBudget" type="number" min="0" step="0.01" placeholder="200" /></div>
                 </div>
               </div>
 
@@ -753,9 +810,19 @@
               </div>
 
               <div class="rl-wizard-step-panel">
-                <div class="rl-wizard-step-title">Step 3 · Shopping / Action Item List</div>
-                <div id="progShoppingRows"></div>
-                <button class="rl-btn sm" id="progAddItemBtn" type="button" style="margin-top:8px">+ Add Item</button>
+                <div class="rl-wizard-step-title">Step 3 · Supplies &amp; Action Items</div>
+                <p style="margin:0 0 10px;font-size:12.5px;color:var(--rl-subtext)">List anything this program needs: items to buy, supplies to pull from storage, flyer/marketing requests, or other to-dos. Skip this step if nothing is needed.</p>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;margin-bottom:10px"><input type="checkbox" id="progNoItems" /> No supplies or action items needed</label>
+                <div id="progItemsWrap">
+                  <div id="progShoppingRows"></div>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+                    <button class="rl-btn sm" type="button" data-add-kind="purchase">+ Purchase</button>
+                    <button class="rl-btn sm" type="button" data-add-kind="supply">+ Supply on hand</button>
+                    <button class="rl-btn sm" type="button" data-add-kind="flyer">+ Flyer / Marketing request</button>
+                    <button class="rl-btn sm" type="button" data-add-kind="task">+ Task / Other</button>
+                  </div>
+                  <div id="progItemsTotal" style="margin-top:8px;font-size:13px;font-weight:700"></div>
+                </div>
               </div>
 
               <div class="rl-wizard-step-panel">
@@ -770,6 +837,16 @@
                   <button class="rl-btn primary" data-wizard-next>Next &rarr;</button>
                   <button class="rl-btn primary" id="progSaveBtn">Submit Proposal</button>
                 </div>
+              </div>
+            </div>
+            <div id="progToolbar" class="prog-toolbar">
+              <div class="prog-stats" id="progStats"></div>
+              <div class="prog-filters">
+                <input id="progSearch" placeholder="Search title, location, proposer…" />
+                <select id="progFilterStatus"><option value="">All statuses</option><option value="proposed">Proposed</option><option value="approved">Approved</option><option value="completed">Completed</option></select>
+                <select id="progFilterType"><option value="">All types</option><option value="active">Active</option><option value="passive">Passive</option></select>
+                <select id="progFilterMonth"><option value="">All months</option></select>
+                <label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox" id="progMineOnly" /> Mine only</label>
               </div>
             </div>
             <div id="progList"><div class="rl-loading">Loading…</div></div>
@@ -3587,71 +3664,234 @@
     }
 
     // ==================== PROGRAM PROPOSALS ====================
-    function shoppingRowHTML(it){
-      it = it || { item: '', vendor: '', link: '', price: '', qty: 1 };
-      return `<div class="rl-form-grid cols-3 shopping-row" style="margin-bottom:8px;align-items:end">
-        <div class="rl-field"><label>Item</label><input class="si-item" value="${esc(it.item)}" /></div>
-        <div class="rl-field"><label>Vendor</label><input class="si-vendor" value="${esc(it.vendor)}" /></div>
-        <div class="rl-field"><label>Link</label><input class="si-link" value="${esc(it.link)}" /></div>
-        <div class="rl-field"><label>Price ($)</label><input class="si-price" type="number" step="0.01" value="${esc(it.price)}" /></div>
-        <div class="rl-field"><label>Qty</label><input class="si-qty" type="number" value="${esc(it.qty || 1)}" /></div>
-        <div class="rl-field"><button class="rl-btn sm danger" type="button" data-remove-row>Remove</button></div>
+    // Supplies & action items. Each item has a `kind`; legacy items without one are purchases.
+    const ITEM_KINDS = {
+      purchase: { label: 'Purchase', pill: 'maintenance' },
+      supply:   { label: 'Supply on hand', pill: 'key' },
+      flyer:    { label: 'Flyer / Marketing', pill: 'in-progress' },
+      task:     { label: 'Task / Other', pill: 'open' },
+    };
+    function itemKind(it){ return ITEM_KINDS[it && it.kind] ? it.kind : 'purchase'; }
+    function itemCost(it){ return itemKind(it) === 'purchase' ? (it.price || 0) * (it.qty || 1) : 0; }
+
+    function shoppingRowHTML(it, kind){
+      it = it || {};
+      const k = kind || itemKind(it);
+      const f = (cls, label, val, attrs = '') => `<div class="rl-field"><label>${label}</label><input class="${cls}" value="${esc(val == null ? '' : val)}" ${attrs} /></div>`;
+      let fields = '';
+      if (k === 'purchase') {
+        fields = f('si-item', 'Item', it.item, 'placeholder="e.g., Poster board"') + f('si-vendor', 'Vendor', it.vendor, 'placeholder="Amazon, Target…"') +
+          f('si-link', 'Link', it.link, 'placeholder="https://…"') + f('si-price', 'Price ($)', it.price, 'type="number" min="0" step="0.01"') +
+          f('si-qty', 'Qty', it.qty || 1, 'type="number" min="1"');
+      } else if (k === 'supply') {
+        fields = f('si-item', 'Supply', it.item, 'placeholder="e.g., Folding tables, markers"') + f('si-qty', 'Qty', it.qty || 1, 'type="number" min="1"') +
+          f('si-source', 'Where to get it', it.source, 'placeholder="e.g., Office storage closet"') + f('si-owner', 'Who will grab it', it.owner);
+      } else if (k === 'flyer') {
+        fields = f('si-item', 'Request', it.item || 'Event flyer', 'placeholder="e.g., Flyer, social post, door hangers"') +
+          f('si-qty', 'Qty / copies', it.qty || '', 'type="number" min="0"') + f('si-due', 'Needed by', it.due, 'type="date"') +
+          `<div class="rl-field full"><label>Details for marketing</label><input class="si-notes" value="${esc(it.notes || '')}" placeholder="Size, wording, where it will be posted…" /></div>`;
+      } else {
+        fields = f('si-item', 'Task', it.item, 'placeholder="e.g., Reserve courtyard, email campus partner"') + f('si-owner', 'Owner', it.owner) +
+          f('si-due', 'Due', it.due, 'type="date"');
+      }
+      return `<div class="shopping-row" data-kind="${k}" style="border:1px solid var(--rl-border);border-radius:10px;padding:10px 12px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span class="rl-pill ${ITEM_KINDS[k].pill}">${ITEM_KINDS[k].label}</span>
+          <button class="rl-btn sm danger" type="button" data-remove-row>Remove</button>
+        </div>
+        <div class="rl-form-grid cols-3">${fields}</div>
       </div>`;
     }
 
     function collectShoppingList(){
-      return Array.from(document.querySelectorAll('#progShoppingRows .shopping-row')).map(row => ({
-        item: row.querySelector('.si-item').value.trim(),
-        vendor: row.querySelector('.si-vendor').value.trim(),
-        link: row.querySelector('.si-link').value.trim(),
-        price: parseFloat(row.querySelector('.si-price').value) || 0,
-        qty: parseInt(row.querySelector('.si-qty').value, 10) || 1,
-      })).filter(r => r.item);
+      if (document.getElementById('progNoItems').checked) return [];
+      const v = (row, cls) => { const el = row.querySelector('.' + cls); return el ? el.value.trim() : ''; };
+      return Array.from(document.querySelectorAll('#progShoppingRows .shopping-row')).map(row => {
+        const kind = row.getAttribute('data-kind');
+        const it = { kind, item: v(row, 'si-item'), qty: parseInt(v(row, 'si-qty'), 10) || (kind === 'flyer' ? 0 : 1) };
+        if (kind === 'purchase') Object.assign(it, { vendor: v(row, 'si-vendor'), link: v(row, 'si-link'), price: parseFloat(v(row, 'si-price')) || 0 });
+        if (kind === 'supply') Object.assign(it, { source: v(row, 'si-source'), owner: v(row, 'si-owner') });
+        if (kind === 'flyer') Object.assign(it, { due: v(row, 'si-due'), notes: v(row, 'si-notes') });
+        if (kind === 'task') Object.assign(it, { owner: v(row, 'si-owner'), due: v(row, 'si-due') });
+        return it;
+      }).filter(r => r.item);
+    }
+
+    function updateItemsTotal(){
+      const items = collectShoppingList();
+      const cost = items.reduce((s, r) => s + itemCost(r), 0);
+      const counts = Object.keys(ITEM_KINDS).map(k => [k, items.filter(i => itemKind(i) === k).length]).filter(([, n]) => n);
+      document.getElementById('progItemsTotal').textContent = items.length
+        ? counts.map(([k, n]) => `${n} ${ITEM_KINDS[k].label.toLowerCase()}`).join(' · ') + (cost ? ` · Purchase total $${cost.toFixed(2)}` : '')
+        : '';
+    }
+
+    // Read-only rendering of items, grouped by kind, for the saved list.
+    function itemsDetailHTML(list){
+      if (!list || !list.length) return '';
+      const due = d => d ? new Date(d + 'T00:00').toLocaleDateString([], { month: 'short', day: 'numeric' }) : '';
+      return Object.keys(ITEM_KINDS).map(k => {
+        const rows = list.filter(i => itemKind(i) === k);
+        if (!rows.length) return '';
+        let body;
+        if (k === 'purchase') {
+          const total = rows.reduce((s, r) => s + itemCost(r), 0);
+          body = `<table class="rl-table"><thead><tr><th>Item</th><th>Vendor</th><th>Price</th><th>Qty</th><th>Subtotal</th><th></th></tr></thead><tbody>${rows.map(r => `<tr><td>${esc(r.item)}</td><td>${esc(r.vendor || '')}</td><td>$${(r.price || 0).toFixed(2)}</td><td>${esc(r.qty)}</td><td>$${itemCost(r).toFixed(2)}</td><td>${r.link ? `<a href="${esc(r.link)}" target="_blank" rel="noopener">Link</a>` : ''}</td></tr>`).join('')}<tr><td colspan="4" style="text-align:right;font-weight:700">Total</td><td style="font-weight:700">$${total.toFixed(2)}</td><td></td></tr></tbody></table>`;
+        } else {
+          body = '<ul style="margin:4px 0 0 18px;padding:0">' + rows.map(r => {
+            const bits = [];
+            if (k === 'supply') { if (r.qty) bits.push('qty ' + r.qty); if (r.source) bits.push('from ' + esc(r.source)); if (r.owner) bits.push(esc(r.owner) + ' grabbing'); }
+            if (k === 'flyer') { if (r.qty) bits.push(r.qty + ' copies'); if (r.due) bits.push('needed by ' + due(r.due)); }
+            if (k === 'task') { if (r.owner) bits.push(esc(r.owner)); if (r.due) bits.push('due ' + due(r.due)); }
+            return `<li><strong>${esc(r.item)}</strong>${bits.length ? ' — ' + bits.join(' · ') : ''}${r.notes ? `<div style="color:var(--rl-subtext)">${esc(r.notes)}</div>` : ''}</li>`;
+          }).join('') + '</ul>';
+        }
+        return `<div style="margin-bottom:10px;overflow-x:auto"><strong>${ITEM_KINDS[k].label}</strong>${body}</div>`;
+      }).join('');
     }
 
     document.getElementById('progShoppingRows').addEventListener('click', (e) => {
-      if (e.target.hasAttribute('data-remove-row')) e.target.closest('.shopping-row').remove();
+      if (e.target.hasAttribute('data-remove-row')) { e.target.closest('.shopping-row').remove(); updateItemsTotal(); }
     });
-    document.getElementById('progAddItemBtn').addEventListener('click', () => {
-      document.getElementById('progShoppingRows').insertAdjacentHTML('beforeend', shoppingRowHTML());
+    document.getElementById('progShoppingRows').addEventListener('input', updateItemsTotal);
+    document.querySelectorAll('[data-add-kind]').forEach(btn => btn.addEventListener('click', () => {
+      document.getElementById('progShoppingRows').insertAdjacentHTML('beforeend', shoppingRowHTML(null, btn.getAttribute('data-add-kind')));
+      const rows = document.querySelectorAll('#progShoppingRows .shopping-row');
+      const input = rows[rows.length - 1].querySelector('input'); if (input) input.focus();
+      updateItemsTotal();
+    }));
+    document.getElementById('progNoItems').addEventListener('change', e => {
+      document.getElementById('progItemsWrap').classList.toggle('hidden', e.target.checked);
+      updateItemsTotal();
     });
+
+    const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    let progDocs = [];
+    let progLocations = [];
+
+    // 15-minute time options, 7:00 AM – 11:45 PM, values in 24h "HH:MM".
+    (function buildTimeOptions(){
+      const sel = document.getElementById('progTime');
+      let html = '<option value="">Select time…</option>';
+      for (let h = 7; h < 24; h++) for (let m = 0; m < 60; m += 15) {
+        const v = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+        const label = ((h % 12) || 12) + ':' + String(m).padStart(2, '0') + (h < 12 ? ' AM' : ' PM');
+        html += `<option value="${v}">${label}</option>`;
+      }
+      sel.innerHTML = html;
+    })();
+    function fmtTime12(v){ if (!v) return ''; const [h, m] = v.split(':').map(Number); return ((h % 12) || 12) + ':' + String(m).padStart(2, '0') + (h < 12 ? ' AM' : ' PM'); }
+    // Split a stored eventDate ISO into local date + time strings for the inputs.
+    function splitEventDate(iso){
+      if (!iso) return { date: '', time: '' };
+      const d = new Date(iso); if (isNaN(d)) return { date: '', time: '' };
+      const p = n => String(n).padStart(2, '0');
+      return { date: `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`, time: `${p(d.getHours())}:${p(Math.floor(d.getMinutes() / 15) * 15)}` };
+    }
+
+    function setProgType(t){
+      document.getElementById('progType').value = t;
+      document.querySelectorAll('[data-prog-type]').forEach(b => b.classList.toggle('selected', b.getAttribute('data-prog-type') === t));
+      document.getElementById('progDateLabel').textContent = t === 'passive' ? 'Install / Display Date' : 'Event Date';
+      document.getElementById('progTimeLabel').textContent = t === 'passive' ? 'Time (optional)' : 'Start Time';
+    }
+
+    async function loadProgLocations(){
+      try { progLocations = await apiFetch('/reslife-locations' + propParam()); } catch (e) { progLocations = []; }
+    }
+    function renderLocationOptions(selected){
+      const sel = document.getElementById('progLocation');
+      const names = progLocations.map(l => l.name);
+      if (selected && !names.includes(selected)) names.unshift(selected); // keep legacy free-text values
+      sel.innerHTML = '<option value="">Select location…</option>' + names.map(n => `<option${n === selected ? ' selected' : ''}>${esc(n)}</option>`).join('');
+      document.getElementById('progAddLocBtn').classList.toggle('hidden', !isManager);
+    }
 
     async function loadPrograms(){
       const list = document.getElementById('progList');
       list.innerHTML = '<div class="rl-loading">Loading…</div>';
-      let docs = [];
-      try { docs = await apiFetch('/reslife-programs' + propParam()); } catch (e) { list.innerHTML = '<div class="rl-empty">Failed to load program proposals.</div>'; return; }
-      if (docs.length === 0) { list.innerHTML = '<div class="rl-empty">No program proposals yet.</div>'; return; }
-      list.innerHTML = docs.map(p => {
+      try {
+        const [docs] = await Promise.all([apiFetch('/reslife-programs' + propParam()), loadProgLocations()]);
+        progDocs = docs;
+      } catch (e) { list.innerHTML = '<div class="rl-empty">Failed to load program proposals.</div>'; return; }
+      const monthSel = document.getElementById('progFilterMonth');
+      const cur = monthSel.value;
+      const used = MONTHS.filter(m => progDocs.some(p => progMonthOf(p) === m));
+      monthSel.innerHTML = '<option value="">All months</option>' + used.map(m => `<option${m === cur ? ' selected' : ''}>${m}</option>`).join('');
+      renderPrograms();
+    }
+
+    function progMonthOf(p){ return p.month || (p.eventDate ? MONTHS[new Date(p.eventDate).getMonth()] : ''); }
+    function progTotal(p){ return (p.shoppingList || []).reduce((s, r) => s + itemCost(r), 0); }
+
+    function renderPrograms(){
+      const list = document.getElementById('progList');
+      const q = document.getElementById('progSearch').value.trim().toLowerCase();
+      const fs = document.getElementById('progFilterStatus').value;
+      const ft = document.getElementById('progFilterType').value;
+      const fm = document.getElementById('progFilterMonth').value;
+      const mine = document.getElementById('progMineOnly').checked;
+
+      const all = progDocs;
+      document.getElementById('progStats').innerHTML = [
+        ['Total', all.length], ['Proposed', all.filter(p => p.status === 'proposed').length],
+        ['Approved', all.filter(p => p.status === 'approved').length], ['Completed', all.filter(p => p.status === 'completed').length],
+        ['Budget', '$' + all.reduce((s, p) => s + (p.budget || 0), 0).toFixed(0)],
+      ].map(([l, v]) => `<div class="prog-stat"><b>${v}</b><span>${l}</span></div>`).join('');
+
+      const docs = all.filter(p =>
+        (!fs || p.status === fs) && (!ft || p.type === ft) && (!fm || progMonthOf(p) === fm) &&
+        (!mine || p.createdBy === me.username) &&
+        (!q || [p.title, p.location, p.createdBy, p.description].some(v => String(v || '').toLowerCase().includes(q))));
+
+      if (!all.length) { list.innerHTML = '<div class="rl-empty">No program proposals yet. Click “+ New Program Proposal” to submit one.</div>'; return; }
+      if (!docs.length) { list.innerHTML = '<div class="rl-empty">No proposals match these filters.</div>'; return; }
+
+      // Group by month in calendar order; undated last.
+      const groups = new Map();
+      docs.slice().sort((a, b) => (a.eventDate ? new Date(a.eventDate) : Infinity) - (b.eventDate ? new Date(b.eventDate) : Infinity))
+        .forEach(p => { const k = progMonthOf(p) || 'No date set'; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(p); });
+
+      list.innerHTML = Array.from(groups.entries()).map(([month, items]) => `<div class="prog-month-h">${esc(month)} · ${items.length}</div>` + items.map(p => {
         const canModify = isManager || p.createdBy === me.username;
-        const total = (p.shoppingList || []).reduce((sum, r) => sum + (r.price || 0) * (r.qty || 1), 0);
+        const total = progTotal(p);
+        const d = p.eventDate ? new Date(p.eventDate) : null;
+        const t = splitEventDate(p.eventDate).time;
         const nextStatus = p.status === 'proposed' ? 'approved' : (p.status === 'approved' ? 'completed' : 'proposed');
+        const statusPill = `<span class="rl-pill ${p.status === 'completed' ? 'resolved' : (p.status === 'approved' ? 'in-progress' : 'open')}">${esc(p.status)}</span>`;
         return `
-        <div class="rl-item">
-          <div class="rl-item-main">
-            <div class="rl-item-title">
-              <span class="rl-pill ${p.type === 'active' ? 'maintenance' : 'key'}">${esc(p.type)}</span>
-              <span class="rl-pill ${p.status === 'completed' ? 'resolved' : (p.status === 'approved' ? 'in-progress' : 'open')}">${esc(p.status)}</span>
-              ${esc(p.title)}
+        <div class="prog-card">
+          <div class="prog-date">${d ? `<div class="m">${MONTHS[d.getMonth()].slice(0, 3)}</div><div class="d">${d.getDate()}</div><div class="w">${d.toLocaleDateString([], { weekday: 'short' })}</div>` : '<div class="m">TBD</div><div class="d">—</div>'}</div>
+          <div>
+            <h4>${esc(p.title)} <span class="rl-pill ${p.type === 'active' ? 'maintenance' : 'key'}">${esc(p.type)}</span> ${statusPill}</h4>
+            <div class="prog-meta">
+              ${t && t !== '00:00' ? `<span>Time: ${fmtTime12(t)}</span>` : ''}
+              ${p.location ? `<span>Location: ${esc(p.location)}</span>` : ''}
+              <span>Budget $${(p.budget || 0).toFixed(2)}${total > 0 ? ` · Purchases $${total.toFixed(2)}` : ''}</span>
+              <span>By ${esc(p.createdBy)}</span>
             </div>
-            <div class="rl-item-meta">
-              ${p.month ? esc(p.month) + ' · ' : ''}${p.eventDate ? fmtDate(p.eventDate) + ' · ' : ''}${p.location ? esc(p.location) + ' · ' : ''}Budget $${(p.budget || 0).toFixed(2)}
-              ${total > 0 ? ' · Shopping List Total $' + total.toFixed(2) : ''}
-            </div>
-            <div class="rl-item-meta">Proposed by ${esc(p.createdBy)} · ${fmtDate(p.createdAt)}</div>
-            ${p.description ? `<div class="rl-item-body">${esc(p.description)}</div>` : ''}
-            ${(p.stations || []).length ? `<div class="rl-item-body"><strong>Stations:</strong><br>${p.stations.map(s => esc(s)).join('<br>')}</div>` : ''}
-            ${(p.shoppingList || []).length ? `<div style="margin-top:8px;overflow-x:auto"><table class="rl-table"><thead><tr><th>Item</th><th>Vendor</th><th>Price</th><th>Qty</th><th>Link</th></tr></thead><tbody>${p.shoppingList.map(r => `<tr><td>${esc(r.item)}</td><td>${esc(r.vendor)}</td><td>$${(r.price||0).toFixed(2)}</td><td>${esc(r.qty)}</td><td>${r.link ? `<a href="${esc(r.link)}" target="_blank" rel="noopener">Link</a>` : ''}</td></tr>`).join('')}</tbody></table></div>` : ''}
           </div>
-          <div class="rl-item-actions">
+          <div class="prog-actions">
+            <button class="rl-btn sm" data-prog-toggle="${p.id}">Details</button>
             ${isManager ? `<button class="rl-btn sm success" data-prog-status="${p.id}" data-status="${nextStatus}">Mark ${esc(nextStatus)}</button>` : ''}
             ${canModify ? `<button class="rl-btn sm" data-prog-edit="${p.id}">Edit</button><button class="rl-btn sm danger" data-prog-del="${p.id}">Delete</button>` : ''}
           </div>
-        </div>
-      `; }).join('');
+          <div class="prog-details hidden" id="progDetails-${p.id}">
+            ${p.description ? `<div style="white-space:pre-wrap;margin-bottom:8px">${esc(p.description)}</div>` : '<div class="rl-empty" style="padding:0 0 8px">No description.</div>'}
+            ${(p.stations || []).length ? `<div style="margin-bottom:8px"><strong>Stations &amp; assignments</strong><ul style="margin:4px 0 0 18px;padding:0">${p.stations.map(s => `<li>${esc(s)}</li>`).join('')}</ul></div>` : ''}
+            ${(p.shoppingList || []).length ? itemsDetailHTML(p.shoppingList) : '<div style="color:var(--rl-subtext);margin-bottom:8px">No supplies or action items needed.</div>'}
+            <div style="font-size:12px;color:var(--rl-subtext);margin-top:6px">Submitted ${fmtDate(p.createdAt)}${p.updatedAt && p.updatedAt !== p.createdAt ? ' · updated ' + fmtDate(p.updatedAt) : ''}</div>
+          </div>
+        </div>`; }).join('')).join('');
+
+      list.querySelectorAll('[data-prog-toggle]').forEach(btn => btn.addEventListener('click', () => {
+        const el = document.getElementById('progDetails-' + btn.getAttribute('data-prog-toggle'));
+        const open = el.classList.toggle('hidden') === false;
+        btn.textContent = open ? 'Hide' : 'Details';
+      }));
       list.querySelectorAll('[data-prog-edit]').forEach(btn => btn.addEventListener('click', () => {
-        const p = docs.find(x => x.id === btn.getAttribute('data-prog-edit'));
-        if (p) openProgramForm(p);
+        const p = progDocs.find(x => x.id === btn.getAttribute('data-prog-edit'));
+        if (p) { openProgramForm(p); document.getElementById('progForm').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
       }));
       list.querySelectorAll('[data-prog-del]').forEach(btn => btn.addEventListener('click', async () => {
         if (!confirm('Delete this program proposal?')) return;
@@ -3665,62 +3905,106 @@
     }
 
     function openProgramForm(p){
+      const dt = splitEventDate(p && p.eventDate);
       document.getElementById('progId').value = p ? p.id : '';
       document.getElementById('progTitle').value = p ? p.title : '';
-      document.getElementById('progType').value = p ? p.type : 'active';
-      document.getElementById('progMonth').value = p ? (p.month || '') : '';
-      document.getElementById('progDate').value = p ? toLocalInputValue(p.eventDate) : '';
-      document.getElementById('progLocation').value = p ? (p.location || '') : '';
+      setProgType(p ? p.type : 'active');
+      document.getElementById('progMonth').value = p ? progMonthOf(p) : '';
+      document.getElementById('progDate').value = dt.date;
+      document.getElementById('progTime').value = dt.time;
+      renderLocationOptions(p ? (p.location || '') : '');
+      document.getElementById('progNewLocRow').classList.add('hidden');
       document.getElementById('progBudget').value = p ? (p.budget || '') : '';
       document.getElementById('progDescription').value = p ? (p.description || '') : '';
       document.getElementById('progStations').value = p ? (p.stations || []).join('\n') : '';
-      document.getElementById('progShoppingRows').innerHTML = p && p.shoppingList && p.shoppingList.length
-        ? p.shoppingList.map(shoppingRowHTML).join('')
-        : shoppingRowHTML();
+      const items = (p && p.shoppingList) || [];
+      document.getElementById('progShoppingRows').innerHTML = items.map(it => shoppingRowHTML(it)).join('');
+      const none = !!p && items.length === 0;
+      document.getElementById('progNoItems').checked = none;
+      document.getElementById('progItemsWrap').classList.toggle('hidden', none);
+      updateItemsTotal();
       toggleForm('progForm', true);
       resetWizard('progForm');
     }
 
+    function progEventISO(){
+      const date = document.getElementById('progDate').value;
+      if (!date) return null;
+      const time = document.getElementById('progTime').value || '00:00';
+      return new Date(date + 'T' + time).toISOString();
+    }
+
     function renderProgReview(){
       const shoppingList = collectShoppingList();
-      const total = shoppingList.reduce((sum, r) => sum + (r.price || 0) * (r.qty || 1), 0);
+      const total = shoppingList.reduce((sum, r) => sum + itemCost(r), 0);
+      const type = document.getElementById('progType').value;
       document.getElementById('progReview').innerHTML =
         reviewRow('Title', document.getElementById('progTitle').value) +
-        reviewRow('Type', document.getElementById('progType').value) +
+        reviewRow('Type', type === 'passive' ? 'Passive' : 'Active') +
         reviewRow('Month', document.getElementById('progMonth').value) +
-        reviewRow('Event Date/Time', fmtDate(document.getElementById('progDate').value)) +
+        reviewRow(type === 'passive' ? 'Install / Display Date' : 'Event Date', document.getElementById('progDate').value ? new Date(document.getElementById('progDate').value + 'T00:00').toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) : '') +
+        reviewRow('Time', fmtTime12(document.getElementById('progTime').value)) +
         reviewRow('Location', document.getElementById('progLocation').value) +
         reviewRow('Budget', '$' + (parseFloat(document.getElementById('progBudget').value) || 0).toFixed(2)) +
         reviewRow('Description', document.getElementById('progDescription').value) +
         reviewRow('Stations', document.getElementById('progStations').value) +
-        reviewRow('Shopping List Items', String(shoppingList.length)) +
-        reviewRow('Shopping List Total', '$' + total.toFixed(2));
+        reviewRow('Supplies & Action Items', shoppingList.length
+          ? Object.keys(ITEM_KINDS).map(k => [k, shoppingList.filter(i => itemKind(i) === k).length]).filter(([, n]) => n).map(([k, n]) => `${n} ${ITEM_KINDS[k].label}`).join(', ')
+          : 'None needed') +
+        reviewRow('Purchase Total', '$' + total.toFixed(2));
     }
 
     function bindProgramForm(){
+      document.querySelectorAll('[data-prog-type]').forEach(b => b.addEventListener('click', () => setProgType(b.getAttribute('data-prog-type'))));
+      // Picking a date fills the month automatically.
+      document.getElementById('progDate').addEventListener('change', e => {
+        if (e.target.value) document.getElementById('progMonth').value = MONTHS[Number(e.target.value.slice(5, 7)) - 1];
+      });
+      document.getElementById('progAddLocBtn').addEventListener('click', () => {
+        document.getElementById('progNewLocRow').classList.remove('hidden');
+        document.getElementById('progNewLoc').focus();
+      });
+      document.getElementById('progCancelLocBtn').addEventListener('click', () => {
+        document.getElementById('progNewLoc').value = '';
+        document.getElementById('progNewLocRow').classList.add('hidden');
+      });
+      document.getElementById('progSaveLocBtn').addEventListener('click', async () => {
+        const name = document.getElementById('progNewLoc').value.trim();
+        if (!name) return;
+        try {
+          const loc = await apiFetch('/reslife-locations', { method: 'POST', body: JSON.stringify({ property: currentProperty, name }) });
+          await loadProgLocations();
+          renderLocationOptions(loc.name);
+          document.getElementById('progNewLoc').value = '';
+          document.getElementById('progNewLocRow').classList.add('hidden');
+        } catch (e) { alert('Could not add location: ' + e.message); }
+      });
+      ['progSearch', 'progFilterStatus', 'progFilterType', 'progFilterMonth', 'progMineOnly'].forEach(id =>
+        document.getElementById(id).addEventListener(id === 'progSearch' ? 'input' : 'change', renderPrograms));
+
       document.getElementById('progAddBtn').addEventListener('click', () => openProgramForm(null));
       document.getElementById('progCancelBtn').addEventListener('click', () => toggleForm('progForm', false));
       document.getElementById('progSaveBtn').addEventListener('click', async () => {
         const id = document.getElementById('progId').value;
         const title = document.getElementById('progTitle').value.trim();
         const type = document.getElementById('progType').value;
-        const month = document.getElementById('progMonth').value.trim();
-        const eventDateRaw = document.getElementById('progDate').value;
-        const location = document.getElementById('progLocation').value.trim();
+        const month = document.getElementById('progMonth').value;
+        const location = document.getElementById('progLocation').value;
         const budget = parseFloat(document.getElementById('progBudget').value) || 0;
         const description = document.getElementById('progDescription').value.trim();
         const stations = document.getElementById('progStations').value.split('\n').map(s => s.trim()).filter(Boolean);
         const shoppingList = collectShoppingList();
         if (!title) { alert('Program title is required'); return; }
+        if (type === 'active' && document.getElementById('progDate').value && !document.getElementById('progTime').value) { alert('Please select a start time for this active program.'); return; }
         try {
-          const payload = { property: currentProperty, title, type, month, eventDate: eventDateRaw ? new Date(eventDateRaw).toISOString() : null, location, budget, description, stations, shoppingList };
+          const payload = { property: currentProperty, title, type, month, eventDate: progEventISO(), location, budget, description, stations, shoppingList };
           if (id) await apiFetch('/reslife-programs', { method: 'PUT', body: JSON.stringify(Object.assign({ id }, payload)) });
           else await apiFetch('/reslife-programs', { method: 'POST', body: JSON.stringify(payload) });
           toggleForm('progForm', false);
           await loadPrograms();
         } catch (e) { alert('Save failed: ' + e.message); }
       });
-      initWizard('progForm', ['Basics', 'Description', 'Shopping List', 'Review'], { saveBtnId: 'progSaveBtn', onReview: renderProgReview });
+      initWizard('progForm', ['Basics', 'Description', 'Supplies & Tasks', 'Review'], { saveBtnId: 'progSaveBtn', onReview: renderProgReview });
     }
 
     // ==================== COMMITTEES ====================
