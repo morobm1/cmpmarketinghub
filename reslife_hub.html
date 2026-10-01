@@ -2053,7 +2053,17 @@
   <div class="nt-toasts" id="ntToasts"></div>
   <div class="pp-overlay" id="ntAlertModal"><div class="pp-modal nt-alert-modal"><div class="pp-head"><div class="pp-head-ico">&#128227;</div><div><h3 id="ntAlertTitle">Announcement</h3><p id="ntAlertFrom"></p></div></div><div style="padding:22px 26px;font-size:15px;line-height:1.55;white-space:pre-wrap" id="ntAlertMsg"></div><div class="rl-modal-footer"><button class="rl-btn primary" id="ntAlertOk">Got it</button></div></div></div>
 
-  <script>    // ==================== STATE ====================
+  <script>    // Safety net: if anything throws while the Hub is still starting up, show a clear
+    // message with a reload button instead of leaving users on "Loading Reslife Hub…" forever.
+    function rlStartupFailed(msg){
+      const gate = document.getElementById('rlAuthGate');
+      if (!gate || gate.classList.contains('hidden')) return;
+      gate.innerHTML = '<div style="text-align:center;max-width:420px;padding:20px"><b style="font-size:17px">The Reslife Hub couldn’t finish loading.</b><p style="color:#64748b;font-size:14px">Please reload. If this keeps happening, contact your Reslife Admin.</p><button onclick="location.reload()" style="padding:10px 20px;border-radius:999px;border:none;background:#002D6A;color:#fff;font-weight:700;cursor:pointer">Reload</button><p style="color:#94a3b8;font-size:11px;margin-top:14px">' + String(msg || '').replace(/[<>&]/g, '') + '</p></div>';
+    }
+    window.addEventListener('error', e => rlStartupFailed(e.message));
+    window.addEventListener('unhandledrejection', e => rlStartupFailed(e.reason && e.reason.message));
+
+    // ==================== STATE ====================
     const RESLIFE_ROLES = ['reslife-ra', 'reslife-rec', 'reslife-admin'];
     const ROLE_LABELS = { 'reslife-ra':'Reslife - RA', 'reslife-rec':'Reslife - REC', 'reslife-admin':'Reslife Admin', admin:'Site Admin' };
     let me = null;                 // { username, role, properties }
@@ -2322,7 +2332,6 @@
     function setupPermissions(){
       document.getElementById('annComposerCollapsed').classList.toggle('hidden', !isManager);
       if (!isManager) document.getElementById('annForm').classList.add('hidden');
-      document.getElementById('rosterAddBtn').classList.toggle('hidden', !isManager);
       document.getElementById('curAddBtn').classList.toggle('hidden', !isManager);
       document.getElementById('trainAddBtn').classList.toggle('hidden', !isManager);
       document.getElementById('trainSubTracking').classList.toggle('hidden', !isManager);
