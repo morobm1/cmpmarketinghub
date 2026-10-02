@@ -5,7 +5,11 @@ import { canAccessReslifeProperty, canAdminReslifeProperty, canManageReslifeProp
 /**
  * Reslife Hub — Duty Log (Harbour Duty Log 26-27, normalized)
  *
- * ONE DutySession per (property, duty_date) holds MULTIPLE embedded DutyEntry
+ * ONE DutySession per (property, duty_date, shift) holds MULTIPLE embedded DutyEntry
+ * (multiple shifts per day = multiple logs per day; a log can be linked to a Schedule & On-Call shift).
+ * Every staff member on the shift (primary, duty partner, collaborators) can open, edit and submit the
+ * shared log — only ONE of them needs to submit it.
+ *
  * records — replacing the old shift/sign-in model and the Excel's twelve
  * monthly tabs with a single, date-filterable log. An RA starts (or resumes)
  * today's session, adds/edits entries all day/night, and the session stays
@@ -15,12 +19,14 @@ import { canAccessReslifeProperty, canAdminReslifeProperty, canManageReslifeProp
  * draft survives closed tabs, dead phones, and temporary offline periods;
  * the frontend's localStorage use is a recovery/offline-queue layer only.
  *
- * GET  ?property=X                              - caller's own sessions (most recent first)
+ * GET  ?property=X                              - sessions the caller is a member of (most recent first)
+ * GET  ?property=X&day=YYYY-MM-DD               - every log for that day (all shifts) — read-only unless you're a member
+ * GET  ?property=X&myShifts=1&date=YYYY-MM-DD    - the caller's published Schedule shifts that day (to pick which shift to log)
  * GET  ?property=X&all=1&(month|from|to|ra|partner|type|location|status|q)= - manager tier, filtered
  * GET  ?property=X&id=Y                          - single session (owner or manager tier)
  * GET  ?property=X&config=1                      - configurable options (caller titles, incident types, etc.)
  * GET  ?property=X&roster=1                      - active RA/REC usernames+labels for the Duty Partner picker
- * POST { property, action:'start' }              - create-or-resume today's session (one per property/day)
+ * POST { property, action:'start', duty_date, shift_id?, shift_label? } - create-or-join the log for that shift
  * PUT  { id, property, action, ... }              - addEntry / updateEntry / deleteEntry / updateSession / submit / reopen / requestEdit
  * PUT  { property, action:'updateConfig', config } - admin tier only
  * DELETE ?id=X&property=Y                        - remove a session (manager tier only; correcting a mistake)
@@ -84,6 +90,11 @@ function patchEntry(entry, body, now) {
   return patched;
 }
 
+// Everyone on the shift can work on the shared log.
+function members(doc) { return [...new Set([doc.primary_ra_username, doc.duty_partner_username, ...(doc.collaborators || [])].filter(Boolean))]; }
+const memberFilter = u => ({ $or: [{ primary_ra_username: u }, { duty_partner_username: u }, { collaborators: u }] });
+const pad2 = n => String(n).padStart(2, '0');
+
 function summarize(doc) {
   doc.id = doc._id.toString();
   delete doc._id;
@@ -124,7 +135,7 @@ export async function handler(event) {
       if (id) {
         const doc = await col.findOne({ _id: new ObjectId(id), property });
         if (!doc) return { statusCode: 404, body: 'Not found' };
-        if (doc.primary_ra_username !== user.sub && !manager) return { statusCode: 403, body: 'Forbidden' };
+        if (!members(doc).includes(user.sub) && !manager) return { statusCode: 403, body: 'Forbidden' };
         return json(200, summarize(doc));
       }
 
@@ -153,8 +164,21 @@ export async function handler(event) {
         return json(200, docs.map(summarize));
       }
 
-      // Default: caller's own sessions only
-      const docs = await col.find({ property, primary_ra_username: user.sub }).sort({ duty_date: -1 }).limit(60).toArray();
+      if (q.day) {
+        const docs = await col.find({ property, duty_date: q.day }).sort({ shift_start: 1, created_at: 1 }).toArray();
+        return json(200, docs.map(d => { const s = summarize(d); s.is_member = members(s).includes(user.sub); s.members = members(s); if (!s.is_member && !manager) s.entries = undefined; return s; }));
+      }
+
+      if (q.myShifts) {
+        const date = q.date || todayLocalFallback();
+        const sched = await db.collection('sched_shifts').find({ property, published: true, status: { $ne: 'cancelled' }, date, $or: [{ assignedUser: user.sub }, { backupUser: user.sub }] }).sort({ startAt: 1 }).toArray();
+        const settings = await db.collection('sched_settings').findOne({ property });
+        const typeName = id => ((settings && settings.shiftTypes) || []).find(t => t.id === id)?.name || id;
+        return json(200, sched.map(s => ({ id: s._id.toString(), label: `${typeName(s.typeId)} · ${s.start}–${s.end}`, typeId: s.typeId, start: s.start, end: s.end, assignedUser: s.assignedUser, backupUser: s.backupUser })));
+      }
+
+      // Default: every log the caller is a member of (primary, partner or collaborator)
+      const docs = await col.find(Object.assign({ property }, memberFilter(user.sub))).sort({ duty_date: -1, shift_start: -1 }).limit(60).toArray();
       return json(200, docs.map(summarize));
     }
 
@@ -168,19 +192,42 @@ export async function handler(event) {
       const dutyDate = body.duty_date || todayLocalFallback();
       const now = new Date().toISOString();
 
-      const existing = await col.findOne({ property, duty_date: dutyDate });
+      // Which shift is this log for? A Schedule & On-Call shift (preferred) or a named shift (e.g. "Evening").
+      let shift = null;
+      if (body.shift_id) {
+        try { shift = await db.collection('sched_shifts').findOne({ _id: new ObjectId(body.shift_id), property }); } catch (e) { shift = null; }
+        if (!shift) return { statusCode: 404, body: 'That schedule shift was not found' };
+      }
+      const settings = shift ? await db.collection('sched_settings').findOne({ property }) : null;
+      const typeName = shift ? ((((settings && settings.shiftTypes) || []).find(t => t.id === shift.typeId) || {}).name || shift.typeId) : '';
+      const shiftKey = shift ? 'sched:' + shift._id.toString() : ('label:' + String(body.shift_label || 'General').trim().toLowerCase().slice(0, 40));
+      const shiftLabel = shift ? `${typeName} · ${shift.start}–${shift.end}` : (String(body.shift_label || 'General').trim().slice(0, 60) || 'General');
+
+      // Legacy logs (one per day, no shift) count as the "General" shift.
+      const existing = await col.findOne(shiftKey === 'label:general'
+        ? { property, duty_date: dutyDate, $or: [{ shift_key: 'label:general' }, { shift_key: { $exists: false } }] }
+        : { property, duty_date: dutyDate, shift_key: shiftKey });
       if (existing) {
-        // One shared log per calendar day. If someone else already started today's log and
-        // it's not yet submitted, hand back the same session rather than creating a duplicate;
-        // edit permission still requires ownership or manager tier (enforced on PUT).
+        // Join the shared log: anyone who opens it while on that shift becomes a collaborator.
+        if (!members(existing).includes(user.sub)) {
+          await col.updateOne({ _id: existing._id }, { $addToSet: { collaborators: user.sub }, $set: { updated_at: now } });
+          existing.collaborators = [...(existing.collaborators || []), user.sub];
+        }
         return json(200, summarize(existing));
       }
 
+      const primary = (shift && shift.assignedUser) || user.sub;
+      const partner = (shift && shift.backupUser && shift.backupUser !== primary) ? shift.backupUser : '';
       const doc = {
         property,
         duty_date: dutyDate,
-        primary_ra_username: user.sub,
-        duty_partner_username: '',
+        shift_key: shiftKey,
+        shift_label: shiftLabel,
+        shift_id: shift ? shift._id.toString() : null,
+        shift_start: shift ? shift.start : (body.shift_start || ''),
+        primary_ra_username: primary,
+        duty_partner_username: partner,
+        collaborators: [...new Set([user.sub, primary, partner].filter(Boolean))],
         status: 'draft',
         no_incidents: false,
         entries: [],
@@ -202,6 +249,9 @@ export async function handler(event) {
       };
       const result = await col.insertOne(doc);
       doc._id = result.insertedId;
+      // Let the other person on the shift know the shared log is open.
+      const others = members(doc).filter(u => u !== user.sub);
+      if (others.length) await notifyDutyLog(db, property, others, 'log_started', 'Duty Log started', `${user.sub} started the ${shiftLabel} Duty Log for ${dutyDate}. You can add entries too — only one of you needs to submit.`, { sessionId: doc._id.toString(), dutyDate });
       return json(200, summarize(doc));
     }
 
@@ -222,7 +272,7 @@ export async function handler(event) {
       if (!id || !action) return { statusCode: 400, body: 'Missing id/action' };
       const existing = await col.findOne({ _id: new ObjectId(id), property });
       if (!existing) return { statusCode: 404, body: 'Not found' };
-      const isOwner = existing.primary_ra_username === user.sub;
+      const isOwner = members(existing).includes(user.sub); // any staff member on this shift
       const now = new Date().toISOString();
       const updates = { updated_at: now };
       const editable = existing.status === 'draft' || existing.status === 'reopened';
@@ -277,7 +327,10 @@ export async function handler(event) {
       if (action === 'updateSession') {
         if (!isOwner && !manager) return { statusCode: 403, body: 'Forbidden' };
         if (!editable) return { statusCode: 409, body: 'This Duty Log has already been submitted' };
-        if (body.duty_partner_username !== undefined) updates.duty_partner_username = body.duty_partner_username;
+        if (body.duty_partner_username !== undefined) {
+          updates.duty_partner_username = body.duty_partner_username;
+          if (body.duty_partner_username) await col.updateOne({ _id: new ObjectId(id), property }, { $addToSet: { collaborators: body.duty_partner_username } });
+        }
         if (body.no_incidents !== undefined) {
           if (body.no_incidents && (existing.entries || []).length > 0) {
             return { statusCode: 409, body: 'Cannot mark "No Calls / Incidents" while entries exist — remove entries first or leave unchecked' };
@@ -292,7 +345,7 @@ export async function handler(event) {
       }
 
       if (action === 'submit') {
-        if (!isOwner && !manager) return { statusCode: 403, body: 'Only the Duty RA (or REC/Admin) can submit this Duty Log' };
+        if (!isOwner && !manager) return { statusCode: 403, body: 'Only staff on this shift (or REC/Admin) can submit this Duty Log' };
         if (!editable) return { statusCode: 409, body: 'This Duty Log has already been submitted' };
         const entryCount = (existing.entries || []).length;
         if (!existing.no_incidents && entryCount === 0) {
@@ -303,6 +356,8 @@ export async function handler(event) {
         updates.submitted_by_username = user.sub;
         updates.last_saved_at = now;
         await col.updateOne({ _id: new ObjectId(id), property }, { $set: updates });
+        const others = members(existing).filter(u => u !== user.sub);
+        if (others.length) await notifyDutyLog(db, property, others, 'log_submitted', 'Duty Log submitted', `${user.sub} submitted the ${existing.shift_label || ''} Duty Log for ${existing.duty_date}. No action needed.`, { sessionId: id, dutyDate: existing.duty_date });
         return json(200, { success: true, submitted_at: now });
       }
 
@@ -329,8 +384,10 @@ export async function handler(event) {
       }
 
       if (action === 'reopen') {
-        if (!canAdminReslifeProperty(user, property) && !canManageReslifeProperty(user, property)) {
-          return { statusCode: 403, body: 'Only REC/Admin can reopen a submitted Duty Log' };
+        const canManage = canAdminReslifeProperty(user, property) || canManageReslifeProperty(user, property);
+        const sameDay = existing.duty_date === (body.today || todayLocalFallback()) && !existing.auto_submitted;
+        if (!canManage && !(isOwner && sameDay)) {
+          return { statusCode: 403, body: 'Only REC/Admin can reopen this Duty Log (staff on the shift can reopen it the same day, before it auto-submits)' };
         }
         if (existing.status !== 'submitted') return { statusCode: 409, body: 'Only a submitted Duty Log can be reopened' };
         updates.status = 'reopened';
@@ -343,11 +400,12 @@ export async function handler(event) {
           updates.edit_request_resolved_by_username = user.sub;
         }
         await col.updateOne({ _id: new ObjectId(id), property }, { $set: updates });
-        if (existing.primary_ra_username && existing.primary_ra_username !== user.sub) {
+        const notifyTo = members(existing).filter(u => u !== user.sub);
+        if (notifyTo.length) {
           await notifyDutyLog(
-            db, property, [existing.primary_ra_username], 'edit_unlocked',
+            db, property, notifyTo, 'edit_unlocked',
             'Duty Log unlocked for editing',
-            `${user.sub} ${hadRequest ? 'approved your edit request and unlocked' : 'unlocked'} the ${existing.duty_date} Duty Log. You can edit it again now.`,
+            `${user.sub} ${hadRequest ? 'approved the edit request and unlocked' : 'reopened'} the ${existing.shift_label || ''} Duty Log for ${existing.duty_date}. It can be edited again.`,
             { sessionId: id, dutyDate: existing.duty_date }
           );
         }

@@ -571,6 +571,24 @@
     }
     @keyframes ntSheet{from{transform:translateY(100%)}to{transform:none}}
     .rl-dl-notif-panel{max-width:calc(100vw - 24px)}
+    /* Duty Log: one shared log per shift, several shifts per day */
+    .dl-shift-strip{background:#fff;border:1px solid var(--rl-border);border-radius:14px;padding:12px 14px;margin-bottom:14px}
+    .dl-shift-strip-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+    .dl-shift-strip-h b{color:var(--rl-primary);font-size:15px}
+    .dl-shift-strip-h span{font-size:12px;color:var(--rl-subtext)}
+    .dl-shift-chips{display:flex;gap:8px;flex-wrap:wrap;align-items:stretch}
+    .dl-shift-chip{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;border:1.5px solid var(--rl-border);background:#fff;border-radius:12px;padding:9px 12px;min-width:170px;cursor:pointer;font:inherit}
+    .dl-shift-chip b{font-size:13.5px;color:var(--rl-primary)}
+    .dl-shift-chip span{font-size:11.5px;color:var(--rl-subtext)}
+    .dl-shift-chip em{position:absolute;top:8px;right:10px;font-style:normal;font-size:10.5px;font-weight:800;color:#fff;background:var(--rl-secondary);border-radius:999px;padding:2px 8px}
+    .dl-shift-chip.on{border-color:var(--rl-secondary);background:#fff8f0;box-shadow:0 0 0 3px rgba(249,146,57,.15)}
+    .dl-shift-chip.st-submitted{border-left:4px solid #16a34a}
+    .dl-shift-chip.st-draft,.dl-shift-chip.st-reopened{border-left:4px solid #f59e0b}
+    .dl-shift-chip.new{border-style:dashed;background:#f8fafc}
+    .dl-shift-chip:disabled{opacity:.55;cursor:not-allowed}
+    .dl-shift-other{display:flex;gap:6px;align-items:center;margin-left:auto}
+    .dl-shift-other select{padding:7px 9px;border:1px solid var(--rl-border);border-radius:8px;font:inherit;font-size:13px}
+    @media (max-width:640px){.dl-shift-chip{min-width:0;flex:1 1 100%}.dl-shift-other{margin-left:0;width:100%}.dl-shift-other select{flex:1}}
     /* Primary / Non-Leasing Occupant pairing (resident profile) */
     .res-occ{margin-top:14px;border-radius:14px;padding:12px 14px;border:2px solid;display:flex;flex-direction:column;gap:6px}
     .res-occ.nlo{background:#fef3c7;border-color:#f59e0b;color:#78350f}
@@ -1335,8 +1353,7 @@
           <div class="rl-panel-header">
             <div><h2>My Duty Log</h2><p>Open today's log, add calls/incidents as they happen, and submit at the end of your duty period. Nothing here ever auto-closes on you — it stays open and editable until you submit it.</p></div>
             <div style="position:relative;flex-shrink:0">
-              <button class="rl-dl-bell-btn" id="dlBellBtn" title="Duty Log notifications" type="button">&#128276;<span class="rl-dl-bell-dot hidden" id="dlBellDot"></span></button>
-              <div id="dlNotifPanel" class="rl-dl-notif-panel hidden"></div>
+
             </div>
           </div>
           <div class="rl-panel-body" id="dutyLogActiveBox"><div class="rl-loading">Loading…</div></div>
@@ -2964,51 +2981,8 @@
       renderDutyResources();
       await refreshTodaySession();
       await loadDutyLogHistory();
-      await loadDlNotifications();
       if (isManager) await loadDutyLogDashboard();
       if (isAdminTier) renderDlSettingsForm();
-    }
-
-    // ---- Duty Log notifications (private to the RA + REC/Admin they're addressed to) ----
-    async function loadDlNotifications(){
-      try { dlNotifications = await apiFetch('/reslife-duty-log-notifications' + propParam()); } catch (e) { dlNotifications = []; }
-      const dot = document.getElementById('dlBellDot');
-      if (dot) dot.classList.toggle('hidden', dlNotifications.filter(n => !n.read).length === 0);
-    }
-
-    function dlNotifIcon(type){
-      if (type === 'auto_submitted' || type === 'auto_submitted_manager') return '⏱️';
-      if (type === 'missed_log' || type === 'missed_log_manager') return '⚠️';
-      if (type === 'edit_requested') return '🔓';
-      if (type === 'edit_unlocked') return '✅';
-      return '🔔';
-    }
-
-    function renderDlNotifPanel(){
-      const panel = document.getElementById('dlNotifPanel');
-      const head = `<div class="rl-dl-notif-head"><strong style="font-size:12.5px">Duty Log Notifications</strong><button class="rl-btn sm" id="dlMarkAllReadBtn">Mark all read</button></div>`;
-      if (dlNotifications.length === 0) {
-        panel.innerHTML = head + '<div class="rl-empty" style="padding:20px 14px">No notifications yet.</div>';
-      } else {
-        panel.innerHTML = head + dlNotifications.map(n => `
-          <div class="rl-dl-notif-item ${n.read ? '' : 'unread'}" data-notif-id="${n.id}" data-session-id="${n.sessionId || ''}">
-            <div class="rl-dl-notif-title">${dlNotifIcon(n.type)} ${esc(n.title)}</div>
-            <div>${esc(n.message)}</div>
-            <div class="rl-dl-notif-meta">${fmtDate(n.createdAt)}</div>
-          </div>
-        `).join('');
-      }
-      const markAllBtn = document.getElementById('dlMarkAllReadBtn');
-      if (markAllBtn) markAllBtn.addEventListener('click', async () => {
-        try { await apiFetch('/reslife-duty-log-notifications', { method: 'PUT', body: JSON.stringify({ property: currentProperty, action: 'markAllRead' }) }); await loadDlNotifications(); renderDlNotifPanel(); } catch (e) {}
-      });
-      panel.querySelectorAll('[data-notif-id]').forEach(el => el.addEventListener('click', async () => {
-        const notifId = el.getAttribute('data-notif-id');
-        const sessionId = el.getAttribute('data-session-id');
-        try { await apiFetch('/reslife-duty-log-notifications', { method: 'PUT', body: JSON.stringify({ property: currentProperty, action: 'markRead', id: notifId }) }); await loadDlNotifications(); } catch (e) {}
-        document.getElementById('dlNotifPanel').classList.add('hidden');
-        if (sessionId) openReportModal(sessionId);
-      }));
     }
 
     function renderDlSettingsForm(){
@@ -3050,69 +3024,110 @@
       `;
     }
 
-    // ---- Today's session: load / start ----
-    async function refreshTodaySession(){
+    // ---- Today's logs: one log per shift, shared by everyone on that shift ----
+    let dlTodayLogs = [], dlMyShifts = [];
+    const DL_SHIFT_LABELS = ['Day', 'Evening', 'Overnight', 'Weekend', 'General'];
+    async function refreshTodaySession(keepId){
       const todayStr = localDateStr();
-      let sessions = null;
-      try { sessions = await apiFetch('/reslife-duty-log' + propParam()); }
-      catch (e) {
+      try {
+        [dlTodayLogs, dlMyShifts] = await Promise.all([
+          apiFetch('/reslife-duty-log' + propParam() + '&day=' + todayStr),
+          apiFetch('/reslife-duty-log' + propParam() + '&myShifts=1&date=' + todayStr).catch(() => []),
+        ]);
+      } catch (e) {
         const cached = dlLoadSnapshot();
-        if (cached && cached.duty_date === todayStr) { dlActiveSession = cached; renderTodayCard(); return; }
+        if (cached && cached.duty_date === todayStr) { dlActiveSession = cached; dlTodayLogs = [cached]; renderTodayCard(); return; }
         document.getElementById('dutyLogActiveBox').innerHTML = '<div class="rl-empty">Unable to reach the server and no local copy is available. Check your connection and try again.</div>';
         return;
       }
-      dlActiveSession = sessions.find(s => s.duty_date === todayStr) || null;
+      const want = keepId || (dlActiveSession && dlActiveSession.duty_date === todayStr ? dlActiveSession.id : null);
+      const pick = dlTodayLogs.find(s => s.id === want) || dlTodayLogs.find(s => s.is_member && isSessionEditable(s)) || null;
+      dlActiveSession = pick && (pick.is_member || isManager) ? await apiFetch('/reslife-duty-log' + propParam() + '&id=' + pick.id).catch(() => pick) : null;
       if (dlActiveSession) { dlSaveSnapshot(dlActiveSession); await dlFlushQueue(dlActiveSession.id); }
       renderTodayCard();
     }
 
-    function isSessionOwner(s){ return !!(s && me && s.primary_ra_username === me.username); }
+    function sessionMembers(s){ return [...new Set([s.primary_ra_username, s.duty_partner_username, ...(s.collaborators || [])].filter(Boolean))]; }
+    // Everyone on the shift (primary, duty partner, collaborators) can edit; only one needs to submit.
+    function isSessionOwner(s){ return !!(s && me && sessionMembers(s).includes(me.username)); }
     function isSessionEditable(s){ return !!(s && (s.status === 'draft' || s.status === 'reopened')); }
+
+    async function dlStartLog(payload, btn){
+      if (btn) { btn.disabled = true; btn.textContent = 'Opening…'; }
+      try {
+        const s = await apiFetch('/reslife-duty-log', { method: 'POST', body: JSON.stringify(Object.assign({ property: currentProperty, action: 'start', duty_date: localDateStr() }, payload)) });
+        await refreshTodaySession(s.id);
+      } catch (e) { alert('Couldn’t open the Duty Log: ' + e.message); if (btn) { btn.disabled = false; btn.textContent = 'Try again'; } }
+    }
+
+    // Strip of today's shift logs + start buttons (rendered above the open log)
+    function dlShiftStripHTML(){
+      const todayStr = localDateStr();
+      const logged = new Set(dlTodayLogs.map(s => s.shift_id).filter(Boolean));
+      const myOpen = dlMyShifts.filter(sh => !logged.has(sh.id));
+      const chips = dlTodayLogs.map(s => {
+        const st = s.status === 'submitted' ? '✓ Submitted' : s.status === 'reopened' ? 'Reopened' : 'In progress';
+        const can = s.is_member || isManager || dlMyShifts.some(sh => sh.id === s.shift_id);
+        return `<button type="button" class="dl-shift-chip${dlActiveSession && dlActiveSession.id === s.id ? ' on' : ''} st-${esc(s.status)}" data-dl-open="${esc(s.id)}" ${can ? '' : 'disabled title="You are not on this shift"'}>
+          <b>${esc(s.shift_label || 'General')}</b><span>${esc(st)} · ${esc(sessionMembers(s).join(', ') || '—')}</span>${!s.is_member && can ? '<em>Join</em>' : ''}</button>`;
+      }).join('');
+      const starts = myOpen.map(sh => `<button type="button" class="dl-shift-chip new" data-dl-start-shift="${esc(sh.id)}"><b>+ ${esc(sh.label)}</b><span>Start the log for your scheduled shift</span></button>`).join('');
+      return `<div class="dl-shift-strip">
+          <div class="dl-shift-strip-h"><b>${esc(fmtDutyDateLong(todayStr))}</b><span>${dlTodayLogs.length} log${dlTodayLogs.length === 1 ? '' : 's'} today · one per shift</span></div>
+          <div class="dl-shift-chips">${chips}${starts}
+            <div class="dl-shift-other"><select id="dlOtherShift">${DL_SHIFT_LABELS.map(l => `<option>${l}</option>`).join('')}<option value="__custom">Other…</option></select><button type="button" class="rl-btn sm" id="dlOtherStart">Start / open shift log</button></div>
+          </div>
+        </div>`;
+    }
+    function bindShiftStrip(box){
+      box.querySelectorAll('[data-dl-open]').forEach(b => b.onclick = async () => {
+        const s = dlTodayLogs.find(x => x.id === b.getAttribute('data-dl-open'));
+        if (!s) return;
+        if (!s.is_member && !isManager) return dlStartLog(s.shift_id ? { shift_id: s.shift_id } : { shift_label: s.shift_label }, b); // join as a collaborator
+        await refreshTodaySession(s.id);
+      });
+      box.querySelectorAll('[data-dl-start-shift]').forEach(b => b.onclick = () => dlStartLog({ shift_id: b.getAttribute('data-dl-start-shift') }, b));
+      const other = box.querySelector('#dlOtherStart');
+      if (other) other.onclick = () => {
+        let label = box.querySelector('#dlOtherShift').value;
+        if (label === '__custom') { label = (prompt('Shift name (e.g. "Front Desk 4–8 PM"):') || '').trim(); if (!label) return; }
+        dlStartLog({ shift_label: label }, other);
+      };
+    }
 
     function renderTodayCard(){
       const box = document.getElementById('dutyLogActiveBox');
       const s = dlActiveSession;
+      const strip = dlShiftStripHTML();
       if (!s) {
-        box.innerHTML = `
-          <div class="dl-today-card">
-            <div class="dl-today-date">${esc(fmtDutyDateLong(localDateStr()))}</div>
-            <div class="dl-today-title">Today's Duty Log</div>
-            <button class="rl-btn primary" id="dlStartBtn">Start Today's Duty Log</button>
-          </div>`;
-        document.getElementById('dlStartBtn').addEventListener('click', async () => {
-          const btn = document.getElementById('dlStartBtn'); btn.disabled = true; btn.textContent = 'Starting…';
-          try {
-            dlActiveSession = await apiFetch('/reslife-duty-log', { method: 'POST', body: JSON.stringify({ property: currentProperty, action: 'start', duty_date: localDateStr() }) });
-            dlSaveSnapshot(dlActiveSession);
-            renderTodayCard();
-          } catch (e) { alert('Failed to start Duty Log: ' + e.message); btn.disabled = false; btn.textContent = "Start Today's Duty Log"; }
-        });
+        box.innerHTML = strip + `<div class="dl-today-card"><div class="dl-today-title">${dlTodayLogs.length ? 'Choose a shift log above' : 'No Duty Log started yet today'}</div><div class="dl-today-meta">${dlMyShifts.length ? 'Start the log for your scheduled shift — your duty partner can open the same log and add entries. Only one of you needs to submit.' : 'Pick the shift you’re working and start its log. Everyone on that shift can add entries; only one person submits.'}</div></div>`;
+        bindShiftStrip(box);
         return;
       }
-
       if (s.status === 'submitted') {
-        box.innerHTML = `
+        const canReopen = isManager || (isSessionOwner(s) && s.duty_date === localDateStr() && !s.auto_submitted);
+        box.innerHTML = strip + `
           <div class="dl-today-card">
-            <div class="dl-today-date">${esc(fmtDutyDateLong(s.duty_date))}</div>
+            <div class="dl-today-date">${esc(fmtDutyDateLong(s.duty_date))} · ${esc(s.shift_label || 'General')}</div>
             <div class="dl-today-title">&#10003; Duty Log Submitted</div>
-            <div class="dl-today-meta">${esc(fmtDutyDateShort(s.duty_date))} &middot; Submitted at ${esc(fmtClock(s.submitted_at))}</div>
-            <div class="dl-today-meta">${s.no_incidents ? 'No Calls / Incidents to Report' : (s.entries || []).length + ' call(s)/incident(s) recorded'}</div>
+            <div class="dl-today-meta">Submitted by ${esc(s.submitted_by_username || 'auto-submit')} at ${esc(fmtClock(s.submitted_at))} · ${s.no_incidents ? 'No Calls / Incidents to Report' : (s.entries || []).length + ' call(s)/incident(s)'}</div>
+            <div class="dl-today-meta">On this shift: ${esc(sessionMembers(s).join(', '))}</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="rl-btn sm" id="dlViewReport">View report</button>${canReopen ? '<button class="rl-btn sm" id="dlReopenToday">Reopen to edit</button>' : '<span class="dl-today-meta">Need a change? Open the report and use “Request Edit Unlock”.</span>'}</div>
           </div>`;
+        bindShiftStrip(box);
+        document.getElementById('dlViewReport').onclick = () => openReportModal(s.id);
+        const ro = document.getElementById('dlReopenToday');
+        if (ro) ro.onclick = async () => {
+          if (!confirm('Reopen this Duty Log so your shift can edit it again? It will need to be submitted again.')) return;
+          try { await apiFetch('/reslife-duty-log', { method: 'PUT', body: JSON.stringify({ property: currentProperty, id: s.id, action: 'reopen', today: localDateStr() }) }); await refreshTodaySession(s.id); }
+          catch (e) { alert('Couldn’t reopen: ' + e.message); }
+        };
         return;
       }
-
-      const mine = isSessionOwner(s);
-      if (!mine && !isManager) {
-        box.innerHTML = `
-          <div class="dl-today-card">
-            <div class="dl-today-date">${esc(fmtDutyDateLong(s.duty_date))}</div>
-            <div class="dl-today-title">Today's Duty Log Already Started</div>
-            <div class="dl-today-meta">Started by ${esc(s.primary_ra_username)}. Only they (or REC/Admin) can add entries.</div>
-          </div>`;
-        return;
-      }
-
+      if (!isSessionOwner(s) && !isManager) { box.innerHTML = strip; bindShiftStrip(box); return; }
       renderEditableTodayCard(s);
+      box.insertAdjacentHTML('afterbegin', strip);
+      bindShiftStrip(box);
     }
 
     function renderEditableTodayCard(s){
@@ -3131,7 +3146,8 @@
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">
             <div>
               <div class="dl-today-date">${esc(fmtDutyDateLong(s.duty_date))}</div>
-              <div class="dl-today-title">Today's Duty Log</div>
+              <div class="dl-today-title">${esc(s.shift_label || 'General')} Duty Log</div>
+              <div class="dl-today-meta">Shared log · on this shift: ${esc(sessionMembers(s).join(', '))} · only one person needs to submit</div>
             </div>
             <div style="text-align:right">
               ${statusPill}
@@ -3155,7 +3171,7 @@
           <div id="dlEntriesList">${entries.map(dlEntryCardHTML).join('') || '<div class="rl-empty">No entries yet.</div>'}</div>
 
           <div class="dl-add-btn-wrap"><button class="rl-btn primary dl-add-btn" id="dlAddEntryBtn">+ Add Call / Incident</button></div>
-          <button class="rl-btn primary" id="dlSubmitBtn" style="width:100%">Submit Daily Duty Log</button>
+          <button class="rl-btn primary" id="dlSubmitBtn" style="width:100%">Submit ${esc(s.shift_label || '')} Duty Log</button>
         </div>
       `;
 
@@ -3441,7 +3457,7 @@
       const editReqBadge = s.edit_requested ? ' <span class="rl-pill dl-edit-requested">Edit Requested</span>' : '';
       return `<tr>
         <td data-label="Duty Date">${esc(fmtDutyDateShort(s.duty_date))}</td>
-        <td data-label="Duty RA">${esc(s.primary_ra_username)}</td>
+        <td data-label="Duty RA">${esc(s.primary_ra_username)}${s.shift_label ? '<div style="font-size:11px;color:var(--rl-subtext)">' + esc(s.shift_label) + '</div>' : ''}</td>
         <td data-label="Duty Partner">${esc(s.duty_partner_username || '—')}</td>
         <td data-label="# Incidents">${s.no_incidents ? '0 (none reported)' : (s.entries || []).length}</td>
         <td data-label="Last Updated">${s.last_saved_at ? esc(fmtDate(s.last_saved_at)) : '—'}</td>
@@ -3496,7 +3512,7 @@
       dlReportSession = s;
       renderReportContent(s);
       document.getElementById('dlReportReopenBtn').classList.toggle('hidden', !(isManager && s.status === 'submitted'));
-      const isOwner = s.primary_ra_username === me.username;
+      const isOwner = isSessionOwner(s);
       const canRequestEdit = !isManager && isOwner && s.status === 'submitted' && !s.edit_requested;
       document.getElementById('dlReportRequestEditBtn').style.display = canRequestEdit ? '' : 'none';
       document.getElementById('dlReportEditPendingBadge').style.display = s.edit_requested ? '' : 'none';
@@ -3525,7 +3541,7 @@
           <h2>Harbour Duty Log</h2>
           <div class="dl-report-meta-row">
             <div><strong>Duty Date</strong>${esc(fmtDutyDateLong(s.duty_date))}</div>
-            <div><strong>Duty RA</strong>${esc(s.primary_ra_username)}</div>
+            <div><strong>Shift</strong>${esc(s.shift_label || 'General')}</div><div><strong>Duty RA</strong>${esc(s.primary_ra_username)}</div><div><strong>On this shift</strong>${esc(sessionMembers(s).join(', '))}</div><div><strong>Submitted by</strong>${esc(s.submitted_by_username || (s.auto_submitted ? 'Auto-submit' : '—'))}</div>
             <div><strong>Duty Partner</strong>${esc(s.duty_partner_username || '—')}</div>
           </div>
           <div class="dl-report-meta-row" style="margin-top:8px"><div>${statusLine}</div></div>
@@ -3579,11 +3595,6 @@
         loadDutyLogTable();
       });
       document.getElementById('dlsSaveBtn').addEventListener('click', saveDlSettings);
-      document.getElementById('dlBellBtn').addEventListener('click', () => {
-        const panel = document.getElementById('dlNotifPanel');
-        if (panel.classList.contains('hidden')) { renderDlNotifPanel(); panel.classList.remove('hidden'); } else panel.classList.add('hidden');
-      });
-      document.addEventListener('click', (e) => { if (!e.target.closest('#dlNotifPanel') && !e.target.closest('#dlBellBtn')) document.getElementById('dlNotifPanel').classList.add('hidden'); });
     }
 
     // ==================== GUEST LOG ====================

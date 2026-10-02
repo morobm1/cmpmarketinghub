@@ -63,7 +63,6 @@ export async function handler() {
   const properties = await db.collection('properties').find({}).toArray();
   const cfgCol = db.collection('reslife_duty_config');
   const sessionsCol = db.collection('reslife_duty_sessions');
-  const rosterCol = db.collection('reslife_roster');
 
   const now = new Date();
   const results = [];
@@ -91,11 +90,12 @@ export async function handler() {
           status: 'submitted', submitted_at: nowIso, submitted_by_username: null,
           auto_submitted: true, updated_at: nowIso,
         } });
-        if (s.primary_ra_username) {
+        const shiftMembers = [...new Set([s.primary_ra_username, s.duty_partner_username, ...(s.collaborators || [])].filter(Boolean))];
+        if (shiftMembers.length) {
           await notifyDutyLog(
-            db, property, [s.primary_ra_username], 'auto_submitted',
+            db, property, shiftMembers, 'auto_submitted',
             'Duty Log auto-submitted',
-            `Your ${todayLocalDate} Duty Log was still in progress at 11:59 PM and was automatically submitted for you. If you still need to add or fix something, use "Request Edit" to ask your REC/Admin to unlock it.`,
+            `The ${s.shift_label ? s.shift_label + ' ' : ''}${todayLocalDate} Duty Log was still in progress at 11:59 PM and was automatically submitted for you. If you still need to add or fix something, use "Request Edit" to ask your REC/Admin to unlock it.`,
             { sessionId: s._id.toString(), dutyDate: todayLocalDate }
           );
         }
@@ -103,38 +103,28 @@ export async function handler() {
           await notifyDutyLog(
             db, property, managerUsernames, 'auto_submitted_manager',
             'Duty Log auto-submitted',
-            `${s.primary_ra_username || 'A Duty RA'}'s ${todayLocalDate} Duty Log was still in progress at 11:59 PM and was auto-submitted.`,
+            `${shiftMembers.join(' & ') || 'A Duty RA'}'s ${s.shift_label ? s.shift_label + ' ' : ''}${todayLocalDate} Duty Log was still in progress at 11:59 PM and was auto-submitted.`,
             { sessionId: s._id.toString(), dutyDate: todayLocalDate }
           );
         }
       }
 
-      // 2) Roster shifts today with no session at all -> "missed log".
-      const shifts = await rosterCol.find({ property }).toArray();
-      const scheduledToday = [...new Set(
-        shifts.filter(sh => localDateOf(sh.shiftStart, timezone) === todayLocalDate).map(sh => sh.assignedTo).filter(Boolean)
-      )];
+      // 2) Published on-call shifts today (Schedule & On-Call) with no Duty Log at all -> "missed log".
+      const schedSettings = await db.collection('sched_settings').findOne({ property });
+      const onCallTypes = ((schedSettings && schedSettings.shiftTypes) || []).filter(t => t.level === 1).map(t => t.id);
+      const shiftsToday = onCallTypes.length ? await db.collection('sched_shifts').find({ property, published: true, status: { $ne: 'cancelled' }, date: todayLocalDate, typeId: { $in: onCallTypes } }).toArray() : [];
+      const todaySessions = await sessionsCol.find({ property, duty_date: todayLocalDate }, { projection: { shift_key: 1, primary_ra_username: 1, duty_partner_username: 1, collaborators: 1 } }).toArray();
       let missedRAs = [];
-      if (scheduledToday.length) {
-        const todaySessions = await sessionsCol.find({ property, duty_date: todayLocalDate }, { projection: { primary_ra_username: 1 } }).toArray();
-        const startedUsernames = new Set(todaySessions.map(s => s.primary_ra_username));
-        missedRAs = scheduledToday.filter(u => !startedUsernames.has(u));
-        for (const username of missedRAs) {
-          await notifyDutyLog(
-            db, property, [username], 'missed_log',
-            'Duty Log not submitted',
-            `You were scheduled for duty on ${todayLocalDate}, but no Duty Log was started or submitted.`,
-            { dutyDate: todayLocalDate }
-          );
-        }
-        if (missedRAs.length && managerUsernames.length) {
-          await notifyDutyLog(
-            db, property, managerUsernames, 'missed_log_manager',
-            'Duty Log not submitted',
-            `${missedRAs.join(', ')} ${missedRAs.length === 1 ? 'was' : 'were'} scheduled for duty on ${todayLocalDate} but did not start or submit a Duty Log.`,
-            { dutyDate: todayLocalDate }
-          );
-        }
+      for (const sh of shiftsToday) {
+        const people = [sh.assignedUser, sh.backupUser].filter(Boolean);
+        const logged = todaySessions.some(s => s.shift_key === 'sched:' + sh._id.toString() || people.some(p => [s.primary_ra_username, s.duty_partner_username, ...(s.collaborators || [])].includes(p)));
+        if (logged || !people.length) continue;
+        missedRAs.push(...people);
+        await notifyDutyLog(db, property, people, 'missed_log', 'Duty Log not submitted', `You were on ${sh.start}–${sh.end} duty on ${todayLocalDate}, but no Duty Log was started or submitted.`, { dutyDate: todayLocalDate });
+      }
+      missedRAs = [...new Set(missedRAs)];
+      if (missedRAs.length && managerUsernames.length) {
+        await notifyDutyLog(db, property, managerUsernames, 'missed_log_manager', 'Duty Log not submitted', `${missedRAs.join(', ')} ${missedRAs.length === 1 ? 'was' : 'were'} on duty ${todayLocalDate} but no Duty Log was started or submitted.`, { dutyDate: todayLocalDate });
       }
 
       await cfgCol.updateOne({ property }, { $set: { property, lastAutosubmitRunDate: todayLocalDate } }, { upsert: true });

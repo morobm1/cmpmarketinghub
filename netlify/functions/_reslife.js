@@ -167,20 +167,12 @@ export async function managersForReslifeProperty(db, property) {
 }
 
 /**
- * Shared in-app notification writer for the Duty Log module (same rationale
- * as notifyCollateral above — no outbound email/SMS infra exists, so every
- * notification is in-app only). Kept in its own reslife_duty_log_notifications
- * collection so a Duty Log alert (auto-submit, missed log, edit request/unlock)
- * only ever reaches the specific RA and REC/Admin it's addressed to — never
- * broadcast to the wider team. `meta` (e.g. { sessionId, dutyDate }) is stored
- * so the frontend can deep-link a notification straight to the relevant report.
+ * Duty Log notifications now go to the main Hub notification bell (reslife_notifications via _notify.js),
+ * one addressed notification per recipient. `meta` is kept on the notification for deep-linking.
  */
 export async function notifyDutyLog(db, property, recipients, type, title, message, meta) {
-  const now = new Date().toISOString();
-  const docs = [...new Set((recipients || []).filter(Boolean))].map(username => ({
-    property, forUsername: username, type, title, message, read: false, createdAt: now,
-    sessionId: (meta && meta.sessionId) || null,
-    dutyDate: (meta && meta.dutyDate) || null,
-  }));
-  if (docs.length) await db.collection('reslife_duty_log_notifications').insertMany(docs);
+  const to = [...new Set((recipients || []).filter(Boolean))];
+  if (!to.length) return;
+  const { notify } = await import('./_notify.js');
+  await notify(db, { property, to, title, message, type: 'dutylog', priority: /missed|auto_submitted/.test(type) ? 'urgent' : 'normal', link: 'dutylog', createdBy: 'Duty Log' });
 }

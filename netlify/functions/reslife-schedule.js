@@ -117,7 +117,10 @@ export async function handler(event) {
         const s = await C('shifts').findOne(visibleFilter({ _id: oid(q.id) }));
         if (!s) return { statusCode: 404, body: 'Shift not found' };
         const shift = pub(s);
-        const session = await db.collection('reslife_duty_sessions').findOne({ property, duty_date: shift.date }, { projection: { status: 1, primary_ra_username: 1, entries: 1 } });
+        // Multiple logs per day: prefer the log linked to this shift, then one the shift's staff belong to.
+        const daySessions = await db.collection('reslife_duty_sessions').find({ property, duty_date: shift.date }, { projection: { status: 1, primary_ra_username: 1, duty_partner_username: 1, collaborators: 1, shift_key: 1, entries: 1 } }).toArray();
+        const people = [shift.assignedUser, shift.backupUser].filter(Boolean);
+        const session = daySessions.find(x => x.shift_key === 'sched:' + shift.id) || daySessions.find(x => people.some(p => [x.primary_ra_username, x.duty_partner_username, ...(x.collaborators || [])].includes(p))) || null;
         shift.dutyLog = session ? { id: session._id.toString(), status: session.status === 'submitted' ? 'Submitted' : 'In Progress', entries: (session.entries || []).length, owner: session.primary_ra_username } : { status: 'Not Started' };
         shift.handoffs = await C('handoffs').find({ property, shiftId: shift.id }).sort({ createdAt: 1 }).toArray();
         shift.requests = await C('requests').find({ property, shiftId: shift.id }).sort({ createdAt: -1 }).limit(10).toArray();
