@@ -1,6 +1,8 @@
 import { verifyReqAuth } from './_auth.js';
 import { getDb, ObjectId } from './_db.js';
 import { canAccessReslifeProperty, canAdminReslifeProperty, canManageReslifeProperty, refreshReslifeUser, json } from './_reslife.js';
+import { parseUnit, displayName } from './_units.js';
+import { getDirSettings, refreshDirectoryTags, unitFields, DEFAULT_TAGS } from './_dirtags.js';
 
 /**
  * Reslife Hub — Resident Directory
@@ -42,8 +44,15 @@ export async function handler(event) {
         return json(200, await buildHistory(db, property, res));
       }
 
+      if ((event.queryStringParameters || {}).settings) {
+        const s = await getDirSettings(db, property);
+        const out = { tags: s.tags, rules: s.rules, raAssignments: s.raAssignments, lastRefresh: s.lastRefresh || null, canManage: canManageReslifeProperty(user, property) };
+        if (out.canManage) out.raUsers = (await db.collection('users').find({ role: 'reslife-ra', properties: property }, { projection: { _id: 0, username: 1, fullName: 1 } }).sort({ fullName: 1, username: 1 }).toArray()).map(u => ({ username: u.username, name: u.fullName || u.username }));
+        return json(200, out);
+      }
       const docs = await col.find({ property }).sort({ unit: 1, room: 1, residentName: 1 }).toArray();
-      docs.forEach(d => { d.id = d._id.toString(); });
+      // Derived unit fields are computed on the fly so older imports display correctly before a refresh.
+      docs.forEach(d => { d.id = d._id.toString(); Object.assign(d, unitFields(d.unit || d.room), { displayName: displayName(d.residentName), tags: d.tags || [], autoTags: d.autoTags || [] }); });
       return json(200, docs);
     }
 
@@ -61,12 +70,13 @@ export async function handler(event) {
             unit: String(r.unit || '').trim(),
             email: String(r.email || '').trim(),
             phone: String(r.phone || '').trim(),
+            occupantType: String(r.occupantType || '').trim(),
           }))
           .filter(r => r.residentName);
         if (!rows.length) return { statusCode: 400, body: 'No valid rows (each row needs a name)' };
         const now = new Date().toISOString();
         const existing = await col.find({ property }).toArray();
-        const keyOf = (n, u) => n.toLowerCase().replace(/\s+/g, ' ') + '|' + u.toLowerCase();
+        const keyOf = (n, u) => n.toLowerCase().replace(/\s+/g, ' ') + '|' + parseUnit(u).unit;
         const byKey = new Map(existing.map(d => [keyOf(d.residentName || '', d.unit || ''), d]));
         const byName = new Map(existing.map(d => [(d.residentName || '').toLowerCase().replace(/\s+/g, ' '), d]));
         let created = 0, updated = 0;
@@ -74,15 +84,31 @@ export async function handler(event) {
         for (const r of rows) {
           const match = byKey.get(keyOf(r.residentName, r.unit)) || byName.get(r.residentName.toLowerCase().replace(/\s+/g, ' '));
           if (match) {
-            ops.push({ updateOne: { filter: { _id: match._id }, update: { $set: { residentName: r.residentName, unit: r.unit, room: r.unit, email: r.email || match.email || '', phone: r.phone || match.phone || '', updatedBy: user.sub, updatedAt: now } } } });
+            ops.push({ updateOne: { filter: { _id: match._id }, update: { $set: Object.assign({ residentName: r.residentName, email: r.email || match.email || '', phone: r.phone || match.phone || '', occupantType: r.occupantType || match.occupantType || '', updatedBy: user.sub, updatedAt: now }, unitFields(r.unit)) } } });
             updated++;
           } else {
-            ops.push({ insertOne: { document: { property, residentName: r.residentName, room: r.unit, unit: r.unit, phone: r.phone, email: r.email, notes: '', violationMeetings: [], behaviorNotes: [], keyLog: [], updatedBy: user.sub, createdAt: now, updatedAt: now } } });
+            ops.push({ insertOne: { document: Object.assign({ property, residentName: r.residentName, phone: r.phone, email: r.email, occupantType: r.occupantType, notes: '', tags: [], autoTags: [], violationMeetings: [], behaviorNotes: [], keyLog: [], updatedBy: user.sub, createdAt: now, updatedAt: now }, unitFields(r.unit)) } });
             created++;
           }
         }
         if (ops.length) await col.bulkWrite(ops);
-        return json(200, { created, updated });
+        const tagged = await refreshDirectoryTags(db, property); // re-apply tag rules + RA assignments to the new roster
+        return json(200, { created, updated, tagged });
+      }
+
+      // ── Tags (REC/Admin) ──
+      if (body.action === 'refreshTags' || body.action === 'bulkTags') {
+        if (!canManageReslifeProperty(user, body.property)) return { statusCode: 403, body: 'Forbidden' };
+        if (body.action === 'bulkTags') {
+          const s = await getDirSettings(db, body.property);
+          const allowed = new Set(s.tags.map(t => t.name));
+          const ids = (body.ids || []).map(i => { try { return new ObjectId(i); } catch { return null; } }).filter(Boolean);
+          const add = (body.add || []).filter(t => allowed.has(t)), remove = body.remove || [];
+          if (add.length) await col.updateMany({ property: body.property, _id: { $in: ids } }, { $addToSet: { tags: { $each: add } } });
+          if (remove.length) await col.updateMany({ property: body.property, _id: { $in: ids } }, { $pull: { tags: { $in: remove } } });
+          return json(200, { updated: ids.length });
+        }
+        return json(200, await refreshDirectoryTags(db, body.property));
       }
 
       const { property, residentName, room, unit, phone, email, notes } = body;
@@ -102,6 +128,23 @@ export async function handler(event) {
     if (event.httpMethod === 'PUT') {
       const body = JSON.parse(event.body || '{}');
       const { id, property, action } = body;
+      if (action === 'dirSettings') {
+        if (!canManageReslifeProperty(user, property)) return { statusCode: 403, body: 'Only an REC or Admin can manage tags' };
+        const upd = { updatedAt: new Date().toISOString(), updatedBy: user.sub };
+        if (Array.isArray(body.tags)) upd.tags = body.tags.map(t => ({ name: String(t.name || '').trim().slice(0, 40), color: String(t.color || 'slate').slice(0, 20) })).filter(t => t.name);
+        if (Array.isArray(body.rules)) upd.rules = body.rules.map(r => ({ field: String(r.field || ''), op: String(r.op || 'equals'), value: String(r.value || '').trim().slice(0, 200), tag: String(r.tag || '').trim().slice(0, 40) })).filter(r => r.field && r.tag);
+        if (Array.isArray(body.raAssignments)) upd.raAssignments = body.raAssignments.map(a => ({ username: String(a.username || ''), name: String(a.name || a.username || ''), building: String(a.building || '').trim(), floors: (Array.isArray(a.floors) ? a.floors : String(a.floors || '').split(/[\s,]+/)).map(String).map(x => x.trim()).filter(Boolean) })).filter(a => a.username && a.building);
+        await db.collection('reslife_dir_settings').updateOne({ property }, { $set: upd }, { upsert: true });
+        return json(200, await refreshDirectoryTags(db, property));
+      }
+      if (action === 'setTags') {
+        if (!canManageReslifeProperty(user, property)) return { statusCode: 403, body: 'Only an REC or Admin can tag residents' };
+        const s = await getDirSettings(db, property);
+        const allowed = new Set(s.tags.map(t => t.name));
+        const tags = [...new Set((body.tags || []).filter(t => allowed.has(t)))];
+        await col.updateOne({ _id: new ObjectId(id), property }, { $set: { tags, updatedAt: new Date().toISOString(), updatedBy: user.sub } });
+        return json(200, { tags });
+      }
       if (!id || !property) return { statusCode: 400, body: 'Missing id/property' };
 
       // ── Append a violation meeting or behavior note (manager tier only) ──
@@ -144,7 +187,7 @@ export async function handler(event) {
       const updates = { updatedBy: user.sub, updatedAt: new Date().toISOString() };
       if (residentName !== undefined) updates.residentName = residentName;
       if (room !== undefined) updates.room = room;
-      if (unit !== undefined) updates.unit = unit;
+      if (unit !== undefined) Object.assign(updates, unitFields(unit));
       if (phone !== undefined) updates.phone = phone;
       if (email !== undefined) updates.email = email;
       if (notes !== undefined) updates.notes = notes;

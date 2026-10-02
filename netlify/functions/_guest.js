@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { ObjectId } from './_db.js';
+import { parseUnit, unitCanon, nameMatches } from './_units.js';
 
 /**
  * Shared helpers for the Reslife guest log, the front-desk kiosk and pre-registration links.
@@ -62,50 +63,40 @@ export async function getSettings(db, property, create) {
   return s || { property, notifyEmails: DEFAULT_NOTIFY, kioskKey: null, checkinAfter: '19:00' };
 }
 
-// Unit/bed compare key: letters+digits only, so "7417-A", "7417 a", "7417A", "#7417-a" all match.
+// Unit/bed compare key — kept for callers that only need "is anything typed?" checks.
 export const unitKey = s => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-// Name compare: word sets, so "Lee, Jordan" (Entrata Last, First) matches "Jordan Lee".
-const nameWords = s => normName(s).split(' ').filter(Boolean);
-function nameMatches(entered, onFile) {
-  const a = nameWords(entered), b = nameWords(onFile);
-  if (!a.length || !b.length) return false;
-  if ([...a].sort().join(' ') === [...b].sort().join(' ')) return true;            // same words, any order
-  // Allow a missing/extra middle name: first + last words of either order must both appear.
-  const first = a[0], last = a[a.length - 1];
-  return a.length >= 2 && b.includes(first) && b.includes(last) && Math.abs(a.length - b.length) <= 1;
-}
 
 /**
- * Find a resident by full name + unit/bed. If the resident types an email and an email is on file,
- * it must match; same for phone. (If that kind of contact isn't on file, name + unit is enough.)
- * Returns { resident } on success or { reason } explaining why it failed (reason is for staff diagnostics only).
+ * Find a resident by full name + unit/bed.
+ *  - Name: directory stores "Last, First Preferred" ("Smith, Daniel Danny"); "Daniel Smith" or "Danny Smith" match.
+ *  - Unit & bed must match exactly after normalizing ("1111-b", "1-1111-B" → "1111-B"). Double-occupancy
+ *    beds must include the number: "1112-B2" ≠ "1112-B".
+ *  - If an email is typed and one is on file it must match; same for phone. If that kind isn't on file,
+ *    name + unit/bed is enough.
+ * Returns { resident } or { reason } (reason is for staff diagnostics only, never shown at the kiosk).
  */
 export async function findResident(db, property, { name, unit, contact }) {
-  const uk = unitKey(unit);
-  if (!nameWords(name).length || !uk) return { reason: 'Name and unit are required.' };
+  const want = unitCanon(unit);
+  if (!String(name || '').trim() || !want) return { reason: 'Name and unit are required.' };
   const all = await db.collection('reslife_directory').find({ property }).project({ residentName: 1, unit: 1, room: 1, email: 1, phone: 1 }).toArray();
   if (!all.length) return { reason: `The Resident Directory for "${property}" is empty — import the roster first.` };
-  const inUnit = all.filter(r => unitKey(r.unit) === uk || unitKey(r.room) === uk);
+  const inUnit = all.filter(r => unitCanon(r.unit) === want);
   if (!inUnit.length) {
-    // Common case: directory has the base unit only ("7417") while the resident typed "7417-A", or vice versa.
-    const base = uk.replace(/[A-Z]\d{0,2}$/, '');
-    const loose = all.filter(r => [r.unit, r.room].some(v => { const k = unitKey(v); return k && (k === base || k.replace(/[A-Z]\d{0,2}$/, '') === uk); }));
-    if (!loose.length) return { reason: `No resident has unit "${unit}" in the directory.` };
-    inUnit.push(...loose);
+    const sameBase = all.filter(r => parseUnit(r.unit).baseUnit === parseUnit(unit).baseUnit);
+    return { reason: sameBase.length ? `No bed "${want}". Beds on file in unit ${parseUnit(unit).baseUnit}: ${[...new Set(sameBase.map(r => unitCanon(r.unit)))].join(', ')}.` : `No resident has unit/bed "${want}" in the directory.` };
   }
   const hit = inUnit.find(r => nameMatches(name, r.residentName));
-  if (!hit) return { reason: `Unit "${unit}" found, but no name matched. On file for that unit: ${inUnit.map(r => r.residentName).join(', ')}.` };
+  if (!hit) return { reason: `Bed "${want}" found, but the name didn’t match. On file: ${inUnit.map(r => r.residentName).join(', ')}.` };
   const c = String(contact || '').trim();
   if (c) {
     if (c.includes('@')) {
-      if (hit.email && hit.email.trim().toLowerCase() !== c.toLowerCase()) return { reason: `Name and unit matched, but the email didn’t match the one on file (${maskEmail(hit.email)}).` };
+      if (hit.email && hit.email.trim().toLowerCase() !== c.toLowerCase()) return { reason: `Name and bed matched, but the email didn’t match the one on file (${maskEmail(hit.email)}).` };
     } else if (digits(c).length >= 7) {
-      if (hit.phone && digits(hit.phone) !== digits(c)) return { reason: `Name and unit matched, but the phone didn’t match the one on file (…${digits(hit.phone).slice(-4)}).` };
+      if (hit.phone && digits(hit.phone) !== digits(c)) return { reason: `Name and bed matched, but the phone didn’t match the one on file (…${digits(hit.phone).slice(-4)}).` };
     }
   }
   return { resident: hit };
-}
-const maskEmail = e => { const [u, d] = String(e).split('@'); return (u || '').slice(0, 2) + '•••@' + (d || ''); };
+}const maskEmail = e => { const [u, d] = String(e).split('@'); return (u || '').slice(0, 2) + '•••@' + (d || ''); };
 export async function matchResident(db, property, q) { return (await findResident(db, property, q)).resident || null; }
 /** Record the visit on the resident's directory record. */
 export async function recordVisitOnResident(db, property, residentId, entry) {

@@ -571,6 +571,28 @@
     }
     @keyframes ntSheet{from{transform:translateY(100%)}to{transform:none}}
     .rl-dl-notif-panel{max-width:calc(100vw - 24px)}
+    /* Resident directory: filters, tags, bulk, tag management */
+    .dt-filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:-2px 0 12px}
+    .dt-filters select{padding:7px 10px;border:1px solid var(--rl-border);border-radius:8px;font:inherit;font-size:13px;background:#fff}
+    .dt-bulk{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:#fff8f0;border:1px solid #fed7aa;border-radius:12px;padding:10px 12px;margin-bottom:12px;position:sticky;top:64px;z-index:5}
+    .dt-bulk select{padding:7px 10px;border:1px solid var(--rl-border);border-radius:8px;font:inherit;font-size:13px}
+    .dt-table-wrap{overflow-x:auto}
+    tr.dt-sel td{background:#fff8f0}
+    .dt-tags{display:flex;flex-wrap:wrap;gap:4px}
+    .dt-chip{display:inline-flex;align-items:center;font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;background:color-mix(in srgb,var(--c) 14%,#fff);color:var(--c);border:1px solid color-mix(in srgb,var(--c) 35%,#fff);white-space:nowrap}
+    .dt-chip.auto{border-style:dashed}
+    .dt-addrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+    .dt-addrow select{padding:6px 8px;border:1px solid var(--rl-border);border-radius:8px;font:inherit;font-size:12.5px}
+    .dt-sec{border:1px solid var(--rl-border);border-radius:14px;padding:14px 16px;margin-bottom:14px}
+    .dt-sec h4{margin:0 0 4px;font-size:14px;font-weight:800;color:var(--rl-primary)}
+    .dt-sec>p{margin:0 0 10px;font-size:12.5px;color:var(--rl-subtext)}
+    .dt-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+    .dt-row input,.dt-row select{padding:7px 9px;border:1px solid var(--rl-border);border-radius:8px;font:inherit;font-size:13px}
+    .dt-row input[data-k="name"],.dt-row input[data-k="value"]{flex:1;min-width:140px}
+    .dt-w{font-size:12px;font-weight:700;color:var(--rl-subtext)}
+    .dt-help{background:#f0f7ff;border:1px solid #c9dcf2;border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.5;margin-bottom:10px;color:#1e3a5f}
+    .dt-help ul{margin:6px 0 0 18px;padding:0}
+    .dt-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:12.5px;color:var(--rl-subtext)}
     /* Guest log */    .gl-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
     .gl-nav{display:flex;gap:6px;align-items:center}
     .gl-nav b{min-width:190px;text-align:center;font-size:14px;color:var(--rl-primary)}
@@ -1654,6 +1676,22 @@
             <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
               <input id="dirSearch" placeholder="Search name, unit, email…" style="flex:1;min-width:200px;padding:8px 10px;border:1px solid var(--rl-border);border-radius:8px" />
               <span id="dirInvSummary" style="font-size:12px;color:var(--rl-subtext)"></span>
+              <button type="button" class="rl-btn sm hidden" id="dirTagMgrBtn">&#127991; Tag Management</button>
+            </div>
+            <div class="dt-filters">
+              <select id="dirFBuilding"><option value="">All buildings</option></select>
+              <select id="dirFFloor"><option value="">All floors</option></select>
+              <select id="dirFTag"><option value="">All tags</option></select>
+              <select id="dirFRA"><option value="">All RAs</option></select>
+              <button type="button" class="rl-btn sm" id="dirFClear">Clear filters</button>
+              <span id="dirShownCount" style="font-size:12px;color:var(--rl-subtext)"></span>
+            </div>
+            <div class="dt-bulk hidden" id="dirBulkBar">
+              <b id="dirBulkCount"></b>
+              <select id="dirBulkTag"></select>
+              <button type="button" class="rl-btn sm primary" id="dirBulkAdd">Add tag</button>
+              <button type="button" class="rl-btn sm" id="dirBulkRemove">Remove tag</button>
+              <button type="button" class="rl-btn sm" id="dirBulkClear">Clear selection</button>
             </div>
             <div class="rl-form hidden" id="dirForm">
               <input type="hidden" id="dirId" />
@@ -1692,6 +1730,7 @@
               </div>
             </div>
             <div id="dirList"><div class="rl-loading">Loading…</div></div>
+            <div class="pp-overlay" id="dirTagModal"><div class="pp-modal" style="max-width:920px"><div class="pp-head"><div class="pp-head-ico">&#127991;</div><div><h3>Tag Management</h3><p>Approved tags, auto-tag rules and RA assignments.</p></div><button type="button" class="pp-close" id="dirTagClose">&times;</button></div><div style="padding:20px 24px" id="dirTagBody"></div></div></div>
           </div>
         </div>
         <div class="rl-modal-overlay" id="resModalOverlay">
@@ -4087,15 +4126,18 @@
     // ==================== RESIDENT DIRECTORY ====================
     let dirDocs = [];
     let dirUnits = [];
-    // "7417-A", "7417-A1", "7417 - B2" -> "7417". Same base unit + different bed = roommates.
-    function baseUnitOf(u){
-      const s = String(u || '').trim();
-      const i = s.lastIndexOf('-');
-      return (i > 0 ? s.slice(0, i) : s).trim().toUpperCase();
+    // Unit labels: "1-1111-B" / "1111-B" / "1112-B2" / "1111". Building = 1st digit, floor = 2nd digit.
+    function parseUnitLabel(u){
+      const s = String(u || '').toUpperCase().replace(/[–—]/g, '-').trim();
+      const m = s.match(/(\d{3,6})\s*-?\s*([A-Z]\d{0,2})?\s*$/);
+      if (!m) return { unit: s, baseUnit: s, bed: '', building: '', floor: '' };
+      return { unit: m[2] ? `${m[1]}-${m[2]}` : m[1], baseUnit: m[1], bed: m[2] || '', building: m[1][0], floor: m[1][1] || '' };
     }
+    // Same base unit + different bed = roommates.
+    function baseUnitOf(u){ return parseUnitLabel(u).baseUnit; }
     function unitTypeOf(u){
-      const full = String(u || '').trim().toUpperCase(), base = baseUnitOf(u);
-      const hit = dirUnits.find(x => String(x.unit).trim().toUpperCase() === full) || dirUnits.find(x => String(x.unit).trim().toUpperCase() === base) || dirUnits.find(x => baseUnitOf(x.unit) === base);
+      const p = parseUnitLabel(u);
+      const hit = dirUnits.find(x => parseUnitLabel(x.unit).unit === p.unit) || dirUnits.find(x => parseUnitLabel(x.unit).unit === p.baseUnit) || dirUnits.find(x => parseUnitLabel(x.unit).baseUnit === p.baseUnit);
       return hit ? hit.unitType : '';
     }
     function roommatesOf(d){
@@ -4103,44 +4145,93 @@
       if (!base) return [];
       return dirDocs.filter(x => x.id !== d.id && baseUnitOf(x.unit || x.room) === base);
     }
+    // "Smith, Daniel Danny" → "Daniel (Danny) Smith"
+    function dirDisplayName(n){
+      const s = String(n || '').trim(); if (!s.includes(',')) return s;
+      const last = s.slice(0, s.indexOf(',')).trim(), rest = s.slice(s.indexOf(',') + 1).trim().split(/\s+/).filter(Boolean);
+      return rest.length ? `${rest[0]}${rest.length > 1 ? ' (' + rest.slice(1).join(' ').replace(/[()]/g, '') + ')' : ''} ${last}` : last;
+    }
+    const TAG_COLORS = { slate: '#64748b', amber: '#d97706', rose: '#e11d48', violet: '#7c3aed', teal: '#0d9488', sky: '#0284c7', orange: '#ea580c', green: '#16a34a', navy: '#1e3a8a' };
+    let dirSettings = { tags: [], rules: [], raAssignments: [] };
+    let dirSelected = new Set();
+    function tagChip(name, auto){
+      const t = (dirSettings.tags || []).find(x => x.name === name);
+      const c = auto ? '#475569' : TAG_COLORS[(t && t.color) || 'slate'] || '#64748b';
+      return `<span class="dt-chip${auto ? ' auto' : ''}" style="--c:${c}" title="${auto ? 'Auto tag (from a rule or RA assignment)' : 'Tag'}">${auto ? '⚙ ' : ''}${esc(name)}</span>`;
+    }
 
     async function loadDirectory(){
       const list = document.getElementById('dirList');
       list.innerHTML = '<div class="rl-loading">Loading…</div>';
       try {
-        const [docs, units] = await Promise.all([
+        const [docs, units, settings] = await Promise.all([
           apiFetch('/reslife-directory' + propParam()),
           apiFetch('/reslife-unit-inventory' + propParam()).catch(() => []),
+          apiFetch('/reslife-directory' + propParam() + '&settings=1').catch(() => null),
         ]);
-        dirDocs = docs; dirUnits = units || [];
+        dirDocs = docs; dirUnits = units || []; if (settings) dirSettings = settings;
       } catch (e) { list.innerHTML = '<div class="rl-empty">Failed to load directory.</div>'; return; }
+      dirSelected = new Set([...dirSelected].filter(id => dirDocs.some(d => d.id === id)));
       const occupied = new Set(dirDocs.map(d => baseUnitOf(d.unit || d.room)).filter(Boolean));
       document.getElementById('dirInvSummary').textContent = dirUnits.length
         ? `${dirUnits.length} units in inventory · ${dirDocs.length} residents · ${occupied.size} occupied units`
         : `${dirDocs.length} residents · no unit inventory imported`;
+      // Filter dropdowns
+      const val = id => document.getElementById(id).value;
+      const opt = (id, label, values, fmt) => { const cur = val(id); document.getElementById(id).innerHTML = `<option value="">${label}</option>` + values.map(v => `<option value="${esc(v)}"${v === cur ? ' selected' : ''}>${esc(fmt ? fmt(v) : v)}</option>`).join(''); };
+      const P = dirDocs.map(d => parseUnitLabel(d.unit || d.room));
+      opt('dirFBuilding', 'All buildings', [...new Set(P.map(p => p.building).filter(Boolean))].sort(), v => 'Building ' + v);
+      opt('dirFFloor', 'All floors', [...new Set(P.map(p => p.floor).filter(Boolean))].sort(), v => 'Floor ' + v);
+      opt('dirFTag', 'All tags', [...new Set(dirDocs.flatMap(d => [...(d.tags || []), ...(d.autoTags || [])]))].sort());
+      opt('dirFRA', 'All RAs', [...new Set(dirDocs.map(d => d.assignedRAName).filter(Boolean))].sort());
+      document.getElementById('dirTagMgrBtn').classList.toggle('hidden', !isManager);
       renderDirectoryList();
+    }
+
+    function dirFiltered(){
+      const q = (document.getElementById('dirSearch').value || '').trim().toLowerCase();
+      const fb = document.getElementById('dirFBuilding').value, ff = document.getElementById('dirFFloor').value;
+      const ft = document.getElementById('dirFTag').value, fr = document.getElementById('dirFRA').value;
+      return dirDocs.filter(d => {
+        const p = parseUnitLabel(d.unit || d.room);
+        return (!fb || p.building === fb) && (!ff || p.floor === ff) &&
+          (!ft || (d.tags || []).includes(ft) || (d.autoTags || []).includes(ft)) && (!fr || d.assignedRAName === fr) &&
+          (!q || [d.residentName, dirDisplayName(d.residentName), d.unit, d.email, d.phone, d.occupantType, ...(d.tags || [])].some(v => String(v || '').toLowerCase().includes(q)));
+      }).sort((a, b) => parseUnitLabel(a.unit).unit.localeCompare(parseUnitLabel(b.unit).unit, undefined, { numeric: true }));
     }
 
     function renderDirectoryList(){
       const list = document.getElementById('dirList');
-      const q = (document.getElementById('dirSearch').value || '').trim().toLowerCase();
-      const docs = q ? dirDocs.filter(d => [d.residentName, d.unit, d.room, d.email, d.phone].some(v => String(v || '').toLowerCase().includes(q))) : dirDocs;
-      if (docs.length === 0) { list.innerHTML = `<div class="rl-empty">${dirDocs.length ? 'No matches.' : 'No residents on file yet.'}</div>`; return; }
-      list.innerHTML = `<table class="rl-table"><thead><tr><th>Resident</th><th>Unit</th><th>Unit Type</th><th>Phone</th><th>Email</th><th>Notes</th>${isAdminTier ? '<th></th>' : ''}</tr></thead><tbody>` +
-        docs.map(d => `
-          <tr>
-            <td><a href="#" data-dir-open="${d.id}" style="font-weight:700;color:var(--rl-primary, #0b5cab)">${esc(d.residentName)}</a></td>
-            <td>${esc(d.unit || d.room || '')}</td>
+      const docs = dirFiltered();
+      const canTag = isManager;
+      const bar = document.getElementById('dirBulkBar');
+      bar.classList.toggle('hidden', !canTag || !dirSelected.size);
+      if (canTag && dirSelected.size) {
+        document.getElementById('dirBulkCount').textContent = `${dirSelected.size} selected`;
+        document.getElementById('dirBulkTag').innerHTML = '<option value="">Choose a tag…</option>' + (dirSettings.tags || []).map(t => `<option>${esc(t.name)}</option>`).join('');
+      }
+      document.getElementById('dirShownCount').textContent = docs.length === dirDocs.length ? '' : `Showing ${docs.length} of ${dirDocs.length}`;
+      if (docs.length === 0) { list.innerHTML = `<div class="rl-empty">${dirDocs.length ? 'No residents match these filters.' : 'No residents on file yet.'}</div>`; return; }
+      const allOn = docs.every(d => dirSelected.has(d.id));
+      list.innerHTML = `<div class="dt-table-wrap"><table class="rl-table"><thead><tr>${canTag ? `<th style="width:28px"><input type="checkbox" id="dirSelAll"${allOn ? ' checked' : ''} title="Select all shown"></th>` : ''}<th>Resident</th><th>Unit</th><th>Bed</th><th>Bldg / Flr</th><th>Unit Type</th><th>Tags</th><th>Email</th><th>Phone</th>${isAdminTier ? '<th></th>' : ''}</tr></thead><tbody>` +
+        docs.map(d => { const p = parseUnitLabel(d.unit || d.room); return `
+          <tr class="${dirSelected.has(d.id) ? 'dt-sel' : ''}">
+            ${canTag ? `<td><input type="checkbox" data-dir-sel="${d.id}"${dirSelected.has(d.id) ? ' checked' : ''}></td>` : ''}
+            <td><a href="#" data-dir-open="${d.id}" style="font-weight:700;color:var(--rl-primary, #0b5cab)">${esc(dirDisplayName(d.residentName))}</a><div style="font-size:11px;color:var(--rl-subtext)">${esc(d.residentName)}${d.occupantType ? ' · ' + esc(d.occupantType) : ''}</div></td>
+            <td><b>${esc(p.unit)}</b></td>
+            <td>${esc(p.bed || '—')}</td>
+            <td>${p.building ? `B${esc(p.building)} · F${esc(p.floor)}` : '—'}</td>
             <td>${esc(unitTypeOf(d.unit || d.room))}</td>
-            <td>${esc(d.phone || '')}</td>
+            <td class="dt-tags">${[...(d.tags || []).map(t => tagChip(t)), ...(d.autoTags || []).map(t => tagChip(t, true))].join('') || '<span style="color:#cbd5e1">—</span>'}</td>
             <td>${esc(d.email || '')}</td>
-            <td>${esc(d.notes || '')}</td>
+            <td>${esc(d.phone || '')}</td>
             ${isAdminTier ? `<td style="white-space:nowrap"><button class="rl-btn sm" data-dir-edit="${d.id}">Edit</button> <button class="rl-btn sm danger" data-dir-del="${d.id}">Delete</button></td>` : ''}
-          </tr>
-        `).join('') + '</tbody></table>';
+          </tr>`; }).join('') + '</tbody></table></div>';
       list.querySelectorAll('[data-dir-open]').forEach(a => a.addEventListener('click', ev => {
         ev.preventDefault(); resHistoryStack = []; openResidentModal(a.getAttribute('data-dir-open'));
       }));
+      list.querySelectorAll('[data-dir-sel]').forEach(cb => cb.addEventListener('change', () => { const id = cb.getAttribute('data-dir-sel'); cb.checked ? dirSelected.add(id) : dirSelected.delete(id); renderDirectoryList(); }));
+      const sa = document.getElementById('dirSelAll'); if (sa) sa.addEventListener('change', () => { docs.forEach(d => sa.checked ? dirSelected.add(d.id) : dirSelected.delete(d.id)); renderDirectoryList(); });
       list.querySelectorAll('[data-dir-edit]').forEach(btn => btn.addEventListener('click', () => {
         const d = docs.find(x => x.id === btn.getAttribute('data-dir-edit'));
         if (d) openDirectoryForm(d);
@@ -4150,6 +4241,71 @@
         try { await apiFetch('/reslife-directory?id=' + btn.getAttribute('data-dir-del') + '&property=' + encodeURIComponent(currentProperty), { method: 'DELETE' }); await loadDirectory(); }
         catch (e) { alert('Failed to delete: ' + e.message); }
       }));
+    }
+
+    async function dirBulkTag(remove){
+      const tag = document.getElementById('dirBulkTag').value;
+      if (!tag) return alert('Choose a tag first.');
+      try {
+        await apiFetch('/reslife-directory', { method: 'POST', body: JSON.stringify({ property: currentProperty, action: 'bulkTags', ids: [...dirSelected], add: remove ? [] : [tag], remove: remove ? [tag] : [] }) });
+        dirSelected.clear(); await loadDirectory();
+      } catch (e) { alert('Bulk tag failed: ' + e.message); }
+    }
+
+    // ---------- Tag management (REC/Admin): tags, auto-tag rules, RA assignments ----------
+    const RULE_FIELDS = [['building', 'Building (1st digit of unit)'], ['floor', 'Floor (2nd digit of unit)'], ['baseUnit', 'Unit number (e.g. 1111)'], ['bed', 'Bed (e.g. B or B2)'], ['unit', 'Unit & bed (e.g. 1111-B)'], ['occupantType', 'Occupant Type (from the roster)'], ['unitType', 'Unit Type (from the unit report)'], ['name', 'Resident name'], ['email', 'Email']];
+    const RULE_OPS = [['equals', 'is'], ['not_equals', 'is not'], ['starts_with', 'starts with'], ['contains', 'contains'], ['in', 'is one of (comma list)'], ['is_empty', 'is empty'], ['not_empty', 'is not empty']];
+    function openTagManager(){
+      const s = dirSettings;
+      const tagRow = t => `<div class="dt-row" data-tag-row><input data-k="name" value="${esc(t.name)}" placeholder="Tag name" /><select data-k="color">${Object.keys(TAG_COLORS).map(c => `<option value="${c}"${t.color === c ? ' selected' : ''}>${c}</option>`).join('')}</select><span class="dt-chip" style="--c:${TAG_COLORS[t.color] || '#64748b'}">${esc(t.name || 'preview')}</span><button type="button" class="rl-btn sm danger" data-rm>&times;</button></div>`;
+      const tagOpts = sel => (s.tags || []).map(t => `<option${t.name === sel ? ' selected' : ''}>${esc(t.name)}</option>`).join('');
+      const ruleRow = r => `<div class="dt-row" data-rule-row>
+        <span class="dt-w">If</span><select data-k="field">${RULE_FIELDS.map(([v, l]) => `<option value="${v}"${r.field === v ? ' selected' : ''}>${l}</option>`).join('')}</select>
+        <select data-k="op">${RULE_OPS.map(([v, l]) => `<option value="${v}"${r.op === v ? ' selected' : ''}>${l}</option>`).join('')}</select>
+        <input data-k="value" value="${esc(r.value || '')}" placeholder="value" />
+        <span class="dt-w">then tag</span><select data-k="tag">${tagOpts(r.tag)}</select>
+        <button type="button" class="rl-btn sm danger" data-rm>&times;</button></div>`;
+      const raUsers = s.raUsers || [];
+      const raRow = a => `<div class="dt-row" data-ra-row>
+        <select data-k="username">${raUsers.map(u => `<option value="${esc(u.username)}"${u.username === a.username ? ' selected' : ''}>${esc(u.name)}</option>`).join('')}</select>
+        <span class="dt-w">Building</span><input data-k="building" value="${esc(a.building || '')}" placeholder="1" style="max-width:70px" />
+        <span class="dt-w">Floor(s)</span><input data-k="floors" value="${esc((a.floors || []).join(', '))}" placeholder="2, 3 (blank = all)" style="max-width:150px" />
+        <button type="button" class="rl-btn sm danger" data-rm>&times;</button></div>`;
+      const ov = document.getElementById('dirTagModal');
+      document.getElementById('dirTagBody').innerHTML = `
+        <div class="dt-sec"><h4>Approved tags</h4><p>These appear in the tag dropdowns on each resident and in bulk tagging.</p><div id="dtTags">${(s.tags || []).map(tagRow).join('')}</div><button type="button" class="rl-btn sm" id="dtAddTag">+ Add tag</button></div>
+        <div class="dt-sec"><h4>Auto-tag rules</h4>
+          <div class="dt-help"><b>How rules work:</b> each rule reads <i>“If [field] [condition] [value] then tag [tag]”</i>. Rules run every time a roster is imported or you press <b>Refresh tags</b>. Auto tags show with a ⚙ and are replaced on every refresh; tags you add by hand are never removed by rules.
+            <ul><li><b>Building</b> and <b>Floor</b> come from the unit number: in <b>1234-A</b>, building is <b>1</b>, floor is <b>2</b>.</li>
+            <li><b>Occupant Type</b> comes from the roster’s “Occupant Type” column — e.g. <i>If Occupant Type is “Minor” then tag Minor</i>.</li>
+            <li><b>is one of</b> takes a comma list — e.g. <i>If Floor is one of “1, 2” then tag Family</i>.</li>
+            <li>Values aren’t case-sensitive. Create the tag above first, then pick it here.</li></ul></div>
+          <div id="dtRules">${(s.rules || []).map(ruleRow).join('')}</div><button type="button" class="rl-btn sm" id="dtAddRule"${(s.tags || []).length ? '' : ' disabled'}>+ Add rule</button></div>
+        <div class="dt-sec"><h4>RA assignments</h4><p>Assign each RA a building and floor(s). Every resident in that area gets an <b>⚙ RA: Name</b> tag and the RA filter. After a transfer, move-out or new roster import, assignments update automatically.</p>
+          ${raUsers.length ? `<div id="dtRAs">${(s.raAssignments || []).map(raRow).join('')}</div><button type="button" class="rl-btn sm" id="dtAddRA">+ Add assignment</button>` : '<div class="rl-empty">No users with the RA role on this property yet. Add them in Manage Users.</div>'}</div>
+        <div class="dt-foot"><span id="dtLast">${s.lastRefresh ? 'Last refreshed ' + new Date(s.lastRefresh).toLocaleString() : 'Not refreshed yet'}</span><div><button class="rl-btn" id="dtRefresh">Refresh tags now</button> <button class="rl-btn primary" id="dtSave">Save &amp; apply</button></div></div>`;
+      ov.classList.add('show');
+      const body = document.getElementById('dirTagBody');
+      body.addEventListener('click', e => { if (e.target.hasAttribute('data-rm')) e.target.closest('.dt-row').remove(); });
+      body.querySelector('#dtAddTag').onclick = () => body.querySelector('#dtTags').insertAdjacentHTML('beforeend', tagRow({ name: '', color: 'slate' }));
+      const ar = body.querySelector('#dtAddRule'); if (ar) ar.onclick = () => body.querySelector('#dtRules').insertAdjacentHTML('beforeend', ruleRow({ field: 'building', op: 'equals' }));
+      const ra = body.querySelector('#dtAddRA'); if (ra) ra.onclick = () => body.querySelector('#dtRAs').insertAdjacentHTML('beforeend', raRow({}));
+      const collect = () => {
+        const g = (row, k) => row.querySelector(`[data-k="${k}"]`).value;
+        return {
+          tags: [...body.querySelectorAll('[data-tag-row]')].map(r => ({ name: g(r, 'name').trim(), color: g(r, 'color') })).filter(t => t.name),
+          rules: [...body.querySelectorAll('[data-rule-row]')].map(r => ({ field: g(r, 'field'), op: g(r, 'op'), value: g(r, 'value'), tag: g(r, 'tag') })).filter(r => r.tag),
+          raAssignments: [...body.querySelectorAll('[data-ra-row]')].map(r => { const u = raUsers.find(x => x.username === g(r, 'username')); return { username: g(r, 'username'), name: u ? u.name : g(r, 'username'), building: g(r, 'building').trim(), floors: g(r, 'floors').split(/[\s,]+/).filter(Boolean) }; }).filter(a => a.username && a.building),
+        };
+      };
+      body.querySelector('#dtSave').onclick = async () => {
+        try { const r = await apiFetch('/reslife-directory', { method: 'PUT', body: JSON.stringify(Object.assign({ property: currentProperty, action: 'dirSettings' }, collect())) }); ov.classList.remove('show'); await loadDirectory(); alert(`Saved. ${r.autoTagged} residents auto-tagged · ${r.raAssigned} assigned to an RA.`); }
+        catch (e) { alert('Save failed: ' + e.message); }
+      };
+      body.querySelector('#dtRefresh').onclick = async () => {
+        try { const r = await apiFetch('/reslife-directory', { method: 'POST', body: JSON.stringify({ property: currentProperty, action: 'refreshTags' }) }); await loadDirectory(); body.querySelector('#dtLast').textContent = 'Last refreshed just now'; alert(`Refreshed ${r.residents} residents · ${r.autoTagged} auto-tagged · ${r.raAssigned} assigned to an RA.`); }
+        catch (e) { alert('Refresh failed: ' + e.message); }
+      };
     }
 
     function openDirectoryForm(d){
@@ -4209,21 +4365,28 @@
       } catch (e) { alert('Unit import failed: ' + e.message); }
     }
 
+    // Roster: Name | Unit | E-mail | Phone | Occupant Type. Columns are matched by header name
+    // (any order); if there's no header row, the columns are read in that order.
     async function importRoster(file){
       try {
-        const rows = stripHeader(await readSheetRows(file), /^(resident\s*)?name\b/i)
-          .map(r => ({ residentName: String(r[0] || '').trim(), unit: String(r[1] || '').trim(), email: String(r[2] || '').trim(), phone: String(r[3] || '').trim() }))
-          .filter(r => r.residentName);
-        if (!rows.length) { alert('No residents found. Expected A = Name, B = Unit, C = Email, D = Phone.'); return; }
-        if (dirUnits.length) {
-          const known = new Set(dirUnits.map(u => String(u.unit).trim().toUpperCase()));
-          const knownBase = new Set(dirUnits.map(u => baseUnitOf(u.unit)));
-          const unknown = rows.filter(r => r.unit && !known.has(r.unit.toUpperCase()) && !knownBase.has(baseUnitOf(r.unit)));
-          if (unknown.length && !confirm(`${unknown.length} roster row(s) reference units not in the unit inventory (e.g. ${unknown.slice(0, 3).map(r => r.unit).join(', ')}). Continue anyway?`)) return;
-        }
-        if (!confirm(`Import ${rows.length} residents? Existing residents with the same name are updated; their history is kept.`)) return;
+        let rows = (await readSheetRows(file)).filter(r => r.some(c => String(c).trim() !== ''));
+        const norm = s => String(s || '').toLowerCase().replace(/[^a-z]/g, '');
+        let col = { name: 0, unit: 1, email: 2, phone: 3, occ: 4 };
+        const hi = rows.findIndex(r => r.some(c => norm(c) === 'name' || norm(c) === 'residentname') && r.some(c => norm(c).startsWith('unit')));
+        if (hi >= 0) {
+          const h = rows[hi].map(norm);
+          const find = (...keys) => h.findIndex(x => keys.includes(x));
+          col = { name: find('name', 'residentname', 'resident'), unit: find('unit', 'unitnumber', 'bedspace', 'space', 'unitbed'), email: find('email', 'emailaddress', 'mail'), phone: find('phone', 'phonenumber', 'cellphone', 'mobile', 'mobilephone'), occ: find('occupanttype', 'occupant', 'type') };
+          rows = rows.slice(hi + 1);
+        } else if (/^(resident\s*)?name\b/i.test(String(rows[0] && rows[0][0]))) rows.shift();
+        const cell = (r, i) => i >= 0 ? String(r[i] == null ? '' : r[i]).trim() : '';
+        rows = rows.map(r => ({ residentName: cell(r, col.name), unit: cell(r, col.unit), email: cell(r, col.email).replace(/^mailto:/i, ''), phone: cell(r, col.phone), occupantType: cell(r, col.occ) })).filter(r => r.residentName);
+        if (!rows.length) { alert('No residents found. Expected columns: Name | Unit | E-mail | Phone | Occupant Type.'); return; }
+        const withEmail = rows.filter(r => r.email).length;
+        const sample = rows[0];
+        if (!confirm(`Import ${rows.length} residents?\n\nFirst row reads as:\n  Name: ${sample.residentName}\n  Unit/Bed: ${parseUnitLabel(sample.unit).unit} (bed ${parseUnitLabel(sample.unit).bed || '—'})\n  Email: ${sample.email || '—'}\n  Phone: ${sample.phone || '—'}\n  Occupant Type: ${sample.occupantType || '—'}\n\n${withEmail} of ${rows.length} rows have an email. Existing residents are updated and keep their history; tag rules and RA assignments are re-applied.`)) return;
         const r = await apiFetch('/reslife-directory', { method: 'POST', body: JSON.stringify({ property: currentProperty, action: 'import', rows }) });
-        alert(`Roster imported: ${r.created} added, ${r.updated} updated.`);
+        alert(`Roster imported: ${r.created} added, ${r.updated} updated.${r.tagged ? ` ${r.tagged.autoTagged} auto-tagged · ${r.tagged.raAssigned} assigned to an RA.` : ''}`);
         await loadDirectory();
       } catch (e) { alert('Roster import failed: ' + e.message); }
     }
@@ -4267,9 +4430,9 @@
         <div class="res-id">
           <div class="res-avatar">${esc(initialsOf(d.residentName))}</div>
           <div>
-            <h3 class="res-name">${esc(d.residentName)}</h3>
+            <h3 class="res-name">${esc(dirDisplayName(d.residentName))}</h3>
             <div class="res-badges">
-              ${unit ? `<span class="res-badge">Unit ${esc(baseUnitOf(unit))}</span><span class="res-badge">Bed ${esc(unit)}</span>` : '<span class="res-badge">No unit assigned</span>'}
+              ${unit ? `<span class="res-badge">Unit ${esc(parseUnitLabel(unit).unit)}</span>${parseUnitLabel(unit).bed ? `<span class="res-badge">Bed ${esc(parseUnitLabel(unit).bed)}</span>` : ''}${parseUnitLabel(unit).building ? `<span class="res-badge">Bldg ${esc(parseUnitLabel(unit).building)} · Floor ${esc(parseUnitLabel(unit).floor)}</span>` : ''}` : '<span class="res-badge">No unit assigned</span>'}
               ${utype ? `<span class="res-badge">${esc(utype)}</span>` : ''}
               <span class="res-badge">${mates.length} roommate${mates.length === 1 ? '' : 's'}</span>
             </div>
@@ -4311,9 +4474,9 @@
         ? `<div class="res-mates">${mates.map(m => `
             <a href="#" class="res-mate" data-res-mate="${m.id}">
               <span class="mav">${esc(initialsOf(m.residentName))}</span>
-              <span><div class="mname">${esc(m.residentName)}</div><div class="mbed">Bed ${esc(m.unit || m.room)}</div></span>
+              <span><div class="mname">${esc(m.residentName)}</div><div class="mbed">${esc(parseUnitLabel(m.unit || m.room).unit)}</div></span>
               <span class="marrow">&rsaquo;</span>
-              <span class="mtip"><strong>${esc(m.residentName)}</strong><br>${esc(m.email || 'No email on file')}</span>
+              <span class="mtip"><strong>${esc(dirDisplayName(m.residentName))}</strong><br>${esc(m.email || 'No email on file')}</span>
             </a>`).join('')}</div>`
         : '<div class="res-none">No roommates on file for this unit.</div>';
 
@@ -4322,10 +4485,11 @@
         overview: `
           <div class="res-grid2">
             <div class="res-card"><div class="res-sec-title">Roommates <span>${mates.length}</span></div>${mateCards}</div>
+            <div class="res-card" style="grid-column:1/-1"><div class="res-sec-title">Tags</div><div class="dt-tags" id="resTags">${[...(fresh.tags || []).map(t => tagChip(t)), ...(fresh.autoTags || []).map(t => tagChip(t, true))].join('') || '<span style="color:var(--rl-subtext);font-size:13px">No tags</span>'}</div>${isManager ? `<div class="dt-addrow"><select id="resTagSel"><option value="">Add a tag…</option>${(dirSettings.tags || []).filter(t => !(fresh.tags || []).includes(t.name)).map(t => `<option>${esc(t.name)}</option>`).join('')}</select><button class="rl-btn sm primary" id="resTagAdd">Add</button>${(fresh.tags || []).length ? `<select id="resTagRm"><option value="">Remove a tag…</option>${fresh.tags.map(t => `<option>${esc(t)}</option>`).join('')}</select><button class="rl-btn sm" id="resTagRmBtn">Remove</button>` : ''}</div>` : ''}</div>
             <div class="res-card"><div class="res-sec-title">Details</div>
               <dl class="res-dl">
                 <dt>Unit</dt><dd>${esc(baseUnitOf(unit)) || '—'}</dd>
-                <dt>Bed</dt><dd>${esc(unit) || '—'}</dd>
+                <dt>Bed</dt><dd>${esc(parseUnitLabel(unit).bed) || '—'}</dd><dt>Building / Floor</dt><dd>${parseUnitLabel(unit).building ? 'Building ' + esc(parseUnitLabel(unit).building) + ' · Floor ' + esc(parseUnitLabel(unit).floor) : '—'}</dd>${fresh.occupantType ? `<dt>Occupant type</dt><dd>${esc(fresh.occupantType)}</dd>` : ''}${fresh.assignedRAName ? `<dt>RA</dt><dd>${esc(fresh.assignedRAName)}</dd>` : ''}
                 <dt>Unit type</dt><dd>${esc(utype) || '—'}</dd>
                 <dt>Email</dt><dd>${esc(fresh.email) || '—'}</dd>
                 <dt>Phone</dt><dd>${esc(fresh.phone) || '—'}</dd>
@@ -4356,6 +4520,9 @@
 
       stats.querySelectorAll('[data-res-tab]').forEach(b => b.addEventListener('click', () => { resActiveTab = b.getAttribute('data-res-tab'); resUseCache = true; openResidentModal(id, true); }));
       body.querySelectorAll('[data-res-mate]').forEach(a => a.addEventListener('click', ev => { ev.preventDefault(); openResidentModal(a.getAttribute('data-res-mate')); }));
+      const saveTags = async tags => { try { const r = await apiFetch('/reslife-directory', { method: 'PUT', body: JSON.stringify({ id, property: currentProperty, action: 'setTags', tags }) }); fresh.tags = r.tags; const dd = dirDocs.find(x => x.id === id); if (dd) dd.tags = r.tags; resUseCache = true; openResidentModal(id, true); if (document.getElementById('dirList')) renderDirectoryList(); } catch (e) { alert('Tag update failed: ' + e.message); } };
+      const ta = document.getElementById('resTagAdd'); if (ta) ta.onclick = () => { const v = document.getElementById('resTagSel').value; if (v) saveTags([...(fresh.tags || []), v]); };
+      const tr = document.getElementById('resTagRmBtn'); if (tr) tr.onclick = () => { const v = document.getElementById('resTagRm').value; if (v) saveTags((fresh.tags || []).filter(t => t !== v)); };
 
       const put = async (payload) => apiFetch('/reslife-directory', { method: 'PUT', body: JSON.stringify(Object.assign({ id, property: currentProperty }, payload)) });
       const refresh = async () => { dirDocs = await apiFetch('/reslife-directory' + propParam()); openResidentModal(id, true); };
@@ -4383,6 +4550,14 @@
 
     function bindDirectoryForm(){
       document.getElementById('dirSearch').addEventListener('input', renderDirectoryList);
+      ['dirFBuilding', 'dirFFloor', 'dirFTag', 'dirFRA'].forEach(id => document.getElementById(id).addEventListener('change', renderDirectoryList));
+      document.getElementById('dirFClear').addEventListener('click', () => { ['dirSearch', 'dirFBuilding', 'dirFFloor', 'dirFTag', 'dirFRA'].forEach(id => document.getElementById(id).value = ''); renderDirectoryList(); });
+      document.getElementById('dirBulkAdd').addEventListener('click', () => dirBulkTag(false));
+      document.getElementById('dirBulkRemove').addEventListener('click', () => dirBulkTag(true));
+      document.getElementById('dirBulkClear').addEventListener('click', () => { dirSelected.clear(); renderDirectoryList(); });
+      document.getElementById('dirTagMgrBtn').addEventListener('click', openTagManager);
+      document.getElementById('dirTagClose').addEventListener('click', () => document.getElementById('dirTagModal').classList.remove('show'));
+      document.getElementById('dirTagModal').addEventListener('mousedown', e => { if (e.target.id === 'dirTagModal') e.target.classList.remove('show'); });
       document.getElementById('dirImportUnitsBtn').addEventListener('click', () => document.getElementById('dirUnitsFile').click());
       document.getElementById('dirImportRosterBtn').addEventListener('click', () => document.getElementById('dirRosterFile').click());
       document.getElementById('dirUnitsFile').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) importUnitReport(f); });
