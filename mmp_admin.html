@@ -699,8 +699,8 @@
         <div class="form-group">
           <label>Icon *</label>
           <div style="display:flex;align-items:center;gap:10px;">
-            <div id="navItemIconPreview" style="width:40px;height:40px;border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--brand-primary);background:#f8fafc;flex-shrink:0;"><i class="bi bi-link-45deg"></i></div>
-            <input type="hidden" id="navItemIcon" value="bi-link-45deg" />
+            <div id="navItemIconPreview" style="width:40px;height:40px;border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--brand-primary);background:#f8fafc;flex-shrink:0;"></div>
+            <input type="hidden" id="navItemIcon" value="link" />
             <button type="button" class="btn" id="navItemIconPickBtn">Choose Icon&hellip;</button>
           </div>
           <div id="navIconPicker" style="display:none;margin-top:10px;border:1px solid var(--border);border-radius:10px;padding:12px;background:#f8fafc;">
@@ -1039,20 +1039,11 @@
       'creative_studio.html', 'creative_library.html', 'marketing_contacts.html', 'leasing_staff_list.html',
       'custom_tools.html', 'sop_library.html', 'renewal_campaign.html', 'mmp_admin.html'
     ];
-    // A curated, searchable subset of Bootstrap Icons (free, already loaded via standard-nav.js's
-    // CDN link) — the full set has 1800+ icons, more than useful to hardcode; admins can also type
-    // any valid "bi-xxx" class directly if they know it.
-    const NAV_ICON_CHOICES = [
-      'bi-calendar3','bi-calendar-check','bi-calendar-week','bi-graph-up-arrow','bi-graph-up','bi-bar-chart-steps','bi-bar-chart',
-      'bi-columns-gap','bi-grid-3x3-gap','bi-cart3','bi-bag-check','bi-bag','bi-magic','bi-images','bi-image','bi-person-lines-fill',
-      'bi-people','bi-person-badge','bi-kanban','bi-clipboard-check','bi-gear-wide-connected','bi-gear','bi-sliders','bi-journal-bookmark',
-      'bi-journal-text','bi-file-earmark-text','bi-file-earmark','bi-folder','bi-link-45deg','bi-box-arrow-up-right','bi-building',
-      'bi-house-door','bi-mailbox','bi-envelope','bi-chat-dots','bi-megaphone','bi-star','bi-flag','bi-clock-history','bi-shield-check',
-      'bi-tools','bi-wrench-adjustable','bi-printer','bi-camera','bi-palette','bi-brush','bi-pie-chart','bi-clipboard-data','bi-list-check',
-      'bi-check2-square','bi-award','bi-trophy','bi-lightbulb','bi-globe','bi-map','bi-geo-alt','bi-truck','bi-boxes','bi-tag','bi-tags',
-      'bi-credit-card','bi-cash-stack','bi-bank','bi-briefcase','bi-book','bi-mortarboard','bi-door-open','bi-key','bi-arrow-left-circle',
-      'bi-house','bi-question-circle','bi-info-circle','bi-bell'
-    ];
+    // Icon library: Lucide line icons (single-color, inline SVG) provided by standard-nav.js via
+    // window.MMPIcons. Legacy "bi-*" values saved earlier are mapped to equivalent Lucide icons.
+    function navIconResolve(name) { return window.MMPIcons ? window.MMPIcons.resolve(name) : (name || 'link'); }
+    function navIconSVG(name, size) { return window.MMPIcons ? window.MMPIcons.svg(name, size) : ''; }
+    function navIconChoices() { return window.MMPIcons ? window.MMPIcons.names() : []; }
     const NAV_ROLE_CHOICES = [
       { value: 'user', label: 'User' },
       { value: 'admin', label: 'Admin' },
@@ -1109,7 +1100,7 @@
             <button type="button" class="btn" style="padding:2px 8px;font-size:11px;" data-nav-up="${it.id}" ${idx === 0 ? 'disabled' : ''}>&uarr;</button>
             <button type="button" class="btn" style="padding:2px 8px;font-size:11px;" data-nav-down="${it.id}" ${idx === total - 1 ? 'disabled' : ''}>&darr;</button>
           </div>
-          <div style="width:32px;height:32px;border-radius:6px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;color:var(--brand-primary);flex-shrink:0;"><i class="bi ${esc(it.icon || 'bi-link-45deg')}"></i></div>
+          <div style="width:32px;height:32px;border-radius:6px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;color:var(--brand-primary);flex-shrink:0;">${navIconSVG(it.icon, 18)}</div>
           <div style="flex:1;min-width:0;">
             <div style="font-weight:700;font-size:13px;">${esc(it.name)}${it.enabled === false ? ' <span class="hint" style="color:var(--danger)">(disabled)</span>' : ''}</div>
             <div class="hint" style="margin:2px 0 0;">${dest} &middot; ${esc(roles)}</div>
@@ -1186,12 +1177,13 @@
     function navPopulateIconGrid(filter) {
       const grid = document.getElementById('navIconGrid');
       const f = (filter || '').toLowerCase().trim();
-      const list = f ? NAV_ICON_CHOICES.filter(i => i.indexOf(f) !== -1) : NAV_ICON_CHOICES;
-      grid.innerHTML = list.map(icon => `<button type="button" class="btn" data-icon="${icon}" title="${icon}" aria-label="${icon}" style="padding:8px;font-size:16px;">${'<i class="bi ' + icon + '" aria-hidden="true"></i>'}</button>`).join('') || '<div class="hint">No matching icons.</div>';
+      const all = navIconChoices();
+      const list = f ? all.filter(i => i.indexOf(f.replace(/\s+/g, '-')) !== -1) : all;
+      grid.innerHTML = list.map(icon => `<button type="button" class="btn" data-icon="${icon}" title="${icon}" aria-label="${icon}" style="padding:8px;display:flex;align-items:center;justify-content:center;color:var(--brand-primary);">${navIconSVG(icon, 20)}</button>`).join('') || '<div class="hint">No matching icons.</div>';
       grid.querySelectorAll('[data-icon]').forEach(btn => btn.addEventListener('click', () => {
         const icon = btn.getAttribute('data-icon');
         document.getElementById('navItemIcon').value = icon;
-        document.getElementById('navItemIconPreview').innerHTML = `<i class="bi ${icon}"></i>`;
+        document.getElementById('navItemIconPreview').innerHTML = navIconSVG(icon, 22);
         document.getElementById('navIconPicker').style.display = 'none';
       }));
     }
@@ -1202,8 +1194,8 @@
       document.getElementById('navItemId').value = item ? item.id : '';
       document.getElementById('navItemName').value = item ? item.name : '';
       document.getElementById('navItemSection').value = item ? (item.section || 'tools') : 'tools';
-      document.getElementById('navItemIcon').value = item ? (item.icon || 'bi-link-45deg') : 'bi-link-45deg';
-      document.getElementById('navItemIconPreview').innerHTML = `<i class="bi ${item ? (item.icon || 'bi-link-45deg') : 'bi-link-45deg'}"></i>`;
+      document.getElementById('navItemIcon').value = navIconResolve(item && item.icon);
+      document.getElementById('navItemIconPreview').innerHTML = navIconSVG(item && item.icon, 22);
       document.getElementById('navItemDestType').value = item ? item.destinationType : 'project';
       document.getElementById('navItemEnabled').checked = item ? item.enabled !== false : true;
       document.getElementById('navIconPicker').style.display = 'none';
@@ -1243,7 +1235,7 @@
       const body = {
         name, link, destinationType,
         section: document.getElementById('navItemSection').value,
-        icon: document.getElementById('navItemIcon').value || 'bi-link-45deg',
+        icon: document.getElementById('navItemIcon').value || 'link',
         enabled: document.getElementById('navItemEnabled').checked,
         roles,
       };
