@@ -208,12 +208,12 @@
     const box = CS.$('#nlSecList'); if (!box) return;
     box.innerHTML = E.nl.sections.map((s, i) => { const t = NL.TYPES[s.type] || NL.TYPES.custom; const label = (s.content && (s.content.heading || s.content.title)) || t.name; return `
       <div class="nl-sec${s.id === E.sel ? ' on' : ''}${s.visible === false ? ' off' : ''}" data-sec="${s.id}" draggable="true">
-        <span class="nl-grip" title="Drag to reorder">&#8942;&#8942;</span><span class="nl-ico">${t.icon}</span>
+        <span class="nl-grip" title="Drag to reorder"></span>
         <div class="nl-sec-txt"><b>${esc(String(label).replace(/\[\[|\]\]/g, ''))}</b><small>${esc(t.name)}${s.visible === false ? ' · hidden' : ''}</small></div>
         <div class="nl-sec-btns">
           <button title="Move up" data-x="up"${i === 0 ? ' disabled' : ''}>&#8593;</button><button title="Move down" data-x="down"${i === E.nl.sections.length - 1 ? ' disabled' : ''}>&#8595;</button>
-          <button title="${s.visible === false ? 'Show' : 'Hide'}" data-x="vis">${s.visible === false ? '&#128065;&#65039;&#8205;&#128488;' : '&#128065;'}</button>
-          <button title="Duplicate" data-x="dup">&#10697;</button><button title="Delete" data-x="del">&#128465;</button>
+          <button title="${s.visible === false ? 'Show' : 'Hide'}" data-x="vis">${s.visible === false ? 'Show' : 'Hide'}</button>
+          <button title="Duplicate" data-x="dup">Copy</button><button title="Delete" data-x="del">Delete</button>
         </div></div>`; }).join('') || '<div class="cs-empty" style="padding:14px">No sections — click + Add Section.</div>';
     box.querySelectorAll('[data-sec]').forEach(row => {
       const id = row.getAttribute('data-sec');
@@ -271,7 +271,7 @@
     const t = NL.TYPES[s.type] || NL.TYPES.custom;
     s.content = s.content || {};
     box.innerHTML = `
-      <div class="nl-right-h"><span class="nl-ico">${t.icon}</span><div><b>${esc(t.name)}</b><small>${s.visible === false ? 'Hidden — won’t be exported' : 'Visible'}</small></div></div>
+      <div class="nl-right-h"><div><b>${esc(t.name)}</b><small>${esc(t.desc || '')}${s.visible === false ? ' · Hidden — won’t be exported' : ''}</small></div></div>
       <div class="nl-fields">${t.fields.map(f => fieldHTML(f, s.content[f.key], f.key)).join('') || '<p class="cs-hint">This section has no settings.</p>'}</div>
       <div class="nl-right-foot"><button class="cs-btn ghost sm" id="nlSaveBlock">Save as reusable block</button></div>`;
     bindFields(box, s);
@@ -288,7 +288,7 @@
     if (f.kind === 'items') {
       const items = Array.isArray(v) ? v : [];
       return `<div class="nl-items"><div class="nl-items-h"><label class="cs-label">${esc(f.label)}</label><button type="button" class="cs-btn xs" data-add-item="${esc(path)}">+ Add ${esc(f.itemLabel)}</button></div>
-        ${items.map((it, i) => `<div class="nl-item" data-item="${i}"><div class="nl-item-h"><b>${esc(f.itemLabel)} ${i + 1}</b><span><button type="button" data-item-x="up" data-i="${i}"${i === 0 ? ' disabled' : ''}>&#8593;</button><button type="button" data-item-x="down" data-i="${i}"${i === items.length - 1 ? ' disabled' : ''}>&#8595;</button><button type="button" data-item-x="dup" data-i="${i}">&#10697;</button><button type="button" data-item-x="del" data-i="${i}">&#128465;</button></span></div>
+        ${items.map((it, i) => `<div class="nl-item" data-item="${i}"><div class="nl-item-h"><b>${esc(f.itemLabel)} ${i + 1}</b><span><button type="button" data-item-x="up" data-i="${i}"${i === 0 ? ' disabled' : ''}>&#8593;</button><button type="button" data-item-x="down" data-i="${i}"${i === items.length - 1 ? ' disabled' : ''}>&#8595;</button><button type="button" data-item-x="dup" data-i="${i}">Copy</button><button type="button" data-item-x="del" data-i="${i}">Remove</button></span></div>
           ${f.sub.map(sf => fieldHTML(sf, it[sf.key], `${path}.${i}.${sf.key}`)).join('')}</div>`).join('') || '<p class="cs-hint">None yet.</p>'}</div>`;
     }
     if (f.kind === 'image' || f.kind === 'image') {
@@ -298,7 +298,7 @@
     }
     if (f.kind === 'select') return `<div class="cs-field"><label class="cs-label">${esc(f.label)}</label><select class="cs-select" data-path="${esc(path)}"><option value=""></option>${f.options.map(o => `<option${o === v ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select></div>`;
     if (f.kind === 'textarea') return `<div class="cs-field"><label class="cs-label">${esc(f.label)} <small style="text-transform:none;font-weight:600;color:var(--ui-muted)">**bold**</small></label><textarea class="cs-textarea" id="${id}" data-path="${esc(path)}" style="min-height:90px">${esc(v || '')}</textarea>
-      <details class="nl-ai"><summary>&#10022; AI writing help</summary><div class="cs-ai-actions">${AI_ACTIONS.map(a => `<button type="button" data-ai="${esc(path)}" data-act="${a}">${a}</button>`).join('')}</div><div class="nl-ai-out" data-ai-out="${esc(path)}"></div></details></div>`;
+      <details class="nl-ai"><summary>AI writing help</summary><div class="cs-ai-actions">${AI_ACTIONS.map(a => `<button type="button" data-ai="${esc(path)}" data-act="${a}">${a}</button>`).join('')}</div><div class="nl-ai-out" data-ai-out="${esc(path)}"></div></details></div>`;
     const type = f.kind === 'date' ? 'date' : f.kind === 'time' ? 'time' : f.kind === 'url' ? 'url' : 'text';
     return `<div class="cs-field"><label class="cs-label">${esc(f.label)}</label><input class="cs-input" type="${type}" data-path="${esc(path)}" value="${esc(v || '')}"${f.kind === 'url' ? ' placeholder="https://…"' : ''}></div>`;
   }
@@ -316,24 +316,25 @@
       if (a === 'del') { if (!confirm('Remove this item?')) return; arr.splice(i, 1); }
       drawRight(); dirty();
     });
-    box.querySelectorAll('[data-img]').forEach(b => b.onclick = () => imagePicker(im => { setPath(s.content, b.getAttribute('data-img'), im); drawRight(); dirty(); }));
+    box.querySelectorAll('[data-img]').forEach(b => b.onclick = () => CS.pickImage(im => { setPath(s.content, b.getAttribute('data-img'), im); drawRight(); dirty(); }));
     box.querySelectorAll('[data-img-rm]').forEach(b => b.onclick = () => { setPath(s.content, b.getAttribute('data-img-rm'), null); drawRight(); dirty(); });
     // AI: suggestions must be approved before they replace the text.
     box.querySelectorAll('[data-ai]').forEach(b => b.onclick = async () => {
       const p = b.getAttribute('data-ai'), act = b.getAttribute('data-act'), out = box.querySelector(`[data-ai-out="${p}"]`);
-      const cur = String(getPath(s.content, p) || '');
-      if (!cur.trim() && !/Create/.test(act)) return CS.toast('Write something first');
-      out.innerHTML = '<div class="cs-hint">Thinking…</div>';
-      const map = { 'Improve Writing': 'Fix Grammar', 'Shorten': 'Make Shorter', 'Make Friendlier': 'Make Friendlier', 'Make More Professional': 'Make More Professional', 'Rewrite for Residents': 'Make It More Harbour', 'Create Headline': 'Make Shorter', 'Create CTA': 'Make More Exciting' };
-      let r = await CS.aiRewriteText(cur || (s.content.heading || ''), map[act] || act, 'email', s.content.heading || '');
-      let sug = String(r.body || '').trim();
-      if (act === 'Create Headline') sug = sug.split(/[.!?\n]/)[0].split(' ').slice(0, 8).join(' ');
-      if (act === 'Create CTA') sug = sug.split(/[.!?\n]/)[0].split(' ').slice(0, 4).join(' ');
-      // Guardrail: never let AI change numbers, URLs, phones or dates.
+      const cur = String(getPath(s.content, p) || '').trim();
+      if (!cur) { out.innerHTML = '<div class="cs-hint">Write a draft first, then choose how to improve it.</div>'; return; }
+      out.innerHTML = '<div class="cs-hint">Writing…</div>';
+      const r = await NL.aiAssist(cur, act, s.content.heading || s.content.headline || '');
+      const sug = String(r.text || '').trim();
+      if (!sug || sug === cur) { out.innerHTML = `<div class="cs-hint">No changes suggested for “${esc(act)}” — your text already reads well.</div>`; return; }
       const facts = t => (String(t).match(/https?:\/\/\S+|\b\d[\d,:./-]*\b|\$\d+/g) || []).sort().join('|');
       const changedFacts = !/Create/.test(act) && facts(cur) !== facts(sug);
-      out.innerHTML = `<div class="nl-ai-sug">${esc(sug)}</div>${changedFacts ? '<div class="cs-verify" style="margin-top:6px">Heads up: this suggestion changed a date, number, price or link. Review carefully.</div>' : ''}<div style="display:flex;gap:6px;margin-top:6px"><button type="button" class="cs-btn xs" data-ai-use>Use this</button><button type="button" class="cs-btn ghost xs" data-ai-no>Discard</button></div>`;
-      out.querySelector('[data-ai-use]').onclick = () => { setPath(s.content, p, sug); drawRight(); dirty(); };
+      out.innerHTML = `<div class="nl-ai-sug">${esc(sug)}</div><div class="cs-hint" style="margin-top:4px">${r.source === 'ai' ? 'Suggested by AI' : 'Suggested by the built-in writer'} · review before using</div>${changedFacts ? '<div class="cs-verify" style="margin-top:6px">Heads up: this changed a date, number, price or link. Check it carefully.</div>' : ''}<div style="display:flex;gap:6px;margin-top:6px"><button type="button" class="cs-btn xs" data-ai-use>Use this</button><button type="button" class="cs-btn ghost xs" data-ai-no>Discard</button></div>`;
+      out.querySelector('[data-ai-use]').onclick = () => {
+        if (/Create Headline|Create CTA/.test(act)) { const hk = s.content.heading !== undefined ? 'heading' : (s.content.headline !== undefined ? 'headline' : null); if (act === 'Create Headline' && hk) { s.content[hk] = sug; } else if (act === 'Create CTA') { const ck = ['cta', 'buttonLabel', 'linkLabel'].find(k => k in s.content) || 'cta'; s.content[ck] = sug; } else setPath(s.content, p, sug); }
+        else setPath(s.content, p, sug);
+        drawRight(); drawList2(); dirty();
+      };
       out.querySelector('[data-ai-no]').onclick = () => { out.innerHTML = ''; };
     });
   }
@@ -358,12 +359,14 @@
 
   // Add Section: library + saved blocks
   function addSectionDialog() {
-    CS.modal(`<h2 style="margin:0 0 12px;color:var(--brand-primary)">Add a section</h2>
-      <div class="nl-lib">${NL.LIBRARY.map(([label, type], i) => `<button type="button" data-lib="${i}"><span>${(NL.TYPES[type] || {}).icon || ''}</span>${esc(label)}</button>`).join('')}</div>
-      <h3 style="margin:18px 0 8px;font-size:14px;color:var(--brand-primary)">Saved Newsletter Blocks</h3>
-      ${blocks.length ? `<div class="nl-lib">${blocks.map(b => `<button type="button" data-blk="${b.id}"><span>${(NL.TYPES[b.sectionType] || {}).icon || ''}</span>${esc(b.name)}<small>${esc(b.category)}</small></button>`).join('')}</div>` : '<p class="cs-hint">No saved blocks yet. Use “Save as reusable block” on any section.</p>'}`);
+    const byGroup = NL.GROUPS.map(g => [g, NL.LIBRARY.filter(([, type]) => NL.TYPES[type].group === g)]).filter(([, l]) => l.length);
+    CS.modal(`<h2 style="margin:0 0 4px;color:var(--brand-primary)">Add a section</h2><p style="margin:0 0 12px;color:var(--ui-muted);font-size:13.5px">Sections are inserted below the one you have selected.</p>
+      ${byGroup.map(([g, l]) => `<div class="nl-lib-g">${esc(g)}</div><div class="nl-lib">${l.map(([label, type]) => `<button type="button" data-lib="${type}"><b>${esc(label)}</b><small>${esc(NL.TYPES[type].desc || '')}</small></button>`).join('')}</div>`).join('')}
+      <div class="nl-lib-g">Saved Newsletter Blocks</div>
+      ${blocks.length ? `<div class="nl-lib">${blocks.map(b => `<button type="button" data-blk="${b.id}"><b>${esc(b.name)}</b><small>${esc(b.category)} · ${esc((NL.TYPES[b.sectionType] || {}).name || b.sectionType)}</small></button>`).join('')}</div>` : '<p class="cs-hint">No saved blocks yet. Use “Save as reusable block” on any section.</p>'}`);
+    CS.$('#csModal .cs-modal-box').style.maxWidth = '920px';
     const insert = sec => { const idx = E.nl.sections.findIndex(s => s.id === E.sel); const footerIdx = E.nl.sections.findIndex(s => s.type === 'footer'); const at = idx >= 0 ? idx + 1 : (footerIdx >= 0 ? footerIdx : E.nl.sections.length); E.nl.sections.splice(at, 0, sec); E.sel = sec.id; CS.closeModal(); drawList2(); drawRight(); dirty(); setTimeout(() => scrollCanvasTo(sec.id), 300); };
-    CS.$('#csModalBody').querySelectorAll('[data-lib]').forEach(b => b.onclick = () => { const [, type, content] = NL.LIBRARY[+b.getAttribute('data-lib')]; insert(NL.newSection(type, content)); });
+    CS.$('#csModalBody').querySelectorAll('[data-lib]').forEach(b => b.onclick = () => insert(NL.newSection(b.getAttribute('data-lib'))));
     CS.$('#csModalBody').querySelectorAll('[data-blk]').forEach(b => b.onclick = () => { const blk = blocks.find(x => x.id === b.getAttribute('data-blk')); insert(NL.newSection(blk.sectionType, blk.content)); });
   }
 
@@ -377,7 +380,7 @@
     let src = null;
     const load = async () => {
       src = await api(q() + '&id=' + CS.$('#imSrc').value).catch(() => null);
-      const recurring = ['quicklinks', 'footer', 'maintenance', 'occ', 'social', 'reminders', 'resource'];
+      const recurring = ['quicklinks', 'footer', 'maintenance', 'occ', 'campus', 'social', 'reminders', 'tips', 'resource'];
       CS.$('#imSecs').innerHTML = src ? src.sections.map((s, i) => `<label class="nl-imp"><input type="checkbox" value="${i}"${recurring.includes(s.type) ? ' checked' : ''}> <b>${esc((NL.TYPES[s.type] || {}).name || s.type)}</b> <small>${esc((s.content && (s.content.heading || s.content.title)) || '')}</small></label>`).join('') : '<div class="cs-verify">Couldn’t load that newsletter.</div>';
     };
     CS.$('#imSrc').onchange = load; await load();
@@ -387,7 +390,7 @@
       if (!picks.length) return CS.toast('Choose at least one section');
       picks.forEach(p => {
         const copy = JSON.parse(JSON.stringify(p)); copy.id = NL.uid();
-        const same = E.nl.sections.findIndex(s => s.type === p.type && ['quicklinks', 'footer', 'maintenance', 'social', 'header'].includes(p.type));
+        const same = E.nl.sections.findIndex(s => s.type === p.type && ['quicklinks', 'footer', 'maintenance', 'social', 'header', 'masthead', 'contents'].includes(p.type));
         if (same >= 0) E.nl.sections[same] = copy; // replace singletons like the footer instead of duplicating
         else { const fi = E.nl.sections.findIndex(s => s.type === 'footer'); E.nl.sections.splice(fi >= 0 ? fi : E.nl.sections.length, 0, copy); }
       });
@@ -444,10 +447,10 @@
   // ───────────────────────── SAVED BLOCKS MANAGER ─────────────────────────
   async function blocksManager() {
     try { blocks = await api(q() + '&resource=blocks'); } catch (e) { blocks = []; }
-    const starters = [['Service Request Instructions', 'maintenance'], ['Pest Control Reminder', 'reminders', { heading: 'Pest Prevention', items: [{ icon: '&#128028;', title: 'Keep pests out', body: 'Take out trash often, store food in sealed containers and report pests through the resident portal.' }] }], ['Quiet Hours', 'reminders', { heading: 'Quiet Hours', items: [{ icon: '&#129323;', title: 'Quiet hours', body: '[[Quiet hours times]] — please keep noise down so everyone can rest and study.' }] }], ['Emergency Contact Information', 'announcements', { heading: 'Emergency Contacts', items: [{ title: 'In an emergency, call 911', body: '[[After-hours / on-call number]]' }] }], ['Resident Portal', 'ctaBanner', { heading: 'Your Resident Portal', body: 'Pay, submit service requests and stay up to date.', buttonLabel: 'Open Resident Portal', buttonUrl: CS.cfg.email.portalUrl }], ['OCC Counseling Resources', 'occ', { heading: 'Mental Health Support', items: [{ heading: 'OCC Mental Health Care', description: 'Confidential support through the Student Health Center.', url: ((CS.cfg.resources || []).find(r => r.title === 'Mental Health Care') || {}).url || '', cta: 'Get Support' }] }], ['Parking Reminder', 'reminders', { heading: 'Parking', items: [{ icon: '&#128663;', title: 'Parking reminder', body: '[[Parking rules]]' }] }], ['Guest Policy', 'reminders', { heading: 'Guest Policy', items: [{ icon: '&#128101;', title: 'Register your guests', body: 'Guests must check in at the front desk. Residents are responsible for their guests.' }] }], ['Package Reminder', 'reminders', { heading: 'Packages', items: [{ icon: '&#128230;', title: 'Package pickup', body: '[[Package room hours]] — bring your ID.' }] }]];
+    const starters = [['Service Request Instructions', 'maintenance'], ['Pest Control Reminder', 'tips', { heading: 'Pest Prevention', items: [{ title: 'Keep pests out', body: 'Take out trash often, store food in sealed containers and report pests through the resident portal.' }] }], ['Quiet Hours', 'tips', { heading: 'Quiet Hours', items: [{ title: 'Quiet hours', body: '[[Quiet hours times]] — please keep noise down so everyone can rest and study.' }] }], ['Emergency Contact Information', 'news', { heading: 'Emergency Contacts', items: [{ title: 'In an emergency, call 911', body: '[[After-hours / on-call number]]' }] }], ['Resident Portal', 'ctaBanner', { heading: 'Your Resident Portal', body: 'Pay, submit service requests and stay up to date.', buttonLabel: 'Open Resident Portal', buttonUrl: CS.cfg.email.portalUrl }], ['OCC Counseling Resources', 'campus', { heading: 'Mental Health Support', items: [{ title: 'OCC Mental Health Care', body: 'Confidential support through the Student Health Center.', url: ((CS.cfg.resources || []).find(r => r.title === 'Mental Health Care') || {}).url || '', cta: 'Get Support' }] }], ['Parking Reminder', 'tips', { heading: 'Parking', items: [{ title: 'Parking reminder', body: '[[Parking rules]]' }] }], ['Guest Policy', 'tips', { heading: 'Guest Policy', items: [{ title: 'Register your guests', body: 'Guests must check in at the front desk. Residents are responsible for their guests.' }] }], ['Package Reminder', 'tips', { heading: 'Packages', items: [{ title: 'Package pickup', body: '[[Package room hours]] — bring your ID.' }] }]];
     const draw = () => {
       CS.modal(`<h2 style="margin:0 0 6px;color:var(--brand-primary)">Saved Newsletter Blocks</h2><p style="margin:0 0 12px;color:var(--ui-muted);font-size:13.5px">Reusable sections you can insert into any newsletter. Save one from the editor with “Save as reusable block”.</p>
-        ${blocks.length ? blocks.map(b => `<div class="nl-blk"><span class="nl-ico">${(NL.TYPES[b.sectionType] || {}).icon || ''}</span><div><b>${esc(b.name)}</b><small>${esc(b.category)} · ${esc((NL.TYPES[b.sectionType] || {}).name || b.sectionType)}</small></div><div class="nl-blk-btns"><button class="cs-btn ghost xs" data-be="${b.id}">Rename</button><button class="cs-btn ghost xs" data-bd="${b.id}">Duplicate</button><button class="cs-btn danger xs" data-bx="${b.id}">Delete</button></div></div>`).join('') : '<div class="cs-empty">No saved blocks yet.</div>'}
+        ${blocks.length ? blocks.map(b => `<div class="nl-blk"><div><b>${esc(b.name)}</b><small>${esc(b.category)} · ${esc((NL.TYPES[b.sectionType] || {}).name || b.sectionType)}</small></div><div class="nl-blk-btns"><button class="cs-btn ghost xs" data-be="${b.id}">Rename</button><button class="cs-btn ghost xs" data-bd="${b.id}">Duplicate</button><button class="cs-btn danger xs" data-bx="${b.id}">Delete</button></div></div>`).join('') : '<div class="cs-empty">No saved blocks yet.</div>'}
         <div style="margin-top:14px"><button class="cs-btn ghost sm" id="blkStarters">Add Harbour starter blocks</button></div>
         <p class="cs-hint">To edit a block’s content: insert it into a newsletter, edit it, then “Save as reusable block” again.</p>`);
       const body = CS.$('#csModalBody');

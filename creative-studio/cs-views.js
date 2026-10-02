@@ -376,18 +376,112 @@
   };
   V.after_brand = () => CS.$('#csMain').querySelectorAll('[data-hex]').forEach(s => s.onclick = () => CS.copy(s.getAttribute('data-hex')));
 
-  // ───────────── PHOTOS ─────────────
-  V.photos = () => {
-    const cfg = CS.cfg;
-    const kindLabel = { property: 'Property', campus: 'OCC campus', lifestyle: 'Lifestyle', stock: 'Stock' };
-    return `
-    <div class="cs-page-h"><h1>Photo Library</h1><p>Real, approved photography only. We never generate or alter property photos — use a placeholder until a real photo is available.</p></div>
-    ${cfg.photoCategories.map(cat => {
-      const ps = cfg.photos.filter(p => p.category === cat);
-      return `<section class="cs-section" style="margin-top:24px"><div class="cs-section-h"><div><h2>${esc(cat)}</h2></div><span class="cs-chip">${ps.length}</span></div>
-        <div class="cs-photos">${ps.length ? ps.map(p => `<figure class="cs-photo" style="margin:0 0 14px"><img src="${p.src}" alt="${esc(p.alt)}" loading="lazy"><figcaption><span>${esc(p.alt)}</span><span class="cs-chip ${p.kind === 'property' ? 'ok' : p.kind === 'stock' ? 'warn' : ''}">${kindLabel[p.kind] || p.kind}</span></figcaption></figure>`).join('')
-          : `<figure class="cs-photo" style="margin:0"><div class="cs-photo-ph">&#9635;<span>No approved ${esc(cat.toLowerCase())} photo yet</span></div><figcaption><span>Placeholder — upload a real photo</span></figcaption></figure>`}</div></section>`;
-    }).join('')}`;
+  // ───────────── PHOTOS (shared library for every editor) ─────────────
+  const SRC_LABEL = { property: 'Harbour photo', campus: 'OCC campus', lifestyle: 'Lifestyle', stock: 'Stock', entrata: 'Entrata library' };
+  V.photos = () => `
+    <div class="cs-page-h" style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap">
+      <div><h1>Photo Library</h1><p>Approved images for every Creative Studio editor — flyers, social posts and the Monthly Newsletter. Real photography only.</p></div>
+      ${CS.isManager() ? '<button class="cs-btn" id="phAdd">+ Add Entrata Image</button>' : ''}
+    </div>
+    <div class="cs-ph-bar">
+      <input class="cs-input" id="phSearch" placeholder="Search by name, alt text or tag…">
+      <select class="cs-select" id="phCat"><option value="">All categories</option></select>
+      <select class="cs-select" id="phSrc"><option value="">All sources</option><option value="entrata">Entrata library</option><option value="property">Harbour photos</option><option value="campus">OCC campus</option><option value="lifestyle">Lifestyle / stock</option></select>
+      <div class="pp-viewtoggle cs-ph-view"><button type="button" class="active" data-phv="grid">Grid</button><button type="button" data-phv="list">List</button></div>
+    </div>
+    <div class="cs-ph-cats" id="phCats"></div>
+    <div id="phGrid"></div>
+    <p class="cs-hint" style="margin-top:14px">Need an image that isn’t here? Upload it to the Entrata Media Library, then ${CS.isManager() ? 'use “+ Add Entrata Image” and paste its link' : 'ask an REC or Admin to add its link here'}. Entrata links start with <code>${CS.ENTRATA_MEDIA}</code>.</p>`;
+
+  V.after_photos = () => {
+    const cats = [...new Set([...CS.cfg.photoCategories, ...CS.cfg.photos.map(p => p.category)])].filter(Boolean);
+    let cat = '', view = 'grid';
+    CS.$('#phCat').innerHTML = '<option value="">All categories</option>' + cats.map(c => `<option>${esc(c)}</option>`).join('');
+    const draw = () => {
+      const q = CS.$('#phSearch').value.trim().toLowerCase(), src = CS.$('#phSrc').value; cat = CS.$('#phCat').value;
+      const all = CS.cfg.photos;
+      const list = all.filter(p => (!cat || p.category === cat) && (!src || p.kind === src || (src === 'lifestyle' && p.kind === 'stock')) && (!q || [p.alt, p.title, p.category, (p.tags || []).join(' '), p.src].join(' ').toLowerCase().includes(q)));
+      CS.$('#phCats').innerHTML = `<button class="cs-pill ${!cat ? 'active' : ''}" data-phc="">All <small>${all.length}</small></button>` + cats.map(c => { const n = all.filter(p => p.category === c).length; return `<button class="cs-pill ${cat === c ? 'active' : ''}${n ? '' : ' empty'}" data-phc="${esc(c)}">${esc(c)} <small>${n}</small></button>`; }).join('');
+      CS.$('#phCats').querySelectorAll('[data-phc]').forEach(b => b.onclick = () => { CS.$('#phCat').value = b.getAttribute('data-phc'); draw(); });
+      const grid = CS.$('#phGrid');
+      if (!list.length) { grid.innerHTML = `<div class="cs-empty"><b>No images${cat ? ' in ' + esc(cat) : ''}</b>${CS.isManager() ? 'Add one from the Entrata Media Library with “+ Add Entrata Image”.' : 'Ask an REC or Admin to add images from the Entrata Media Library.'}</div>`; return; }
+      grid.innerHTML = `<div class="cs-ph-${view}">${list.map(p => `
+        <div class="cs-ph-card">
+          <div class="cs-ph-img" data-phprev="${esc(p.id)}"><img src="${esc(p.src)}" alt="${esc(p.alt)}" loading="lazy" onerror="this.closest('.cs-ph-img').classList.add('broken')"><span class="cs-ph-broken">Image link not loading</span></div>
+          <div class="cs-ph-body">
+            <b>${esc(p.title || p.alt || 'Untitled image')}</b>
+            <div class="cs-card-meta"><span class="cs-chip fmt">${esc(p.category)}</span><span class="cs-chip ${p.kind === 'entrata' ? 'ok' : p.kind === 'stock' ? 'warn' : ''}">${esc(SRC_LABEL[p.kind] || p.kind)}</span>${(p.tags || []).map(t => `<span class="cs-chip">${esc(t)}</span>`).join('')}</div>
+            ${p.alt && p.title ? `<small>${esc(p.alt)}</small>` : ''}
+            <div class="cs-ph-acts"><button class="cs-btn ghost xs" data-phcopy="${esc(p.id)}">Copy link</button>${CS.isManager() && p.kind === 'entrata' ? `<button class="cs-btn ghost xs" data-phedit="${esc(p.id)}">Edit</button><button class="cs-btn danger xs" data-phdel="${esc(p.id)}">Remove</button>` : ''}</div>
+          </div>
+        </div>`).join('')}</div>`;
+      grid.querySelectorAll('[data-phcopy]').forEach(b => b.onclick = () => { const p = all.find(x => x.id === b.getAttribute('data-phcopy')); CS.copy(/^https?:/.test(p.src) ? p.src : location.origin + p.src); });
+      grid.querySelectorAll('[data-phprev]').forEach(b => b.onclick = () => { const p = all.find(x => x.id === b.getAttribute('data-phprev')); CS.modal(`<h2 style="margin:0 0 8px;color:var(--brand-primary)">${esc(p.title || p.alt || 'Image')}</h2><div class="cs-preview-wrap"><img src="${esc(p.src)}" alt="${esc(p.alt)}" style="max-width:100%;max-height:70vh"></div><p class="cs-hint" style="word-break:break-all">${esc(/^https?:/.test(p.src) ? p.src : location.origin + p.src)}</p>`); });
+      grid.querySelectorAll('[data-phedit]').forEach(b => b.onclick = () => CS.mediaForm(all.find(x => x.id === b.getAttribute('data-phedit')), () => CS.go('photos')));
+      grid.querySelectorAll('[data-phdel]').forEach(b => b.onclick = async () => {
+        const p = all.find(x => x.id === b.getAttribute('data-phdel'));
+        if (!confirm(`Remove “${p.title || p.alt || 'this image'}” from the library? Designs that already use it keep working.`)) return;
+        try { await CS.api('/reslife-creative-projects?resource=media&propertyId=' + CS.propertyId + '&id=' + p.mediaId, { method: 'DELETE' }); await CS.loadMedia(); CS.toast('Removed'); CS.go('photos'); } catch (e) { CS.toast(e.message); }
+      });
+    };
+    ['phSearch', 'phCat', 'phSrc'].forEach(id => CS.$('#' + id).addEventListener(id === 'phSearch' ? 'input' : 'change', draw));
+    CS.$('#csMain').querySelectorAll('[data-phv]').forEach(b => b.onclick = () => { view = b.getAttribute('data-phv'); CS.$('#csMain').querySelectorAll('[data-phv]').forEach(x => x.classList.toggle('active', x === b)); draw(); });
+    const add = CS.$('#phAdd'); if (add) add.onclick = () => CS.mediaForm(null, () => CS.go('photos'));
+    draw();
+  };
+
+  // Add / edit an Entrata Media Library image (REC/Admin). Only https://medialibrarycf.entrata.com/ links are accepted.
+  CS.mediaForm = function (p, done) {
+    const cats = [...new Set([...CS.cfg.photoCategories, ...CS.cfg.photos.map(x => x.category)])].filter(Boolean);
+    CS.modal(`<h2 style="margin:0 0 6px;color:var(--brand-primary)">${p ? 'Edit image' : 'Add Entrata Image'}</h2>
+      <p style="margin:0 0 12px;color:var(--ui-muted);font-size:13.5px">Paste the image link from the Entrata Media Library. It must start with <code>${CS.ENTRATA_MEDIA}</code></p>
+      <div class="cs-field"><label class="cs-label">Entrata image link *</label><input class="cs-input" id="mfUrl" value="${esc(p ? p.src : '')}" placeholder="${CS.ENTRATA_MEDIA}2342/MLv3/…/image.jpg"></div>
+      <div class="cs-ph-prev" id="mfPrev">${p ? `<img src="${esc(p.src)}" alt="">` : '<span>Preview appears here</span>'}</div>
+      <div class="cs-row"><div class="cs-field"><label class="cs-label">Title</label><input class="cs-input" id="mfTitle" value="${esc(p ? p.title : '')}" placeholder="e.g. Rooftop terrace at sunset"></div>
+      <div class="cs-field"><label class="cs-label">Category</label><select class="cs-select" id="mfCat">${cats.map(c => `<option${p && p.category === c ? ' selected' : ''}>${esc(c)}</option>`).join('')}<option value="Other"${p && p.category === 'Other' ? ' selected' : ''}>Other</option></select></div></div>
+      <div class="cs-field"><label class="cs-label">Alt text (describe the image) *</label><input class="cs-input" id="mfAlt" value="${esc(p ? p.alt : '')}"></div>
+      <div class="cs-field"><label class="cs-label">Tags (comma separated)</label><input class="cs-input" id="mfTags" value="${esc(p ? (p.tags || []).join(', ') : '')}"></div>
+      <div id="mfErr"></div>
+      <button class="cs-btn" id="mfSave" style="width:100%">${p ? 'Save changes' : 'Add to Photo Library'}</button>`);
+    const prev = () => { const u = CS.$('#mfUrl').value.trim(); CS.$('#mfErr').innerHTML = u && !CS.isEntrataUrl(u) ? `<div class="cs-verify">Only Entrata Media Library links are allowed. The link must start with ${CS.ENTRATA_MEDIA}</div>` : ''; CS.$('#mfPrev').innerHTML = CS.isEntrataUrl(u) ? `<img src="${esc(u)}" alt="" onerror="this.parentNode.innerHTML='<span>That link didn’t load — check it in Entrata.</span>'">` : '<span>Preview appears here</span>'; };
+    CS.$('#mfUrl').addEventListener('input', prev);
+    CS.$('#mfSave').onclick = async () => {
+      const url = CS.$('#mfUrl').value.trim(), alt = CS.$('#mfAlt').value.trim();
+      if (!CS.isEntrataUrl(url)) { CS.$('#mfErr').innerHTML = `<div class="cs-verify">Only Entrata Media Library links are allowed. The link must start with ${CS.ENTRATA_MEDIA}</div>`; return; }
+      if (!alt) { CS.$('#mfErr').innerHTML = '<div class="cs-verify">Add alt text so the image is accessible.</div>'; return; }
+      const payload = { propertyId: CS.propertyId, resource: 'media', url, alt, title: CS.$('#mfTitle').value.trim(), category: CS.$('#mfCat').value, tags: CS.$('#mfTags').value };
+      try {
+        if (p) await CS.api('/reslife-creative-projects', { method: 'PUT', body: JSON.stringify(Object.assign({ id: p.mediaId }, payload)) });
+        else await CS.api('/reslife-creative-projects', { method: 'POST', body: JSON.stringify(payload) });
+        await CS.loadMedia(); CS.closeModal(); CS.toast(p ? 'Image updated' : 'Added to the Photo Library'); done && done();
+      } catch (e) { CS.$('#mfErr').innerHTML = `<div class="cs-verify">${esc(e.message)}</div>`; }
+    };
+  };
+
+  /** Shared image picker for every editor: library only, plus a pasted Entrata link. Calls done({ src, alt, link }). */
+  CS.pickImage = function (done, opts) {
+    opts = opts || {};
+    const photos = CS.cfg.photos.filter(p => p.kind !== 'upload' && (!opts.emailSafe || true));
+    const cats = [...new Set(photos.map(p => p.category))];
+    CS.modal(`<h2 style="margin:0 0 6px;color:var(--brand-primary)">Choose an image</h2>
+      <div class="cs-ph-bar" style="margin-bottom:10px"><input class="cs-input" id="pkQ" placeholder="Search…"><select class="cs-select" id="pkCat"><option value="">All categories</option>${cats.map(c => `<option>${esc(c)}</option>`).join('')}</select></div>
+      <div class="cs-pick-grid" id="pkGrid"></div>
+      <div class="cs-pick-note"><b>Don’t see the image you need?</b> Images come from the Photo Library only. Upload it to the Entrata Media Library, then paste its link below${CS.isManager() ? ' (it’s also saved to the Photo Library for everyone)' : ''}.</div>
+      <div class="cs-field"><label class="cs-label">Entrata Media Library link</label><div style="display:flex;gap:6px"><input class="cs-input" id="pkUrl" placeholder="${CS.ENTRATA_MEDIA}…"><button class="cs-btn sm" id="pkUse">Use link</button></div></div>
+      <div id="pkErr"></div>`);
+    const draw = () => {
+      const q = CS.$('#pkQ').value.trim().toLowerCase(), c = CS.$('#pkCat').value;
+      const list = photos.filter(p => (!c || p.category === c) && (!q || [p.alt, p.title, p.category, (p.tags || []).join(' ')].join(' ').toLowerCase().includes(q)));
+      CS.$('#pkGrid').innerHTML = list.map(p => `<button type="button" data-pk="${esc(p.id)}" title="${esc(p.alt)}"><img src="${esc(p.src)}" alt="" loading="lazy"><span>${esc(p.title || p.category)}</span>${p.kind === 'entrata' ? '<em>Entrata</em>' : ''}</button>`).join('') || '<div class="cs-empty">No images match.</div>';
+      CS.$('#pkGrid').querySelectorAll('[data-pk]').forEach(b => b.onclick = () => { const p = photos.find(x => x.id === b.getAttribute('data-pk')); CS.closeModal(); done({ id: p.id, src: /^https?:/.test(p.src) ? p.src : location.origin + p.src, alt: p.alt || '', link: '' }); });
+    };
+    CS.$('#pkQ').oninput = draw; CS.$('#pkCat').onchange = draw; draw();
+    CS.$('#pkUse').onclick = async () => {
+      const u = CS.$('#pkUrl').value.trim();
+      if (!CS.isEntrataUrl(u)) { CS.$('#pkErr').innerHTML = `<div class="cs-verify">That link isn’t from the Entrata Media Library. Image links must start with ${CS.ENTRATA_MEDIA}</div>`; return; }
+      if (CS.isManager() && !CS.cfg.photos.some(p => p.src === u)) { try { await CS.api('/reslife-creative-projects', { method: 'POST', body: JSON.stringify({ propertyId: CS.propertyId, resource: 'media', url: u, alt: '', category: 'Other' }) }); await CS.loadMedia(); } catch (e) {} }
+      CS.closeModal(); done({ src: u, alt: '', link: '' });
+    };
   };
 
   // ───────────── PROJECTS ─────────────
@@ -427,18 +521,14 @@
     drawFolders(); drawGrid();
   };
 
-  // ───────────── RESOURCES ─────────────
-  V.resources = () => {
-    const cfg = CS.cfg;
-    const byCat = {};
-    cfg.resources.forEach(r => (byCat[r.category] = byCat[r.category] || []).push(r));
-    return `
-    <div class="cs-page-h"><h1>Property Resources</h1><p>Reference links and verified property information. The AI assistant only uses verified facts; highlighted items need to be confirmed.</p></div>
-    <section class="cs-section" style="margin-top:0"><div class="cs-section-h"><div><h2>Resource Links</h2></div></div>
-      <div class="cs-res-groups">${Object.entries(byCat).map(([cat, items]) => `<div class="cs-res-group"><h3>${esc(cat)}</h3>${items.map(r => `<div class="cs-res-item"><div><b>${esc(r.title)}</b>${r.note ? `<small>${esc(r.note)}</small>` : ''}</div>${r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener">Open</a>` : '<span class="cs-missing">Link needed</span>'}</div>`).join('')}</div>`).join('')}</div>
-    </section>
-    <section class="cs-section"><div class="cs-section-h"><div><h2>${esc(cfg.shortName)} Information Library</h2><p>Verified facts used by templates and AI. Never publish a highlighted item without confirming it.</p></div></div>
-      <div class="cs-res-groups">${Object.entries(cfg.info).map(([cat, items]) => `<div class="cs-res-group"><h3>${esc(cat)}</h3>${items.map(i => i.q ? `<div class="cs-res-item"><div><b>${esc(i.q)}</b><small>${esc(i.a)}</small></div></div>` : i.fact ? `<div class="cs-res-item"><div>${esc(i.fact)}</div></div>` : `<div class="cs-res-item"><div><span class="cs-missing">Needs info</span> <small style="display:inline">${esc(i.ask)}</small></div></div>`).join('')}</div>`).join('')}</div>
-    </section>`;
+  // ───────────── RESOURCES (shared with the Reslife Hub “Resources” tab via resources-shared.js) ─────────────
+  V.resources = () => '<div id="csResources"></div>';
+  V.after_resources = () => {
+    RLResources.mount(CS.$('#csResources'), {
+      propertyId: CS.propertyId, propertyName: CS.cfg.name, canEdit: CS.isManager(), username: CS.user.username,
+      defaults: CS.cfg.defaultResources || CS.cfg.resources, info: CS.cfg.info, infoTitle: CS.cfg.shortName + ' Information Library',
+      title: 'Property Resources', otherPage: 'Reslife Hub Resources tab',
+      onChange: list => { CS.cfg.resources = list; },
+    });
   };
 })(window.CS = window.CS || {});

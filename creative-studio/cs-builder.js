@@ -230,18 +230,18 @@
     } else if (B.tab === 'images') {
       const photos = CS.cfg.photos;
       p.innerHTML = `<h3>Images</h3>
-        <p style="font-size:12.5px;color:var(--ui-muted);margin:0 0 12px">Approved photos only. Photos keep their original proportions and are never AI-altered.</p>
+        <p style="font-size:12.5px;color:var(--ui-muted);margin:0 0 12px">Photo Library images only. Photos keep their original proportions and are never AI-altered.</p>
         <div class="cs-photo-pick">
           <button data-photo="" class="${!B.content.photo ? 'active' : ''}" style="display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--ui-muted)">Placeholder</button>
           ${photos.map(ph => `<button data-photo="${ph.id}" class="${B.content.photo === ph.id ? 'active' : ''}" title="${esc(ph.alt)}${ph.kind === 'stock' ? ' (stock)' : ''}"><img src="${ph.src}" alt="${esc(ph.alt)}"></button>`).join('')}
         </div>
-        <div class="cs-field" style="margin-top:16px"><label class="cs-label">Use your own photo</label><input type="file" accept="image/*" id="bUpload" class="cs-input" /><small style="color:var(--ui-muted);font-size:11.5px">Real photos only. Kept in this project for this session; ask an admin to add it to the library permanently.</small></div>`;
+        <div class="cs-pick-note" style="margin-top:14px"><b>Don’t see the image you need?</b> Images come from the Photo Library only. Upload it to the Entrata Media Library and paste the link here.</div>
+        <div class="cs-field"><label class="cs-label">Entrata Media Library link</label><div style="display:flex;gap:6px"><input class="cs-input" id="bEntrata" placeholder="${CS.ENTRATA_MEDIA}…"><button class="cs-btn sm" id="bEntrataUse">Use</button></div><div id="bEntrataErr"></div></div>`;
       p.querySelectorAll('[data-photo]').forEach(b => b.onclick = () => { B.content.photo = b.getAttribute('data-photo'); panel(); preview(); });
-      $('#bUpload').onchange = e => {
-        const f = e.target.files[0]; if (!f) return;
-        const r = new FileReader();
-        r.onload = () => { const id = 'upload-' + Date.now(); CS.cfg.photos.push({ id, src: r.result, category: 'Students/community', alt: f.name, kind: 'upload' }); B.content.photo = id; panel(); preview(); };
-        r.readAsDataURL(f);
+      $('#bEntrataUse').onclick = () => {
+        const u = $('#bEntrata').value.trim();
+        if (!CS.isEntrataUrl(u)) { $('#bEntrataErr').innerHTML = `<div class="cs-verify" style="margin-top:6px">Only Entrata Media Library links are allowed (must start with ${CS.ENTRATA_MEDIA}).</div>`; return; }
+        B.content.photo = u; panel(); preview();
       };
     } else if (B.tab === 'brand') {
       const cfg = CS.cfg;

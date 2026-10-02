@@ -72,6 +72,50 @@ export async function handler(event) {
   const favorites = db.collection('reslife_creative_favorites');
   const now = new Date().toISOString();
 
+  const media = db.collection('reslife_creative_media');
+  const ENTRATA = 'https://medialibrarycf.entrata.com/';
+  const isMgr = MANAGER_ROLES.includes(user.role);
+
+  // ── Property Resources list (shared by the Creative Studio Resources page and the Reslife Hub Resources tab).
+  //    The stored list overrides the defaults in properties/<id>/property.config.js. Everyone reads; REC/Admin edit.
+  if (resource === 'resources') {
+    const col = db.collection('reslife_resources');
+    if (event.httpMethod === 'GET') { const d = await col.findOne({ propertyId }); return json(200, d ? { resources: d.resources, updatedAt: d.updatedAt, updatedBy: d.updatedBy } : { resources: null }); }
+    if (event.httpMethod === 'PUT') {
+      if (!isMgr) return { statusCode: 403, body: 'Only an REC or Admin can edit resources' };
+      const list = (Array.isArray(body.resources) ? body.resources : []).slice(0, 300).map(r => ({ category: String(r.category || 'Other').trim().slice(0, 80), title: String(r.title || '').trim().slice(0, 160), url: String(r.url || '').trim().slice(0, 600), note: String(r.note || '').trim().slice(0, 300) })).filter(r => r.title);
+      const bad = list.find(r => r.url && !/^(https?:\/\/|mailto:|tel:|[a-z0-9_-]+\.html)/i.test(r.url));
+      if (bad) return { statusCode: 400, body: 'Links must start with https://, mailto: or tel: — check “' + bad.title + '”' };
+      await col.updateOne({ propertyId }, { $set: { resources: list, updatedAt: now, updatedBy: user.sub } }, { upsert: true });
+      return json(200, { ok: true, count: list.length, updatedAt: now });
+    }
+  }
+
+  // ── Shared photo library (Entrata Media Library links). Everyone can read; REC/Admin manage. ──
+  if (resource === 'media') {
+    if (event.httpMethod === 'GET') {
+      const docs = await media.find({ propertyId }).sort({ category: 1, createdAt: -1 }).toArray();
+      return json(200, docs.map(d => Object.assign(d, { id: d._id.toString() })));
+    }
+    if (!isMgr) return { statusCode: 403, body: 'Only an REC or Admin can manage the photo library' };
+    const clean = b => { const o = {}; if (b.url !== undefined) o.url = String(b.url).trim(); ['alt', 'category', 'title'].forEach(k => { if (b[k] !== undefined) o[k] = String(b[k]).trim().slice(0, 160); }); if (b.tags !== undefined) o.tags = (Array.isArray(b.tags) ? b.tags : String(b.tags).split(',')).map(t => String(t).trim()).filter(Boolean).slice(0, 12); return o; };
+    const okUrl = u => typeof u === 'string' && u.startsWith(ENTRATA) && /^https:\/\/medialibrarycf\.entrata\.com\/[^\s<>"']+$/.test(u);
+    if (event.httpMethod === 'POST') {
+      const d = clean(body);
+      if (!okUrl(d.url)) return { statusCode: 400, body: 'Image links must come from the Entrata Media Library and start with ' + ENTRATA };
+      if (await media.findOne({ propertyId, url: d.url })) return { statusCode: 409, body: 'That image is already in the library' };
+      const doc = Object.assign({ propertyId, alt: '', category: 'Other', title: '', tags: [] }, d, { createdBy: user.sub, createdAt: now, updatedAt: now });
+      const r = await media.insertOne(doc); doc.id = r.insertedId.toString(); return json(200, doc);
+    }
+    if (event.httpMethod === 'PUT') {
+      const d = clean(body);
+      if (d.url !== undefined && !okUrl(d.url)) return { statusCode: 400, body: 'Image links must come from the Entrata Media Library and start with ' + ENTRATA };
+      await media.updateOne({ propertyId, _id: new ObjectId(body.id) }, { $set: Object.assign(d, { updatedAt: now, updatedBy: user.sub }) });
+      return json(200, { ok: true });
+    }
+    if (event.httpMethod === 'DELETE') { await media.deleteOne({ propertyId, _id: new ObjectId(q.id) }); return json(200, { ok: true }); }
+  }
+
   try {
     if (event.httpMethod === 'GET') {
       if (resource === 'folders') {

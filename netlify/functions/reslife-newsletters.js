@@ -71,6 +71,7 @@ export async function handler(event) {
 
     if (event.httpMethod === 'POST') {
       if (body.action === 'image') {
+        return { statusCode: 410, body: 'Uploads are disabled — use an image from the Photo Library or paste an Entrata Media Library link.' };
         const m = String(body.data || '').match(/^data:(image\/(?:png|jpeg|gif|webp));base64,(.+)$/);
         if (!m || m[2].length > MAX_IMG) return { statusCode: 400, body: 'Image must be PNG/JPEG/GIF/WebP under ~2 MB' };
         const r = await db.collection('reslife_newsletter_images').insertOne({ propertyId, mime: m[1], data: m[2], name: clip(body.name, 120), createdBy: user.sub, createdAt: now });

@@ -9,7 +9,7 @@
     $, esc,
     state: { view: 'home', projects: [], folders: [], favorites: [], projectFolder: 'all' },
     color: k => (CS.cfg.colors[k] || {}).hex || '#000',
-    photo: id => (CS.cfg.photos || []).find(p => p.id === id) || null,
+    photo: id => (CS.cfg.photos || []).find(p => p.id === id || p.src === id) || (CS.isEntrataUrl && CS.isEntrataUrl(id) ? { id, src: id, alt: '', kind: 'entrata', category: 'Entrata' } : null),
     logo: id => (CS.cfg.logos || []).find(l => l.id === id && l.src) || null,
     graphic: id => ((CS.cfg.graphics || []).find(g => g.id === id) || {}).src || '',
     fmtLabel: f => (CS.data.formats[f] || {}).label || f,
@@ -61,7 +61,23 @@
     try { CS.state.folders = await CS.api('/reslife-creative-projects?resource=folders&propertyId=' + id); } catch (e) { CS.state.folders = []; }
     try { CS.state.favorites = (await CS.api('/reslife-creative-projects?resource=favorites&propertyId=' + id)).templateIds || []; }
     catch (e) { try { CS.state.favorites = JSON.parse(localStorage.getItem('cs_fav_' + id) || '[]'); } catch (x) { CS.state.favorites = []; } }
+    await CS.loadMedia();
+    CS.cfg.defaultResources = CS.cfg.defaultResources || JSON.parse(JSON.stringify(CS.cfg.resources || []));
+    try { const r = await CS.api('/reslife-creative-projects?resource=resources&propertyId=' + id); if (r && Array.isArray(r.resources)) CS.cfg.resources = r.resources; } catch (e) {}
   }
+
+  // Shared photo library: built-in Harbour photos + Entrata Media Library links added by RECs/Admins.
+  // Every editor (flyers, social, newsletter) picks images from CS.cfg.photos.
+  CS.ENTRATA_MEDIA = 'https://medialibrarycf.entrata.com/';
+  CS.isEntrataUrl = u => typeof u === 'string' && u.trim().startsWith(CS.ENTRATA_MEDIA) && !/\s/.test(u.trim());
+  CS.loadMedia = async function () {
+    CS.cfg.photos = (CS.cfg.photos || []).filter(p => p.kind !== 'entrata' && p.kind !== 'upload');
+    try {
+      const m = await CS.api('/reslife-creative-projects?resource=media&propertyId=' + CS.propertyId);
+      CS.state.media = m;
+      m.forEach(x => CS.cfg.photos.push({ id: 'm-' + x.id, mediaId: x.id, src: x.url, category: x.category || 'Other', alt: x.alt || x.title || '', title: x.title || '', tags: x.tags || [], kind: 'entrata', createdBy: x.createdBy }));
+    } catch (e) { CS.state.media = []; }
+  };
 
   CS.toggleFavorite = async function (tplId) {
     const f = CS.state.favorites;

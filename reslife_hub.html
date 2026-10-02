@@ -929,6 +929,10 @@
           <span class="rl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/></svg></span>
           <span class="rl-nav-label">SOP Library</span>
         </button>
+        <button class="rl-nav-item" data-tab="resources" data-label="Resources">
+          <span class="rl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>
+          <span class="rl-nav-label">Resources</span>
+        </button>
         <button class="rl-nav-item" data-tab="training" data-label="Training Modules">
           <span class="rl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5-10-5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></span>
           <span class="rl-nav-label">Training Modules</span>
@@ -1925,6 +1929,9 @@
            the same `sops` MongoDB collection, scoped to the current Reslife
            property. A standalone page (not an iframe) avoids any CSP /
            X-Frame-Options complications entirely. -->
+      <!-- ================= RESOURCES (same list as Creative Studio → Resources; resources-shared.js) ================= -->
+      <section class="rl-tab-content" id="tab-resources"><div class="rl-panel"><div class="rl-panel-body" id="hubResources"><div class="rl-loading">Loading…</div></div></div></section>
+
       <section class="rl-tab-content" id="tab-sops">
         <div class="rl-panel">
           <div class="rl-panel-header">
@@ -2376,6 +2383,7 @@
       if (tab === 'contacts') return loadContacts();
       if (tab === 'curriculum') return loadCurriculum();
       if (tab === 'sops') return loadSopLibraryFrame();
+      if (tab === 'resources') return loadHubResources();
       if (tab === 'training') return loadTraining();
       if (tab === 'users') return loadReslifeUsers();
     }
@@ -5842,6 +5850,21 @@ Success looks like: [Attendance goal, feedback, new faces]`;
       ntTimer = setInterval(() => { if (!document.hidden) ntPoll(); }, 20000);
       document.addEventListener('visibilitychange', () => { if (!document.hidden) ntPoll(); });
     }
+    // ==================== RESOURCES ====================
+    // Same component and data as the Creative Studio Resources page, so edits show up in both places.
+    function loadScriptOnce(src){ return new Promise((res, rej) => { if (document.querySelector('script[data-src="' + src + '"]')) return res(); const s = document.createElement('script'); s.src = src; s.dataset.src = src; s.onload = res; s.onerror = () => rej(new Error('Could not load ' + src)); document.head.appendChild(s); }); }
+    async function loadHubResources(){
+      const box = document.getElementById('hubResources');
+      try {
+        await loadScriptOnce('properties/registry.js');
+        await loadScriptOnce('resources-shared.js');
+        const pid = window.CSRegistry && CSRegistry.resolvePropertyId(currentProperty);
+        if (!pid) { box.innerHTML = '<div class="rl-empty">Resources aren’t set up for ' + esc(currentProperty) + ' yet.</div>'; return; }
+        const data = await CSRegistry.loadProperty(pid);
+        RLResources.mount(box, { propertyId: pid, propertyName: data.config.name, canEdit: isManager, username: me.username, defaults: data.config.resources, info: data.config.info, infoTitle: data.config.shortName + ' Information Library', title: 'Resources', otherPage: 'Creative Studio Resources page' });
+      } catch (e) { box.innerHTML = '<div class="rl-empty">Couldn’t load resources: ' + esc(e.message) + '</div>'; }
+    }
+
     // ==================== TRAINING MODULES ====================
     let trainDocs = [];
     let myProgressDocs = [];
