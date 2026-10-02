@@ -571,6 +571,18 @@
     }
     @keyframes ntSheet{from{transform:translateY(100%)}to{transform:none}}
     .rl-dl-notif-panel{max-width:calc(100vw - 24px)}
+    /* Primary / Non-Leasing Occupant pairing (resident profile) */
+    .res-occ{margin-top:14px;border-radius:14px;padding:12px 14px;border:2px solid;display:flex;flex-direction:column;gap:6px}
+    .res-occ.nlo{background:#fef3c7;border-color:#f59e0b;color:#78350f}
+    .res-occ.primary{background:#e0f2fe;border-color:#38bdf8;color:#0c4a6e}
+    .res-occ-tag{font-size:13px;font-weight:900;letter-spacing:.06em;text-transform:uppercase}
+    .res-occ-body{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:13.5px;font-weight:600}
+    .res-occ-link{display:inline-flex;align-items:center;gap:4px;background:#fff;color:#0f172a;font-weight:800;font-size:15px;padding:6px 14px;border-radius:999px;text-decoration:none;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+    .res-occ-link:hover{background:#0f172a;color:#fff}
+    .res-occ-body em{font-style:normal;opacity:.8}
+    .res-occ-explain{margin-top:12px;background:#fffbeb;border:1px solid #fde68a;border-left:4px solid #f59e0b;border-radius:10px;padding:10px 12px;font-size:13px;color:#78350f}
+    .res-occ-explain b{display:block;text-transform:uppercase;letter-spacing:.05em;font-size:12px;margin-bottom:4px}
+    .res-occ-explain p{margin:4px 0 0;line-height:1.45}
     /* Resident directory: filters, tags, bulk, tag management */
     .dt-filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:-2px 0 12px}
     .dt-filters select{padding:7px 10px;border:1px solid var(--rl-border);border-radius:8px;font:inherit;font-size:13px;background:#fff}
@@ -4144,6 +4156,22 @@
       const hit = dirUnits.find(x => parseUnitLabel(x.unit).unit === p.unit) || dirUnits.find(x => parseUnitLabel(x.unit).unit === p.baseUnit) || dirUnits.find(x => parseUnitLabel(x.unit).baseUnit === p.baseUnit);
       return hit ? hit.unitType : '';
     }
+    // Occupant pairing: a Primary (leaseholder / parent-guardian) and a Non-Leasing Occupant (minor)
+    // assigned to the same unit & bed — or, if none share the bed, the same unit.
+    function occRole(d){
+      const t = String(d && d.occupantType || '').toLowerCase();
+      if (/non[\s-]*leas/.test(t)) return 'nlo';
+      if (/primary|responsible|lease|guarantor|parent|guardian/.test(t)) return 'primary';
+      return '';
+    }
+    function linkedOccupants(d){
+      const role = occRole(d); if (!role) return [];
+      const want = role === 'nlo' ? 'primary' : 'nlo';
+      const label = parseUnitLabel(d.unit || d.room).unit, base = baseUnitOf(d.unit || d.room);
+      const others = dirDocs.filter(x => x.id !== d.id && occRole(x) === want);
+      const sameBed = others.filter(x => parseUnitLabel(x.unit || x.room).unit === label);
+      return sameBed.length ? sameBed : others.filter(x => baseUnitOf(x.unit || x.room) === base);
+    }
     function roommatesOf(d){
       const base = baseUnitOf(d.unit || d.room);
       if (!base) return [];
@@ -4445,7 +4473,8 @@
         <div class="res-contacts">
           ${d.email ? `<a class="res-contact" href="mailto:${esc(d.email)}"><small>Email</small>${esc(d.email)}</a>` : ''}
           ${d.phone ? `<a class="res-contact" href="tel:${esc(String(d.phone).replace(/[^\d+]/g, ''))}"><small>Phone</small>${esc(d.phone)}</a>` : ''}
-        </div>`;
+        </div>
+        ${(() => { const role = occRole(d), links = linkedOccupants(d); if (!role) return ''; const isN = role === 'nlo'; return `<div class="res-occ ${isN ? 'nlo' : 'primary'}"><div class="res-occ-tag">${isN ? '&#9888; Non-Leasing Occupant (Minor)' : '&#128100; Primary Resident · Parent / Guardian'}</div><div class="res-occ-body"><span>${isN ? 'Primary resident (parent / guardian / responsible adult):' : 'Non-Leasing Occupant (minor) in this unit:'}</span>${links.length ? links.map(o => `<a href="#" class="res-occ-link" data-res-occ="${o.id}">${esc(dirDisplayName(o.residentName))} &rsaquo;</a>`).join('') : `<em>${isN ? 'No primary resident found for this unit' : 'No non-leasing occupant on file'}</em>`}</div></div>`; })()}`;
 
       const body = document.getElementById('resModalBody');
       body.innerHTML = '<div class="rl-loading">Loading resident record…</div>';
@@ -4499,6 +4528,7 @@
                 <dt>Phone</dt><dd>${esc(fresh.phone) || '—'}</dd>
                 ${fresh.notes ? `<dt>Notes</dt><dd>${esc(fresh.notes)}</dd>` : ''}
               </dl>
+              ${(() => { const role = occRole(fresh); if (!role) return ''; const links = linkedOccupants(fresh); const names = links.map(o => esc(dirDisplayName(o.residentName))).join(', '); const primaryName = role === 'primary' ? esc(dirDisplayName(fresh.residentName)) : (names || 'the primary resident'); const minorName = role === 'nlo' ? esc(dirDisplayName(fresh.residentName)) : (names || 'the non-leasing occupant'); return `<div class="res-occ-explain"><b>Underage occupant</b><p><strong>${primaryName}</strong> (Primary) is the <strong>parent / guardian / responsible adult</strong>.</p><p><strong>${minorName}</strong> (Non-Leasing Occupant) <strong>is a resident but a minor</strong>. They live here but aren’t on the License Agreement — contact the primary resident about anything involving them.</p></div>`; })()}
             </div>
           </div>
           <div style="margin-top:18px"><div class="res-sec-title">Habits, Interactions &amp; Notes <span>${bn.length}</span></div>${notesAdd}
@@ -4524,6 +4554,7 @@
 
       stats.querySelectorAll('[data-res-tab]').forEach(b => b.addEventListener('click', () => { resActiveTab = b.getAttribute('data-res-tab'); resUseCache = true; openResidentModal(id, true); }));
       body.querySelectorAll('[data-res-mate]').forEach(a => a.addEventListener('click', ev => { ev.preventDefault(); openResidentModal(a.getAttribute('data-res-mate')); }));
+      document.getElementById('resHeroBody').querySelectorAll('[data-res-occ]').forEach(a => a.addEventListener('click', ev => { ev.preventDefault(); openResidentModal(a.getAttribute('data-res-occ')); }));
       const saveTags = async tags => { try { const r = await apiFetch('/reslife-directory', { method: 'PUT', body: JSON.stringify({ id, property: currentProperty, action: 'setTags', tags }) }); fresh.tags = r.tags; const dd = dirDocs.find(x => x.id === id); if (dd) dd.tags = r.tags; resUseCache = true; openResidentModal(id, true); if (document.getElementById('dirList')) renderDirectoryList(); } catch (e) { alert('Tag update failed: ' + e.message); } };
       const ta = document.getElementById('resTagAdd'); if (ta) ta.onclick = () => { const v = document.getElementById('resTagSel').value; if (v) saveTags([...(fresh.tags || []), v]); };
       const tr = document.getElementById('resTagRmBtn'); if (tr) tr.onclick = () => { const v = document.getElementById('resTagRm').value; if (v) saveTags((fresh.tags || []).filter(t => t !== v)); };
