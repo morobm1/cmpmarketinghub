@@ -1,4 +1,6 @@
 import jwt from 'jsonwebtoken';
+import { verifyResident } from './_verify.js';
+import { displayName } from './_units.js';
 import { getDb, ObjectId } from './_db.js';
 import { json } from './_reslife.js';
 import { ID_TYPES, DURATIONS, normName, normUnit, unitKey, expectedOut, cleanPhoto, matchResident, recordVisitOnResident, sendGuestEmail, guestEmailHtml } from './_guest.js';
@@ -53,17 +55,18 @@ export async function handler(event) {
       const fails = s.fails || [];
       const recent = fails.filter(t => now - new Date(t) < 10 * 60e3);
       if (recent.length >= MAX_FAILS) return json(429, { ok: false, error: 'Too many attempts. Please ask the front desk for assistance.' });
-      if (unitKey(body.unit).length < 2) return json(400, { ok: false, error: 'Please enter your unit like 1234-A or 1234-A1.' });
-      const r = await matchResident(db, s.property, { name: body.name, unit: body.unit, contact: body.contact });
-      if (!r) {
-        await db.collection('reslife_guest_settings').updateOne({ _id: s._id }, { $set: { fails: [...recent, now.toISOString()] } });
-        return json(404, { ok: false, error: 'We couldn’t match that resident record. Please ask the front desk for assistance.' });
+      const v = await verifyResident(db, s.property, { fullName: body.name, unitBed: body.unit, contact: body.contact });
+      if (!v.verified) {
+        if (v.reason !== 'DATA_SOURCE_ERROR' && v.reason !== 'INVALID_INPUT') await db.collection('reslife_guest_settings').updateOne({ _id: s._id }, { $set: { fails: [...recent, now.toISOString()] } });
+        // Generic message only — the internal reason is logged server-side and available to staff via Test resident verification.
+        return json(404, { ok: false, error: 'We couldn’t verify that information. Please confirm your name, unit and bed, and email or phone exactly as listed on your resident account, or ask the front desk for assistance.' });
       }
+      const r = v.resident;
       const rid = r._id.toString();
       const token = jwt.sign({ p: s.property, rid, name: r.residentName, unit: r.unit || r.room }, SECRET, { expiresIn: '10m' });
       const startOfDay = new Date(now.getTime() - 18 * 3600e3).toISOString();
       const pending = await guests.find({ property: s.property, residentId: rid, status: 'preregistered', $or: [{ expectedDate: { $gte: startOfDay.slice(0, 10) } }, { expectedDate: { $in: [null, ''] } }] }).project({ guestName: 1, expectedDate: 1, idType: 1 }).limit(10).toArray();
-      return json(200, { ok: true, token, firstName: r.residentName.split(' ')[0], unit: r.unit || r.room, pending: pending.map(g => ({ id: g._id.toString(), guestName: g.guestName, expectedDate: g.expectedDate, hasId: !!g.idType })) });
+      return json(200, { ok: true, token, firstName: displayName(r.residentName).split(' ')[0], unit: r.unit || r.room, pending: pending.map(g => ({ id: g._id.toString(), guestName: g.guestName, expectedDate: g.expectedDate, hasId: !!g.idType })) });
     }
 
     if (body.action === 'checkin' || body.action === 'prereg') {

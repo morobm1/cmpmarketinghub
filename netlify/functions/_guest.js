@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { ObjectId } from './_db.js';
 import { parseUnit, unitCanon, nameMatches } from './_units.js';
+import { verifyResident, REASON_TEXT } from './_verify.js';
 
 /**
  * Shared helpers for the Reslife guest log, the front-desk kiosk and pre-registration links.
@@ -76,27 +77,10 @@ export const unitKey = s => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, 
  * Returns { resident } or { reason } (reason is for staff diagnostics only, never shown at the kiosk).
  */
 export async function findResident(db, property, { name, unit, contact }) {
-  const want = unitCanon(unit);
-  if (!String(name || '').trim() || !want) return { reason: 'Name and unit are required.' };
-  const all = await db.collection('reslife_directory').find({ property }).project({ residentName: 1, unit: 1, room: 1, email: 1, phone: 1 }).toArray();
-  if (!all.length) return { reason: `The Resident Directory for "${property}" is empty — import the roster first.` };
-  const inUnit = all.filter(r => unitCanon(r.unit) === want);
-  if (!inUnit.length) {
-    const sameBase = all.filter(r => parseUnit(r.unit).baseUnit === parseUnit(unit).baseUnit);
-    return { reason: sameBase.length ? `No bed "${want}". Beds on file in unit ${parseUnit(unit).baseUnit}: ${[...new Set(sameBase.map(r => unitCanon(r.unit)))].join(', ')}.` : `No resident has unit/bed "${want}" in the directory.` };
-  }
-  const hit = inUnit.find(r => nameMatches(name, r.residentName));
-  if (!hit) return { reason: `Bed "${want}" found, but the name didn’t match. On file: ${inUnit.map(r => r.residentName).join(', ')}.` };
-  const c = String(contact || '').trim();
-  if (c) {
-    if (c.includes('@')) {
-      if (hit.email && hit.email.trim().toLowerCase() !== c.toLowerCase()) return { reason: `Name and bed matched, but the email didn’t match the one on file (${maskEmail(hit.email)}).` };
-    } else if (digits(c).length >= 7) {
-      if (hit.phone && digits(hit.phone) !== digits(c)) return { reason: `Name and bed matched, but the phone didn’t match the one on file (…${digits(hit.phone).slice(-4)}).` };
-    }
-  }
-  return { resident: hit };
-}const maskEmail = e => { const [u, d] = String(e).split('@'); return (u || '').slice(0, 2) + '•••@' + (d || ''); };
+  const v = await verifyResident(db, property, { fullName: name, unitBed: unit, contact }, { log: false });
+  return v.verified ? { resident: v.resident } : { reason: REASON_TEXT[v.reason] || v.reason, code: v.reason };
+}
+const maskEmail = e => { const [u, d] = String(e).split('@'); return (u || '').slice(0, 2) + '•••@' + (d || ''); };
 export async function matchResident(db, property, q) { return (await findResident(db, property, q)).resident || null; }
 /** Record the visit on the resident's directory record. */
 export async function recordVisitOnResident(db, property, residentId, entry) {

@@ -3781,7 +3781,11 @@
       document.getElementById('glTGo').onclick = async () => {
         const v = id => encodeURIComponent(document.getElementById(id).value.trim());
         const out = document.getElementById('glTOut'); out.textContent = 'Checking…';
-        try { const r = await apiFetch('/reslife-guest-log' + propParam() + '&diagnose=1&name=' + v('glTName') + '&unit=' + v('glTUnit') + '&contact=' + v('glTContact')); out.innerHTML = `<div style="padding:8px 10px;border-radius:8px;${r.ok ? 'background:#dcfce7;color:#166534' : 'background:#fef2f2;color:#991b1b'}">${r.ok ? '✓ ' : '✕ '}${esc(r.message)}</div>`; }
+        try { const r = await apiFetch('/reslife-guest-log' + propParam() + '&diagnose=1&name=' + v('glTName') + '&unit=' + v('glTUnit') + '&contact=' + v('glTContact')); const cands = (r.detail && r.detail.candidates) || [];
+          const yn = b => b ? '<b style="color:#16a34a">✓</b>' : '<b style="color:#dc2626">✕</b>';
+          out.innerHTML = `<div style="padding:8px 10px;border-radius:8px;${r.ok ? 'background:#dcfce7;color:#166534' : 'background:#fef2f2;color:#991b1b'}">${r.ok ? '✓ ' : '✕ '}<b>${esc(r.code || '')}</b> — ${esc(r.message)}</div>` +
+            (r.detail ? `<div style="font-size:12px;color:var(--rl-subtext);margin:6px 0">Entered: name "${esc(r.detail.entered.name)}" · unit ${esc(r.detail.entered.unit)} · bed ${esc(r.detail.entered.bed || '—')} · contact type: ${esc(r.detail.entered.contactType)}</div>` : '') +
+            (cands.length ? `<div style="overflow-x:auto"><table class="rl-table" style="font-size:12px"><thead><tr><th>Directory record</th><th>Unit-Bed</th><th>Stored unit / room</th><th>Email</th><th>Phone</th><th>Name</th><th>Unit+Bed</th><th>Contact</th></tr></thead><tbody>${cands.map(c => `<tr><td>${esc(c.residentName)}</td><td>${esc(c.normalizedResidentUnitBed)}</td><td>${esc(c.storedUnitField || '')} / ${esc(c.storedRoomField || '')}</td><td>${esc(c.residentEmail || '—')}</td><td>${esc(c.residentPhone || '—')}</td><td>${yn(c.nameMatch)}</td><td>${yn(c.unitBedMatch)}</td><td>${yn(c.contactMatch)}</td></tr>`).join('')}</tbody></table></div>` : '<div style="font-size:12px;color:var(--rl-subtext)">No directory records share that name or unit.</div>'); }
         catch (e) { out.textContent = 'Test failed: ' + e.message; }
       };
       document.getElementById('glSetSave').onclick = async () => { try { await save(); document.getElementById('glSettingsModal').classList.remove('show'); } catch (e) { alert('Save failed: ' + e.message); } };
@@ -6321,5 +6325,6 @@ Success looks like: [Attendance goal, feedback, new faces]`;
   </script>
   <script src="schedule/sched-core.js"></script>
   <script src="schedule/sched-manage.js"></script>
+  <script src="reslife-feedback.js" defer></script>
 </body>
 </html>
