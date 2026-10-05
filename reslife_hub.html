@@ -3833,10 +3833,21 @@
       document.getElementById('glAddBtn').onclick = () => glOpenEntry('now');
       document.getElementById('glInviteBtn').onclick = glOpenInvite;
       document.getElementById('glSettingsBtn').onclick = glOpenSettings;
-      document.getElementById('glKioskBtn').onclick = () => {
-        const u = glKioskUrl();
-        if (u) window.open(u, '_blank');
-        else alert('The kiosk link hasn’t been set up yet. Ask an REC or Admin to open Guest Log → Settings once to create it.');
+      document.getElementById('glKioskBtn').onclick = async () => {
+        let u = glKioskUrl();
+        if (!u) {
+          // Open the tab synchronously so popup blockers allow it, then point it at the kiosk once the link is ready.
+          const win = window.open('', '_blank');
+          try {
+            const r = await apiFetch('/reslife-guest-log' + propParam() + '&settings=1');
+            glSettings = Object.assign({}, glSettings, r);
+            u = glKioskUrl();
+          } catch (e) {}
+          if (u) { if (win) win.location = u; else window.open(u, '_blank'); }
+          else { if (win) win.close(); alert('Could not create the kiosk link. Please try again.'); }
+          return;
+        }
+        window.open(u, '_blank');
       };
       document.querySelectorAll('[data-gl-mode]').forEach(b => b.onclick = () => glSetMode(b.getAttribute('data-gl-mode')));
       document.querySelectorAll('[data-gl-view]').forEach(b => b.onclick = () => glSetView(b.getAttribute('data-gl-view')));

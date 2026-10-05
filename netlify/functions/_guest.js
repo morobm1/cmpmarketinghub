@@ -60,6 +60,9 @@ export async function getSettings(db, property, create) {
   if (!s && create) {
     s = { property, notifyEmails: DEFAULT_NOTIFY, kioskKey: crypto.randomBytes(12).toString('hex'), checkinAfter: '19:00', createdAt: new Date().toISOString() };
     await col.insertOne(s);
+  } else if (s && !s.kioskKey && create) {
+    s.kioskKey = crypto.randomBytes(12).toString('hex');
+    await col.updateOne({ property }, { $set: { kioskKey: s.kioskKey } });
   }
   return s || { property, notifyEmails: DEFAULT_NOTIFY, kioskKey: null, checkinAfter: '19:00' };
 }

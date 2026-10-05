@@ -42,8 +42,10 @@ export async function handler(event) {
       if (!canAccessReslifeProperty(user, property)) return { statusCode: 403, body: 'Forbidden' };
 
       if (q.settings) {
-        const s = await getSettings(db, property, isMgr(user));
-        return json(200, { notifyEmails: s.notifyEmails || DEFAULT_NOTIFY, checkinAfter: s.checkinAfter || '19:00', kioskKey: isMgr(user) ? s.kioskKey : null, canEdit: isMgr(user), idTypes: ID_TYPES, durations: Object.entries(DURATIONS).map(([k, v]) => ({ key: k, label: v.label })) });
+        // Any staff on the property (incl. RAs opening the desk) can create/open the kiosk link.
+        // Changing settings / regenerating the key remains manager-only (PUT).
+        const s = await getSettings(db, property, true);
+        return json(200, { notifyEmails: s.notifyEmails || DEFAULT_NOTIFY, checkinAfter: s.checkinAfter || '19:00', kioskKey: s.kioskKey || null, canEdit: isMgr(user), idTypes: ID_TYPES, durations: Object.entries(DURATIONS).map(([k, v]) => ({ key: k, label: v.label })) });
       }
       if (q.diagnose) {
         if (!isMgr(user)) return { statusCode: 403, body: 'Forbidden' };
