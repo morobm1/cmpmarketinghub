@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1f2a37" />
+  <meta name="robots" content="noindex" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>Move-In Day</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root{--primary:#1f2a37;--accent:#c8a96a;--ink:#1c1c1e;--sub:#6b6b70;--line:rgba(0,0,0,.08);--bg:#faf8f4;--card:#fff;--safe-b:env(safe-area-inset-bottom)}
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    html{scroll-behavior:smooth}
+    body{font-family:Inter,system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh}
+    .serif{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;letter-spacing:.01em}
+    .hidden{display:none!important}
+    .wrap{max-width:560px;margin:0 auto}
+
+    /* Gate */
+    .gate{min-height:100svh;display:flex;flex-direction:column;background:var(--primary);color:#fff;position:relative;overflow:hidden}
+    .gate .bg{position:absolute;inset:0;background-size:cover;background-position:center;opacity:.35;transform:scale(1.05)}
+    .gate .shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.15) 0%,var(--primary) 70%)}
+    .gate .inner{position:relative;flex:1;display:flex;flex-direction:column;justify-content:flex-end;padding:32px 24px calc(32px + var(--safe-b))}
+    .logo{max-height:56px;max-width:180px;object-fit:contain;margin-bottom:28px}
+    .eyebrow{text-transform:uppercase;letter-spacing:.22em;font-size:11px;font-weight:600;color:var(--accent)}
+    .gate h1{font-size:44px;line-height:1.05;margin:10px 0 12px}
+    .gate p.lead{color:rgba(255,255,255,.78);margin-bottom:28px;font-size:15px}
+    .field{margin-bottom:14px}
+    .field label{display:block;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.7);margin-bottom:6px}
+    .field input{width:100%;font:inherit;font-size:17px;padding:15px 16px;border-radius:14px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#fff;transition:border-color .2s,background .2s}
+    .field input::placeholder{color:rgba(255,255,255,.4)}
+    .field input:focus{outline:none;border-color:var(--accent);background:rgba(255,255,255,.12)}
+    .btn{display:block;width:100%;text-align:center;font:inherit;font-weight:600;font-size:16px;letter-spacing:.04em;padding:16px;border-radius:14px;border:0;background:var(--accent);color:var(--primary);cursor:pointer;transition:transform .15s,opacity .2s;text-decoration:none}
+    .btn:active{transform:scale(.98)}
+    .btn:disabled{opacity:.6}
+    .err{background:rgba(255,90,90,.15);border:1px solid rgba(255,90,90,.35);color:#ffd7d7;padding:12px 14px;border-radius:12px;font-size:14px;margin-bottom:14px}
+    .fine{font-size:12px;color:rgba(255,255,255,.5);text-align:center;margin-top:16px}
+
+    /* Move-in page */
+    .hero{min-height:78svh;position:relative;display:flex;align-items:flex-end;color:#fff;background:var(--primary);overflow:hidden}
+    .hero .bg{position:absolute;inset:0;background-size:cover;background-position:center}
+    .hero .shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.1) 30%,rgba(0,0,0,.65) 100%)}
+    .hero .inner{position:relative;padding:28px 24px 40px;width:100%}
+    .hero h1{font-size:48px;line-height:1.02;margin:10px 0}
+    .unit-badge{display:inline-flex;flex-direction:column;margin-top:18px;padding:14px 20px;border-radius:16px;background:rgba(255,255,255,.12);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.2)}
+    .unit-badge small{font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.8}
+    .unit-badge strong{font-size:30px;font-family:'Cormorant Garamond',Georgia,serif;line-height:1.1}
+    .scroll-cue{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);width:22px;height:34px;border:2px solid rgba(255,255,255,.6);border-radius:12px}
+    .scroll-cue::after{content:'';position:absolute;left:50%;top:6px;width:4px;height:8px;margin-left:-2px;border-radius:2px;background:#fff;animation:cue 1.6s infinite}
+    @keyframes cue{0%{opacity:0;transform:translateY(0)}40%{opacity:1}100%{opacity:0;transform:translateY(10px)}}
+
+    nav.chips{position:sticky;top:0;z-index:10;background:rgba(250,248,244,.9);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line);overflow-x:auto;white-space:nowrap;scrollbar-width:none;padding:10px 16px}
+    nav.chips::-webkit-scrollbar{display:none}
+    nav.chips a{display:inline-block;padding:7px 14px;margin-right:6px;border-radius:999px;font-size:13px;font-weight:500;color:var(--ink);text-decoration:none;border:1px solid var(--line);background:#fff}
+    nav.chips a.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+    section.block{padding:44px 22px 8px;scroll-margin-top:56px}
+    .block h2{font-size:34px;line-height:1.1;margin:8px 0 18px;color:var(--primary)}
+    .card{background:var(--card);border-radius:20px;padding:22px;box-shadow:0 1px 2px rgba(0,0,0,.04),0 8px 30px rgba(0,0,0,.05);border:1px solid var(--line)}
+    .card + .card{margin-top:14px}
+    .prose{white-space:pre-line;color:#3a3a3f;font-size:15.5px}
+    .wifi-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
+    .wifi-row:last-of-type{border-bottom:0}
+    .wifi-row small{display:block;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--sub)}
+    .wifi-row b{font-size:19px;font-weight:600;word-break:break-all}
+    .copy{flex-shrink:0;font:inherit;font-size:13px;font-weight:600;padding:9px 14px;border-radius:999px;border:1px solid var(--primary);background:transparent;color:var(--primary);cursor:pointer}
+    .copy.done{background:var(--primary);color:#fff}
+    .map img{width:100%;border-radius:14px;display:block}
+    .map .hint{font-size:12px;color:var(--sub);text-align:center;margin-top:8px}
+    .contact{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+    .contact a{display:block;text-align:center;padding:14px;border-radius:14px;border:1px solid var(--line);background:#fff;text-decoration:none;color:var(--primary);font-weight:600;font-size:14px}
+    .btn.dark{background:var(--primary);color:#fff;margin-top:16px}
+    footer{padding:48px 22px calc(40px + var(--safe-b));text-align:center;color:var(--sub);font-size:13px}
+    footer .serif{font-size:26px;color:var(--primary);display:block;margin-bottom:6px}
+
+    .reveal{opacity:0;transform:translateY(18px);transition:opacity .7s ease,transform .7s ease}
+    .reveal.in{opacity:1;transform:none}
+    .fade-in{animation:fade .6s ease both}
+    @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+    .spinner{display:inline-block;width:16px;height:16px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-3px;margin-right:8px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
+  </style>
+</head>
+<body>
+
+  <!-- Check-in gate -->
+  <main id="gate" class="gate">
+    <div class="bg" id="gateBg"></div><div class="shade"></div>
+    <div class="inner wrap fade-in">
+      <img id="gateLogo" class="logo hidden" alt="" />
+      <div class="eyebrow" id="gateBrand">Move-In Day</div>
+      <h1 class="serif" id="gateTitle">Welcome Home</h1>
+      <p class="lead">Check in below to unlock your personal move-in guide.</p>
+      <div id="gateErr" class="err hidden"></div>
+      <form id="checkinForm" novalidate>
+        <div class="field"><label for="fName">Full Name</label><input id="fName" autocomplete="name" placeholder="As it appears on your lease" required /></div>
+        <div class="field"><label for="fPhone">Phone Number</label><input id="fPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(555) 555-5555" /></div>
+        <div class="field"><label for="fEmail">Email</label><input id="fEmail" type="email" inputmode="email" autocomplete="email" autocapitalize="off" placeholder="you@email.com" /></div>
+        <button class="btn" id="checkinBtn" type="submit">Check In</button>
+      </form>
+      <p class="fine">Having trouble? Visit the leasing office and we'll help you right away.</p>
+    </div>
+  </main>
+
+  <!-- Move-in page -->
+  <div id="page" class="hidden">
+    <header class="hero">
+      <div class="bg" id="heroBg"></div><div class="shade"></div>
+      <div class="inner wrap">
+        <img id="heroLogo" class="logo hidden" alt="" />
+        <div class="eyebrow" id="heroBrand"></div>
+        <h1 class="serif" id="heroTitle"></h1>
+        <div class="unit-badge"><small>Your Home</small><strong id="heroUnit"></strong></div>
+      </div>
+      <div class="scroll-cue" aria-hidden="true"></div>
+    </header>
+    <nav class="chips" id="chips"></nav>
+    <div class="wrap" id="sections"></div>
+    <footer class="wrap"><span class="serif" id="footBrand"></span>We're glad you're here.</footer>
+  </div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const safeUrl = u => /^https:\/\//i.test(u || '') ? u : '';
+  const safeImg = u => /^data:image\/(png|jpe?g|webp|gif);base64,/i.test(u || '') || /^https:\/\//i.test(u || '') ? u : '';
+  const k = new URLSearchParams(location.search).get('k') || '';
+  const STORE = 'movein:' + k;
+
+  const call = async payload => {
+    const r = await fetch('/api/move-in-public', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ k, ...payload }) });
+    const j = await r.json().catch(() => ({ ok: false, error: 'Something went wrong. Please try again.' }));
+    if (!r.ok || !j.ok) throw new Error(j.error || 'Something went wrong.');
+    return j;
+  };
+
+  function applyBrand(b) {
+    const root = document.documentElement.style;
+    if (/^#[0-9a-f]{3,8}$/i.test(b.primaryColor || '')) { root.setProperty('--primary', b.primaryColor); document.querySelector('meta[name=theme-color]').content = b.primaryColor; }
+    if (/^#[0-9a-f]{3,8}$/i.test(b.accentColor || '')) root.setProperty('--accent', b.accentColor);
+    const hero = safeUrl(b.heroImageUrl);
+    if (hero) { $('gateBg').style.backgroundImage = $('heroBg').style.backgroundImage = `url("${hero.replace(/"/g, '%22')}")`; }
+    const logo = safeUrl(b.logoUrl);
+    ['gateLogo', 'heroLogo'].forEach(id => { if (logo) { $(id).src = logo; $(id).classList.remove('hidden'); } });
+    if (b.brandName) { document.title = `Move-In Day • ${b.brandName}`; $('gateBrand').textContent = b.brandName; }
+    if (b.welcomeTitle) $('gateTitle').textContent = b.welcomeTitle;
+  }
+
+  function showError(msg) { const e = $('gateErr'); e.textContent = msg; e.classList.remove('hidden'); }
+
+  function block(id, eyebrow, title, html) {
+    return { id, label: eyebrow, html: `<section class="block reveal" id="${id}"><div class="eyebrow">${esc(eyebrow)}</div><h2 class="serif">${esc(title)}</h2>${html}</section>` };
+  }
+
+  function renderPage({ resident, page: p }) {
+    applyBrand(p);
+    $('heroBrand').textContent = p.brandName || 'Move-In Day';
+    $('heroTitle').textContent = `Welcome home, ${resident.firstName}.`;
+    $('heroUnit').textContent = resident.unit || '—';
+    $('footBrand').textContent = p.brandName || '';
+
+    const out = [];
+    out.push(block('welcome', 'Welcome', p.welcomeTitle || 'Welcome Home',
+      `<div class="card"><div class="prose">${esc(p.welcomeMessage || 'We are so excited to welcome you to the community. Everything you need for move-in day is right here.')}</div></div>
+       <div class="card" style="text-align:center"><div class="eyebrow">Your Unit</div><div class="serif" style="font-size:40px;color:var(--primary)">${esc(resident.unit || '—')}</div><div style="color:var(--sub);font-size:14px">${esc(resident.name)}</div></div>`));
+
+    if (p.wifiNetwork || p.wifiPassword || p.wifiInstructions) {
+      out.push(block('wifi', 'Wi-Fi', 'Get Connected', `<div class="card">
+        ${p.wifiNetwork ? `<div class="wifi-row"><div><small>Network</small><b>${esc(p.wifiNetwork)}</b></div><button class="copy" data-copy="${esc(p.wifiNetwork)}">Copy</button></div>` : ''}
+        ${p.wifiPassword ? `<div class="wifi-row"><div><small>Password</small><b>${esc(p.wifiPassword)}</b></div><button class="copy" data-copy="${esc(p.wifiPassword)}">Copy</button></div>` : ''}
+      </div>${p.wifiInstructions ? `<div class="card"><div class="eyebrow" style="margin-bottom:8px">How to connect</div><div class="prose">${esc(p.wifiInstructions)}</div></div>` : ''}`));
+    }
+
+    const map = safeImg(p.mapImage);
+    if (map || p.mapNotes) {
+      out.push(block('map', 'Property Map', 'Find Your Way', `${map ? `<div class="card map"><a href="${esc(map)}" target="_blank" rel="noopener"><img src="${esc(map)}" alt="Property map" loading="lazy" /></a><div class="hint">Tap the map to zoom</div></div>` : ''}
+        ${p.mapNotes ? `<div class="card"><div class="prose">${esc(p.mapNotes)}</div></div>` : ''}`));
+    }
+
+    if (p.communityInfo) out.push(block('community', 'Community', 'Community Information', `<div class="card"><div class="prose">${esc(p.communityInfo)}</div></div>`));
+    if (p.hours) out.push(block('hours', 'Hours', 'Hours of Operation', `<div class="card"><div class="prose">${esc(p.hours)}</div></div>`));
+
+    const wo = safeUrl(p.workOrderUrl);
+    if (p.workOrderInstructions || wo) {
+      out.push(block('workorder', 'Maintenance', 'Submit a Work Order', `<div class="card">
+        ${p.workOrderInstructions ? `<div class="prose">${esc(p.workOrderInstructions)}</div>` : ''}
+        ${wo ? `<a class="btn dark" href="${esc(wo)}" target="_blank" rel="noopener">Submit a Work Order</a>` : ''}
+      </div>`));
+    }
+
+    if (p.contactPhone || p.contactEmail) {
+      const tel = String(p.contactPhone || '').replace(/[^\d+]/g, '');
+      out.push(block('contact', 'Questions', 'We\u2019re Here For You', `<div class="contact">
+        ${p.contactPhone ? `<a href="tel:${esc(tel)}">Call Office</a>` : ''}
+        ${p.contactEmail ? `<a href="mailto:${esc(p.contactEmail)}">Email Office</a>` : ''}
+      </div>`));
+    }
+
+    $('sections').innerHTML = out.map(b => b.html).join('');
+    $('chips').innerHTML = out.map(b => `<a href="#${b.id}" data-id="${b.id}">${esc(b.label)}</a>`).join('');
+
+    $('gate').classList.add('hidden');
+    $('page').classList.remove('hidden');
+    window.scrollTo(0, 0);
+    wireInteractions();
+  }
+
+  function wireInteractions() {
+    document.querySelectorAll('.copy').forEach(btn => btn.onclick = async () => {
+      try { await navigator.clipboard.writeText(btn.dataset.copy); } catch {
+        const t = document.createElement('textarea'); t.value = btn.dataset.copy; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove();
+      }
+      btn.textContent = 'Copied'; btn.classList.add('done');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('done'); }, 1800);
+    });
+    const reveal = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); reveal.unobserve(e.target); } }), { threshold: .12 });
+    document.querySelectorAll('.reveal').forEach(el => reveal.observe(el));
+    const chips = [...document.querySelectorAll('#chips a')];
+    const spy = new IntersectionObserver(es => es.forEach(e => {
+      if (!e.isIntersecting) return;
+      chips.forEach(c => c.classList.toggle('active', c.dataset.id === e.target.id));
+      const a = chips.find(c => c.dataset.id === e.target.id);
+      if (a) a.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+    }), { rootMargin: '-45% 0px -50% 0px' });
+    document.querySelectorAll('section.block').forEach(s => spy.observe(s));
+  }
+
+  $('fPhone').addEventListener('input', e => {
+    const d = e.target.value.replace(/\D/g, '').replace(/^1/, '').slice(0, 10);
+    e.target.value = d.length > 6 ? `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}` : d.length > 3 ? `(${d.slice(0,3)}) ${d.slice(3)}` : d;
+  });
+
+  $('checkinForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    $('gateErr').classList.add('hidden');
+    const name = $('fName').value.trim(), phone = $('fPhone').value.trim(), email = $('fEmail').value.trim();
+    if (!name) return showError('Please enter your full name.');
+    if (!phone && !email) return showError('Please enter your phone number and email.');
+    const btn = $('checkinBtn'); btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Verifying…';
+    try {
+      const res = await call({ action: 'verify', name, phone, email });
+      try { sessionStorage.setItem(STORE, JSON.stringify(res)); } catch {}
+      renderPage(res);
+    } catch (err) { showError(err.message); }
+    finally { btn.disabled = false; btn.textContent = 'Check In'; }
+  });
+
+  (async () => {
+    if (!k) { showError('This move-in link is missing its property code. Please use the link provided by your community.'); $('checkinForm').classList.add('hidden'); return; }
+    try { const cached = JSON.parse(sessionStorage.getItem(STORE) || 'null'); if (cached && cached.page) { renderPage(cached); return; } } catch {}
+    try { const { brand } = await call({ action: 'config' }); applyBrand(brand); }
+    catch (err) { showError(err.message); $('checkinForm').classList.add('hidden'); }
+  })();
+})();
+</script>
+</body>
+</html>

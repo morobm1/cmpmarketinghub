@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Move-In Day App • Marketing Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <style>
+    :root{--brand-primary:#446472;--brand-accent:#ffb732;--accent-2:#52d5ff;--page-bg:#f8fafc;--text:#1e293b;--sub:#64748b;--border:#e2e8f0;--good:#22c55e;--bad:#ef4444}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Open Sans',system-ui,sans-serif;background:var(--page-bg);color:var(--text);font-size:14px;line-height:1.5}
+    header{padding:14px 24px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:16px;flex-wrap:wrap;position:sticky;top:0;z-index:20}
+    header h1{font-size:20px;color:var(--brand-primary)}
+    header .right{margin-left:auto;display:flex;gap:10px;align-items:center}
+    .container{max-width:1300px;margin:0 auto;padding:24px}
+    .card{background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:20px;overflow:hidden}
+    .card h2{font-size:16px;padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+    .card .content{padding:20px}
+    label{font-size:13px;font-weight:600;display:block;margin-bottom:6px}
+    input,select,textarea{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font:inherit;background:#fff}
+    textarea{min-height:90px;resize:vertical}
+    input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent-2);box-shadow:0 0 0 3px rgba(82,213,255,.15)}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .grid .full{grid-column:1/-1}
+    @media(max-width:800px){.grid{grid-template-columns:1fr}}
+    button{padding:9px 18px;border-radius:8px;border:1px solid var(--border);background:#fff;font:inherit;font-weight:600;cursor:pointer}
+    button:hover{background:#f1f5f9}
+    button.primary{background:var(--brand-primary);color:#fff;border-color:var(--brand-primary)}
+    button.primary:hover{filter:brightness(1.1)}
+    button:disabled{opacity:.5;cursor:not-allowed}
+    .tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap}
+    .tabs button.active{background:var(--brand-primary);color:#fff;border-color:var(--brand-primary)}
+    table{width:100%;border-collapse:collapse}
+    th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--border);font-size:13px}
+    th{background:#f8fafc;font-weight:700;position:sticky;top:0}
+    .table-wrap{max-height:560px;overflow:auto;border:1px solid var(--border);border-radius:10px}
+    .muted{color:var(--sub);font-size:12px}
+    .pill{display:inline-block;padding:2px 10px;border-radius:999px;background:#eef2f7;font-size:12px;font-weight:600}
+    .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+    .toolbar input[type=search]{max-width:320px}
+    .link-box{display:flex;gap:8px}
+    .link-box input{font-family:monospace;font-size:12px}
+    .hidden{display:none!important}
+    #toast{position:fixed;bottom:24px;right:24px;background:#1e293b;color:#fff;padding:12px 18px;border-radius:10px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:50}
+    #toast.show{opacity:1}
+    .map-preview{max-width:100%;max-height:260px;border-radius:10px;border:1px solid var(--border);margin-top:10px}
+    .center{text-align:center;padding:60px 20px}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Move-In Day App</h1>
+    <div class="right">
+      <select id="propertySelect" style="min-width:240px"></select>
+      <a href="custom_tools.html"><button>Back to Tools</button></a>
+    </div>
+  </header>
+
+  <div class="container">
+    <div id="authMsg" class="center hidden"><p>Please <a href="index.html">log in</a> to use this tool.</p></div>
+
+    <div id="app" class="hidden">
+      <div class="tabs">
+        <button data-tab="directory" class="active">Resident Directory</button>
+        <button data-tab="page">Move-In Page Content</button>
+        <button data-tab="checkins">Check-Ins</button>
+      </div>
+
+      <!-- Share link -->
+      <div class="card">
+        <h2>Resident Move-In Link <span class="muted">Share via text/email or a QR code at the property</span></h2>
+        <div class="content">
+          <div class="link-box">
+            <input id="publicLink" readonly />
+            <button id="copyLink">Copy</button>
+            <button id="openLink">Open</button>
+            <button id="rotateKey" title="Invalidates the old link">New Link</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Directory -->
+      <section id="tab-directory">
+        <div class="card">
+          <h2>Upload Resident Directory</h2>
+          <div class="content">
+            <p class="muted" style="margin-bottom:12px">Excel or CSV with columns: <b>Name | Bldg-Unit | E-mail | Phone Number</b>. Uploading replaces this property's current directory.</p>
+            <div class="toolbar">
+              <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="max-width:380px" />
+              <button id="templateBtn">Download Template</button>
+            </div>
+            <div id="previewBox" class="hidden">
+              <p style="margin-bottom:10px"><span id="previewCount" class="pill"></span> <span id="previewWarn" class="muted"></span></p>
+              <div class="toolbar">
+                <button class="primary" id="saveDirectory">Save Directory</button>
+                <button id="cancelPreview">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Resident Directory <span id="dirCount" class="pill"></span> <span id="dirUpdated" class="muted"></span></h2>
+          <div class="content">
+            <div class="toolbar">
+              <input type="search" id="dirSearch" placeholder="Search name, unit, email, phone..." />
+              <button id="exportBtn">Export Excel</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Name</th><th>Bldg-Unit</th><th>E-mail</th><th>Phone Number</th></tr></thead>
+                <tbody id="dirBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Page content -->
+      <section id="tab-page" class="hidden">
+        <form id="settingsForm">
+          <div class="card"><h2>Branding</h2><div class="content grid">
+            <div><label>Property Display Name</label><input name="brandName" placeholder="The Harbour at Oxford" /></div>
+            <div><label>Logo URL</label><input name="logoUrl" placeholder="https://..." /></div>
+            <div><label>Primary Color</label><input name="primaryColor" type="color" value="#1f2a37" /></div>
+            <div><label>Accent Color</label><input name="accentColor" type="color" value="#c8a96a" /></div>
+            <div class="full"><label>Hero Image URL</label><input name="heroImageUrl" placeholder="https://... (large exterior / amenity photo)" /></div>
+          </div></div>
+
+          <div class="card"><h2>Welcome</h2><div class="content grid">
+            <div class="full"><label>Welcome Headline</label><input name="welcomeTitle" placeholder="Welcome Home" /></div>
+            <div class="full"><label>Welcome Message</label><textarea name="welcomeMessage" placeholder="We're so excited to have you..."></textarea></div>
+          </div></div>
+
+          <div class="card"><h2>Wi-Fi</h2><div class="content grid">
+            <div><label>Network Name</label><input name="wifiNetwork" /></div>
+            <div><label>Password</label><input name="wifiPassword" /></div>
+            <div class="full"><label>Wi-Fi Instructions</label><textarea name="wifiInstructions"></textarea></div>
+          </div></div>
+
+          <div class="card"><h2>Property Map</h2><div class="content grid">
+            <div class="full">
+              <label>Map Image (PNG/JPG — resized automatically)</label>
+              <input type="file" id="mapFile" accept="image/*" />
+              <input type="hidden" name="mapImage" />
+              <img id="mapPreview" class="map-preview hidden" alt="Map preview" />
+              <div><button type="button" id="removeMap" class="hidden" style="margin-top:8px">Remove Map</button></div>
+            </div>
+            <div class="full"><label>Map Notes (parking, mail room, trash, etc.)</label><textarea name="mapNotes"></textarea></div>
+          </div></div>
+
+          <div class="card"><h2>Community Information &amp; Hours</h2><div class="content grid">
+            <div class="full"><label>Community Information</label><textarea name="communityInfo" style="min-height:140px" placeholder="Amenities, parking, packages, trash, quiet hours..."></textarea></div>
+            <div class="full"><label>Hours of Operation</label><textarea name="hours" placeholder="Leasing Office: Mon–Fri 9am–6pm&#10;Fitness Center: 24/7"></textarea></div>
+          </div></div>
+
+          <div class="card"><h2>Work Orders &amp; Contact</h2><div class="content grid">
+            <div class="full"><label>How to Submit a Work Order</label><textarea name="workOrderInstructions"></textarea></div>
+            <div class="full"><label>Work Order / Resident Portal URL</label><input name="workOrderUrl" placeholder="https://..." /></div>
+            <div><label>Office Phone</label><input name="contactPhone" /></div>
+            <div><label>Office Email</label><input name="contactEmail" /></div>
+          </div></div>
+
+          <div class="toolbar"><button class="primary" type="submit">Save Page Content</button><span class="muted">Tip: blank sections are hidden on the resident page.</span></div>
+        </form>
+      </section>
+
+      <!-- Check-ins -->
+      <section id="tab-checkins" class="hidden">
+        <div class="card">
+          <h2>Check-Ins <span id="checkinCount" class="pill"></span> <button id="refreshCheckins" style="margin-left:auto">Refresh</button></h2>
+          <div class="content">
+            <div class="table-wrap"><table>
+              <thead><tr><th>Time</th><th>Name</th><th>Bldg-Unit</th></tr></thead>
+              <tbody id="checkinBody"></tbody>
+            </table></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+  <div id="toast"></div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const toast = msg => { const t = $('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2600); };
+  let me = null, property = '', data = { settings: {}, residents: [], checkins: [] }, pending = null;
+
+  const api = async (url, opts = {}) => {
+    const r = await fetch(url, { credentials: 'include', headers: { 'Content-Type': 'application/json' }, ...opts });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || r.statusText);
+    return j;
+  };
+
+  async function init() {
+    try { me = await api('/api/me'); } catch { $('authMsg').classList.remove('hidden'); return; }
+    let props = [];
+    try { props = await api('/api/properties'); } catch {}
+    const allowed = me.role === 'admin' || me.properties === '*' ? props : props.filter(p => (me.properties || []).includes(p.id));
+    if (!allowed.length) { $('authMsg').innerHTML = '<p>You do not have access to any properties.</p>'; $('authMsg').classList.remove('hidden'); return; }
+    $('propertySelect').innerHTML = allowed.map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('');
+    const saved = localStorage.getItem('movein_property');
+    if (saved && allowed.some(p => p.id === saved)) $('propertySelect').value = saved;
+    $('app').classList.remove('hidden');
+    await loadProperty();
+  }
+
+  async function loadProperty() {
+    property = $('propertySelect').value;
+    localStorage.setItem('movein_property', property);
+    pending = null; $('previewBox').classList.add('hidden'); $('fileInput').value = '';
+    data = await api('/api/move-in?property=' + encodeURIComponent(property));
+    renderLink(); renderDirectory(); fillSettings(); renderCheckins();
+  }
+
+  function renderLink() { $('publicLink').value = `${location.origin}/move_in.html?k=${data.settings.key || ''}`; }
+
+  function renderDirectory() {
+    const q = $('dirSearch').value.trim().toLowerCase();
+    const rows = (pending || data.residents).filter(r => !q || [r.name, r.unit, r.email, r.phone].join(' ').toLowerCase().includes(q));
+    $('dirBody').innerHTML = rows.map(r => `<tr><td>${esc(r.name)}</td><td>${esc(r.unit)}</td><td>${esc(r.email)}</td><td>${esc(r.phone)}</td></tr>`).join('')
+      || '<tr><td colspan="4" class="muted" style="text-align:center;padding:30px">No residents yet. Upload an Excel file above.</td></tr>';
+    $('dirCount').textContent = `${(pending || data.residents).length}${pending ? ' (preview)' : ''}`;
+    const s = data.settings;
+    $('dirUpdated').textContent = s.directoryUpdatedAt ? `Updated ${new Date(s.directoryUpdatedAt).toLocaleString()} by ${s.directoryUpdatedBy || ''}` : '';
+  }
+
+  // Header matching: tolerant of "Bldg-Unit", "Unit", "Email", "E-mail", "Phone", "Phone Number", etc.
+  const norm = h => String(h).toLowerCase().replace(/[^a-z]/g, '');
+  const FIELD_MATCH = {
+    name: ['name', 'residentname', 'fullname', 'resident'],
+    unit: ['bldgunit', 'buildingunit', 'unit', 'bldg', 'unitnumber', 'apartment', 'bldgunitbed', 'unitbed', 'space'],
+    email: ['email', 'emailaddress'],
+    phone: ['phonenumber', 'phone', 'mobile', 'cell', 'cellphone', 'mobilephone'],
+  };
+
+  function parseRows(json) {
+    if (!json.length) return { rows: [], missing: ['all columns'] };
+    const headers = Object.keys(json[0]);
+    const map = {};
+    for (const [f, opts] of Object.entries(FIELD_MATCH)) map[f] = headers.find(h => opts.includes(norm(h))) || headers.find(h => opts.some(o => norm(h).includes(o)));
+    const missing = Object.keys(FIELD_MATCH).filter(f => !map[f]);
+    const rows = json.map(r => ({ name: String(r[map.name] ?? '').trim(), unit: String(r[map.unit] ?? '').trim(), email: String(r[map.email] ?? '').trim(), phone: String(r[map.phone] ?? '').trim() })).filter(r => r.name);
+    return { rows, missing };
+  }
+
+  $('fileInput').addEventListener('change', async e => {
+    const f = e.target.files[0]; if (!f) return;
+    try {
+      const wb = XLSX.read(await f.arrayBuffer(), { type: 'array' });
+      const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '', raw: false });
+      const { rows, missing } = parseRows(json);
+      if (missing.includes('name') || missing.includes('all columns')) { toast('Could not find a "Name" column.'); return; }
+      pending = rows;
+      const noContact = rows.filter(r => !r.email && !r.phone).length;
+      $('previewCount').textContent = `${rows.length} residents found`;
+      $('previewWarn').textContent = [missing.length ? `Missing column(s): ${missing.join(', ')}.` : '', noContact ? `${noContact} row(s) have no email or phone and won't be able to check in.` : ''].join(' ');
+      $('previewBox').classList.remove('hidden');
+      renderDirectory();
+    } catch (err) { toast('Could not read file: ' + err.message); }
+  });
+
+  $('cancelPreview').onclick = () => { pending = null; $('fileInput').value = ''; $('previewBox').classList.add('hidden'); renderDirectory(); };
+  $('saveDirectory').onclick = async () => {
+    if (!pending) return;
+    if (data.residents.length && !confirm(`Replace the current ${data.residents.length} residents with ${pending.length} from this file?`)) return;
+    $('saveDirectory').disabled = true;
+    try { const r = await api('/api/move-in', { method: 'POST', body: JSON.stringify({ action: 'saveResidents', property, residents: pending }) }); toast(`Saved ${r.count} residents`); await loadProperty(); }
+    catch (err) { toast('Save failed: ' + err.message); }
+    finally { $('saveDirectory').disabled = false; }
+  };
+
+  $('templateBtn').onclick = () => {
+    const ws = XLSX.utils.aoa_to_sheet([['Name', 'Bldg-Unit', 'E-mail', 'Phone Number'], ['Jane Doe', '1200-A', 'jane@example.com', '(555) 555-1234']]);
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Residents'); XLSX.writeFile(wb, 'move-in-directory-template.xlsx');
+  };
+  $('exportBtn').onclick = () => {
+    const ws = XLSX.utils.json_to_sheet(data.residents.map(r => ({ 'Name': r.name, 'Bldg-Unit': r.unit, 'E-mail': r.email, 'Phone Number': r.phone })));
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Residents'); XLSX.writeFile(wb, `${property}-resident-directory.xlsx`);
+  };
+  $('dirSearch').addEventListener('input', renderDirectory);
+
+  // Settings
+  const form = $('settingsForm');
+  function fillSettings() {
+    const s = data.settings;
+    for (const el of form.elements) if (el.name) el.value = s[el.name] || (el.type === 'color' ? el.defaultValue : '');
+    showMap(s.mapImage);
+  }
+  function showMap(src) {
+    form.elements.mapImage.value = src || '';
+    $('mapPreview').classList.toggle('hidden', !src); $('removeMap').classList.toggle('hidden', !src);
+    if (src) $('mapPreview').src = src; else $('mapPreview').removeAttribute('src');
+  }
+  $('removeMap').onclick = () => { showMap(''); $('mapFile').value = ''; };
+  $('mapFile').addEventListener('change', e => {
+    const f = e.target.files[0]; if (!f) return;
+    const img = new Image();
+    img.onload = () => {
+      const max = 1800, scale = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas'); c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+      const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height); ctx.drawImage(img, 0, 0, c.width, c.height);
+      let q = 0.85, out = c.toDataURL('image/jpeg', q);
+      while (out.length > 2_000_000 && q > 0.4) { q -= 0.1; out = c.toDataURL('image/jpeg', q); }
+      showMap(out); URL.revokeObjectURL(img.src);
+    };
+    img.src = URL.createObjectURL(f);
+  });
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const settings = {};
+    for (const el of form.elements) if (el.name) settings[el.name] = el.value;
+    try { await api('/api/move-in', { method: 'POST', body: JSON.stringify({ action: 'saveSettings', property, settings }) }); Object.assign(data.settings, settings); toast('Page content saved'); }
+    catch (err) { toast('Save failed: ' + err.message); }
+  });
+
+  function renderCheckins() {
+    $('checkinCount').textContent = data.checkins.length;
+    $('checkinBody').innerHTML = data.checkins.map(c => `<tr><td>${esc(new Date(c.at).toLocaleString())}</td><td>${esc(c.name)}</td><td>${esc(c.unit)}</td></tr>`).join('')
+      || '<tr><td colspan="3" class="muted" style="text-align:center;padding:30px">No check-ins yet.</td></tr>';
+  }
+  $('refreshCheckins').onclick = loadProperty;
+
+  // Link
+  $('copyLink').onclick = async () => { await navigator.clipboard.writeText($('publicLink').value); toast('Link copied'); };
+  $('openLink').onclick = () => window.open($('publicLink').value, '_blank', 'noopener');
+  $('rotateKey').onclick = async () => {
+    if (!confirm('Create a new link? The current link will stop working.')) return;
+    const r = await api('/api/move-in', { method: 'POST', body: JSON.stringify({ action: 'rotateKey', property }) });
+    data.settings.key = r.key; renderLink(); toast('New link created');
+  };
+
+  // Tabs
+  document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+    document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('active', x === b));
+    ['directory', 'page', 'checkins'].forEach(t => $('tab-' + t).classList.toggle('hidden', t !== b.dataset.tab));
+  });
+  $('propertySelect').addEventListener('change', () => loadProperty().catch(err => toast(err.message)));
+
+  init().catch(err => toast(err.message));
+})();
+</script>
+</body>
+</html>
