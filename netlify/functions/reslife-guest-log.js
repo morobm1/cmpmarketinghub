@@ -3,6 +3,8 @@ import { verifyReqAuth } from './_auth.js';
 import { getDb, ObjectId } from './_db.js';
 import { canAccessReslifeProperty, canModifyReslifeRecord, isReslifeManager, refreshReslifeUser, json } from './_reslife.js';
 import { verifyResident, REASON_TEXT } from './_verify.js';
+import { screenGuest } from './_safetycheck.js';
+import { projectForCheck } from './_safety.js';
 import { ID_TYPES, DURATIONS, DEFAULT_NOTIFY, expectedOut, cleanPhoto, getSettings, recordVisitOnResident, sendGuestEmail, guestEmailHtml } from './_guest.js';
 
 /**
@@ -105,6 +107,14 @@ export async function handler(event) {
       };
       const result = await col.insertOne(doc);
       doc.id = result.insertedId.toString();
+      // Restricted-access screening (active, verified restrictions only). A hit never blocks or
+      // identifies anyone: it flags the entry for identity verification + escalation.
+      const screen = await screenGuest(db, { property, guestName, guestLogId: doc.id, user, source: 'staff' });
+      if (screen.hits.length) {
+        doc.safetyReview = { required: true, checkId: screen.checkId, flaggedAt: now };
+        await col.updateOne({ _id: result.insertedId }, { $set: { safetyReview: doc.safetyReview } });
+        doc.safetyHits = screen.hits.map(h => projectForCheck(h.record, user, h.level));
+      }
       await recordVisitOnResident(db, property, doc.residentId, { logId: doc.id, guestName, date: preRegister ? doc.expectedDate : now, status: doc.status, source: 'staff' });
       if (body.notify !== false && resident) {
         const s = await getSettings(db, property, false);
@@ -136,9 +146,17 @@ export async function handler(event) {
       const existing = await col.findOne({ _id: new ObjectId(id), property });
       if (!existing) return { statusCode: 404, body: 'Not found' };
       const updates = { updatedAt: now };
+      let extra = {};
       if (action === 'checkIn') {
         updates.status = 'checked_in'; updates.checkInTime = now; updates.checkedInBy = user.sub;
         updates.expectedOut = expectedOut(body.duration || existing.duration || '2h');
+        if (!existing.safetyReview) {
+          const screen = await screenGuest(db, { property, guestName: existing.guestName, guestLogId: id, user, source: 'staff-checkin' });
+          if (screen.hits.length) {
+            updates.safetyReview = { required: true, checkId: screen.checkId, flaggedAt: now };
+            extra = { safetyReview: updates.safetyReview, safetyHits: screen.hits.map(h => projectForCheck(h.record, user, h.level)) };
+          }
+        }
       } else if (action === 'checkOut') {
         updates.status = 'checked_out'; updates.checkOutTime = now; updates.checkedOutBy = user.sub;
       } else {
@@ -152,7 +170,7 @@ export async function handler(event) {
       if (updates.status && existing.residentId) {
         try { await db.collection('reslife_directory').updateOne({ _id: new ObjectId(existing.residentId), 'guestVisits.logId': id }, { $set: { 'guestVisits.$.status': updates.status } }); } catch (e) {}
       }
-      return json(200, { success: true });
+      return json(200, Object.assign({ success: true }, extra));
     }
 
     if (event.httpMethod === 'DELETE') {

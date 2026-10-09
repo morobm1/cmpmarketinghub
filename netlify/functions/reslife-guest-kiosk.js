@@ -3,6 +3,7 @@ import { verifyResident } from './_verify.js';
 import { displayName } from './_units.js';
 import { getDb, ObjectId } from './_db.js';
 import { json } from './_reslife.js';
+import { screenGuest } from './_safetycheck.js';
 import { ID_TYPES, DURATIONS, normName, normUnit, unitKey, expectedOut, cleanPhoto, matchResident, recordVisitOnResident, sendGuestEmail, guestEmailHtml } from './_guest.js';
 
 /**
@@ -90,6 +91,7 @@ export async function handler(event) {
         const photo = cleanPhoto(body.idPhoto); if (photo) { upd.idPhoto = photo; upd.idType = ID_TYPES.includes(body.idType) ? body.idType : g.idType; }
         if (!g.idPhoto && !photo) return json(400, { ok: false, error: 'Please capture a photo of your guest’s ID.' });
         await guests.updateOne({ _id: g._id }, { $set: upd });
+        if (!g.safetyReview) await flagIfRestricted(db, guests, property, g.guestName, g._id, 'kiosk-checkin');
         await recordVisitOnResident(db, property, residentId, { logId: g._id.toString(), guestName: g.guestName, date: nowIso, status: 'checked_in', source: 'kiosk' });
         await notify(db, settings, property, residentId, { residentName, unit, guestName: g.guestName, guestPhone: g.guestPhone, guestEmail: g.guestEmail, idType: upd.idType || g.idType, inTime: nowIso, outTime: upd.expectedOut, kind: 'checkin' });
         return json(200, { ok: true, entry: { guestName: g.guestName, residentFirst: residentName.split(' ')[0], unit, checkInTime: nowIso, expectedOut: upd.expectedOut } });
@@ -115,6 +117,7 @@ export async function handler(event) {
       };
       const r = await guests.insertOne(doc);
       const logId = r.insertedId.toString();
+      await flagIfRestricted(db, guests, property, guestName, r.insertedId, doc.source);
       if (inv) await invites.updateOne({ _id: inv._id }, { $set: { used: true, usedAt: nowIso, logId } });
       await recordVisitOnResident(db, property, residentId, { logId, guestName, date: isPre ? doc.expectedDate : nowIso, status: doc.status, source: doc.source });
       await notify(db, settings, property, residentId, { residentName, unit, guestName, guestPhone: doc.guestPhone, guestEmail: doc.guestEmail, idType: doc.idType, inTime: isPre ? doc.expectedDate + 'T19:00:00' : nowIso, outTime: doc.expectedOut, kind: isPre ? 'prereg' : 'checkin', note: isPre ? `Your guest must still check in at the front desk${settings && settings.checkinAfter ? ' after ' + fmt12(settings.checkinAfter) : ''}.` : '' });
@@ -126,6 +129,18 @@ export async function handler(event) {
     console.error('guest kiosk error', e);
     return json(500, { ok: false, error: 'Something went wrong. Please ask the front desk for assistance.' });
   }
+}
+
+/**
+ * Server-side restricted-access screening for public kiosk entries. The public response never changes
+ * (no disclosure to guests/residents); staff see a "verification required" flag in the Guest Log and
+ * RECs/Admins get a generic urgent notification. Screening failures never break check-in.
+ */
+async function flagIfRestricted(db, guests, property, guestName, logOid, source) {
+  try {
+    const screen = await screenGuest(db, { property, guestName, guestLogId: logOid, user: null, source });
+    if (screen.hits.length) await guests.updateOne({ _id: logOid }, { $set: { safetyReview: { required: true, checkId: screen.checkId, flaggedAt: new Date().toISOString() } } });
+  } catch (e) { console.error('[kiosk] screening failed'); }
 }
 
 const fmt12 = hhmm => { const [h, m] = String(hhmm).split(':').map(Number); return `${(h % 12) || 12}:${String(m || 0).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`; };
