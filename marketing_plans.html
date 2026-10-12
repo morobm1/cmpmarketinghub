@@ -336,6 +336,7 @@
     <div class="header-controls">
       <select id="propertySelect" style="min-width:200px;padding:8px 12px"></select>
       <button id="logoutBtn" class="header-btn">Sign Out</button>
+      <a href="marketing_plans_test.html" class="header-btn" style="text-decoration:none;background:#fff7e6;border-color:#ffb732" title="Try the new 30-60-90 Day Plan (test version)">Switch to 30-60-90 (Test)</a>
       <button id="adminPageBtn" class="header-btn hidden">Admin</button>
     </div>
     <span class="company-name">Capstone Management Partners</span>
@@ -741,7 +742,13 @@
     async function apiFetch(path, opts = {}) {
       const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
       const res = await fetch('/api' + path, Object.assign({}, opts, { headers, credentials: 'include' }));
-      if (!res.ok) { const text = await res.text(); throw new Error(text || ('HTTP ' + res.status)); }
+      if (!res.ok) {
+        const text = await res.text();
+        let msg = text;
+        try { const j = JSON.parse(text); msg = j.message || j.detail || j.error || text; } catch (e) { }
+        if (res.status === 401) msg = 'Your session expired. Please log in again.';
+        throw new Error(msg || ('HTTP ' + res.status));
+      }
       return res;
     }
 
@@ -764,8 +771,19 @@
       try {
         const res = await fetch('/api/properties');
         const list = await res.json();
-        properties = (list || []).map(x => x.name).filter(Boolean);
+        properties = (list || []).filter(x => userCanAccess(x)).map(x => x.name).filter(Boolean);
       } catch (e) { properties = []; }
+    }
+
+    // Mirror server-side access rules so users only see properties they can save to.
+    function userCanAccess(prop) {
+      if (!currentUser || currentUser.role === 'admin') return true;
+      const raw = currentUser.properties;
+      const list = Array.isArray(raw) ? raw.map(String) : (typeof raw === 'string' ? raw.split(',').map(s => s.trim()).filter(Boolean) : []);
+      if (list.includes('*')) return true;
+      const n = s => String(s || '').trim().toLowerCase();
+      const slug = s => n(s).replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      return list.some(p => n(p) === n(prop.name) || n(p) === n(prop.id) || slug(p) === slug(prop.name));
     }
 
     function renderPropertyOptions() {
