@@ -11,11 +11,17 @@
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:'Open Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
     .hidden{display:none!important}
+    /* Header matches the classic page; standard-nav.js supplies the shared header styles */
     header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
     .brand{display:flex;align-items:center;gap:10px}
-    .brand .logo-img{height:28px}
+    .brand .logo-img{height:28px;width:auto}
     .brand .title{color:#ffb732;font-family:zooja-pro,Arial,sans-serif;font-size:clamp(32px,4vw,48px);line-height:1}
-    .header-controls{display:flex;align-items:center;gap:10px;margin-left:auto;flex-wrap:wrap}
+    .header-controls{display:flex;align-items:center;gap:12px;margin-left:auto}
+    .header-controls select{width:auto;min-width:200px;padding:8px 12px;border-radius:6px}
+    .header-btn{background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;white-space:nowrap}
+    .header-btn:hover{background:#f8fafc;border-color:#cbd5e1}
+    .company-name{font-size:12px;color:var(--sub);font-weight:500}
+    .planbar{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap}
     .test-pill{background:#fff7e6;border:1px solid var(--accent);color:#92400e;font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;text-transform:uppercase;letter-spacing:.5px}
     .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--text);font-weight:600;cursor:pointer;font-size:13px;text-decoration:none;font-family:inherit}
     .btn:hover{background:#f1f5f9}
@@ -30,8 +36,10 @@
     input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent2);box-shadow:0 0 0 3px rgba(82,213,255,.15)}
     textarea{min-height:64px;resize:vertical}
     label{font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:4px}
-    .wrap{max-width:1500px;margin:0 auto;padding:20px 24px;display:grid;grid-template-columns:280px 1fr;gap:20px;align-items:start}
-    @media(max-width:1000px){.wrap{grid-template-columns:1fr}}
+    .wrap{max-width:1400px;margin:0 auto;padding:20px 24px;min-width:0}
+    #main,.card,.card .body{min-width:0}
+    .main-content{overflow-x:hidden}
+    .tscroll{overflow-x:auto;max-width:100%}
     .card{background:#fff;border:1px solid var(--border);border-radius:12px;margin-bottom:18px;overflow:hidden}
     .card>h3{padding:14px 18px;font-size:15px;font-family:Roboto,Arial,sans-serif;border-bottom:1px solid var(--border);background:#f8fafc;display:flex;align-items:center;gap:10px}
     .card>h3 .sub{font-weight:400;font-size:12px;color:var(--sub);margin-left:auto}
@@ -71,7 +79,10 @@
     th{text-align:left;font-size:11px;text-transform:uppercase;color:var(--sub);font-weight:700;padding:8px 6px;border-bottom:2px solid var(--border);background:#f8fafc;white-space:nowrap}
     td{padding:6px;border-bottom:1px solid var(--border);vertical-align:top}
     td input,td select{padding:6px 8px;font-size:13px}
-    td.num input{text-align:right;min-width:64px}
+    td.num input{text-align:right;width:72px;padding:6px}
+    .mcfg{display:flex;gap:4px;margin-top:4px}
+    .mcfg select{padding:3px 4px;font-size:11px;color:var(--sub);width:auto}
+    .phase-tabs .phase-tab{flex:1;min-width:180px;text-align:left}
     .grp{text-align:center;background:#eef6f9;color:var(--brand)}
     .auto{display:inline-block;padding:6px 8px;font-weight:700;color:var(--brand);background:#f0f9ff;border-radius:6px;min-width:56px;text-align:right}
     .auto small{font-weight:400;color:var(--sub);font-size:10px;display:block;text-align:right}
@@ -106,7 +117,8 @@
     @media print{
       @page{size:letter;margin:0.5in}
       body{background:#fff}
-      body>*:not(#report){display:none!important}
+      header,#sidebarNav,#navToggle,#app,#boot,#toast{display:none!important}
+      .main-content{margin-left:0!important}
       #report{display:block!important;border:none;margin:0;padding:0;max-width:none}
       .no-print{display:none!important}
       tr,.callout{break-inside:avoid}
@@ -120,32 +132,23 @@
       <img src="logo-main.svg" class="logo-img" alt="Capstone" />
       <div class="title">Marketing Hub</div>
     </div>
-    <span class="test-pill">30-60-90 · Test Version</span>
     <div class="header-controls">
-      <select id="propertySelect" style="min-width:200px;width:auto"></select>
-      <a href="marketing_plans.html" class="btn" title="Back to the current marketing plan page">&larr; Switch to Classic Plans</a>
+      <span class="test-pill">30-60-90 Test</span>
+      <select id="propertySelect"></select>
+      <a href="marketing_plans.html" class="header-btn" style="text-decoration:none" title="Back to the current marketing plan page">&larr; Classic Plans</a>
     </div>
+    <span class="company-name">Capstone Management Partners</span>
   </header>
 
   <div id="boot" class="empty">Loading…</div>
 
   <div id="app" class="hidden">
     <div class="wrap">
-      <aside class="side">
-        <div class="card">
-          <h3>30-60-90 Plans <span class="sub" id="planCount">0</span></h3>
-          <div id="planList"></div>
-          <div class="body"><button class="btn primary" id="newPlanBtn" style="width:100%;justify-content:center">+ New 30-60-90 Plan</button></div>
-        </div>
-        <div class="card"><div class="body hint">
-          <b>How this plan works</b><br>
-          1. Write the one-page brief.<br>
-          2. Set baseline + Day 30/60/90 targets.<br>
-          3. Plan initiatives per phase with owners &amp; exit criteria.<br>
-          4. Log the weekly pulse every Monday — the scorecard, pace, and health update automatically.<br>
-          5. Export the HQ-ready report.
-        </div></div>
-      </aside>
+      <div class="card"><div class="body planbar">
+        <div style="flex:1;min-width:220px;max-width:460px"><label>30-60-90 plans for this property (<span id="planCount">0</span>)</label><select id="planSelect"></select></div>
+        <button class="btn primary" id="newPlanBtn">+ New 30-60-90 Plan</button>
+        <div class="hint" style="flex:2;min-width:240px;margin:0"><b>How it works:</b> write the brief → set Day 30/60/90 targets → plan initiatives by phase → log the weekly pulse every Monday → export the HQ report.</div>
+      </div></div>
       <main id="main"><div class="empty">Select a plan or create a new one.</div></main>
     </div>
   </div>
@@ -317,13 +320,13 @@
   }
   function renderList() {
     $('planCount').textContent = plans.length;
-    $('planList').innerHTML = plans.map(p => `<div class="plan-item ${plan && plan.id === p.id ? 'active' : ''}" data-id="${p.id}">
-      <div class="n">${esc(p.name)}</div><div class="m">${fmtShort(p.startDate)} – ${fmtDate(p.endDate)}${p.termLabel ? ' · ' + esc(p.termLabel) : ''}</div></div>`).join('')
-      || '<div class="body hint">No 30-60-90 plans for this property yet.</div>';
-    $('planList').querySelectorAll('.plan-item').forEach(el => el.onclick = () => openPlan(el.dataset.id));
+    const s = $('planSelect');
+    s.innerHTML = `<option value="">${plans.length ? '— Select a plan —' : 'No plans yet — create one'}</option>` + (plan && !plan.id ? '<option value="__new" selected>(New unsaved plan)</option>' : '') +
+      plans.map(p => `<option value="${p.id}" ${plan && plan.id === p.id ? 'selected' : ''}>${esc(p.name)} · ${fmtShort(p.startDate)} – ${fmtDate(p.endDate)}</option>`).join('');
+    s.onchange = () => { if (s.value && s.value !== '__new') openPlan(s.value); };
   }
   async function openPlan(id) {
-    if (dirty && !confirm('Discard unsaved changes?')) return;
+    if (dirty && !confirm('Discard unsaved changes?')) { renderList(); return; }
     try {
       const d = await api(`/marketing-plans?id=${encodeURIComponent(id)}`);
       const base = defaultNinety();
@@ -458,20 +461,18 @@
       </div>
     </div></div>
 
-    <div class="card"><h3><span class="step">2</span> Scorecard — baseline, targets &amp; actuals <span class="sub">Counts are cumulative from Day 1. Auto values come from the weekly pulse.</span></h3><div class="body" style="overflow-x:auto">
+    <div class="card"><h3><span class="step">2</span> Scorecard — baseline, targets &amp; actuals <span class="sub">Counts are cumulative from Day 1. Auto values come from the weekly pulse.</span></h3><div class="body"><div class="tscroll">
       <table>
-        <thead><tr><th rowspan="2">Metric</th><th rowspan="2">Unit</th><th rowspan="2">Better</th><th rowspan="2">Data source</th><th rowspan="2">Baseline</th>
+        <thead><tr><th rowspan="2">Metric <span style="font-weight:400;text-transform:none">(unit · direction · source)</span></th><th rowspan="2">Baseline</th>
           ${CPS.map(c => `<th colspan="3" class="grp">Day ${c}</th>`).join('')}<th rowspan="2"></th></tr>
           <tr>${CPS.map(() => '<th>Target</th><th>Actual</th><th>Status</th>').join('')}</tr></thead>
         <tbody>${n.metrics.map((m, i) => `<tr>
-          <td style="min-width:190px">${inp(`ninety.metrics.${i}.name`, { ph: 'Metric name' })}</td>
-          <td style="width:70px">${sel(`ninety.metrics.${i}.unit`, { '#': '#', '%': '%', '$': '$', hrs: 'hrs', '★': '★' }, false)}</td>
-          <td style="width:80px">${sel(`ninety.metrics.${i}.dir`, { up: '↑ Higher', down: '↓ Lower' })}</td>
-          <td style="width:170px">${sel(`ninety.metrics.${i}.src`, SOURCES)}</td>
+          <td style="min-width:200px">${inp(`ninety.metrics.${i}.name`, { ph: 'Metric name' })}
+            <div class="mcfg">${sel(`ninety.metrics.${i}.unit`, { '#': '#', '%': '%', '$': '$', hrs: 'hrs', '★': '★' }, false)}${sel(`ninety.metrics.${i}.dir`, { up: '↑ Higher', down: '↓ Lower' })}${sel(`ninety.metrics.${i}.src`, SOURCES)}</div></td>
           <td class="num">${inp(`ninety.metrics.${i}.baseline`, { type: 'number', numeric: true })}</td>
           ${CPS.map(c => `<td class="num">${inp(`ninety.metrics.${i}.t${c}`, { type: 'number', numeric: true })}</td><td class="num" id="act-${i}-${c}"></td><td id="st-${i}-${c}"></td>`).join('')}
           <td><button class="btn sm ghost danger" data-act="delMetric" data-i="${i}" title="Remove">✕</button></td></tr>`).join('')}</tbody>
-      </table>
+      </table></div>
       <div style="margin-top:10px"><button class="btn sm" data-act="addMetric">+ Add metric</button></div>
       <div class="hint">Status: <b>On track</b> ≥ 95% of target · <b>At risk</b> 80–95% · <b>Off track</b> &lt; 80% (inverted for “lower is better”).</div>
     </div></div>
@@ -481,12 +482,12 @@
       <div class="body">${renderPhase(phaseTab)}</div>
     </div>
 
-    <div class="card"><h3><span class="step">4</span> Weekly pulse <span class="sub">Log every Monday — new activity that week (not cumulative), pre-lease % as of that week</span></h3><div class="body" style="overflow-x:auto">
+    <div class="card"><h3><span class="step">4</span> Weekly pulse <span class="sub">Log every Monday — new activity that week (not cumulative), pre-lease % as of that week</span></h3><div class="body"><div class="tscroll">
       <table><thead><tr><th>Week</th><th>Dates</th><th>Leads</th><th>Tours</th><th>Apps</th><th>Leases</th><th>Pre-lease %</th><th style="width:40%">Wins / blockers / notes</th></tr></thead>
       <tbody>${n.pulse.map((r, w) => { const s = plan.startDate ? addDays(plan.startDate, w * 7) : ''; const ph = w < 4 ? 0 : w < 8 ? 1 : 2;
         return `<tr ${w === 4 || w === 8 ? 'style="border-top:2px solid var(--brand)"' : ''}><td><b>Wk ${w + 1}</b><div class="hint" style="margin:0">${PHASES[ph].name}</div></td><td style="white-space:nowrap">${fmtShort(s)}–${fmtShort(s ? addDays(s, w === 12 ? 89 - 84 : 6) : '')}</td>
         ${['leads', 'tours', 'apps', 'leases', 'prelease'].map(k => `<td class="num">${inp(`ninety.pulse.${w}.${k}`, { type: 'number', numeric: true })}</td>`).join('')}
-        <td>${inp(`ninety.pulse.${w}.notes`, { ph: 'e.g. Tabling at Union drove 22 leads; 2 agents out sick' })}</td></tr>`; }).join('')}</tbody></table>
+        <td>${inp(`ninety.pulse.${w}.notes`, { ph: 'e.g. Tabling at Union drove 22 leads; 2 agents out sick' })}</td></tr>`; }).join('')}</tbody></table></div>
       <div class="grid2" style="margin-top:16px">
         <div><label>Funnel to date</label><div id="funnel"></div></div>
         <div><label>Lease pace vs. Day 90 target</label><div id="pace"></div></div>
@@ -498,13 +499,13 @@
       <div id="budget" style="margin-top:12px"></div>
     </div></div>
 
-    <div class="card"><h3><span class="step">6</span> Risks &amp; mitigations</h3><div class="body" style="overflow-x:auto">
+    <div class="card"><h3><span class="step">6</span> Risks &amp; mitigations</h3><div class="body"><div class="tscroll">
       <table><thead><tr><th>Risk</th><th>Likelihood</th><th>Impact</th><th>Mitigation / contingency</th><th>Owner</th><th></th></tr></thead>
       <tbody>${n.risks.map((r, i) => `<tr><td>${inp(`ninety.risks.${i}.risk`)}</td>
         <td style="width:110px">${sel(`ninety.risks.${i}.likelihood`, { Low: 'Low', Medium: 'Medium', High: 'High' }, false)}</td>
         <td style="width:110px">${sel(`ninety.risks.${i}.impact`, { Low: 'Low', Medium: 'Medium', High: 'High' }, false)}</td>
         <td>${inp(`ninety.risks.${i}.mitigation`)}</td><td style="width:140px">${inp(`ninety.risks.${i}.owner`)}</td>
-        <td><button class="btn sm ghost danger" data-act="delRisk" data-i="${i}">✕</button></td></tr>`).join('')}</tbody></table>
+        <td><button class="btn sm ghost danger" data-act="delRisk" data-i="${i}">✕</button></td></tr>`).join('')}</tbody></table></div>
       <div style="margin-top:10px"><button class="btn sm" data-act="addRisk">+ Add risk</button></div>
     </div></div>`;
     renderDerived();
