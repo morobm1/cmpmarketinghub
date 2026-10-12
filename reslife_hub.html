@@ -916,6 +916,7 @@
     }
   </style>
   <link rel="stylesheet" href="schedule/sched.css" />
+<link rel="stylesheet" href="reslife-conduct.css" />
 </head>
 <body>
 
@@ -1012,6 +1013,10 @@
         <button class="rl-nav-item hidden" id="rlSafetyTabBtn" data-tab="safety" data-label="Safety Records">
           <span class="rl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><rect x="9" y="11" width="6" height="5" rx="1"/><path d="M10 11V9a2 2 0 0 1 4 0v2"/></svg></span>
           <span class="rl-nav-label">Safety Records</span>
+        </button>
+        <button class="rl-nav-item hidden" id="rlConductTabBtn" data-tab="conduct" data-label="Conduct Meeting Notes">
+          <span class="rl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15l2 2 4-4"/></svg></span>
+          <span class="rl-nav-label">Conduct Meeting Notes</span>
         </button>
         <button class="rl-nav-item" data-tab="contacts" data-label="Campus Contacts">
           <span class="rl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
@@ -1819,6 +1824,17 @@
         </div>
       </section>
 
+      <!-- ================= CONDUCT MEETING NOTES (REC + ADMIN; reslife-conduct-ui.js / reslife-conduct.js) ================= -->
+      <section class="rl-tab-content" id="tab-conduct">
+        <div class="rl-panel">
+          <div class="rl-panel-header">
+            <div><h2>Conduct Meeting Notes <span class="cm-lock">&#128274; REC &amp; Admin</span></h2><p style="margin:4px 0 0;font-size:13px;color:var(--rl-subtext)">Resident accountability meetings, recorded on the official Harbour meeting record.</p></div>
+            <button class="rl-btn primary" id="cmNewBtn" type="button">+ New Conduct Meeting</button>
+          </div>
+          <div class="rl-panel-body"><div id="cmRoot"></div></div>
+        </div>
+      </section>
+
       <section class="rl-tab-content" id="tab-directory">
         <div class="rl-panel">
           <div class="rl-panel-header">
@@ -2266,6 +2282,7 @@
 
   <script src="reslife-programs-ui.js"></script>
   <script src="reslife-safety-ui.js"></script>
+  <script src="reslife-conduct-ui.js"></script>
   <script>    // Safety net: if anything throws while the Hub is still starting up, show a clear
     // message with a reload button instead of leaving users on "Loading Reslife Hub…" forever.
     function rlStartupFailed(msg){
@@ -2535,7 +2552,9 @@
       if (tab === 'incidents') return loadIncidents();
       if (tab === 'maintenance') return loadMaintenance();
       if (tab === 'directory') return loadDirectory();
+      if (tab !== 'conduct' && window.ConductUI) ConductUI.leave();
       if (tab === 'safety') return window.SafetyUI && SafetyUI.loadSafetyTab();
+      if (tab === 'conduct') return window.ConductUI && ConductUI.load();
       if (tab === 'contacts') return loadContacts();
       if (tab === 'curriculum') return loadCurriculum();
       if (tab === 'sops') return loadSopLibraryFrame();
@@ -2585,6 +2604,8 @@
 
       els.usersTabBtn.classList.toggle('hidden', !isManager);
       const safetyBtn = document.getElementById('rlSafetyTabBtn'); if (safetyBtn) safetyBtn.classList.toggle('hidden', !isManager);
+      // Conduct Meeting Notes: REC + Admin only (the server enforces the same rule on every request).
+      const conductBtn = document.getElementById('rlConductTabBtn'); if (conductBtn) conductBtn.classList.toggle('hidden', !(isManager && ['admin', 'reslife-admin', 'reslife-rec'].includes(me.role)));
       const marketingHubBtn = document.getElementById('rlMarketingHubBtn');
       if (marketingHubBtn) marketingHubBtn.classList.toggle('hidden', !(me.role === 'admin' && !viewingAsRA));
       const seedPanel = document.getElementById('seedPanel');
@@ -2603,7 +2624,7 @@
       applyRoleView();
       // "Manage Users" is admin-tier only and disappears in RA preview — bounce
       // to the dashboard instead of leaving an inaccessible tab active.
-      if (viewingAsRA && ['users', 'safety'].includes(activeTabKey())) {
+      if (viewingAsRA && ['users', 'safety', 'conduct'].includes(activeTabKey())) {
         goToTab('dashboard');
       } else {
         await loadCurrentTabData();
@@ -4679,6 +4700,11 @@
       const showAccom = !!(window.SafetyUI && SafetyUI.canSeeAccommodations());
       if (showAccom) tabs.push(['accom', 'Accommodations', '🔒']);
       if (!showAccom && resActiveTab === 'accom') resActiveTab = 'overview';
+      // Conduct Meeting Records: REC / Admin only; data comes from the restricted reslife-conduct endpoint.
+      const showConduct = !!(window.ConductUI && ConductUI.canUse());
+      if (showConduct && ConductUI.profileTab) { resActiveTab = ConductUI.profileTab; ConductUI.profileTab = null; }
+      if (showConduct) tabs.push(['conduct', 'Conduct Meeting Records', '🔒']);
+      if (!showConduct && resActiveTab === 'conduct') resActiveTab = 'overview';
       stats.innerHTML = tabs.map(([k, label, n, warn]) => `<button type="button" class="res-stat${k === resActiveTab ? ' active' : ''}${warn ? ' warn' : ''}" data-res-tab="${k}"><b>${k === 'overview' ? '☰' : n}</b><span>${label}</span></button>`).join('');
 
       const mateCards = mates.length
@@ -4728,9 +4754,11 @@
       panels.maint = `<div class="res-sec-title">Maintenance Requests <span>${(h.maintenance || []).length}</span></div>` +
         resTimeline(h.maintenance, '#0d9488', m => resHead(fmtD(m.date), [[m.category], [m.area], [m.priority, m.priority === 'Emergency' || m.priority === 'Urgent' ? 'high' : ''], [m.status]], m.reportedBy) + (m.notes ? `<div class="res-entry-text">${esc(m.notes)}</div>` : ''));
       if (showAccom) panels.accom = '<div id="resAccomHost"></div>';
+      if (showConduct) panels.conduct = '<div id="resConductHost"></div>';
       body.innerHTML = panels[resActiveTab] || panels.overview;
       body.scrollTop = 0;
       if (showAccom && resActiveTab === 'accom') SafetyUI.renderResidentAccommodations(document.getElementById('resAccomHost'), id);
+      if (showConduct && resActiveTab === 'conduct') ConductUI.renderResidentRecords(document.getElementById('resConductHost'), id);
 
       stats.querySelectorAll('[data-res-tab]').forEach(b => b.addEventListener('click', () => { resActiveTab = b.getAttribute('data-res-tab'); resUseCache = true; openResidentModal(id, true); }));
       body.querySelectorAll('[data-res-mate]').forEach(a => a.addEventListener('click', ev => { ev.preventDefault(); openResidentModal(a.getAttribute('data-res-mate')); }));
