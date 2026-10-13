@@ -1,6 +1,6 @@
 /* Reslife Hub — Feedback widget ("Report an issue / Request a feature").
    Include on any Reslife page: <script src="reslife-feedback.js" defer></script>
-   Self-contained (own styles, no dependencies). Submits to /api/reslife-feedback, which emails the admin. */
+   Self-contained (own styles, no dependencies). Submits to /api/reslife-feedback, which logs a ticket in the Hub's admin Feedback tab. */
 (function () {
   if (window.__rlFeedback) return; window.__rlFeedback = true;
   const HIDE_KEY = 'rl_fb_hidden';
@@ -133,7 +133,8 @@
           property: localStorage.getItem('reslife_current_property') || '', userAgent: navigator.userAgent, viewport: `${window.innerWidth}×${window.innerHeight}`,
         }) });
         if (!res.ok) throw new Error((await res.text()) || 'Could not send');
-        panel.innerHTML = `<div class="rlfb-done"><div class="ck">&#10003;</div><b>Thanks — it’s been sent!</b><p>${type === 'feature' ? 'Your idea' : type === 'question' ? 'Your question' : 'Your report'} went to the Hub admin. We’ll follow up if we need more details.</p><button type="button" class="rlfb-send" style="max-width:220px">Done</button></div>`;
+        const out = await res.json().catch(() => ({}));
+        panel.innerHTML = `<div class="rlfb-done"><div class="ck">&#10003;</div><b>Thanks — it’s been sent!</b><p>${type === 'feature' ? 'Your idea' : type === 'question' ? 'Your question' : 'Your report'} was logged${out.ticketNo ? ' as ticket #' + esc(out.ticketNo) : ''} for the Hub admins to review. We’ll follow up if we need more details.</p><button type="button" class="rlfb-send" style="max-width:220px">Done</button></div>`;
         panel.querySelector('.rlfb-send').onclick = close;
         setTimeout(() => { if (ov.classList.contains('show') && panel.querySelector('.rlfb-done')) close(); }, 6000);
       } catch (e) {
