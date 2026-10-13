@@ -301,7 +301,7 @@
     .rl-ann-body{min-height:120px;max-height:420px;overflow-y:auto;border:1px solid var(--rl-border);border-radius:0 0 8px 8px;padding:12px;font-size:14px;line-height:1.5;background:#fff;outline:none;position:relative}
     .rl-ann-body:focus{border-color:var(--rl-primary);box-shadow:0 0 0 3px rgba(0,45,106,.08)}
     .rl-ann-body-empty:before{content:attr(data-placeholder);color:var(--rl-subtext);pointer-events:none}
-    .rl-ann-body img,.rl-ann-body video{max-width:100%;border-radius:8px;display:block;margin:8px 0}
+    .rl-ann-body img,.rl-ann-body video{max-width:100% !important;width:auto !important;height:auto !important;max-height:220px;object-fit:contain;border-radius:8px;display:block;margin:8px 0}
     .rl-ann-video-embed{position:relative;padding-top:56.25%;margin:8px 0;border-radius:8px;overflow:hidden;background:#000}
     .rl-ann-video-embed iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 
@@ -315,6 +315,19 @@
     .rl-ann-card-meta{font-size:12px;color:var(--rl-subtext);margin-top:1px}
     .rl-ann-card-actions{display:flex;gap:4px;flex-shrink:0}
     .rl-ann-card-body{padding:4px 16px 16px;font-size:14px;line-height:1.55;color:var(--rl-text);word-break:break-word;white-space:pre-wrap}
+    .rl-ann-card-body img,.rl-ann-card-body video{display:block;max-width:100% !important;width:auto !important;height:auto !important;max-height:360px;object-fit:contain;margin:8px auto;border-radius:8px;background:#f1f5f9}
+    .rl-ann-card-body img{cursor:zoom-in}
+    .rl-ann-card-body iframe{max-width:100%}
+    .rl-ann-card-body .rl-ann-video-embed{max-width:640px;margin:8px auto}
+    .rl-mini-item-body{font-size:12px;color:var(--rl-subtext);margin-top:4px;display:flex;gap:8px;align-items:flex-start}
+    .rl-mini-item-body img{width:48px;height:48px;object-fit:cover;border-radius:6px;flex-shrink:0}
+    .rl-mini-item-body span{overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+    .rl-lightbox{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:10000;cursor:zoom-out;padding:20px}
+    .rl-lightbox img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px}
+    .rl-nav-disabled{display:none !important}
+    .rl-navedit-row{display:grid;grid-template-columns:1fr 1.4fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--rl-border)}
+    .rl-navedit-row input[type=text]{width:100%;padding:6px 8px;border:1px solid var(--rl-border);border-radius:6px;font-size:13px;box-sizing:border-box}
+    .rl-navedit-row .rl-navedit-def{grid-column:1/-1;font-size:11px;color:var(--rl-subtext)}
     .rl-ann-icon-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--rl-border);background:#fff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;color:var(--rl-subtext)}
     .rl-ann-icon-btn:hover{background:#f8fafc;color:var(--rl-text)}
     .rl-ann-icon-btn.danger:hover{background:var(--rl-danger-bg);color:var(--rl-danger);border-color:#fecaca}
@@ -937,6 +950,7 @@
         <button class="rl-view-toggle-btn hidden" id="rlViewToggleBtn" type="button" title="Preview the Reslife Hub exactly as an RA sees it">
           <span id="rlViewToggleIcon">&#128065;</span><span id="rlViewToggleLabel">Preview RA View</span>
         </button>
+        <button class="rl-view-toggle-btn hidden" id="rlNavEditBtn" type="button" title="Edit sidebar navigation (Admins only)">&#9998; Edit Nav</button>
         <div class="nt-wrap">
           <button class="nt-bell" id="ntBell" type="button" aria-label="Notifications" title="Notifications"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="nt-badge hidden" id="ntBadge">0</span></button>
           <div class="nt-backdrop hidden" id="ntBackdrop"></div>
@@ -950,6 +964,21 @@
         <button class="rl-logout-btn" id="rlLogoutBtn">Log Out</button>
       </div>
     </header>
+
+    <div id="rlNavEditModal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px">
+      <div style="background:#fff;border-radius:12px;max-width:760px;width:100%;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 10px 40px rgba(0,0,0,.25)">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--rl-border);display:flex;justify-content:space-between;align-items:center">
+          <div><b style="font-size:16px">Edit Navigation</b><div style="font-size:12px;color:var(--rl-subtext)">Rename items, change linked URLs, or hide items temporarily. Applies to all properties and users. Leave a field blank to use the default.</div></div>
+          <button type="button" id="rlNavEditClose" class="rl-ann-icon-btn" aria-label="Close">&times;</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1.4fr auto;gap:8px;padding:8px 20px 0;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--rl-subtext)"><span>Name</span><span>Linked URL</span><span>Hide</span></div>
+        <div id="rlNavEditList" style="overflow-y:auto;padding:0 20px"></div>
+        <div style="padding:12px 20px;border-top:1px solid var(--rl-border);display:flex;justify-content:space-between;gap:8px">
+          <button type="button" id="rlNavEditReset" class="rl-logout-btn">Reset All to Defaults</button>
+          <div style="display:flex;gap:8px"><button type="button" id="rlNavEditCancel" class="rl-logout-btn">Cancel</button><button type="button" id="rlNavEditSave" class="rl-view-toggle-btn">Save</button></div>
+        </div>
+      </div>
+    </div>
 
     <aside class="rl-sidebar" id="rlSidebar">
       <nav class="rl-sidebar-nav">
@@ -2402,6 +2431,7 @@
       setupSidebarToggle();
       setupRoleViewToggle();
       applyRoleView();
+      await loadNavConfig();
       bindAllForms();
 
       els.authGate.classList.add('hidden');
@@ -2492,6 +2522,81 @@
     }
 
     // ==================== TABS / SIDEBAR NAV ====================
+    // ==================== NAV CONFIG (admin-editable labels / URLs / hide) ====================
+    let navConfig = {};
+    function navItems(){
+      return Array.from(document.querySelectorAll('.rl-sidebar-nav .rl-nav-item'));
+    }
+    function navKey(el){
+      if (!el.dataset.navKey) {
+        el.dataset.navKey = el.dataset.tab ? 'tab:' + el.dataset.tab : 'href:' + (el.getAttribute('href') || '');
+        el.dataset.navDefLabel = el.querySelector('.rl-nav-label').textContent;
+        el.dataset.navDefHref = el.getAttribute('href') || '';
+      }
+      return el.dataset.navKey;
+    }
+    function applyNavConfig(){
+      navItems().forEach(el => {
+        const key = navKey(el);
+        const cfg = navConfig[key] || {};
+        const label = cfg.label || el.dataset.navDefLabel;
+        el.querySelector('.rl-nav-label').textContent = label;
+        el.setAttribute('data-label', label);
+        el.classList.toggle('rl-nav-disabled', !!cfg.hidden);
+        if (el.tagName === 'A') el.setAttribute('href', cfg.url || el.dataset.navDefHref);
+        else el.dataset.navUrl = cfg.url || '';
+      });
+    }
+    async function loadNavConfig(){
+      navItems().forEach(el => {
+        navKey(el);
+        if (el.tagName !== 'A') el.addEventListener('click', e => {
+          if (el.dataset.navUrl) { e.stopImmediatePropagation(); e.preventDefault(); window.location.href = el.dataset.navUrl; }
+        }, true);
+      });
+      try { navConfig = (await apiFetch('/reslife-nav-config')).items || {}; } catch (e) { navConfig = {}; }
+      applyNavConfig();
+      setupNavEditor();
+    }
+    function setupNavEditor(){
+      const modal = document.getElementById('rlNavEditModal');
+      const list = document.getElementById('rlNavEditList');
+      const close = () => modal.classList.add('hidden');
+      document.getElementById('rlNavEditBtn').addEventListener('click', () => {
+        list.innerHTML = navItems().map(el => {
+          const key = navKey(el); const cfg = navConfig[key] || {};
+          const def = el.dataset.navDefHref ? el.dataset.navDefHref : 'in-hub tab';
+          return `<div class="rl-navedit-row" data-key="${esc(key)}">
+            <input type="text" data-f="label" maxlength="60" placeholder="${esc(el.dataset.navDefLabel)}" value="${esc(cfg.label || '')}">
+            <input type="text" data-f="url" maxlength="500" placeholder="${esc(def)}" value="${esc(cfg.url || '')}">
+            <label style="font-size:12px;white-space:nowrap"><input type="checkbox" data-f="hidden" ${cfg.hidden ? 'checked' : ''}> Hide</label>
+            <div class="rl-navedit-def">Default: ${esc(el.dataset.navDefLabel)} &rarr; ${esc(def)}</div>
+          </div>`;
+        }).join('');
+        modal.classList.remove('hidden');
+      });
+      document.getElementById('rlNavEditClose').addEventListener('click', close);
+      document.getElementById('rlNavEditCancel').addEventListener('click', close);
+      modal.addEventListener('click', e => { if (e.target === modal) close(); });
+      const save = async items => {
+        try {
+          navConfig = (await apiFetch('/reslife-nav-config', { method: 'PUT', body: JSON.stringify({ items }) })).items || {};
+          applyNavConfig(); close();
+        } catch (e) { alert('Failed to save navigation: ' + e.message); }
+      };
+      document.getElementById('rlNavEditReset').addEventListener('click', () => { if (confirm('Reset all navigation items to their defaults?')) save({}); });
+      document.getElementById('rlNavEditSave').addEventListener('click', () => {
+        const items = {};
+        list.querySelectorAll('.rl-navedit-row').forEach(row => {
+          const label = row.querySelector('[data-f=label]').value.trim();
+          const url = row.querySelector('[data-f=url]').value.trim();
+          const hidden = row.querySelector('[data-f=hidden]').checked;
+          if (label || url || hidden) items[row.dataset.key] = { label, url, hidden };
+        });
+        save(items);
+      });
+    }
+
     function setupTabs(){
       document.querySelectorAll('.rl-nav-item[data-tab]').forEach(btn => {
         btn.addEventListener('click', async () => {
@@ -2610,6 +2715,9 @@
       if (marketingHubBtn) marketingHubBtn.classList.toggle('hidden', !(me.role === 'admin' && !viewingAsRA));
       const seedPanel = document.getElementById('seedPanel');
       if (seedPanel) seedPanel.classList.toggle('hidden', !(me.role === 'admin' && !viewingAsRA));
+
+      const navEditBtn = document.getElementById('rlNavEditBtn');
+      if (navEditBtn) navEditBtn.classList.toggle('hidden', !isAdminTier);
 
       setupPermissions();
 
@@ -2755,6 +2863,7 @@
         <div class="rl-mini-item">
           <div class="rl-mini-item-title">${a.pinned ? '<span class="rl-pill pinned">Pinned</span>' : ''}${esc(a.title)}</div>
           <div class="rl-mini-item-meta">${esc(a.createdBy)} · ${fmtDate(a.createdAt)}</div>
+          ${annPreview(a.message)}
         </div>
       `).join('');
 
@@ -2813,6 +2922,29 @@
       return fmtDate(iso);
     }
 
+    function openImageLightbox(src){
+      if (!src) return;
+      const box = document.createElement('div');
+      box.className = 'rl-lightbox';
+      const img = document.createElement('img');
+      img.src = src; img.alt = 'Announcement image';
+      box.appendChild(img);
+      const close = () => { box.remove(); document.removeEventListener('keydown', onKey); };
+      const onKey = e => { if (e.key === 'Escape') close(); };
+      box.addEventListener('click', close);
+      document.addEventListener('keydown', onKey);
+      document.body.appendChild(box);
+    }
+
+    function annPreview(html){
+      const tmp = document.createElement('div');
+      tmp.innerHTML = sanitizeAnnHtml(html);
+      const img = tmp.querySelector('img');
+      const text = (tmp.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 160);
+      if (!img && !text) return '';
+      return `<div class="rl-mini-item-body">${img ? `<img src="${esc(img.getAttribute('src') || '')}" alt="">` : ''}<span>${esc(text)}</span></div>`;
+    }
+
     async function loadAnnouncements(){
       const list = document.getElementById('annList');
       list.innerHTML = '<div class="rl-loading">Loading…</div>';
@@ -2835,6 +2967,7 @@
           <div class="rl-ann-card-body">${sanitizeAnnHtml(a.message)}</div>
         </div>
       `).join('');
+      list.querySelectorAll('.rl-ann-card-body img').forEach(img => img.addEventListener('click', () => openImageLightbox(img.src)));
       list.querySelectorAll('[data-ann-edit]').forEach(btn => btn.addEventListener('click', () => {
         const a = docs.find(x => x.id === btn.getAttribute('data-ann-edit'));
         if (a) openAnnouncementForm(a);
