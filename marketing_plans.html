@@ -4,1754 +4,1333 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Marketing Plans • Marketing Hub</title>
-  <link rel="preconnect" href="https://use.typekit.net" crossorigin>
-  <link rel="preconnect" href="https://p.typekit.net" crossorigin>
   <link rel="stylesheet" href="https://use.typekit.net/hqv8hwr.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-  <meta name="description" content="Create, edit, and track 30 & 60 day marketing plans by property." />
   <style>
-    :root{ --brand-primary:#446472; --brand-accent:#ffb732; --brand-accent-2:#52d5ff; --brand-gray:#929497; --page-bg:#f8fafc; --bg:#ffffff; --panel:#ffffff; --text:#1e293b; --subtext:#64748b; --accent:var(--brand-accent-2); --border:#e2e8f0; --success:#22c55e; --warning:#f59e0b; --danger:#ef4444; }
+    :root{--brand:#446472;--accent:#ffb732;--accent2:#52d5ff;--bg:#f8fafc;--text:#1e293b;--sub:#64748b;--border:#e2e8f0;--ok:#16a34a;--risk:#d97706;--off:#dc2626}
     *{box-sizing:border-box;margin:0;padding:0}
-    html,body{height:100%}
-    body{margin:0; font-family:'Open Sans',system-ui,-apple-system,sans-serif; background:var(--page-bg); color:var(--text);font-size:14px;line-height:1.5}
-    
-    /* Header */
+    body{font-family:'Open Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+    .hidden{display:none!important}
+    /* Header layout; standard-nav.js supplies the shared header styles */
     header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
     .brand{display:flex;align-items:center;gap:10px}
     .brand .logo-img{height:28px;width:auto}
     .brand .title{color:#ffb732;font-family:zooja-pro,Arial,sans-serif;font-size:clamp(32px,4vw,48px);line-height:1}
     .header-controls{display:flex;align-items:center;gap:12px;margin-left:auto}
-    .header-btn{background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;transition:all .15s;width:auto}
+    .header-controls select{width:auto;min-width:200px;padding:8px 12px;border-radius:6px}
+    .header-btn{background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;white-space:nowrap;font-family:inherit}
     .header-btn:hover{background:#f8fafc;border-color:#cbd5e1}
-    .company-name{font-size:12px;color:var(--subtext);font-weight:500}
-
-    /* Navigation */
-    .nav-bar{background:#fff;border-bottom:1px solid var(--border)}
-    .nav-wrap{max-width:1400px;margin:0 auto;padding:0 24px;display:flex;gap:2px;overflow-x:auto}
-    .nav-tab{display:flex;align-items:center;gap:6px;padding:14px 16px;color:var(--subtext);text-decoration:none;font-size:13px;font-weight:600;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap}
-    .nav-tab:hover{color:var(--text);background:#f8fafc}
-    .nav-tab.active{color:var(--brand-primary);border-bottom-color:var(--brand-primary)}
-
-    .container{padding:24px; max-width:1600px; margin:0 auto}
-
-    /* Cards */
-    .card{background:#ffffff; border:1px solid var(--border); border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,0.06); overflow:hidden; margin-bottom:20px}
-    .card h3{margin:0; padding:16px 20px; font-size:15px; color:#374151; font-weight:700; font-family: Roboto, Arial, sans-serif; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--border); background:#f8fafc}
-    .card .content{padding:20px}
-
-    /* Form Elements */
-    label{font-size:12px; color:#6b7280; display:block; margin-bottom:6px; font-weight:600}
-    input, select, textarea{width:100%; padding:10px 12px; border-radius:8px; border:1px solid #d1d5db; background:#fff; color:var(--text); font-size:14px; transition:border-color .15s, box-shadow .15s; font-family:inherit}
-    input:focus, select:focus, textarea:focus{outline:none; border-color:var(--brand-accent-2); box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
-    textarea{min-height:80px;resize:vertical}
-
-    /* Buttons */
-    .btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 18px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--text); font-weight:600; cursor:pointer; font-size:14px; transition:all .15s; width:auto}
-    .btn:hover{background:#f8fafc}
-    .btn.primary{background:var(--brand-accent-2); border-color:var(--brand-accent-2); color:#0b1b24}
-    .btn.primary:hover{background:#3ecbf5}
-    .btn.success{background:var(--success); border-color:var(--success); color:#fff}
-    .btn.success:hover{background:#16a34a}
-    .btn.warning{background:var(--warning); border-color:var(--warning); color:#fff}
-    .btn.warning:hover{background:#d97706}
-    .btn.danger{background:var(--danger); border-color:var(--danger); color:#fff}
-    .btn.danger:hover{background:#dc2626}
-    .btn.sm{padding:6px 12px; font-size:13px}
-    .btn:disabled{opacity:0.5; cursor:not-allowed}
-
-    .badge{display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; background:#f1f5f9; color:#475569; border:1px solid var(--border); font-weight:600}
-    .badge.success{background:#dcfce7;color:#166534;border-color:#bbf7d0}
-    .badge.warning{background:#fef3c7;color:#92400e;border-color:#fde68a}
-    .badge.danger{background:#fee2e2;color:#991b1b;border-color:#fecaca}
-    .badge.info{background:#dbeafe;color:#1e40af;border-color:#bfdbfe}
-    .badge.primary{background:var(--brand-accent-2);color:#fff;border-color:var(--brand-accent-2)}
-
-    .hint{font-size:12px; color:#6b7280; margin-top:6px}
-
-    /* Two Column Layout */
-    .two-col{display:grid; grid-template-columns:340px 1fr; gap:24px; align-items:start}
-    @media(max-width:1000px){.two-col{grid-template-columns:1fr}}
-
-    /* Plan List Sidebar */
-    .plan-list-card{background:#fff; border:1px solid var(--border); border-radius:14px; overflow:hidden; position:sticky; top:140px}
-    .plan-list-header{padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between}
-    .plan-list-header h2{font-size:15px; font-weight:700; color:var(--text); margin:0}
-    .plan-count{font-size:12px; color:var(--subtext); background:#f1f5f9; padding:4px 10px; border-radius:999px}
-    
-    .plan-filters{padding:12px 16px; border-bottom:1px solid var(--border); display:flex; gap:8px; flex-wrap:wrap}
-    .plan-filters select, .plan-filters input{padding:8px 10px; font-size:13px}
-
-    .plan-list{max-height:calc(100vh - 380px); overflow-y:auto}
-    .plan-item{padding:14px 20px; border-bottom:1px solid var(--border); cursor:pointer; transition:background .15s}
-    .plan-item:last-child{border-bottom:none}
-    .plan-item:hover{background:#f8fafc}
-    .plan-item.active{background:#eff6ff; border-left:3px solid var(--brand-accent-2)}
-    .plan-item-name{font-weight:600; color:var(--text); margin-bottom:4px}
-    .plan-item-meta{font-size:12px; color:var(--subtext); display:flex; gap:8px; flex-wrap:wrap; align-items:center}
-
-    .add-plan-btn{width:100%; padding:14px 20px; background:#fff; border:none; border-top:1px solid var(--border); color:var(--brand-primary); font-weight:600; font-size:14px; cursor:pointer; transition:background .15s; display:flex; align-items:center; justify-content:center; gap:8px}
-    .add-plan-btn:hover{background:#f0f9ff}
-
-    /* Plan Detail Panel */
-    .detail-panel{min-width:0}
-    .detail-card{background:#fff; border:1px solid var(--border); border-radius:14px; overflow:hidden}
-    .detail-header{padding:20px 24px; border-bottom:1px solid var(--border); background:linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)}
-    .detail-header h2{font-size:20px; font-weight:700; color:var(--text); margin:0 0 8px 0}
-    .detail-actions{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px}
-
-    /* Metrics Cards */
-    .metrics-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:12px; margin-top:16px}
-    .metric-card{background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px 16px; text-align:center}
-    .metric-card.highlight{background:linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-color:#bbf7d0}
-    .metric-card.warning-highlight{background:linear-gradient(135deg, #fefce8 0%, #fef9c3 100%); border-color:#fde047}
-    .metric-label{font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px}
-    .metric-values{display:flex; align-items:baseline; justify-content:center; gap:4px}
-    .metric-goal{font-size:22px; font-weight:700; color:var(--brand-primary)}
-    .metric-separator{color:#94a3b8; font-size:14px}
-    .metric-actual{font-size:22px; font-weight:700; color:var(--success)}
-    .metric-single{font-size:22px; font-weight:700; color:var(--brand-primary)}
-    .metric-pct{font-size:11px; color:#64748b; margin-top:4px}
-    .metric-progress{height:4px; background:#e5e7eb; border-radius:2px; margin-top:8px; overflow:hidden}
-    .metric-progress-bar{height:100%; border-radius:2px; transition:width .3s}
-
-    /* Week Tabs */
-    .week-tabs{display:flex; gap:4px; padding:16px 20px; border-bottom:1px solid var(--border); overflow-x:auto; background:#f8fafc}
-    .week-tab{padding:10px 16px; border-radius:8px; background:#fff; border:1px solid var(--border); font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; transition:all .15s}
-    .week-tab:hover{border-color:#cbd5e1}
-    .week-tab.active{background:var(--brand-accent-2); border-color:var(--brand-accent-2); color:#fff}
-    .week-tab .week-progress{font-size:11px; font-weight:400; opacity:0.8}
-
-    /* Week Content */
-    .week-content{padding:20px}
-    .week-header{display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:20px; flex-wrap:wrap}
-    .week-title{font-size:18px; font-weight:700; color:var(--text)}
-    .week-dates{font-size:13px; color:var(--subtext)}
-    .week-stats{display:flex; gap:12px; flex-wrap:wrap}
-    .week-stat{text-align:center; padding:8px 16px; background:#f8fafc; border-radius:8px; border:1px solid var(--border)}
-    .week-stat-value{font-size:20px; font-weight:700; color:var(--brand-primary)}
-    .week-stat-label{font-size:11px; color:var(--subtext); text-transform:uppercase}
-
-    /* Weekly KPI Card */
-    .kpi-card{background:#fff; border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:20px}
-    .kpi-card-title{font-size:14px; font-weight:700; color:var(--text); margin-bottom:16px; text-transform:uppercase; letter-spacing:0.5px}
-    .kpi-grid{display:grid; grid-template-columns:repeat(4, 1fr); gap:16px}
-    @media(max-width:700px){.kpi-grid{grid-template-columns:repeat(2, 1fr)}}
-    .kpi-item{text-align:center}
-    .kpi-item label{font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:8px; display:block}
-    .kpi-item input{text-align:center; font-size:18px; font-weight:700; padding:12px; border-radius:8px}
-    .kpi-item .kpi-hint{font-size:11px; color:#94a3b8; margin-top:4px}
-
-    /* Current Special Banner */
-    .special-banner{background:linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border:1px solid #fcd34d; border-radius:10px; padding:16px 20px; margin-top:16px}
-    .special-banner-title{font-size:12px; font-weight:700; color:#92400e; text-transform:uppercase; margin-bottom:4px}
-    .special-banner-text{font-size:14px; color:#78350f; font-weight:500}
-
-    /* Proposed Specials Section */
-    .specials-section{margin-top:20px}
-    .specials-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:12px}
-    .special-card{background:#fff; border:1px solid var(--border); border-radius:10px; padding:16px; position:relative; transition:all .15s}
-    .special-card:hover{box-shadow:0 2px 8px rgba(0,0,0,0.08)}
-    .special-card.active{border-color:#fcd34d; background:linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)}
-    .special-card.proposed{border-color:#bfdbfe; background:linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)}
-    .special-card.expired{opacity:0.6; border-color:#e5e7eb}
-    .special-status{position:absolute; top:12px; right:12px}
-    .special-name{font-size:15px; font-weight:700; color:var(--text); margin-bottom:6px; padding-right:70px}
-    .special-desc{font-size:13px; color:#64748b; margin-bottom:10px}
-    .special-dates{font-size:12px; color:#94a3b8; display:flex; gap:12px; flex-wrap:wrap}
-    .special-actions{display:flex; gap:6px; margin-top:12px; padding-top:12px; border-top:1px solid var(--border)}
-
-    /* Outreach Tracking Section */
-    .outreach-section{margin-top:20px}
-    .outreach-card{background:#fff; border:1px solid var(--border); border-radius:10px; overflow:hidden}
-    .outreach-header{padding:14px 16px; background:#f8fafc; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:12px}
-    .outreach-title{font-size:14px; font-weight:700; color:var(--text)}
-    .outreach-stats{display:flex; gap:16px}
-    .outreach-stat{text-align:center}
-    .outreach-stat-value{font-size:18px; font-weight:700; color:var(--brand-primary)}
-    .outreach-stat-label{font-size:11px; color:#64748b; text-transform:uppercase}
-    
-    .outreach-table{width:100%; border-collapse:collapse}
-    .outreach-table th{background:#f8fafc; padding:10px 14px; text-align:left; font-size:12px; font-weight:700; color:#475569; text-transform:uppercase; border-bottom:1px solid var(--border)}
-    .outreach-table td{padding:12px 14px; border-bottom:1px solid var(--border); font-size:13px}
-    .outreach-table tr:last-child td{border-bottom:none}
-    .outreach-table tr:hover{background:#f8fafc}
-    
-    .contact-type-badge{display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:600}
-    .contact-type-badge.dept{background:#dbeafe; color:#1e40af}
-    .contact-type-badge.business{background:#dcfce7; color:#166534}
-    .contact-type-badge.general{background:#f3e8ff; color:#7c3aed}
-    
-    .visit-outcome{display:inline-block; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:600}
-    .visit-outcome.positive{background:#dcfce7; color:#166534}
-    .visit-outcome.neutral{background:#fef3c7; color:#92400e}
-    .visit-outcome.followup{background:#dbeafe; color:#1e40af}
-    .visit-outcome.declined{background:#fee2e2; color:#991b1b}
-
-    /* Activity Table */
-    .activity-section{margin-bottom:24px}
-    .activity-section-header{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; padding-bottom:8px; border-bottom:2px solid var(--border)}
-    .activity-section-title{font-size:14px; font-weight:700; color:var(--text); text-transform:uppercase; letter-spacing:0.5px}
-    
-    .activity-table{width:100%; border-collapse:separate; border-spacing:0; border:1px solid var(--border); border-radius:10px; overflow:hidden}
-    .activity-table th{background:#f8fafc; padding:12px 14px; text-align:left; font-size:12px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.5px; border-bottom:1px solid var(--border)}
-    .activity-table td{padding:12px 14px; border-bottom:1px solid var(--border); font-size:13px; vertical-align:top}
-    .activity-table tr:last-child td{border-bottom:none}
-    .activity-table tr:hover{background:#f8fafc}
-    
-    .activity-day{font-weight:700; color:var(--brand-primary); white-space:nowrap}
-    .activity-desc{max-width:300px}
-    .activity-goal{font-weight:600; color:var(--text)}
-    .activity-owner{font-size:12px; color:var(--subtext)}
-    .activity-status{text-align:center}
-    .activity-actual{font-size:12px; color:var(--subtext)}
-
-    /* Status Checkbox */
-    .status-check{width:20px; height:20px; border-radius:4px; border:2px solid #d1d5db; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .15s; margin:0 auto; font-size:12px; font-weight:700}
-    .status-check.done{background:var(--success); border-color:var(--success); color:#fff}
-
-    /* Empty State */
-    .empty-state{text-align:center; padding:60px 40px; color:var(--subtext)}
-    .empty-state h3{font-size:18px; color:var(--text); margin-bottom:8px}
-    .empty-state p{font-size:14px; margin-bottom:20px}
-
-    /* Modal */
-    .modal-overlay{position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:100; padding:20px; backdrop-filter:blur(4px)}
-    .modal-overlay.show{display:flex}
-    .modal{background:#fff; border:1px solid var(--border); border-radius:14px; max-width:900px; width:100%; max-height:90vh; overflow:auto; box-shadow:0 20px 40px rgba(0,0,0,0.15)}
-    .modal-header{padding:20px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; background:#fff; z-index:1}
-    .modal-header h3{margin:0; font-size:18px; color:var(--text); font-weight:700}
-    .modal-close{background:none; border:none; color:var(--subtext); font-size:24px; cursor:pointer; padding:0; width:auto; line-height:1}
-    .modal-close:hover{color:var(--text)}
-    .modal-body{padding:24px}
-    .modal-footer{padding:20px 24px; border-top:1px solid var(--border); display:flex; gap:12px; justify-content:flex-end; position:sticky; bottom:0; background:#fff}
-
-    /* Wizard Steps */
-    .wizard-progress{display:flex; justify-content:center; gap:8px; margin-bottom:24px; padding:0 20px; flex-wrap:wrap}
-    .wizard-step{display:flex; flex-direction:column; align-items:center; gap:6px; opacity:0.4; transition:opacity .3s}
-    .wizard-step.active{opacity:1}
-    .wizard-step.completed{opacity:0.7}
-    .step-number{width:36px; height:36px; border-radius:50%; background:#e5e7eb; color:#6b7280; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px}
-    .wizard-step.active .step-number{background:var(--brand-accent-2); color:#fff; box-shadow:0 0 0 4px rgba(82,213,255,0.2)}
-    .wizard-step.completed .step-number{background:var(--success); color:#fff}
-    .step-label{font-size:11px; font-weight:600; color:#6b7280; white-space:nowrap}
-    .wizard-step.active .step-label{color:var(--text)}
-    .step-connector{width:30px; height:2px; background:#e5e7eb; margin-top:18px}
-
-    /* Form Sections */
-    .form-section{margin-bottom:24px}
-    .form-section-title{font-size:14px; font-weight:700; color:var(--text); margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--border)}
-    .form-row{display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:16px; margin-bottom:16px}
-    .form-row:last-child{margin-bottom:0}
-
-    /* Plan Type Cards */
-    .plan-type-cards{display:grid; grid-template-columns:repeat(3, 1fr); gap:12px}
-    @media(max-width:600px){.plan-type-cards{grid-template-columns:1fr}}
-    .plan-type-card{display:flex; flex-direction:column; align-items:center; padding:20px; border:2px solid var(--border); border-radius:10px; background:#fff; cursor:pointer; transition:all .2s; text-align:center}
-    .plan-type-card:hover{border-color:#cbd5e1; box-shadow:0 2px 8px rgba(0,0,0,0.08)}
-    .plan-type-card.selected{border-color:var(--brand-accent-2); background:#f0f9ff; box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
-    .plan-type-icon{width:50px; height:50px; border-radius:50%; background:var(--border); color:#6b7280; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:700; margin-bottom:10px}
-    .plan-type-card.selected .plan-type-icon{background:var(--brand-accent-2); color:#fff}
-    .plan-type-title{font-size:15px; font-weight:700; color:var(--text); margin-bottom:4px}
-    .plan-type-desc{font-size:12px; color:var(--subtext)}
-
-    /* Key Dates List */
-    .key-dates-list{display:flex; flex-direction:column; gap:8px}
-    .key-date-item{display:flex; align-items:center; gap:12px; padding:10px 14px; background:#f8fafc; border:1px solid var(--border); border-radius:8px}
-    .key-date-dot{width:8px; height:8px; border-radius:50%; background:var(--brand-accent-2); flex-shrink:0}
-    .key-date-label{flex:1; font-weight:600; color:var(--text)}
-    .key-date-date{font-size:13px; color:var(--subtext)}
-    .key-date-remove{background:none; border:none; color:#9ca3af; cursor:pointer; font-size:18px; padding:0; width:auto}
-    .key-date-remove:hover{color:var(--danger)}
-
-    /* Template Suggestions */
-    .template-section{margin-top:16px; padding-top:16px; border-top:1px solid var(--border)}
-    .template-section-title{font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:10px}
-    .template-chips{display:flex; flex-wrap:wrap; gap:6px}
-    .template-chip{padding:6px 12px; background:#f1f5f9; border:1px solid var(--border); border-radius:6px; font-size:12px; color:var(--text); cursor:pointer; transition:all .15s}
-    .template-chip:hover{background:#e2e8f0; border-color:#cbd5e1}
-    .template-chip.selected{background:var(--brand-accent-2); border-color:var(--brand-accent-2); color:#fff}
-
-    /* Special Templates */
-    .special-templates{display:flex; flex-direction:column; gap:8px; margin-top:12px}
-    .special-template{padding:12px 14px; background:#fefce8; border:1px solid #fde047; border-radius:8px; cursor:pointer; transition:all .15s}
-    .special-template:hover{background:#fef9c3; border-color:#facc15}
-    .special-template-title{font-size:12px; font-weight:700; color:#854d0e; margin-bottom:4px}
-    .special-template-text{font-size:13px; color:#713f12}
-
-    .hidden{display:none}
-
-    /* Login */
-    #loginView{min-height:100vh; display:none; align-items:center; justify-content:center; padding:20px; background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)}
-    #bootLoader{position:fixed; inset:0; background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); display:flex; align-items:center; justify-content:center; z-index:100}
-    @keyframes spin{to{transform:rotate(360deg)}}
-
-    /* Print Styles */
+    .company-name{font-size:12px;color:var(--sub);font-weight:500}
+    .planbar{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap}
+    .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--text);font-weight:600;cursor:pointer;font-size:13px;text-decoration:none;font-family:inherit}
+    .btn:hover{background:#f1f5f9}
+    .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+    .btn.primary:hover{background:#36525e}
+    .btn.accent{background:var(--accent2);border-color:var(--accent2);color:#0b1b24}
+    .btn.ghost{border-color:transparent;background:transparent;color:var(--sub)}
+    .btn.sm{padding:4px 10px;font-size:12px}
+    .btn.danger{color:var(--off)}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    input,select,textarea{width:100%;padding:8px 10px;border-radius:7px;border:1px solid #d1d5db;font-size:13px;font-family:inherit;background:#fff;color:var(--text)}
+    input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent2);box-shadow:0 0 0 3px rgba(82,213,255,.15)}
+    textarea{min-height:64px;resize:vertical}
+    label{font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:4px}
+    .wrap{max-width:1400px;margin:0 auto;padding:20px 24px;min-width:0}
+    #main,.card,.card .body{min-width:0}
+    .main-content{overflow-x:hidden}
+    .tscroll{overflow-x:auto;max-width:100%}
+    .card{background:#fff;border:1px solid var(--border);border-radius:12px;margin-bottom:18px;overflow:hidden}
+    .card>h3{padding:14px 18px;font-size:15px;font-family:Roboto,Arial,sans-serif;border-bottom:1px solid var(--border);background:#f8fafc;display:flex;align-items:center;gap:10px}
+    .card>h3 .sub{font-weight:400;font-size:12px;color:var(--sub);margin-left:auto}
+    .card .body{padding:16px 18px}
+    .step{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--brand);color:#fff;font-size:12px}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    @media(max-width:800px){.grid2,.grid3,.grid4{grid-template-columns:1fr}}
+    .hint{font-size:12px;color:var(--sub);margin-top:4px}
+    .empty-row{padding:14px;text-align:center;color:var(--sub);font-size:13px;background:#fafcff;border:1px dashed var(--border);border-radius:8px}
+    /* status */
+    .pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}
+    .pill.ok{background:#dcfce7;color:#166534}.pill.risk{background:#fef3c7;color:#92400e}.pill.off{background:#fee2e2;color:#991b1b}.pill.na{background:#f1f5f9;color:#64748b}
+    .pill.done{background:#dcfce7;color:#166534}.pill.prog{background:#dbeafe;color:#1e40af}.pill.blocked{background:#fee2e2;color:#991b1b}
+    .pill.idea{background:#f1f5f9;color:#475569}.pill.planned{background:#dbeafe;color:#1e40af}.pill.approved{background:#ede9fe;color:#5b21b6}.pill.cancelled{background:#f1f5f9;color:#94a3b8;text-decoration:line-through}
+    .pill.due{background:#fff7e6;color:#92400e;border:1px solid var(--accent)}
+    /* save state */
+    .savestate{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--sub);font-weight:600}
+    .savestate i{width:8px;height:8px;border-radius:50%;background:#94a3b8;display:inline-block}
+    .savestate.saved i{background:var(--ok)}
+    .savestate.pending i,.savestate.saving i{background:var(--accent)}
+    .savestate.error{color:var(--off)}.savestate.error i{background:var(--off)}
+    .livenote{font-size:12px;color:var(--sub)}
+    /* health strip */
+    .health{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+    @media(max-width:900px){.health{grid-template-columns:repeat(2,1fr)}}
+    .hcard{border:1px solid var(--border);border-radius:10px;padding:12px 14px;background:#fff}
+    .hcard .k{font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase}
+    .hcard .v{font-size:22px;font-weight:700;color:var(--brand)}
+    .hcard .s{font-size:12px;color:var(--sub)}
+    .bar{height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden;margin-top:6px}
+    .bar>i{display:block;height:100%;background:var(--accent2)}
+    .timeline{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:14px}
+    .timeline div{padding:8px 10px;border-radius:6px;background:#f1f5f9;font-size:12px;font-weight:600;color:var(--sub)}
+    .timeline div.now{background:var(--brand);color:#fff}
+    .timeline div.past{background:#e0f2fe;color:#0c4a6e}
+    /* tables */
+    table{width:100%;border-collapse:collapse}
+    th{text-align:left;font-size:11px;text-transform:uppercase;color:var(--sub);font-weight:700;padding:8px 6px;border-bottom:2px solid var(--border);background:#f8fafc;white-space:nowrap}
+    td{padding:6px;border-bottom:1px solid var(--border);vertical-align:top}
+    td input,td select{padding:6px 8px;font-size:13px}
+    td.num input{text-align:right;width:72px;padding:6px}
+    .mcfg{display:flex;gap:4px;margin-top:4px}
+    .mcfg select{padding:3px 4px;font-size:11px;color:var(--sub);width:auto}
+    .grp{text-align:center;background:#eef6f9;color:var(--brand)}
+    .auto{display:inline-block;padding:6px 8px;font-weight:700;color:var(--brand);background:#f0f9ff;border-radius:6px;min-width:56px;text-align:right}
+    .auto small{font-weight:400;color:var(--sub);font-size:10px;display:block;text-align:right}
+    .pick{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
+    .pick select{width:auto;min-width:260px}
+    /* phases */
+    .phase-tabs{display:flex;gap:6px;padding:12px 18px;border-bottom:1px solid var(--border);background:#f8fafc;flex-wrap:wrap}
+    .phase-tab{flex:1;min-width:180px;text-align:left;padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:#fff;cursor:pointer;font-weight:600;font-size:13px;font-family:inherit}
+    .phase-tab.active{background:var(--brand);color:#fff;border-color:var(--brand)}
+    .exit-row{display:flex;gap:8px;align-items:center;margin-bottom:6px}
+    .exit-row input[type=checkbox]{width:18px;height:18px;flex:none}
+    .empty{text-align:center;padding:60px 20px;color:var(--sub)}
+    #toast{position:fixed;bottom:20px;right:20px;background:#1e293b;color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;z-index:100;display:none}
+    /* ===== Weekly activations ===== */
+    .kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:14px}
+    @media(max-width:1000px){.kpis{grid-template-columns:repeat(3,1fr)}}
+    .kpi{border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:#fafcff}
+    .kpi .k{font-size:10px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.3px}
+    .kpi .v{font-size:20px;font-weight:700;color:var(--brand)}
+    .kpi .s{font-size:11px;color:var(--sub)}
+    .week{border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden}
+    .week-h{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f8fafc;flex-wrap:wrap}
+    .week-h .t{font-weight:700}
+    .week-h .d{color:var(--sub);font-size:12px}
+    .week-h .tot{margin-left:auto;font-size:12px;color:var(--sub)}
+    .week.now{border-color:var(--brand);box-shadow:0 0 0 2px rgba(68,100,114,.15)}
+    .ev{display:grid;grid-template-columns:100px minmax(0,2fr) minmax(0,1.4fr) 90px 120px 24px;gap:10px;align-items:center;padding:10px 14px;border-top:1px solid var(--border);font-size:13px;cursor:pointer}
+    .ev:hover{background:#f0f9ff}
+    .ev .nm{font-weight:600}
+    .ev .sm{font-size:12px;color:var(--sub)}
+    .ev .chev{color:var(--sub);font-size:18px;text-align:right}
+    @media(max-width:900px){.ev{grid-template-columns:1fr 1fr}}
+    .week .empty-w{padding:8px 14px;border-top:1px solid var(--border);font-size:12px;color:var(--sub)}
+    .phase-div{font-size:11px;font-weight:700;text-transform:uppercase;color:var(--brand);letter-spacing:.5px;margin:14px 0 6px}
+    /* month budget */
+    .mrow td{background:#f8fafc;font-weight:700}
+    .neg{color:var(--off);font-weight:700}.pos{color:var(--ok);font-weight:700}
+    /* ===== Modal (wizard + activation detail) ===== */
+    .modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:90;display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto}
+    .modal-bg.show{display:flex}
+    .modal{background:#fff;border-radius:14px;width:100%;max-width:820px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+    .modal-h{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .modal-h h3{font-size:16px;font-family:Roboto,Arial,sans-serif}
+    .modal-b{padding:18px 20px}
+    .modal-f{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+    .steps{display:flex;gap:4px;padding:10px 20px;background:#f8fafc;border-bottom:1px solid var(--border);flex-wrap:wrap}
+    .steps span{flex:1;min-width:110px;text-align:center;font-size:12px;font-weight:600;padding:6px;border-radius:6px;color:var(--sub);background:#fff;border:1px solid var(--border);cursor:pointer}
+    .steps span.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+    .steps span.done{background:#e0f2fe;color:#0c4a6e}
+    .tpl{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+    .tpl button,.chip{padding:6px 10px;border-radius:999px;border:1px solid var(--border);background:#fff;font-size:12px;cursor:pointer;font-family:inherit;color:var(--text)}
+    .tpl button:hover,.tpl button.on,.chip:hover,.chip.on{background:#f0f9ff;border-color:var(--accent2)}
+    .chip.on{font-weight:700;color:var(--brand)}
+    .chips{display:flex;flex-wrap:wrap;gap:6px}
+    .fld{margin-bottom:12px}
+    .track{display:flex;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px}
+    .track input[type=checkbox]{width:18px;height:18px;flex:none}
+    .track .tl{flex:1}
+    .track .tl b{display:block;font-size:13px}
+    .track .tl span{font-size:12px;color:var(--sub)}
+    .track input[type=number]{width:110px}
+    .chk{display:flex;gap:8px;align-items:center;margin-bottom:6px}
+    .chk input[type=checkbox]{width:18px;height:18px;flex:none}
+    .chk.done input[type=text]{text-decoration:line-through;color:var(--sub)}
+    .callbox{background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:12px 14px;font-size:13px}
+    .callbox.warn{background:#fff7e6;border-color:#fde68a}
+    /* detail view */
+    .dv-meta{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--sub);margin-bottom:14px}
+    .dv-meta b{color:var(--text)}
+    .dv-cols{display:grid;grid-template-columns:1fr 1.25fr;gap:18px}
+    @media(max-width:760px){.dv-cols{grid-template-columns:1fr}}
+    .dv-sec{font-size:11px;font-weight:700;text-transform:uppercase;color:var(--brand);letter-spacing:.5px;border-bottom:2px solid var(--accent);padding-bottom:4px;margin:0 0 10px}
+    .dv-list{font-size:13px}
+    .dv-list div{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid #f1f5f9}
+    .dv-list div span:first-child{color:var(--sub)}
+    .calc{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+    .calc .c{background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:10px 12px}
+    .calc .c .k{font-size:10px;font-weight:700;text-transform:uppercase;color:var(--sub)}
+    .calc .c .v{font-size:20px;font-weight:700;color:var(--brand)}
+    .calc .c .s{font-size:11px;color:var(--sub)}
+    .link{background:none;border:none;color:var(--brand);font-weight:700;font-size:12px;cursor:pointer;padding:0;font-family:inherit;text-decoration:underline}
+    /* ===== Report (export) ===== */
+    #report{display:none;background:#fff;max-width:1000px;margin:20px auto;padding:36px 40px;border:1px solid var(--border);border-radius:12px;font-size:12.5px}
+    #report h1{font-family:Roboto,Arial,sans-serif;font-size:22px;color:var(--brand)}
+    #report h2{font-family:Roboto,Arial,sans-serif;font-size:14px;color:var(--brand);text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid var(--accent);padding-bottom:4px;margin:20px 0 10px}
+    #report h4{font-size:13px;margin:10px 0 4px}
+    #report .meta{color:var(--sub);font-size:12px}
+    #report table{font-size:11.5px}
+    #report th,#report td{padding:5px 6px}
+    #report .callout{background:#f8fafc;border-left:4px solid var(--brand);padding:10px 14px;border-radius:4px;margin-bottom:8px}
+    #report .two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    #report ul{margin-left:18px}
+    .pagebreak{break-before:page}
+    body.preview #app{display:none}
+    body.preview #report{display:block}
     @media print{
-      header, .nav-bar, .plan-list-card, .detail-actions, .add-plan-btn{display:none !important}
-      .two-col{grid-template-columns:1fr}
-      .detail-card{box-shadow:none; border:none}
+      @page{size:letter;margin:0.5in}
+      body{background:#fff}
+      header,#sidebarNav,#navToggle,#app,#boot,#toast,#evModal{display:none!important}
+      .main-content{margin-left:0!important}
+      #report{display:block!important;border:none;margin:0;padding:0;max-width:none}
+      .no-print{display:none!important}
+      tr,.callout{break-inside:avoid}
+      .pill{-webkit-print-color-adjust:exact;print-color-adjust:exact}
     }
   </style>
 </head>
 <body>
-  <div id="bootLoader">
-    <div style="display:flex;flex-direction:column;gap:12px;align-items:center">
-      <div style="width:48px;height:48px;border:4px solid #e5e7eb;border-top-color:#446472;border-radius:50%;animation:spin 1s linear infinite"></div>
-      <div style="font-weight:700;font-size:18px;color:#446472">Marketing Hub</div>
-      <div style="font-size:12px;color:#6b7280">Loading your workspace…</div>
-    </div>
-  </div>
-
-  <div id="loginView">
-    <div class="card" style="max-width:440px;width:100%;box-shadow:0 10px 25px rgba(0,0,0,0.1)">
-      <h3 style="justify-content:center;font-size:18px">Welcome Back</h3>
-      <div class="content">
-        <p style="text-align:center;color:#6b7280;font-size:14px;margin-bottom:20px">Sign in to access Marketing Plans</p>
-        <div style="margin-bottom:16px">
-          <label for="loginUsername">Username</label>
-          <input id="loginUsername" type="text" autocomplete="username" placeholder="Enter your username" />
-        </div>
-        <div style="margin-bottom:16px">
-          <label for="loginPassword">Password</label>
-          <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Enter your password" />
-        </div>
-        <div style="margin-bottom:20px">
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-            <input id="togglePw" type="checkbox" style="width:auto" /> Show password
-          </label>
-        </div>
-        <button id="loginBtn" class="btn success" style="width:100%">Sign In</button>
-        <div id="loginError" style="margin-top:12px;padding:10px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#dc2626;font-size:13px;display:none"></div>
-      </div>
-    </div>
-  </div>
-
   <header id="appHeader" class="hidden">
     <div class="brand">
       <img src="logo-main.svg" class="logo-img" alt="Capstone" />
       <div class="title">Marketing Hub</div>
     </div>
     <div class="header-controls">
-      <select id="propertySelect" style="min-width:200px;padding:8px 12px"></select>
+      <select id="propertySelect"></select>
       <button id="logoutBtn" class="header-btn">Sign Out</button>
-      <a href="marketing_plans_test.html" class="header-btn" style="text-decoration:none;background:#fff7e6;border-color:#ffb732" title="Try the new 30-60-90 Day Plan (test version)">Switch to 30-60-90 (Test)</a>
       <button id="adminPageBtn" class="header-btn hidden">Admin</button>
     </div>
     <span class="company-name">Capstone Management Partners</span>
   </header>
 
-  <nav class="nav-bar" id="navBar">
-    <div class="nav-wrap">
-      <a href="mmp_calendar_app.html" class="nav-tab">Marketing Calendar</a>
-      <a href="marketing_plans.html" class="nav-tab active">Marketing Plans</a>
-      <a href="marketing_contacts.html" class="nav-tab">Marketing Contacts</a>
-      <a href="promo_order_tracker.html" class="nav-tab">Promo Order Tracker</a>
-      <a href="renewal_campaign.html" class="nav-tab">Renewal Campaign</a>
-      <a href="velocity_tracker.html" class="nav-tab">Velocity Tracker</a>
-      <a href="uniform_shop.html" class="nav-tab">Uniform Shop</a>
-      <a href="creative_library.html" class="nav-tab">Creative Library</a>
-      <a href="custom_tools.html" class="nav-tab">Custom Tools</a>
-    </div>
-  </nav>
-  
-  <main id="appContainer" class="container hidden">
-    <div class="two-col">
-      <!-- Plan List Sidebar -->
-      <aside>
-        <div class="plan-list-card">
-          <div class="plan-list-header">
-            <h2>Marketing Plans</h2>
-            <span class="plan-count" id="planCount">0</span>
-          </div>
-          <div class="plan-filters">
-            <select id="filterType" style="flex:1">
-              <option value="all">All Types</option>
-              <option value="30_day">30 Day</option>
-              <option value="60_day">60 Day</option>
-              <option value="90_day">90 Day</option>
-            </select>
-            <input id="filterTerm" type="text" placeholder="Search..." style="flex:1" />
-          </div>
-          <div class="plan-list" id="planList">
-            <div class="empty-state" style="padding:40px 20px">
-              <p>No plans yet</p>
-            </div>
-          </div>
-          <button class="add-plan-btn" id="newPlanBtn">
-            + Create New Plan
-          </button>
-        </div>
-      </aside>
+  <div id="boot" class="empty">Loading…</div>
 
-      <!-- Plan Detail Panel -->
-      <section class="detail-panel">
-        <div id="planDetailCard" class="detail-card">
-          <div id="emptyState" class="empty-state" style="padding:80px 40px">
-            <h3>Select or Create a Plan</h3>
-            <p>Choose a plan from the list to view and track progress, or create a new marketing plan.</p>
-            <button class="btn primary" id="emptyNewPlanBtn">Create New Plan</button>
-          </div>
-
-          <div id="planDetail" class="hidden">
-            <!-- Header -->
-            <div class="detail-header" id="planHeader"></div>
-            
-            <!-- Week Tabs -->
-            <div class="week-tabs" id="weekTabs"></div>
-            
-            <!-- Week Content -->
-            <div class="week-content" id="weekContent"></div>
-          </div>
-        </div>
-      </section>
-    </div>
-  </main>
-
-  <!-- Create/Edit Plan Modal -->
-  <div id="planModal" class="modal-overlay">
-    <div class="modal">
-      <div class="modal-header">
-        <h3 id="modalTitle">Create Marketing Plan</h3>
-        <button class="modal-close" id="closeModal">&times;</button>
-      </div>
-      <div class="modal-body">
-        <!-- Wizard Progress -->
-        <div class="wizard-progress" id="wizardProgress"></div>
-        
-        <!-- Step Content -->
-        <div id="wizardContent"></div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn" id="wizardBack">Back</button>
-        <button class="btn primary" id="wizardNext">Next</button>
-        <button class="btn success hidden" id="wizardSave">Save Plan</button>
-        <button class="btn" id="wizardCancel">Cancel</button>
-      </div>
+  <div id="app" class="hidden">
+    <div class="wrap">
+      <div class="card"><div class="body planbar">
+        <div style="flex:1;min-width:220px;max-width:460px"><label>30-60-90 plans for this property (<span id="planCount">0</span>)</label><select id="planSelect"></select></div>
+        <button class="btn primary" id="newPlanBtn">+ New 30-60-90 Plan</button>
+        <div class="hint" style="flex:2;min-width:240px;margin:0"><b>How it works:</b> write the brief → add the metrics you'll track → plan initiatives by phase → schedule each week's marketing activations → log post-event results → export the HQ report. Everything saves automatically and teammates see changes live.</div>
+      </div></div>
+      <main id="main"><div class="empty">Select a plan or create a new one.</div></main>
     </div>
   </div>
 
-  <!-- Add Activity Modal -->
-  <div id="activityModal" class="modal-overlay">
-    <div class="modal" style="max-width:700px">
-      <div class="modal-header">
-        <h3>Add Activity</h3>
-        <button class="modal-close" id="closeActivityModal">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="form-row">
-          <div>
-            <label>Day of Week</label>
-            <select id="actDay">
-              <option>Monday</option>
-              <option>Tuesday</option>
-              <option>Wednesday</option>
-              <option>Thursday</option>
-              <option>Friday</option>
-              <option>Saturday</option>
-              <option>Sunday</option>
-            </select>
-          </div>
-          <div>
-            <label>Category</label>
-            <select id="actCategory" onchange="updateActivityTemplates()">
-              <option value="outreach">Outreach Marketing</option>
-              <option value="social">Social Media</option>
-              <option value="event">Event</option>
-              <option value="digital">Digital Marketing</option>
-              <option value="leasing">Leasing Activity</option>
-            </select>
-          </div>
-        </div>
-        
-        <!-- Activity Templates -->
-        <div class="template-section" id="activityTemplatesSection">
-          <div class="template-section-title">Quick Add Templates</div>
-          <div class="template-chips" id="activityTemplateChips"></div>
-        </div>
-        
-        <div style="margin-bottom:16px;margin-top:16px">
-          <label>Activity Description</label>
-          <textarea id="actDescription" placeholder="Describe the marketing activity..."></textarea>
-        </div>
-        <div class="form-row">
-          <div>
-            <label>Goal / Target</label>
-            <input id="actGoal" type="text" placeholder="e.g., 15 Leads, 200+ Views" />
-          </div>
-          <div>
-            <label>Responsible Person</label>
-            <input id="actOwner" type="text" placeholder="Team member name" />
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn" id="cancelActivity">Cancel</button>
-        <button class="btn success" id="saveActivity">Add Activity</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Add Special Modal -->
-  <div id="specialModal" class="modal-overlay">
-    <div class="modal" style="max-width:600px">
-      <div class="modal-header">
-        <h3 id="specialModalTitle">Add Proposed Special</h3>
-        <button class="modal-close" id="closeSpecialModal">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="form-row">
-          <div>
-            <label>Special Name *</label>
-            <input id="specialName" type="text" placeholder="e.g., Sign Fast Save Big" />
-          </div>
-          <div>
-            <label>Status</label>
-            <select id="specialStatus">
-              <option value="proposed">Proposed</option>
-              <option value="active">Active</option>
-              <option value="expired">Expired</option>
-            </select>
-          </div>
-        </div>
-        <div style="margin-bottom:16px">
-          <label>Description *</label>
-          <textarea id="specialDesc" placeholder="e.g., Sign within 48 hours for $1000 gift card or 1.5 months free!"></textarea>
-        </div>
-        <div class="form-row">
-          <div>
-            <label>Start Date</label>
-            <input id="specialStart" type="date" />
-          </div>
-          <div>
-            <label>End Date</label>
-            <input id="specialEnd" type="date" />
-          </div>
-        </div>
-        <div style="margin-top:16px">
-          <label>Notes</label>
-          <textarea id="specialNotes" placeholder="Any additional notes about this special..."></textarea>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn" id="cancelSpecial">Cancel</button>
-        <button class="btn success" id="saveSpecial">Save Special</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Add Outreach Visit Modal -->
-  <div id="outreachModal" class="modal-overlay">
-    <div class="modal" style="max-width:700px">
-      <div class="modal-header">
-        <h3>Log Outreach Visit</h3>
-        <button class="modal-close" id="closeOutreachModal">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="form-row">
-          <div>
-            <label>Contact Type *</label>
-            <select id="outreachType" onchange="loadContactOptions()">
-              <option value="department">Department Contact</option>
-              <option value="business">Local Business</option>
-              <option value="general">General Contact</option>
-              <option value="other">Other (Manual Entry)</option>
-            </select>
-          </div>
-          <div>
-            <label>Select Contact</label>
-            <select id="outreachContact">
-              <option value="">-- Select or enter below --</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-row" id="manualContactRow" style="display:none">
-          <div>
-            <label>Contact/Location Name</label>
-            <input id="outreachManualName" type="text" placeholder="Enter name manually" />
-          </div>
-          <div>
-            <label>Department/Business</label>
-            <input id="outreachManualDept" type="text" placeholder="Department or business name" />
-          </div>
-        </div>
-        <div class="form-row">
-          <div>
-            <label>Visit Date *</label>
-            <input id="outreachDate" type="date" />
-          </div>
-          <div>
-            <label>Visited By</label>
-            <input id="outreachVisitor" type="text" placeholder="Team member name" />
-          </div>
-        </div>
-        <div class="form-row">
-          <div>
-            <label>Outcome</label>
-            <select id="outreachOutcome">
-              <option value="positive">Positive - Good Reception</option>
-              <option value="neutral">Neutral - No Commitment</option>
-              <option value="followup">Follow-up Needed</option>
-              <option value="declined">Declined / Not Interested</option>
-            </select>
-          </div>
-          <div>
-            <label>Promo/Materials Left</label>
-            <input id="outreachPromo" type="text" placeholder="e.g., Flyers, Gift Bags" />
-          </div>
-        </div>
-        <div style="margin-top:16px">
-          <label>Notes</label>
-          <textarea id="outreachNotes" placeholder="Details about the visit, who you spoke with, next steps..."></textarea>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn" id="cancelOutreach">Cancel</button>
-        <button class="btn success" id="saveOutreach">Log Visit</button>
-      </div>
-    </div>
-  </div>
+  <div id="report"></div>
+  <div id="toast"></div>
+  <div class="modal-bg" id="evModal"><div class="modal" id="evModalBox"></div></div>
 
   <script>
-    // ==================== STATE ====================
-    let currentUser = null;
-    let properties = [];
-    let currentProperty = '';
-    let plans = [];
-    let selectedPlanId = null;
-    let selectedWeekIndex = 0;
-    let wizardStep = 1;
-    let wizardData = null;
-    let editingPlanId = null;
-    let addingActivityToWeek = null;
+  // ======================= STATE =======================
+  let me = null, properties = [], currentProperty = '', plans = [], plan = null, phaseTab = 0;
+  let draft = null, draftStep = 0, draftIsNew = false, modalMode = 'wizard'; // activation modal: 'wizard' | 'view'
+  // Auto-save / live sync
+  let base = null;            // last server snapshot we're in sync with (for 3-way merges)
+  let dirty = false, saving = false, saveQueued = false, saveTimer = null, retryTimer = null;
+  let saveState = 'saved', saveMsg = '';
+  const SAVE_DEBOUNCE_MS = 1200, POLL_MS = 10000;
 
-    // ==================== ELEMENTS ====================
-    const els = {
-      bootLoader: document.getElementById('bootLoader'),
-      loginView: document.getElementById('loginView'),
-      loginUsername: document.getElementById('loginUsername'),
-      loginPassword: document.getElementById('loginPassword'),
-      togglePw: document.getElementById('togglePw'),
-      loginBtn: document.getElementById('loginBtn'),
-      loginError: document.getElementById('loginError'),
-      appHeader: document.getElementById('appHeader'),
-      navBar: document.getElementById('navBar'),
-      appContainer: document.getElementById('appContainer'),
-      propertySelect: document.getElementById('propertySelect'),
-      logoutBtn: document.getElementById('logoutBtn'),
-      adminPageBtn: document.getElementById('adminPageBtn'),
-      filterType: document.getElementById('filterType'),
-      filterTerm: document.getElementById('filterTerm'),
-      planList: document.getElementById('planList'),
-      planCount: document.getElementById('planCount'),
-      newPlanBtn: document.getElementById('newPlanBtn'),
-      emptyNewPlanBtn: document.getElementById('emptyNewPlanBtn'),
-      emptyState: document.getElementById('emptyState'),
-      planDetail: document.getElementById('planDetail'),
-      planHeader: document.getElementById('planHeader'),
-      weekTabs: document.getElementById('weekTabs'),
-      weekContent: document.getElementById('weekContent'),
-      planModal: document.getElementById('planModal'),
-      modalTitle: document.getElementById('modalTitle'),
-      closeModal: document.getElementById('closeModal'),
-      wizardProgress: document.getElementById('wizardProgress'),
-      wizardContent: document.getElementById('wizardContent'),
-      wizardBack: document.getElementById('wizardBack'),
-      wizardNext: document.getElementById('wizardNext'),
-      wizardSave: document.getElementById('wizardSave'),
-      wizardCancel: document.getElementById('wizardCancel'),
-      activityModal: document.getElementById('activityModal'),
-      closeActivityModal: document.getElementById('closeActivityModal'),
-      cancelActivity: document.getElementById('cancelActivity'),
-      saveActivity: document.getElementById('saveActivity')
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const rid = () => 'r' + Math.random().toString(36).slice(2, 10);
+  const num = v => (v === '' || v == null || isNaN(+v)) ? null : +v;
+  const clone = o => JSON.parse(JSON.stringify(o));
+  const iso = d => { const z = new Date(d); return new Date(z.getTime() - z.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
+  const addDays = (s, n) => { const d = new Date(s + 'T00:00:00'); d.setDate(d.getDate() + n); return iso(d); };
+  const daysBetween = (a, b) => Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / 86400000);
+  const fmtDate = s => s ? new Date(s + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+  const fmtShort = s => s ? new Date(s + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+  const fmtDow = s => s ? new Date(s + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 'No date';
+  const fmtTime = t => { if (!t) return ''; const [h, m] = t.split(':').map(Number); return `${((h + 11) % 12) + 1}:${String(m).padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`; };
+  const monthLabel = k => new Date(k + '-01T00:00:00').toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const money = v => v == null ? '—' : '$' + Math.round(v).toLocaleString();
+  const money2 = v => v == null ? '—' : '$' + (+v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const today = () => iso(new Date());
+  function toast(m) { const t = $('toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(t._h); t._h = setTimeout(() => t.style.display = 'none', 2800); }
+
+  async function api(path, opts = {}) {
+    const res = await fetch('/api' + path, { ...opts, headers: { 'Content-Type': 'application/json' }, credentials: 'include' });
+    if (!res.ok) {
+      const text = await res.text(); let msg = text;
+      try { const j = JSON.parse(text); msg = j.message || j.detail || j.error || text; } catch (e) { }
+      if (res.status === 401) msg = 'Your session expired. Please log in again.';
+      const err = new Error(msg || 'HTTP ' + res.status); err.status = res.status; throw err;
+    }
+    return res.json();
+  }
+
+  // ======================= MODEL =======================
+  const PHASES = [{ d0: 1, d1: 30, label: 'Days 1–30' }, { d0: 31, d1: 60, label: 'Days 31–60' }, { d0: 61, d1: 90, label: 'Days 61–90' }];
+  const phaseTitle = i => PHASES[i].label + (plan?.ninety?.phases?.[i]?.theme ? ' · ' + plan.ninety.phases[i].theme : '');
+  const CPS = [30, 60, 90];
+  const WEEKS = 13;
+  const SOURCES = { '': 'Manual entry', ev_leads: 'Auto: guest cards from activations', ev_leases: 'Auto: leases from activations (7-day)', ev_att: 'Auto: activation attendance', ev_contacts: 'Auto: business contacts from activations', conv_lt: 'Calc: Tours ÷ Leads', conv_tl: 'Calc: Leases ÷ Tours', cost_gc: 'Calc: Activation spend ÷ guest cards', cost_lease: 'Calc: Activation spend ÷ Leases' };
+  // Library offered in the "Add a metric" picker. Nothing is preloaded; teams add only what their plan needs.
+  const METRIC_LIBRARY = [
+    ['Pre-lease / Occupancy', '%', 'up', 'prelease', ''],
+    ['Leases signed (cumulative)', '#', 'up', 'leases', ''],
+    ['Leads / guest cards (cumulative)', '#', 'up', 'leads', ''],
+    ['Tours (cumulative)', '#', 'up', 'tours', ''],
+    ['Applications (cumulative)', '#', 'up', 'apps', ''],
+    ['Guest cards from activations', '#', 'up', '', 'ev_leads'],
+    ['Leases from activations (7-day)', '#', 'up', '', 'ev_leases'],
+    ['Activation attendance / reach', '#', 'up', '', 'ev_att'],
+    ['Business contacts from activations', '#', 'up', '', 'ev_contacts'],
+    ['Lead → Tour conversion', '%', 'up', '', 'conv_lt'],
+    ['Tour → Lease conversion', '%', 'up', '', 'conv_tl'],
+    ['Avg. lead response time', 'hrs', 'down', '', ''],
+    ['Activation cost per guest card', '$', 'down', '', 'cost_gc'],
+    ['Marketing cost per lease', '$', 'down', '', 'cost_lease'],
+    ['Google rating', '★', 'up', '', ''],
+    ['Google reviews (count)', '#', 'up', '', ''],
+    ['Social media followers', '#', 'up', '', ''],
+    ['Renewals signed', '#', 'up', '', ''],
+  ];
+  const STATUSES = { not_started: 'Not started', in_progress: 'In progress', done: 'Done', blocked: 'Blocked' };
+  const EV_STATUS = { idea: 'Idea', planned: 'Planned', approved: 'Approved', done: 'Completed', cancelled: 'Cancelled' };
+  const CHANNELS = ['Leasing / Sales', 'Digital / Paid', 'Social', 'Website / ILS', 'Campus Outreach', 'Events', 'Resident / Referral', 'Reputation / Reviews', 'Email / SMS', 'Pricing / Specials', 'Other'];
+  const EV_TYPES = ['Campus Outreach', 'Community Outreach', 'Resident Event', 'Leasing Event / Open House', 'Social Media', 'Digital / Paid Ads', 'Email / SMS', 'Print / Flyering', 'Referral Promotion', 'Partnership', 'Other'];
+  const CAPTURE = ['', 'QR code → online guest card', 'iPad / tablet guest card', 'Paper sign-in / guest card', 'Online lead form', 'Business card drop', 'Social follow / DM', 'Not capturing leads'];
+  const PROMO = ['Instagram post', 'Instagram story', 'Facebook', 'TikTok', 'Email / SMS blast', 'Flyers / posters', 'Resident portal', 'Campus partner / org', 'Paid boost'];
+  const TEMPLATES = {
+    'Campus tabling': { type: 'Campus Outreach', goalLeads: 25, goalLeases: 3, goalAttendees: 150, trackPhotos: true, goalPhotos: 15, capture: 'QR code → online guest card', promo: ['Instagram story', 'Campus partner / org'],
+      checklist: ['Reserve table / space with campus', 'Print QR code signage', 'Pack swag & giveaways', 'Schedule 2 staff'], lines: [['Giveaways / swag', 150], ['Flyers & signage', 60], ['Snacks', 50]] },
+    'Resident event': { type: 'Resident Event', goalLeads: 5, goalLeases: 1, goalAttendees: 60, trackPhotos: true, goalPhotos: 25, capture: 'iPad / tablet guest card', promo: ['Instagram post', 'Instagram story', 'Resident portal', 'Flyers / posters'],
+      checklist: ['Book space & vendors', 'Post flyers 1 week out', 'Order food & drinks', 'Set up photo spot'], lines: [['Food & drinks', 400], ['Decor / rentals', 150], ['Entertainment / DJ', 250]] },
+    'Open house / tour day': { type: 'Leasing Event / Open House', goalLeads: 20, goalLeases: 4, goalAttendees: 40, capture: 'iPad / tablet guest card', promo: ['Instagram post', 'Email / SMS blast', 'Paid boost'],
+      checklist: ['Prep model units', 'Confirm tour route', 'Pre-schedule tour slots', 'Gift card drawing entries'], lines: [['Food', 150], ['Gift card drawing', 100], ['Signage', 50]] },
+    'Business outreach visit': { type: 'Community Outreach', goalLeads: 5, goalLeases: 1, trackContacts: true, goalContacts: 8, capture: 'Business card drop', promo: [],
+      checklist: ['Build list of businesses to visit', 'Assemble promo kits', 'Bring business cards & flyers'], lines: [['Promo kits', 80]] },
+    'Paid social campaign': { type: 'Digital / Paid Ads', goalLeads: 40, goalLeases: 4, capture: 'Online lead form', promo: ['Paid boost'],
+      checklist: ['Pick creative & copy', 'Set audience & budget', 'Confirm tracking link'], lines: [['Ad spend', 500]] },
+    'Referral push': { type: 'Referral Promotion', goalLeads: 10, goalLeases: 3, capture: 'Online lead form', promo: ['Resident portal', 'Email / SMS blast', 'Flyers / posters'],
+      checklist: ['Confirm reward with RM', 'Create referral flyer', 'Email residents'], lines: [['Referral rewards', 300], ['Promo materials', 50]] },
+    'Social content series': { type: 'Social Media', goalLeads: 15, trackPhotos: true, goalPhotos: 20, capture: 'Social follow / DM', promo: ['Instagram post', 'Instagram story', 'TikTok'],
+      checklist: ['Plan shot list', 'Schedule posts'], lines: [['Boosted posts', 100]] },
+    'Email / SMS blast': { type: 'Email / SMS', goalLeads: 15, goalLeases: 2, capture: 'Online lead form', promo: ['Email / SMS blast'],
+      checklist: ['Write copy', 'Pick audience list', 'Schedule send'], lines: [] },
+    'Flyering / print': { type: 'Print / Flyering', goalLeads: 10, capture: 'QR code → online guest card', promo: ['Flyers / posters'],
+      checklist: ['Design flyer', 'Print', 'Map drop locations'], lines: [['Printing', 120]] },
+  };
+
+  const defaultPhase = () => ({ theme: '', objective: '', exit: [], initiatives: [], retro: { worked: '', didnt: '', adjust: '' } });
+  function defaultNinety() {
+    return {
+      owner: '', preparedBy: me?.username || '', reviewer: '', approvalStatus: 'draft',
+      summary: { situation: '', objective: '', strategy: '', priorities: ['', '', ''], audience: '', special: '', hqAsk: '' },
+      metrics: [],
+      phases: [defaultPhase(), defaultPhase(), defaultPhase()],
+      events: [],
+      monthBudgets: {},
+      weekFocus: Array.from({ length: WEEKS }, () => ''),
+      risks: [],
     };
+  }
+  function normEvent(e) {
+    const x = Object.assign({ id: rid(), name: '', type: EV_TYPES[0], template: '', date: '', time: '', location: '', owner: '', initiativeId: '', audience: '', objective: '',
+      goalLeads: null, goalLeases: null, goalAttendees: null, trackPhotos: false, goalPhotos: null, trackContacts: false, goalContacts: null, successMeasure: '',
+      capture: '', promo: [], staff: '', followUp: '', followUpOwner: '', checklist: [], lines: [], status: 'planned' }, e || {});
+    x.results = Object.assign({ attendees: null, leads: null, leases: null, actualCost: null, photos: null, contacts: null, notes: '', loggedBy: '', loggedAt: '' }, x.results || {});
+    x.promo = Array.isArray(x.promo) ? x.promo : [];
+    // Deterministic ids for legacy rows so every teammate's copy merges cleanly.
+    x.lines = (Array.isArray(x.lines) ? x.lines : []).map((l, i) => Object.assign({ id: `${x.id}-l${i}`, item: '', vendor: '', qty: 1, cost: null }, l));
+    x.checklist = (Array.isArray(x.checklist) ? x.checklist : []).map((c, i) => Object.assign({ id: `${x.id}-c${i}`, text: '', done: false }, c));
+    if (num(x.results.photos) != null) x.trackPhotos = true;
+    if (num(x.results.contacts) != null) x.trackContacts = true;
+    return x;
+  }
+  function normalizeNinety(saved) {
+    saved = saved || {};
+    const n = Object.assign(defaultNinety(), saved);
+    n.summary = Object.assign(defaultNinety().summary, saved.summary || {});
+    n.summary.priorities = [0, 1, 2].map(i => (n.summary.priorities || [])[i] || '');
+    n.metrics = Array.isArray(n.metrics) ? n.metrics : [];
+    n.phases = [0, 1, 2].map(i => {
+      const p = Object.assign(defaultPhase(), (saved.phases || [])[i] || {});
+      p.exit = (Array.isArray(p.exit) ? p.exit : []).map((x, j) => ({ id: x.id || `exit-${i}-${j}`, text: x.text || '', done: !!x.done }));
+      p.initiatives = Array.isArray(p.initiatives) ? p.initiatives : [];
+      p.retro = Object.assign({ worked: '', didnt: '', adjust: '' }, p.retro || {});
+      return p;
+    });
+    n.events = (Array.isArray(n.events) ? n.events : []).map(normEvent);
+    n.monthBudgets = n.monthBudgets && typeof n.monthBudgets === 'object' ? n.monthBudgets : {};
+    n.weekFocus = Array.from({ length: WEEKS }, (_, i) => (n.weekFocus || [])[i] || '');
+    n.risks = Array.isArray(n.risks) ? n.risks : [];
+    delete n.pulse; delete n.approvedBudget;
+    return n;
+  }
+  // Older plans were created with preloaded content. Remove anything that is still exactly the untouched default.
+  const LEGACY = {
+    themes: ['Diagnose & fix the funnel', 'Drive traffic & tours', 'Convert & close'],
+    objectives: ['Every lead is answered fast, every listing is accurate, and core campaigns are live.', 'Grow qualified leads and convert them into booked tours.', 'Create urgency and close outstanding prospects to hit the Day 90 lease target.'],
+    exit: ['Avg lead response under 2 hrs', 'Website, ILS, Google profile updated (photos, pricing, special)', 'Referral program launched', 'Lead → Tour conversion at or above target', '2+ campus / community events completed', 'Day 90 lease target achieved', 'All open applications followed up'],
+    inits: ['Audit website, ILS listings & Google Business Profile', 'Mystery shop leasing team; set 1-hr response standard', 'Launch resident referral program', 'Build campus partner & outreach target list', 'Campus & community event activations', 'Paid social + retargeting', 'Refresh tour route & model unit', 'Deadline-driven special / urgency campaign', 'Follow-up blitz: toured-not-signed & open apps', 'Review generation push'],
+    metrics: ['Pre-lease / Occupancy', 'Leases signed (cumulative)', 'Leads (cumulative)', 'Tours (cumulative)', 'Applications (cumulative)', 'Leads from marketing activations', 'Lead → Tour conversion', 'Tour → Lease conversion', 'Avg. lead response time', 'Marketing cost per lease'],
+  };
+  function stripLegacyDefaults(n) {
+    const untouchedMetric = m => LEGACY.metrics.includes(m.name) && ['baseline', 't30', 't60', 't90', 'a30', 'a60', 'a90'].every(k => num(m[k]) == null);
+    n.metrics = n.metrics.filter(m => !untouchedMetric(m));
+    n.phases.forEach((p, i) => {
+      if (p.theme === LEGACY.themes[i]) p.theme = '';
+      if (p.objective === LEGACY.objectives[i]) p.objective = '';
+      p.exit = p.exit.filter(x => x.done || !LEGACY.exit.includes(x.text));
+      p.initiatives = p.initiatives.filter(x => !(LEGACY.inits.includes(x.title) && !x.owner && !x.due && x.status === 'not_started' && !n.events.some(e => e.initiativeId === x.id)));
+    });
+    return n;
+  }
 
-    // ==================== UTILITIES ====================
-    function show(el) { if (el) el.classList.remove('hidden'); }
-    function hide(el) { if (el) el.classList.add('hidden'); }
-    function esc(s) { return String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
-    function nl2br(s) { return (s || '').replace(/\n/g, '<br>'); }
-    function formatDate(d) { if (!d) return ''; try { return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); } catch (e) { return d; } }
-    function formatDateTime(d) { if (!d) return ''; try { return new Date(d).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); } catch (e) { return d; } }
-    function rid() { return 'r' + Math.random().toString(36).substr(2, 9); }
-    function addDays(date, days) { const d = new Date(date); d.setDate(d.getDate() + days); return d.toISOString().slice(0, 10); }
-    function fmtNum(n) { return n != null && !isNaN(n) ? n : '-'; }
-    function sumWeeklyKPI(plan, key) {
-      if (!plan.weeks) return 0;
-      return plan.weeks.reduce((sum, w) => sum + (parseFloat(w[key]) || 0), 0);
+  // ======================= EVENTS / BUDGET =======================
+  const evPlanned = e => (e.lines || []).reduce((s, l) => s + (num(l.qty) ?? 1) * (num(l.cost) || 0), 0);
+  const evActual = e => num(e.results?.actualCost);
+  const evCommitted = e => e.status === 'cancelled' ? 0 : (evActual(e) ?? evPlanned(e));
+  const evWeek = e => (e.date && plan.startDate) ? Math.floor(daysBetween(plan.startDate, e.date) / 7) : -1;
+  const evMonth = e => e.date ? e.date.slice(0, 7) : 'none';
+  const activeEvents = () => plan.ninety.events.filter(e => e.status !== 'cancelled');
+  const needsResults = e => e.date && e.date < today() && !['done', 'cancelled', 'idea'].includes(e.status);
+  function sortEvents(list) { return list.slice().sort((a, b) => (a.date || '9999').localeCompare(b.date || '9999') || (a.time || '').localeCompare(b.time || '')); }
+  // Post-event efficiency: actual spend ÷ actual guest cards / leases, plus the planned (projected) versions.
+  function evCalc(e) {
+    const r = e.results || {}, spend = num(r.actualCost), gc = num(r.leads), ls = num(r.leases), planned = evPlanned(e);
+    return {
+      spend, gc, ls, planned,
+      cpg: spend != null && gc ? spend / gc : null, cpl: spend != null && ls ? spend / ls : null,
+      gcPer100: spend && gc != null ? gc / spend * 100 : null, lsPer1000: spend && ls != null ? ls / spend * 1000 : null,
+      projCpg: planned && num(e.goalLeads) ? planned / e.goalLeads : null, projCpl: planned && num(e.goalLeases) ? planned / e.goalLeases : null,
+    };
+  }
+  function actTotals() {
+    const done = plan.ninety.events.filter(e => e.status === 'done');
+    const sum = f => done.reduce((s, e) => s + (num(f(e)) || 0), 0);
+    const gc = sum(e => e.results.leads), ls = sum(e => e.results.leases), spend = sum(e => e.results.actualCost);
+    return { n: activeEvents().length, done: done.length, gc, ls, spend, gcGoal: sum(e => e.goalLeads), lsGoal: sum(e => e.goalLeases),
+      photos: sum(e => e.results.photos), contacts: sum(e => e.results.contacts), att: sum(e => e.results.attendees),
+      cpg: gc ? spend / gc : null, cpl: ls ? spend / ls : null, pending: plan.ninety.events.filter(needsResults).length };
+  }
+  function planMonths() {
+    const set = new Set();
+    if (plan.startDate) { let d = plan.startDate.slice(0, 7) + '-01'; const end = addDays(plan.startDate, 89); while (d <= end) { set.add(d.slice(0, 7)); const x = new Date(d + 'T00:00:00'); x.setMonth(x.getMonth() + 1); d = iso(x); } }
+    plan.ninety.events.forEach(e => { if (e.date) set.add(evMonth(e)); });
+    return [...set].sort();
+  }
+  function monthStats(k) {
+    const evs = sortEvents(plan.ninety.events.filter(e => evMonth(e) === k));
+    const live = evs.filter(e => e.status !== 'cancelled');
+    const planned = live.reduce((s, e) => s + evPlanned(e), 0);
+    const actual = live.reduce((s, e) => s + (evActual(e) || 0), 0);
+    const committed = live.reduce((s, e) => s + evCommitted(e), 0);
+    const budget = num(plan.ninety.monthBudgets[k]);
+    return { evs, planned, actual, committed, budget, remaining: budget != null ? budget - committed : null };
+  }
+  function budgetTotals() {
+    const ms = planMonths().map(monthStats);
+    const sum = f => ms.reduce((s, m) => s + (f(m) || 0), 0);
+    const anyBudget = ms.some(m => m.budget != null);
+    return { budget: anyBudget ? sum(m => m.budget) : null, planned: sum(m => m.planned), actual: sum(m => m.actual), committed: sum(m => m.committed) };
+  }
+
+  // ======================= SCORECARD CALCS =======================
+  const metricByKey = k => plan.ninety.metrics.find(m => m.key === k);
+  const cpDate = c => addDays(plan.startDate, c - 1);
+  function evsBy(c) { return activeEvents().filter(e => e.status === 'done' && e.date && e.date <= cpDate(c)); }
+  function sumRes(c, k) { const ev = evsBy(c).filter(e => num(e.results?.[k]) != null); return ev.length ? ev.reduce((s, e) => s + +e.results[k], 0) : null; }
+  function autoActual(m, c) {
+    const val = k => { const x = metricByKey(k); return x ? actual(x, c) : null; };
+    const spendTo = () => activeEvents().filter(e => e.date && e.date <= cpDate(c) && evActual(e) != null).reduce((s, e) => s + evActual(e), 0);
+    switch (m.src) {
+      case 'ev_leads': return sumRes(c, 'leads');
+      case 'ev_leases': return sumRes(c, 'leases');
+      case 'ev_att': return sumRes(c, 'attendees');
+      case 'ev_contacts': return sumRes(c, 'contacts');
+      case 'conv_lt': { const l = val('leads'), t = val('tours'); return l && t != null ? +(t / l * 100).toFixed(1) : null; }
+      case 'conv_tl': { const t = val('tours'), l = val('leases'); return t && l != null ? +(l / t * 100).toFixed(1) : null; }
+      case 'cost_gc': { const g = sumRes(c, 'leads'), sp = spendTo(); return g && sp ? Math.round(sp / g) : null; }
+      case 'cost_lease': { const l = val('leases') ?? sumRes(c, 'leases'), sp = spendTo(); return l && sp ? Math.round(sp / l) : null; }
     }
+    return null;
+  }
+  function actual(m, c) { const a = m.src ? autoActual(m, c) : null; return a != null ? a : num(m['a' + c]); }
+  function dayOfPlan() { if (!plan.startDate) return 0; return Math.max(0, Math.min(91, daysBetween(plan.startDate, today()) + 1)); }
+  const reached = c => dayOfPlan() >= c;
+  function score(m, c) {
+    const a = actual(m, c), t = num(m['t' + c]);
+    if (a == null || t == null) return null;
+    if (!reached(c)) return 'prog';
+    const pct = m.dir === 'down' ? (a === 0 ? 1 : t / a) : (t === 0 ? 1 : a / t);
+    return pct >= 0.95 ? 'ok' : pct >= 0.8 ? 'risk' : 'off';
+  }
+  const LABEL = { ok: 'On track', risk: 'At risk', off: 'Off track', na: 'No data', prog: 'In progress' };
+  const pill = s => `<span class="pill ${s || 'na'}">${LABEL[s || 'na']}</span>`;
+  function latestScore(m) { for (const c of [90, 60, 30]) { const s = score(m, c); if (s && s !== 'prog') return { c, s }; } return null; }
+  function leasesToDate() { const m = metricByKey('leases'); if (!m) return null; for (const c of [90, 60, 30]) { const a = actual(m, c); if (a != null) return a; } return null; }
+  function projection() {
+    const m = metricByKey('leases'); if (!m) return null;
+    const cum = leasesToDate(), d = dayOfPlan(), target = num(m.t90);
+    if (cum == null || d < 7) return cum == null ? null : { cum, target, projected: null, needPerWeek: null };
+    const weeksLeft = Math.max(0, (90 - d) / 7);
+    return { cum, target, projected: d >= 90 ? cum : Math.round(cum / d * 90), needPerWeek: target != null && weeksLeft > 0 ? Math.max(0, (target - cum) / weeksLeft) : null };
+  }
+  function overall() {
+    const ss = plan.ninety.metrics.map(latestScore).filter(Boolean).map(x => x.s);
+    const pr = projection();
+    if (pr && pr.target && pr.projected != null) { const r = pr.projected / pr.target; ss.push(r >= .95 ? 'ok' : r >= .8 ? 'risk' : 'off'); }
+    const bt = budgetTotals(); if (bt.budget != null && bt.committed > bt.budget * 1.05) ss.push('risk');
+    if (!ss.length) return 'na';
+    const off = ss.filter(s => s === 'off').length, risk = ss.filter(s => s === 'risk').length;
+    return off >= 2 || off / ss.length > .25 ? 'off' : (off || risk) ? 'risk' : 'ok';
+  }
+  function initiativeStats(list) { const n = list.length, done = list.filter(x => x.status === 'done').length, blocked = list.filter(x => x.status === 'blocked').length; return { n, done, blocked, pct: n ? Math.round(done / n * 100) : 0 }; }
+  const allInitiatives = () => plan.ninety.phases.flatMap(p => p.initiatives);
 
-    // ==================== AUTH ====================
-    els.togglePw?.addEventListener('change', () => { els.loginPassword.type = els.togglePw.checked ? 'text' : 'password'; });
-    els.loginBtn?.addEventListener('click', doLogin);
-    document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (document.activeElement === els.loginUsername || document.activeElement === els.loginPassword)) doLogin(); });
+  // ======================= AUTH / INIT =======================
+  function userCanAccess(p) {
+    if (!me || me.role === 'admin') return true;
+    const raw = me.properties;
+    const list = Array.isArray(raw) ? raw.map(String) : (typeof raw === 'string' ? raw.split(',').map(s => s.trim()).filter(Boolean) : []);
+    if (list.includes('*')) return true;
+    const n = s => String(s || '').trim().toLowerCase(), slug = s => n(s).replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    return list.some(x => n(x) === n(p.name) || n(x) === n(p.id) || slug(x) === slug(p.name));
+  }
+  async function init() {
+    try { const r = await fetch('/api/me', { credentials: 'include' }); if (!r.ok) throw 0; me = await r.json(); }
+    catch (e) { location.href = 'index.html'; return; }
+    try { const list = await (await fetch('/api/properties', { credentials: 'include' })).json(); properties = (list || []).filter(userCanAccess).map(x => x.name).filter(Boolean); } catch (e) { properties = []; }
+    $('propertySelect').innerHTML = properties.map(p => `<option>${esc(p)}</option>`).join('') || '<option value="">No properties assigned</option>';
+    $('propertySelect').onchange = async () => { await flush(); setProperty($('propertySelect').value); };
+    $('newPlanBtn').onclick = newPlan;
+    $('logoutBtn').onclick = async () => { await flush(); try { await fetch('/api/auth-logout', { method: 'POST', credentials: 'include' }); } catch (e) { } location.href = 'index.html'; };
+    if (me.role === 'admin') { $('adminPageBtn').classList.remove('hidden'); $('adminPageBtn').onclick = () => location.href = 'mmp_admin.html'; }
+    $('boot').classList.add('hidden'); $('appHeader').classList.remove('hidden'); $('app').classList.remove('hidden');
+    if (properties.length) await setProperty(properties[0]);
+    setInterval(poll, POLL_MS);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
+  }
+  async function setProperty(p) { currentProperty = p; plan = null; base = null; dirty = false; await loadList(); renderMain(); }
+  async function loadList() {
+    try { plans = await api(`/marketing-plans?property=${encodeURIComponent(currentProperty)}&planType=30_60_90`); } catch (e) { plans = []; toast('Could not load plans: ' + e.message); }
+    renderList();
+  }
+  function renderList() {
+    $('planCount').textContent = plans.length;
+    const s = $('planSelect');
+    s.innerHTML = `<option value="">${plans.length ? '— Select a plan —' : 'No plans yet — create one'}</option>` + (plan && !plan.id ? '<option value="__new" selected>(New plan, saving…)</option>' : '') +
+      plans.map(p => `<option value="${p.id}" ${plan && plan.id === p.id ? 'selected' : ''}>${esc(p.name)} · ${fmtShort(p.startDate)} – ${fmtDate(p.endDate)}</option>`).join('');
+    s.onchange = async () => { if (s.value && s.value !== '__new') { await flush(); openPlan(s.value); } };
+  }
+  const snap = p => clone({ name: p.name || '', termLabel: p.termLabel || '', startDate: p.startDate || '', ninety: p.ninety });
+  const remoteSnap = d => ({ name: d.name || '', termLabel: d.termLabel || '', startDate: d.startDate || '', ninety: normalizeNinety(d.ninety) });
+  async function openPlan(id) {
+    try {
+      const d = await api(`/marketing-plans?id=${encodeURIComponent(id)}`);
+      base = remoteSnap(d);
+      d.ninety = stripLegacyDefaults(normalizeNinety(d.ninety));
+      plan = d; dirty = false; phaseTab = 0; setSaveState('saved'); renderList(); renderMain();
+    } catch (e) { alert('Failed to load plan: ' + e.message); }
+  }
+  async function newPlan() {
+    if (!currentProperty) { alert('Select a property first.'); return; }
+    await flush();
+    const start = today();
+    plan = { id: null, property: currentProperty, name: `${currentProperty} 30-60-90 Plan`, termLabel: '', startDate: start, endDate: addDays(start, 89), planType: '30_60_90', ninety: defaultNinety() };
+    base = null; phaseTab = 0; renderList(); renderMain(); markDirty();
+  }
 
-    async function doLogin() {
-      const u = (els.loginUsername?.value || '').trim();
-      const p = els.loginPassword?.value || '';
-      if (!u || !p) { showError('Enter username and password'); return; }
-      try {
-        hideError();
-        const res = await fetch('/api/auth-login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ username: u, password: p }) });
-        if (!res.ok) { showError(res.status === 401 ? 'Incorrect username or password' : 'Login failed'); return; }
-        await initAuth();
-      } catch (e) { showError('Network error'); }
+  // ======================= AUTO-SAVE + LIVE SYNC =======================
+  // Edits save automatically ~1s after typing stops. Each save carries the version it was based on; if a teammate
+  // saved in between, we pull their version, merge it with ours field-by-field (and item-by-item by id), and retry.
+  // While idle, we poll for teammates' changes and merge them in, keeping the cursor where it was.
+  const isObj = v => v && typeof v === 'object' && !Array.isArray(v);
+  const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  function merge3(b, l, r) {
+    if (eq(l, r)) return l;
+    if (eq(l, b)) return r;
+    if (eq(r, b)) return l;
+    if (isObj(l) && isObj(r)) {
+      const B = isObj(b) ? b : {}, o = {};
+      for (const k of new Set([...Object.keys(r), ...Object.keys(l)])) { const v = merge3(B[k], l[k], r[k]); if (v !== undefined) o[k] = v; }
+      return o;
     }
-
-    function showError(msg) { if (els.loginError) { els.loginError.textContent = msg; els.loginError.style.display = ''; } }
-    function hideError() { if (els.loginError) els.loginError.style.display = 'none'; }
-
-    function showApp() {
-      show(els.appHeader);
-      show(els.appContainer);
-      els.loginView.style.display = 'none';
-      els.bootLoader.style.display = 'none';
-    }
-
-    function showLogin() {
-      els.bootLoader.style.display = 'none';
-      hide(els.appHeader);
-      hide(els.appContainer);
-      els.loginView.style.display = 'flex';
-    }
-
-    async function initAuth() {
-      try {
-        const res = await fetch('/api/me', { credentials: 'include' });
-        if (res.ok) {
-          const me = await res.json();
-          currentUser = { username: me.username, role: me.role, properties: me.properties };
-          showApp();
-          bindHeaderHandlers();
-          await initApp();
-          return true;
-        }
-      } catch (e) { }
-      showLogin();
-      return false;
-    }
-
-    function bindHeaderHandlers() {
-      els.logoutBtn.onclick = async () => { try { await fetch('/api/auth-logout', { method: 'POST' }); } catch (e) { } location.href = 'index.html'; };
-      if (currentUser?.role === 'admin') show(els.adminPageBtn);
-      els.adminPageBtn.onclick = () => location.href = 'mmp_admin.html';
-    }
-
-    // ==================== API ====================
-    async function apiFetch(path, opts = {}) {
-      const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
-      const res = await fetch('/api' + path, Object.assign({}, opts, { headers, credentials: 'include' }));
-      if (!res.ok) {
-        const text = await res.text();
-        let msg = text;
-        try { const j = JSON.parse(text); msg = j.message || j.detail || j.error || text; } catch (e) { }
-        if (res.status === 401) msg = 'Your session expired. Please log in again.';
-        throw new Error(msg || ('HTTP ' + res.status));
+    if (Array.isArray(l) && Array.isArray(r)) {
+      const B = Array.isArray(b) ? b : [];
+      const idList = a => a.every(x => isObj(x) && x.id);
+      if (idList(l) && idList(r) && idList(B)) {
+        const bm = new Map(B.map(x => [x.id, x])), lm = new Map(l.map(x => [x.id, x])), out = [], seen = new Set();
+        for (const x of r) { seen.add(x.id); if (lm.has(x.id)) out.push(merge3(bm.get(x.id), lm.get(x.id), x)); else if (!bm.has(x.id)) out.push(x); }
+        l.forEach((x, i) => {
+          if (seen.has(x.id) || bm.has(x.id)) return; // kept above, or deleted by a teammate
+          const prev = i > 0 ? out.findIndex(y => y.id === l[i - 1].id) : -1;
+          if (i > 0 && prev < 0) out.push(x); else out.splice(prev + 1, 0, x);
+        });
+        return out;
       }
-      return res;
+      if (l.length === r.length && B.length === l.length) return l.map((x, i) => merge3(B[i], x, r[i]));
+      return l;
     }
-
-    // ==================== INIT ====================
-    async function initApp() {
-      await loadProperties();
-      renderPropertyOptions();
-      if (properties.length) {
-        els.propertySelect.value = properties[0];
-        await setActiveProperty(properties[0]);
-      }
-      els.propertySelect.addEventListener('change', () => setActiveProperty(els.propertySelect.value));
-      els.filterType.addEventListener('change', renderPlanList);
-      els.filterTerm.addEventListener('input', renderPlanList);
-      els.newPlanBtn.addEventListener('click', () => openPlanModal());
-      els.emptyNewPlanBtn.addEventListener('click', () => openPlanModal());
-    }
-
-    async function loadProperties() {
-      try {
-        const res = await fetch('/api/properties');
-        const list = await res.json();
-        properties = (list || []).filter(x => userCanAccess(x)).map(x => x.name).filter(Boolean);
-      } catch (e) { properties = []; }
-    }
-
-    // Mirror server-side access rules so users only see properties they can save to.
-    function userCanAccess(prop) {
-      if (!currentUser || currentUser.role === 'admin') return true;
-      const raw = currentUser.properties;
-      const list = Array.isArray(raw) ? raw.map(String) : (typeof raw === 'string' ? raw.split(',').map(s => s.trim()).filter(Boolean) : []);
-      if (list.includes('*')) return true;
-      const n = s => String(s || '').trim().toLowerCase();
-      const slug = s => n(s).replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-      return list.some(p => n(p) === n(prop.name) || n(p) === n(prop.id) || slug(p) === slug(prop.name));
-    }
-
-    function renderPropertyOptions() {
-      els.propertySelect.innerHTML = properties.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('');
-    }
-
-    async function setActiveProperty(prop) {
-      currentProperty = prop;
-      await fetchPlans();
-      renderPlanList();
-      selectedPlanId = null;
-      showEmptyState();
-    }
-
-    async function fetchPlans() {
-      if (!currentProperty) { plans = []; return; }
-      try {
-        const res = await apiFetch(`/marketing-plans?property=${encodeURIComponent(currentProperty)}`);
-        plans = await res.json();
-      } catch (e) { plans = []; }
-    }
-
-    // ==================== PLAN LIST ====================
-    function renderPlanList() {
-      const type = els.filterType.value;
-      const term = (els.filterTerm.value || '').toLowerCase().trim();
-      const filtered = plans.filter(p => (type === 'all' || p.planType === type) && (!term || (p.name || '').toLowerCase().includes(term) || (p.termLabel || '').toLowerCase().includes(term)));
-
-      els.planCount.textContent = filtered.length;
-
-      if (!filtered.length) {
-        els.planList.innerHTML = `<div class="empty-state" style="padding:40px 20px"><p>No plans found</p></div>`;
-        return;
-      }
-
-      els.planList.innerHTML = filtered.map(p => {
-        const isActive = selectedPlanId === (p._id || p.id);
-        const typeLabel = p.planType === '90_day' ? '90 Day' : (p.planType === '60_day' ? '60 Day' : '30 Day');
-        const progress = calcPlanProgress(p);
-        return `
-          <div class="plan-item ${isActive ? 'active' : ''}" data-id="${p._id || p.id}">
-            <div class="plan-item-name">${esc(p.name || 'Untitled Plan')}</div>
-            <div class="plan-item-meta">
-              <span class="badge ${p.planType === '90_day' ? 'warning' : (p.planType === '60_day' ? 'info' : 'success')}">${typeLabel}</span>
-              ${p.termLabel ? `<span>${esc(p.termLabel)}</span>` : ''}
-              <span>${formatDate(p.startDate)} - ${formatDate(p.endDate)}</span>
-            </div>
-            ${progress !== null ? `<div style="margin-top:8px"><div style="height:4px;background:#e5e7eb;border-radius:2px;overflow:hidden"><div style="height:100%;width:${progress}%;background:${progress === 100 ? 'var(--success)' : 'var(--brand-accent-2)'}"></div></div><div style="font-size:11px;color:#6b7280;margin-top:4px">${progress}% complete</div></div>` : ''}
-          </div>
-        `;
-      }).join('');
-
-      els.planList.querySelectorAll('.plan-item').forEach(item => {
-        item.addEventListener('click', () => selectPlan(item.dataset.id));
-      });
-    }
-
-    function calcPlanProgress(plan) {
-      if (!plan.weeks || !plan.weeks.length) return null;
-      let total = 0, done = 0;
-      plan.weeks.forEach(w => {
-        (w.activities || []).forEach(a => { total++; if (a.completed) done++; });
-      });
-      if (total === 0) return null;
-      return Math.round((done / total) * 100);
-    }
-
-    function showEmptyState() {
-      show(els.emptyState);
-      hide(els.planDetail);
-    }
-
-    // ==================== PLAN DETAIL ====================
-    async function selectPlan(id) {
-      selectedPlanId = id;
-      selectedWeekIndex = 0;
-      renderPlanList();
-
-      try {
-        const res = await apiFetch(`/marketing-plans?id=${encodeURIComponent(id)}`);
-        const plan = await res.json();
-        renderPlanDetail(plan);
-      } catch (e) {
-        alert('Failed to load plan: ' + e.message);
-      }
-    }
-
-    function renderPlanDetail(plan) {
-      hide(els.emptyState);
-      show(els.planDetail);
-
-      const typeLabel = plan.planType === '90_day' ? '90 Day' : (plan.planType === '60_day' ? '60 Day' : '30 Day');
-      
-      // Calculate cumulative actuals from weekly data
-      const totalLeads = sumWeeklyKPI(plan, 'leadsActual');
-      const totalTours = sumWeeklyKPI(plan, 'toursActual');
-      const totalLeases = sumWeeklyKPI(plan, 'leasesActual');
-      
-      // Get latest prelease % (from most recent week with data)
-      let latestPrelease = null;
-      if (plan.weeks) {
-        for (let i = plan.weeks.length - 1; i >= 0; i--) {
-          if (plan.weeks[i].preleaseActual != null && !isNaN(plan.weeks[i].preleaseActual)) {
-            latestPrelease = plan.weeks[i].preleaseActual;
+    return l; // true conflict on the same value: the person typing now wins
+  }
+  function applySnap(s) {
+    plan.name = s.name; plan.termLabel = s.termLabel; plan.startDate = s.startDate;
+    plan.endDate = s.startDate ? addDays(s.startDate, 89) : plan.endDate;
+    plan.ninety = normalizeNinety(s.ninety);
+  }
+  function mergeRemote(remote) {
+    const before = snap(plan);
+    const merged = merge3(base, before, remoteSnap(remote));
+    base = remoteSnap(remote);
+    plan.updatedAt = remote.updatedAt; plan.updatedBy = remote.updatedBy;
+    if (!eq(merged, before)) { applySnap(merged); return true; }
+    return false;
+  }
+  function markDirty() {
+    dirty = true; setSaveState('pending');
+    clearTimeout(saveTimer); saveTimer = setTimeout(flush, SAVE_DEBOUNCE_MS);
+  }
+  async function flush() {
+    clearTimeout(saveTimer);
+    if (!plan || !dirty) return;
+    if (saving) { saveQueued = true; return; }
+    if (!String(plan.name || '').trim() || !plan.startDate) { setSaveState('error', 'Add a plan name and Day 1 date to save'); return; }
+    saving = true; dirty = false; setSaveState('saving');
+    const p = plan, sent = snap(p);
+    try {
+      const lm = metricByKey('leases');
+      const body = { property: currentProperty, name: sent.name, termLabel: sent.termLabel, planType: '30_60_90', startDate: sent.startDate, endDate: addDays(sent.startDate, 89),
+        leasesGoal: lm ? num(lm.t90) : null, primaryGoals: sent.ninety.summary.objective, targetAudiences: sent.ninety.summary.audience, currentSpecial: sent.ninety.summary.special, ninety: sent.ninety };
+      if (!p.id) {
+        const r = await api('/marketing-plans', { method: 'POST', body: JSON.stringify(body) });
+        p.id = r.id; p.updatedAt = r.updatedAt; p.updatedBy = me.username; base = sent;
+        await loadList();
+      } else {
+        let attempt = 0, toSend = body;
+        for (;;) {
+          try {
+            const r = await api('/marketing-plans', { method: 'PUT', body: JSON.stringify({ id: p.id, ifUpdatedAt: p.updatedAt || null, ...toSend }) });
+            p.updatedAt = r.updatedAt; p.updatedBy = me.username; base = JSON.parse(JSON.stringify({ name: toSend.name, termLabel: toSend.termLabel, startDate: toSend.startDate, ninety: toSend.ninety }));
             break;
+          } catch (e) {
+            if (e.status !== 409 || ++attempt > 4) throw e;
+            // A teammate saved first: merge their version into ours, then resend the merged result.
+            const remote = await api(`/marketing-plans?id=${encodeURIComponent(p.id)}`);
+            if (plan === p) { mergeRemote(remote); rerenderKeepFocus(); }
+            const m = snap(p);
+            toSend = { ...toSend, name: m.name, termLabel: m.termLabel, startDate: m.startDate, endDate: addDays(m.startDate, 89), ninety: m.ninety, primaryGoals: m.ninety.summary.objective, targetAudiences: m.ninety.summary.audience, currentSpecial: m.ninety.summary.special };
           }
         }
+        const li = plans.find(x => x.id === p.id); if (li && (li.name !== sent.name || li.startDate !== sent.startDate)) { li.name = sent.name; li.startDate = sent.startDate; li.endDate = addDays(sent.startDate, 89); renderList(); }
       }
-
-      // Calculate progress percentages
-      const leadsProgress = plan.leadsGoal ? Math.min(100, Math.round((totalLeads / plan.leadsGoal) * 100)) : 0;
-      const toursProgress = plan.toursGoal ? Math.min(100, Math.round((totalTours / plan.toursGoal) * 100)) : 0;
-      const leasesProgress = plan.leasesGoal ? Math.min(100, Math.round((totalLeases / plan.leasesGoal) * 100)) : 0;
-      const preleaseProgress = plan.preleaseGoal && latestPrelease != null ? Math.min(100, Math.round((latestPrelease / plan.preleaseGoal) * 100)) : 0;
-
-      els.planHeader.innerHTML = `
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
-          <div style="flex:1;min-width:300px">
-            <h2>${esc(plan.name || 'Untitled Plan')}</h2>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-              <span class="badge primary">${typeLabel}</span>
-              ${plan.termLabel ? `<span class="badge">${esc(plan.termLabel)}</span>` : ''}
-              <span class="badge">${formatDate(plan.startDate)} - ${formatDate(plan.endDate)}</span>
-            </div>
-            <div style="font-size:12px;color:#64748b">
-              Created by ${esc(plan.createdByUserId || 'Unknown')} | Updated ${formatDateTime(plan.updatedAt)}
-            </div>
-          </div>
-          <div class="detail-actions">
-            <button class="btn" onclick="openPlanModal({mode:'edit'}, '${plan._id || plan.id}')">Edit</button>
-            <button class="btn" onclick="duplicatePlan('${plan._id || plan.id}')">Duplicate</button>
-            <button class="btn danger" onclick="deletePlan('${plan._id || plan.id}')">Delete</button>
-          </div>
-        </div>
-
-        <!-- Cumulative Metrics Grid -->
-        <div class="metrics-grid">
-          <div class="metric-card ${leadsProgress >= 100 ? 'highlight' : (leadsProgress >= 75 ? 'warning-highlight' : '')}">
-            <div class="metric-label">Leads</div>
-            <div class="metric-values">
-              <span class="metric-actual">${totalLeads}</span>
-              <span class="metric-separator">/</span>
-              <span class="metric-goal">${fmtNum(plan.leadsGoal)}</span>
-            </div>
-            <div class="metric-progress"><div class="metric-progress-bar" style="width:${leadsProgress}%;background:${leadsProgress >= 100 ? 'var(--success)' : 'var(--brand-accent-2)'}"></div></div>
-            <div class="metric-pct">${leadsProgress}% of goal</div>
-          </div>
-          <div class="metric-card ${toursProgress >= 100 ? 'highlight' : (toursProgress >= 75 ? 'warning-highlight' : '')}">
-            <div class="metric-label">Tours</div>
-            <div class="metric-values">
-              <span class="metric-actual">${totalTours}</span>
-              <span class="metric-separator">/</span>
-              <span class="metric-goal">${fmtNum(plan.toursGoal)}</span>
-            </div>
-            <div class="metric-progress"><div class="metric-progress-bar" style="width:${toursProgress}%;background:${toursProgress >= 100 ? 'var(--success)' : 'var(--brand-accent-2)'}"></div></div>
-            <div class="metric-pct">${toursProgress}% of goal</div>
-          </div>
-          <div class="metric-card ${preleaseProgress >= 100 ? 'highlight' : (preleaseProgress >= 75 ? 'warning-highlight' : '')}">
-            <div class="metric-label">Prelease</div>
-            <div class="metric-values">
-              <span class="metric-actual">${latestPrelease != null ? latestPrelease + '%' : '-'}</span>
-              <span class="metric-separator">/</span>
-              <span class="metric-goal">${fmtNum(plan.preleaseGoal)}%</span>
-            </div>
-            <div class="metric-progress"><div class="metric-progress-bar" style="width:${preleaseProgress}%;background:${preleaseProgress >= 100 ? 'var(--success)' : 'var(--brand-accent-2)'}"></div></div>
-            <div class="metric-pct">${preleaseProgress}% of goal</div>
-          </div>
-          <div class="metric-card ${leasesProgress >= 100 ? 'highlight' : (leasesProgress >= 75 ? 'warning-highlight' : '')}">
-            <div class="metric-label">Leases</div>
-            <div class="metric-values">
-              <span class="metric-actual">${totalLeases}</span>
-              <span class="metric-separator">/</span>
-              <span class="metric-goal">${fmtNum(plan.leasesGoal)}</span>
-            </div>
-            <div class="metric-progress"><div class="metric-progress-bar" style="width:${leasesProgress}%;background:${leasesProgress >= 100 ? 'var(--success)' : 'var(--brand-accent-2)'}"></div></div>
-            <div class="metric-pct">${leasesProgress}% of goal</div>
-          </div>
-        </div>
-
-        ${plan.currentSpecial ? `
-          <div class="special-banner">
-            <div class="special-banner-title">Current Special</div>
-            <div class="special-banner-text">${esc(plan.currentSpecial)}</div>
-          </div>
-        ` : ''}
-      `;
-
-      // Week Tabs
-      const weeks = plan.weeks || [];
-      els.weekTabs.innerHTML = weeks.map((w, i) => {
-        const progress = calcWeekProgress(w);
-        return `
-          <button class="week-tab ${i === selectedWeekIndex ? 'active' : ''}" data-index="${i}">
-            ${esc(w.weekLabel || `Week ${i + 1}`)}
-            ${progress !== null ? `<div class="week-progress">${progress}%</div>` : ''}
-          </button>
-        `;
-      }).join('');
-
-      els.weekTabs.querySelectorAll('.week-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-          selectedWeekIndex = parseInt(tab.dataset.index);
-          renderPlanDetail(plan);
-        });
-      });
-
-      // Week Content
-      if (weeks.length > 0) {
-        renderWeekContent(plan, weeks[selectedWeekIndex], selectedWeekIndex);
-      } else {
-        els.weekContent.innerHTML = `<div class="empty-state"><p>No weeks defined for this plan</p></div>`;
+      setSaveState(dirty ? 'pending' : 'saved');
+    } catch (e) {
+      if (e.status === 404) { toast('This plan was deleted by a teammate.'); plan = null; base = null; dirty = false; await loadList(); renderMain(); return; }
+      dirty = true; setSaveState('error', e.status === 401 ? e.message : "Couldn't save, retrying…");
+      clearTimeout(retryTimer); if (e.status !== 401) retryTimer = setTimeout(flush, 5000);
+    } finally {
+      saving = false;
+      if (saveQueued || (dirty && saveState !== 'error')) { saveQueued = false; flush(); }
+    }
+  }
+  async function poll() {
+    if (!plan?.id || dirty || saving || document.hidden || document.body.classList.contains('preview')) return;
+    const p = plan;
+    try {
+      const remote = await api(`/marketing-plans?id=${encodeURIComponent(p.id)}`);
+      if (plan !== p || dirty || saving) return;
+      if (remote.updatedAt && remote.updatedAt !== p.updatedAt) {
+        const changed = mergeRemote(remote);
+        if (changed) { rerenderKeepFocus(); toast(`Updated with changes from ${remote.updatedBy || 'a teammate'}`); }
+        setSaveState('saved');
+        const li = plans.find(x => x.id === p.id); if (li && li.name !== p.name) { li.name = p.name; renderList(); }
       }
+    } catch (e) { if (e.status === 404 && plan === p) { toast('This plan was deleted by a teammate.'); plan = null; base = null; await loadList(); renderMain(); } }
+  }
+  function rerenderKeepFocus() {
+    const a = document.activeElement, k = a?.dataset?.k;
+    let s = null, en = null; try { s = a.selectionStart; en = a.selectionEnd; } catch (e) { }
+    renderMain();
+    if (k) { const el = document.querySelector(`[data-k="${CSS.escape(k)}"]`); if (el) { el.focus(); try { if (s != null) el.setSelectionRange(s, en); } catch (e) { } } }
+  }
+  function saveStateHtml() {
+    const who = plan?.updatedBy && plan.updatedBy !== me?.username ? ` · last edit by ${esc(plan.updatedBy)}` : '';
+    const when = plan?.updatedAt ? ' ' + new Date(plan.updatedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '';
+    const txt = { saved: plan?.id ? `All changes saved${when}${who}` : 'Not saved yet', pending: 'Saving soon…', saving: 'Saving…', error: esc(saveMsg) }[saveState];
+    return `<span class="savestate ${saveState}"><i></i>${txt}</span>`;
+  }
+  function setSaveState(s, msg = '') { saveState = s; saveMsg = msg; const el = $('saveState'); if (el) el.innerHTML = saveStateHtml(); }
 
-      window.__currentPlan = plan;
-    }
+  async function del() {
+    if (!plan.id || !confirm('Delete this plan permanently for everyone?')) return;
+    clearTimeout(saveTimer); dirty = false;
+    try { await api('/marketing-plans', { method: 'DELETE', body: JSON.stringify({ id: plan.id }) }); plan = null; base = null; await loadList(); renderMain(); toast('Plan deleted'); }
+    catch (e) { alert('Failed to delete: ' + e.message); }
+  }
+  window.addEventListener('beforeunload', e => { if (dirty || saving) { flush(); e.preventDefault(); e.returnValue = ''; } });
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's' && plan) { e.preventDefault(); flush(); }
+    if (e.key === 'Escape' && draft) closeWizard();
+  });
 
-    function calcWeekProgress(week) {
-      const activities = week.activities || [];
-      if (!activities.length) return null;
-      const done = activities.filter(a => a.completed).length;
-      return Math.round((done / activities.length) * 100);
-    }
-
-    function renderWeekContent(plan, week, weekIndex) {
-      const progress = calcWeekProgress(week);
-      const activities = week.activities || [];
-      
-      // Group activities by category
-      const outreach = activities.filter(a => a.category === 'outreach' || !a.category);
-      const social = activities.filter(a => a.category === 'social');
-      const events = activities.filter(a => a.category === 'event');
-      const digital = activities.filter(a => a.category === 'digital');
-      const leasing = activities.filter(a => a.category === 'leasing');
-
-      els.weekContent.innerHTML = `
-        <div class="week-header">
-          <div>
-            <div class="week-title">${esc(week.weekLabel || `Week ${weekIndex + 1}`)}</div>
-            <div class="week-dates">${formatDate(week.dateRangeStart)} - ${formatDate(week.dateRangeEnd)}</div>
-          </div>
-          <div class="week-stats">
-            <div class="week-stat">
-              <div class="week-stat-value">${activities.length}</div>
-              <div class="week-stat-label">Activities</div>
-            </div>
-            <div class="week-stat">
-              <div class="week-stat-value" style="color:var(--success)">${activities.filter(a => a.completed).length}</div>
-              <div class="week-stat-label">Completed</div>
-            </div>
-            ${progress !== null ? `
-              <div class="week-stat">
-                <div class="week-stat-value" style="color:${progress === 100 ? 'var(--success)' : 'var(--brand-accent-2)'}">${progress}%</div>
-                <div class="week-stat-label">Progress</div>
-              </div>
-            ` : ''}
-          </div>
-        </div>
-
-        <!-- Weekly KPI Tracking -->
-        <div class="kpi-card">
-          <div class="kpi-card-title">Weekly KPI Tracking</div>
-          <div class="kpi-grid">
-            <div class="kpi-item">
-              <label>Leads</label>
-              <input type="number" min="0" value="${week.leadsActual || ''}" placeholder="0" 
-                onchange="updateWeeklyKPI('${plan._id || plan.id}', ${weekIndex}, 'leadsActual', this.value)" />
-              <div class="kpi-hint">This week</div>
-            </div>
-            <div class="kpi-item">
-              <label>Tours</label>
-              <input type="number" min="0" value="${week.toursActual || ''}" placeholder="0"
-                onchange="updateWeeklyKPI('${plan._id || plan.id}', ${weekIndex}, 'toursActual', this.value)" />
-              <div class="kpi-hint">This week</div>
-            </div>
-            <div class="kpi-item">
-              <label>Prelease %</label>
-              <input type="number" min="0" max="100" value="${week.preleaseActual || ''}" placeholder="0"
-                onchange="updateWeeklyKPI('${plan._id || plan.id}', ${weekIndex}, 'preleaseActual', this.value)" />
-              <div class="kpi-hint">Current %</div>
-            </div>
-            <div class="kpi-item">
-              <label>Leases</label>
-              <input type="number" min="0" value="${week.leasesActual || ''}" placeholder="0"
-                onchange="updateWeeklyKPI('${plan._id || plan.id}', ${weekIndex}, 'leasesActual', this.value)" />
-              <div class="kpi-hint">This week</div>
-            </div>
-          </div>
-        </div>
-
-        ${week.leasingFocus || week.communityOutreach || week.socialDigital ? `
-          <div class="card" style="margin-bottom:20px">
-            <h3>Week Overview</h3>
-            <div class="content">
-              ${week.leasingFocus ? `<div style="margin-bottom:12px"><strong>Leasing Focus:</strong> ${nl2br(esc(week.leasingFocus))}</div>` : ''}
-              ${week.communityOutreach ? `<div style="margin-bottom:12px"><strong>Community Outreach:</strong> ${nl2br(esc(week.communityOutreach))}</div>` : ''}
-              ${week.socialDigital ? `<div><strong>Social & Digital:</strong> ${nl2br(esc(week.socialDigital))}</div>` : ''}
-            </div>
-          </div>
-        ` : ''}
-
-        ${renderActivitySection('Outreach Marketing & Deliverables', outreach, plan, weekIndex)}
-        ${renderActivitySection('Social Media', social, plan, weekIndex)}
-        ${renderActivitySection('Events', events, plan, weekIndex)}
-        ${renderActivitySection('Digital Marketing', digital, plan, weekIndex)}
-        ${renderActivitySection('Leasing Activities', leasing, plan, weekIndex)}
-
-        <!-- Outreach Tracking -->
-        ${renderOutreachSection(plan, week, weekIndex)}
-
-        <!-- Proposed Specials (only on first week) -->
-        ${weekIndex === 0 ? renderSpecialsSection(plan) : ''}
-
-        <div style="margin-top:20px">
-          <button class="btn primary" onclick="openAddActivityModal(${weekIndex})">+ Add Activity</button>
-        </div>
-      `;
-    }
-
-    function renderActivitySection(title, activities, plan, weekIndex) {
-      if (!activities.length) return '';
-      
-      return `
-        <div class="activity-section">
-          <div class="activity-section-header">
-            <div class="activity-section-title">${title}</div>
-            <span class="badge">${activities.length} items</span>
-          </div>
-          <table class="activity-table">
-            <thead>
-              <tr>
-                <th style="width:90px">Day</th>
-                <th>Activity</th>
-                <th style="width:120px">Goal</th>
-                <th style="width:100px">Owner</th>
-                <th style="width:70px">Done</th>
-                <th style="width:100px">Actual</th>
-                <th style="width:50px"></th>
-              </tr>
-            </thead>
-            <tbody>
-              ${activities.map((a, ai) => `
-                <tr>
-                  <td class="activity-day">${esc(a.dayOfWeek || '')}</td>
-                  <td class="activity-desc">${nl2br(esc(a.description || ''))}</td>
-                  <td class="activity-goal">${esc(a.goal || '')}</td>
-                  <td class="activity-owner">${esc(a.owner || '')}</td>
-                  <td class="activity-status">
-                    <div class="status-check ${a.completed ? 'done' : ''}" onclick="toggleActivityStatus('${plan._id || plan.id}', ${weekIndex}, '${a.id}')" title="Click to toggle">${a.completed ? '✓' : ''}</div>
-                  </td>
-                  <td class="activity-actual">
-                    <input type="text" value="${esc(a.actual || '')}" placeholder="Result..." style="padding:6px 8px;font-size:12px" onchange="updateActivityActual('${plan._id || plan.id}', ${weekIndex}, '${a.id}', this.value)" />
-                  </td>
-                  <td>
-                    <button class="btn sm danger" onclick="deleteActivity('${plan._id || plan.id}', ${weekIndex}, '${a.id}')" title="Delete">×</button>
-                  </td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
-    }
-
-    function renderOutreachSection(plan, week, weekIndex) {
-      // Placeholder for outreach tracking - can be expanded later
-      return '';
-    }
-
-    function renderSpecialsSection(plan) {
-      // Placeholder for specials section - can be expanded later
-      return '';
-    }
-
-    function updateActivityTemplates() {
-      // Placeholder for activity templates - can be expanded later
+  // ======================= BINDING =======================
+  // data-k="path" binds to plan; data-d="path" binds to the activation draft in the modal.
+  function setPath(obj, path, val) { const ks = path.split('.'); let o = obj; for (let i = 0; i < ks.length - 1; i++) { if (o[ks[i]] == null) o[ks[i]] = {}; o = o[ks[i]]; } o[ks[ks.length - 1]] = val; }
+  function getPath(obj, path) { return path.split('.').reduce((o, k) => o == null ? o : o[k], obj); }
+  function field(attr, root, path, { type = 'text', numeric = false, ph = '', attrs = '' } = {}) {
+    const v = getPath(root, path);
+    return `<input type="${type}" ${attr}="${path}" ${numeric ? 'data-num step="any" min="0"' : ''} value="${esc(v ?? '')}" placeholder="${esc(ph)}" ${attrs}>`;
+  }
+  const inp = (path, o) => field('data-k', plan, path, o);
+  const dinp = (path, o) => field('data-d', draft, path, o);
+  function area(path, ph = '', rows = 3, attr = 'data-k') { const root = attr === 'data-k' ? plan : draft; return `<textarea ${attr}="${path}" rows="${rows}" placeholder="${esc(ph)}">${esc(getPath(root, path) ?? '')}</textarea>`; }
+  const darea = (path, ph, rows) => area(path, ph, rows, 'data-d');
+  function sel(path, opts, rerender = true, attr = 'data-k') {
+    const v = getPath(attr === 'data-k' ? plan : draft, path);
+    return `<select ${attr}="${path}" ${rerender ? 'data-rr' : ''}>${Object.entries(opts).map(([k, l]) => `<option value="${esc(k)}" ${String(v ?? '') === k ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
+  }
+  const dsel = (path, opts, rr = false) => sel(path, opts, rr, 'data-d');
+  const dchk = (path, rr = true) => `<input type="checkbox" data-d="${path}" ${rr ? 'data-rr' : ''} ${getPath(draft, path) ? 'checked' : ''}>`;
+  const isStructural = el => el.dataset.rr !== undefined || el.type === 'checkbox' || el.dataset.k === 'startDate';
+  function onEdit(e) {
+    const el = e.target; if (!el.dataset) return;
+    const k = el.dataset.k, d = el.dataset.d;
+    if (!k && !d) return;
+    let v = el.type === 'checkbox' ? el.checked : el.value;
+    if (el.dataset.num !== undefined) v = num(v);
+    if (d) {
+      if (!draft) return; setPath(draft, d, v);
+      if (e.type === 'change' && el.dataset.rr !== undefined) renderWizard(); else updateWizardTotals();
+      if (el.type === 'checkbox') el.closest('.chk')?.classList.toggle('done', el.checked);
       return;
     }
+    if (!plan) return;
+    setPath(plan, k, v); markDirty();
+    if (k === 'startDate' && v) plan.endDate = addDays(v, 89);
+    if (isStructural(el)) { if (e.type === 'change') renderMain(); }
+    else renderDerived();
+  }
+  document.addEventListener('input', onEdit);
+  document.addEventListener('change', e => {
+    if (e.target.id === 'metricPick') { addMetricFromPicker(e.target.value); return; }
+    if (e.target.dataset && (isStructural(e.target) || e.target.dataset.d)) onEdit(e);
+  });
+  function addMetricFromPicker(v) {
+    if (!v || !plan) return;
+    const blank = { baseline: null, t30: null, t60: null, t90: null, a30: null, a60: null, a90: null };
+    if (v === '__custom') plan.ninety.metrics.push({ id: rid(), name: '', unit: '#', dir: 'up', key: '', src: '', ...blank });
+    else { const [name, unit, dir, key, src] = METRIC_LIBRARY[+v]; plan.ninety.metrics.push({ id: rid(), name, unit, dir, key, src, ...blank }); }
+    markDirty(); renderMain();
+    if (v === '__custom') { const ins = document.querySelectorAll('[data-k$=".name"][data-k^="ninety.metrics."]'); ins[ins.length - 1]?.focus(); }
+  }
 
-    // ==================== WEEKLY KPI UPDATE ====================
-    async function updateWeeklyKPI(planId, weekIndex, field, value) {
-      const plan = window.__currentPlan;
-      if (!plan) return;
-
-      const week = plan.weeks[weekIndex];
-      const numVal = parseFloat(value);
-      week[field] = isFinite(numVal) ? numVal : null;
-
-      try {
-        await apiFetch('/marketing-plans', {
-          method: 'PUT',
-          body: JSON.stringify({ id: planId, property: currentProperty, weeks: plan.weeks })
-        });
-        // Re-render to update cumulative totals in header
-        renderPlanDetail(plan);
-      } catch (e) {
-        alert('Failed to update: ' + e.message);
-      }
-    }
-
-    // ==================== ACTIVITY ACTIONS ====================
-    async function toggleActivityStatus(planId, weekIndex, activityId) {
-      const plan = window.__currentPlan;
-      if (!plan) return;
-
-      const week = plan.weeks[weekIndex];
-      const activity = (week.activities || []).find(a => a.id === activityId);
-      if (!activity) return;
-
-      activity.completed = !activity.completed;
-
-      try {
-        await apiFetch('/marketing-plans', {
-          method: 'PUT',
-          body: JSON.stringify({ id: planId, property: currentProperty, weeks: plan.weeks })
-        });
-        renderPlanDetail(plan);
-        renderPlanList();
-      } catch (e) {
-        alert('Failed to update: ' + e.message);
-      }
-    }
-
-    async function updateActivityActual(planId, weekIndex, activityId, value) {
-      const plan = window.__currentPlan;
-      if (!plan) return;
-
-      const week = plan.weeks[weekIndex];
-      const activity = (week.activities || []).find(a => a.id === activityId);
-      if (!activity) return;
-
-      activity.actual = value;
-
-      try {
-        await apiFetch('/marketing-plans', {
-          method: 'PUT',
-          body: JSON.stringify({ id: planId, property: currentProperty, weeks: plan.weeks })
-        });
-      } catch (e) {
-        alert('Failed to update: ' + e.message);
-      }
-    }
-
-    async function deleteActivity(planId, weekIndex, activityId) {
-      if (!confirm('Delete this activity?')) return;
-
-      const plan = window.__currentPlan;
-      if (!plan) return;
-
-      const week = plan.weeks[weekIndex];
-      week.activities = (week.activities || []).filter(a => a.id !== activityId);
-
-      try {
-        await apiFetch('/marketing-plans', {
-          method: 'PUT',
-          body: JSON.stringify({ id: planId, property: currentProperty, weeks: plan.weeks })
-        });
-        renderPlanDetail(plan);
-        renderPlanList();
-      } catch (e) {
-        alert('Failed to delete: ' + e.message);
-      }
-    }
-
-    function openAddActivityModal(weekIndex) {
-      addingActivityToWeek = weekIndex;
-      document.getElementById('actDay').value = 'Monday';
-      document.getElementById('actCategory').value = 'outreach';
-      document.getElementById('actDescription').value = '';
-      document.getElementById('actGoal').value = '';
-      document.getElementById('actOwner').value = '';
-      els.activityModal.classList.add('show');
-      setTimeout(updateActivityTemplates, 0);
-    }
-
-    els.closeActivityModal.onclick = () => els.activityModal.classList.remove('show');
-    els.cancelActivity.onclick = () => els.activityModal.classList.remove('show');
-    els.saveActivity.onclick = async () => {
-      const plan = window.__currentPlan;
-      if (!plan || addingActivityToWeek === null) return;
-
-      const week = plan.weeks[addingActivityToWeek];
-      if (!week.activities) week.activities = [];
-
-      week.activities.push({
-        id: rid(),
-        dayOfWeek: document.getElementById('actDay').value,
-        category: document.getElementById('actCategory').value,
-        description: document.getElementById('actDescription').value,
-        goal: document.getElementById('actGoal').value,
-        owner: document.getElementById('actOwner').value,
-        completed: false,
-        actual: ''
-      });
-
-      try {
-        await apiFetch('/marketing-plans', {
-          method: 'PUT',
-          body: JSON.stringify({ id: plan._id || plan.id, property: currentProperty, weeks: plan.weeks })
-        });
-        els.activityModal.classList.remove('show');
-        renderPlanDetail(plan);
-        renderPlanList();
-      } catch (e) {
-        alert('Failed to add activity: ' + e.message);
-      }
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-act]'); if (!b || !plan) return;
+    const n = plan.ninety, a = b.dataset.act, i = +b.dataset.i, j = +b.dataset.j;
+    const acts = {
+      flush, del, report: () => openReport(false), print: () => openReport(true), csv: exportCsv,
+      phase: () => { phaseTab = i; },
+      delMetric: () => n.metrics.splice(i, 1),
+      addInit: () => n.phases[i].initiatives.push({ id: rid(), title: '', channel: CHANNELS[0], owner: '', due: '', metric: '', status: 'not_started' }),
+      delInit: () => n.phases[i].initiatives.splice(j, 1),
+      addExit: () => n.phases[i].exit.push({ id: rid(), text: '', done: false }),
+      delExit: () => n.phases[i].exit.splice(j, 1),
+      addRisk: () => n.risks.push({ id: rid(), risk: '', likelihood: 'Medium', impact: 'Medium', mitigation: '', owner: '' }),
+      delRisk: () => n.risks.splice(i, 1),
+      // activation modal
+      addEv: () => openWizard(null, isNaN(i) ? null : i),
+      viewEv: () => openView(b.dataset.id),
+      wzStep: () => { if (i <= draftStep || validateUpTo(i)) { draftStep = i; renderWizard(); } },
+      wzNext: () => { if (validateStep(draftStep)) { draftStep++; renderWizard(); } },
+      wzBack: () => { draftStep--; renderWizard(); },
+      wzClose: closeWizard,
+      wzSave: saveWizard,
+      wzSaveResults: saveResults,
+      wzEdit: () => { modalMode = 'wizard'; draftStep = 0; renderWizard(); },
+      wzDup: duplicateDraft,
+      wzDelete: deleteDraft,
+      wzTpl: () => applyTemplate(b.dataset.t),
+      wzPromo: () => { const t = b.dataset.t, p = draft.promo; p.includes(t) ? p.splice(p.indexOf(t), 1) : p.push(t); renderWizard(); },
+      wzTrack: () => { draft[b.dataset.t] = true; renderWizard(); },
+      wzAddLine: () => { draft.lines.push({ id: rid(), item: '', vendor: '', qty: 1, cost: null }); renderWizard(); },
+      wzDelLine: () => { draft.lines.splice(i, 1); renderWizard(); },
+      wzAddCheck: () => { draft.checklist.push({ id: rid(), text: '', done: false }); renderWizard(); const c = document.querySelectorAll('[data-d^="checklist."][type=text]'); c[c.length - 1]?.focus(); },
+      wzDelCheck: () => { draft.checklist.splice(i, 1); renderWizard(); },
     };
+    if (!acts[a]) return;
+    acts[a]();
+    if (a.startsWith('wz') || ['addEv', 'viewEv', 'flush', 'del', 'report', 'print', 'csv'].includes(a)) return;
+    if (a !== 'phase') markDirty();
+    renderMain();
+  });
 
-    // ==================== PLAN ACTIONS ====================
-    async function duplicatePlan(id) {
-      if (!confirm('Duplicate this plan?')) return;
-      try {
-        const res = await apiFetch('/marketing-plans', { method: 'POST', body: JSON.stringify({ action: 'duplicate', id }) });
-        const { id: newId } = await res.json();
-        await fetchPlans();
-        renderPlanList();
-        if (newId) selectPlan(newId);
-      } catch (e) { alert('Duplicate failed: ' + e.message); }
+  // ======================= ACTIVATION WIZARD + DETAIL VIEW =======================
+  const WZ_STEPS = ['Basics', 'Goals & tracking', 'Logistics & promotion', 'Budget', 'Review'];
+  function newDraft(week) {
+    const date = week != null && plan.startDate ? addDays(plan.startDate, week * 7) : '';
+    return normEvent({ id: rid(), date, owner: me?.username || '', repeat: 0 });
+  }
+  function loadDraft(id) {
+    const ex = id && plan.ninety.events.find(e => e.id === id);
+    draftIsNew = !ex;
+    draft = normEvent(clone(ex || newDraft(null)));
+  }
+  function openWizard(id, week) {
+    if (id) loadDraft(id); else { draftIsNew = true; draft = newDraft(week); }
+    modalMode = 'wizard'; draftStep = 0; renderWizard(); $('evModal').classList.add('show');
+  }
+  function openView(id) { loadDraft(id); modalMode = 'view'; renderWizard(); $('evModal').classList.add('show'); }
+  function closeWizard() { draft = null; $('evModal').classList.remove('show'); }
+  function applyTemplate(name) {
+    const t = TEMPLATES[name]; if (!t) return;
+    draft.template = name; draft.type = t.type;
+    if (!draft.name) draft.name = name;
+    for (const k of ['goalLeads', 'goalLeases', 'goalAttendees', 'goalPhotos', 'goalContacts']) if (draft[k] == null && t[k] != null) draft[k] = t[k];
+    if (t.trackPhotos) draft.trackPhotos = true;
+    if (t.trackContacts) draft.trackContacts = true;
+    if (!draft.capture) draft.capture = t.capture || '';
+    if (!draft.promo.length) draft.promo = (t.promo || []).slice();
+    if (!draft.checklist.length) draft.checklist = (t.checklist || []).map(text => ({ id: rid(), text, done: false }));
+    if (!draft.lines.length) draft.lines = t.lines.map(([item, cost]) => ({ id: rid(), item, vendor: '', qty: 1, cost }));
+    renderWizard(); toast(`"${name}" template applied. Adjust anything you like.`);
+  }
+  function validateStep(s) {
+    if (s === 0) {
+      if (!draft.name.trim()) { alert('Give the activation a name.'); return false; }
+      if (!draft.date) { alert('Pick a date so it lands in the right week and month budget.'); return false; }
     }
-
-    async function deletePlan(id) {
-      if (!confirm('Delete this plan? This cannot be undone.')) return;
-      try {
-        await apiFetch('/marketing-plans', { method: 'DELETE', body: JSON.stringify({ id }) });
-        await fetchPlans();
-        renderPlanList();
-        selectedPlanId = null;
-        showEmptyState();
-      } catch (e) { alert('Delete failed: ' + e.message); }
+    if (s === 1 && ['goalLeads', 'goalLeases', 'goalAttendees', 'goalPhotos', 'goalContacts'].every(k => num(draft[k]) == null)) {
+      alert('Set at least one goal (guest cards, leases, attendance, photos or contacts) so results can be measured.'); return false;
     }
+    return true;
+  }
+  const validateUpTo = n => { for (let s = 0; s < n; s++) if (!validateStep(s)) { draftStep = s; renderWizard(); return false; } return true; };
+  function weekLabelFor(date) {
+    if (!date || !plan.startDate) return '';
+    const w = Math.floor(daysBetween(plan.startDate, date) / 7);
+    if (w < 0 || w >= WEEKS) return '<span class="neg">Outside the 90-day plan window</span>';
+    return `Week ${w + 1} · ${PHASES[w < 4 ? 0 : w < 8 ? 1 : 2].label} · ${monthLabel(date.slice(0, 7))} budget`;
+  }
+  function leaseWindow(e) {
+    if (!e.date) return '';
+    const end = addDays(e.date, 7);
+    return end >= today() ? `Count leases signed ${fmtShort(e.date)} – ${fmtShort(end)}. Window closes ${fmtDow(end)}.` : `Leases signed ${fmtShort(e.date)} – ${fmtShort(end)} (window closed).`;
+  }
+  function monthImpact() {
+    if (!draft.date) return '';
+    const k = draft.date.slice(0, 7), ms = monthStats(k);
+    const existing = plan.ninety.events.find(e => e.id === draft.id);
+    const others = ms.committed - (existing ? evCommitted(existing) : 0);
+    const after = others + (draft.status === 'cancelled' ? 0 : (evActual(draft) ?? evPlanned(draft)));
+    if (ms.budget == null) return `${monthLabel(k)}: ${money(after)} committed incl. this activation · <i>no monthly budget set yet</i>`;
+    const left = ms.budget - after;
+    return `${monthLabel(k)} budget ${money(ms.budget)} · committed incl. this ${money(after)} · <span class="${left < 0 ? 'neg' : 'pos'}">${left < 0 ? 'Over by ' + money(-left) : money(left) + ' remaining'}</span>`;
+  }
+  function projHtml() {
+    const c = evCalc(draft);
+    return `<div class="calc">
+      <div class="c"><div class="k">Projected cost per guest card</div><div class="v">${c.projCpg != null ? money2(c.projCpg) : '—'}</div><div class="s">${money(c.planned)} planned ÷ ${draft.goalLeads ?? '—'} guest card goal</div></div>
+      <div class="c"><div class="k">Projected cost per lease</div><div class="v">${c.projCpl != null ? money2(c.projCpl) : '—'}</div><div class="s">${money(c.planned)} planned ÷ ${draft.goalLeases ?? '—'} lease goal</div></div></div>`;
+  }
+  const pct = (a, g) => (a == null || !g) ? '' : ` <span class="pill ${a / g >= .95 ? 'ok' : a / g >= .8 ? 'risk' : 'off'}">${Math.round(a / g * 100)}% of goal</span>`;
+  function resultsCalcHtml() {
+    const c = evCalc(draft), r = draft.results;
+    const variance = c.spend != null ? c.spend - c.planned : null;
+    return `<div class="calc">
+      <div class="c"><div class="k">Est. avg. cost per guest card</div><div class="v">${c.cpg != null ? money2(c.cpg) : '—'}</div>
+        <div class="s">${c.gcPer100 != null ? `≈ ${c.gcPer100.toFixed(1)} guest cards per $100` : 'Enter spend and guest cards'}${c.projCpg != null ? ` · projected ${money2(c.projCpg)}` : ''}</div></div>
+      <div class="c"><div class="k">Est. avg. cost per lease</div><div class="v">${c.cpl != null ? money2(c.cpl) : '—'}</div>
+        <div class="s">${c.lsPer1000 != null ? `≈ ${c.lsPer1000.toFixed(2)} leases per $1,000` : 'Enter spend and leases'}${c.projCpl != null ? ` · projected ${money2(c.projCpl)}` : ''}</div></div>
+      <div class="c"><div class="k">Guest cards vs goal</div><div class="v">${num(r.leads) ?? '—'} <span style="font-size:13px;color:var(--sub)">/ ${draft.goalLeads ?? '—'}</span></div><div class="s">${pct(num(r.leads), num(draft.goalLeads)) || 'No goal set'}</div></div>
+      <div class="c"><div class="k">Spend vs plan</div><div class="v">${c.spend != null ? money(c.spend) : '—'} <span style="font-size:13px;color:var(--sub)">/ ${money(c.planned)}</span></div>
+        <div class="s">${variance == null ? 'Enter total actual spend' : variance > 0 ? `<span class="neg">${money(variance)} over plan</span>` : `<span class="pos">${money(-variance)} under plan</span>`}</div></div></div>`;
+  }
+  function updateWizardTotals() {
+    if (!draft) return;
+    const t = $('wzTotal'); if (t) t.textContent = money(evPlanned(draft));
+    const wl = $('wzWeek'); if (wl) wl.innerHTML = weekLabelFor(draft.date);
+    draft.lines.forEach((l, i) => { const c = $('wzLine' + i); if (c) c.textContent = money((num(l.qty) ?? 1) * (num(l.cost) || 0)); });
+    const mb = $('wzMonth'); if (mb) mb.innerHTML = monthImpact();
+    const pj = $('wzProj'); if (pj) pj.innerHTML = projHtml();
+    const rc = $('wzCalc'); if (rc) rc.innerHTML = resultsCalcHtml();
+  }
+  function initiativeOptions() { return Object.fromEntries([['', '— None —'], ...plan.ninety.phases.flatMap((p, pi) => p.initiatives.filter(x => x.title).map(x => [x.id, `${PHASES[pi].label}: ${x.title}`]))]); }
 
-    // ==================== WIZARD ====================
-    const WIZARD_STEPS = [
-      { id: 1, label: 'Type' },
-      { id: 2, label: 'Details' },
-      { id: 3, label: 'Timeline' },
-      { id: 4, label: 'Strategy' },
-      { id: 5, label: 'Goals' },
-      { id: 6, label: 'Weeks' }
-    ];
-
-    function openPlanModal(opts = {}, id = null) {
-      editingPlanId = (opts.mode === 'edit') ? id : null;
-      wizardStep = 1;
-      wizardData = {
-        planType: '30_day',
-        name: '',
-        termLabel: '',
-        startDate: '',
-        endDate: '',
-        currentSpecial: '',
-        primaryGoals: '',
-        targetAudiences: '',
-        keyDates: [],
-        leadsGoal: null,
-        toursGoal: null,
-        preleaseGoal: null,
-        leasesGoal: null,
-        weeks: []
-      };
-
-      if (editingPlanId) {
-        els.modalTitle.textContent = 'Edit Marketing Plan';
-        loadPlanForEdit(editingPlanId);
-      } else {
-        els.modalTitle.textContent = 'Create Marketing Plan';
-        renderWizard();
-      }
-
-      els.planModal.classList.add('show');
+  function renderWizard() { if (modalMode === 'view') renderView(); else renderWizardSteps(); }
+  function renderWizardSteps() {
+    const steps = WZ_STEPS, s = steps[draftStep], last = draftStep === steps.length - 1, inits = initiativeOptions();
+    let body = '';
+    if (s === 'Basics') body = `
+      <label>Start from a proven template (optional)</label>
+      <div class="tpl">${Object.keys(TEMPLATES).map(t => `<button type="button" class="${draft.template === t ? 'on' : ''}" data-act="wzTpl" data-t="${esc(t)}">${esc(t)}</button>`).join('')}</div>
+      <div class="grid2"><div class="fld"><label>Activation name *</label>${dinp('name', { ph: 'e.g. Union Welcome Week tabling' })}</div>
+        <div class="fld"><label>Type</label>${dsel('type', Object.fromEntries(EV_TYPES.map(t => [t, t])))}</div></div>
+      <div class="grid3"><div class="fld"><label>Date *</label>${dinp('date', { type: 'date' })}</div>
+        <div class="fld"><label>Time</label>${dinp('time', { type: 'time' })}</div>
+        <div class="fld"><label>Owner (runs it)</label>${dinp('owner', { ph: 'Name' })}</div></div>
+      <div class="grid2"><div class="fld"><label>Location / channel</label>${dinp('location', { ph: 'e.g. Student Union, Instagram' })}</div>
+        <div class="fld"><label>Supports initiative</label>${dsel('initiativeId', inits)}</div></div>
+      <div class="hint" id="wzWeek">${weekLabelFor(draft.date)}</div>`;
+    if (s === 'Goals & tracking') body = `
+      <div class="grid2"><div class="fld"><label>Who is it for?</label>${dinp('audience', { ph: 'e.g. Sophomores in dorms, transfer students' })}</div>
+        <div class="fld"><label>Success looks like…</label>${dinp('successMeasure', { ph: 'e.g. 10 tours booked from sign-ups' })}</div></div>
+      <div class="fld"><label>Why are we doing it? (objective)</label>${darea('objective', 'e.g. Capture leads from students leaving on-campus housing before spring break', 2)}</div>
+      <label>Goals (set at least one)</label>
+      <div class="grid3"><div class="fld"><label style="text-transform:none">Guest card goal</label>${dinp('goalLeads', { type: 'number', numeric: true })}</div>
+        <div class="fld"><label style="text-transform:none">Leases signed within 7 days</label>${dinp('goalLeases', { type: 'number', numeric: true })}</div>
+        <div class="fld"><label style="text-transform:none">Attendance / reach</label>${dinp('goalAttendees', { type: 'number', numeric: true })}</div></div>
+      <label style="margin-top:4px">Also track (if needed)</label>
+      <div class="track">${dchk('trackPhotos')}<div class="tl"><b>Social photos taken</b><span>Content captured for social media</span></div>${draft.trackPhotos ? dinp('goalPhotos', { type: 'number', numeric: true, ph: 'Goal' }) : ''}</div>
+      <div class="track">${dchk('trackContacts')}<div class="tl"><b>Business contacts gained</b><span>Local businesses / partners met</span></div>${draft.trackContacts ? dinp('goalContacts', { type: 'number', numeric: true, ph: 'Goal' }) : ''}</div>`;
+    if (s === 'Logistics & promotion') body = `
+      <div class="grid2"><div class="fld"><label>How will we capture guest cards?</label>${dsel('capture', Object.fromEntries(CAPTURE.map(c => [c, c || '— Select —'])))}
+          <div class="hint">No capture plan means no guest cards to measure.</div></div>
+        <div class="fld"><label>Staffing</label>${dinp('staff', { ph: 'e.g. Brian + 2 leasing agents, 11am–2pm' })}</div></div>
+      <div class="fld"><label>Promote it on</label><div class="chips">${PROMO.map(p => `<button type="button" class="chip ${draft.promo.includes(p) ? 'on' : ''}" data-act="wzPromo" data-t="${esc(p)}">${draft.promo.includes(p) ? '✓ ' : ''}${esc(p)}</button>`).join('')}</div></div>
+      <div class="grid2"><div class="fld"><label>Follow-up plan</label>${dinp('followUp', { ph: 'e.g. Call every guest card within 24 hrs; invite to tour' })}</div>
+        <div class="fld"><label>Follow-up owner</label>${dinp('followUpOwner', { ph: 'Name' })}</div></div>
+      <label>Prep checklist</label>
+      ${draft.checklist.map((c, i) => `<div class="chk ${c.done ? 'done' : ''}">${dchk(`checklist.${i}.done`, false)}${dinp(`checklist.${i}.text`, { ph: 'Task' })}<button class="btn sm ghost danger" data-act="wzDelCheck" data-i="${i}">✕</button></div>`).join('') || '<div class="hint" style="margin-bottom:6px">No prep tasks yet.</div>'}
+      <button class="btn sm" data-act="wzAddCheck">+ Add task</button>`;
+    if (s === 'Budget') body = `
+      <table><thead><tr><th>Line item</th><th>Vendor</th><th style="width:70px">Qty</th><th style="width:100px">Unit cost $</th><th style="width:90px">Total</th><th></th></tr></thead>
+      <tbody>${draft.lines.map((l, i) => `<tr><td>${dinp(`lines.${i}.item`, { ph: 'e.g. T-shirts' })}</td><td>${dinp(`lines.${i}.vendor`, { ph: 'Optional' })}</td>
+        <td class="num">${dinp(`lines.${i}.qty`, { type: 'number', numeric: true })}</td><td class="num">${dinp(`lines.${i}.cost`, { type: 'number', numeric: true })}</td>
+        <td id="wzLine${i}" style="text-align:right;padding-top:12px">${money((num(l.qty) ?? 1) * (num(l.cost) || 0))}</td>
+        <td><button class="btn sm ghost danger" data-act="wzDelLine" data-i="${i}">✕</button></td></tr>`).join('') || '<tr><td colspan="6" class="hint">No costs yet. Add line items, or leave empty for a $0 activation.</td></tr>'}</tbody></table>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px"><button class="btn sm" data-act="wzAddLine">+ Add line item</button><div><b>Planned total: <span id="wzTotal">${money(evPlanned(draft))}</span></b></div></div>
+      <div class="grid2" style="margin-top:14px"><div class="fld"><label>Status</label>${dsel('status', EV_STATUS, true)}</div></div>
+      <div class="hint" id="wzMonth">${monthImpact()}</div>
+      <div id="wzProj">${projHtml()}</div>`;
+    if (s === 'Review') {
+      const gaps = [];
+      if (!draft.capture || draft.capture === 'Not capturing leads') gaps.push('No guest card capture method');
+      if (!draft.promo.length) gaps.push('No promotion channels selected');
+      if (!draft.followUp) gaps.push('No follow-up plan');
+      if (!draft.owner) gaps.push('No owner');
+      const goals = [['guest cards', draft.goalLeads], ['leases (7-day)', draft.goalLeases], ['reach', draft.goalAttendees], ...(draft.trackPhotos ? [['social photos', draft.goalPhotos]] : []), ...(draft.trackContacts ? [['business contacts', draft.goalContacts]] : [])].filter(([, v]) => num(v) != null).map(([k, v]) => `${v} ${k}`).join(' · ');
+      body = `<table>
+        ${[['Activation', `<b>${esc(draft.name)}</b> · ${esc(draft.type)}`], ['When', `${fmtDow(draft.date)} ${esc(fmtTime(draft.time))} · ${weekLabelFor(draft.date)}`], ['Where', esc(draft.location || '—')], ['Owner', esc(draft.owner || '—')],
+           ['Supports', esc(inits[draft.initiativeId] || '—')], ['Audience', esc(draft.audience || '—')], ['Objective', esc(draft.objective || '—')], ['Goals', esc(goals || '—')],
+           ['Guest card capture', esc(draft.capture || '—')], ['Promotion', esc(draft.promo.join(', ') || '—')], ['Follow-up', esc([draft.followUp, draft.followUpOwner].filter(Boolean).join(' · ') || '—')],
+           ['Prep', `${draft.checklist.filter(c => c.done).length}/${draft.checklist.length} tasks done`],
+           ['Budget', `${money(evPlanned(draft))} planned (${draft.lines.length} line items)`], ['Status', `<span class="pill ${draft.status}">${EV_STATUS[draft.status]}</span>`]]
+          .map(([k, v]) => `<tr><td style="width:150px;color:var(--sub);font-weight:600">${k}</td><td>${v}</td></tr>`).join('')}</table>
+        <div id="wzProj">${projHtml()}</div>
+        ${gaps.length ? `<div class="callbox warn" style="margin-top:12px"><b>Make it stronger:</b> ${gaps.map(esc).join(' · ')}</div>` : '<div class="callbox" style="margin-top:12px"><b>Ready to go.</b> Goals, capture, promotion and follow-up are all set.</div>'}
+        ${draftIsNew ? `<div class="grid3" style="margin-top:12px;align-items:end"><div class="fld" style="margin:0"><label>Repeat weekly for</label>${dinp('repeat', { type: 'number', numeric: true, ph: '0' })}</div><div class="hint" style="grid-column:span 2;margin:0 0 10px">more week(s). Creates a copy on the same weekday each following week.</div></div>` : ''}
+        <div class="hint" style="margin-top:10px">${monthImpact()}</div>`;
     }
-
-    async function loadPlanForEdit(id) {
-      try {
-        const res = await apiFetch(`/marketing-plans?id=${encodeURIComponent(id)}`);
-        const plan = await res.json();
-        wizardData = {
-          planType: plan.planType || '30_day',
-          name: plan.name || '',
-          termLabel: plan.termLabel || '',
-          startDate: (plan.startDate || '').slice(0, 10),
-          endDate: (plan.endDate || '').slice(0, 10),
-          currentSpecial: plan.currentSpecial || '',
-          primaryGoals: plan.primaryGoals || '',
-          targetAudiences: plan.targetAudiences || '',
-          keyDates: plan.keyDates || [],
-          leadsGoal: plan.leadsGoal,
-          toursGoal: plan.toursGoal,
-          preleaseGoal: plan.preleaseGoal,
-          leasesGoal: plan.leasesGoal,
-          weeks: plan.weeks || []
-        };
-        renderWizard();
-      } catch (e) {
-        alert('Failed to load plan: ' + e.message);
-        els.planModal.classList.remove('show');
-      }
-    }
-
-    function renderWizard() {
-      // Progress
-      els.wizardProgress.innerHTML = WIZARD_STEPS.map((s, i) => `
-        ${i > 0 ? '<div class="step-connector"></div>' : ''}
-        <div class="wizard-step ${wizardStep === s.id ? 'active' : ''} ${wizardStep > s.id ? 'completed' : ''}">
-          <div class="step-number">${s.id}</div>
-          <div class="step-label">${s.label}</div>
-        </div>
-      `).join('');
-
-      // Buttons
-      els.wizardBack.style.display = wizardStep > 1 ? '' : 'none';
-      els.wizardNext.classList.toggle('hidden', wizardStep === WIZARD_STEPS.length);
-      els.wizardSave.classList.toggle('hidden', wizardStep !== WIZARD_STEPS.length);
-
-      // Content
-      switch (wizardStep) {
-        case 1: renderStep1(); break;
-        case 2: renderStep2(); break;
-        case 3: renderStep3(); break;
-        case 4: renderStep4(); break;
-        case 5: renderStep5(); break;
-        case 6: renderStep6(); break;
-      }
-    }
-
-    function renderStep1() {
-      els.wizardContent.innerHTML = `
-        <div class="form-section">
-          <div class="form-section-title">Select Plan Type</div>
-          <div class="plan-type-cards">
-            <div class="plan-type-card ${wizardData.planType === '30_day' ? 'selected' : ''}" data-type="30_day">
-              <div class="plan-type-icon">30</div>
-              <div class="plan-type-title">30 Day Plan</div>
-              <div class="plan-type-desc">4-5 week sprint campaign</div>
+    $('evModalBox').innerHTML = `
+      <div class="modal-h"><h3>${draftIsNew ? 'Plan a marketing activation' : 'Edit activation details'}</h3><button class="btn ghost" style="margin-left:auto" data-act="wzClose">✕</button></div>
+      <div class="steps">${steps.map((x, i) => `<span class="${i === draftStep ? 'on' : i < draftStep ? 'done' : ''}" data-act="wzStep" data-i="${i}">${i + 1}. ${x}</span>`).join('')}</div>
+      <div class="modal-b">${body}</div>
+      <div class="modal-f">
+        ${!draftIsNew ? '<button class="btn ghost danger" style="margin-right:auto" data-act="wzDelete">Delete</button>' : ''}
+        ${draftStep > 0 ? '<button class="btn" data-act="wzBack">Back</button>' : '<button class="btn" data-act="wzClose">Cancel</button>'}
+        ${!last ? '<button class="btn primary" data-act="wzNext">Next</button>' : ''}
+        ${(last || !draftIsNew) ? `<button class="btn primary" data-act="wzSave">${draftIsNew ? 'Add to plan' : 'Save changes'}</button>` : ''}
+      </div>`;
+  }
+  function renderView() {
+    const r = draft.results, inits = initiativeOptions(), past = draft.date && draft.date <= today();
+    const goals = [['Guest cards', draft.goalLeads], ['Leases (7-day)', draft.goalLeases], ['Attendance / reach', draft.goalAttendees], ...(draft.trackPhotos ? [['Social photos', draft.goalPhotos]] : []), ...(draft.trackContacts ? [['Business contacts', draft.goalContacts]] : [])];
+    const row = (k, v) => `<div><span>${k}</span><span>${v}</span></div>`;
+    $('evModalBox').innerHTML = `
+      <div class="modal-h"><h3>${esc(draft.name || 'Activation')}</h3><span class="pill ${draft.status}">${EV_STATUS[draft.status]}</span>
+        ${needsResults(draft) ? '<span class="pill due">Results needed</span>' : ''}<button class="btn ghost" style="margin-left:auto" data-act="wzClose">✕</button></div>
+      <div class="modal-b">
+        <div class="dv-meta"><span><b>${fmtDow(draft.date)}</b>${draft.time ? ' · ' + esc(fmtTime(draft.time)) : ''}</span><span>${esc(draft.type)}</span>${draft.location ? `<span>${esc(draft.location)}</span>` : ''}
+          <span>Owner: <b>${esc(draft.owner || '—')}</b></span><span>${weekLabelFor(draft.date)}</span>${draft.initiativeId && inits[draft.initiativeId] ? `<span>Supports: ${esc(inits[draft.initiativeId])}</span>` : ''}</div>
+        <div class="dv-cols">
+          <div>
+            <div class="dv-sec">The plan</div>
+            <div class="dv-list">
+              ${goals.map(([k, v]) => row(k + ' goal', num(v) ?? '—')).join('')}
+              ${row('Planned budget', money(evPlanned(draft)))}
+              ${row('Guest card capture', esc(draft.capture || '—'))}
+              ${row('Promotion', esc(draft.promo.join(', ') || '—'))}
+              ${row('Follow-up', esc([draft.followUp, draft.followUpOwner].filter(Boolean).join(' · ') || '—'))}
+              ${draft.staff ? row('Staffing', esc(draft.staff)) : ''}
+              ${draft.objective ? row('Objective', esc(draft.objective)) : ''}
             </div>
-            <div class="plan-type-card ${wizardData.planType === '60_day' ? 'selected' : ''}" data-type="60_day">
-              <div class="plan-type-icon">60</div>
-              <div class="plan-type-title">60 Day Plan</div>
-              <div class="plan-type-desc">8-9 week comprehensive</div>
-            </div>
-            <div class="plan-type-card ${wizardData.planType === '90_day' ? 'selected' : ''}" data-type="90_day">
-              <div class="plan-type-icon">90</div>
-              <div class="plan-type-title">90 Day Plan</div>
-              <div class="plan-type-desc">12-13 week full strategy</div>
-            </div>
-          </div>
-        </div>
-      `;
-
-      document.querySelectorAll('.plan-type-card').forEach(card => {
-        card.addEventListener('click', () => {
-          document.querySelectorAll('.plan-type-card').forEach(c => c.classList.remove('selected'));
-          card.classList.add('selected');
-          wizardData.planType = card.dataset.type;
-        });
-      });
-    }
-
-    function renderStep2() {
-      els.wizardContent.innerHTML = `
-        <div class="form-section">
-          <div class="form-section-title">Plan Details</div>
-          <div class="form-row">
-            <div>
-              <label>Plan Name *</label>
-              <input id="wiz_name" type="text" value="${esc(wizardData.name)}" placeholder="e.g., Fall 2025 Leasing Campaign" />
-            </div>
-            <div>
-              <label>Term Label</label>
-              <input id="wiz_term" type="text" value="${esc(wizardData.termLabel)}" placeholder="e.g., Fall 2025" />
-            </div>
-          </div>
-          <div style="margin-top:16px">
-            <label>Current Special / Promotion</label>
-            <textarea id="wiz_special" placeholder="e.g., Sign Fast Save Big! Sign within 48 hours for $1000 gift card or 1.5 months free!">${esc(wizardData.currentSpecial)}</textarea>
-            <div class="hint">This will be displayed as a banner on the plan</div>
-          </div>
-        </div>
-      `;
-
-      document.getElementById('wiz_name').oninput = (e) => wizardData.name = e.target.value;
-      document.getElementById('wiz_term').oninput = (e) => wizardData.termLabel = e.target.value;
-      document.getElementById('wiz_special').oninput = (e) => wizardData.currentSpecial = e.target.value;
-    }
-
-    function renderStep3() {
-      const days = wizardData.planType === '90_day' ? 89 : (wizardData.planType === '60_day' ? 59 : 29);
-      
-      els.wizardContent.innerHTML = `
-        <div class="form-section">
-          <div class="form-section-title">Timeline</div>
-          <div class="form-row">
-            <div>
-              <label>Start Date *</label>
-              <input id="wiz_start" type="date" value="${wizardData.startDate}" />
-            </div>
-            <div>
-              <label>End Date *</label>
-              <input id="wiz_end" type="date" value="${wizardData.endDate}" />
-            </div>
-          </div>
-          <div class="hint" style="margin-top:12px;padding:12px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px">
-            <strong>Tip:</strong> For a ${wizardData.planType.replace('_', ' ')} plan, the end date will be auto-calculated as ${days + 1} days from start.
-          </div>
-        </div>
-
-        <div class="form-section" style="margin-top:24px">
-          <div class="form-section-title">Key Dates</div>
-          <div class="hint" style="margin-bottom:12px">Add important dates like housing fairs, move-in dates, university events, etc.</div>
-          <div id="keyDatesList" class="key-dates-list"></div>
-          <div class="form-row" style="margin-top:12px">
-            <div style="flex:2">
-              <input id="kd_label" type="text" placeholder="Event name (e.g., Housing Fair)" />
-            </div>
-            <div style="flex:1">
-              <input id="kd_date" type="date" />
-            </div>
-            <div style="flex:0 0 auto">
-              <button class="btn" id="addKeyDateBtn">Add</button>
-            </div>
-          </div>
-        </div>
-      `;
-
-      const startInput = document.getElementById('wiz_start');
-      const endInput = document.getElementById('wiz_end');
-
-      startInput.onchange = () => {
-        wizardData.startDate = startInput.value;
-        if (startInput.value) {
-          wizardData.endDate = addDays(startInput.value, days);
-          endInput.value = wizardData.endDate;
-        }
-      };
-      endInput.onchange = () => wizardData.endDate = endInput.value;
-
-      renderKeyDatesList();
-
-      document.getElementById('addKeyDateBtn').onclick = () => {
-        const label = document.getElementById('kd_label').value.trim();
-        const date = document.getElementById('kd_date').value;
-        if (label && date) {
-          wizardData.keyDates.push({ label, date });
-          document.getElementById('kd_label').value = '';
-          document.getElementById('kd_date').value = '';
-          renderKeyDatesList();
-        }
-      };
-    }
-
-    function renderKeyDatesList() {
-      const container = document.getElementById('keyDatesList');
-      if (!container) return;
-
-      if (!wizardData.keyDates.length) {
-        container.innerHTML = '<div style="color:#6b7280;font-size:13px">No key dates added yet</div>';
-        return;
-      }
-
-      container.innerHTML = wizardData.keyDates.map((kd, i) => `
-        <div class="key-date-item">
-          <div class="key-date-dot"></div>
-          <div class="key-date-label">${esc(kd.label)}</div>
-          <div class="key-date-date">${formatDate(kd.date)}</div>
-          <button class="key-date-remove" data-index="${i}">×</button>
-        </div>
-      `).join('');
-
-      container.querySelectorAll('.key-date-remove').forEach(btn => {
-        btn.onclick = () => {
-          wizardData.keyDates.splice(parseInt(btn.dataset.index), 1);
-          renderKeyDatesList();
-        };
-      });
-    }
-
-    function renderStep4() {
-      els.wizardContent.innerHTML = `
-        <div class="form-section">
-          <div class="form-section-title">Strategy</div>
-          <div style="margin-bottom:16px">
-            <label>Primary Goals</label>
-            <textarea id="wiz_goals" placeholder="e.g., Increase brand awareness, generate 50 leads per week, achieve 95% occupancy...">${esc(wizardData.primaryGoals)}</textarea>
+            ${draft.checklist.length ? `<div class="dv-sec" style="margin-top:14px">Prep checklist</div>${draft.checklist.map((c, i) => `<div class="chk ${c.done ? 'done' : ''}">${dchk(`checklist.${i}.done`, false)}<input type="text" value="${esc(c.text)}" readonly style="border:none;background:transparent;padding:4px 0"></div>`).join('')}` : ''}
           </div>
           <div>
-            <label>Target Audiences</label>
-            <textarea id="wiz_audiences" placeholder="e.g., Undergrads, Graduate Students, Transfer Students, Greek Life...">${esc(wizardData.targetAudiences)}</textarea>
+            <div class="dv-sec">Post-event results</div>
+            ${!past ? `<div class="callbox" style="margin-bottom:10px">This activation is on ${fmtDow(draft.date)}. Come back afterwards to log results.</div>` : ''}
+            <div class="grid2">
+              <div class="fld"><label>Actual guest cards</label>${dinp('results.leads', { type: 'number', numeric: true })}</div>
+              <div class="fld"><label>Total actual spend $</label>${dinp('results.actualCost', { type: 'number', numeric: true, ph: String(Math.round(evPlanned(draft))) })}</div>
+            </div>
+            <div class="fld"><label>Leases signed within 7 days after the event</label>${dinp('results.leases', { type: 'number', numeric: true })}<div class="hint">${leaseWindow(draft)}</div></div>
+            <div class="grid2">
+              <div class="fld"><label>Attendance / reach</label>${dinp('results.attendees', { type: 'number', numeric: true })}</div>
+              ${draft.trackPhotos ? `<div class="fld"><label>Social photos taken</label>${dinp('results.photos', { type: 'number', numeric: true })}</div>` : ''}
+              ${draft.trackContacts ? `<div class="fld"><label>Business contacts gained</label>${dinp('results.contacts', { type: 'number', numeric: true })}</div>` : ''}
+            </div>
+            ${!draft.trackPhotos || !draft.trackContacts ? `<div class="hint" style="margin:-4px 0 10px">Also track: ${!draft.trackPhotos ? '<button class="link" data-act="wzTrack" data-t="trackPhotos">social photos</button>' : ''}${!draft.trackPhotos && !draft.trackContacts ? ' · ' : ''}${!draft.trackContacts ? '<button class="link" data-act="wzTrack" data-t="trackContacts">business contacts</button>' : ''}</div>` : ''}
+            <div class="fld"><label>What happened / learnings</label>${darea('results.notes', 'e.g. Great traffic 11–1; ran out of shirts. Next time bring a QR code for tour booking.', 3)}</div>
+            <div id="wzCalc">${resultsCalcHtml()}</div>
+            ${r.loggedBy ? `<div class="hint" style="margin-top:8px">Results logged by ${esc(r.loggedBy)}${r.loggedAt ? ' on ' + fmtDate(r.loggedAt.slice(0, 10)) : ''}</div>` : ''}
           </div>
         </div>
-      `;
-
-      document.getElementById('wiz_goals').oninput = (e) => wizardData.primaryGoals = e.target.value;
-      document.getElementById('wiz_audiences').oninput = (e) => wizardData.targetAudiences = e.target.value;
+      </div>
+      <div class="modal-f">
+        <button class="btn ghost danger" style="margin-right:auto" data-act="wzDelete">Delete</button>
+        <button class="btn" data-act="wzDup">Duplicate</button>
+        <button class="btn" data-act="wzEdit">Edit details</button>
+        <button class="btn" data-act="wzClose">Close</button>
+        <button class="btn primary" data-act="wzSaveResults">Save results</button>
+      </div>`;
+  }
+  function commitDraft(d) {
+    const evs = plan.ninety.events, i = evs.findIndex(e => e.id === d.id);
+    const clean = clone(d); delete clean.repeat;
+    if (i >= 0) evs[i] = clean; else evs.push(clean);
+  }
+  function saveWizard() {
+    if (!validateUpTo(2)) return;
+    const reps = Math.max(0, Math.min(12, Math.floor(num(draft.repeat) || 0)));
+    commitDraft(draft);
+    for (let k = 1; k <= reps; k++) {
+      const c = clone(draft); c.id = rid(); c.date = addDays(draft.date, 7 * k);
+      c.lines = c.lines.map(l => ({ ...l, id: rid() })); c.checklist = c.checklist.map(x => ({ ...x, id: rid(), done: false }));
+      c.results = normEvent({}).results; c.status = draft.status === 'done' ? 'planned' : draft.status;
+      commitDraft(c);
     }
+    const msg = draftIsNew ? (reps ? `Activation added plus ${reps} weekly repeat${reps > 1 ? 's' : ''}` : 'Activation added. Click it anytime to log results.') : 'Activation updated';
+    closeWizard(); markDirty(); renderMain(); toast(msg);
+  }
+  function saveResults() {
+    const r = draft.results;
+    const any = ['attendees', 'leads', 'leases', 'actualCost', 'photos', 'contacts'].some(k => num(r[k]) != null);
+    if (any && !['done', 'cancelled'].includes(draft.status)) draft.status = 'done';
+    if (num(r.photos) != null) draft.trackPhotos = true;
+    if (num(r.contacts) != null) draft.trackContacts = true;
+    if (any) { r.loggedBy = me?.username || ''; r.loggedAt = new Date().toISOString(); }
+    commitDraft(draft); closeWizard(); markDirty(); renderMain(); toast(any ? 'Results saved' : 'Saved');
+  }
+  function duplicateDraft() {
+    const c = clone(draft);
+    c.id = rid(); c.name = draft.name; c.date = draft.date ? addDays(draft.date, 7) : ''; c.status = 'planned';
+    c.lines = c.lines.map(l => ({ ...l, id: rid() })); c.checklist = c.checklist.map(x => ({ ...x, id: rid(), done: false }));
+    c.results = normEvent({}).results;
+    draft = c; draftIsNew = true; modalMode = 'wizard'; draftStep = 0; renderWizard();
+    toast('Copy created one week later. Review and add it to the plan.');
+  }
+  function deleteDraft() {
+    if (!confirm('Delete this activation?')) return;
+    plan.ninety.events = plan.ninety.events.filter(e => e.id !== draft.id);
+    closeWizard(); markDirty(); renderMain();
+  }
 
-    function renderStep5() {
-      els.wizardContent.innerHTML = `
-        <div class="form-section">
-          <div class="form-section-title">Performance Goals</div>
-          <div class="hint" style="margin-bottom:16px">Set your target goals for this plan. You'll track actual performance weekly.</div>
-          
-          <div class="form-row">
-            <div>
-              <label>Leads Goal (Total)</label>
-              <input id="wiz_leadsGoal" type="number" min="0" value="${wizardData.leadsGoal || ''}" placeholder="e.g., 100" />
-              <div class="hint">Total leads to generate during plan</div>
-            </div>
-            <div>
-              <label>Tours Goal (Total)</label>
-              <input id="wiz_toursGoal" type="number" min="0" value="${wizardData.toursGoal || ''}" placeholder="e.g., 50" />
-              <div class="hint">Total tours to schedule during plan</div>
-            </div>
-          </div>
-          
-          <div class="form-row">
-            <div>
-              <label>Prelease Goal (%)</label>
-              <input id="wiz_preleaseGoal" type="number" min="0" max="100" value="${wizardData.preleaseGoal || ''}" placeholder="e.g., 95" />
-              <div class="hint">Target prelease percentage</div>
-            </div>
-            <div>
-              <label>Leases Goal (Total)</label>
-              <input id="wiz_leasesGoal" type="number" min="0" value="${wizardData.leasesGoal || ''}" placeholder="e.g., 30" />
-              <div class="hint">Total leases to sign during plan</div>
-            </div>
-          </div>
-        </div>
-      `;
+  // ======================= RENDER: EDITOR =======================
+  function renderMain() {
+    const main = $('main');
+    if (!plan) { main.innerHTML = `<div class="card"><div class="empty"><h3 style="margin-bottom:8px">30-60-90 Day Marketing Plan</h3>A goal-driven plan with a scorecard, phased initiatives, a weekly marketing activation calendar with per-event budgets and results, and an HQ-ready export.<br><br><button class="btn primary" onclick="newPlan()">+ Create a 30-60-90 plan</button></div></div>`; return; }
+    const n = plan.ninety;
+    const used = new Set(n.metrics.map(m => m.name));
+    main.innerHTML = `
+    <div class="card"><div class="body">
+      <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+        <div style="flex:2;min-width:240px"><label>Plan name</label>${inp('name', { ph: 'e.g. Fall 2027 Pre-Lease Push' })}</div>
+        <div style="flex:1;min-width:140px"><label>Term / season</label>${inp('termLabel', { ph: 'e.g. Fall 2027' })}</div>
+        <div style="flex:1;min-width:150px"><label>Day 1 (start)</label>${inp('startDate', { type: 'date' })}</div>
+        <div style="flex:1;min-width:120px"><label>Day 90 (end)</label><div style="padding:8px 0;font-weight:600">${fmtDate(plan.endDate)}</div></div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap">
+        <span id="saveState">${saveStateHtml()}</span>
+        <span class="livenote">· Auto-saves as you type · teammates' edits appear automatically</span>
+        <span style="flex:1"></span>
+        <button class="btn" data-act="report">Preview HQ report</button>
+        <button class="btn" data-act="print">Export PDF</button>
+        <button class="btn" data-act="csv">Export CSV</button>
+        ${plan.id ? '<button class="btn ghost danger" data-act="del">Delete</button>' : ''}
+      </div>
+    </div></div>
 
-      const bindNum = (id, key) => {
-        const el = document.getElementById(id);
-        if (el) el.oninput = () => { const v = parseFloat(el.value); wizardData[key] = isFinite(v) ? v : null; };
-      };
-      bindNum('wiz_leadsGoal', 'leadsGoal');
-      bindNum('wiz_toursGoal', 'toursGoal');
-      bindNum('wiz_preleaseGoal', 'preleaseGoal');
-      bindNum('wiz_leasesGoal', 'leasesGoal');
+    <div class="card"><h3>Plan health <span class="sub">Updates automatically</span></h3><div class="body" id="health"></div></div>
+
+    <div class="card"><h3><span class="step">1</span> One-page brief <span class="sub">What HQ reads first — keep it tight</span></h3><div class="body">
+      <div class="grid2">
+        <div><label>Situation — where are we today?</label>${area('ninety.summary.situation', 'e.g. 62% pre-leased vs 78% same time last year. Lead volume down 20%; tour conversion strong (45%) but response time averages 9 hrs.')}</div>
+        <div><label>90-day objective (one sentence, measurable)</label>${area('ninety.summary.objective', 'e.g. Reach 85% pre-leased (+68 leases) by Mar 31 at ≤ $350 marketing cost per lease.')}</div>
+      </div>
+      <div style="margin-top:12px"><label>Strategy — how we'll win</label>${area('ninety.summary.strategy', 'e.g. Fix speed-to-lead first, then concentrate spend on campus events + paid social retargeting, and close with a deadline-driven special.')}</div>
+      <label style="margin-top:12px">Top 3 priorities</label>
+      <div class="grid3">${[0, 1, 2].map(k => inp(`ninety.summary.priorities.${k}`, { ph: `Priority ${k + 1}` })).join('')}</div>
+      <div class="grid3" style="margin-top:12px">
+        <div><label>Target audience</label>${area('ninety.summary.audience', 'e.g. Sophomores leaving dorms; transfer students; parents', 2)}</div>
+        <div><label>Current special / offer</label>${area('ninety.summary.special', 'e.g. $0 deposit + $300 gift card through Jan 31', 2)}</div>
+        <div><label>Support needed from HQ</label>${area('ninety.summary.hqAsk', 'e.g. $1,500 paid social budget; approval for Feb concession; creative for 2 flyers', 2)}</div>
+      </div>
+      <div class="grid4" style="margin-top:12px">
+        <div><label>Plan owner</label>${inp('ninety.owner', { ph: 'Community / Marketing Mgr' })}</div>
+        <div><label>Prepared by</label>${inp('ninety.preparedBy')}</div>
+        <div><label>Reviewed by (RM / HQ)</label>${inp('ninety.reviewer')}</div>
+        <div><label>Approval status</label>${sel('ninety.approvalStatus', { draft: 'Draft', submitted: 'Submitted for review', approved: 'Approved', revise: 'Needs revision' })}</div>
+      </div>
+    </div></div>
+
+    <div class="card"><h3><span class="step">2</span> Scorecard — baseline, targets &amp; actuals <span class="sub">Add only the metrics this plan needs. Counts are cumulative from Day 1.</span></h3><div class="body">
+      ${n.metrics.length ? `<div class="tscroll"><table>
+        <thead><tr><th rowspan="2">Metric <span style="font-weight:400;text-transform:none">(unit · direction · source)</span></th><th rowspan="2">Baseline</th>
+          ${CPS.map(c => `<th colspan="3" class="grp">Day ${c} · ${fmtShort(cpDate(c))}</th>`).join('')}<th rowspan="2"></th></tr>
+          <tr>${CPS.map(() => '<th>Target</th><th>Actual</th><th>Status</th>').join('')}</tr></thead>
+        <tbody>${n.metrics.map((m, i) => `<tr>
+          <td style="min-width:200px">${inp(`ninety.metrics.${i}.name`, { ph: 'Metric name' })}
+            <div class="mcfg">${sel(`ninety.metrics.${i}.unit`, { '#': '#', '%': '%', '$': '$', hrs: 'hrs', '★': '★' }, false)}${sel(`ninety.metrics.${i}.dir`, { up: '↑ Higher', down: '↓ Lower' })}${sel(`ninety.metrics.${i}.src`, SOURCES)}</div></td>
+          <td class="num">${inp(`ninety.metrics.${i}.baseline`, { type: 'number', numeric: true })}</td>
+          ${CPS.map(c => `<td class="num">${inp(`ninety.metrics.${i}.t${c}`, { type: 'number', numeric: true })}</td><td class="num" id="act-${i}-${c}"></td><td id="st-${i}-${c}"></td>`).join('')}
+          <td><button class="btn sm ghost danger" data-act="delMetric" data-i="${i}" title="Remove">✕</button></td></tr>`).join('')}</tbody>
+      </table></div>` : '<div class="empty-row">No metrics yet. Add the metrics you need to measure this plan.</div>'}
+      <div class="pick"><select id="metricPick"><option value="">+ Add a metric…</option>
+        <optgroup label="Common metrics">${METRIC_LIBRARY.map((m, i) => used.has(m[0]) ? '' : `<option value="${i}">${esc(m[0])}${m[4] ? ' (auto)' : ''}</option>`).join('')}</optgroup>
+        <option value="__custom">Custom metric…</option></select>
+        <span class="hint" style="margin:0">"(auto)" metrics fill in from activation results.</span></div>
+      ${n.metrics.length ? '<div class="hint">Status is graded once the checkpoint date passes: <b>On track</b> ≥ 95% of target · <b>At risk</b> 80–95% · <b>Off track</b> &lt; 80% (inverted for “lower is better”).</div>' : ''}
+    </div></div>
+
+    <div class="card"><h3><span class="step">3</span> Phases &amp; initiatives <span class="sub">What you'll do in each 30 days</span></h3>
+      <div class="phase-tabs">${PHASES.map((p, i) => { const st = initiativeStats(n.phases[i].initiatives); return `<button class="phase-tab ${phaseTab === i ? 'active' : ''}" data-act="phase" data-i="${i}">${esc(phaseTitle(i))} <span style="opacity:.7">(${st.done}/${st.n})</span></button>`; }).join('')}</div>
+      <div class="body">${renderPhase(phaseTab)}</div>
+    </div>
+
+    <div class="card"><h3><span class="step">4</span> Weekly marketing activations <span class="sub">Click any activation to open it and log post-event results</span></h3><div class="body" id="weeks"></div></div>
+
+    <div class="card"><h3><span class="step">5</span> Budget by month <span class="sub">Every activation's cost rolls into the month it happens</span></h3><div class="body" id="budget"></div></div>
+
+    <div class="card"><h3><span class="step">6</span> Risks &amp; mitigations</h3><div class="body">
+      ${n.risks.length ? `<div class="tscroll"><table><thead><tr><th>Risk</th><th>Likelihood</th><th>Impact</th><th>Mitigation / contingency</th><th>Owner</th><th></th></tr></thead>
+      <tbody>${n.risks.map((r, i) => `<tr><td>${inp(`ninety.risks.${i}.risk`)}</td>
+        <td style="width:110px">${sel(`ninety.risks.${i}.likelihood`, { Low: 'Low', Medium: 'Medium', High: 'High' }, false)}</td>
+        <td style="width:110px">${sel(`ninety.risks.${i}.impact`, { Low: 'Low', Medium: 'Medium', High: 'High' }, false)}</td>
+        <td>${inp(`ninety.risks.${i}.mitigation`)}</td><td style="width:140px">${inp(`ninety.risks.${i}.owner`)}</td>
+        <td><button class="btn sm ghost danger" data-act="delRisk" data-i="${i}">✕</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty-row">No risks logged.</div>'}
+      <div style="margin-top:10px"><button class="btn sm" data-act="addRisk">+ Add risk</button></div>
+    </div></div>`;
+    renderWeeks();
+    renderDerived();
+  }
+
+  function renderPhase(i) {
+    const p = plan.ninety.phases[i], P = PHASES[i];
+    const s = plan.startDate ? addDays(plan.startDate, P.d0 - 1) : '', e = plan.startDate ? addDays(plan.startDate, P.d1 - 1) : '';
+    const pre = `ninety.phases.${i}`;
+    const evs = activeEvents().filter(x => x.date >= s && x.date <= e);
+    return `
+      <div class="hint" style="margin:0 0 10px"><b>${P.label}</b> · ${fmtDate(s)} – ${fmtDate(e)} · ${evs.length} activations scheduled · ${money(evs.reduce((t, x) => t + evCommitted(x), 0))} budgeted</div>
+      <div class="grid2">
+        <div><label>Phase name (optional)</label>${inp(`${pre}.theme`, { ph: 'Name this phase, if you like' })}</div>
+        <div><label>Phase objective — what will be true by Day ${P.d1}?</label>${inp(`${pre}.objective`, { ph: `What must be true by Day ${P.d1}?` })}</div>
+      </div>
+      <label style="margin-top:14px">Initiatives</label>
+      ${p.initiatives.length ? `<div class="tscroll"><table><thead><tr><th>Initiative</th><th>Channel</th><th>Owner</th><th>Due</th><th>Success measure</th><th>Activations</th><th>Status</th><th></th></tr></thead>
+      <tbody>${p.initiatives.map((x, j) => { const linked = activeEvents().filter(ev => ev.initiativeId === x.id); return `<tr>
+        <td style="min-width:220px">${inp(`${pre}.initiatives.${j}.title`, { ph: 'What will be done' })}</td>
+        <td style="width:150px">${sel(`${pre}.initiatives.${j}.channel`, Object.fromEntries(CHANNELS.map(c => [c, c])), false)}</td>
+        <td style="width:120px">${inp(`${pre}.initiatives.${j}.owner`, { ph: 'Name' })}</td>
+        <td style="width:140px">${inp(`${pre}.initiatives.${j}.due`, { type: 'date', attrs: `min="${s}" max="${e}"` })}</td>
+        <td style="width:160px">${inp(`${pre}.initiatives.${j}.metric`, { ph: 'How we know it worked' })}</td>
+        <td style="width:90px;text-align:center" title="${esc(linked.map(l => l.name).join(', '))}">${linked.length}</td>
+        <td style="width:120px">${sel(`${pre}.initiatives.${j}.status`, STATUSES)}</td>
+        <td><button class="btn sm ghost danger" data-act="delInit" data-i="${i}" data-j="${j}">✕</button></td></tr>`; }).join('')}</tbody></table></div>`
+      : `<div class="empty-row">No initiatives yet for ${P.label}. Add what this phase needs.</div>`}
+      <div style="margin-top:8px"><button class="btn sm" data-act="addInit" data-i="${i}">+ Add initiative</button></div>
+      <div class="grid2" style="margin-top:18px">
+        <div><label>Exit criteria — what must be true to move to the next phase</label>
+          ${p.exit.map((x, j) => `<div class="exit-row"><input type="checkbox" data-k="${pre}.exit.${j}.done" ${x.done ? 'checked' : ''}>${inp(`${pre}.exit.${j}.text`, { ph: 'e.g. 20 guest cards from campus events' })}<button class="btn sm ghost danger" data-act="delExit" data-i="${i}" data-j="${j}">✕</button></div>`).join('') || '<div class="hint" style="margin:0 0 6px">No exit criteria yet. Add what this property needs for the report.</div>'}
+          <button class="btn sm" data-act="addExit" data-i="${i}">+ Add criterion</button></div>
+        <div><label>Day ${P.d1} checkpoint review</label>
+          <div style="display:grid;gap:6px">${area(`${pre}.retro.worked`, 'What worked (keep doing)', 2)}${area(`${pre}.retro.didnt`, "What didn't (stop / fix)", 2)}${area(`${pre}.retro.adjust`, 'Adjustments for next phase', 2)}</div></div>
+      </div>`;
+  }
+
+  function evRow(e) {
+    const r = e.results || {}, act = evActual(e), c = evCalc(e);
+    const result = e.status === 'done'
+      ? `<b>${r.leads ?? '—'}</b> guest cards · <b>${r.leases ?? '—'}</b> leases${c.cpg != null ? ` · ${money2(c.cpg)}/GC` : ''}`
+      : `Goal: ${e.goalLeads ?? '—'} guest cards${e.goalLeases != null ? ' · ' + e.goalLeases + ' leases' : ''}`;
+    return `<div class="ev" data-act="viewEv" data-id="${e.id}" title="Open activation">
+      <div class="sm">${fmtDow(e.date)}${e.time ? '<br>' + esc(fmtTime(e.time)) : ''}</div>
+      <div><div class="nm">${esc(e.name)}</div><div class="sm">${esc(e.type)}${e.location ? ' · ' + esc(e.location) : ''}${e.owner ? ' · ' + esc(e.owner) : ''}</div></div>
+      <div class="sm">${result}</div>
+      <div style="text-align:right"><b>${money(act ?? evPlanned(e))}</b><div class="sm">${act != null ? 'actual' : 'planned'}</div></div>
+      <div>${needsResults(e) ? '<span class="pill due">Log results</span>' : `<span class="pill ${e.status}">${EV_STATUS[e.status]}</span>`}</div>
+      <div class="chev">›</div></div>`;
+  }
+
+  function renderWeeks() {
+    const box = $('weeks'); if (!box) return;
+    const n = plan.ninety, cur = Math.floor((dayOfPlan() - 1) / 7), t = actTotals();
+    const byWeek = Array.from({ length: WEEKS }, () => []), outside = [];
+    sortEvents(n.events).forEach(e => { const w = evWeek(e); (w >= 0 && w < WEEKS ? byWeek[w] : outside).push(e); });
+    let html = `<div class="kpis">
+      <div class="kpi"><div class="k">Activations</div><div class="v">${t.done}<span style="font-size:13px;color:var(--sub)"> / ${t.n}</span></div><div class="s">completed${t.pending ? ` · <b style="color:var(--risk)">${t.pending} need results</b>` : ''}</div></div>
+      <div class="kpi"><div class="k">Guest cards</div><div class="v">${t.gc}</div><div class="s">${t.gcGoal ? `${Math.round(t.gc / t.gcGoal * 100)}% of ${t.gcGoal} goal (completed)` : 'from completed activations'}</div></div>
+      <div class="kpi"><div class="k">Leases (7-day)</div><div class="v">${t.ls}</div><div class="s">${t.lsGoal ? `${Math.round(t.ls / t.lsGoal * 100)}% of ${t.lsGoal} goal` : 'within 7 days of events'}</div></div>
+      <div class="kpi"><div class="k">Actual spend</div><div class="v">${money(t.spend)}</div><div class="s">${money(budgetTotals().committed)} committed overall</div></div>
+      <div class="kpi"><div class="k">Avg cost / guest card</div><div class="v">${t.cpg != null ? money2(t.cpg) : '—'}</div><div class="s">actual spend ÷ guest cards</div></div>
+      <div class="kpi"><div class="k">Avg cost / lease</div><div class="v">${t.cpl != null ? money(t.cpl) : '—'}</div><div class="s">actual spend ÷ 7-day leases</div></div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap"><button class="btn primary" data-act="addEv">+ Plan a marketing activation</button>
+      <span class="hint" style="margin:0">${t.photos ? t.photos + ' social photos · ' : ''}${t.contacts ? t.contacts + ' business contacts · ' : ''}Click an activation to see its plan and log results.</span></div>`;
+    for (let w = 0; w < WEEKS; w++) {
+      if (w % 4 === 0 && w < 12) html += `<div class="phase-div">${esc(phaseTitle(w / 4))}</div>`;
+      const s = addDays(plan.startDate, w * 7), e = addDays(plan.startDate, w === 12 ? 89 : w * 7 + 6);
+      const evs = byWeek[w], cost = evs.filter(x => x.status !== 'cancelled').reduce((t, x) => t + evCommitted(x), 0);
+      html += `<div class="week ${w === cur ? 'now' : ''}">
+        <div class="week-h"><span class="t">Week ${w + 1}${w === cur ? ' · this week' : ''}</span><span class="d">${fmtShort(s)} – ${fmtShort(e)}</span>
+          <div style="flex:1;min-width:200px;max-width:420px">${inp(`ninety.weekFocus.${w}`, { ph: 'Week focus (optional), e.g. Push tours before spring break' })}</div>
+          <span class="tot">${evs.length} activation${evs.length === 1 ? '' : 's'} · ${money(cost)}</span>
+          <button class="btn sm" data-act="addEv" data-i="${w}">+ Add</button></div>
+        ${evs.map(evRow).join('') || '<div class="empty-w">Nothing scheduled. Every week should have at least one activation going live.</div>'}
+      </div>`;
     }
+    if (outside.length) html += `<div class="phase-div">Outside the 90-day window / no date</div><div class="week">${outside.map(evRow).join('')}</div>`;
+    box.innerHTML = html;
+  }
 
-    function renderStep6() {
-      // Auto-generate weeks if empty
-      if (!wizardData.weeks.length && wizardData.startDate && wizardData.endDate) {
-        wizardData.weeks = generateWeeks(wizardData.planType, wizardData.startDate, wizardData.endDate);
-      }
+  // Recompute derived widgets without destroying the input that has focus.
+  function renderDerived() {
+    if (!plan) return;
+    const put = (id, html) => { const el = $(id); if (el && !el.contains(document.activeElement)) el.innerHTML = html; };
+    plan.ninety.metrics.forEach((m, i) => CPS.forEach(c => {
+      const a = m.src ? autoActual(m, c) : null;
+      put(`act-${i}-${c}`, a != null ? `<span class="auto">${fmtVal(a, m.unit)}<small>auto</small></span>` : inp(`ninety.metrics.${i}.a${c}`, { type: 'number', numeric: true }));
+      put(`st-${i}-${c}`, pill(score(m, c)));
+    }));
+    put('health', healthHtml());
+    put('budget', budgetHtml(true));
+  }
+  const fmtVal = (v, u) => v == null ? '—' : u === '$' ? money(v) : u === '%' ? v + '%' : u === 'hrs' ? v + ' hrs' : u === '★' ? v + '★' : (+v).toLocaleString();
 
-      els.wizardContent.innerHTML = `
-        <div class="form-section">
-          <div class="form-section-title">Weekly Structure</div>
-          <div class="hint" style="margin-bottom:16px">Review and customize the weekly breakdown. You'll track KPIs and add activities after creating the plan.</div>
-          <div id="weeksPreview"></div>
-        </div>
-      `;
+  function healthHtml() {
+    const d = dayOfPlan(), o = overall(), pr = projection(), bt = budgetTotals(), t = actTotals();
+    const cur = d < 1 ? -1 : d <= 30 ? 0 : d <= 60 ? 1 : d <= 90 ? 2 : 3;
+    const next = sortEvents(activeEvents().filter(e => e.date >= today() && e.status !== 'done'))[0];
+    const thisWeek = activeEvents().filter(e => evWeek(e) === Math.floor((d - 1) / 7)).length;
+    const off = plan.ninety.metrics.filter(m => (latestScore(m) || {}).s === 'off').map(m => m.name).filter(Boolean);
+    return `<div class="health">
+      <div class="hcard"><div class="k">Overall</div><div style="margin:6px 0">${pill(o)}</div><div class="s">${off.length ? 'Off: ' + esc(off.slice(0, 2).join(', ')) : 'Scorecard, lease pace & budget'}</div></div>
+      <div class="hcard"><div class="k">Plan day</div><div class="v">${d < 1 ? 'Not started' : d > 90 ? 'Complete' : d + ' / 90'}</div><div class="bar"><i style="width:${Math.min(100, d / 90 * 100)}%"></i></div></div>
+      <div class="hcard"><div class="k">Leases to date</div><div class="v">${pr ? pr.cum : (t.ls || '—')}${pr && pr.target != null ? `<span style="font-size:14px;color:var(--sub)"> / ${pr.target}</span>` : ''}</div><div class="s">${pr && pr.projected != null ? `Pace → ${pr.projected} by Day 90${pr.needPerWeek != null ? ` · need ${pr.needPerWeek.toFixed(1)}/wk` : ''}` : pr ? 'Pace shows after Day 7' : t.ls ? 'From activation results' : 'Add a "Leases signed" metric to track pace'}</div></div>
+      <div class="hcard"><div class="k">Activations</div><div class="v">${thisWeek} <span style="font-size:13px;color:var(--sub)">this week</span></div><div class="s">${t.pending ? `<b style="color:var(--risk)">${t.pending} need results</b> · ` : ''}${next ? 'Next: ' + esc(next.name) + ' · ' + fmtShort(next.date) : 'Nothing upcoming scheduled'}</div></div>
+      <div class="hcard"><div class="k">Budget committed</div><div class="v">${money(bt.committed)}</div><div class="s">${bt.budget != null ? `of ${money(bt.budget)} · <span class="${bt.committed > bt.budget ? 'neg' : 'pos'}">${bt.committed > bt.budget ? 'over ' + money(bt.committed - bt.budget) : money(bt.budget - bt.committed) + ' left'}</span>` : 'Set monthly budgets below'}</div>
+        ${bt.budget ? `<div class="bar"><i style="width:${Math.min(100, bt.committed / bt.budget * 100)}%;background:${bt.committed > bt.budget ? 'var(--off)' : 'var(--accent2)'}"></i></div>` : ''}</div>
+    </div>
+    <div class="timeline">${PHASES.map((p, i) => `<div class="${i === cur ? 'now' : i < cur ? 'past' : ''}">${esc(phaseTitle(i))}</div>`).join('')}</div>`;
+  }
 
-      const container = document.getElementById('weeksPreview');
-      container.innerHTML = wizardData.weeks.map((w, i) => `
-        <div style="padding:16px;background:#f8fafc;border:1px solid var(--border);border-radius:10px;margin-bottom:12px">
-          <div class="form-row">
-            <div style="flex:2">
-              <label>Week Label</label>
-              <input type="text" value="${esc(w.weekLabel)}" data-week="${i}" data-field="weekLabel" />
-            </div>
-            <div>
-              <label>Start</label>
-              <input type="date" value="${w.dateRangeStart}" data-week="${i}" data-field="dateRangeStart" />
-            </div>
-            <div>
-              <label>End</label>
-              <input type="date" value="${w.dateRangeEnd}" data-week="${i}" data-field="dateRangeEnd" />
-            </div>
-          </div>
-        </div>
-      `).join('');
+  // editable=true renders monthly budget inputs; false renders a read-only version for the report.
+  function budgetHtml(editable) {
+    const months = planMonths(), bt = budgetTotals();
+    const rows = months.map(k => {
+      const m = monthStats(k);
+      const rem = m.remaining == null ? '—' : `<span class="${m.remaining < 0 ? 'neg' : 'pos'}">${m.remaining < 0 ? '−' + money(-m.remaining) : money(m.remaining)}</span>`;
+      const head = `<tr class="mrow"><td>${monthLabel(k)}</td><td>${m.evs.filter(e => e.status !== 'cancelled').length}</td>
+        <td class="num" style="width:120px">${editable ? inp(`ninety.monthBudgets.${k}`, { type: 'number', numeric: true, ph: '$ budget' }) : money(m.budget)}</td>
+        <td>${money(m.planned)}</td><td>${money(m.actual)}</td><td>${money(m.committed)}</td><td>${rem}</td></tr>`;
+      const lines = m.evs.map(e => `<tr${e.status === 'cancelled' ? ' style="opacity:.5"' : ''}><td style="padding-left:22px">${fmtShort(e.date)} · ${editable ? `<a href="#" data-act="viewEv" data-id="${e.id}" onclick="return false">${esc(e.name)}</a>` : esc(e.name)} <span class="pill ${e.status}">${EV_STATUS[e.status]}</span></td><td></td><td></td>
+        <td>${money(evPlanned(e))}</td><td>${evActual(e) != null ? money(evActual(e)) : '—'}</td><td>${money(evCommitted(e))}</td><td></td></tr>`).join('');
+      return head + lines;
+    }).join('');
+    return `<div class="tscroll"><table><thead><tr><th>Month / activation</th><th># Activations</th><th>Monthly budget</th><th>Planned</th><th>Actual spent</th><th>Committed*</th><th>Remaining</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="7" class="hint">Set a start date to see months.</td></tr>'}
+      <tr class="mrow"><td>Total (90 days)</td><td>${activeEvents().length}</td><td>${money(bt.budget)}</td><td>${money(bt.planned)}</td><td>${money(bt.actual)}</td><td>${money(bt.committed)}</td>
+        <td>${bt.budget != null ? `<span class="${bt.budget - bt.committed < 0 ? 'neg' : 'pos'}">${money(bt.budget - bt.committed)}</span>` : '—'}</td></tr></tbody></table></div>
+      <div class="hint">*Committed = actual cost when entered, otherwise planned cost. Cancelled activations are excluded.</div>`;
+  }
 
-      container.querySelectorAll('input').forEach(input => {
-        input.oninput = () => {
-          const weekIndex = parseInt(input.dataset.week);
-          const field = input.dataset.field;
-          wizardData.weeks[weekIndex][field] = input.value;
-        };
-      });
-    }
+  // ======================= EXPORT =======================
+  function reportHtml() {
+    const n = plan.ninety, s = n.summary, pr = projection(), inits = initiativeStats(allInitiatives()), bt = budgetTotals(), t = actTotals();
+    const pri = s.priorities.filter(Boolean);
+    const ap = { draft: 'Draft', submitted: 'Submitted for review', approved: 'Approved', revise: 'Needs revision' }[n.approvalStatus] || 'Draft';
+    const blank = v => v ? esc(v).replace(/\n/g, '<br>') : '<span style="color:#94a3b8">—</span>';
+    const evs = sortEvents(n.events);
+    const done = evs.filter(e => e.status === 'done');
+    return `
+    <div class="no-print" style="display:flex;gap:8px;margin-bottom:16px"><button class="btn" onclick="closeReport()">&larr; Back to editor</button><button class="btn primary" onclick="window.print()">Print / Save as PDF</button></div>
+    <div style="display:flex;justify-content:space-between;gap:20px;align-items:flex-start">
+      <div><div class="meta">${esc(currentProperty)} · 30-60-90 Day Marketing Plan</div><h1>${esc(plan.name)}</h1>
+        <div class="meta">${fmtDate(plan.startDate)} – ${fmtDate(plan.endDate)}${plan.termLabel ? ' · ' + esc(plan.termLabel) : ''} · Owner: ${esc(n.owner || '—')} · Status: ${ap}</div></div>
+      <div style="text-align:right"><div class="meta">Overall health</div>${pill(overall())}<div class="meta" style="margin-top:4px">Day ${Math.max(0, Math.min(90, dayOfPlan()))} of 90 · Generated ${fmtDate(today())}</div></div>
+    </div>
+    <h2>Executive summary</h2>
+    <div class="callout"><b>Objective:</b> ${blank(s.objective)}</div>
+    <div class="two"><div><h4>Situation</h4>${blank(s.situation)}</div><div><h4>Strategy</h4>${blank(s.strategy)}</div></div>
+    <div class="two"><div><h4>Top priorities</h4>${pri.length ? '<ol style="margin-left:18px">' + pri.map(p => `<li>${esc(p)}</li>`).join('') + '</ol>' : blank('')}</div>
+      <div><h4>Support needed from HQ</h4>${blank(s.hqAsk)}<h4>Audience / current offer</h4>${blank([s.audience, s.special].filter(Boolean).join(' · '))}</div></div>
+    <div class="callout" style="margin-top:10px"><b>At a glance:</b> ${t.n} marketing activations planned (${t.done} completed) ·
+      ${money(bt.committed)} committed${bt.budget != null ? ' of ' + money(bt.budget) + ' budget' : ''} ·
+      ${t.gc} guest cards and ${t.ls} leases from activations${t.cpg != null ? ` (${money2(t.cpg)} per guest card${t.cpl != null ? ', ' + money(t.cpl) + ' per lease' : ''})` : ''} ·
+      ${pr ? `${pr.cum} total leases to date${pr.target != null ? ' of ' + pr.target + ' goal' : ''}${pr.projected != null ? ', pacing to ' + pr.projected : ''} · ` : ''}${inits.done}/${inits.n} initiatives done</div>
+    ${n.metrics.filter(m => m.name).length ? `<h2>Scorecard</h2>
+    <table><thead><tr><th>Metric</th><th>Baseline</th>${CPS.map(c => `<th>D${c} target</th><th>D${c} actual</th>`).join('')}<th>Status</th></tr></thead><tbody>
+      ${n.metrics.filter(m => m.name).map(m => { const ls = latestScore(m); return `<tr><td><b>${esc(m.name)}</b>${m.dir === 'down' ? ' <span class="meta">(lower is better)</span>' : ''}</td><td>${fmtVal(num(m.baseline), m.unit)}</td>
+        ${CPS.map(c => `<td>${fmtVal(num(m['t' + c]), m.unit)}</td><td><b>${fmtVal(actual(m, c), m.unit)}</b></td>`).join('')}<td>${pill(ls && ls.s)}</td></tr>`; }).join('')}
+    </tbody></table>` : ''}
+    <div class="pagebreak"></div>
+    <h2>Strategy by phase <span class="meta" style="text-transform:none;letter-spacing:0">(${inits.done}/${inits.n} initiatives complete)</span></h2>
+    ${PHASES.map((P, i) => { const p = n.phases[i]; const st = initiativeStats(p.initiatives); const s0 = addDays(plan.startDate, P.d0 - 1), e0 = addDays(plan.startDate, P.d1 - 1); return `
+      <h4>${P.label} (${fmtShort(s0)} – ${fmtShort(e0)})${p.theme ? ': ' + esc(p.theme) : ''} <span class="meta">· ${st.done}/${st.n} done</span></h4>
+      ${p.objective ? `<div class="meta" style="margin-bottom:6px"><b>Objective:</b> ${esc(p.objective)}</div>` : ''}
+      <table><thead><tr><th>Initiative</th><th>Channel</th><th>Owner</th><th>Due</th><th>Success measure</th><th>Status</th></tr></thead><tbody>
+      ${p.initiatives.filter(x => x.title).map(x => `<tr><td>${esc(x.title)}</td><td>${esc(x.channel)}</td><td>${esc(x.owner || '—')}</td><td>${fmtShort(x.due) || '—'}</td><td>${esc(x.metric || '')}</td><td><span class="pill ${{ done: 'done', in_progress: 'prog', blocked: 'blocked' }[x.status] || 'na'}">${STATUSES[x.status] || ''}</span></td></tr>`).join('') || '<tr><td colspan="6" class="meta">No initiatives</td></tr>'}
+      </tbody></table>
+      <div class="two" style="margin-top:6px"><div>${p.exit.some(x => x.text) ? `<b class="meta">Exit criteria</b><ul>${p.exit.filter(x => x.text).map(x => `<li>${x.done ? '☑' : '☐'} ${esc(x.text)}</li>`).join('')}</ul>` : ''}</div>
+        <div>${p.retro.worked || p.retro.didnt || p.retro.adjust ? `<b class="meta">Day ${P.d1} review</b><ul>${p.retro.worked ? `<li><b>Worked:</b> ${esc(p.retro.worked)}</li>` : ''}${p.retro.didnt ? `<li><b>Didn't:</b> ${esc(p.retro.didnt)}</li>` : ''}${p.retro.adjust ? `<li><b>Adjust:</b> ${esc(p.retro.adjust)}</li>` : ''}</ul>` : ''}</div></div>`; }).join('')}
+    <h2>Weekly marketing activation calendar</h2>
+    <table><thead><tr><th>Week</th><th>Date</th><th>Activation</th><th>Type</th><th>Owner</th><th>Goal</th><th>Budget</th><th>Status / result</th></tr></thead><tbody>
+      ${Array.from({ length: WEEKS }, (_, w) => {
+        const list = evs.filter(e => evWeek(e) === w && e.status !== 'cancelled'); const focus = n.weekFocus[w];
+        const label = `<b>Wk ${w + 1}</b><div class="meta">${fmtShort(addDays(plan.startDate, w * 7))}</div>`;
+        if (!list.length) return `<tr><td>${label}</td><td colspan="7" class="meta">${focus ? esc(focus) + ' · ' : ''}No activations scheduled</td></tr>`;
+        return list.map((e, k) => `<tr>${k === 0 ? `<td rowspan="${list.length}">${label}${focus ? `<div class="meta">${esc(focus)}</div>` : ''}</td>` : ''}<td>${fmtShort(e.date)}</td><td><b>${esc(e.name)}</b>${e.location ? `<div class="meta">${esc(e.location)}</div>` : ''}</td><td>${esc(e.type)}</td><td>${esc(e.owner || '—')}</td>
+          <td>${e.goalLeads ?? '—'} GC${e.goalLeases != null ? ' · ' + e.goalLeases + ' leases' : ''}</td><td>${money(evActual(e) ?? evPlanned(e))}</td><td><span class="pill ${e.status}">${EV_STATUS[e.status]}</span>${e.status === 'done' ? `<div class="meta">${e.results.leads ?? '—'} GC · ${e.results.leases ?? '—'} leases${evCalc(e).cpg != null ? ' · ' + money2(evCalc(e).cpg) + '/GC' : ''}</div>` : ''}</td></tr>`).join('');
+      }).join('')}</tbody></table>
+    ${done.length ? `<h2>Activation results</h2>
+    <table><thead><tr><th>Activation</th><th>Guest cards</th><th>Leases (7-day)</th><th>Reach</th><th>Photos</th><th>Contacts</th><th>Actual spend</th><th>$ / guest card</th><th>$ / lease</th></tr></thead><tbody>
+      ${done.map(e => { const c = evCalc(e), r = e.results; return `<tr><td><b>${esc(e.name)}</b><div class="meta">${fmtShort(e.date)}${r.notes ? ' · ' + esc(r.notes) : ''}</div></td><td>${r.leads ?? '—'}${e.goalLeads != null ? ` <span class="meta">/ ${e.goalLeads}</span>` : ''}</td><td>${r.leases ?? '—'}${e.goalLeases != null ? ` <span class="meta">/ ${e.goalLeases}</span>` : ''}</td><td>${r.attendees ?? '—'}</td><td>${e.trackPhotos ? r.photos ?? '—' : ''}</td><td>${e.trackContacts ? r.contacts ?? '—' : ''}</td><td>${money(c.spend)}</td><td>${money2(c.cpg)}</td><td>${money2(c.cpl)}</td></tr>`; }).join('')}
+      <tr class="mrow"><td>Total</td><td>${t.gc}</td><td>${t.ls}</td><td>${t.att}</td><td>${t.photos || ''}</td><td>${t.contacts || ''}</td><td>${money(t.spend)}</td><td>${money2(t.cpg)}</td><td>${money2(t.cpl)}</td></tr></tbody></table>` : ''}
+    <h2>Budget by month</h2>${budgetHtml(false)}
+    ${n.risks.some(r => r.risk) ? `<h2>Risks &amp; mitigations</h2>
+    <table><thead><tr><th>Risk</th><th>Likelihood</th><th>Impact</th><th>Mitigation</th><th>Owner</th></tr></thead><tbody>
+      ${n.risks.filter(r => r.risk).map(r => `<tr><td>${esc(r.risk)}</td><td>${esc(r.likelihood)}</td><td>${esc(r.impact)}</td><td>${esc(r.mitigation)}</td><td>${esc(r.owner)}</td></tr>`).join('')}</tbody></table>` : ''}
+    <h2>Sign-off</h2>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:20px">
+      ${[['Prepared by', n.preparedBy], ['Plan owner', n.owner], ['Reviewed / approved', n.reviewer]].map(([k, v]) => `<div><div style="border-bottom:1px solid #94a3b8;height:28px;padding-top:6px">${esc(v || '')}</div><div class="meta">${k} · Date ________</div></div>`).join('')}
+    </div>`;
+  }
+  function openReport(print) {
+    $('report').innerHTML = reportHtml();
+    document.body.classList.add('preview'); window.scrollTo(0, 0);
+    if (print) setTimeout(() => window.print(), 150);
+  }
+  function closeReport() { document.body.classList.remove('preview'); }
 
-    function generateWeeks(planType, startDate, endDate) {
-      const weeks = [];
-      const numWeeks = planType === '90_day' ? 13 : (planType === '60_day' ? 9 : 5);
-      let current = startDate;
+  function exportCsv() {
+    const n = plan.ninety, q = v => `"${String(v ?? '').replace(/"/g, '""')}"`, rows = [];
+    rows.push(['Property', currentProperty], ['Plan', plan.name], ['Dates', `${plan.startDate} to ${plan.endDate}`], ['Overall', LABEL[overall()]], []);
+    rows.push(['SCORECARD'], ['Metric', 'Unit', 'Baseline', 'D30 Target', 'D30 Actual', 'D60 Target', 'D60 Actual', 'D90 Target', 'D90 Actual', 'Status']);
+    n.metrics.forEach(m => rows.push([m.name, m.unit, m.baseline, ...CPS.flatMap(c => [m['t' + c], actual(m, c)]), LABEL[(latestScore(m) || {}).s || 'na']]));
+    rows.push([], ['INITIATIVES'], ['Phase', 'Initiative', 'Channel', 'Owner', 'Due', 'Success measure', 'Status']);
+    n.phases.forEach((p, i) => p.initiatives.forEach(x => rows.push([phaseTitle(i), x.title, x.channel, x.owner, x.due, x.metric, STATUSES[x.status]])));
+    rows.push([], ['EXIT CRITERIA'], ['Phase', 'Criterion', 'Met']);
+    n.phases.forEach((p, i) => p.exit.filter(x => x.text).forEach(x => rows.push([phaseTitle(i), x.text, x.done ? 'Yes' : 'No'])));
+    rows.push([], ['MARKETING ACTIVATIONS'], ['Week', 'Date', 'Time', 'Month', 'Activation', 'Type', 'Location', 'Owner', 'Guest card goal', 'Lease goal', 'Capture', 'Promotion', 'Planned $', 'Actual $', 'Status',
+      'Reach', 'Guest cards', 'Leases (7-day)', 'Social photos', 'Business contacts', '$ per guest card', '$ per lease', 'Notes']);
+    sortEvents(n.events).forEach(e => { const w = evWeek(e), r = e.results || {}, c = evCalc(e);
+      rows.push([w >= 0 && w < WEEKS ? w + 1 : '', e.date, e.time, evMonth(e), e.name, e.type, e.location, e.owner, e.goalLeads, e.goalLeases, e.capture, (e.promo || []).join('; '), evPlanned(e), evActual(e), EV_STATUS[e.status],
+        r.attendees, r.leads, r.leases, r.photos, r.contacts, c.cpg != null ? c.cpg.toFixed(2) : '', c.cpl != null ? c.cpl.toFixed(2) : '', r.notes]); });
+    rows.push([], ['ACTIVATION BUDGET LINE ITEMS'], ['Date', 'Activation', 'Item', 'Vendor', 'Qty', 'Unit cost', 'Total']);
+    sortEvents(n.events).forEach(e => (e.lines || []).forEach(l => rows.push([e.date, e.name, l.item, l.vendor, l.qty, l.cost, (num(l.qty) ?? 1) * (num(l.cost) || 0)])));
+    rows.push([], ['BUDGET BY MONTH'], ['Month', 'Budget', 'Planned', 'Actual', 'Committed', 'Remaining']);
+    planMonths().forEach(k => { const m = monthStats(k); rows.push([monthLabel(k), m.budget, m.planned, m.actual, m.committed, m.remaining]); });
+    const blob = new Blob([rows.map(r => r.map(q).join(',')).join('\r\n')], { type: 'text/csv' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${(plan.name || 'plan').replace(/[^a-z0-9]+/gi, '_')}_30-60-90.csv`; a.click();
+  }
 
-      for (let i = 0; i < numWeeks; i++) {
-        const weekEnd = i === numWeeks - 1 ? endDate : addDays(current, 6);
-        weeks.push({
-          weekNumber: i + 1,
-          weekLabel: `Week ${i + 1}`,
-          dateRangeStart: current,
-          dateRangeEnd: weekEnd,
-          leasingFocus: '',
-          communityOutreach: '',
-          socialDigital: '',
-          leadsActual: null,
-          toursActual: null,
-          preleaseActual: null,
-          leasesActual: null,
-          activities: []
-        });
-        current = addDays(weekEnd, 1);
-      }
-
-      return weeks;
-    }
-
-    // Wizard Navigation
-    els.wizardBack.onclick = () => { if (wizardStep > 1) { wizardStep--; renderWizard(); } };
-    els.wizardNext.onclick = () => {
-      // Validation
-      if (wizardStep === 2 && !wizardData.name.trim()) {
-        alert('Plan name is required');
-        return;
-      }
-      if (wizardStep === 3 && (!wizardData.startDate || !wizardData.endDate)) {
-        alert('Start and end dates are required');
-        return;
-      }
-      if (wizardStep < WIZARD_STEPS.length) {
-        wizardStep++;
-        renderWizard();
-      }
-    };
-    els.wizardCancel.onclick = () => els.planModal.classList.remove('show');
-    els.closeModal.onclick = () => els.planModal.classList.remove('show');
-
-    els.wizardSave.onclick = async () => {
-      try {
-        const payload = {
-          name: wizardData.name,
-          planType: wizardData.planType,
-          termLabel: wizardData.termLabel,
-          startDate: wizardData.startDate,
-          endDate: wizardData.endDate,
-          currentSpecial: wizardData.currentSpecial,
-          primaryGoals: wizardData.primaryGoals,
-          targetAudiences: wizardData.targetAudiences,
-          keyDates: wizardData.keyDates,
-          leadsGoal: wizardData.leadsGoal,
-          toursGoal: wizardData.toursGoal,
-          preleaseGoal: wizardData.preleaseGoal,
-          leasesGoal: wizardData.leasesGoal,
-          weeks: wizardData.weeks
-        };
-
-        if (editingPlanId) {
-          await apiFetch('/marketing-plans', { method: 'PUT', body: JSON.stringify({ id: editingPlanId, property: currentProperty, ...payload }) });
-        } else {
-          const res = await apiFetch('/marketing-plans', { method: 'POST', body: JSON.stringify({ property: currentProperty, ...payload }) });
-          const { id } = await res.json();
-          editingPlanId = id;
-        }
-
-        els.planModal.classList.remove('show');
-        await fetchPlans();
-        renderPlanList();
-        if (editingPlanId) selectPlan(editingPlanId);
-      } catch (e) {
-        alert('Failed to save: ' + e.message);
-      }
-    };
-
-    // ==================== INIT ====================
-    initAuth();
+  init();
   </script>
-
-<script src="standard-nav.js"></script>
+  <script src="standard-nav.js"></script>
 </body>
 </html>

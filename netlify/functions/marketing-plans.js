@@ -214,7 +214,7 @@ export async function handler(event){
       if (!property) return json(400, { error:'property required' });
       if (!canAccessProperty(user, property)) return json(403, { error:'forbidden', message:'Your account does not have access to this property. Ask an admin to add it to your user profile.' });
       const list = await db.collection('marketing_plans')
-        // 30-60-90 plans live on the test page; the classic page only lists 30/60 day plans.
+        // 30-60-90 plans are listed by marketing_plans.html; other plan types are older classic plans.
         .find(qs.planType === '30_60_90' || url.searchParams.get('planType') === '30_60_90'
           ? { property, planType: '30_60_90' }
           : { property, planType: { $ne: '30_60_90' } })
@@ -267,9 +267,10 @@ export async function handler(event){
       if (!canAccessProperty(user, prop)) return json(403, { error:'forbidden', message:'Your account does not have access to this property. Ask an admin to add it to your user profile.' });
       const plan = normalizePlan(body||{});
       if (!plan.name || !plan.startDate || !plan.endDate) return json(400, { error:'name, startDate, endDate required' });
-      const doc = { property: prop, ...plan, createdByUserId: user.sub, createdAt: new Date(), updatedAt: new Date() };
+      const now = new Date();
+      const doc = { property: prop, ...plan, createdByUserId: user.sub, createdAt: now, updatedAt: now, updatedBy: user.sub };
       const res = await db.collection('marketing_plans').insertOne(doc);
-      return json(200, { id: res.insertedId.toString() });
+      return json(200, { id: res.insertedId.toString(), updatedAt: now });
     }
 
     if (method === 'PUT'){
@@ -280,10 +281,21 @@ export async function handler(event){
       const existing = await db.collection('marketing_plans').findOne({ _id: new ObjectId(planId) });
       if (!existing) return json(404, { error:'not_found' });
       if (!canAccessProperty(user, existing.property)) return json(403, { error:'forbidden', message:'Your account does not have access to this property. Ask an admin to add it to your user profile.' });
+      // Optimistic concurrency for auto-save: when the client says which version it edited (ifUpdatedAt),
+      // reject with 409 if a teammate saved in between so the client can merge and retry instead of overwriting.
+      const filter = { _id: new ObjectId(planId) };
+      if (body.ifUpdatedAt && existing.updatedAt){
+        if (new Date(existing.updatedAt).getTime() !== new Date(body.ifUpdatedAt).getTime()){
+          return json(409, { error:'conflict', message:'This plan was updated by someone else.', updatedAt: existing.updatedAt, updatedBy: existing.updatedBy || '' });
+        }
+        filter.updatedAt = existing.updatedAt;
+      }
       const updates = normalizePlan(body||{}, { forUpdate: true });
       updates.updatedAt = new Date();
-      await db.collection('marketing_plans').updateOne({ _id: new ObjectId(planId) }, { $set: updates });
-      return json(200, { ok:true });
+      updates.updatedBy = user.sub;
+      const r = await db.collection('marketing_plans').updateOne(filter, { $set: updates });
+      if (!r.matchedCount) return json(409, { error:'conflict', message:'This plan was updated by someone else.' });
+      return json(200, { ok:true, updatedAt: updates.updatedAt });
     }
 
     if (method === 'DELETE'){
