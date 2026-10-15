@@ -10,10 +10,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.10/main.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/index.global.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.10/index.global.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- Full bundle: daygrid + list views + drag/drop interaction (CSS is injected by the bundle) -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
   <style>
     :root{
       --brand-primary:#446472;
@@ -52,7 +50,9 @@
     .nav-tab.active{color:var(--brand-primary);border-bottom-color:var(--brand-primary)}
 
     /* Main Layout */
-    .main-container{max-width:1100px;margin:0 auto;padding:20px}
+    .main-container{max-width:1280px;margin:0 auto;padding:20px}
+    .layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:20px;align-items:start}
+    @media(max-width:1100px){.layout{grid-template-columns:1fr}}
 
     /* Stats Bar */
     .stats-bar{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
@@ -63,77 +63,116 @@
     .stat-card .stat-icon.spent{background:#fef3c7;color:#b45309}
     .stat-card .stat-icon.remaining{background:#dcfce7;color:#15803d}
     .stat-card .stat-icon.remaining.negative{background:#fee2e2;color:#b91c1c}
+    .stat-card .stat-icon.score{background:#ede9fe;color:#6d28d9}
     .stat-card .stat-info{display:flex;flex-direction:column}
     .stat-card .stat-label{font-size:11px;color:var(--subtext);font-weight:600;text-transform:uppercase;letter-spacing:0.3px}
     .stat-card .stat-value{font-size:20px;font-weight:800;color:var(--text)}
+    .stat-card .stat-sub{font-size:11px;color:var(--subtext)}
     .stat-card.clickable{cursor:pointer;transition:all .15s}
     .stat-card.clickable:hover{border-color:var(--brand-accent-2);box-shadow:0 2px 8px rgba(82,213,255,0.15)}
 
     /* Targets Section */
     .targets-section{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:20px}
-    .targets-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+    .targets-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:8px}
     .targets-header h3{font-size:14px;font-weight:700;color:var(--text);margin:0}
+    .targets-header .hint{font-size:12px;color:var(--subtext);font-weight:400}
     .targets-edit-btn{background:none;border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;color:var(--subtext);cursor:pointer;transition:all .15s}
     .targets-edit-btn:hover{background:#f8fafc;color:var(--text)}
     .targets-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
-    .target-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:#f8fafc;border-radius:10px;border:1px solid transparent;transition:all .2s}
+    .target-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:#f8fafc;border-radius:10px;border:1px solid transparent;transition:all .2s;cursor:pointer}
+    .target-item:hover{border-color:var(--brand-accent-2)}
     .target-item.complete{background:#f0fdf4;border-color:#bbf7d0}
-    .target-item .target-indicator{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border:3px solid var(--border);color:var(--subtext);background:#fff;position:relative}
-    .target-item.complete .target-indicator{border-color:var(--success);color:var(--success);background:#f0fdf4}
-    .target-item .target-indicator::after{content:'';position:absolute;inset:3px;border-radius:50%;background:conic-gradient(var(--progress-color,var(--border)) var(--progress,0%),transparent 0);opacity:0.3}
-    .target-item .target-info{flex:1}
+    .target-item .target-indicator{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--text);background:conic-gradient(var(--progress-color) var(--progress),#e2e8f0 0);position:relative;flex-shrink:0}
+    .target-item .target-indicator span{position:relative;z-index:1}
+    .target-item .target-indicator::after{content:'';position:absolute;inset:4px;border-radius:50%;background:#fff}
+    .target-item.complete .target-indicator{background:var(--success)}
+    .target-item .target-info{flex:1;min-width:0}
     .target-item .target-name{font-size:13px;font-weight:600;color:var(--text)}
     .target-item .target-progress{font-size:11px;color:var(--subtext)}
-    .target-item .target-period{font-size:10px;color:var(--subtext);background:#e2e8f0;padding:2px 6px;border-radius:4px;margin-left:auto}
+    .target-item .target-period{font-size:10px;color:var(--subtext);background:#e2e8f0;padding:2px 6px;border-radius:4px}
 
     /* Calendar Card */
     .calendar-card{background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
     .calendar-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
     .calendar-header h2{font-size:16px;font-weight:700;color:var(--text);margin:0}
-    .calendar-actions{display:flex;gap:10px}
+    .calendar-actions{display:flex;gap:10px;flex-wrap:wrap}
     .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 18px;border-radius:10px;border:1px solid var(--border);background:#fff;color:var(--text);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s}
     .btn:hover{background:#f8fafc}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
     .btn.primary{background:var(--brand-accent-2);border-color:var(--brand-accent-2);color:#0b1b24}
     .btn.primary:hover{background:#3ecbf5}
     .btn.success{background:var(--success);border-color:var(--success);color:#fff}
     .btn.success:hover{background:#16a34a}
-    .btn.sm{padding:8px 14px;font-size:13px}
+    .btn.idea{background:#fff7e6;border-color:#ffb732;color:#7c4a00}
+    .btn.idea:hover{background:#ffedc2}
+    .btn.sm{padding:7px 12px;font-size:12px;border-radius:8px}
+    .btn.xs{padding:4px 10px;font-size:11px;border-radius:6px}
 
     /* Filters */
-    .filters-row{padding:12px 20px;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;background:#f8fafc}
+    .filters-row{padding:12px 20px;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;background:#f8fafc;align-items:center}
     .filter-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--border);border-radius:999px;background:#fff;font-size:12px;font-weight:500;color:var(--text);cursor:pointer;transition:all .15s;user-select:none}
     .filter-chip:hover{background:#f8fafc;border-color:#cbd5e1}
     .filter-chip.active{background:#eff6ff;border-color:var(--brand-accent-2)}
     .filter-chip .swatch{width:10px;height:10px;border-radius:3px}
     .filter-chip input{display:none}
+    .filters-row .divider{width:1px;height:20px;background:var(--border);margin:0 4px}
 
     .calendar-body{padding:16px}
+    .legend{display:flex;gap:14px;flex-wrap:wrap;padding:0 4px 10px;font-size:11px;color:var(--subtext)}
+    .legend span{display:inline-flex;align-items:center;gap:5px}
+    .legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
 
     /* FullCalendar */
     .fc{--fc-border-color:#e2e8f0;--fc-page-bg-color:#ffffff;--fc-neutral-bg-color:#f8fafc;--fc-today-bg-color:#fffbeb}
-    .fc .fc-toolbar{margin-bottom:16px}
+    .fc .fc-toolbar{margin-bottom:16px;flex-wrap:wrap;gap:8px}
     .fc .fc-toolbar-title{font-size:20px;font-weight:700;color:var(--text)}
-    .fc .fc-button{background:var(--brand-accent-2);border-color:var(--brand-accent-2);color:#0b1b24;padding:10px 16px;border-radius:10px;font-weight:600;font-size:14px}
-    .fc .fc-button:hover{background:#3ecbf5;border-color:#3ecbf5}
+    .fc .fc-button{background:var(--brand-accent-2);border-color:var(--brand-accent-2);color:#0b1b24;padding:8px 14px;border-radius:10px;font-weight:600;font-size:13px;text-transform:capitalize}
+    .fc .fc-button:hover{background:#3ecbf5;border-color:#3ecbf5;color:#0b1b24}
     .fc .fc-button:disabled{background:#e0f7ff;border-color:#e0f7ff;color:#6b7280;opacity:1}
     .fc .fc-button-primary:not(:disabled).fc-button-active{background:var(--brand-primary);border-color:var(--brand-primary);color:#fff}
     .fc .fc-daygrid-day{cursor:pointer;transition:background .15s}
     .fc .fc-daygrid-day:hover{background:#f0f9ff}
     .fc .fc-daygrid-day-number{color:var(--text);font-weight:500;padding:8px}
-    .fc .fc-event{border-radius:6px;padding:4px 8px;font-size:12px;font-weight:600;cursor:pointer;border:none}
+    .fc .fc-event{border-radius:6px;padding:2px 6px;font-size:12px;font-weight:600;cursor:pointer;border:none}
+    .fc .fc-event.st-idea{opacity:.75;outline:2px dashed rgba(30,41,59,.45);outline-offset:-2px}
+    .fc .fc-event.st-done{opacity:.55}
+    .fc .fc-event.st-done .fc-event-title{text-decoration:line-through}
+    .fc .fc-event.key-date{background:transparent !important;color:#7c4a00 !important;font-weight:600;font-size:11px;border:1px dashed #ffb732 !important;cursor:help}
+    .fc .fc-event.key-date:hover{background:#fff7e6 !important}
+    .ev-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:middle;background:#fff;border:1px solid rgba(0,0,0,.3)}
+    .ev-dot.planned{background:#fff}
+    .ev-dot.promoted{background:#22c55e}
+    .ev-dot.done{background:#1e293b}
+
+    /* Sidebar */
+    .side-card{background:#fff;border:1px solid var(--border);border-radius:14px;margin-bottom:16px;overflow:hidden}
+    .side-card h3{font-size:13px;font-weight:700;padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .side-card h3 .count{background:#fee2e2;color:#991b1b;border-radius:999px;padding:1px 8px;font-size:11px}
+    .side-card h3 .count.ok{background:#dcfce7;color:#166534}
+    .side-list{max-height:420px;overflow-y:auto}
+    .side-item{padding:12px 16px;border-bottom:1px solid #f1f5f9;display:flex;gap:10px;align-items:flex-start}
+    .side-item:last-child{border-bottom:none}
+    .side-item .bar{width:4px;align-self:stretch;border-radius:2px;flex-shrink:0}
+    .side-item .body{flex:1;min-width:0}
+    .side-item .t{font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis}
+    .side-item .d{font-size:12px;color:var(--subtext);margin:2px 0 6px}
+    .side-item .acts{display:flex;gap:6px;flex-wrap:wrap}
+    .side-empty{padding:18px 16px;font-size:13px;color:var(--subtext);text-align:center}
+    .idea-of-day{padding:16px}
+    .idea-of-day .tag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#7c4a00;background:#fff7e6;border:1px solid #ffe2a8;border-radius:999px;padding:2px 8px;display:inline-block;margin-bottom:8px}
+    .idea-of-day .t{font-size:15px;font-weight:700;margin-bottom:4px}
+    .idea-of-day .d{font-size:12px;color:var(--subtext);margin-bottom:12px}
 
     /* Event Panel */
     .panel-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);opacity:0;visibility:hidden;transition:all .3s ease;z-index:100}
     .panel-overlay.open{opacity:1;visibility:visible}
-    .event-panel{position:fixed;top:0;right:0;bottom:0;width:100%;max-width:480px;background:#fff;box-shadow:-4px 0 24px rgba(0,0,0,0.12);transform:translateX(100%);transition:transform .3s ease;z-index:101;display:flex;flex-direction:column}
+    .event-panel{position:fixed;top:0;right:0;bottom:0;width:100%;max-width:520px;background:#fff;box-shadow:-4px 0 24px rgba(0,0,0,0.12);transform:translateX(100%);transition:transform .3s ease;z-index:101;display:flex;flex-direction:column}
     .panel-overlay.open .event-panel{transform:translateX(0)}
-    
     .panel-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
     .panel-header h3{font-size:18px;font-weight:700;color:var(--text);margin:0}
     .panel-close{background:none;border:none;font-size:28px;color:var(--subtext);cursor:pointer;padding:0;line-height:1;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:8px}
     .panel-close:hover{background:#f1f5f9;color:var(--text)}
-    
-    .panel-body{flex:1;overflow-y:auto;padding:24px}
+    .panel-body{flex:1;overflow-y:auto;padding:20px 24px}
     .panel-section{margin-bottom:12px;border:1px solid var(--border);border-radius:8px;overflow:hidden}
     .panel-section:last-child{margin-bottom:0}
     .section-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#fff;border-bottom:1px solid transparent;cursor:pointer;user-select:none;transition:all .15s}
@@ -141,38 +180,57 @@
     .panel-section:not(.collapsed) .section-header{border-bottom-color:var(--border);background:#f8fafc}
     .section-header .section-title{font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:10px}
     .section-header .section-title .section-icon{width:6px;height:6px;border-radius:50%;background:var(--brand-primary);flex-shrink:0}
+    .section-header .section-badge{font-size:11px;color:var(--subtext);font-weight:600;margin-left:auto;margin-right:8px}
     .section-header .section-toggle{width:20px;height:20px;display:flex;align-items:center;justify-content:center;color:var(--subtext);transition:transform .2s}
     .section-header .section-toggle svg{width:14px;height:14px}
     .panel-section.collapsed .section-header .section-toggle{transform:rotate(-90deg)}
     .section-content{padding:16px;display:block;background:#fff}
     .panel-section.collapsed .section-content{display:none}
-    .section-label{font-size:11px;font-weight:700;color:var(--subtext);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
-    
+
+    .status-pills{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+    .status-pill{flex:1;min-width:90px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:#fff;font-size:12px;font-weight:600;color:var(--subtext);cursor:pointer;text-align:center}
+    .status-pill.active{background:var(--brand-primary);border-color:var(--brand-primary);color:#fff}
+    .helper-banner{display:flex;align-items:center;gap:12px;padding:12px 14px;margin-bottom:14px;border-radius:10px;background:linear-gradient(90deg,#fff7e6,#ecfeff);border:1px solid #ffe2a8}
+    .helper-banner .txt{flex:1;font-size:12px;color:#7c4a00}
+    .helper-banner .txt b{display:block;font-size:13px;color:var(--text)}
+
+    .promo-check{display:flex;flex-direction:column;gap:8px}
+    .promo-row{display:grid;grid-template-columns:22px 1fr 150px;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--border);border-radius:8px}
+    .promo-row.done{background:#f0fdf4;border-color:#bbf7d0}
+    .promo-row input[type=checkbox]{width:18px;height:18px;accent-color:var(--success)}
+    .promo-row .lbl{font-size:13px;font-weight:600}
+    .promo-row .lbl small{display:block;font-weight:400;color:var(--subtext);font-size:11px}
+    .promo-row input[type=date]{padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px}
+    .linked-list{margin-top:12px;font-size:12px;color:var(--subtext)}
+    .linked-list a{color:var(--brand-primary);font-weight:600;cursor:pointer;text-decoration:underline}
+
     .form-group{margin-bottom:16px}
     .form-group:last-child{margin-bottom:0}
     .form-group label{display:block;font-size:12px;font-weight:600;color:var(--subtext);margin-bottom:6px}
-    .form-group input,.form-group select,.form-group textarea{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;font-size:14px;color:var(--text);background:#fff;transition:all .15s}
+    .form-group input,.form-group select,.form-group textarea{width:100%;padding:11px 13px;border:1px solid var(--border);border-radius:10px;font-size:14px;color:var(--text);background:#fff;transition:all .15s;font-family:inherit}
     .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--brand-accent-2);box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
     .form-group textarea{min-height:80px;resize:vertical}
     .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-    
-    .panel-footer{padding:16px 24px;border-top:1px solid var(--border);background:#f8fafc;display:flex;gap:12px;justify-content:space-between;flex-shrink:0}
-    .panel-footer .left{display:flex;gap:8px}
-    .panel-footer .right{display:flex;gap:8px}
+
+    .panel-footer{padding:16px 24px;border-top:1px solid var(--border);background:#f8fafc;display:flex;gap:12px;justify-content:space-between;flex-shrink:0;flex-wrap:wrap}
+    .panel-footer .left,.panel-footer .right{display:flex;gap:8px}
     .btn.danger{background:#fee2e2;border-color:#fecaca;color:#991b1b}
     .btn.danger:hover{background:#fecaca}
 
     /* Modals */
     .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:200;padding:20px}
     .modal-overlay.open{display:flex}
-    .modal{background:#fff;border-radius:20px;max-width:700px;width:100%;max-height:90vh;overflow:hidden;box-shadow:0 25px 50px rgba(0,0,0,0.2)}
-    .modal-header{padding:24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+    .modal-overlay.top{z-index:220}
+    .modal{background:#fff;border-radius:20px;max-width:700px;width:100%;max-height:92vh;overflow:hidden;box-shadow:0 25px 50px rgba(0,0,0,0.2);display:flex;flex-direction:column}
+    .modal.wide{max-width:1040px}
+    .modal-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px}
     .modal-header h3{font-size:18px;font-weight:700;color:var(--text);margin:0}
+    .modal-header .sub{font-size:12px;color:var(--subtext);font-weight:400;display:block}
     .modal-close{background:none;border:none;font-size:28px;color:var(--subtext);cursor:pointer;padding:0;line-height:1;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:8px}
     .modal-close:hover{background:#f1f5f9;color:var(--text)}
-    .modal-body{padding:24px;max-height:calc(90vh - 160px);overflow-y:auto}
-    .modal-footer{padding:20px 24px;border-top:1px solid var(--border);background:#f8fafc;display:flex;gap:12px;justify-content:flex-end}
+    .modal-body{padding:24px;overflow-y:auto;flex:1}
+    .modal-footer{padding:16px 24px;border-top:1px solid var(--border);background:#f8fafc;display:flex;gap:12px;justify-content:flex-end;align-items:center}
 
     /* Budget Grid */
     .budget-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
@@ -182,7 +240,6 @@
     .budget-card .value.positive{color:var(--success)}
     .budget-card .value.negative{color:var(--danger)}
     .budget-card .value.accent{color:var(--brand-accent-2)}
-    
     .budget-months{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
     @media(max-width:600px){.budget-months{grid-template-columns:repeat(3,1fr)}}
     .month-input{display:flex;flex-direction:column;gap:4px}
@@ -190,63 +247,102 @@
     .month-input input{padding:10px;border:1px solid var(--border);border-radius:8px;font-size:14px;text-align:center}
     .month-input input:focus{outline:none;border-color:var(--brand-accent-2)}
 
-    /* Event Type Selection - Professional Style */
-    .type-selection{display:flex;flex-direction:column;gap:8px}
-    .type-option{display:flex;align-items:center;gap:14px;padding:14px 18px;border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .15s;background:#fff}
+    /* Event Type Selection */
+    .type-selection{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    @media(max-width:560px){.type-selection{grid-template-columns:1fr}}
+    .type-option{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .15s;background:#fff}
     .type-option:hover{background:#f8fafc;border-color:#cbd5e1}
     .type-option.selected{background:#f0f9ff;border-color:var(--brand-primary);box-shadow:0 0 0 1px var(--brand-primary)}
-    .type-option .type-indicator{width:12px;height:12px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;transition:all .15s}
-    .type-option.selected .type-indicator{border-color:var(--brand-primary);background:var(--brand-primary)}
     .type-option .type-color{width:4px;height:32px;border-radius:2px;flex-shrink:0}
     .type-option .type-info{flex:1}
-    .type-option .type-name{font-size:14px;font-weight:600;color:var(--text)}
-    .type-option .type-desc{font-size:12px;color:var(--subtext);margin-top:2px}
-
-    /* Legacy campaign grid - keep for compatibility */
-    .campaign-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
-    @media(max-width:500px){.campaign-grid{grid-template-columns:repeat(2,1fr)}}
-    .campaign-option{padding:16px 12px;border:2px solid var(--border);border-radius:12px;text-align:center;cursor:pointer;transition:all .15s;background:#fff}
-    .campaign-option:hover{border-color:#cbd5e1;background:#f8fafc}
-    .campaign-option.selected{border-color:var(--brand-accent-2);background:#ecfeff}
-    .campaign-option .campaign-icon{width:40px;height:40px;border-radius:10px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center}
-    .campaign-option .campaign-icon svg{width:20px;height:20px}
-    .campaign-option .name{font-size:12px;font-weight:600;color:var(--text)}
+    .type-option .type-name{font-size:13px;font-weight:600;color:var(--text)}
+    .type-option .type-desc{font-size:11px;color:var(--subtext);margin-top:2px}
 
     /* Targets Edit Modal */
-    .target-edit-row{display:grid;grid-template-columns:1fr 80px 100px;gap:12px;align-items:end;padding:12px 0;border-bottom:1px solid var(--border)}
+    .target-edit-row{display:grid;grid-template-columns:1.4fr 70px 100px 1fr 50px auto;gap:10px;align-items:end;padding:12px 0;border-bottom:1px solid var(--border)}
     .target-edit-row:last-child{border-bottom:none}
     .target-edit-row .form-group{margin-bottom:0}
+    .target-edit-row input[type=color]{padding:2px;height:42px}
     .add-target-btn{margin-top:16px}
 
-    /* Wizard Modal */
-    .wizard-progress{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border)}
+    /* Wizard */
+    .wizard-progress{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)}
     .wizard-step-indicator{display:flex;align-items:center;gap:8px}
-    .wizard-step-dot{width:32px;height:32px;border-radius:50%;background:#e2e8f0;color:var(--subtext);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;transition:all .2s}
+    .wizard-step-dot{width:30px;height:30px;border-radius:50%;background:#e2e8f0;color:var(--subtext);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;transition:all .2s}
     .wizard-step-dot.active{background:var(--brand-accent-2);color:#0b1b24}
     .wizard-step-dot.complete{background:var(--success);color:#fff}
     .wizard-step-line{width:40px;height:3px;background:#e2e8f0;border-radius:2px}
     .wizard-step-line.complete{background:var(--success)}
     .wizard-step{display:none}
     .wizard-step.active{display:block}
-    .wizard-question{font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px;text-align:center}
-    .wizard-hint{font-size:13px;color:var(--subtext);margin-bottom:20px;text-align:center}
-    .wizard-footer{display:flex;gap:12px;justify-content:space-between;padding-top:20px;border-top:1px solid var(--border);margin-top:24px}
-    .wizard-footer .left{display:flex;gap:8px}
-    .wizard-footer .right{display:flex;gap:8px}
+    .wizard-question{font-size:18px;font-weight:700;color:var(--text);margin-bottom:6px;text-align:center}
+    .wizard-hint{font-size:13px;color:var(--subtext);margin-bottom:18px;text-align:center}
+    .wizard-footer{display:flex;gap:12px;justify-content:space-between;padding:16px 24px;border-top:1px solid var(--border);background:#f8fafc}
+    .wizard-footer .left,.wizard-footer .right{display:flex;gap:8px}
+    .suggest-box{background:#fffbf0;border:1px solid #ffe2a8;border-radius:10px;padding:12px;margin-bottom:16px}
+    .suggest-box .hdr{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:700;color:#7c4a00;margin-bottom:8px}
+    .suggest-chips{display:flex;flex-wrap:wrap;gap:6px}
+    .suggest-chip{border:1px solid #ffd27a;background:#fff;border-radius:999px;padding:5px 11px;font-size:12px;cursor:pointer;color:var(--text)}
+    .suggest-chip:hover{background:#ffb732;border-color:#ffb732}
+    .check-line{display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid var(--border);border-radius:10px;cursor:pointer;margin-bottom:10px}
+    .check-line input{width:18px;height:18px;margin-top:2px;accent-color:var(--brand-primary)}
+    .check-line b{display:block;font-size:13px}
+    .check-line span{font-size:12px;color:var(--subtext)}
+    .review-box{background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:13px;margin-bottom:12px}
+    .review-box div{display:flex;justify-content:space-between;gap:12px;padding:3px 0}
+    .review-box div span:first-child{color:var(--subtext)}
+
+    /* Idea Lab */
+    .lab-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+    .lab-toolbar input,.lab-toolbar select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px}
+    .lab-toolbar input{flex:1;min-width:180px}
+    .lab-cats{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+    .lab-cat{padding:6px 12px;border:1px solid var(--border);border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;background:#fff;display:inline-flex;gap:6px;align-items:center}
+    .lab-cat i{width:9px;height:9px;border-radius:3px;display:inline-block}
+    .lab-cat.active{background:var(--brand-primary);border-color:var(--brand-primary);color:#fff}
+    .idea-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+    .idea-card{border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;background:#fff;position:relative}
+    .idea-card:hover{border-color:#cbd5e1;box-shadow:0 4px 12px rgba(0,0,0,.05)}
+    .idea-card .top{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+    .idea-card .pill{font-size:10px;font-weight:700;border-radius:999px;padding:2px 8px;text-transform:uppercase;letter-spacing:.3px}
+    .idea-card .pill.season{background:#fff7e6;color:#7c4a00}
+    .idea-card .pill.cost{background:#f1f5f9;color:#334155}
+    .idea-card h4{font-size:14px;font-weight:700}
+    .idea-card p{font-size:12px;color:var(--subtext)}
+    .idea-card .how{font-size:12px;color:var(--text);background:#f8fafc;border-radius:8px;padding:8px 10px}
+    .idea-card .how b{display:block;font-size:11px;color:var(--subtext);text-transform:uppercase;margin-bottom:2px}
+    .idea-card .acts{display:flex;gap:6px;margin-top:auto;align-items:center}
+    .idea-card .acts input{padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;flex:1;min-width:0}
+    .plan-intro{background:#ecfeff;border:1px solid #a5f3fc;border-radius:10px;padding:12px 14px;font-size:13px;margin-bottom:14px}
+    .plan-row{display:grid;grid-template-columns:24px 110px 1fr 150px;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px}
+    .plan-row input[type=checkbox]{width:18px;height:18px}
+    .plan-row input[type=date]{padding:6px;border:1px solid var(--border);border-radius:6px;font-size:12px}
+    .plan-row .ty{font-size:11px;font-weight:700;border-radius:6px;padding:3px 6px;text-align:center}
+    .plan-row .ti{font-size:13px;font-weight:600}
+    .plan-row .ti small{display:block;font-weight:400;color:var(--subtext)}
+
+    /* Content Helper */
+    .tone-tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+    .tone-tab{padding:7px 14px;border:1px solid var(--border);border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;background:#fff}
+    .tone-tab.active{background:var(--brand-primary);color:#fff;border-color:var(--brand-primary)}
+    .copy-block{border:1px solid var(--border);border-radius:10px;margin-bottom:12px;overflow:hidden}
+    .copy-block .hdr{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8fafc;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;color:var(--subtext);text-transform:uppercase;letter-spacing:.3px}
+    .copy-block textarea{width:100%;border:none;padding:12px;font-size:13px;font-family:inherit;line-height:1.5;resize:vertical;min-height:70px;color:var(--text)}
+    .copy-block textarea:focus{outline:none;background:#fffef7}
+    .timeline{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+    .timeline .tl{display:grid;grid-template-columns:90px 1fr;gap:10px;font-size:12px;padding:8px 10px;border-radius:8px;background:#f8fafc}
+    .timeline .tl b{color:var(--brand-primary)}
 
     /* Toast */
-    .toast{position:fixed;bottom:24px;right:24px;padding:16px 24px;background:#1e293b;color:#fff;border-radius:12px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,0.2);transform:translateY(100px);opacity:0;transition:all .3s;z-index:300}
+    .toast{position:fixed;bottom:24px;right:24px;padding:14px 22px;background:#1e293b;color:#fff;border-radius:12px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,0.2);transform:translateY(100px);opacity:0;transition:all .3s;z-index:300}
     .toast.show{transform:translateY(0);opacity:1}
     .toast.success{background:var(--success)}
     .toast.error{background:var(--danger)}
 
-    .hidden{display:none}
+    .hidden{display:none !important}
 
-    /* Loading */
     #bootLoader{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;z-index:1000}
     #bootLoader .spinner{font-weight:800;color:var(--text)}
-
-    /* Login */
     #loginView{min-height:100vh;display:none;align-items:center;justify-content:center;padding:20px;background:var(--page-bg)}
     .login-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:32px;max-width:400px;width:100%;box-shadow:0 4px 12px rgba(0,0,0,0.05)}
     .login-card h2{font-size:24px;font-weight:700;margin-bottom:24px;text-align:center}
@@ -259,32 +355,27 @@
       .stats-bar{gap:8px}
       .stat-card{padding:12px 14px;min-width:140px}
       .stat-card .stat-value{font-size:18px}
-      .stat-card .stat-icon{width:36px;height:36px}
       .budget-summary{grid-template-columns:repeat(2,1fr)}
       .form-row,.form-row-3{grid-template-columns:1fr}
       .event-panel{max-width:100%}
       .targets-grid{grid-template-columns:1fr 1fr}
+      .plan-row{grid-template-columns:24px 1fr}
+      .plan-row .ty,.plan-row input[type=date]{grid-column:2}
+      .promo-row{grid-template-columns:22px 1fr}
+      .promo-row input[type=date]{grid-column:2}
+      .target-edit-row{grid-template-columns:1fr 1fr}
     }
   </style>
 </head>
 <body>
-  <!-- Boot Loader -->
-  <div id="bootLoader">
-    <div class="spinner">Marketing Hub</div>
-  </div>
+  <div id="bootLoader"><div class="spinner">Marketing Hub</div></div>
 
   <!-- Login View -->
   <div id="loginView">
     <div class="login-card">
       <h2>Sign In</h2>
-      <div class="form-group">
-        <label>Username</label>
-        <input type="text" id="loginUsername" autocomplete="username">
-      </div>
-      <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="loginPassword" autocomplete="current-password">
-      </div>
+      <div class="form-group"><label>Username</label><input type="text" id="loginUsername" autocomplete="username"></div>
+      <div class="form-group"><label>Password</label><input type="password" id="loginPassword" autocomplete="current-password"></div>
       <button class="btn primary" id="loginBtn">Sign In</button>
       <div class="login-error" id="loginError">Invalid credentials</div>
     </div>
@@ -305,7 +396,6 @@
     </div>
   </header>
 
-  <!-- Navigation -->
   <nav class="nav-bar" id="navBar" style="display:none">
     <div class="nav-wrap">
       <a href="mmp_calendar_app.html" class="nav-tab active">Marketing Calendar</a>
@@ -319,67 +409,76 @@
     </div>
   </nav>
 
-  <!-- Main Content -->
+  <!-- Main -->
   <div class="main-container" id="appContainer" style="display:none">
-    <!-- Stats Bar -->
     <div class="stats-bar">
       <div class="stat-card clickable" id="budgetPill" title="Click to manage budgets">
         <div class="stat-icon budget">$</div>
-        <div class="stat-info">
-          <span class="stat-label">Budget</span>
-          <span class="stat-value" id="statBudget">$0</span>
-        </div>
+        <div class="stat-info"><span class="stat-label">Budget</span><span class="stat-value" id="statBudget">$0</span></div>
       </div>
       <div class="stat-card">
         <div class="stat-icon planned">P</div>
-        <div class="stat-info">
-          <span class="stat-label">Planned</span>
-          <span class="stat-value" id="statPlanned">$0</span>
-        </div>
+        <div class="stat-info"><span class="stat-label">Planned</span><span class="stat-value" id="statPlanned">$0</span><span class="stat-sub" id="statPlannedSub"></span></div>
       </div>
       <div class="stat-card">
         <div class="stat-icon spent">S</div>
-        <div class="stat-info">
-          <span class="stat-label">Spent</span>
-          <span class="stat-value" id="statSpent">$0</span>
-        </div>
+        <div class="stat-info"><span class="stat-label">Spent</span><span class="stat-value" id="statSpent">$0</span></div>
       </div>
       <div class="stat-card">
         <div class="stat-icon remaining" id="remainingIcon">R</div>
-        <div class="stat-info">
-          <span class="stat-label">Remaining</span>
-          <span class="stat-value" id="statRemaining">$0</span>
-        </div>
+        <div class="stat-info"><span class="stat-label">Remaining</span><span class="stat-value" id="statRemaining">$0</span></div>
+      </div>
+      <div class="stat-card" title="Share of weekly + monthly targets met">
+        <div class="stat-icon score">%</div>
+        <div class="stat-info"><span class="stat-label">Targets Hit</span><span class="stat-value" id="statScore">0%</span><span class="stat-sub" id="statScoreSub"></span></div>
       </div>
     </div>
 
-    <!-- Targets Section -->
     <div class="targets-section">
       <div class="targets-header">
-        <h3>Marketing Targets</h3>
+        <h3>Marketing Targets <span class="hint">— click a target to get ideas that fill it</span></h3>
         <button class="targets-edit-btn" id="editTargetsBtn" style="display:none">Edit Targets</button>
       </div>
-      <div class="targets-grid" id="targetsGrid">
-        <!-- Targets will be rendered here -->
-      </div>
+      <div class="targets-grid" id="targetsGrid"></div>
     </div>
 
-    <!-- Calendar Card -->
-    <div class="calendar-card">
-      <div class="calendar-header">
-        <h2 id="calendarTitle">January 2025</h2>
-        <div class="calendar-actions">
-          <button class="btn primary" id="addEventBtn">+ Add Event</button>
+    <div class="layout">
+      <div class="calendar-card">
+        <div class="calendar-header">
+          <h2 id="calendarTitle">Calendar</h2>
+          <div class="calendar-actions">
+            <button class="btn idea" id="openIdeaLabBtn">💡 Idea Lab</button>
+            <button class="btn" id="planWeekBtn">Plan My Week</button>
+            <button class="btn primary" id="addEventBtn">+ Add Event</button>
+          </div>
+        </div>
+        <div class="filters-row" id="filtersRow"></div>
+        <div class="calendar-body">
+          <div class="legend">
+            <span><i style="outline:2px dashed #64748b;outline-offset:-2px;background:#e2e8f0"></i>Idea (not confirmed)</span>
+            <span><span class="ev-dot planned"></span>Planned</span>
+            <span><span class="ev-dot promoted"></span>Promoted</span>
+            <span><span class="ev-dot done"></span>Done</span>
+            <span><i style="border:1px dashed #ffb732"></i>Key date / holiday (click for ideas)</span>
+          </div>
+          <div id="calendar"></div>
         </div>
       </div>
-      
-      <!-- Filters -->
-      <div class="filters-row" id="filtersRow"></div>
-      
-      <!-- Calendar -->
-      <div class="calendar-body">
-        <div id="calendar"></div>
-      </div>
+
+      <aside>
+        <div class="side-card">
+          <h3>Needs Attention <span class="count" id="attnCount">0</span></h3>
+          <div class="side-list" id="attnList"></div>
+        </div>
+        <div class="side-card">
+          <h3>Coming Up (14 days)</h3>
+          <div class="side-list" id="upcomingList"></div>
+        </div>
+        <div class="side-card">
+          <h3>Idea of the Day <button class="btn xs" id="ideaShuffleBtn">Shuffle</button></h3>
+          <div class="idea-of-day" id="ideaOfDay"></div>
+        </div>
+      </aside>
     </div>
   </div>
 
@@ -391,156 +490,114 @@
         <button class="panel-close" id="closePanel">×</button>
       </div>
       <div class="panel-body">
-        <!-- Basic Info - Always Open -->
+        <div class="status-pills" id="statusPills">
+          <button class="status-pill" data-status="idea">💭 Idea</button>
+          <button class="status-pill" data-status="planned">Planned</button>
+          <button class="status-pill" data-status="promoted">Promoted</button>
+          <button class="status-pill" data-status="done">Done</button>
+        </div>
+
+        <div class="helper-banner">
+          <div class="txt"><b>Need help with the post or flyer?</b>Generate captions, story frames, flyer copy, and an email in one click.</div>
+          <button class="btn idea sm" id="openContentHelperBtn">✨ Write it for me</button>
+        </div>
+
         <div class="panel-section" data-section="basic">
           <div class="section-header" onclick="toggleSection(this)">
             <span class="section-title"><span class="section-icon"></span>Basic Information</span>
             <span class="section-toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
           </div>
           <div class="section-content">
-            <div class="form-group">
-              <label>Event Title *</label>
-              <input type="text" id="eventTitle" placeholder="e.g., Spring Social BBQ">
+            <div class="form-group"><label>Title *</label><input type="text" id="eventTitle" placeholder="e.g., Spring Social BBQ"></div>
+            <div class="form-row">
+              <div class="form-group"><label>Start Date *</label><input type="date" id="eventStart"></div>
+              <div class="form-group"><label>End Date</label><input type="date" id="eventEnd"></div>
             </div>
             <div class="form-row">
-              <div class="form-group">
-                <label>Start Date *</label>
-                <input type="date" id="eventStart">
-              </div>
-              <div class="form-group">
-                <label>End Date</label>
-                <input type="date" id="eventEnd">
-              </div>
+              <div class="form-group"><label>Time</label><input type="time" id="eventTime"></div>
+              <div class="form-group"><label>Campaign Type</label><select id="eventCampaign" class="campaign-select"></select></div>
             </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Time</label>
-                <input type="time" id="eventTime">
-              </div>
-              <div class="form-group">
-                <label>Campaign Type</label>
-                <select id="eventCampaign">
-                  <option value="">Select type...</option>
-                  <option value="Resident event">Resident Event</option>
-                  <option value="on-campus event">On-Campus Event</option>
-                  <option value="off-campus event">Off-Campus Event</option>
-                  <option value="Social Media Story">Social Story</option>
-                  <option value="Social Media Post">Social Post</option>
-                  <option value="Review/Reputation">Review Campaign</option>
-                  <option value="Giveaway">Giveaway</option>
-                  <option value="outreach marketing">Outreach</option>
-                  <option value="cross-marketing partnership/scholarship">Partnership</option>
-                  <option value="Key Market Event">Key Market Event</option>
-                </select>
-              </div>
-            </div>
+            <div class="form-group"><label>Location</label><input type="text" id="eventLocation" placeholder="e.g., Clubhouse, Pool deck, Student Union"></div>
           </div>
         </div>
 
-        <!-- Budget -->
-        <div class="panel-section collapsed" data-section="budget">
-          <div class="section-header" onclick="toggleSection(this)">
-            <span class="section-title"><span class="section-icon" style="background:#22c55e"></span>Budget & Spend</span>
-            <span class="section-toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
-          </div>
-          <div class="section-content">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Planned Budget</label>
-                <input type="number" id="eventBudget" placeholder="0.00" step="0.01">
-              </div>
-              <div class="form-group">
-                <label>Actual Spend</label>
-                <input type="number" id="eventSpend" placeholder="0.00" step="0.01">
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Details -->
         <div class="panel-section collapsed" data-section="details">
           <div class="section-header" onclick="toggleSection(this)">
-            <span class="section-title"><span class="section-icon" style="background:#3b82f6"></span>Details & Goals</span>
+            <span class="section-title"><span class="section-icon" style="background:#3b82f6"></span>Audience, Goal &amp; Notes</span>
             <span class="section-toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
           </div>
           <div class="section-content">
-            <div class="form-group">
-              <label>Description</label>
-              <textarea id="eventNotes" placeholder="Event description, goals, notes..."></textarea>
-            </div>
             <div class="form-row">
-              <div class="form-group">
-                <label>Target Audience</label>
-                <input type="text" id="eventAudience" placeholder="e.g., Current residents">
-              </div>
-              <div class="form-group">
-                <label>Goal</label>
-                <input type="text" id="eventGoal" placeholder="e.g., 20 attendees">
-              </div>
+              <div class="form-group"><label>Target Audience</label><select id="eventAudience" class="audience-select"></select></div>
+              <div class="form-group"><label>Desired Action</label><select id="eventDesired" class="desired-select"></select></div>
             </div>
-            <div class="form-group">
-              <label>Desired Action</label>
-              <select id="eventDesired">
-                <option value="">Select...</option>
-                <option>Social media followers</option>
-                <option>collect review</option>
-                <option>complete guest cards</option>
-                <option>schedule a tour</option>
-                <option>complete application</option>
-                <option>sign new leases</option>
-                <option>sign renewal lease</option>
-                <option>building relationship</option>
-              </select>
+            <div class="form-group"><label>Goal</label><input type="text" id="eventGoal" placeholder="e.g., 20 attendees, 10 guest cards"></div>
+            <div class="form-group"><label>Description / Supplies / Notes</label><textarea id="eventNotes" placeholder="What's happening, supplies, vendors, who's running it..."></textarea></div>
+          </div>
+        </div>
+
+        <div class="panel-section collapsed" data-section="budget">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="section-title"><span class="section-icon" style="background:#22c55e"></span>Budget &amp; Spend</span>
+            <span class="section-badge" id="budgetBadge"></span>
+            <span class="section-toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+          </div>
+          <div class="section-content">
+            <div class="form-row">
+              <div class="form-group"><label>Planned Budget</label><input type="number" id="eventBudget" placeholder="0.00" step="0.01" min="0"></div>
+              <div class="form-group"><label>Actual Spend</label><input type="number" id="eventSpend" placeholder="0.00" step="0.01" min="0"></div>
             </div>
           </div>
         </div>
 
-        <!-- Marketing Checklist -->
         <div class="panel-section collapsed" data-section="checklist">
           <div class="section-header" onclick="toggleSection(this)">
-            <span class="section-title"><span class="section-icon" style="background:#a78bfa"></span>Marketing Checklist</span>
+            <span class="section-title"><span class="section-icon" style="background:#a78bfa"></span>Promotion Checklist</span>
+            <span class="section-badge" id="promoBadge"></span>
+            <span class="section-toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+          </div>
+          <div class="section-content">
+            <div class="promo-check" id="promoCheck"></div>
+            <div class="linked-list" id="linkedList"></div>
+            <div style="margin-top:12px"><button class="btn sm" id="buildPromoBtn">📅 Auto-schedule promo posts for this event</button></div>
+          </div>
+        </div>
+
+        <div class="panel-section collapsed" data-section="creative">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="section-title"><span class="section-icon" style="background:#f59e0b"></span>Creative &amp; Caption</span>
+            <span class="section-toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+          </div>
+          <div class="section-content">
+            <div class="form-group"><label>Caption / Copy</label><textarea id="eventCaption" placeholder="Use ✨ Write it for me to generate one"></textarea></div>
+            <div class="form-group"><label>Flyer / Asset URL</label><input type="url" id="eventFlyerUrl" placeholder="https://..."></div>
+            <div id="flyerPreview"></div>
+          </div>
+        </div>
+
+        <div class="panel-section collapsed" data-section="results">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="section-title"><span class="section-icon" style="background:#ef4444"></span>Results &amp; Recap</span>
             <span class="section-toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
           </div>
           <div class="section-content">
             <div class="form-row-3">
-              <div class="form-group">
-                <label>Social Posted</label>
-                <input type="date" id="eventSocialDate">
-              </div>
-              <div class="form-group">
-                <label>Flyer Posted</label>
-                <input type="date" id="eventFlyerDate">
-              </div>
-              <div class="form-group">
-                <label>Email Sent</label>
-                <input type="date" id="eventEmailDate">
-              </div>
+              <div class="form-group"><label>Attendance / Reach</label><input type="number" id="resAttendance" min="0"></div>
+              <div class="form-group"><label>Leads / Guest Cards</label><input type="number" id="resLeads" min="0"></div>
+              <div class="form-group"><label>Reviews / Renewals</label><input type="number" id="resConversions" min="0"></div>
             </div>
-          </div>
-        </div>
-
-        <!-- Creative Assets -->
-        <div class="panel-section collapsed" data-section="creative">
-          <div class="section-header" onclick="toggleSection(this)">
-            <span class="section-title"><span class="section-icon" style="background:#f59e0b"></span>Creative Assets</span>
-            <span class="section-toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
-          </div>
-          <div class="section-content">
-            <div class="form-group">
-              <label>Flyer URL</label>
-              <input type="url" id="eventFlyerUrl" placeholder="https://...">
-            </div>
-            <div id="flyerPreview"></div>
+            <div class="form-group"><label>What worked / do differently next time</label><textarea id="resNotes"></textarea></div>
           </div>
         </div>
       </div>
       <div class="panel-footer">
         <div class="left">
           <button class="btn danger" id="deleteEventBtn" style="display:none">Delete</button>
+          <button class="btn" id="duplicateEventBtn" style="display:none" title="Copy this to a new date">Duplicate</button>
         </div>
         <div class="right">
           <button class="btn" id="cancelEventBtn">Cancel</button>
-          <button class="btn success" id="saveEventBtn">Save Event</button>
+          <button class="btn success" id="saveEventBtn">Save</button>
         </div>
       </div>
     </div>
@@ -549,35 +606,15 @@
   <!-- Budget Modal -->
   <div class="modal-overlay" id="budgetModal">
     <div class="modal">
-      <div class="modal-header">
-        <h3>Budget Management</h3>
-        <button class="modal-close" id="closeBudgetModal">×</button>
-      </div>
+      <div class="modal-header"><h3>Budget Management</h3><button class="modal-close" id="closeBudgetModal">×</button></div>
       <div class="modal-body">
         <div class="budget-summary">
-          <div class="budget-card">
-            <div class="label">Monthly Budget</div>
-            <div class="value" id="modalBudget">$0</div>
-          </div>
-          <div class="budget-card">
-            <div class="label">Planned</div>
-            <div class="value accent" id="modalPlanned">$0</div>
-          </div>
-          <div class="budget-card">
-            <div class="label">Actual</div>
-            <div class="value" id="modalActual">$0</div>
-          </div>
-          <div class="budget-card">
-            <div class="label">Remaining</div>
-            <div class="value positive" id="modalRemaining">$0</div>
-          </div>
+          <div class="budget-card"><div class="label">Monthly Budget</div><div class="value" id="modalBudget">$0</div></div>
+          <div class="budget-card"><div class="label">Planned</div><div class="value accent" id="modalPlanned">$0</div></div>
+          <div class="budget-card"><div class="label">Actual</div><div class="value" id="modalActual">$0</div></div>
+          <div class="budget-card"><div class="label">Remaining</div><div class="value positive" id="modalRemaining">$0</div></div>
         </div>
-        
-        <div class="form-group" style="margin-bottom:20px">
-          <label>Year</label>
-          <select id="budgetYear" style="max-width:150px"></select>
-        </div>
-        
+        <div class="form-group" style="margin-bottom:20px"><label>Year</label><select id="budgetYear" style="max-width:150px"></select></div>
         <div class="budget-months" id="budgetMonths"></div>
       </div>
       <div class="modal-footer">
@@ -587,196 +624,148 @@
     </div>
   </div>
 
-  <!-- Wizard Add Event Modal -->
+  <!-- Wizard -->
   <div class="modal-overlay" id="quickAddModal">
-    <div class="modal" style="max-width:560px">
+    <div class="modal" style="max-width:640px">
       <div class="modal-header">
-        <h3 id="wizardTitle">Plan Your Marketing Event</h3>
+        <h3 id="wizardTitle">Plan Your Marketing Activity</h3>
         <button class="modal-close" id="closeQuickAdd">×</button>
       </div>
       <div class="modal-body">
-        <!-- Progress Indicator -->
         <div class="wizard-progress">
           <div class="wizard-step-indicator">
-            <div class="wizard-step-dot active" data-step="1">1</div>
-            <div class="wizard-step-line" data-line="1"></div>
-            <div class="wizard-step-dot" data-step="2">2</div>
-            <div class="wizard-step-line" data-line="2"></div>
-            <div class="wizard-step-dot" data-step="3">3</div>
-            <div class="wizard-step-line" data-line="3"></div>
+            <div class="wizard-step-dot active" data-step="1">1</div><div class="wizard-step-line" data-line="1"></div>
+            <div class="wizard-step-dot" data-step="2">2</div><div class="wizard-step-line" data-line="2"></div>
+            <div class="wizard-step-dot" data-step="3">3</div><div class="wizard-step-line" data-line="3"></div>
             <div class="wizard-step-dot" data-step="4">4</div>
           </div>
         </div>
 
-        <!-- Step 1: What type of marketing activity? -->
         <div class="wizard-step active" data-step="1">
-          <div class="wizard-question">What type of marketing activity are you planning?</div>
-          <div class="wizard-hint">Select the category that best describes your event</div>
-          <div class="type-selection" id="campaignGrid">
-            <div class="type-option" data-type="Resident event">
-              <div class="type-indicator"></div>
-              <div class="type-color" style="background:#86efac"></div>
-              <div class="type-info">
-                <div class="type-name">Resident Event</div>
-                <div class="type-desc">Community events for current residents</div>
-              </div>
-            </div>
-            <div class="type-option" data-type="on-campus event">
-              <div class="type-indicator"></div>
-              <div class="type-color" style="background:#3b82f6"></div>
-              <div class="type-info">
-                <div class="type-name">Campus Event</div>
-                <div class="type-desc">On-campus marketing and tabling activities</div>
-              </div>
-            </div>
-            <div class="type-option" data-type="Social Media Post">
-              <div class="type-indicator"></div>
-              <div class="type-color" style="background:#a78bfa"></div>
-              <div class="type-info">
-                <div class="type-name">Social Media Post</div>
-                <div class="type-desc">Instagram, Facebook, or TikTok grid posts</div>
-              </div>
-            </div>
-            <div class="type-option" data-type="Social Media Story">
-              <div class="type-indicator"></div>
-              <div class="type-color" style="background:#f472b6"></div>
-              <div class="type-info">
-                <div class="type-name">Social Media Story</div>
-                <div class="type-desc">Instagram or Facebook stories</div>
-              </div>
-            </div>
-            <div class="type-option" data-type="Review/Reputation">
-              <div class="type-indicator"></div>
-              <div class="type-color" style="background:#93c5fd"></div>
-              <div class="type-info">
-                <div class="type-name">Review Campaign</div>
-                <div class="type-desc">Google review push or reputation management</div>
-              </div>
-            </div>
-            <div class="type-option" data-type="Giveaway">
-              <div class="type-indicator"></div>
-              <div class="type-color" style="background:#fcd34d"></div>
-              <div class="type-info">
-                <div class="type-name">Giveaway</div>
-                <div class="type-desc">Promotional giveaways and contests</div>
-              </div>
-            </div>
-            <div class="type-option" data-type="outreach marketing">
-              <div class="type-indicator"></div>
-              <div class="type-color" style="background:#7f1d1d"></div>
-              <div class="type-info">
-                <div class="type-name">Outreach Marketing</div>
-                <div class="type-desc">Flyering, door-to-door, or local business outreach</div>
-              </div>
-            </div>
-            <div class="type-option" data-type="cross-marketing partnership/scholarship">
-              <div class="type-indicator"></div>
-              <div class="type-color" style="background:#f59e0b"></div>
-              <div class="type-info">
-                <div class="type-name">Partnership / Cross-Marketing</div>
-                <div class="type-desc">Collaborations with local businesses or organizations</div>
-              </div>
-            </div>
-          </div>
+          <div class="wizard-question">What are you planning?</div>
+          <div class="wizard-hint">Not sure? <a href="#" id="wizardNeedIdeas" style="color:var(--brand-primary);font-weight:700">Browse ideas in the Idea Lab →</a></div>
+          <div class="type-selection" id="campaignGrid"></div>
         </div>
 
-        <!-- Step 2: Who is your target audience? -->
         <div class="wizard-step" data-step="2">
-          <div class="wizard-question">Who is your target audience?</div>
-          <div class="wizard-hint">Think about who you want to reach with this activity</div>
-          <div class="form-group">
-            <label>Target Audience</label>
-            <select id="wizardAudience">
-              <option value="">Select audience...</option>
-              <option value="Current residents">Current Residents</option>
-              <option value="Prospective students">Prospective Students</option>
-              <option value="Parents">Parents</option>
-              <option value="Local community">Local Community</option>
-              <option value="University staff">University Staff</option>
-              <option value="Social media followers">Social Media Followers</option>
-            </select>
+          <div class="wizard-question">What's it called and when?</div>
+          <div class="wizard-hint">Pick a suggestion to auto-fill everything, or type your own</div>
+          <div class="suggest-box">
+            <div class="hdr"><span>💡 Ideas that work for <span id="suggestFor">this</span></span><button class="btn xs" id="suggestMoreBtn">More</button></div>
+            <div class="suggest-chips" id="suggestChips"></div>
           </div>
-          <div class="form-group">
-            <label>What action do you want them to take?</label>
-            <select id="wizardDesired">
-              <option value="">Select desired action...</option>
-              <option value="Social media followers">Follow on social media</option>
-              <option value="collect review">Leave a review</option>
-              <option value="complete guest cards">Complete a guest card</option>
-              <option value="schedule a tour">Schedule a tour</option>
-              <option value="complete application">Complete an application</option>
-              <option value="sign new leases">Sign a new lease</option>
-              <option value="sign renewal lease">Sign a renewal lease</option>
-              <option value="building relationship">Build relationship</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Step 3: Event details -->
-        <div class="wizard-step" data-step="3">
-          <div class="wizard-question">What are the event details?</div>
-          <div class="wizard-hint">Give your event a name and set the date</div>
-          <div class="form-group">
-            <label>Event Title *</label>
-            <input type="text" id="quickTitle" placeholder="e.g., Pizza Party, Spring Social BBQ">
-          </div>
+          <div class="form-group"><label>Title *</label><input type="text" id="quickTitle" placeholder="e.g., Pizza Party, Spring Social BBQ"></div>
           <div class="form-row">
-            <div class="form-group">
-              <label>Date *</label>
-              <input type="date" id="quickDate">
-            </div>
-            <div class="form-group">
-              <label>Time (optional)</label>
-              <input type="time" id="wizardTime">
-            </div>
+            <div class="form-group"><label>Date *</label><input type="date" id="quickDate"></div>
+            <div class="form-group"><label>Time (optional)</label><input type="time" id="wizardTime"></div>
           </div>
-          <div class="form-group">
-            <label>What's your goal? (e.g., 20 attendees, 5 reviews)</label>
-            <input type="text" id="wizardGoal" placeholder="e.g., 20 attendees, 5 new reviews">
-          </div>
+          <div class="form-group"><label>Location (optional)</label><input type="text" id="wizardLocation" placeholder="e.g., Clubhouse"></div>
         </div>
 
-        <!-- Step 4: Budget -->
+        <div class="wizard-step" data-step="3">
+          <div class="wizard-question">Who is it for and what's the goal?</div>
+          <div class="wizard-hint">Every activity should drive one clear action</div>
+          <div class="form-row">
+            <div class="form-group"><label>Target Audience</label><select id="wizardAudience" class="audience-select"></select></div>
+            <div class="form-group"><label>Desired Action</label><select id="wizardDesired" class="desired-select"></select></div>
+          </div>
+          <div class="form-group"><label>Measurable goal</label><input type="text" id="wizardGoal" placeholder="e.g., 20 attendees, 5 new reviews"></div>
+          <div class="form-group"><label>Notes / supplies</label><textarea id="wizardNotes" placeholder="Supplies, vendors, who's running it..."></textarea></div>
+        </div>
+
         <div class="wizard-step" data-step="4">
-          <div class="wizard-question">What's your budget for this activity?</div>
-          <div class="wizard-hint">Plan your spending to stay within your monthly budget</div>
-          <div class="form-group">
-            <label>Planned Budget ($)</label>
-            <input type="number" id="quickBudget" placeholder="0.00" step="0.01">
-          </div>
-          <div class="form-group">
-            <label>Any notes or additional details?</label>
-            <textarea id="wizardNotes" placeholder="Add any notes about supplies needed, vendors to contact, etc." style="min-height:80px"></textarea>
-          </div>
+          <div class="wizard-question">Budget &amp; promotion</div>
+          <div class="wizard-hint" id="wizardBudgetHint">Plan your spending to stay within your monthly budget</div>
+          <div class="form-group"><label>Planned Budget ($)</label><input type="number" id="quickBudget" placeholder="0.00" step="0.01" min="0"></div>
+          <label class="check-line" id="autoPromoLine">
+            <input type="checkbox" id="wizardAutoPromo" checked>
+            <div><b>Auto-schedule promotion for me</b><span id="autoPromoDesc">Adds a save-the-date post, reminder stories, a day-of story and a recap post to the calendar.</span></div>
+          </label>
+          <label class="check-line">
+            <input type="checkbox" id="wizardIsIdea">
+            <div><b>Save as an idea (not confirmed yet)</b><span>Shows dashed on the calendar so the team knows it's tentative.</span></div>
+          </label>
+          <div class="review-box" id="wizardReview"></div>
         </div>
-
-        <!-- Wizard Footer -->
-        <div class="wizard-footer">
-          <div class="left">
-            <button class="btn" id="wizardBack" style="display:none">← Back</button>
-          </div>
-          <div class="right">
-            <button class="btn" id="cancelQuickAdd">Cancel</button>
-            <button class="btn primary" id="wizardNext">Next →</button>
-            <button class="btn success" id="quickAddSave" style="display:none">Create Event</button>
-          </div>
+      </div>
+      <div class="wizard-footer">
+        <div class="left"><button class="btn" id="wizardBack" style="display:none">← Back</button></div>
+        <div class="right">
+          <button class="btn" id="cancelQuickAdd">Cancel</button>
+          <button class="btn primary" id="wizardNext">Next →</button>
+          <button class="btn success" id="quickAddSave" style="display:none">Create</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Targets Edit Modal (Admin Only) -->
-  <div class="modal-overlay" id="targetsModal">
-    <div class="modal" style="max-width:600px">
+  <!-- Idea Lab -->
+  <div class="modal-overlay" id="ideaLabModal">
+    <div class="modal wide">
       <div class="modal-header">
-        <h3>Edit Marketing Targets</h3>
-        <button class="modal-close" id="closeTargetsModal">×</button>
+        <h3>💡 Idea Lab <span class="sub" id="ideaLabSub">Proven events, posts, stories and giveaways for student housing — pick one and drop it on the calendar.</span></h3>
+        <button class="modal-close" id="closeIdeaLab">×</button>
       </div>
       <div class="modal-body">
-        <p style="color:var(--subtext);font-size:13px;margin-bottom:20px">Configure the weekly and monthly marketing targets for all properties. These targets help teams track their marketing activity goals.</p>
-        <div id="targetsEditList">
-          <!-- Target edit rows will be rendered here -->
+        <div id="labBrowse">
+          <div class="lab-toolbar">
+            <input type="search" id="labSearch" placeholder="Search ideas (pizza, finals, renewal, review...)">
+            <select id="labMonth"></select>
+            <select id="labBudget">
+              <option value="">Any budget</option>
+              <option value="0">Free</option>
+              <option value="75">Under $75</option>
+              <option value="150">Under $150</option>
+            </select>
+            <button class="btn sm idea" id="labSurprise">🎲 Surprise me</button>
+          </div>
+          <div class="lab-cats" id="labCats"></div>
+          <div class="idea-grid" id="ideaGrid"></div>
         </div>
+        <div id="labPlan" class="hidden">
+          <div class="plan-intro" id="planIntro"></div>
+          <div id="planRows"></div>
+        </div>
+      </div>
+      <div class="modal-footer" id="labPlanFooter" style="display:none">
+        <button class="btn" id="planBackBtn" style="margin-right:auto">← Browse ideas</button>
+        <button class="btn" id="planReshuffleBtn">🎲 Different ideas</button>
+        <button class="btn success" id="planAddBtn">Add selected to calendar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content Helper -->
+  <div class="modal-overlay top" id="contentModal">
+    <div class="modal" style="max-width:760px">
+      <div class="modal-header">
+        <h3>✨ Content Helper <span class="sub" id="contentSub"></span></h3>
+        <button class="modal-close" id="closeContent">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="tone-tabs" id="toneTabs">
+          <button class="tone-tab active" data-tone="hype">🔥 Hype</button>
+          <button class="tone-tab" data-tone="friendly">😊 Friendly</button>
+          <button class="tone-tab" data-tone="pro">💼 Professional</button>
+          <button class="tone-tab" data-tone="short">⚡ Short</button>
+          <button class="btn xs" id="regenBtn" style="margin-left:auto">🎲 Regenerate</button>
+        </div>
+        <div id="contentBlocks"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="contentCloseBtn">Close</button>
+        <button class="btn primary" id="useCaptionBtn">Use caption on this event</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Targets Edit Modal -->
+  <div class="modal-overlay" id="targetsModal">
+    <div class="modal" style="max-width:820px">
+      <div class="modal-header"><h3>Edit Marketing Targets</h3><button class="modal-close" id="closeTargetsModal">×</button></div>
+      <div class="modal-body">
+        <p style="color:var(--subtext);font-size:13px;margin-bottom:12px">Weekly and monthly activity goals. <b>Match pattern</b> is a regex tested against the campaign type (e.g. <code>story</code>, <code>giveaway</code>, <code>flyer</code>).</p>
+        <div id="targetsEditList"></div>
         <button class="btn add-target-btn" id="addTargetBtn">+ Add New Target</button>
       </div>
       <div class="modal-footer">
@@ -786,7 +775,6 @@
     </div>
   </div>
 
-  <!-- Toast -->
   <div class="toast" id="toast"></div>
 
   <script>
@@ -795,14 +783,14 @@
     let events = [];
     let selectedEventId = null;
     let selectedCampaignType = null;
+    let panelStatus = 'planned';
     let monthlyBudgets = {};
     let currentProperty = '';
     let properties = [];
     let currentUser = null;
-    let SESSION_ACTIVE = false;
+    let listenersBound = false;
 
-    //
-    let marketingTargets = [
+    const DEFAULT_TARGETS = [
       { id: 'stories', name: 'Social Stories', goal: 3, period: 'weekly', matchPattern: 'story', color: '#52d5ff' },
       { id: 'posts', name: 'Grid Posts', goal: 1, period: 'weekly', matchPattern: 'social\\s*media\\s*post', color: '#a78bfa' },
       { id: 'giveaways', name: 'Giveaways', goal: 1, period: 'weekly', matchPattern: 'giveaway', color: '#fcd34d' },
@@ -811,54 +799,158 @@
       { id: 'crossmkt', name: 'Cross-Marketing', goal: 1, period: 'monthly', matchPattern: 'cross[-\\s]?marketing|partnership', color: '#f472b6' },
       { id: 'flyers', name: 'Flyering', goal: 4, period: 'monthly', matchPattern: 'flyer', color: '#fb923c' },
     ];
+    let marketingTargets = DEFAULT_TARGETS.map(t => ({ ...t }));
 
     const TARGETS_STORAGE_KEY = 'mmp_marketing_targets_v1';
     const API_BASE = '/api';
     const STORE_CURRENT_PROPERTY_KEY = 'mmp_current_property_v1';
+    const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-    // ==================== TYPE DEFINITIONS ====================
+    // ==================== CAMPAIGN TYPES ====================
+    // value = what gets stored in event.campaign (kept compatible with live calendar)
+    const CAMPAIGNS = [
+      { value: 'Resident event', name: 'Resident Event', desc: 'Community events for current residents', color: '#86efac' },
+      { value: 'on-campus event', name: 'Campus Event / Tabling', desc: 'On-campus marketing and tabling', color: '#3b82f6' },
+      { value: 'off-campus event', name: 'Off-Campus Event', desc: 'Community events away from property', color: '#60a5fa' },
+      { value: 'Social Media Post', name: 'Social Media Post', desc: 'Instagram / Facebook / TikTok grid post or reel', color: '#a78bfa' },
+      { value: 'Social Media Story', name: 'Social Media Story', desc: 'Instagram or Facebook stories', color: '#f472b6' },
+      { value: 'Giveaway', name: 'Giveaway', desc: 'Contests and promotional giveaways', color: '#fcd34d' },
+      { value: 'Review/Reputation', name: 'Review Campaign', desc: 'Google review push, reputation', color: '#93c5fd' },
+      { value: 'Renewal campaign', name: 'Renewal Push', desc: 'Get current residents to renew', color: '#f59e0b' },
+      { value: 'Flyering', name: 'Flyering', desc: 'Campus boards, door hangers, local drops', color: '#fb923c' },
+      { value: 'outreach marketing', name: 'Outreach Marketing', desc: 'Door-to-door, local business outreach', color: '#7f1d1d' },
+      { value: 'cross-marketing partnership/scholarship', name: 'Partnership / Cross-Marketing', desc: 'Local business or campus org collabs', color: '#f472b6' },
+      { value: 'Key Market Event', name: 'Key Market Event', desc: 'Big leasing-season moments', color: '#facc15' },
+    ];
+    const AUDIENCES = ['Current residents','Prospective students','Parents','Local community','University staff','Social media followers'];
+    const DESIRED = [
+      ['Social media followers','Follow on social media'],['collect review','Leave a review'],['complete guest cards','Complete a guest card'],
+      ['schedule a tour','Schedule a tour'],['complete application','Complete an application'],['sign new leases','Sign a new lease'],
+      ['sign renewal lease','Sign a renewal lease'],['building relationship','Build relationship'],
+    ];
+
     const TYPE_DEFS = [
       { id: 'resident', label: 'Resident Event', color: '#86efac', textColor: '#00130c', match: [/resident\s*event/i] },
       { id: 'renewal', label: 'Renewal', color: '#f59e0b', textColor: '#1f1300', match: [/renewal/i] },
       { id: 'campus', label: 'Campus', color: '#3b82f6', textColor: '#ffffff', match: [/on[-\s]?campus/i, /off[-\s]?campus/i] },
-      { id: 'outreach', label: 'Outreach', color: '#7f1d1d', textColor: '#ffffff', match: [/outreach/i, /cross[-\s]marketing/i, /partnership/i] },
+      { id: 'outreach', label: 'Outreach / Flyer', color: '#7f1d1d', textColor: '#ffffff', match: [/outreach/i, /flyer/i, /cross[-\s]marketing/i, /partnership/i] },
       { id: 'review', label: 'Review', color: '#93c5fd', textColor: '#1e3a5f', match: [/review/i, /reputation/i] },
-      { id: 'social', label: 'Social', color: '#a78bfa', textColor: '#1e1b4b', match: [/social\s*media/i, /story/i, /post/i] },
+      { id: 'story', label: 'Story', color: '#f9a8d4', textColor: '#500724', match: [/story/i] },
+      { id: 'social', label: 'Post', color: '#a78bfa', textColor: '#1e1b4b', match: [/social\s*media/i, /post/i] },
       { id: 'giveaway', label: 'Giveaway', color: '#fcd34d', textColor: '#78350f', match: [/giveaway/i] },
       { id: 'market', label: 'Key Market', color: '#facc15', textColor: '#1f1300', match: [/key\s*market/i] },
       { id: 'other', label: 'Other', color: '#94a3b8', textColor: '#1e293b', match: [] },
     ];
     let visibleTypes = new Set(TYPE_DEFS.map(d => d.id));
+    let showKeyDates = true;
+    let showIdeas = true;
 
     function getTypeForCampaign(c){
-      const s = String(c||'').toLowerCase();
+      const s = String(c || '').toLowerCase();
       for (const d of TYPE_DEFS){ if (d.match.some(rx => rx.test(s))) return d; }
-      return TYPE_DEFS.find(d => d.id === 'other');
+      return TYPE_DEFS[TYPE_DEFS.length - 1];
+    }
+    function isEventLike(campaign){ return /event|giveaway|renewal|review/i.test(campaign || '') && !/story|post/i.test(campaign || ''); }
+
+    // ==================== IDEA LIBRARY ====================
+    // [title, campaign, months (empty = any), budget, goal, audience, desired, description, howTo]
+    const R='Resident event', C='on-campus event', P='Social Media Post', S='Social Media Story', G='Giveaway', V='Review/Reputation', N='Renewal campaign', F='Flyering', X='outreach marketing', M='cross-marketing partnership/scholarship', K='Key Market Event';
+    const RES='Current residents', PRO='Prospective students', FOL='Social media followers';
+    const IDEA_ROWS = [
+      ['Welcome Back Block Party', R, [8,9], 250, '40 attendees', RES, 'building relationship', 'Kick off the semester with music, food truck or BBQ, and lawn games.', 'Book a food truck 3 wks out, DJ playlist, check-in table with QR to leave a review.'],
+      ['Taco Tuesday Pop-Up', R, [], 150, '30 attendees', RES, 'building relationship', 'Build-your-own taco bar in the clubhouse.', 'Order from a local spot (ask for a partner discount), set up 5–7pm, snap stories all night.'],
+      ['Game Night & Trivia', R, [], 75, '20 attendees', RES, 'building relationship', 'Board games, Mario Kart tournament or pop-culture trivia.', 'Prize for winners, pizza, post bracket on story to hype it.'],
+      ['Ice Cream Social', R, [4,5,6,7,8,9], 100, '35 attendees', RES, 'building relationship', 'Sundae bar on a hot afternoon.', 'Toppings bar, sticker for every guest who tags the property.'],
+      ['Halloween Pumpkin Carving', R, [10], 150, '25 attendees', RES, 'building relationship', 'Carving/painting pumpkins + costume contest.', 'Buy pumpkins in bulk, vote on best pumpkin via story poll.'],
+      ['Friendsgiving Potluck', R, [11], 200, '30 attendees', RES, 'building relationship', 'Property provides turkey & drinks, residents bring a side.', 'Sign-up sheet in lobby, photo wall, great recap content.'],
+      ['Finals Fuel Station', R, [12,4,5], 120, '60 grab-and-go', RES, 'collect review', 'Coffee, snacks and study supplies in the lobby during finals.', 'Put review QR code on every snack bag.'],
+      ['Self-Care Night', R, [10,1,4], 100, '20 attendees', RES, 'building relationship', 'Face masks, tea, journaling, mental-health resources.', 'Tie to World Mental Health Day (Oct 10); invite campus counseling.'],
+      ['Earth Day Succulent Planting', R, [4], 120, '25 attendees', RES, 'building relationship', 'Pot a succulent to take home + recycling tips.', 'Bulk succulents from a nursery partner; post "plant parents" photos.'],
+      ['Yappy Hour / Pet Pageant', R, [4,8,10], 80, '15 pets', RES, 'Social media followers', 'Pet treats, costume or talent contest for resident pets.', 'National Pet Day Apr 11 / Dog Day Aug 26 — winners get featured on the grid.'],
+      ['Super Bowl Watch Party', R, [2], 150, '30 attendees', RES, 'building relationship', 'Big screen, wings, squares board.', 'Prize for the squares winner; boomerangs at every touchdown.'],
+      ['Grad Photo Booth', R, [4,5,12], 150, '40 grads', RES, 'collect review', 'Backdrop + props for cap & gown photos.', 'Ask every grad for a review while they wait.'],
+      ['Movie Night', R, [], 80, '20 attendees', RES, 'building relationship', 'Outdoor or clubhouse movie with popcorn bar.', 'Let residents vote the movie via story poll first.'],
+      ['Coffee & Donuts Grab-n-Go', R, [], 60, '50 residents', RES, 'collect review', 'Morning coffee for residents walking to class.', 'National Coffee Day Sep 29 — easy, cheap, high visibility.'],
+      ['"Stay Another Year" Renewal Party', N, [10,11,1,2], 250, '10 renewals', RES, 'sign renewal lease', 'Party where renewing residents get a prize or swag.', 'Have renewal docs ready on iPads; announce winners on story.'],
+      ['Renewal Door Hanger Blitz', N, [10,11,1], 40, 'Every unit', RES, 'sign renewal lease', 'Door hangers with renewal rate deadline and perk.', 'Pair with a story countdown to the deadline.'],
+      ['Student Union Tabling + Spin Wheel', C, [9,10,1,2,3], 100, '25 guest cards', PRO, 'complete guest cards', 'Table with prize wheel — spin after filling a guest card.', 'Bring swag, QR to apply, take a team photo for the grid.'],
+      ['Campus Housing Fair Booth', C, [10,11,1,2], 150, '40 guest cards', PRO, 'schedule a tour', 'Booth at the housing fair with tour sign-ups.', 'Tour shuttle sign-up sheet, floor-plan handouts.'],
+      ['Library Finals Snack Drop', C, [12,5], 80, '100 handouts', PRO, 'complete guest cards', 'Hand out snacks outside the library with a leasing card.', 'Card includes QR + "apply this week" special.'],
+      ['Sponsor a Club Meeting', C, [], 100, '1 org partnership', PRO, 'building relationship', 'Buy pizza for a student org meeting; 2-minute pitch.', 'Greek life, athletics and cultural orgs are great fits.'],
+      ['Resident Spotlight', P, [], 0, '50 likes', FOL, 'Social media followers', 'Feature a resident: major, fav spot on property, campus tip.', 'Photo + 3 Q&A in caption. Tag them so their friends see it.'],
+      ['"Which Floor Plan Are You?"', P, [], 0, '10 shares', PRO, 'schedule a tour', 'Fun carousel matching personalities to floor plans.', 'Final slide = "Tour yours" CTA + link in bio.'],
+      ['Amenity Showcase Reel', P, [], 0, '1,000 views', PRO, 'schedule a tour', '15-second reel walking through the gym, pool, study rooms.', 'Use trending audio, text overlays for each amenity.'],
+      ['Meet the Team', P, [8,9,1], 0, '50 likes', FOL, 'building relationship', 'Staff intro carousel with fun facts.', 'One staffer per slide: name, role, go-to coffee order.'],
+      ['Local Favorites Guide', P, [], 0, '15 saves', PRO, 'Social media followers', 'Top 5 coffee / food / study spots near property.', 'Tag the businesses — they often re-share (free reach).'],
+      ['Move-In Countdown', P, [7,8], 0, '100 likes', RES, 'building relationship', 'Countdown graphic + packing checklist.', 'Pin it to the profile; repost as story each week.'],
+      ['Rates Going Up / Deadline Post', P, [10,11,12,1,2,3], 0, '5 applications', PRO, 'complete application', 'Urgency post: limited units / rates rise on X date.', 'Clear deadline, one CTA, link to apply.'],
+      ['Review Thank-You Post', P, [], 0, '3 new reviews', FOL, 'collect review', 'Screenshot a 5-star review and thank the resident.', 'Caption asks others to share their experience.'],
+      ['Study Spots on Property', P, [10,12,4,5], 0, '20 saves', RES, 'building relationship', 'Carousel of the best quiet study spots on site.', 'Post the week before midterms/finals.'],
+      ['Relatable Student Meme', P, [], 0, '15 shares', FOL, 'Social media followers', 'On-brand meme about classes, roommates or finals.', 'Keep it light, clean and on-brand.'],
+      ['This-or-That Poll', S, [], 0, '40 votes', FOL, 'Social media followers', 'Coffee or energy drink? Pool or gym? Story poll stickers.', 'Post 3–4 frames back to back.'],
+      ['Day in the Life: Leasing Team', S, [], 0, '200 views', FOL, 'building relationship', 'Behind-the-scenes of the office day.', 'Morning coffee → tours → package room → event setup.'],
+      ['Event Setup Behind-the-Scenes', S, [], 0, '150 views', RES, 'building relationship', 'Show setup an hour before an event starts.', 'Add a countdown sticker to the event start.'],
+      ['Countdown Sticker', S, [], 0, '25 reminders', RES, 'building relationship', 'Countdown sticker for the next event or deadline.', 'Followers tap "remind me" — free reminders.'],
+      ['Ask Us Anything: Leasing', S, [10,11,12,1,2], 0, '10 questions', PRO, 'schedule a tour', 'Question box for prospects about leasing/roommates.', 'Answer each in its own frame next day.'],
+      ['Resident Tip Tuesday', S, [], 0, '150 views', RES, 'building relationship', 'Quick tip: packages, maintenance requests, parking.', 'Make it a weekly series so it is never a blank slate.'],
+      ['Tag-a-Friend Gift Card', G, [], 50, '30 entries', FOL, 'Social media followers', 'Follow + tag 2 friends to win a local gift card.', 'Run 5 days, announce winner on story.'],
+      ['Finals Survival Kit Giveaway', G, [12,5], 75, '40 entries', RES, 'collect review', 'Snacks, energy drinks, highlighters, earplugs.', 'Enter by leaving a review or commenting.'],
+      ['Spring Break Kit', G, [3], 75, '30 entries', FOL, 'Social media followers', 'Sunscreen, speaker, sunglasses, beach towel.', 'Share-to-story entry for extra reach.'],
+      ['Costume Contest', G, [10], 50, '15 entries', RES, 'Social media followers', 'Residents post costumes, tag property, most likes wins.', 'Repost every entry to story.'],
+      ['12 Days of Giveaways', G, [12], 150, '100 entries', FOL, 'Social media followers', 'Small prize every day before winter break.', 'Daily story, one grid post kicking it off.'],
+      ['Review & Raffle Week', V, [], 50, '10 reviews', RES, 'collect review', 'Every review = raffle entry for a gift card.', 'QR code flyers in lobby, mailroom, elevators.'],
+      ['Post-Maintenance Review Ask', V, [], 0, '5 reviews', RES, 'collect review', 'Text residents after a completed work order.', 'Happy residents right after a fix = best reviews.'],
+      ['Event Check-In Review Station', V, [], 0, '8 reviews', RES, 'collect review', 'At every event, iPad station to leave a review.', 'Offer an extra raffle ticket for reviewers.'],
+      ['Campus Bulletin Board Flyer Drop', F, [], 30, '20 boards', PRO, 'schedule a tour', 'Post flyers on campus boards with QR to tour.', 'Track scans with a unique QR per drop.'],
+      ['Lobby & Mailroom Flyers', F, [], 10, 'All residents', RES, 'building relationship', 'Promote the next event where everyone walks by.', 'Swap flyers weekly so they stay fresh.'],
+      ['Local Business Walk', X, [], 20, '5 businesses', 'Local community', 'building relationship', 'Drop treats + leasing info to nearby businesses.', 'Ask to post a flyer & offer a resident discount.'],
+      ['Coffee Shop Resident Discount', M, [], 0, '1 partner', RES, 'building relationship', 'Partner deal: 10% off for residents with key fob.', 'Co-post on both accounts.'],
+      ['Gym / Fitness Class Partnership', M, [1,9], 50, '15 attendees', RES, 'building relationship', 'Local studio teaches a free class on property.', 'They get exposure, you get a free event.'],
+      ['Campus Org Scholarship', M, [2,3,4], 250, '1 partnership', PRO, 'complete application', 'Small scholarship sponsored with a campus org.', 'Application via your website = new leads.'],
+      ['Leasing Launch Kickoff', K, [9,10], 300, '15 applications', PRO, 'complete application', 'Launch next year leasing with a special and event.', 'Hype week before; same-day application perk.'],
+    ];
+    const IDEAS = IDEA_ROWS.map((r, i) => ({ id: 'i' + i, title: r[0], campaign: r[1], months: r[2], budget: r[3], goal: r[4], audience: r[5], desired: r[6], desc: r[7], how: r[8] }));
+
+    // Key dates shown on the calendar (month is 1-based). nth-weekday entries handled in keyDatesForYear.
+    const KEY_DATES = [
+      [1,1,'New Year'],[1,15,'Spring semester starts (approx)'],[2,9,'National Pizza Day'],[2,14,"Valentine's Day"],[3,17,"St. Patrick's Day"],
+      [3,20,'First day of spring'],[4,11,'National Pet Day'],[4,22,'Earth Day'],[5,4,'Star Wars Day'],[6,21,'National Selfie Day'],
+      [7,4,'Independence Day'],[8,26,'National Dog Day'],[9,29,'National Coffee Day'],[10,4,'National Taco Day'],
+      [10,10,'World Mental Health Day'],[10,31,'Halloween'],[11,3,'National Sandwich Day'],[12,4,'National Cookie Day'],[12,31,"New Year's Eve"],
+    ];
+    function nthWeekday(y, m0, weekday, n){ const d = new Date(y, m0, 1); const off = (weekday - d.getDay() + 7) % 7; return new Date(y, m0, 1 + off + (n - 1) * 7); }
+    function keyDatesForYear(y){
+      const list = KEY_DATES.map(([m, d, t]) => ({ date: toISO(new Date(y, m - 1, d)), title: t }));
+      list.push({ date: toISO(nthWeekday(y, 1, 0, 2)), title: 'Super Bowl Sunday' });
+      list.push({ date: toISO(nthWeekday(y, 10, 4, 4)), title: 'Thanksgiving' });
+      list.push({ date: toISO(nthWeekday(y, 6, 0, 3)), title: 'National Ice Cream Day' });
+      list.push({ date: toISO(nthWeekday(y, 5, 5, 1)), title: 'National Donut Day' });
+      return list;
     }
 
     // ==================== UTILITIES ====================
-    function toISO(d){ 
-      if (!d) return ''; 
-      const z = new Date(d.getTime() - d.getTimezoneOffset() * 60000); 
-      return z.toISOString().slice(0, 10); 
-    }
-
-    function addDaysISO(iso, days){
-      const d = new Date(iso);
-      d.setDate(d.getDate() + days);
-      return toISO(d);
-    }
-
-    function formatCurrency(n){
-      const v = parseFloat(n) || 0;
-      return '$' + v.toLocaleString(undefined, { maximumFractionDigits: 0 });
-    }
+    function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+    function toISO(d){ if (!d) return ''; const z = new Date(d.getTime() - d.getTimezoneOffset() * 60000); return z.toISOString().slice(0, 10); }
+    function parseISO(iso){ const [y, m, d] = String(iso).slice(0, 10).split('-').map(Number); return new Date(y, (m || 1) - 1, d || 1); }
+    function addDaysISO(iso, days){ const d = parseISO(iso); d.setDate(d.getDate() + days); return toISO(d); }
+    function todayISO(){ return toISO(new Date()); }
+    function daysBetween(a, b){ return Math.round((parseISO(b) - parseISO(a)) / 86400000); }
+    function fmtDate(iso, opts){ return parseISO(iso).toLocaleDateString(undefined, opts || { weekday: 'short', month: 'short', day: 'numeric' }); }
+    function fmtTime(t){ if (!t) return ''; const [h, m] = t.split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; return `${((h + 11) % 12) + 1}${m ? ':' + String(m).padStart(2, '0') : ''} ${ap}`; }
+    function formatCurrency(n){ const v = parseFloat(n) || 0; return '$' + v.toLocaleString(undefined, { maximumFractionDigits: 0 }); }
+    function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+    function shuffle(arr){ const a = arr.slice(); for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+    function propShortName(){ return String(currentProperty || 'our community').split('/')[0].replace(/\s*(Apartments|SLO)$/i, '').trim(); }
+    function propHashtag(){ return '#' + propShortName().replace(/[^a-z0-9]/gi, ''); }
+    function campaignMeta(value){ return CAMPAIGNS.find(c => c.value === value) || { value, name: value || 'Activity', color: getTypeForCampaign(value).color }; }
+    function statusOf(ev){ return ev.status || (ev.spend > 0 || (ev.end || ev.start) < todayISO() ? 'done' : (ev.postedSocialAt || ev.flyerPostedAt || ev.eblastSentAt ? 'promoted' : 'planned')); }
 
     function showToast(message, type = 'success'){
       const toast = document.getElementById('toast');
       toast.textContent = message;
       toast.className = 'toast ' + type + ' show';
-      setTimeout(() => toast.classList.remove('show'), 3000);
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
     async function apiFetch(path, opts = {}){
@@ -867,175 +959,132 @@
       if (!res.ok){ const text = await res.text(); throw new Error(text || ('HTTP ' + res.status)); }
       return res;
     }
+    async function reloadEvents(){
+      const res = await apiFetch(`/events?property=${encodeURIComponent(currentProperty)}`);
+      events = await res.json();
+      renderAll();
+    }
+    async function createEvent(payload){
+      const res = await apiFetch('/events', { method: 'POST', body: JSON.stringify({ property: currentProperty, ...payload }) });
+      return (await res.json()).id;
+    }
+    async function updateEvent(id, updates){
+      await apiFetch('/events', { method: 'PUT', body: JSON.stringify({ id, property: currentProperty, ...updates }) });
+    }
+
+    function fillSelects(){
+      const campOpts = '<option value="">Select type...</option>' + CAMPAIGNS.map(c => `<option value="${esc(c.value)}">${esc(c.name)}</option>`).join('');
+      document.querySelectorAll('.campaign-select').forEach(s => s.innerHTML = campOpts);
+      const audOpts = '<option value="">Select audience...</option>' + AUDIENCES.map(a => `<option value="${esc(a)}">${esc(a)}</option>`).join('');
+      document.querySelectorAll('.audience-select').forEach(s => s.innerHTML = audOpts);
+      const desOpts = '<option value="">Select action...</option>' + DESIRED.map(([v, l]) => `<option value="${esc(v)}">${esc(l)}</option>`).join('');
+      document.querySelectorAll('.desired-select').forEach(s => s.innerHTML = desOpts);
+      document.getElementById('campaignGrid').innerHTML = CAMPAIGNS.map(c => `
+        <div class="type-option" data-type="${esc(c.value)}">
+          <div class="type-color" style="background:${c.color}"></div>
+          <div class="type-info"><div class="type-name">${esc(c.name)}</div><div class="type-desc">${esc(c.desc)}</div></div>
+        </div>`).join('');
+    }
+    function setSelectValue(id, value){
+      const el = document.getElementById(id);
+      if (value && ![...el.options].some(o => o.value === value)){ el.insertAdjacentHTML('beforeend', `<option value="${esc(value)}">${esc(value)}</option>`); }
+      el.value = value || '';
+    }
 
     // ==================== TARGETS ====================
     function loadTargets(){
-      try {
-        const saved = localStorage.getItem(TARGETS_STORAGE_KEY);
-        if (saved){
-          marketingTargets = JSON.parse(saved);
-        }
-      } catch(e){}
+      try { const saved = localStorage.getItem(TARGETS_STORAGE_KEY); if (saved) marketingTargets = JSON.parse(saved); } catch(e){}
     }
+    function saveTargets(){ try { localStorage.setItem(TARGETS_STORAGE_KEY, JSON.stringify(marketingTargets)); } catch(e){} }
 
-    function saveTargets(){
-      try {
-        localStorage.setItem(TARGETS_STORAGE_KEY, JSON.stringify(marketingTargets));
-      } catch(e){}
+    function currentWeekBounds(){
+      const t = new Date(); t.setHours(0, 0, 0, 0);
+      const ws = new Date(t); ws.setDate(t.getDate() - t.getDay());
+      const we = new Date(ws); we.setDate(ws.getDate() + 6);
+      return { start: toISO(ws), end: toISO(we) };
+    }
+    function viewMonthKey(){ return calendar ? getMonthKey(calendar.getDate()) : getMonthKey(new Date()); }
+
+    function targetProgress(){
+      const wk = currentWeekBounds();
+      const mk = viewMonthKey();
+      return marketingTargets.map(target => {
+        let rx; try { rx = new RegExp(target.matchPattern, 'i'); } catch(e){ rx = /$^/; }
+        const count = events.filter(e => {
+          if (!e.start || !rx.test(String(e.campaign || ''))) return false;
+          return target.period === 'weekly' ? (e.start >= wk.start && e.start <= wk.end) : e.start.slice(0, 7) === mk;
+        }).length;
+        return { target, count, missing: Math.max(0, target.goal - count) };
+      });
     }
 
     function renderTargets(){
-      const container = document.getElementById('targetsGrid');
-      const today = new Date();
-      
-      // Calculate week bounds
-      const weekStart = new Date(today);
-      weekStart.setDate(today.getDate() - today.getDay());
-      weekStart.setHours(0, 0, 0, 0);
-      const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekStart.getDate() + 6);
-      weekEnd.setHours(23, 59, 59, 999);
-
-      // Get current month from calendar view
-      const view = calendar?.view;
-      const monthStart = view?.currentStart || new Date();
-      const y = monthStart.getFullYear();
-      const m = monthStart.getMonth();
-
-      let html = '';
-      
-      marketingTargets.forEach(target => {
-        let count = 0;
-        const regex = new RegExp(target.matchPattern, 'i');
-        
-        for (const e of events){
-          const campaign = String(e.campaign || '').toLowerCase();
-          const eDate = new Date(e.start + 'T00:00:00');
-          
-          if (target.period === 'weekly'){
-            if (eDate >= weekStart && eDate <= weekEnd && regex.test(campaign)){
-              count++;
-            }
-          } else {
-            if (eDate.getFullYear() === y && eDate.getMonth() === m && regex.test(campaign)){
-              count++;
-            }
-          }
-        }
-        
-        const isComplete = count >= target.goal;
-        const progress = Math.min(100, Math.round((count / target.goal) * 100));
-        
-        html += `
-          <div class="target-item ${isComplete ? 'complete' : ''}" style="--progress:${progress}%;--progress-color:${target.color}">
-            <div class="target-indicator">${count}</div>
-            <div class="target-info">
-              <div class="target-name">${target.name}</div>
-              <div class="target-progress">${count} of ${target.goal}</div>
-            </div>
-            <div class="target-period">${target.period}</div>
+      const prog = targetProgress();
+      document.getElementById('targetsGrid').innerHTML = prog.map(({ target, count }, i) => {
+        const done = count >= target.goal;
+        const pct = Math.min(100, Math.round((count / Math.max(1, target.goal)) * 100));
+        return `<div class="target-item ${done ? 'complete' : ''}" data-idx="${i}" style="--progress:${pct}%;--progress-color:${esc(target.color)}" title="${done ? 'Target met!' : 'Click for ideas to hit this target'}">
+          <div class="target-indicator"><span>${count}</span></div>
+          <div class="target-info">
+            <div class="target-name">${esc(target.name)}</div>
+            <div class="target-progress">${count} of ${target.goal} ${done ? '✓' : '· need ' + (target.goal - count)}</div>
           </div>
-        `;
-      });
-      
-      container.innerHTML = html;
+          <div class="target-period">${target.period === 'weekly' ? 'this week' : 'this month'}</div>
+        </div>`;
+      }).join('');
+      const met = prog.filter(p => p.count >= p.target.goal).length;
+      document.getElementById('statScore').textContent = prog.length ? Math.round(met / prog.length * 100) + '%' : '—';
+      document.getElementById('statScoreSub').textContent = `${met} of ${prog.length} targets`;
     }
 
-    function openTargetsModal(){
-      renderTargetsEditList();
-      document.getElementById('targetsModal').classList.add('open');
+    function ideasForTarget(target){
+      let rx; try { rx = new RegExp(target.matchPattern, 'i'); } catch(e){ return []; }
+      return IDEAS.filter(i => rx.test(i.campaign));
     }
 
-    function closeTargetsModal(){
-      document.getElementById('targetsModal').classList.remove('open');
-    }
+    function openTargetsModal(){ renderTargetsEditList(); document.getElementById('targetsModal').classList.add('open'); }
+    function closeTargetsModal(){ document.getElementById('targetsModal').classList.remove('open'); }
 
     function renderTargetsEditList(){
       const container = document.getElementById('targetsEditList');
-      
-      let html = marketingTargets.map((t, i) => `
+      container.innerHTML = marketingTargets.map((t, i) => `
         <div class="target-edit-row" data-index="${i}">
-          <div class="form-group">
-            <label>Target Name</label>
-            <input type="text" class="target-name-input" value="${t.name}" placeholder="e.g., Social Stories">
-          </div>
-          <div class="form-group">
-            <label>Goal</label>
-            <input type="number" class="target-goal-input" value="${t.goal}" min="1">
-          </div>
-          <div class="form-group">
-            <label>Period</label>
-            <select class="target-period-input">
-              <option value="weekly" ${t.period === 'weekly' ? 'selected' : ''}>Weekly</option>
-              <option value="monthly" ${t.period === 'monthly' ? 'selected' : ''}>Monthly</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Match Pattern</label>
-            <input type="text" class="target-pattern-input" value="${t.matchPattern}" placeholder="e.g., story">
-          </div>
-          <div class="form-group">
-            <label>Color</label>
-            <input type="color" class="target-color-input" value="${t.color}">
-          </div>
-          <div class="form-group" style="display:flex;align-items:flex-end">
-            <button class="btn danger sm remove-target-btn" data-index="${i}">Remove</button>
-          </div>
-        </div>
-      `).join('');
-      
-      container.innerHTML = html;
-      
-      // Bind remove buttons
-      container.querySelectorAll('.remove-target-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const idx = parseInt(e.target.dataset.index, 10);
-          marketingTargets.splice(idx, 1);
-          renderTargetsEditList();
-        });
-      });
+          <div class="form-group"><label>Name</label><input type="text" class="target-name-input" value="${esc(t.name)}"></div>
+          <div class="form-group"><label>Goal</label><input type="number" class="target-goal-input" value="${t.goal}" min="1"></div>
+          <div class="form-group"><label>Period</label><select class="target-period-input">
+            <option value="weekly" ${t.period === 'weekly' ? 'selected' : ''}>Weekly</option>
+            <option value="monthly" ${t.period === 'monthly' ? 'selected' : ''}>Monthly</option></select></div>
+          <div class="form-group"><label>Match Pattern</label><input type="text" class="target-pattern-input" value="${esc(t.matchPattern)}"></div>
+          <div class="form-group"><label>Color</label><input type="color" class="target-color-input" value="${esc(t.color)}"></div>
+          <div class="form-group"><button class="btn danger sm remove-target-btn" data-index="${i}">Remove</button></div>
+        </div>`).join('');
+      container.querySelectorAll('.remove-target-btn').forEach(btn => btn.addEventListener('click', () => {
+        syncTargetsFromRows();
+        marketingTargets.splice(parseInt(btn.dataset.index, 10), 1);
+        renderTargetsEditList();
+      }));
     }
-
+    function syncTargetsFromRows(){
+      const rows = document.querySelectorAll('.target-edit-row');
+      marketingTargets = [...rows].map((row, i) => ({
+        id: marketingTargets[i]?.id || ('target_' + Date.now() + '_' + i),
+        name: row.querySelector('.target-name-input').value.trim(),
+        goal: parseInt(row.querySelector('.target-goal-input').value, 10) || 1,
+        period: row.querySelector('.target-period-input').value,
+        matchPattern: row.querySelector('.target-pattern-input').value.trim(),
+        color: row.querySelector('.target-color-input').value,
+      }));
+    }
     function addNewTarget(){
-      const newId = 'target_' + Date.now();
-      marketingTargets.push({
-        id: newId,
-        name: 'New Target',
-        goal: 1,
-        period: 'weekly',
-        matchPattern: '',
-        color: '#94a3b8'
-      });
+      syncTargetsFromRows();
+      marketingTargets.push({ id: 'target_' + Date.now(), name: 'New Target', goal: 1, period: 'weekly', matchPattern: '', color: '#94a3b8' });
       renderTargetsEditList();
     }
-
     function saveTargetsFromModal(){
-      const rows = document.querySelectorAll('.target-edit-row');
-      const newTargets = [];
-      
-      rows.forEach((row, i) => {
-        const name = row.querySelector('.target-name-input').value.trim();
-        const goal = parseInt(row.querySelector('.target-goal-input').value, 10) || 1;
-        const period = row.querySelector('.target-period-input').value;
-        const pattern = row.querySelector('.target-pattern-input').value.trim();
-        const color = row.querySelector('.target-color-input').value;
-        
-        if (name && pattern){
-          newTargets.push({
-            id: marketingTargets[i]?.id || ('target_' + Date.now() + '_' + i),
-            name,
-            goal,
-            period,
-            matchPattern: pattern,
-            color
-          });
-        }
-      });
-      
-      marketingTargets = newTargets;
-      saveTargets();
-      renderTargets();
-      closeTargetsModal();
+      syncTargetsFromRows();
+      for (const t of marketingTargets){ try { new RegExp(t.matchPattern); } catch(e){ showToast(`Invalid pattern for "${t.name}"`, 'error'); return; } }
+      marketingTargets = marketingTargets.filter(t => t.name && t.matchPattern);
+      saveTargets(); renderTargets(); renderSidebar(); closeTargetsModal();
       showToast('Targets saved!');
     }
 
@@ -1046,7 +1095,6 @@
         if (meRes.ok){
           const me = await meRes.json();
           currentUser = { username: me.username, role: me.role, properties: me.properties };
-          SESSION_ACTIVE = true;
           showApp();
           await initializeApp();
           return true;
@@ -1055,65 +1103,34 @@
       showLogin();
       return false;
     }
-
     async function doLogin(){
       const username = document.getElementById('loginUsername').value.trim();
       const password = document.getElementById('loginPassword').value;
       const errorEl = document.getElementById('loginError');
-      
-      if (!username || !password){
-        errorEl.textContent = 'Enter username and password';
-        errorEl.style.display = 'block';
-        return;
-      }
-      
+      if (!username || !password){ errorEl.textContent = 'Enter username and password'; errorEl.style.display = 'block'; return; }
       try {
         errorEl.style.display = 'none';
-        const res = await fetch('/api/auth-login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ username, password })
-        });
-        
-        if (!res.ok){
-          errorEl.textContent = 'Invalid username or password';
-          errorEl.style.display = 'block';
-          return;
-        }
-        
+        const res = await fetch('/api/auth-login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ username, password }) });
+        if (!res.ok){ errorEl.textContent = 'Invalid username or password'; errorEl.style.display = 'block'; return; }
         await initAuth();
-      } catch(e){
-        errorEl.textContent = 'Network error. Try again.';
-        errorEl.style.display = 'block';
-      }
+      } catch(e){ errorEl.textContent = 'Network error. Try again.'; errorEl.style.display = 'block'; }
     }
-
-    async function doLogout(){
-      try { await fetch('/api/auth-logout', { method: 'POST' }); } catch(e){}
-      location.href = 'index.html';
-    }
-
+    async function doLogout(){ try { await fetch('/api/auth-logout', { method: 'POST' }); } catch(e){} location.href = 'index.html'; }
     function showApp(){
       document.getElementById('bootLoader').style.display = 'none';
       document.getElementById('loginView').style.display = 'none';
       document.getElementById('appHeader').style.display = 'flex';
       document.getElementById('navBar').style.display = 'block';
       document.getElementById('appContainer').style.display = 'block';
-      
-      // Show edit targets button for admins
       if (currentUser?.role === 'admin'){
         document.getElementById('editTargetsBtn').style.display = 'block';
         document.getElementById('adminPageBtn').style.display = 'block';
       }
     }
-
     function showLogin(){
       document.getElementById('bootLoader').style.display = 'none';
       document.getElementById('loginView').style.display = 'flex';
-      document.getElementById('appHeader').style.display = 'none';
-      document.getElementById('navBar').style.display = 'none';
-      document.getElementById('appContainer').style.display = 'none';
+      ['appHeader','navBar','appContainer'].forEach(id => document.getElementById(id).style.display = 'none');
     }
 
     // ==================== PROPERTIES ====================
@@ -1123,7 +1140,6 @@
       'Chorro SLO': 'Chorro/Palomar', 'Palomar SLO': 'Chorro/Palomar',
     };
     function mapPropertyNameToGroup(name){ return OLD_TO_GROUP[name] || name; }
-
     function getAccessibleProperties(){
       if (!currentUser) return [];
       if (currentUser.role === 'admin') return properties.slice();
@@ -1131,32 +1147,22 @@
       const assignedGroups = Array.from(new Set(rawAssigned.map(p => mapPropertyNameToGroup(p))));
       return properties.filter(p => assignedGroups.includes(p));
     }
-
     async function loadProperties(){
       try {
         const res = await fetch('/api/properties');
         const list = await res.json();
         properties = (list || []).map(x => x.name).filter(Boolean);
-        const grouped = ['Cerca/Prisma/Zuma', 'Stateside/Monte', 'Chorro/Palomar'];
         const oldNames = Object.keys(OLD_TO_GROUP);
         properties = properties.filter(p => !oldNames.includes(p));
-        grouped.forEach(g => { if (!properties.includes(g)) properties.push(g); });
-      } catch(e){
-        properties = [];
-      }
+        ['Cerca/Prisma/Zuma', 'Stateside/Monte', 'Chorro/Palomar'].forEach(g => { if (!properties.includes(g)) properties.push(g); });
+      } catch(e){ properties = []; }
     }
-
     function renderPropertyOptions(){
-      const select = document.getElementById('propertySelect');
-      const list = getAccessibleProperties();
-      select.innerHTML = list.map(p => `<option value="${p.replace(/"/g, '&quot;')}">${p}</option>`).join('');
+      document.getElementById('propertySelect').innerHTML = getAccessibleProperties().map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('');
     }
-
     async function setActiveProperty(prop){
-      prop = mapPropertyNameToGroup(prop);
-      currentProperty = prop;
+      currentProperty = mapPropertyNameToGroup(prop);
       localStorage.setItem(STORE_CURRENT_PROPERTY_KEY, currentProperty);
-      
       try {
         const [budgetRes, eventsRes] = await Promise.all([
           apiFetch(`/budgets?property=${encodeURIComponent(currentProperty)}`),
@@ -1164,572 +1170,1000 @@
         ]);
         monthlyBudgets = await budgetRes.json();
         events = await eventsRes.json();
-      } catch(e){
-        monthlyBudgets = {};
-        events = [];
-      }
-      
+      } catch(e){ monthlyBudgets = {}; events = []; showToast('Could not load data for this property', 'error'); }
+      renderAll();
+    }
+
+    function renderAll(){
       refreshCalendar();
       updateStats();
       renderTargets();
+      renderSidebar();
     }
 
     // ==================== CALENDAR ====================
     function initCalendar(){
-      const calendarEl = document.getElementById('calendar');
-      calendar = new FullCalendar.Calendar(calendarEl, {
+      calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
         initialView: 'dayGridMonth',
         height: 'auto',
-        headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
-        eventClick: (info) => openEventPanel(info.event.id),
-        dateClick: (info) => openQuickAddWithDate(info.dateStr),
-        datesSet: () => {
-          updateCalendarTitle();
-          updateStats();
-          renderTargets();
+        dayMaxEvents: 4,
+        editable: true,
+        eventStartEditable: true,
+        eventDurationEditable: false,
+        headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,dayGridWeek,listMonth' },
+        buttonText: { today: 'Today', dayGridMonth: 'Month', dayGridWeek: 'Week', listMonth: 'Agenda' },
+        eventClick: (info) => {
+          if (info.event.extendedProps.keyDate){ openIdeaLab({ query: '', keyDate: info.event.extendedProps.keyDate, date: info.event.startStr }); return; }
+          openEventPanel(info.event.id);
         },
-        events: events.filter(ev => visibleTypes.has(getTypeForCampaign(ev.campaign).id)).map(toFcEvent),
+        dateClick: (info) => openQuickAddWithDate(info.dateStr),
+        eventDrop: async (info) => {
+          if (info.event.extendedProps.keyDate){ info.revert(); return; }
+          const ev = events.find(e => String(e.id) === info.event.id);
+          if (!ev){ info.revert(); return; }
+          const newStart = info.event.startStr.slice(0, 10);
+          const shift = daysBetween(ev.start, newStart);
+          const newEnd = addDaysISO(ev.end || ev.start, shift);
+          try {
+            await updateEvent(ev.id, { start: newStart, end: newEnd });
+            ev.start = newStart; ev.end = newEnd;
+            renderAll();
+            showToast(`Moved to ${fmtDate(newStart)}`);
+          } catch(e){ info.revert(); showToast('Move failed: ' + e.message, 'error'); }
+        },
+        eventClassNames: (arg) => arg.event.extendedProps.keyDate ? ['key-date'] : ['st-' + statusOf(arg.event.extendedProps)],
+        eventContent: (arg) => {
+          if (arg.event.extendedProps.keyDate) return { html: `★ ${esc(arg.event.title)}` };
+          const ev = arg.event.extendedProps;
+          const st = statusOf(ev);
+          const time = ev.time ? `<b>${esc(fmtTime(ev.time))}</b> ` : '';
+          return { html: `<div class="fc-event-title" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${st !== 'idea' ? `<span class="ev-dot ${st}"></span>` : '💭 '}${time}${esc(arg.event.title)}</div>` };
+        },
+        datesSet: () => { updateCalendarTitle(); updateStats(); renderTargets(); refreshKeyDates(); },
       });
       calendar.render();
+      refreshCalendar();
       updateCalendarTitle();
     }
 
     function toFcEvent(ev){
       const type = getTypeForCampaign(ev.campaign);
       return {
-        id: String(ev.id),
-        title: ev.title,
-        start: ev.start,
-        end: ev.end ? addDaysISO(ev.end, 1) : undefined,
-        backgroundColor: type.color,
-        borderColor: type.color,
-        textColor: type.textColor,
+        id: String(ev.id), title: ev.title, start: ev.start,
+        end: ev.end && ev.end !== ev.start ? addDaysISO(ev.end, 1) : undefined,
+        allDay: true,
+        backgroundColor: type.color, borderColor: type.color, textColor: type.textColor,
         extendedProps: ev
       };
     }
+    function eventVisible(ev){ return visibleTypes.has(getTypeForCampaign(ev.campaign).id) && (showIdeas || statusOf(ev) !== 'idea'); }
 
     function refreshCalendar(){
       if (!calendar) return;
-      calendar.removeAllEvents();
-      events.filter(ev => visibleTypes.has(getTypeForCampaign(ev.campaign).id))
-        .forEach(ev => calendar.addEvent(toFcEvent(ev)));
+      calendar.getEvents().filter(e => !e.extendedProps.keyDate).forEach(e => e.remove());
+      events.filter(eventVisible).forEach(ev => calendar.addEvent(toFcEvent(ev)));
+      refreshKeyDates();
     }
-
+    function refreshKeyDates(){
+      if (!calendar) return;
+      calendar.getEvents().filter(e => e.extendedProps.keyDate).forEach(e => e.remove());
+      if (!showKeyDates) return;
+      const v = calendar.view; const ys = new Set([v.activeStart.getFullYear(), v.activeEnd.getFullYear()]);
+      ys.forEach(y => keyDatesForYear(y).forEach(k => calendar.addEvent({ id: 'kd-' + k.date, title: k.title, start: k.date, allDay: true, editable: false, extendedProps: { keyDate: k.title } })));
+    }
     function updateCalendarTitle(){
       if (!calendar) return;
-      const view = calendar.view;
-      const title = view.currentStart.toLocaleString(undefined, { month: 'long', year: 'numeric' });
-      document.getElementById('calendarTitle').textContent = title;
+      document.getElementById('calendarTitle').textContent = calendar.getDate().toLocaleString(undefined, { month: 'long', year: 'numeric' });
     }
 
     // ==================== STATS ====================
+    function getMonthKey(d){ return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; }
+    function monthTotals(mk){
+      const list = events.filter(e => e.start && e.start.slice(0, 7) === mk);
+      return { budget: Number(monthlyBudgets[mk]) || 0, planned: list.reduce((s, e) => s + (Number(e.budget) || 0), 0), spent: list.reduce((s, e) => s + (Number(e.spend) || 0), 0) };
+    }
     function updateStats(){
       if (!calendar) return;
-      const view = calendar.view;
-      const monthKey = getMonthKey(view.currentStart);
-      
-      const budget = monthlyBudgets[monthKey] || 0;
-      const planned = events.filter(e => e.start && e.start.slice(0, 7) === monthKey)
-        .reduce((sum, e) => sum + (e.budget || 0), 0);
-      const spent = events.filter(e => e.start && e.start.slice(0, 7) === monthKey)
-        .reduce((sum, e) => sum + (e.spend || 0), 0);
+      const { budget, planned, spent } = monthTotals(viewMonthKey());
       const remaining = budget - spent;
-
       document.getElementById('statBudget').textContent = formatCurrency(budget);
       document.getElementById('statPlanned').textContent = formatCurrency(planned);
+      document.getElementById('statPlannedSub').textContent = budget && planned > budget ? `⚠ ${formatCurrency(planned - budget)} over budget` : (budget ? `${formatCurrency(budget - planned)} unplanned` : '');
+      document.getElementById('statPlannedSub').style.color = budget && planned > budget ? 'var(--danger)' : '';
       document.getElementById('statSpent').textContent = formatCurrency(spent);
-      
       const remainingEl = document.getElementById('statRemaining');
-      const remainingIcon = document.getElementById('remainingIcon');
       remainingEl.textContent = formatCurrency(remaining);
-      
-      if (remaining < 0){
-        remainingEl.style.color = 'var(--danger)';
-        remainingIcon.classList.add('negative');
-      } else {
-        remainingEl.style.color = 'var(--success)';
-        remainingIcon.classList.remove('negative');
-      }
+      remainingEl.style.color = remaining < 0 ? 'var(--danger)' : 'var(--success)';
+      document.getElementById('remainingIcon').classList.toggle('negative', remaining < 0);
     }
 
-    function getMonthKey(d){
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      return `${y}-${m}`;
+    // ==================== SIDEBAR ====================
+    function promoDoneCount(ev){ return ['postedSocialAt','flyerPostedAt','eblastSentAt'].filter(k => ev[k]).length; }
+    function linkedPromos(ev){ return events.filter(e => String(e.linkedTo || '') === String(ev.id)); }
+
+    function attentionItems(){
+      const today = todayISO();
+      const items = [];
+      for (const ev of events){
+        if (!ev.start || ev.linkedTo) continue;
+        const st = statusOf(ev);
+        const days = daysBetween(today, ev.start);
+        if (isEventLike(ev.campaign) && days >= 0 && days <= 14 && st !== 'done' && promoDoneCount(ev) === 0 && linkedPromos(ev).length === 0){
+          items.push({ ev, sev: days <= 3 ? 0 : 1, msg: days === 0 ? 'Today — not promoted yet!' : `In ${days} day${days === 1 ? '' : 's'} — no promotion scheduled`, acts: [['promo', '📅 Build promo plan'], ['write', '✨ Write post']] });
+        } else if (st === 'idea' && days >= 0 && days <= 10){
+          items.push({ ev, sev: 1, msg: `Still an idea — confirm it (${days === 0 ? 'today' : 'in ' + days + 'd'})`, acts: [['confirm', 'Confirm'], ['open', 'Open']] });
+        } else if (isEventLike(ev.campaign) && days < 0 && days >= -30 && !ev.resAttendance && !ev.resNotes && !(Number(ev.spend) > 0)){
+          items.push({ ev, sev: 2, msg: 'Happened — log spend & results', acts: [['results', 'Log results']] });
+        }
+      }
+      items.sort((a, b) => a.sev - b.sev || a.ev.start.localeCompare(b.ev.start));
+      const gaps = targetProgress().filter(p => p.missing > 0 && p.target.period === 'weekly');
+      return { items, gaps };
+    }
+
+    function renderSidebar(){
+      const { items, gaps } = attentionItems();
+      const total = items.length + gaps.length;
+      const countEl = document.getElementById('attnCount');
+      countEl.textContent = total ? total : 'All clear';
+      countEl.classList.toggle('ok', !total);
+      let html = gaps.map(g => `
+        <div class="side-item"><div class="bar" style="background:${esc(g.target.color)}"></div><div class="body">
+          <div class="t">Need ${g.missing} more ${esc(g.target.name)}</div>
+          <div class="d">Weekly target: ${g.count} of ${g.target.goal} done</div>
+          <div class="acts"><button class="btn xs idea" data-gap="${esc(g.target.id)}">💡 Give me ideas</button></div>
+        </div></div>`).join('');
+      html += items.map(({ ev, msg, acts }) => `
+        <div class="side-item"><div class="bar" style="background:${getTypeForCampaign(ev.campaign).color}"></div><div class="body">
+          <div class="t">${esc(ev.title)}</div>
+          <div class="d">${esc(fmtDate(ev.start))} · ${esc(msg)}</div>
+          <div class="acts">${acts.map(([a, l]) => `<button class="btn xs" data-act="${a}" data-id="${esc(ev.id)}">${l}</button>`).join('')}</div>
+        </div></div>`).join('');
+      document.getElementById('attnList').innerHTML = html || '<div class="side-empty">🎉 Everything upcoming is promoted and every weekly target is on track.</div>';
+
+      const today = todayISO(), end = addDaysISO(today, 14);
+      const up = events.filter(e => e.start >= today && e.start <= end).sort((a, b) => (a.start + (a.time || '')).localeCompare(b.start + (b.time || '')));
+      document.getElementById('upcomingList').innerHTML = up.length ? up.map(ev => `
+        <div class="side-item" style="cursor:pointer" data-open="${esc(ev.id)}"><div class="bar" style="background:${getTypeForCampaign(ev.campaign).color}"></div><div class="body">
+          <div class="t">${statusOf(ev) === 'idea' ? '💭 ' : ''}${esc(ev.title)}</div>
+          <div class="d" style="margin:0">${esc(fmtDate(ev.start))}${ev.time ? ' · ' + esc(fmtTime(ev.time)) : ''} · ${esc(campaignMeta(ev.campaign).name)}</div>
+        </div></div>`).join('') : `<div class="side-empty">Nothing on the calendar for the next two weeks.<br><br><button class="btn sm idea" id="emptyPlanBtn">Plan my week for me</button></div>`;
+
+      renderIdeaOfDay();
+    }
+
+    let ideaOfDayIdx = null;
+    function renderIdeaOfDay(shuffleIt){
+      const m = (calendar ? calendar.getDate() : new Date()).getMonth() + 1;
+      const pool = IDEAS.filter(i => !i.months.length || i.months.includes(m));
+      if (ideaOfDayIdx === null || shuffleIt){
+        ideaOfDayIdx = shuffleIt ? Math.floor(Math.random() * pool.length) : (new Date().getDate() * 7) % pool.length;
+      }
+      const idea = pool[ideaOfDayIdx % pool.length];
+      const cm = campaignMeta(idea.campaign);
+      document.getElementById('ideaOfDay').innerHTML = `
+        <span class="tag">${esc(cm.name)}${idea.months.length ? ' · in season' : ''}</span>
+        <div class="t">${esc(idea.title)}</div>
+        <div class="d">${esc(idea.desc)}<br><i>${idea.budget ? '~' + formatCurrency(idea.budget) : 'Free'} · Goal: ${esc(idea.goal)}</i></div>
+        <button class="btn sm primary" data-use-idea="${idea.id}">Use this idea</button>`;
+    }
+
+    async function handleSideAction(act, id){
+      const ev = events.find(e => String(e.id) === String(id));
+      if (!ev) return;
+      if (act === 'promo'){ await buildPromoPlan(ev); }
+      else if (act === 'write'){ openEventPanel(ev.id); openContentHelper(); }
+      else if (act === 'confirm'){ try { await updateEvent(ev.id, { status: 'planned' }); await reloadEvents(); showToast('Confirmed!'); } catch(e){ showToast(e.message, 'error'); } }
+      else if (act === 'results'){ openEventPanel(ev.id, 'results'); }
+      else openEventPanel(ev.id);
     }
 
     // ==================== FILTERS ====================
     function renderFilters(){
       const container = document.getElementById('filtersRow');
       let html = `<label class="filter-chip active"><input type="checkbox" checked data-type="all"> All</label>`;
-      
       TYPE_DEFS.forEach(d => {
-        html += `<label class="filter-chip active">
-          <input type="checkbox" checked data-type="${d.id}">
-          <span class="swatch" style="background:${d.color}"></span>
-          ${d.label}
-        </label>`;
+        html += `<label class="filter-chip active"><input type="checkbox" checked data-type="${d.id}"><span class="swatch" style="background:${d.color}"></span>${esc(d.label)}</label>`;
       });
-      
+      html += `<span class="divider"></span>
+        <label class="filter-chip active"><input type="checkbox" checked data-toggle="ideas">💭 Ideas</label>
+        <label class="filter-chip active"><input type="checkbox" checked data-toggle="keydates">★ Key dates</label>`;
       container.innerHTML = html;
-      
-      container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-        cb.addEventListener('change', (e) => {
-          const type = e.target.dataset.type;
-          const chip = e.target.closest('.filter-chip');
-          
-          if (type === 'all'){
-            const checked = e.target.checked;
-            visibleTypes = new Set(checked ? TYPE_DEFS.map(d => d.id) : []);
-            container.querySelectorAll('input[type="checkbox"]').forEach(c => {
-              c.checked = checked;
-              c.closest('.filter-chip').classList.toggle('active', checked);
-            });
-          } else {
-            if (e.target.checked) visibleTypes.add(type);
-            else visibleTypes.delete(type);
-            chip.classList.toggle('active', e.target.checked);
-            
-            const allChecked = TYPE_DEFS.every(d => visibleTypes.has(d.id));
-            const allCb = container.querySelector('input[data-type="all"]');
-            allCb.checked = allChecked;
-            allCb.closest('.filter-chip').classList.toggle('active', allChecked);
-          }
-          
-          refreshCalendar();
-        });
-      });
+
+      container.querySelectorAll('input[data-toggle]').forEach(cb => cb.addEventListener('change', (e) => {
+        e.target.closest('.filter-chip').classList.toggle('active', e.target.checked);
+        if (e.target.dataset.toggle === 'ideas') showIdeas = e.target.checked; else showKeyDates = e.target.checked;
+        refreshCalendar();
+      }));
+      container.querySelectorAll('input[data-type]').forEach(cb => cb.addEventListener('change', (e) => {
+        const type = e.target.dataset.type;
+        if (type === 'all'){
+          const checked = e.target.checked;
+          visibleTypes = new Set(checked ? TYPE_DEFS.map(d => d.id) : []);
+          container.querySelectorAll('input[data-type]').forEach(c => { c.checked = checked; c.closest('.filter-chip').classList.toggle('active', checked); });
+        } else {
+          if (e.target.checked) visibleTypes.add(type); else visibleTypes.delete(type);
+          e.target.closest('.filter-chip').classList.toggle('active', e.target.checked);
+          const allChecked = TYPE_DEFS.every(d => visibleTypes.has(d.id));
+          const allCb = container.querySelector('input[data-type="all"]');
+          allCb.checked = allChecked; allCb.closest('.filter-chip').classList.toggle('active', allChecked);
+        }
+        refreshCalendar();
+      }));
     }
 
     // ==================== EVENT PANEL ====================
-    function openEventPanel(eventId = null){
+    const PROMO_FIELDS = [
+      ['postedSocialAt', 'Social post / story published', 'Grid post or story announcing it'],
+      ['flyerPostedAt', 'Flyer posted', 'Lobby, mailroom, elevators, campus boards'],
+      ['eblastSentAt', 'Email / text blast sent', 'Resident portal, email or SMS'],
+    ];
+    function renderPromoCheck(ev){
+      const box = document.getElementById('promoCheck');
+      box.innerHTML = PROMO_FIELDS.map(([k, l, s]) => `
+        <div class="promo-row ${ev && ev[k] ? 'done' : ''}" data-key="${k}">
+          <input type="checkbox" ${ev && ev[k] ? 'checked' : ''}>
+          <div class="lbl">${l}<small>${s}</small></div>
+          <input type="date" value="${esc(ev ? ev[k] || '' : '')}">
+        </div>`).join('');
+      box.querySelectorAll('.promo-row').forEach(row => {
+        const cb = row.querySelector('input[type=checkbox]'), dt = row.querySelector('input[type=date]');
+        cb.addEventListener('change', () => { if (cb.checked && !dt.value) dt.value = todayISO(); if (!cb.checked) dt.value = ''; row.classList.toggle('done', cb.checked); updatePanelBadges(); });
+        dt.addEventListener('change', () => { cb.checked = !!dt.value; row.classList.toggle('done', cb.checked); updatePanelBadges(); });
+      });
+      const linked = ev ? linkedPromos(ev) : [];
+      document.getElementById('linkedList').innerHTML = linked.length
+        ? 'Scheduled promo: ' + linked.sort((a, b) => a.start.localeCompare(b.start)).map(l => `<a data-open="${esc(l.id)}">${esc(fmtDate(l.start, { month: 'short', day: 'numeric' }))} ${esc(campaignMeta(l.campaign).name)}</a>`).join(', ')
+        : '';
+      document.getElementById('buildPromoBtn').style.display = ev && !ev.linkedTo && isEventLike(ev.campaign) && !linked.length ? '' : 'none';
+    }
+    function readPromoCheck(){
+      const out = {};
+      document.querySelectorAll('#promoCheck .promo-row').forEach(row => { out[row.dataset.key] = row.querySelector('input[type=date]').value || ''; });
+      return out;
+    }
+    function updatePanelBadges(){
+      const n = Object.values(readPromoCheck()).filter(Boolean).length;
+      document.getElementById('promoBadge').textContent = `${n}/3`;
+      const b = parseFloat(document.getElementById('eventBudget').value) || 0, s = parseFloat(document.getElementById('eventSpend').value) || 0;
+      document.getElementById('budgetBadge').textContent = b || s ? `${formatCurrency(s)} / ${formatCurrency(b)}` : '';
+    }
+    function setPanelStatus(st){
+      panelStatus = st;
+      document.querySelectorAll('#statusPills .status-pill').forEach(p => p.classList.toggle('active', p.dataset.status === st));
+    }
+
+    const PANEL_FIELDS = { eventTitle: 'title', eventStart: 'start', eventEnd: 'end', eventTime: 'time', eventLocation: 'location', eventBudget: 'budget', eventSpend: 'spend', eventNotes: 'notes', eventGoal: 'goal', eventCaption: 'caption', eventFlyerUrl: 'flyerUrl', resAttendance: 'resAttendance', resLeads: 'resLeads', resConversions: 'resConversions', resNotes: 'resNotes' };
+
+    function openEventPanel(eventId = null, focusSection = null, prefill = null){
       selectedEventId = eventId;
-      const panel = document.getElementById('eventPanel');
-      const deleteBtn = document.getElementById('deleteEventBtn');
-      
-      if (eventId){
-        const ev = events.find(e => String(e.id) === String(eventId));
-        if (!ev) return;
-        
-        document.getElementById('panelTitle').textContent = 'Edit Event';
-        document.getElementById('eventTitle').value = ev.title || '';
-        document.getElementById('eventStart').value = ev.start || '';
-        document.getElementById('eventEnd').value = ev.end || '';
-        document.getElementById('eventTime').value = ev.time || '';
-        document.getElementById('eventCampaign').value = ev.campaign || '';
-        document.getElementById('eventBudget').value = ev.budget || '';
-        document.getElementById('eventSpend').value = ev.spend || '';
-        document.getElementById('eventNotes').value = ev.notes || '';
-        document.getElementById('eventAudience').value = ev.audience || '';
-        document.getElementById('eventGoal').value = ev.goal || '';
-        document.getElementById('eventDesired').value = ev.desired || '';
-        document.getElementById('eventSocialDate').value = ev.postedSocialAt || '';
-        document.getElementById('eventFlyerDate').value = ev.flyerPostedAt || '';
-        document.getElementById('eventEmailDate').value = ev.eblastSentAt || '';
-        document.getElementById('eventFlyerUrl').value = ev.flyerUrl || '';
-        deleteBtn.style.display = 'block';
-      } else {
-        document.getElementById('panelTitle').textContent = 'New Event';
-        clearEventForm();
-        document.getElementById('eventStart').value = toISO(new Date());
-        deleteBtn.style.display = 'none';
-      }
-      
-      panel.classList.add('open');
+      const ev = eventId ? events.find(e => String(e.id) === String(eventId)) : null;
+      if (eventId && !ev) return;
+      const src = ev || prefill || {};
+      document.getElementById('panelTitle').textContent = ev ? (ev.linkedTo ? 'Edit Promo Post' : 'Edit') : 'New Activity';
+      for (const [id, key] of Object.entries(PANEL_FIELDS)) document.getElementById(id).value = src[key] ?? '';
+      if (!ev && !src.start) document.getElementById('eventStart').value = todayISO();
+      setSelectValue('eventCampaign', src.campaign);
+      setSelectValue('eventAudience', src.audience);
+      setSelectValue('eventDesired', src.desired);
+      setPanelStatus(ev ? statusOf(ev) : (src.status || 'planned'));
+      renderPromoCheck(ev);
+      updatePanelBadges();
+      renderFlyerPreview();
+      document.querySelectorAll('#eventPanel .panel-section').forEach(s => {
+        const name = s.dataset.section;
+        s.classList.toggle('collapsed', focusSection ? name !== focusSection && name !== 'basic' : name !== 'basic');
+      });
+      document.getElementById('deleteEventBtn').style.display = ev ? 'block' : 'none';
+      document.getElementById('duplicateEventBtn').style.display = ev ? 'block' : 'none';
+      document.getElementById('eventPanel').classList.add('open');
+    }
+    function closeEventPanel(){ document.getElementById('eventPanel').classList.remove('open'); selectedEventId = null; }
+    function toggleSection(headerEl){ headerEl.closest('.panel-section')?.classList.toggle('collapsed'); }
+    function renderFlyerPreview(){
+      const url = document.getElementById('eventFlyerUrl').value.trim();
+      document.getElementById('flyerPreview').innerHTML = /^https?:\/\/.+\.(png|jpe?g|gif|webp)(\?.*)?$/i.test(url)
+        ? `<img src="${esc(url)}" alt="Flyer preview" style="max-width:100%;border-radius:8px;border:1px solid var(--border)">` : '';
     }
 
-    function closeEventPanel(){
-      document.getElementById('eventPanel').classList.remove('open');
-      selectedEventId = null;
-    }
-
-    function toggleSection(headerEl){
-      const section = headerEl.closest('.panel-section');
-      if (section) section.classList.toggle('collapsed');
-    }
-
-    function clearEventForm(){
-      document.getElementById('eventTitle').value = '';
-      document.getElementById('eventStart').value = '';
-      document.getElementById('eventEnd').value = '';
-      document.getElementById('eventTime').value = '';
-      document.getElementById('eventCampaign').value = '';
-      document.getElementById('eventBudget').value = '';
-      document.getElementById('eventSpend').value = '';
-      document.getElementById('eventNotes').value = '';
-      document.getElementById('eventAudience').value = '';
-      document.getElementById('eventGoal').value = '';
-      document.getElementById('eventDesired').value = '';
-      document.getElementById('eventSocialDate').value = '';
-      document.getElementById('eventFlyerDate').value = '';
-      document.getElementById('eventEmailDate').value = '';
-      document.getElementById('eventFlyerUrl').value = '';
+    function readPanel(){
+      const p = {};
+      for (const [id, key] of Object.entries(PANEL_FIELDS)) p[key] = document.getElementById(id).value.trim();
+      ['budget', 'spend'].forEach(k => p[k] = parseFloat(p[k]) || 0);
+      ['resAttendance', 'resLeads', 'resConversions'].forEach(k => p[k] = p[k] === '' ? '' : parseInt(p[k], 10) || 0);
+      p.end = p.end && p.end >= p.start ? p.end : p.start;
+      p.campaign = document.getElementById('eventCampaign').value;
+      p.audience = document.getElementById('eventAudience').value;
+      p.desired = document.getElementById('eventDesired').value;
+      p.status = panelStatus;
+      Object.assign(p, readPromoCheck());
+      return p;
     }
 
     async function saveEvent(){
-      const title = document.getElementById('eventTitle').value.trim();
-      const start = document.getElementById('eventStart').value;
-      
-      if (!title || !start){
-        showToast('Title and date are required', 'error');
-        return;
-      }
-
-      const payload = {
-        title,
-        start,
-        end: document.getElementById('eventEnd').value || start,
-        time: document.getElementById('eventTime').value || '',
-        campaign: document.getElementById('eventCampaign').value || '',
-        budget: parseFloat(document.getElementById('eventBudget').value) || 0,
-        spend: parseFloat(document.getElementById('eventSpend').value) || 0,
-        notes: document.getElementById('eventNotes').value || '',
-        audience: document.getElementById('eventAudience').value || '',
-        goal: document.getElementById('eventGoal').value || '',
-        desired: document.getElementById('eventDesired').value || '',
-        postedSocialAt: document.getElementById('eventSocialDate').value || '',
-        flyerPostedAt: document.getElementById('eventFlyerDate').value || '',
-        eblastSentAt: document.getElementById('eventEmailDate').value || '',
-        flyerUrl: document.getElementById('eventFlyerUrl').value || '',
-      };
-
+      const payload = readPanel();
+      if (!payload.title || !payload.start){ showToast('Title and date are required', 'error'); return null; }
+      if (payload.status !== 'done' && payload.status !== 'idea' && (payload.postedSocialAt || payload.flyerPostedAt || payload.eblastSentAt)) payload.status = 'promoted';
       try {
-        if (selectedEventId){
-          await apiFetch('/events', { method: 'PUT', body: JSON.stringify({ id: selectedEventId, property: currentProperty, ...payload }) });
-          showToast('Event updated!');
-        } else {
-          await apiFetch('/events', { method: 'POST', body: JSON.stringify({ property: currentProperty, ...payload }) });
-          showToast('Event created!');
-        }
-        
-        const res = await apiFetch(`/events?property=${encodeURIComponent(currentProperty)}`);
-        events = await res.json();
-        refreshCalendar();
-        updateStats();
-        renderTargets();
+        let id = selectedEventId;
+        if (id) await updateEvent(id, payload);
+        else id = await createEvent(payload);
+        await reloadEvents();
+        showToast(selectedEventId ? 'Saved!' : 'Created!');
         closeEventPanel();
-      } catch(e){
-        showToast('Save failed: ' + e.message, 'error');
-      }
+        return id;
+      } catch(e){ showToast('Save failed: ' + e.message, 'error'); return null; }
     }
 
     async function deleteEvent(){
       if (!selectedEventId) return;
-      if (!confirm('Delete this event?')) return;
-      
+      const ev = events.find(e => String(e.id) === String(selectedEventId));
+      const linked = ev ? linkedPromos(ev) : [];
+      const msg = linked.length ? `Delete this and its ${linked.length} scheduled promo post(s)?` : 'Delete this?';
+      if (!confirm(msg)) return;
       try {
+        for (const l of linked) await apiFetch('/events', { method: 'DELETE', body: JSON.stringify({ id: l.id, property: currentProperty }) });
         await apiFetch('/events', { method: 'DELETE', body: JSON.stringify({ id: selectedEventId, property: currentProperty }) });
-        const res = await apiFetch(`/events?property=${encodeURIComponent(currentProperty)}`);
-        events = await res.json();
-        refreshCalendar();
-        updateStats();
-        renderTargets();
         closeEventPanel();
-        showToast('Event deleted');
-      } catch(e){
-        showToast('Delete failed: ' + e.message, 'error');
-      }
+        await reloadEvents();
+        showToast('Deleted');
+      } catch(e){ showToast('Delete failed: ' + e.message, 'error'); }
     }
 
-    // ==================== QUICK ADD ====================
+    function duplicateEvent(){
+      const p = readPanel();
+      const nextWeek = addDaysISO(p.start, 7);
+      const len = daysBetween(p.start, p.end);
+      ['postedSocialAt','flyerPostedAt','eblastSentAt','spend','resAttendance','resLeads','resConversions','resNotes'].forEach(k => delete p[k]);
+      openEventPanel(null, null, { ...p, start: nextWeek, end: addDaysISO(nextWeek, len), status: 'planned' });
+      showToast('Copy created — adjust the date and save');
+    }
+
+    // ==================== PROMO PLAN ====================
+    function promoPlanFor(ev){
+      const d = ev.start, today = todayISO();
+      const steps = [
+        { off: -7, campaign: 'Social Media Post', title: `Save the Date: ${ev.title}`, kind: 'announce' },
+        { off: -5, campaign: 'Flyering', title: `Flyers up: ${ev.title}`, kind: 'flyer' },
+        { off: -3, campaign: 'Social Media Story', title: `Story reminder: ${ev.title}`, kind: 'reminder' },
+        { off: -1, campaign: 'Social Media Story', title: `Tomorrow! ${ev.title}`, kind: 'tomorrow' },
+        { off: 0, campaign: 'Social Media Story', title: `LIVE: ${ev.title}`, kind: 'live' },
+        { off: 1, campaign: 'Social Media Post', title: `Recap: ${ev.title}`, kind: 'recap' },
+      ];
+      return steps.map(s => ({ ...s, date: addDaysISO(d, s.off) })).filter(s => s.date >= today || s.off >= 0);
+    }
+
+    async function buildPromoPlan(ev, silent){
+      const plan = promoPlanFor(ev);
+      if (!plan.length){ showToast('Too late to schedule promo for this one', 'error'); return; }
+      try {
+        for (const s of plan){
+          const content = generateContent({ ...ev, campaign: ev.campaign }, 'friendly', s.kind);
+          await createEvent({ title: s.title, start: s.date, end: s.date, campaign: s.campaign, linkedTo: String(ev.id), promoKind: s.kind, status: 'planned', audience: ev.audience || '', desired: ev.desired || '', caption: content.promoCaption, budget: 0, spend: 0, notes: `Promotion for "${ev.title}" on ${fmtDate(ev.start)}.` });
+        }
+        if (!silent){ await reloadEvents(); if (selectedEventId === ev.id) renderPromoCheck(events.find(e => String(e.id) === String(ev.id))); }
+        showToast(`Scheduled ${plan.length} promo items with captions`);
+      } catch(e){ showToast('Could not schedule promo: ' + e.message, 'error'); }
+    }
+
+    // ==================== CONTENT HELPER ====================
+    const EMOJI = { resident: '🎉', campus: '🎓', outreach: '📍', review: '⭐', story: '📲', social: '📸', giveaway: '🎁', renewal: '🔑', market: '🚀', other: '✨' };
+    const CTA_TEXT = {
+      'Social media followers': 'Follow us so you never miss a thing', 'collect review': 'Loving it here? Leave us a quick review — link in bio',
+      'complete guest cards': 'Stop by and say hi — link in bio to get on our list', 'schedule a tour': 'Book your tour — link in bio',
+      'complete application': 'Apply today — link in bio', 'sign new leases': 'Lock in your spot — link in bio',
+      'sign renewal lease': 'Renew with us — stop by the office', 'building relationship': 'Bring your roommates & friends',
+    };
+    let contentTone = 'hype';
+    let lastContent = null;
+
+    function generateContent(ev, tone, kind){
+      const type = getTypeForCampaign(ev.campaign);
+      const e = EMOJI[type.id] || '✨';
+      const prop = propShortName();
+      const when = ev.start ? fmtDate(ev.start, { weekday: 'long', month: 'long', day: 'numeric' }) : '[date]';
+      const whenShort = ev.start ? fmtDate(ev.start, { weekday: 'short', month: 'short', day: 'numeric' }) : '[date]';
+      const time = ev.time ? fmtTime(ev.time) : '';
+      const where = ev.location || (type.id === 'campus' ? 'on campus' : 'the clubhouse');
+      const t = ev.title || 'our next event';
+      const cta = CTA_TEXT[ev.desired] || (type.id === 'giveaway' ? 'Enter below 👇' : 'See you there!');
+      const tags = [propHashtag(), '#StudentLiving', '#' + prop.replace(/[^a-z0-9]/gi, '') + 'Life', type.id === 'giveaway' ? '#Giveaway' : '', type.id === 'review' ? '#ResidentLove' : '', type.id === 'campus' ? '#CollegeLife' : '', '#OffCampusHousing'].filter(Boolean);
+      const whenLine = `${whenShort}${time ? ' · ' + time : ''} · ${where}`;
+
+      const openers = {
+        hype: [`${e} IT'S HAPPENING ${e}`, `${e} Mark your calendars!`, `Okay this one is BIG ${e}`, `${e} You do NOT want to miss this`],
+        friendly: [`Hey neighbors! ${e}`, `${e} Something fun is coming up`, `We've got plans for you ${e}`, `${e} Join us!`],
+        pro: [`${prop} invites you to ${t}.`, `Join the ${prop} community for ${t}.`, `Upcoming at ${prop}: ${t}.`],
+        short: [`${e} ${t}`, `${e} ${t} — ${whenShort}`],
+      };
+      let body;
+      if (type.id === 'giveaway'){
+        body = { hype: `We're giving away ${t.replace(/giveaway/i, '').trim() || 'something awesome'} 🙌\n\nHOW TO ENTER:\n1️⃣ Follow @${prop.replace(/\s/g, '').toLowerCase()}\n2️⃣ Like this post\n3️⃣ Tag 2 friends (each tag = extra entry)\n\nWinner announced ${whenShort} on our story!`,
+          friendly: `We love our residents, so we're doing a giveaway! ${e}\n\nTo enter: follow us, like this post and tag a friend who'd love it. We'll pick a winner on ${when}.`,
+          pro: `${prop} is hosting a giveaway. To enter, follow our account, like this post and tag a friend. The winner will be announced ${when}. Must be 18+; not affiliated with Instagram.`,
+          short: `GIVEAWAY ${e} Follow + like + tag 2 friends. Winner ${whenShort}!` };
+      } else if (type.id === 'review'){
+        body = { hype: `Your reviews keep us going ⭐⭐⭐⭐⭐\n\nLeave us a Google review this week and you're entered to win! Takes 60 seconds.`,
+          friendly: `If you love living at ${prop}, we'd be so grateful for a quick Google review ⭐ Every review this week = a raffle entry!`,
+          pro: `Your feedback helps us improve. Please take a moment to share your experience at ${prop} on Google.`,
+          short: `⭐ 60 seconds. 1 review. 1 raffle entry. Link in bio!` };
+      } else if (type.id === 'social' || type.id === 'story'){
+        body = { hype: `${t} ${e}\n\nTell us in the comments 👇`, friendly: `${t}! ${e} We'd love to hear from you in the comments.`, pro: `${t} at ${prop}.`, short: `${t} ${e}` };
+      } else if (type.id === 'renewal'){
+        body = { hype: `Not ready to leave? Don't! 🔑\n\n${t}\n📅 ${whenLine}\n\nRenew early = lock in the best rate + perks.`,
+          friendly: `We'd love to have you back next year! ${e}\n\n${t} — ${whenLine}. Stop by the office with any questions.`,
+          pro: `Renewal options are now available for current residents. ${t}: ${whenLine}. Visit the leasing office to learn more.`,
+          short: `🔑 Renew & save. ${whenLine}` };
+      } else {
+        body = { hype: `${t.toUpperCase()} ${e}\n\n📅 ${whenShort}\n${time ? '⏰ ' + time + '\n' : ''}📍 ${where}\n\nFood, friends & good vibes. Bring your roommates!`,
+          friendly: `Join us for ${t}! ${e}\n\n📅 ${when}${time ? ' at ' + time : ''}\n📍 ${where}\n\nWe can't wait to see you there.`,
+          pro: `Please join us for ${t} on ${when}${time ? ' at ' + time : ''} at ${where}. All residents are welcome.`,
+          short: `${t} ${e} ${whenLine}` };
+      }
+      const caption = `${pick(openers[tone])}\n\n${body[tone]}\n\n${cta}\n\n${tags.join(' ')}`.replace(/\n{3,}/g, '\n\n');
+
+      const promoCaptions = {
+        announce: `${e} SAVE THE DATE ${e}\n\n${t}\n📅 ${whenLine}\n\nTag who you're bringing 👇\n\n${tags.slice(0, 3).join(' ')}`,
+        flyer: `Flyer headline: ${t.toUpperCase()}\nSub: ${whenLine}\nCTA: ${cta}\nPlace: lobby, mailroom, elevators, gym, campus boards.`,
+        reminder: `Story: "${t}" graphic + countdown sticker → ${whenShort}. Add a poll: "Are you coming? YES / OBVIOUSLY"`,
+        tomorrow: `Story: "TOMORROW ${e}" + event details (${whenLine}). Use the question sticker: "What should we bring?"`,
+        live: `Story: live clips/boomerangs from ${t}. Tag residents (with permission), use location sticker, end with "Thanks for coming!"`,
+        recap: `That's a wrap on ${t}! ${e} Thanks to everyone who came out. Swipe for the best moments 👉\n\nWhat should we do next? Drop ideas below 👇\n\n${tags.slice(0, 3).join(' ')}`,
+      };
+
+      return {
+        caption,
+        promoCaption: promoCaptions[kind] || caption,
+        stories: [
+          `Frame 1 — Hook: "${t}" big text on a bright background + ${e}`,
+          `Frame 2 — Details: ${whenLine}`,
+          `Frame 3 — Engage: poll sticker "Are you coming?" (YES 🙌 / OBVIOUSLY 😎)`,
+          `Frame 4 — Countdown sticker to ${whenShort}${ev.desired ? ' + link sticker: ' + (CTA_TEXT[ev.desired] || '') : ''}`,
+        ].join('\n'),
+        flyer: `HEADLINE: ${t.toUpperCase()}\nSUBHEAD: ${type.id === 'giveaway' ? 'Enter to win!' : 'You\'re invited ' + e}\nDETAILS: ${whenLine}\nCTA: ${cta}\nFOOTER: ${prop} · Scan the QR for more`,
+        email: `Subject: ${e} ${t} — ${whenShort}\n\nHi neighbors,\n\n${tone === 'pro' ? body.pro : body.friendly}\n\n${cta}.\n\nSee you soon,\nThe ${prop} Team`,
+        sms: `${prop}: ${t} ${whenShort}${time ? ' ' + time : ''} @ ${where}. ${type.id === 'giveaway' ? 'Enter on our IG!' : 'See you there!'}`.slice(0, 160),
+        hashtags: tags.join(' '),
+        timeline: ev.start ? promoPlanFor(ev).map(s => [fmtDate(s.date, { weekday: 'short', month: 'short', day: 'numeric' }), s.title.replace(/:.*/, '')]) : [],
+      };
+    }
+
+    function openContentHelper(){
+      const p = readPanel();
+      if (!p.title){ showToast('Add a title first so we know what to write about', 'error'); return; }
+      document.getElementById('contentSub').textContent = `${p.title} · ${p.start ? fmtDate(p.start) : 'no date'} · ${campaignMeta(p.campaign).name}`;
+      renderContent();
+      document.getElementById('contentModal').classList.add('open');
+    }
+    function renderContent(){
+      const p = readPanel();
+      lastContent = generateContent(p, contentTone);
+      const c = lastContent;
+      const block = (label, key, rows) => `<div class="copy-block"><div class="hdr">${label}<button class="btn xs" data-copy="${key}">Copy</button></div><textarea id="cc-${key}" rows="${rows}">${esc(c[key])}</textarea></div>`;
+      const timeline = c.timeline.length && isEventLike(p.campaign) ? `<div class="copy-block"><div class="hdr">Suggested promo timeline${selectedEventId ? '<button class="btn xs primary" id="ccSchedule">Add all to calendar</button>' : ''}</div><div class="timeline" style="padding:10px">${c.timeline.map(([d, l]) => `<div class="tl"><b>${esc(d)}</b><span>${esc(l)}</span></div>`).join('')}</div></div>` : '';
+      document.getElementById('contentBlocks').innerHTML =
+        block('Instagram / Facebook caption', 'caption', 9) + block('Story frames', 'stories', 5) + timeline +
+        block('Flyer copy', 'flyer', 5) + block('Email / portal blast', 'email', 8) + block('Text message (160 chars)', 'sms', 2) + block('Hashtags', 'hashtags', 2);
+      document.getElementById('ccSchedule')?.addEventListener('click', async () => {
+        const ev = events.find(e => String(e.id) === String(selectedEventId));
+        if (!ev) return;
+        if (linkedPromos(ev).length && !confirm('Promo posts already exist for this event. Add another set?')) return;
+        await buildPromoPlan(ev);
+      });
+    }
+
+    // ==================== WIZARD ====================
     let wizardStep = 1;
+    let suggestOffset = 0;
     const WIZARD_TOTAL_STEPS = 4;
 
-    function openQuickAdd(){
-      wizardStep = 1;
-      selectedCampaignType = null;
+    function resetWizard(){
+      wizardStep = 1; selectedCampaignType = null; suggestOffset = 0;
       document.querySelectorAll('.type-option').forEach(el => el.classList.remove('selected'));
-      document.getElementById('quickTitle').value = '';
-      document.getElementById('quickDate').value = toISO(new Date());
-      document.getElementById('quickBudget').value = '';
-      const wizardAudience = document.getElementById('wizardAudience');
-      const wizardDesired = document.getElementById('wizardDesired');
-      const wizardTime = document.getElementById('wizardTime');
-      const wizardGoal = document.getElementById('wizardGoal');
-      const wizardNotes = document.getElementById('wizardNotes');
-      if (wizardAudience) wizardAudience.value = '';
-      if (wizardDesired) wizardDesired.value = '';
-      if (wizardTime) wizardTime.value = '';
-      if (wizardGoal) wizardGoal.value = '';
-      if (wizardNotes) wizardNotes.value = '';
-      updateWizardUI();
-      document.getElementById('quickAddModal').classList.add('open');
+      ['quickTitle','quickBudget','wizardAudience','wizardDesired','wizardTime','wizardGoal','wizardNotes','wizardLocation'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('quickDate').value = todayISO();
+      document.getElementById('wizardAutoPromo').checked = true;
+      document.getElementById('wizardIsIdea').checked = false;
+    }
+    function openQuickAdd(){ resetWizard(); updateWizardUI(); document.getElementById('quickAddModal').classList.add('open'); }
+    function openQuickAddWithDate(dateStr){ openQuickAdd(); document.getElementById('quickDate').value = dateStr; document.getElementById('wizardTitle').textContent = 'Plan for ' + fmtDate(dateStr, { weekday: 'long', month: 'long', day: 'numeric' }); }
+    function closeQuickAdd(){ document.getElementById('quickAddModal').classList.remove('open'); document.getElementById('wizardTitle').textContent = 'Plan Your Marketing Activity'; }
+
+    function selectWizardType(value){
+      selectedCampaignType = value;
+      document.querySelectorAll('.type-option').forEach(el => el.classList.toggle('selected', el.dataset.type === value));
     }
 
-    function openQuickAddWithDate(dateStr){
-      openQuickAdd();
-      document.getElementById('quickDate').value = dateStr;
+    function renderSuggestions(){
+      const date = document.getElementById('quickDate').value || todayISO();
+      const m = parseISO(date).getMonth() + 1;
+      const typeRx = getTypeForCampaign(selectedCampaignType).id;
+      let pool = IDEAS.filter(i => getTypeForCampaign(i.campaign).id === typeRx);
+      if (!pool.length) pool = IDEAS.slice();
+      pool.sort((a, b) => (b.months.includes(m) ? 1 : 0) - (a.months.includes(m) ? 1 : 0));
+      pool = pool.filter(i => !i.months.length || i.months.includes(m)).concat(pool.filter(i => i.months.length && !i.months.includes(m)));
+      const slice = [];
+      for (let k = 0; k < Math.min(6, pool.length); k++) slice.push(pool[(suggestOffset + k) % pool.length]);
+      document.getElementById('suggestFor').textContent = `${campaignMeta(selectedCampaignType).name} in ${MONTHS[m - 1]}`;
+      document.getElementById('suggestChips').innerHTML = slice.map(i => `<button class="suggest-chip" data-idea="${i.id}" title="${esc(i.desc)}">${i.months.includes(m) ? '🔥 ' : ''}${esc(i.title)}</button>`).join('');
     }
-
-    function closeQuickAdd(){
-      document.getElementById('quickAddModal').classList.remove('open');
-      wizardStep = 1;
+    function applyIdeaToWizard(idea){
+      document.getElementById('quickTitle').value = idea.title;
+      document.getElementById('wizardGoal').value = idea.goal;
+      document.getElementById('wizardAudience').value = idea.audience;
+      document.getElementById('wizardDesired').value = idea.desired;
+      document.getElementById('wizardNotes').value = `${idea.desc}\nHow: ${idea.how}`;
+      document.getElementById('quickBudget').value = idea.budget || '';
+      if (!selectedCampaignType) selectWizardType(idea.campaign);
+      showToast(`"${idea.title}" filled in — tweak anything you like`);
     }
 
     function updateWizardUI(){
       document.querySelectorAll('.wizard-step-dot').forEach(dot => {
         const step = parseInt(dot.dataset.step, 10);
-        dot.classList.remove('active', 'complete');
-        if (step === wizardStep) dot.classList.add('active');
-        else if (step < wizardStep) dot.classList.add('complete');
+        dot.classList.toggle('active', step === wizardStep);
+        dot.classList.toggle('complete', step < wizardStep);
       });
-      document.querySelectorAll('.wizard-step-line').forEach(line => {
-        const lineNum = parseInt(line.dataset.line, 10);
-        line.classList.toggle('complete', lineNum < wizardStep);
-      });
-      document.querySelectorAll('.wizard-step').forEach(step => {
-        const stepNum = parseInt(step.dataset.step, 10);
-        step.classList.toggle('active', stepNum === wizardStep);
-      });
-      const backBtn = document.getElementById('wizardBack');
-      const nextBtn = document.getElementById('wizardNext');
-      const saveBtn = document.getElementById('quickAddSave');
-      backBtn.style.display = wizardStep > 1 ? 'block' : 'none';
-      nextBtn.style.display = wizardStep < WIZARD_TOTAL_STEPS ? 'block' : 'none';
-      saveBtn.style.display = wizardStep === WIZARD_TOTAL_STEPS ? 'block' : 'none';
+      document.querySelectorAll('.wizard-step-line').forEach(line => line.classList.toggle('complete', parseInt(line.dataset.line, 10) < wizardStep));
+      document.querySelectorAll('.wizard-step').forEach(step => step.classList.toggle('active', parseInt(step.dataset.step, 10) === wizardStep));
+      document.getElementById('wizardBack').style.display = wizardStep > 1 ? 'block' : 'none';
+      document.getElementById('wizardNext').style.display = wizardStep < WIZARD_TOTAL_STEPS ? 'block' : 'none';
+      document.getElementById('quickAddSave').style.display = wizardStep === WIZARD_TOTAL_STEPS ? 'block' : 'none';
+      if (wizardStep === 2) renderSuggestions();
+      if (wizardStep === 4) renderWizardReview();
     }
-
+    function renderWizardReview(){
+      const date = document.getElementById('quickDate').value;
+      const { budget, planned } = monthTotals(date.slice(0, 7));
+      const b = parseFloat(document.getElementById('quickBudget').value) || 0;
+      const left = budget - planned;
+      document.getElementById('wizardBudgetHint').innerHTML = budget
+        ? `${esc(MONTHS[parseISO(date).getMonth()])} budget: <b>${formatCurrency(budget)}</b> · already planned ${formatCurrency(planned)} · <b style="color:${left - b < 0 ? 'var(--danger)' : 'var(--success)'}">${formatCurrency(left - b)} left after this</b>`
+        : 'No monthly budget set yet — click the Budget card to add one.';
+      const eventLike = isEventLike(selectedCampaignType);
+      document.getElementById('autoPromoLine').style.display = eventLike ? '' : 'none';
+      const plan = eventLike ? promoPlanFor({ start: date, title: '' }) : [];
+      document.getElementById('autoPromoDesc').textContent = plan.length ? `Adds ${plan.length} items with ready-to-post captions: ${plan.map(s => fmtDate(s.date, { month: 'short', day: 'numeric' })).join(', ')}.` : 'Event is too soon for a full promo plan.';
+      const time = document.getElementById('wizardTime').value;
+      document.getElementById('wizardReview').innerHTML = `
+        <div><span>What</span><b>${esc(document.getElementById('quickTitle').value)}</b></div>
+        <div><span>Type</span><span>${esc(campaignMeta(selectedCampaignType).name)}</span></div>
+        <div><span>When</span><span>${esc(fmtDate(date))}${time ? ' · ' + esc(fmtTime(time)) : ''}</span></div>
+        <div><span>Goal</span><span>${esc(document.getElementById('wizardGoal').value || '—')}</span></div>`;
+    }
     function wizardNext(){
-      if (wizardStep === 1 && !selectedCampaignType){
-        showToast('Please select an event type', 'error');
-        return;
+      if (wizardStep === 1 && !selectedCampaignType){ showToast('Pick a type (or browse the Idea Lab)', 'error'); return; }
+      if (wizardStep === 2){
+        if (!document.getElementById('quickTitle').value.trim()){ showToast('Enter a title — or tap a suggestion', 'error'); return; }
+        if (!document.getElementById('quickDate').value){ showToast('Please select a date', 'error'); return; }
       }
-      if (wizardStep === 3){
-        const title = document.getElementById('quickTitle').value.trim();
-        const date = document.getElementById('quickDate').value;
-        if (!title){ showToast('Please enter an event title', 'error'); return; }
-        if (!date){ showToast('Please select a date', 'error'); return; }
-      }
-      if (wizardStep < WIZARD_TOTAL_STEPS){
-        wizardStep++;
-        updateWizardUI();
-      }
+      if (wizardStep < WIZARD_TOTAL_STEPS){ wizardStep++; updateWizardUI(); }
     }
+    function wizardBack(){ if (wizardStep > 1){ wizardStep--; updateWizardUI(); } }
 
-    function wizardBack(){
-      if (wizardStep > 1){
-        wizardStep--;
-        updateWizardUI();
-      }
-    }
-
-    async function quickAddEvent(keepOpen = false){
+    async function quickAddEvent(){
       const title = document.getElementById('quickTitle').value.trim();
       const date = document.getElementById('quickDate').value;
       if (!title || !date){ showToast('Title and date are required', 'error'); return; }
-      const wizardAudience = document.getElementById('wizardAudience');
-      const wizardDesired = document.getElementById('wizardDesired');
-      const wizardTime = document.getElementById('wizardTime');
-      const wizardGoal = document.getElementById('wizardGoal');
-      const wizardNotes = document.getElementById('wizardNotes');
       const payload = {
-        title,
-        start: date,
-        end: date,
-        time: wizardTime ? wizardTime.value : '',
+        title, start: date, end: date,
+        time: document.getElementById('wizardTime').value,
+        location: document.getElementById('wizardLocation').value.trim(),
         campaign: selectedCampaignType || '',
-        budget: parseFloat(document.getElementById('quickBudget').value) || 0,
-        spend: 0,
-        audience: wizardAudience ? wizardAudience.value : '',
-        desired: wizardDesired ? wizardDesired.value : '',
-        goal: wizardGoal ? wizardGoal.value : '',
-        notes: wizardNotes ? wizardNotes.value : '',
+        budget: parseFloat(document.getElementById('quickBudget').value) || 0, spend: 0,
+        audience: document.getElementById('wizardAudience').value,
+        desired: document.getElementById('wizardDesired').value,
+        goal: document.getElementById('wizardGoal').value,
+        notes: document.getElementById('wizardNotes').value,
+        status: document.getElementById('wizardIsIdea').checked ? 'idea' : 'planned',
       };
+      payload.caption = generateContent(payload, 'friendly').caption;
+      const btn = document.getElementById('quickAddSave');
+      btn.disabled = true;
       try {
-        await apiFetch('/events', { method: 'POST', body: JSON.stringify({ property: currentProperty, ...payload }) });
-        const res = await apiFetch(`/events?property=${encodeURIComponent(currentProperty)}`);
-        events = await res.json();
-        refreshCalendar();
-        updateStats();
-        renderTargets();
-        showToast('Event created!');
-        if (keepOpen){
-          wizardStep = 1;
-          selectedCampaignType = null;
-          document.querySelectorAll('.campaign-option').forEach(el => el.classList.remove('selected'));
-          document.getElementById('quickTitle').value = '';
-          document.getElementById('quickBudget').value = '';
-          if (wizardAudience) wizardAudience.value = '';
-          if (wizardDesired) wizardDesired.value = '';
-          if (wizardTime) wizardTime.value = '';
-          if (wizardGoal) wizardGoal.value = '';
-          if (wizardNotes) wizardNotes.value = '';
-          updateWizardUI();
-        } else {
-          closeQuickAdd();
-        }
-      } catch(e){
-        showToast('Save failed: ' + e.message, 'error');
+        const id = await createEvent(payload);
+        if (isEventLike(payload.campaign) && document.getElementById('wizardAutoPromo').checked){
+          await buildPromoPlan({ ...payload, id }, true);
+        } else showToast('Created!');
+        await reloadEvents();
+        closeQuickAdd();
+      } catch(e){ showToast('Save failed: ' + e.message, 'error'); }
+      finally { btn.disabled = false; }
+    }
+
+    // ==================== IDEA LAB ====================
+    let labCat = 'all';
+    let labCtx = {};
+    let planItems = [];
+
+    function openIdeaLab(ctx = {}){
+      labCtx = ctx;
+      const monthSel = document.getElementById('labMonth');
+      const m = ctx.date ? parseISO(ctx.date).getMonth() + 1 : (calendar ? calendar.getDate().getMonth() + 1 : new Date().getMonth() + 1);
+      monthSel.innerHTML = `<option value="0">Any month</option>` + MONTHS.map((n, i) => `<option value="${i + 1}">${n} ideas</option>`).join('');
+      monthSel.value = String(m);
+      document.getElementById('labSearch').value = ctx.query || '';
+      document.getElementById('labBudget').value = '';
+      labCat = ctx.cat || 'all';
+      document.getElementById('ideaLabSub').textContent = ctx.keyDate
+        ? `★ ${ctx.keyDate} is on ${fmtDate(ctx.date)} — here are ideas to tie into it.`
+        : ctx.targetName ? `Ideas to hit your "${ctx.targetName}" target.` : 'Proven events, posts, stories and giveaways for student housing — pick one and drop it on the calendar.';
+      if (ctx.keyDate){
+        const word = ctx.keyDate.replace(/national|day|'s/gi, '').trim().split(/\s+/)[0] || '';
+        const hits = IDEAS.filter(i => (i.title + i.desc + i.how).toLowerCase().includes(word.toLowerCase()));
+        document.getElementById('labSearch').value = hits.length ? word : '';
       }
+      showLabBrowse();
+      renderLabCats();
+      renderIdeaGrid();
+      document.getElementById('ideaLabModal').classList.add('open');
+    }
+    function closeIdeaLab(){ document.getElementById('ideaLabModal').classList.remove('open'); }
+    function showLabBrowse(){
+      document.getElementById('labBrowse').classList.remove('hidden');
+      document.getElementById('labPlan').classList.add('hidden');
+      document.getElementById('labPlanFooter').style.display = 'none';
+    }
+    const LAB_CATS = [['all','All', '#94a3b8'],['resident','Events','#86efac'],['campus','Campus','#3b82f6'],['social','Posts','#a78bfa'],['story','Stories','#f9a8d4'],['giveaway','Giveaways','#fcd34d'],['review','Reviews','#93c5fd'],['renewal','Renewals','#f59e0b'],['outreach','Outreach & Partners','#7f1d1d'],['market','Leasing Push','#facc15']];
+    function renderLabCats(){
+      document.getElementById('labCats').innerHTML = LAB_CATS.map(([id, l, c]) => `<span class="lab-cat ${labCat === id ? 'active' : ''}" data-cat="${id}"><i style="background:${c}"></i>${l}</span>`).join('');
+    }
+    function filteredIdeas(){
+      const q = document.getElementById('labSearch').value.trim().toLowerCase();
+      const m = parseInt(document.getElementById('labMonth').value, 10);
+      const maxB = document.getElementById('labBudget').value;
+      let list = IDEAS.filter(i => labCat === 'all' || getTypeForCampaign(i.campaign).id === labCat);
+      if (labCtx.targetPattern){ try { const rx = new RegExp(labCtx.targetPattern, 'i'); list = list.filter(i => rx.test(i.campaign)); } catch(e){} }
+      if (q) list = list.filter(i => (i.title + ' ' + i.desc + ' ' + i.how + ' ' + i.campaign).toLowerCase().includes(q));
+      if (maxB !== '') list = list.filter(i => maxB === '0' ? !i.budget : i.budget < Number(maxB));
+      if (m) list = list.filter(i => !i.months.length || i.months.includes(m)).sort((a, b) => (b.months.includes(m) ? 1 : 0) - (a.months.includes(m) ? 1 : 0));
+      return list;
+    }
+    function defaultIdeaDate(){
+      if (labCtx.date) return labCtx.date;
+      const m = parseInt(document.getElementById('labMonth').value, 10);
+      const today = todayISO();
+      if (!m) return today;
+      const y = new Date().getFullYear();
+      const first = toISO(new Date(parseISO(today).getMonth() + 1 > m ? y + 1 : y, m - 1, 1));
+      return first > today ? first : today;
+    }
+    function renderIdeaGrid(){
+      const m = parseInt(document.getElementById('labMonth').value, 10);
+      const list = filteredIdeas();
+      const d = defaultIdeaDate();
+      document.getElementById('ideaGrid').innerHTML = list.length ? list.map(i => {
+        const cm = campaignMeta(i.campaign);
+        return `<div class="idea-card" style="border-top:3px solid ${cm.color}">
+          <div class="top"><span class="pill" style="background:${cm.color}33;color:#1e293b">${esc(cm.name)}</span>
+            ${m && i.months.includes(m) ? '<span class="pill season">🔥 In season</span>' : ''}
+            <span class="pill cost">${i.budget ? '~' + formatCurrency(i.budget) : 'Free'}</span></div>
+          <h4>${esc(i.title)}</h4>
+          <p>${esc(i.desc)}</p>
+          <div class="how"><b>How to pull it off</b>${esc(i.how)}</div>
+          <p><b>Goal:</b> ${esc(i.goal)} · <b>Drives:</b> ${esc((DESIRED.find(x => x[0] === i.desired) || ['', i.desired])[1])}</p>
+          <div class="acts">
+            <input type="date" value="${d}" data-date-for="${i.id}" title="Date to add it">
+            <button class="btn xs" data-customize="${i.id}">Customize</button>
+            <button class="btn xs success" data-quickadd="${i.id}">+ Add</button>
+          </div>
+        </div>`;
+      }).join('') : '<div class="side-empty">No ideas match — try another month or category.</div>';
+    }
+
+    async function addIdeaQuick(idea, date, status = 'planned'){
+      const payload = { title: idea.title, start: date, end: date, campaign: idea.campaign, budget: idea.budget || 0, spend: 0, goal: idea.goal, audience: idea.audience, desired: idea.desired, notes: `${idea.desc}\nHow: ${idea.how}`, status, ideaId: idea.id };
+      payload.caption = generateContent(payload, 'friendly').caption;
+      return createEvent(payload);
+    }
+    function customizeIdea(idea, date){
+      closeIdeaLab();
+      resetWizard();
+      selectWizardType(idea.campaign);
+      document.getElementById('quickDate').value = date;
+      applyIdeaToWizard(idea);
+      wizardStep = 2;
+      updateWizardUI();
+      document.getElementById('quickAddModal').classList.add('open');
+    }
+
+    // Plan my week: fill missing weekly targets + one event-like item if the week is empty
+    function buildWeekPlan(){
+      const today = todayISO();
+      const wk = currentWeekBounds();
+      const start = today > wk.start ? today : wk.start;
+      let days = [];
+      for (let d = start; d <= wk.end; d = addDaysISO(d, 1)) days.push(d);
+      if (days.length < 3){ // late in the week → plan next week instead
+        const ns = addDaysISO(wk.end, 1); days = []; for (let i = 0; i < 7; i++) days.push(addDaysISO(ns, i));
+      }
+      const m = parseISO(days[0]).getMonth() + 1;
+      const used = new Set(events.map(e => e.ideaId).filter(Boolean));
+      const items = [];
+      const gaps = targetProgress().filter(p => p.target.period === 'weekly');
+      const nextWeekMode = days[0] > wk.end;
+      gaps.forEach(({ target, missing }) => {
+        const need = nextWeekMode ? target.goal : missing;
+        if (!need) return;
+        let pool = shuffle(ideasForTarget(target).filter(i => (!i.months.length || i.months.includes(m))));
+        pool.sort((a, b) => (used.has(a.id) ? 1 : 0) - (used.has(b.id) ? 1 : 0));
+        for (let k = 0; k < need && pool.length; k++){
+          const idea = pool[k % pool.length];
+          const day = days[Math.min(days.length - 1, Math.round((k + 1) * days.length / (need + 1)))];
+          items.push({ idea, date: day, why: `${target.name} (${target.period} target)`, on: true });
+        }
+      });
+      const monthGaps = targetProgress().filter(p => p.target.period === 'monthly' && p.missing > 0);
+      monthGaps.slice(0, 2).forEach(({ target }) => {
+        const pool = shuffle(ideasForTarget(target).filter(i => !i.months.length || i.months.includes(m)));
+        if (pool.length) items.push({ idea: pool[0], date: days[Math.min(days.length - 1, 3)], why: `${target.name} (monthly target behind)`, on: true });
+      });
+      planItems = items.sort((a, b) => a.date.localeCompare(b.date));
+      return { days, nextWeekMode };
+    }
+    function openPlanWeek(){
+      if (!document.getElementById('ideaLabModal').classList.contains('open')) openIdeaLab({});
+      const { days, nextWeekMode } = buildWeekPlan();
+      document.getElementById('labBrowse').classList.add('hidden');
+      document.getElementById('labPlan').classList.remove('hidden');
+      document.getElementById('labPlanFooter').style.display = 'flex';
+      document.getElementById('planIntro').innerHTML = planItems.length
+        ? `<b>Here's a plan for ${nextWeekMode ? 'next week' : 'the rest of this week'}</b> (${esc(fmtDate(days[0]))} – ${esc(fmtDate(days[days.length - 1]))}) built from your targets. Uncheck anything you don't want, change dates, then add. Everything is added as an <b>idea</b> (dashed) with a ready-made caption, so the team can confirm it.`
+        : `<b>You're on track!</b> All weekly targets for this week are already met. Browse the Idea Lab for extra inspiration.`;
+      renderPlanRows();
+    }
+    function renderPlanRows(){
+      document.getElementById('planRows').innerHTML = planItems.map((p, i) => {
+        const cm = campaignMeta(p.idea.campaign);
+        return `<div class="plan-row">
+          <input type="checkbox" data-plan-on="${i}" ${p.on ? 'checked' : ''}>
+          <span class="ty" style="background:${cm.color}44">${esc(cm.name)}</span>
+          <div class="ti">${esc(p.idea.title)}<small>${esc(p.why)} · ${esc(p.idea.desc)}</small></div>
+          <input type="date" data-plan-date="${i}" value="${p.date}">
+        </div>`;
+      }).join('');
+      document.getElementById('planAddBtn').disabled = !planItems.length;
+    }
+    async function addPlan(){
+      const chosen = planItems.filter(p => p.on);
+      if (!chosen.length){ showToast('Nothing selected', 'error'); return; }
+      const btn = document.getElementById('planAddBtn'); btn.disabled = true;
+      try {
+        for (const p of chosen) await addIdeaQuick(p.idea, p.date, 'idea');
+        await reloadEvents();
+        closeIdeaLab();
+        showToast(`Added ${chosen.length} ideas — confirm them as you go`);
+      } catch(e){ showToast('Failed: ' + e.message, 'error'); }
+      finally { btn.disabled = false; }
     }
 
     // ==================== BUDGET MODAL ====================
-    function openBudgetModal(){
-      updateBudgetModalStats();
-      renderBudgetMonths();
-      document.getElementById('budgetModal').classList.add('open');
-    }
-
-    function closeBudgetModal(){
-      document.getElementById('budgetModal').classList.remove('open');
-    }
-
+    function openBudgetModal(){ updateBudgetModalStats(); renderBudgetMonths(); document.getElementById('budgetModal').classList.add('open'); }
+    function closeBudgetModal(){ document.getElementById('budgetModal').classList.remove('open'); }
     function updateBudgetModalStats(){
       if (!calendar) return;
-      const view = calendar.view;
-      const monthKey = getMonthKey(view.currentStart);
-      
-      const budget = monthlyBudgets[monthKey] || 0;
-      const planned = events.filter(e => e.start && e.start.slice(0, 7) === monthKey)
-        .reduce((sum, e) => sum + (e.budget || 0), 0);
-      const actual = events.filter(e => e.start && e.start.slice(0, 7) === monthKey)
-        .reduce((sum, e) => sum + (e.spend || 0), 0);
-      const remaining = budget - actual;
-
+      const { budget, planned, spent } = monthTotals(viewMonthKey());
+      const remaining = budget - spent;
       document.getElementById('modalBudget').textContent = formatCurrency(budget);
       document.getElementById('modalPlanned').textContent = formatCurrency(planned);
-      document.getElementById('modalActual').textContent = formatCurrency(actual);
-      
-      const remainingEl = document.getElementById('modalRemaining');
-      remainingEl.textContent = formatCurrency(remaining);
-      remainingEl.className = 'value ' + (remaining >= 0 ? 'positive' : 'negative');
+      document.getElementById('modalActual').textContent = formatCurrency(spent);
+      const el = document.getElementById('modalRemaining');
+      el.textContent = formatCurrency(remaining);
+      el.className = 'value ' + (remaining >= 0 ? 'positive' : 'negative');
     }
-
     function initBudgetYearSelect(){
       const select = document.getElementById('budgetYear');
       const now = new Date().getFullYear();
-      select.innerHTML = [now - 1, now, now + 1, now + 2].map(y => 
-        `<option value="${y}" ${y === now ? 'selected' : ''}>${y}</option>`
-      ).join('');
+      select.innerHTML = [now - 1, now, now + 1, now + 2].map(y => `<option value="${y}" ${y === now ? 'selected' : ''}>${y}</option>`).join('');
       select.addEventListener('change', renderBudgetMonths);
     }
-
     function renderBudgetMonths(){
       const year = parseInt(document.getElementById('budgetYear').value, 10);
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
       const container = document.getElementById('budgetMonths');
-      
-      container.innerHTML = months.map((m, i) => {
+      container.innerHTML = MONTHS.map((m, i) => {
         const ym = `${year}-${String(i + 1).padStart(2, '0')}`;
-        const val = monthlyBudgets[ym] || '';
-        return `<div class="month-input">
-          <label>${m}</label>
-          <input type="number" data-ym="${ym}" value="${val}" step="0.01">
-        </div>`;
+        return `<div class="month-input"><label>${m}</label><input type="number" data-ym="${ym}" value="${monthlyBudgets[ym] || ''}" step="0.01" min="0"></div>`;
       }).join('');
-      
-      container.querySelectorAll('input').forEach(inp => {
-        inp.addEventListener('input', (e) => {
-          const ym = e.target.dataset.ym;
-          const v = parseFloat(e.target.value);
-          if (isFinite(v)) monthlyBudgets[ym] = Math.round(v * 100) / 100;
-          else delete monthlyBudgets[ym];
-        });
-      });
+      container.querySelectorAll('input').forEach(inp => inp.addEventListener('input', (e) => {
+        const v = parseFloat(e.target.value);
+        if (isFinite(v)) monthlyBudgets[e.target.dataset.ym] = Math.round(v * 100) / 100; else delete monthlyBudgets[e.target.dataset.ym];
+      }));
     }
-
     async function saveBudgets(){
       try {
         await apiFetch('/budgets', { method: 'PUT', body: JSON.stringify({ property: currentProperty, months: monthlyBudgets }) });
-        updateStats();
-        updateBudgetModalStats();
+        updateStats(); updateBudgetModalStats();
         showToast('Budgets saved!');
-      } catch(e){
-        showToast('Save failed: ' + e.message, 'error');
-      }
+      } catch(e){ showToast('Save failed: ' + e.message, 'error'); }
     }
 
     // ==================== INITIALIZATION ====================
     async function initializeApp(){
       loadTargets();
+      fillSelects();
       await loadProperties();
       renderPropertyOptions();
-      
       const list = getAccessibleProperties();
-      if (!list.length){
-        alert('No properties assigned to your account.');
-        return;
-      }
-      
+      if (!list.length){ alert('No properties assigned to your account.'); return; }
       const saved = mapPropertyNameToGroup(localStorage.getItem(STORE_CURRENT_PROPERTY_KEY) || '');
       currentProperty = list.includes(saved) ? saved : list[0];
       document.getElementById('propertySelect').value = currentProperty;
-      
-      await setActiveProperty(currentProperty);
-      
-      initCalendar();
+      if (!calendar) initCalendar();
       renderFilters();
-      renderTargets();
       initBudgetYearSelect();
       bindEventListeners();
+      await setActiveProperty(currentProperty);
     }
+
+    function onClick(id, fn){ document.getElementById(id).addEventListener('click', fn); }
+    function closeOnBackdrop(id, fn){ document.getElementById(id).addEventListener('click', (e) => { if (e.target.id === id) fn(); }); }
 
     function bindEventListeners(){
-      // Header
-      document.getElementById('backToLiveBtn').addEventListener('click', () => location.href = 'mmp_calendar_app.html');
-      document.getElementById('logoutBtn').addEventListener('click', doLogout);
-      document.getElementById('adminPageBtn').addEventListener('click', () => location.href = 'mmp_admin.html');
+      if (listenersBound) return;
+      listenersBound = true;
+      onClick('backToLiveBtn', () => location.href = 'mmp_calendar_app.html');
+      onClick('logoutBtn', doLogout);
+      onClick('adminPageBtn', () => location.href = 'mmp_admin.html');
       document.getElementById('propertySelect').addEventListener('change', (e) => setActiveProperty(e.target.value));
-      
-      // Add Event
-      document.getElementById('addEventBtn').addEventListener('click', openQuickAdd);
-      
+
+      onClick('addEventBtn', openQuickAdd);
+      onClick('openIdeaLabBtn', () => openIdeaLab({}));
+      onClick('planWeekBtn', () => { openIdeaLab({}); openPlanWeek(); });
+      onClick('ideaShuffleBtn', () => renderIdeaOfDay(true));
+
       // Budget
-      document.getElementById('budgetPill').addEventListener('click', openBudgetModal);
-      document.getElementById('closeBudgetModal').addEventListener('click', closeBudgetModal);
-      document.getElementById('cancelBudgetBtn').addEventListener('click', closeBudgetModal);
-      document.getElementById('saveBudgetBtn').addEventListener('click', saveBudgets);
-      document.getElementById('budgetModal').addEventListener('click', (e) => { if (e.target.id === 'budgetModal') closeBudgetModal(); });
-      
-      // Event Panel
-      document.getElementById('closePanel').addEventListener('click', closeEventPanel);
-      document.getElementById('cancelEventBtn').addEventListener('click', closeEventPanel);
-      document.getElementById('saveEventBtn').addEventListener('click', saveEvent);
-      document.getElementById('deleteEventBtn').addEventListener('click', deleteEvent);
-      document.getElementById('eventPanel').addEventListener('click', (e) => { if (e.target.id === 'eventPanel') closeEventPanel(); });
-      
-      // Quick Add
-      document.getElementById('closeQuickAdd').addEventListener('click', closeQuickAdd);
-      document.getElementById('cancelQuickAdd').addEventListener('click', closeQuickAdd);
-      document.getElementById('quickAddSave').addEventListener('click', () => quickAddEvent(false));
-      document.getElementById('quickAddModal').addEventListener('click', (e) => { if (e.target.id === 'quickAddModal') closeQuickAdd(); });
-      
-      document.getElementById('campaignGrid').addEventListener('click', (e) => {
-        const option = e.target.closest('.type-option');
-        if (!option) return;
-        document.querySelectorAll('.type-option').forEach(el => el.classList.remove('selected'));
-        option.classList.add('selected');
-        selectedCampaignType = option.dataset.type;
+      onClick('budgetPill', openBudgetModal);
+      onClick('closeBudgetModal', closeBudgetModal);
+      onClick('cancelBudgetBtn', closeBudgetModal);
+      onClick('saveBudgetBtn', saveBudgets);
+      closeOnBackdrop('budgetModal', closeBudgetModal);
+
+      // Event panel
+      onClick('closePanel', closeEventPanel);
+      onClick('cancelEventBtn', closeEventPanel);
+      onClick('saveEventBtn', saveEvent);
+      onClick('deleteEventBtn', deleteEvent);
+      onClick('duplicateEventBtn', duplicateEvent);
+      onClick('openContentHelperBtn', openContentHelper);
+      onClick('buildPromoBtn', async () => {
+        const ev = events.find(e => String(e.id) === String(selectedEventId));
+        if (ev) await buildPromoPlan(ev);
       });
-      
-      // Wizard Navigation
-      document.getElementById('wizardNext').addEventListener('click', wizardNext);
-      document.getElementById('wizardBack').addEventListener('click', wizardBack);
-      
-      // Targets Modal (Admin)
-      document.getElementById('editTargetsBtn').addEventListener('click', openTargetsModal);
-      document.getElementById('closeTargetsModal').addEventListener('click', closeTargetsModal);
-      document.getElementById('cancelTargetsBtn').addEventListener('click', closeTargetsModal);
-      document.getElementById('saveTargetsBtn').addEventListener('click', saveTargetsFromModal);
-      document.getElementById('addTargetBtn').addEventListener('click', addNewTarget);
-      document.getElementById('targetsModal').addEventListener('click', (e) => { if (e.target.id === 'targetsModal') closeTargetsModal(); });
-      
-      // Login
-      document.getElementById('loginBtn').addEventListener('click', doLogin);
-      document.getElementById('loginPassword').addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
-      
-      // Keyboard
+      closeOnBackdrop('eventPanel', closeEventPanel);
+      document.getElementById('statusPills').addEventListener('click', (e) => { const p = e.target.closest('.status-pill'); if (p) setPanelStatus(p.dataset.status); });
+      ['eventBudget', 'eventSpend'].forEach(id => document.getElementById(id).addEventListener('input', updatePanelBadges));
+      document.getElementById('eventFlyerUrl').addEventListener('input', renderFlyerPreview);
+      document.getElementById('linkedList').addEventListener('click', (e) => { const a = e.target.closest('[data-open]'); if (a) openEventPanel(a.dataset.open); });
+
+      // Content helper
+      onClick('closeContent', () => document.getElementById('contentModal').classList.remove('open'));
+      onClick('contentCloseBtn', () => document.getElementById('contentModal').classList.remove('open'));
+      closeOnBackdrop('contentModal', () => document.getElementById('contentModal').classList.remove('open'));
+      onClick('regenBtn', renderContent);
+      document.getElementById('toneTabs').addEventListener('click', (e) => {
+        const t = e.target.closest('.tone-tab'); if (!t) return;
+        contentTone = t.dataset.tone;
+        document.querySelectorAll('.tone-tab').forEach(x => x.classList.toggle('active', x === t));
+        renderContent();
+      });
+      document.getElementById('contentBlocks').addEventListener('click', async (e) => {
+        const b = e.target.closest('[data-copy]'); if (!b) return;
+        const text = document.getElementById('cc-' + b.dataset.copy).value;
+        try { await navigator.clipboard.writeText(text); b.textContent = 'Copied ✓'; setTimeout(() => b.textContent = 'Copy', 1500); }
+        catch(err){ document.getElementById('cc-' + b.dataset.copy).select(); document.execCommand('copy'); showToast('Copied'); }
+      });
+      onClick('useCaptionBtn', () => {
+        document.getElementById('eventCaption').value = document.getElementById('cc-caption').value;
+        document.getElementById('contentModal').classList.remove('open');
+        document.querySelector('#eventPanel [data-section="creative"]').classList.remove('collapsed');
+        showToast('Caption added — remember to Save');
+      });
+
+      // Wizard
+      onClick('closeQuickAdd', closeQuickAdd);
+      onClick('cancelQuickAdd', closeQuickAdd);
+      onClick('quickAddSave', quickAddEvent);
+      onClick('wizardNext', wizardNext);
+      onClick('wizardBack', wizardBack);
+      onClick('suggestMoreBtn', () => { suggestOffset += 6; renderSuggestions(); });
+      closeOnBackdrop('quickAddModal', closeQuickAdd);
+      document.getElementById('campaignGrid').addEventListener('click', (e) => {
+        const option = e.target.closest('.type-option'); if (!option) return;
+        selectWizardType(option.dataset.type);
+        suggestOffset = 0;
+      });
+      document.getElementById('campaignGrid').addEventListener('dblclick', (e) => { if (e.target.closest('.type-option')) wizardNext(); });
+      document.getElementById('suggestChips').addEventListener('click', (e) => {
+        const c = e.target.closest('[data-idea]'); if (!c) return;
+        applyIdeaToWizard(IDEAS.find(i => i.id === c.dataset.idea));
+      });
+      document.getElementById('quickDate').addEventListener('change', () => { if (wizardStep === 2) renderSuggestions(); });
+      document.getElementById('wizardNeedIdeas').addEventListener('click', (e) => {
+        e.preventDefault();
+        const date = document.getElementById('quickDate').value;
+        closeQuickAdd();
+        openIdeaLab({ date });
+      });
+
+      // Idea Lab
+      onClick('closeIdeaLab', closeIdeaLab);
+      closeOnBackdrop('ideaLabModal', closeIdeaLab);
+      ['labSearch', 'labMonth', 'labBudget'].forEach(id => document.getElementById(id).addEventListener('input', renderIdeaGrid));
+      document.getElementById('labCats').addEventListener('click', (e) => {
+        const c = e.target.closest('[data-cat]'); if (!c) return;
+        labCat = c.dataset.cat; labCtx.targetPattern = null; renderLabCats(); renderIdeaGrid();
+      });
+      onClick('labSurprise', () => {
+        const list = filteredIdeas(); if (!list.length) return;
+        const idea = pick(list);
+        document.getElementById('labSearch').value = idea.title; renderIdeaGrid();
+        showToast('🎲 How about: ' + idea.title);
+      });
+      document.getElementById('ideaGrid').addEventListener('click', async (e) => {
+        const q = e.target.closest('[data-quickadd]'), c = e.target.closest('[data-customize]');
+        const btn = q || c; if (!btn) return;
+        const id = btn.dataset.quickadd || btn.dataset.customize;
+        const idea = IDEAS.find(i => i.id === id);
+        const date = document.querySelector(`[data-date-for="${id}"]`).value || todayISO();
+        if (c){ customizeIdea(idea, date); return; }
+        btn.disabled = true;
+        try {
+          const newId = await addIdeaQuick(idea, date);
+          if (isEventLike(idea.campaign) && date >= todayISO() && confirm(`Added "${idea.title}". Auto-schedule promo posts (save-the-date, stories, recap) too?`)){
+            await buildPromoPlan({ ...idea, id: newId, start: date, end: date }, true);
+          } else showToast(`Added "${idea.title}" on ${fmtDate(date)}`);
+          await reloadEvents();
+          btn.textContent = 'Added ✓';
+        } catch(err){ showToast('Failed: ' + err.message, 'error'); btn.disabled = false; }
+      });
+      onClick('planBackBtn', () => { showLabBrowse(); renderIdeaGrid(); });
+      onClick('planReshuffleBtn', openPlanWeek);
+      onClick('planAddBtn', addPlan);
+      document.getElementById('planRows').addEventListener('change', (e) => {
+        if (e.target.dataset.planOn !== undefined) planItems[+e.target.dataset.planOn].on = e.target.checked;
+        if (e.target.dataset.planDate !== undefined) planItems[+e.target.dataset.planDate].date = e.target.value;
+      });
+
+      // Sidebar + targets
+      document.getElementById('attnList').addEventListener('click', (e) => {
+        const g = e.target.closest('[data-gap]');
+        if (g){ const t = marketingTargets.find(x => x.id === g.dataset.gap); openIdeaLab({ targetPattern: t.matchPattern, targetName: t.name }); return; }
+        const a = e.target.closest('[data-act]'); if (a) handleSideAction(a.dataset.act, a.dataset.id);
+      });
+      document.getElementById('upcomingList').addEventListener('click', (e) => {
+        if (e.target.closest('#emptyPlanBtn')){ openIdeaLab({}); openPlanWeek(); return; }
+        const o = e.target.closest('[data-open]'); if (o) openEventPanel(o.dataset.open);
+      });
+      document.getElementById('ideaOfDay').addEventListener('click', (e) => {
+        const u = e.target.closest('[data-use-idea]'); if (!u) return;
+        customizeIdea(IDEAS.find(i => i.id === u.dataset.useIdea), todayISO());
+      });
+      document.getElementById('targetsGrid').addEventListener('click', (e) => {
+        const t = e.target.closest('.target-item'); if (!t) return;
+        const target = marketingTargets[+t.dataset.idx];
+        openIdeaLab({ targetPattern: target.matchPattern, targetName: target.name });
+      });
+
+      // Targets modal (admin)
+      onClick('editTargetsBtn', openTargetsModal);
+      onClick('closeTargetsModal', closeTargetsModal);
+      onClick('cancelTargetsBtn', () => { loadTargets(); closeTargetsModal(); });
+      onClick('saveTargetsBtn', saveTargetsFromModal);
+      onClick('addTargetBtn', addNewTarget);
+      closeOnBackdrop('targetsModal', closeTargetsModal);
+
       document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape'){
-          closeEventPanel();
-          closeQuickAdd();
-          closeBudgetModal();
-          closeTargetsModal();
-        }
+        if (e.key !== 'Escape') return;
+        const content = document.getElementById('contentModal');
+        if (content.classList.contains('open')){ content.classList.remove('open'); return; }
+        closeEventPanel(); closeQuickAdd(); closeBudgetModal(); closeTargetsModal(); closeIdeaLab();
       });
     }
 
-    // Start
+    // Login listeners must exist before auth (previously bound only after a successful login)
+    document.getElementById('loginBtn').addEventListener('click', doLogin);
+    document.getElementById('loginPassword').addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
+
     initAuth();
   </script>
 <script>

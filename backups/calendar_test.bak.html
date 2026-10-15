@@ -1,0 +1,1740 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Calendar UX Test • Marketing Hub</title>
+  <link rel="preconnect" href="https://use.typekit.net" crossorigin>
+  <link rel="preconnect" href="https://p.typekit.net" crossorigin>
+  <link rel="stylesheet" href="https://use.typekit.net/hqv8hwr.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.10/main.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.10/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root{
+      --brand-primary:#446472;
+      --brand-accent:#ffb732;
+      --brand-accent-2:#52d5ff;
+      --page-bg:#f8fafc;
+      --text:#1e293b;
+      --subtext:#64748b;
+      --border:#e2e8f0;
+      --success:#22c55e;
+      --warning:#f59e0b;
+      --danger:#ef4444;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{font-family:'Open Sans',system-ui,sans-serif;background:var(--page-bg);color:var(--text);font-size:14px;line-height:1.5}
+
+    /* Header */
+    header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:10px}
+    .brand .logo-img{height:28px;width:auto}
+    .brand .title{color:#ffb732;font-family:zooja-pro,Arial,sans-serif;font-size:clamp(32px,4vw,48px);line-height:1}
+    .test-badge{background:#fef3c7;color:#92400e;border:1px solid #fcd34d;border-radius:999px;padding:6px 14px;font-size:12px;font-weight:700}
+    .header-controls{display:flex;align-items:center;gap:12px;margin-left:auto}
+    .header-controls select{background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);min-width:220px;cursor:pointer}
+    .header-controls select:focus{outline:none;border-color:var(--brand-accent-2);box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
+    .header-btn{background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;transition:all .15s}
+    .header-btn:hover{background:#f8fafc;border-color:#cbd5e1}
+    .header-btn.back{background:#dcfce7;border-color:#86efac;color:#166534}
+
+    /* Navigation */
+    .nav-bar{background:#fff;border-bottom:1px solid var(--border)}
+    .nav-wrap{max-width:1400px;margin:0 auto;padding:0 24px;display:flex;gap:2px;overflow-x:auto}
+    .nav-tab{display:flex;align-items:center;gap:6px;padding:14px 16px;color:var(--subtext);text-decoration:none;font-size:13px;font-weight:600;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap}
+    .nav-tab:hover{color:var(--text);background:#f8fafc}
+    .nav-tab.active{color:var(--brand-primary);border-bottom-color:var(--brand-primary)}
+
+    /* Main Layout */
+    .main-container{max-width:1100px;margin:0 auto;padding:20px}
+
+    /* Stats Bar */
+    .stats-bar{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+    .stat-card{display:flex;align-items:center;gap:14px;padding:16px 20px;background:#fff;border:1px solid var(--border);border-radius:12px;flex:1;min-width:160px}
+    .stat-card .stat-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px}
+    .stat-card .stat-icon.budget{background:#dbeafe;color:#1d4ed8}
+    .stat-card .stat-icon.planned{background:#e0f2fe;color:#0369a1}
+    .stat-card .stat-icon.spent{background:#fef3c7;color:#b45309}
+    .stat-card .stat-icon.remaining{background:#dcfce7;color:#15803d}
+    .stat-card .stat-icon.remaining.negative{background:#fee2e2;color:#b91c1c}
+    .stat-card .stat-info{display:flex;flex-direction:column}
+    .stat-card .stat-label{font-size:11px;color:var(--subtext);font-weight:600;text-transform:uppercase;letter-spacing:0.3px}
+    .stat-card .stat-value{font-size:20px;font-weight:800;color:var(--text)}
+    .stat-card.clickable{cursor:pointer;transition:all .15s}
+    .stat-card.clickable:hover{border-color:var(--brand-accent-2);box-shadow:0 2px 8px rgba(82,213,255,0.15)}
+
+    /* Targets Section */
+    .targets-section{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:20px}
+    .targets-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+    .targets-header h3{font-size:14px;font-weight:700;color:var(--text);margin:0}
+    .targets-edit-btn{background:none;border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;color:var(--subtext);cursor:pointer;transition:all .15s}
+    .targets-edit-btn:hover{background:#f8fafc;color:var(--text)}
+    .targets-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+    .target-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:#f8fafc;border-radius:10px;border:1px solid transparent;transition:all .2s}
+    .target-item.complete{background:#f0fdf4;border-color:#bbf7d0}
+    .target-item .target-indicator{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border:3px solid var(--border);color:var(--subtext);background:#fff;position:relative}
+    .target-item.complete .target-indicator{border-color:var(--success);color:var(--success);background:#f0fdf4}
+    .target-item .target-indicator::after{content:'';position:absolute;inset:3px;border-radius:50%;background:conic-gradient(var(--progress-color,var(--border)) var(--progress,0%),transparent 0);opacity:0.3}
+    .target-item .target-info{flex:1}
+    .target-item .target-name{font-size:13px;font-weight:600;color:var(--text)}
+    .target-item .target-progress{font-size:11px;color:var(--subtext)}
+    .target-item .target-period{font-size:10px;color:var(--subtext);background:#e2e8f0;padding:2px 6px;border-radius:4px;margin-left:auto}
+
+    /* Calendar Card */
+    .calendar-card{background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+    .calendar-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+    .calendar-header h2{font-size:16px;font-weight:700;color:var(--text);margin:0}
+    .calendar-actions{display:flex;gap:10px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 18px;border-radius:10px;border:1px solid var(--border);background:#fff;color:var(--text);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s}
+    .btn:hover{background:#f8fafc}
+    .btn.primary{background:var(--brand-accent-2);border-color:var(--brand-accent-2);color:#0b1b24}
+    .btn.primary:hover{background:#3ecbf5}
+    .btn.success{background:var(--success);border-color:var(--success);color:#fff}
+    .btn.success:hover{background:#16a34a}
+    .btn.sm{padding:8px 14px;font-size:13px}
+
+    /* Filters */
+    .filters-row{padding:12px 20px;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;background:#f8fafc}
+    .filter-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--border);border-radius:999px;background:#fff;font-size:12px;font-weight:500;color:var(--text);cursor:pointer;transition:all .15s;user-select:none}
+    .filter-chip:hover{background:#f8fafc;border-color:#cbd5e1}
+    .filter-chip.active{background:#eff6ff;border-color:var(--brand-accent-2)}
+    .filter-chip .swatch{width:10px;height:10px;border-radius:3px}
+    .filter-chip input{display:none}
+
+    .calendar-body{padding:16px}
+
+    /* FullCalendar */
+    .fc{--fc-border-color:#e2e8f0;--fc-page-bg-color:#ffffff;--fc-neutral-bg-color:#f8fafc;--fc-today-bg-color:#fffbeb}
+    .fc .fc-toolbar{margin-bottom:16px}
+    .fc .fc-toolbar-title{font-size:20px;font-weight:700;color:var(--text)}
+    .fc .fc-button{background:var(--brand-accent-2);border-color:var(--brand-accent-2);color:#0b1b24;padding:10px 16px;border-radius:10px;font-weight:600;font-size:14px}
+    .fc .fc-button:hover{background:#3ecbf5;border-color:#3ecbf5}
+    .fc .fc-button:disabled{background:#e0f7ff;border-color:#e0f7ff;color:#6b7280;opacity:1}
+    .fc .fc-button-primary:not(:disabled).fc-button-active{background:var(--brand-primary);border-color:var(--brand-primary);color:#fff}
+    .fc .fc-daygrid-day{cursor:pointer;transition:background .15s}
+    .fc .fc-daygrid-day:hover{background:#f0f9ff}
+    .fc .fc-daygrid-day-number{color:var(--text);font-weight:500;padding:8px}
+    .fc .fc-event{border-radius:6px;padding:4px 8px;font-size:12px;font-weight:600;cursor:pointer;border:none}
+
+    /* Event Panel */
+    .panel-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);opacity:0;visibility:hidden;transition:all .3s ease;z-index:100}
+    .panel-overlay.open{opacity:1;visibility:visible}
+    .event-panel{position:fixed;top:0;right:0;bottom:0;width:100%;max-width:480px;background:#fff;box-shadow:-4px 0 24px rgba(0,0,0,0.12);transform:translateX(100%);transition:transform .3s ease;z-index:101;display:flex;flex-direction:column}
+    .panel-overlay.open .event-panel{transform:translateX(0)}
+    
+    .panel-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .panel-header h3{font-size:18px;font-weight:700;color:var(--text);margin:0}
+    .panel-close{background:none;border:none;font-size:28px;color:var(--subtext);cursor:pointer;padding:0;line-height:1;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:8px}
+    .panel-close:hover{background:#f1f5f9;color:var(--text)}
+    
+    .panel-body{flex:1;overflow-y:auto;padding:24px}
+    .panel-section{margin-bottom:12px;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+    .panel-section:last-child{margin-bottom:0}
+    .section-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#fff;border-bottom:1px solid transparent;cursor:pointer;user-select:none;transition:all .15s}
+    .section-header:hover{background:#f8fafc}
+    .panel-section:not(.collapsed) .section-header{border-bottom-color:var(--border);background:#f8fafc}
+    .section-header .section-title{font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:10px}
+    .section-header .section-title .section-icon{width:6px;height:6px;border-radius:50%;background:var(--brand-primary);flex-shrink:0}
+    .section-header .section-toggle{width:20px;height:20px;display:flex;align-items:center;justify-content:center;color:var(--subtext);transition:transform .2s}
+    .section-header .section-toggle svg{width:14px;height:14px}
+    .panel-section.collapsed .section-header .section-toggle{transform:rotate(-90deg)}
+    .section-content{padding:16px;display:block;background:#fff}
+    .panel-section.collapsed .section-content{display:none}
+    .section-label{font-size:11px;font-weight:700;color:var(--subtext);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+    
+    .form-group{margin-bottom:16px}
+    .form-group:last-child{margin-bottom:0}
+    .form-group label{display:block;font-size:12px;font-weight:600;color:var(--subtext);margin-bottom:6px}
+    .form-group input,.form-group select,.form-group textarea{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;font-size:14px;color:var(--text);background:#fff;transition:all .15s}
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--brand-accent-2);box-shadow:0 0 0 3px rgba(82,213,255,0.15)}
+    .form-group textarea{min-height:80px;resize:vertical}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+    
+    .panel-footer{padding:16px 24px;border-top:1px solid var(--border);background:#f8fafc;display:flex;gap:12px;justify-content:space-between;flex-shrink:0}
+    .panel-footer .left{display:flex;gap:8px}
+    .panel-footer .right{display:flex;gap:8px}
+    .btn.danger{background:#fee2e2;border-color:#fecaca;color:#991b1b}
+    .btn.danger:hover{background:#fecaca}
+
+    /* Modals */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:200;padding:20px}
+    .modal-overlay.open{display:flex}
+    .modal{background:#fff;border-radius:20px;max-width:700px;width:100%;max-height:90vh;overflow:hidden;box-shadow:0 25px 50px rgba(0,0,0,0.2)}
+    .modal-header{padding:24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+    .modal-header h3{font-size:18px;font-weight:700;color:var(--text);margin:0}
+    .modal-close{background:none;border:none;font-size:28px;color:var(--subtext);cursor:pointer;padding:0;line-height:1;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:8px}
+    .modal-close:hover{background:#f1f5f9;color:var(--text)}
+    .modal-body{padding:24px;max-height:calc(90vh - 160px);overflow-y:auto}
+    .modal-footer{padding:20px 24px;border-top:1px solid var(--border);background:#f8fafc;display:flex;gap:12px;justify-content:flex-end}
+
+    /* Budget Grid */
+    .budget-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+    .budget-card{background:linear-gradient(135deg,#f8fafc 0%,#fff 100%);border:1px solid var(--border);border-radius:14px;padding:16px;text-align:center}
+    .budget-card .label{font-size:11px;font-weight:600;color:var(--subtext);text-transform:uppercase;margin-bottom:6px}
+    .budget-card .value{font-size:24px;font-weight:800;color:var(--text)}
+    .budget-card .value.positive{color:var(--success)}
+    .budget-card .value.negative{color:var(--danger)}
+    .budget-card .value.accent{color:var(--brand-accent-2)}
+    
+    .budget-months{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+    @media(max-width:600px){.budget-months{grid-template-columns:repeat(3,1fr)}}
+    .month-input{display:flex;flex-direction:column;gap:4px}
+    .month-input label{font-size:11px;color:var(--subtext);font-weight:600;text-align:center}
+    .month-input input{padding:10px;border:1px solid var(--border);border-radius:8px;font-size:14px;text-align:center}
+    .month-input input:focus{outline:none;border-color:var(--brand-accent-2)}
+
+    /* Event Type Selection - Professional Style */
+    .type-selection{display:flex;flex-direction:column;gap:8px}
+    .type-option{display:flex;align-items:center;gap:14px;padding:14px 18px;border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .15s;background:#fff}
+    .type-option:hover{background:#f8fafc;border-color:#cbd5e1}
+    .type-option.selected{background:#f0f9ff;border-color:var(--brand-primary);box-shadow:0 0 0 1px var(--brand-primary)}
+    .type-option .type-indicator{width:12px;height:12px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;transition:all .15s}
+    .type-option.selected .type-indicator{border-color:var(--brand-primary);background:var(--brand-primary)}
+    .type-option .type-color{width:4px;height:32px;border-radius:2px;flex-shrink:0}
+    .type-option .type-info{flex:1}
+    .type-option .type-name{font-size:14px;font-weight:600;color:var(--text)}
+    .type-option .type-desc{font-size:12px;color:var(--subtext);margin-top:2px}
+
+    /* Legacy campaign grid - keep for compatibility */
+    .campaign-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+    @media(max-width:500px){.campaign-grid{grid-template-columns:repeat(2,1fr)}}
+    .campaign-option{padding:16px 12px;border:2px solid var(--border);border-radius:12px;text-align:center;cursor:pointer;transition:all .15s;background:#fff}
+    .campaign-option:hover{border-color:#cbd5e1;background:#f8fafc}
+    .campaign-option.selected{border-color:var(--brand-accent-2);background:#ecfeff}
+    .campaign-option .campaign-icon{width:40px;height:40px;border-radius:10px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center}
+    .campaign-option .campaign-icon svg{width:20px;height:20px}
+    .campaign-option .name{font-size:12px;font-weight:600;color:var(--text)}
+
+    /* Targets Edit Modal */
+    .target-edit-row{display:grid;grid-template-columns:1fr 80px 100px;gap:12px;align-items:end;padding:12px 0;border-bottom:1px solid var(--border)}
+    .target-edit-row:last-child{border-bottom:none}
+    .target-edit-row .form-group{margin-bottom:0}
+    .add-target-btn{margin-top:16px}
+
+    /* Wizard Modal */
+    .wizard-progress{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border)}
+    .wizard-step-indicator{display:flex;align-items:center;gap:8px}
+    .wizard-step-dot{width:32px;height:32px;border-radius:50%;background:#e2e8f0;color:var(--subtext);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;transition:all .2s}
+    .wizard-step-dot.active{background:var(--brand-accent-2);color:#0b1b24}
+    .wizard-step-dot.complete{background:var(--success);color:#fff}
+    .wizard-step-line{width:40px;height:3px;background:#e2e8f0;border-radius:2px}
+    .wizard-step-line.complete{background:var(--success)}
+    .wizard-step{display:none}
+    .wizard-step.active{display:block}
+    .wizard-question{font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px;text-align:center}
+    .wizard-hint{font-size:13px;color:var(--subtext);margin-bottom:20px;text-align:center}
+    .wizard-footer{display:flex;gap:12px;justify-content:space-between;padding-top:20px;border-top:1px solid var(--border);margin-top:24px}
+    .wizard-footer .left{display:flex;gap:8px}
+    .wizard-footer .right{display:flex;gap:8px}
+
+    /* Toast */
+    .toast{position:fixed;bottom:24px;right:24px;padding:16px 24px;background:#1e293b;color:#fff;border-radius:12px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,0.2);transform:translateY(100px);opacity:0;transition:all .3s;z-index:300}
+    .toast.show{transform:translateY(0);opacity:1}
+    .toast.success{background:var(--success)}
+    .toast.error{background:var(--danger)}
+
+    .hidden{display:none}
+
+    /* Loading */
+    #bootLoader{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;z-index:1000}
+    #bootLoader .spinner{font-weight:800;color:var(--text)}
+
+    /* Login */
+    #loginView{min-height:100vh;display:none;align-items:center;justify-content:center;padding:20px;background:var(--page-bg)}
+    .login-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:32px;max-width:400px;width:100%;box-shadow:0 4px 12px rgba(0,0,0,0.05)}
+    .login-card h2{font-size:24px;font-weight:700;margin-bottom:24px;text-align:center}
+    .login-card .form-group{margin-bottom:16px}
+    .login-card .btn{width:100%;margin-top:8px}
+    .login-error{color:var(--danger);font-size:13px;margin-top:12px;text-align:center;display:none}
+
+    @media(max-width:768px){
+      .main-container{padding:16px}
+      .stats-bar{gap:8px}
+      .stat-card{padding:12px 14px;min-width:140px}
+      .stat-card .stat-value{font-size:18px}
+      .stat-card .stat-icon{width:36px;height:36px}
+      .budget-summary{grid-template-columns:repeat(2,1fr)}
+      .form-row,.form-row-3{grid-template-columns:1fr}
+      .event-panel{max-width:100%}
+      .targets-grid{grid-template-columns:1fr 1fr}
+    }
+  </style>
+</head>
+<body>
+  <!-- Boot Loader -->
+  <div id="bootLoader">
+    <div class="spinner">Marketing Hub</div>
+  </div>
+
+  <!-- Login View -->
+  <div id="loginView">
+    <div class="login-card">
+      <h2>Sign In</h2>
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="loginUsername" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="loginPassword" autocomplete="current-password">
+      </div>
+      <button class="btn primary" id="loginBtn">Sign In</button>
+      <div class="login-error" id="loginError">Invalid credentials</div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header id="appHeader" style="display:none">
+    <div class="brand">
+      <img src="logo-main.svg" class="logo-img" alt="Capstone" onerror="this.style.display='none'">
+      <div class="title">Marketing Hub</div>
+    </div>
+    <span class="test-badge">UX TEST</span>
+    <div class="header-controls">
+      <select id="propertySelect"></select>
+      <button class="header-btn back" id="backToLiveBtn">← Back to Live</button>
+      <button class="header-btn" id="logoutBtn">Sign Out</button>
+      <button class="header-btn" id="adminPageBtn" style="display:none">Admin</button>
+    </div>
+  </header>
+
+  <!-- Navigation -->
+  <nav class="nav-bar" id="navBar" style="display:none">
+    <div class="nav-wrap">
+      <a href="mmp_calendar_app.html" class="nav-tab active">Marketing Calendar</a>
+      <a href="marketing_plans.html" class="nav-tab">Marketing Plans</a>
+      <a href="marketing_contacts.html" class="nav-tab">Marketing Contacts</a>
+      <a href="promo_order_tracker.html" class="nav-tab">Promo Order Tracker</a>
+      <a href="renewal_campaign.html" class="nav-tab">Renewal Campaign</a>
+      <a href="velocity_tracker.html" class="nav-tab">Velocity Tracker</a>
+      <a href="uniform_shop.html" class="nav-tab">Uniform Shop</a>
+      <a href="creative_library.html" class="nav-tab">Creative Library</a>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="main-container" id="appContainer" style="display:none">
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+      <div class="stat-card clickable" id="budgetPill" title="Click to manage budgets">
+        <div class="stat-icon budget">$</div>
+        <div class="stat-info">
+          <span class="stat-label">Budget</span>
+          <span class="stat-value" id="statBudget">$0</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon planned">P</div>
+        <div class="stat-info">
+          <span class="stat-label">Planned</span>
+          <span class="stat-value" id="statPlanned">$0</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon spent">S</div>
+        <div class="stat-info">
+          <span class="stat-label">Spent</span>
+          <span class="stat-value" id="statSpent">$0</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon remaining" id="remainingIcon">R</div>
+        <div class="stat-info">
+          <span class="stat-label">Remaining</span>
+          <span class="stat-value" id="statRemaining">$0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Targets Section -->
+    <div class="targets-section">
+      <div class="targets-header">
+        <h3>Marketing Targets</h3>
+        <button class="targets-edit-btn" id="editTargetsBtn" style="display:none">Edit Targets</button>
+      </div>
+      <div class="targets-grid" id="targetsGrid">
+        <!-- Targets will be rendered here -->
+      </div>
+    </div>
+
+    <!-- Calendar Card -->
+    <div class="calendar-card">
+      <div class="calendar-header">
+        <h2 id="calendarTitle">January 2025</h2>
+        <div class="calendar-actions">
+          <button class="btn primary" id="addEventBtn">+ Add Event</button>
+        </div>
+      </div>
+      
+      <!-- Filters -->
+      <div class="filters-row" id="filtersRow"></div>
+      
+      <!-- Calendar -->
+      <div class="calendar-body">
+        <div id="calendar"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Event Detail Panel -->
+  <div class="panel-overlay" id="eventPanel">
+    <div class="event-panel">
+      <div class="panel-header">
+        <h3 id="panelTitle">Event Details</h3>
+        <button class="panel-close" id="closePanel">×</button>
+      </div>
+      <div class="panel-body">
+        <!-- Basic Info - Always Open -->
+        <div class="panel-section" data-section="basic">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="section-title"><span class="section-icon"></span>Basic Information</span>
+            <span class="section-toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+          </div>
+          <div class="section-content">
+            <div class="form-group">
+              <label>Event Title *</label>
+              <input type="text" id="eventTitle" placeholder="e.g., Spring Social BBQ">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Start Date *</label>
+                <input type="date" id="eventStart">
+              </div>
+              <div class="form-group">
+                <label>End Date</label>
+                <input type="date" id="eventEnd">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Time</label>
+                <input type="time" id="eventTime">
+              </div>
+              <div class="form-group">
+                <label>Campaign Type</label>
+                <select id="eventCampaign">
+                  <option value="">Select type...</option>
+                  <option value="Resident event">Resident Event</option>
+                  <option value="on-campus event">On-Campus Event</option>
+                  <option value="off-campus event">Off-Campus Event</option>
+                  <option value="Social Media Story">Social Story</option>
+                  <option value="Social Media Post">Social Post</option>
+                  <option value="Review/Reputation">Review Campaign</option>
+                  <option value="Giveaway">Giveaway</option>
+                  <option value="outreach marketing">Outreach</option>
+                  <option value="cross-marketing partnership/scholarship">Partnership</option>
+                  <option value="Key Market Event">Key Market Event</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Budget -->
+        <div class="panel-section collapsed" data-section="budget">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="section-title"><span class="section-icon" style="background:#22c55e"></span>Budget & Spend</span>
+            <span class="section-toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+          </div>
+          <div class="section-content">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Planned Budget</label>
+                <input type="number" id="eventBudget" placeholder="0.00" step="0.01">
+              </div>
+              <div class="form-group">
+                <label>Actual Spend</label>
+                <input type="number" id="eventSpend" placeholder="0.00" step="0.01">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Details -->
+        <div class="panel-section collapsed" data-section="details">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="section-title"><span class="section-icon" style="background:#3b82f6"></span>Details & Goals</span>
+            <span class="section-toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+          </div>
+          <div class="section-content">
+            <div class="form-group">
+              <label>Description</label>
+              <textarea id="eventNotes" placeholder="Event description, goals, notes..."></textarea>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Target Audience</label>
+                <input type="text" id="eventAudience" placeholder="e.g., Current residents">
+              </div>
+              <div class="form-group">
+                <label>Goal</label>
+                <input type="text" id="eventGoal" placeholder="e.g., 20 attendees">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Desired Action</label>
+              <select id="eventDesired">
+                <option value="">Select...</option>
+                <option>Social media followers</option>
+                <option>collect review</option>
+                <option>complete guest cards</option>
+                <option>schedule a tour</option>
+                <option>complete application</option>
+                <option>sign new leases</option>
+                <option>sign renewal lease</option>
+                <option>building relationship</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Marketing Checklist -->
+        <div class="panel-section collapsed" data-section="checklist">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="section-title"><span class="section-icon" style="background:#a78bfa"></span>Marketing Checklist</span>
+            <span class="section-toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+          </div>
+          <div class="section-content">
+            <div class="form-row-3">
+              <div class="form-group">
+                <label>Social Posted</label>
+                <input type="date" id="eventSocialDate">
+              </div>
+              <div class="form-group">
+                <label>Flyer Posted</label>
+                <input type="date" id="eventFlyerDate">
+              </div>
+              <div class="form-group">
+                <label>Email Sent</label>
+                <input type="date" id="eventEmailDate">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Creative Assets -->
+        <div class="panel-section collapsed" data-section="creative">
+          <div class="section-header" onclick="toggleSection(this)">
+            <span class="section-title"><span class="section-icon" style="background:#f59e0b"></span>Creative Assets</span>
+            <span class="section-toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+          </div>
+          <div class="section-content">
+            <div class="form-group">
+              <label>Flyer URL</label>
+              <input type="url" id="eventFlyerUrl" placeholder="https://...">
+            </div>
+            <div id="flyerPreview"></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel-footer">
+        <div class="left">
+          <button class="btn danger" id="deleteEventBtn" style="display:none">Delete</button>
+        </div>
+        <div class="right">
+          <button class="btn" id="cancelEventBtn">Cancel</button>
+          <button class="btn success" id="saveEventBtn">Save Event</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Budget Modal -->
+  <div class="modal-overlay" id="budgetModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Budget Management</h3>
+        <button class="modal-close" id="closeBudgetModal">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="budget-summary">
+          <div class="budget-card">
+            <div class="label">Monthly Budget</div>
+            <div class="value" id="modalBudget">$0</div>
+          </div>
+          <div class="budget-card">
+            <div class="label">Planned</div>
+            <div class="value accent" id="modalPlanned">$0</div>
+          </div>
+          <div class="budget-card">
+            <div class="label">Actual</div>
+            <div class="value" id="modalActual">$0</div>
+          </div>
+          <div class="budget-card">
+            <div class="label">Remaining</div>
+            <div class="value positive" id="modalRemaining">$0</div>
+          </div>
+        </div>
+        
+        <div class="form-group" style="margin-bottom:20px">
+          <label>Year</label>
+          <select id="budgetYear" style="max-width:150px"></select>
+        </div>
+        
+        <div class="budget-months" id="budgetMonths"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="cancelBudgetBtn">Close</button>
+        <button class="btn success" id="saveBudgetBtn">Save Budgets</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Wizard Add Event Modal -->
+  <div class="modal-overlay" id="quickAddModal">
+    <div class="modal" style="max-width:560px">
+      <div class="modal-header">
+        <h3 id="wizardTitle">Plan Your Marketing Event</h3>
+        <button class="modal-close" id="closeQuickAdd">×</button>
+      </div>
+      <div class="modal-body">
+        <!-- Progress Indicator -->
+        <div class="wizard-progress">
+          <div class="wizard-step-indicator">
+            <div class="wizard-step-dot active" data-step="1">1</div>
+            <div class="wizard-step-line" data-line="1"></div>
+            <div class="wizard-step-dot" data-step="2">2</div>
+            <div class="wizard-step-line" data-line="2"></div>
+            <div class="wizard-step-dot" data-step="3">3</div>
+            <div class="wizard-step-line" data-line="3"></div>
+            <div class="wizard-step-dot" data-step="4">4</div>
+          </div>
+        </div>
+
+        <!-- Step 1: What type of marketing activity? -->
+        <div class="wizard-step active" data-step="1">
+          <div class="wizard-question">What type of marketing activity are you planning?</div>
+          <div class="wizard-hint">Select the category that best describes your event</div>
+          <div class="type-selection" id="campaignGrid">
+            <div class="type-option" data-type="Resident event">
+              <div class="type-indicator"></div>
+              <div class="type-color" style="background:#86efac"></div>
+              <div class="type-info">
+                <div class="type-name">Resident Event</div>
+                <div class="type-desc">Community events for current residents</div>
+              </div>
+            </div>
+            <div class="type-option" data-type="on-campus event">
+              <div class="type-indicator"></div>
+              <div class="type-color" style="background:#3b82f6"></div>
+              <div class="type-info">
+                <div class="type-name">Campus Event</div>
+                <div class="type-desc">On-campus marketing and tabling activities</div>
+              </div>
+            </div>
+            <div class="type-option" data-type="Social Media Post">
+              <div class="type-indicator"></div>
+              <div class="type-color" style="background:#a78bfa"></div>
+              <div class="type-info">
+                <div class="type-name">Social Media Post</div>
+                <div class="type-desc">Instagram, Facebook, or TikTok grid posts</div>
+              </div>
+            </div>
+            <div class="type-option" data-type="Social Media Story">
+              <div class="type-indicator"></div>
+              <div class="type-color" style="background:#f472b6"></div>
+              <div class="type-info">
+                <div class="type-name">Social Media Story</div>
+                <div class="type-desc">Instagram or Facebook stories</div>
+              </div>
+            </div>
+            <div class="type-option" data-type="Review/Reputation">
+              <div class="type-indicator"></div>
+              <div class="type-color" style="background:#93c5fd"></div>
+              <div class="type-info">
+                <div class="type-name">Review Campaign</div>
+                <div class="type-desc">Google review push or reputation management</div>
+              </div>
+            </div>
+            <div class="type-option" data-type="Giveaway">
+              <div class="type-indicator"></div>
+              <div class="type-color" style="background:#fcd34d"></div>
+              <div class="type-info">
+                <div class="type-name">Giveaway</div>
+                <div class="type-desc">Promotional giveaways and contests</div>
+              </div>
+            </div>
+            <div class="type-option" data-type="outreach marketing">
+              <div class="type-indicator"></div>
+              <div class="type-color" style="background:#7f1d1d"></div>
+              <div class="type-info">
+                <div class="type-name">Outreach Marketing</div>
+                <div class="type-desc">Flyering, door-to-door, or local business outreach</div>
+              </div>
+            </div>
+            <div class="type-option" data-type="cross-marketing partnership/scholarship">
+              <div class="type-indicator"></div>
+              <div class="type-color" style="background:#f59e0b"></div>
+              <div class="type-info">
+                <div class="type-name">Partnership / Cross-Marketing</div>
+                <div class="type-desc">Collaborations with local businesses or organizations</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Who is your target audience? -->
+        <div class="wizard-step" data-step="2">
+          <div class="wizard-question">Who is your target audience?</div>
+          <div class="wizard-hint">Think about who you want to reach with this activity</div>
+          <div class="form-group">
+            <label>Target Audience</label>
+            <select id="wizardAudience">
+              <option value="">Select audience...</option>
+              <option value="Current residents">Current Residents</option>
+              <option value="Prospective students">Prospective Students</option>
+              <option value="Parents">Parents</option>
+              <option value="Local community">Local Community</option>
+              <option value="University staff">University Staff</option>
+              <option value="Social media followers">Social Media Followers</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>What action do you want them to take?</label>
+            <select id="wizardDesired">
+              <option value="">Select desired action...</option>
+              <option value="Social media followers">Follow on social media</option>
+              <option value="collect review">Leave a review</option>
+              <option value="complete guest cards">Complete a guest card</option>
+              <option value="schedule a tour">Schedule a tour</option>
+              <option value="complete application">Complete an application</option>
+              <option value="sign new leases">Sign a new lease</option>
+              <option value="sign renewal lease">Sign a renewal lease</option>
+              <option value="building relationship">Build relationship</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Step 3: Event details -->
+        <div class="wizard-step" data-step="3">
+          <div class="wizard-question">What are the event details?</div>
+          <div class="wizard-hint">Give your event a name and set the date</div>
+          <div class="form-group">
+            <label>Event Title *</label>
+            <input type="text" id="quickTitle" placeholder="e.g., Pizza Party, Spring Social BBQ">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Date *</label>
+              <input type="date" id="quickDate">
+            </div>
+            <div class="form-group">
+              <label>Time (optional)</label>
+              <input type="time" id="wizardTime">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>What's your goal? (e.g., 20 attendees, 5 reviews)</label>
+            <input type="text" id="wizardGoal" placeholder="e.g., 20 attendees, 5 new reviews">
+          </div>
+        </div>
+
+        <!-- Step 4: Budget -->
+        <div class="wizard-step" data-step="4">
+          <div class="wizard-question">What's your budget for this activity?</div>
+          <div class="wizard-hint">Plan your spending to stay within your monthly budget</div>
+          <div class="form-group">
+            <label>Planned Budget ($)</label>
+            <input type="number" id="quickBudget" placeholder="0.00" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>Any notes or additional details?</label>
+            <textarea id="wizardNotes" placeholder="Add any notes about supplies needed, vendors to contact, etc." style="min-height:80px"></textarea>
+          </div>
+        </div>
+
+        <!-- Wizard Footer -->
+        <div class="wizard-footer">
+          <div class="left">
+            <button class="btn" id="wizardBack" style="display:none">← Back</button>
+          </div>
+          <div class="right">
+            <button class="btn" id="cancelQuickAdd">Cancel</button>
+            <button class="btn primary" id="wizardNext">Next →</button>
+            <button class="btn success" id="quickAddSave" style="display:none">Create Event</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Targets Edit Modal (Admin Only) -->
+  <div class="modal-overlay" id="targetsModal">
+    <div class="modal" style="max-width:600px">
+      <div class="modal-header">
+        <h3>Edit Marketing Targets</h3>
+        <button class="modal-close" id="closeTargetsModal">×</button>
+      </div>
+      <div class="modal-body">
+        <p style="color:var(--subtext);font-size:13px;margin-bottom:20px">Configure the weekly and monthly marketing targets for all properties. These targets help teams track their marketing activity goals.</p>
+        <div id="targetsEditList">
+          <!-- Target edit rows will be rendered here -->
+        </div>
+        <button class="btn add-target-btn" id="addTargetBtn">+ Add New Target</button>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="cancelTargetsBtn">Cancel</button>
+        <button class="btn success" id="saveTargetsBtn">Save Targets</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ==================== STATE ====================
+    let calendar = null;
+    let events = [];
+    let selectedEventId = null;
+    let selectedCampaignType = null;
+    let monthlyBudgets = {};
+    let currentProperty = '';
+    let properties = [];
+    let currentUser = null;
+    let SESSION_ACTIVE = false;
+
+    //
+    let marketingTargets = [
+      { id: 'stories', name: 'Social Stories', goal: 3, period: 'weekly', matchPattern: 'story', color: '#52d5ff' },
+      { id: 'posts', name: 'Grid Posts', goal: 1, period: 'weekly', matchPattern: 'social\\s*media\\s*post', color: '#a78bfa' },
+      { id: 'giveaways', name: 'Giveaways', goal: 1, period: 'weekly', matchPattern: 'giveaway', color: '#fcd34d' },
+      { id: 'events', name: 'Events', goal: 2, period: 'monthly', matchPattern: 'event', color: '#86efac' },
+      { id: 'campus', name: 'On-Campus', goal: 2, period: 'monthly', matchPattern: 'on[-\\s]?campus', color: '#3b82f6' },
+      { id: 'crossmkt', name: 'Cross-Marketing', goal: 1, period: 'monthly', matchPattern: 'cross[-\\s]?marketing|partnership', color: '#f472b6' },
+      { id: 'flyers', name: 'Flyering', goal: 4, period: 'monthly', matchPattern: 'flyer', color: '#fb923c' },
+    ];
+
+    const TARGETS_STORAGE_KEY = 'mmp_marketing_targets_v1';
+    const API_BASE = '/api';
+    const STORE_CURRENT_PROPERTY_KEY = 'mmp_current_property_v1';
+
+    // ==================== TYPE DEFINITIONS ====================
+    const TYPE_DEFS = [
+      { id: 'resident', label: 'Resident Event', color: '#86efac', textColor: '#00130c', match: [/resident\s*event/i] },
+      { id: 'renewal', label: 'Renewal', color: '#f59e0b', textColor: '#1f1300', match: [/renewal/i] },
+      { id: 'campus', label: 'Campus', color: '#3b82f6', textColor: '#ffffff', match: [/on[-\s]?campus/i, /off[-\s]?campus/i] },
+      { id: 'outreach', label: 'Outreach', color: '#7f1d1d', textColor: '#ffffff', match: [/outreach/i, /cross[-\s]marketing/i, /partnership/i] },
+      { id: 'review', label: 'Review', color: '#93c5fd', textColor: '#1e3a5f', match: [/review/i, /reputation/i] },
+      { id: 'social', label: 'Social', color: '#a78bfa', textColor: '#1e1b4b', match: [/social\s*media/i, /story/i, /post/i] },
+      { id: 'giveaway', label: 'Giveaway', color: '#fcd34d', textColor: '#78350f', match: [/giveaway/i] },
+      { id: 'market', label: 'Key Market', color: '#facc15', textColor: '#1f1300', match: [/key\s*market/i] },
+      { id: 'other', label: 'Other', color: '#94a3b8', textColor: '#1e293b', match: [] },
+    ];
+    let visibleTypes = new Set(TYPE_DEFS.map(d => d.id));
+
+    function getTypeForCampaign(c){
+      const s = String(c||'').toLowerCase();
+      for (const d of TYPE_DEFS){ if (d.match.some(rx => rx.test(s))) return d; }
+      return TYPE_DEFS.find(d => d.id === 'other');
+    }
+
+    // ==================== UTILITIES ====================
+    function toISO(d){ 
+      if (!d) return ''; 
+      const z = new Date(d.getTime() - d.getTimezoneOffset() * 60000); 
+      return z.toISOString().slice(0, 10); 
+    }
+
+    function addDaysISO(iso, days){
+      const d = new Date(iso);
+      d.setDate(d.getDate() + days);
+      return toISO(d);
+    }
+
+    function formatCurrency(n){
+      const v = parseFloat(n) || 0;
+      return '$' + v.toLocaleString(undefined, { maximumFractionDigits: 0 });
+    }
+
+    function showToast(message, type = 'success'){
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = 'toast ' + type + ' show';
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    async function apiFetch(path, opts = {}){
+      const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+      const res = await fetch(API_BASE + path, Object.assign({}, opts, { headers, credentials: 'include' }));
+      if (!res.ok){ const text = await res.text(); throw new Error(text || ('HTTP ' + res.status)); }
+      return res;
+    }
+
+    // ==================== TARGETS ====================
+    function loadTargets(){
+      try {
+        const saved = localStorage.getItem(TARGETS_STORAGE_KEY);
+        if (saved){
+          marketingTargets = JSON.parse(saved);
+        }
+      } catch(e){}
+    }
+
+    function saveTargets(){
+      try {
+        localStorage.setItem(TARGETS_STORAGE_KEY, JSON.stringify(marketingTargets));
+      } catch(e){}
+    }
+
+    function renderTargets(){
+      const container = document.getElementById('targetsGrid');
+      const today = new Date();
+      
+      // Calculate week bounds
+      const weekStart = new Date(today);
+      weekStart.setDate(today.getDate() - today.getDay());
+      weekStart.setHours(0, 0, 0, 0);
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+      weekEnd.setHours(23, 59, 59, 999);
+
+      // Get current month from calendar view
+      const view = calendar?.view;
+      const monthStart = view?.currentStart || new Date();
+      const y = monthStart.getFullYear();
+      const m = monthStart.getMonth();
+
+      let html = '';
+      
+      marketingTargets.forEach(target => {
+        let count = 0;
+        const regex = new RegExp(target.matchPattern, 'i');
+        
+        for (const e of events){
+          const campaign = String(e.campaign || '').toLowerCase();
+          const eDate = new Date(e.start + 'T00:00:00');
+          
+          if (target.period === 'weekly'){
+            if (eDate >= weekStart && eDate <= weekEnd && regex.test(campaign)){
+              count++;
+            }
+          } else {
+            if (eDate.getFullYear() === y && eDate.getMonth() === m && regex.test(campaign)){
+              count++;
+            }
+          }
+        }
+        
+        const isComplete = count >= target.goal;
+        const progress = Math.min(100, Math.round((count / target.goal) * 100));
+        
+        html += `
+          <div class="target-item ${isComplete ? 'complete' : ''}" style="--progress:${progress}%;--progress-color:${target.color}">
+            <div class="target-indicator">${count}</div>
+            <div class="target-info">
+              <div class="target-name">${target.name}</div>
+              <div class="target-progress">${count} of ${target.goal}</div>
+            </div>
+            <div class="target-period">${target.period}</div>
+          </div>
+        `;
+      });
+      
+      container.innerHTML = html;
+    }
+
+    function openTargetsModal(){
+      renderTargetsEditList();
+      document.getElementById('targetsModal').classList.add('open');
+    }
+
+    function closeTargetsModal(){
+      document.getElementById('targetsModal').classList.remove('open');
+    }
+
+    function renderTargetsEditList(){
+      const container = document.getElementById('targetsEditList');
+      
+      let html = marketingTargets.map((t, i) => `
+        <div class="target-edit-row" data-index="${i}">
+          <div class="form-group">
+            <label>Target Name</label>
+            <input type="text" class="target-name-input" value="${t.name}" placeholder="e.g., Social Stories">
+          </div>
+          <div class="form-group">
+            <label>Goal</label>
+            <input type="number" class="target-goal-input" value="${t.goal}" min="1">
+          </div>
+          <div class="form-group">
+            <label>Period</label>
+            <select class="target-period-input">
+              <option value="weekly" ${t.period === 'weekly' ? 'selected' : ''}>Weekly</option>
+              <option value="monthly" ${t.period === 'monthly' ? 'selected' : ''}>Monthly</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Match Pattern</label>
+            <input type="text" class="target-pattern-input" value="${t.matchPattern}" placeholder="e.g., story">
+          </div>
+          <div class="form-group">
+            <label>Color</label>
+            <input type="color" class="target-color-input" value="${t.color}">
+          </div>
+          <div class="form-group" style="display:flex;align-items:flex-end">
+            <button class="btn danger sm remove-target-btn" data-index="${i}">Remove</button>
+          </div>
+        </div>
+      `).join('');
+      
+      container.innerHTML = html;
+      
+      // Bind remove buttons
+      container.querySelectorAll('.remove-target-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const idx = parseInt(e.target.dataset.index, 10);
+          marketingTargets.splice(idx, 1);
+          renderTargetsEditList();
+        });
+      });
+    }
+
+    function addNewTarget(){
+      const newId = 'target_' + Date.now();
+      marketingTargets.push({
+        id: newId,
+        name: 'New Target',
+        goal: 1,
+        period: 'weekly',
+        matchPattern: '',
+        color: '#94a3b8'
+      });
+      renderTargetsEditList();
+    }
+
+    function saveTargetsFromModal(){
+      const rows = document.querySelectorAll('.target-edit-row');
+      const newTargets = [];
+      
+      rows.forEach((row, i) => {
+        const name = row.querySelector('.target-name-input').value.trim();
+        const goal = parseInt(row.querySelector('.target-goal-input').value, 10) || 1;
+        const period = row.querySelector('.target-period-input').value;
+        const pattern = row.querySelector('.target-pattern-input').value.trim();
+        const color = row.querySelector('.target-color-input').value;
+        
+        if (name && pattern){
+          newTargets.push({
+            id: marketingTargets[i]?.id || ('target_' + Date.now() + '_' + i),
+            name,
+            goal,
+            period,
+            matchPattern: pattern,
+            color
+          });
+        }
+      });
+      
+      marketingTargets = newTargets;
+      saveTargets();
+      renderTargets();
+      closeTargetsModal();
+      showToast('Targets saved!');
+    }
+
+    // ==================== AUTH ====================
+    async function initAuth(){
+      try {
+        const meRes = await fetch('/api/me', { credentials: 'include' });
+        if (meRes.ok){
+          const me = await meRes.json();
+          currentUser = { username: me.username, role: me.role, properties: me.properties };
+          SESSION_ACTIVE = true;
+          showApp();
+          await initializeApp();
+          return true;
+        }
+      } catch(e){}
+      showLogin();
+      return false;
+    }
+
+    async function doLogin(){
+      const username = document.getElementById('loginUsername').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      const errorEl = document.getElementById('loginError');
+      
+      if (!username || !password){
+        errorEl.textContent = 'Enter username and password';
+        errorEl.style.display = 'block';
+        return;
+      }
+      
+      try {
+        errorEl.style.display = 'none';
+        const res = await fetch('/api/auth-login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ username, password })
+        });
+        
+        if (!res.ok){
+          errorEl.textContent = 'Invalid username or password';
+          errorEl.style.display = 'block';
+          return;
+        }
+        
+        await initAuth();
+      } catch(e){
+        errorEl.textContent = 'Network error. Try again.';
+        errorEl.style.display = 'block';
+      }
+    }
+
+    async function doLogout(){
+      try { await fetch('/api/auth-logout', { method: 'POST' }); } catch(e){}
+      location.href = 'index.html';
+    }
+
+    function showApp(){
+      document.getElementById('bootLoader').style.display = 'none';
+      document.getElementById('loginView').style.display = 'none';
+      document.getElementById('appHeader').style.display = 'flex';
+      document.getElementById('navBar').style.display = 'block';
+      document.getElementById('appContainer').style.display = 'block';
+      
+      // Show edit targets button for admins
+      if (currentUser?.role === 'admin'){
+        document.getElementById('editTargetsBtn').style.display = 'block';
+        document.getElementById('adminPageBtn').style.display = 'block';
+      }
+    }
+
+    function showLogin(){
+      document.getElementById('bootLoader').style.display = 'none';
+      document.getElementById('loginView').style.display = 'flex';
+      document.getElementById('appHeader').style.display = 'none';
+      document.getElementById('navBar').style.display = 'none';
+      document.getElementById('appContainer').style.display = 'none';
+    }
+
+    // ==================== PROPERTIES ====================
+    const OLD_TO_GROUP = {
+      'Cerca Apartments': 'Cerca/Prisma/Zuma', 'Prisma Apartments': 'Cerca/Prisma/Zuma', 'Zuma Apartments': 'Cerca/Prisma/Zuma',
+      'Stateside Apartments': 'Stateside/Monte', 'Monte Apartments': 'Stateside/Monte',
+      'Chorro SLO': 'Chorro/Palomar', 'Palomar SLO': 'Chorro/Palomar',
+    };
+    function mapPropertyNameToGroup(name){ return OLD_TO_GROUP[name] || name; }
+
+    function getAccessibleProperties(){
+      if (!currentUser) return [];
+      if (currentUser.role === 'admin') return properties.slice();
+      const rawAssigned = currentUser.properties === '*' ? properties.slice() : (currentUser.properties || []);
+      const assignedGroups = Array.from(new Set(rawAssigned.map(p => mapPropertyNameToGroup(p))));
+      return properties.filter(p => assignedGroups.includes(p));
+    }
+
+    async function loadProperties(){
+      try {
+        const res = await fetch('/api/properties');
+        const list = await res.json();
+        properties = (list || []).map(x => x.name).filter(Boolean);
+        const grouped = ['Cerca/Prisma/Zuma', 'Stateside/Monte', 'Chorro/Palomar'];
+        const oldNames = Object.keys(OLD_TO_GROUP);
+        properties = properties.filter(p => !oldNames.includes(p));
+        grouped.forEach(g => { if (!properties.includes(g)) properties.push(g); });
+      } catch(e){
+        properties = [];
+      }
+    }
+
+    function renderPropertyOptions(){
+      const select = document.getElementById('propertySelect');
+      const list = getAccessibleProperties();
+      select.innerHTML = list.map(p => `<option value="${p.replace(/"/g, '&quot;')}">${p}</option>`).join('');
+    }
+
+    async function setActiveProperty(prop){
+      prop = mapPropertyNameToGroup(prop);
+      currentProperty = prop;
+      localStorage.setItem(STORE_CURRENT_PROPERTY_KEY, currentProperty);
+      
+      try {
+        const [budgetRes, eventsRes] = await Promise.all([
+          apiFetch(`/budgets?property=${encodeURIComponent(currentProperty)}`),
+          apiFetch(`/events?property=${encodeURIComponent(currentProperty)}`)
+        ]);
+        monthlyBudgets = await budgetRes.json();
+        events = await eventsRes.json();
+      } catch(e){
+        monthlyBudgets = {};
+        events = [];
+      }
+      
+      refreshCalendar();
+      updateStats();
+      renderTargets();
+    }
+
+    // ==================== CALENDAR ====================
+    function initCalendar(){
+      const calendarEl = document.getElementById('calendar');
+      calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        height: 'auto',
+        headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
+        eventClick: (info) => openEventPanel(info.event.id),
+        dateClick: (info) => openQuickAddWithDate(info.dateStr),
+        datesSet: () => {
+          updateCalendarTitle();
+          updateStats();
+          renderTargets();
+        },
+        events: events.filter(ev => visibleTypes.has(getTypeForCampaign(ev.campaign).id)).map(toFcEvent),
+      });
+      calendar.render();
+      updateCalendarTitle();
+    }
+
+    function toFcEvent(ev){
+      const type = getTypeForCampaign(ev.campaign);
+      return {
+        id: String(ev.id),
+        title: ev.title,
+        start: ev.start,
+        end: ev.end ? addDaysISO(ev.end, 1) : undefined,
+        backgroundColor: type.color,
+        borderColor: type.color,
+        textColor: type.textColor,
+        extendedProps: ev
+      };
+    }
+
+    function refreshCalendar(){
+      if (!calendar) return;
+      calendar.removeAllEvents();
+      events.filter(ev => visibleTypes.has(getTypeForCampaign(ev.campaign).id))
+        .forEach(ev => calendar.addEvent(toFcEvent(ev)));
+    }
+
+    function updateCalendarTitle(){
+      if (!calendar) return;
+      const view = calendar.view;
+      const title = view.currentStart.toLocaleString(undefined, { month: 'long', year: 'numeric' });
+      document.getElementById('calendarTitle').textContent = title;
+    }
+
+    // ==================== STATS ====================
+    function updateStats(){
+      if (!calendar) return;
+      const view = calendar.view;
+      const monthKey = getMonthKey(view.currentStart);
+      
+      const budget = monthlyBudgets[monthKey] || 0;
+      const planned = events.filter(e => e.start && e.start.slice(0, 7) === monthKey)
+        .reduce((sum, e) => sum + (e.budget || 0), 0);
+      const spent = events.filter(e => e.start && e.start.slice(0, 7) === monthKey)
+        .reduce((sum, e) => sum + (e.spend || 0), 0);
+      const remaining = budget - spent;
+
+      document.getElementById('statBudget').textContent = formatCurrency(budget);
+      document.getElementById('statPlanned').textContent = formatCurrency(planned);
+      document.getElementById('statSpent').textContent = formatCurrency(spent);
+      
+      const remainingEl = document.getElementById('statRemaining');
+      const remainingIcon = document.getElementById('remainingIcon');
+      remainingEl.textContent = formatCurrency(remaining);
+      
+      if (remaining < 0){
+        remainingEl.style.color = 'var(--danger)';
+        remainingIcon.classList.add('negative');
+      } else {
+        remainingEl.style.color = 'var(--success)';
+        remainingIcon.classList.remove('negative');
+      }
+    }
+
+    function getMonthKey(d){
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      return `${y}-${m}`;
+    }
+
+    // ==================== FILTERS ====================
+    function renderFilters(){
+      const container = document.getElementById('filtersRow');
+      let html = `<label class="filter-chip active"><input type="checkbox" checked data-type="all"> All</label>`;
+      
+      TYPE_DEFS.forEach(d => {
+        html += `<label class="filter-chip active">
+          <input type="checkbox" checked data-type="${d.id}">
+          <span class="swatch" style="background:${d.color}"></span>
+          ${d.label}
+        </label>`;
+      });
+      
+      container.innerHTML = html;
+      
+      container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.addEventListener('change', (e) => {
+          const type = e.target.dataset.type;
+          const chip = e.target.closest('.filter-chip');
+          
+          if (type === 'all'){
+            const checked = e.target.checked;
+            visibleTypes = new Set(checked ? TYPE_DEFS.map(d => d.id) : []);
+            container.querySelectorAll('input[type="checkbox"]').forEach(c => {
+              c.checked = checked;
+              c.closest('.filter-chip').classList.toggle('active', checked);
+            });
+          } else {
+            if (e.target.checked) visibleTypes.add(type);
+            else visibleTypes.delete(type);
+            chip.classList.toggle('active', e.target.checked);
+            
+            const allChecked = TYPE_DEFS.every(d => visibleTypes.has(d.id));
+            const allCb = container.querySelector('input[data-type="all"]');
+            allCb.checked = allChecked;
+            allCb.closest('.filter-chip').classList.toggle('active', allChecked);
+          }
+          
+          refreshCalendar();
+        });
+      });
+    }
+
+    // ==================== EVENT PANEL ====================
+    function openEventPanel(eventId = null){
+      selectedEventId = eventId;
+      const panel = document.getElementById('eventPanel');
+      const deleteBtn = document.getElementById('deleteEventBtn');
+      
+      if (eventId){
+        const ev = events.find(e => String(e.id) === String(eventId));
+        if (!ev) return;
+        
+        document.getElementById('panelTitle').textContent = 'Edit Event';
+        document.getElementById('eventTitle').value = ev.title || '';
+        document.getElementById('eventStart').value = ev.start || '';
+        document.getElementById('eventEnd').value = ev.end || '';
+        document.getElementById('eventTime').value = ev.time || '';
+        document.getElementById('eventCampaign').value = ev.campaign || '';
+        document.getElementById('eventBudget').value = ev.budget || '';
+        document.getElementById('eventSpend').value = ev.spend || '';
+        document.getElementById('eventNotes').value = ev.notes || '';
+        document.getElementById('eventAudience').value = ev.audience || '';
+        document.getElementById('eventGoal').value = ev.goal || '';
+        document.getElementById('eventDesired').value = ev.desired || '';
+        document.getElementById('eventSocialDate').value = ev.postedSocialAt || '';
+        document.getElementById('eventFlyerDate').value = ev.flyerPostedAt || '';
+        document.getElementById('eventEmailDate').value = ev.eblastSentAt || '';
+        document.getElementById('eventFlyerUrl').value = ev.flyerUrl || '';
+        deleteBtn.style.display = 'block';
+      } else {
+        document.getElementById('panelTitle').textContent = 'New Event';
+        clearEventForm();
+        document.getElementById('eventStart').value = toISO(new Date());
+        deleteBtn.style.display = 'none';
+      }
+      
+      panel.classList.add('open');
+    }
+
+    function closeEventPanel(){
+      document.getElementById('eventPanel').classList.remove('open');
+      selectedEventId = null;
+    }
+
+    function toggleSection(headerEl){
+      const section = headerEl.closest('.panel-section');
+      if (section) section.classList.toggle('collapsed');
+    }
+
+    function clearEventForm(){
+      document.getElementById('eventTitle').value = '';
+      document.getElementById('eventStart').value = '';
+      document.getElementById('eventEnd').value = '';
+      document.getElementById('eventTime').value = '';
+      document.getElementById('eventCampaign').value = '';
+      document.getElementById('eventBudget').value = '';
+      document.getElementById('eventSpend').value = '';
+      document.getElementById('eventNotes').value = '';
+      document.getElementById('eventAudience').value = '';
+      document.getElementById('eventGoal').value = '';
+      document.getElementById('eventDesired').value = '';
+      document.getElementById('eventSocialDate').value = '';
+      document.getElementById('eventFlyerDate').value = '';
+      document.getElementById('eventEmailDate').value = '';
+      document.getElementById('eventFlyerUrl').value = '';
+    }
+
+    async function saveEvent(){
+      const title = document.getElementById('eventTitle').value.trim();
+      const start = document.getElementById('eventStart').value;
+      
+      if (!title || !start){
+        showToast('Title and date are required', 'error');
+        return;
+      }
+
+      const payload = {
+        title,
+        start,
+        end: document.getElementById('eventEnd').value || start,
+        time: document.getElementById('eventTime').value || '',
+        campaign: document.getElementById('eventCampaign').value || '',
+        budget: parseFloat(document.getElementById('eventBudget').value) || 0,
+        spend: parseFloat(document.getElementById('eventSpend').value) || 0,
+        notes: document.getElementById('eventNotes').value || '',
+        audience: document.getElementById('eventAudience').value || '',
+        goal: document.getElementById('eventGoal').value || '',
+        desired: document.getElementById('eventDesired').value || '',
+        postedSocialAt: document.getElementById('eventSocialDate').value || '',
+        flyerPostedAt: document.getElementById('eventFlyerDate').value || '',
+        eblastSentAt: document.getElementById('eventEmailDate').value || '',
+        flyerUrl: document.getElementById('eventFlyerUrl').value || '',
+      };
+
+      try {
+        if (selectedEventId){
+          await apiFetch('/events', { method: 'PUT', body: JSON.stringify({ id: selectedEventId, property: currentProperty, ...payload }) });
+          showToast('Event updated!');
+        } else {
+          await apiFetch('/events', { method: 'POST', body: JSON.stringify({ property: currentProperty, ...payload }) });
+          showToast('Event created!');
+        }
+        
+        const res = await apiFetch(`/events?property=${encodeURIComponent(currentProperty)}`);
+        events = await res.json();
+        refreshCalendar();
+        updateStats();
+        renderTargets();
+        closeEventPanel();
+      } catch(e){
+        showToast('Save failed: ' + e.message, 'error');
+      }
+    }
+
+    async function deleteEvent(){
+      if (!selectedEventId) return;
+      if (!confirm('Delete this event?')) return;
+      
+      try {
+        await apiFetch('/events', { method: 'DELETE', body: JSON.stringify({ id: selectedEventId, property: currentProperty }) });
+        const res = await apiFetch(`/events?property=${encodeURIComponent(currentProperty)}`);
+        events = await res.json();
+        refreshCalendar();
+        updateStats();
+        renderTargets();
+        closeEventPanel();
+        showToast('Event deleted');
+      } catch(e){
+        showToast('Delete failed: ' + e.message, 'error');
+      }
+    }
+
+    // ==================== QUICK ADD ====================
+    let wizardStep = 1;
+    const WIZARD_TOTAL_STEPS = 4;
+
+    function openQuickAdd(){
+      wizardStep = 1;
+      selectedCampaignType = null;
+      document.querySelectorAll('.type-option').forEach(el => el.classList.remove('selected'));
+      document.getElementById('quickTitle').value = '';
+      document.getElementById('quickDate').value = toISO(new Date());
+      document.getElementById('quickBudget').value = '';
+      const wizardAudience = document.getElementById('wizardAudience');
+      const wizardDesired = document.getElementById('wizardDesired');
+      const wizardTime = document.getElementById('wizardTime');
+      const wizardGoal = document.getElementById('wizardGoal');
+      const wizardNotes = document.getElementById('wizardNotes');
+      if (wizardAudience) wizardAudience.value = '';
+      if (wizardDesired) wizardDesired.value = '';
+      if (wizardTime) wizardTime.value = '';
+      if (wizardGoal) wizardGoal.value = '';
+      if (wizardNotes) wizardNotes.value = '';
+      updateWizardUI();
+      document.getElementById('quickAddModal').classList.add('open');
+    }
+
+    function openQuickAddWithDate(dateStr){
+      openQuickAdd();
+      document.getElementById('quickDate').value = dateStr;
+    }
+
+    function closeQuickAdd(){
+      document.getElementById('quickAddModal').classList.remove('open');
+      wizardStep = 1;
+    }
+
+    function updateWizardUI(){
+      document.querySelectorAll('.wizard-step-dot').forEach(dot => {
+        const step = parseInt(dot.dataset.step, 10);
+        dot.classList.remove('active', 'complete');
+        if (step === wizardStep) dot.classList.add('active');
+        else if (step < wizardStep) dot.classList.add('complete');
+      });
+      document.querySelectorAll('.wizard-step-line').forEach(line => {
+        const lineNum = parseInt(line.dataset.line, 10);
+        line.classList.toggle('complete', lineNum < wizardStep);
+      });
+      document.querySelectorAll('.wizard-step').forEach(step => {
+        const stepNum = parseInt(step.dataset.step, 10);
+        step.classList.toggle('active', stepNum === wizardStep);
+      });
+      const backBtn = document.getElementById('wizardBack');
+      const nextBtn = document.getElementById('wizardNext');
+      const saveBtn = document.getElementById('quickAddSave');
+      backBtn.style.display = wizardStep > 1 ? 'block' : 'none';
+      nextBtn.style.display = wizardStep < WIZARD_TOTAL_STEPS ? 'block' : 'none';
+      saveBtn.style.display = wizardStep === WIZARD_TOTAL_STEPS ? 'block' : 'none';
+    }
+
+    function wizardNext(){
+      if (wizardStep === 1 && !selectedCampaignType){
+        showToast('Please select an event type', 'error');
+        return;
+      }
+      if (wizardStep === 3){
+        const title = document.getElementById('quickTitle').value.trim();
+        const date = document.getElementById('quickDate').value;
+        if (!title){ showToast('Please enter an event title', 'error'); return; }
+        if (!date){ showToast('Please select a date', 'error'); return; }
+      }
+      if (wizardStep < WIZARD_TOTAL_STEPS){
+        wizardStep++;
+        updateWizardUI();
+      }
+    }
+
+    function wizardBack(){
+      if (wizardStep > 1){
+        wizardStep--;
+        updateWizardUI();
+      }
+    }
+
+    async function quickAddEvent(keepOpen = false){
+      const title = document.getElementById('quickTitle').value.trim();
+      const date = document.getElementById('quickDate').value;
+      if (!title || !date){ showToast('Title and date are required', 'error'); return; }
+      const wizardAudience = document.getElementById('wizardAudience');
+      const wizardDesired = document.getElementById('wizardDesired');
+      const wizardTime = document.getElementById('wizardTime');
+      const wizardGoal = document.getElementById('wizardGoal');
+      const wizardNotes = document.getElementById('wizardNotes');
+      const payload = {
+        title,
+        start: date,
+        end: date,
+        time: wizardTime ? wizardTime.value : '',
+        campaign: selectedCampaignType || '',
+        budget: parseFloat(document.getElementById('quickBudget').value) || 0,
+        spend: 0,
+        audience: wizardAudience ? wizardAudience.value : '',
+        desired: wizardDesired ? wizardDesired.value : '',
+        goal: wizardGoal ? wizardGoal.value : '',
+        notes: wizardNotes ? wizardNotes.value : '',
+      };
+      try {
+        await apiFetch('/events', { method: 'POST', body: JSON.stringify({ property: currentProperty, ...payload }) });
+        const res = await apiFetch(`/events?property=${encodeURIComponent(currentProperty)}`);
+        events = await res.json();
+        refreshCalendar();
+        updateStats();
+        renderTargets();
+        showToast('Event created!');
+        if (keepOpen){
+          wizardStep = 1;
+          selectedCampaignType = null;
+          document.querySelectorAll('.campaign-option').forEach(el => el.classList.remove('selected'));
+          document.getElementById('quickTitle').value = '';
+          document.getElementById('quickBudget').value = '';
+          if (wizardAudience) wizardAudience.value = '';
+          if (wizardDesired) wizardDesired.value = '';
+          if (wizardTime) wizardTime.value = '';
+          if (wizardGoal) wizardGoal.value = '';
+          if (wizardNotes) wizardNotes.value = '';
+          updateWizardUI();
+        } else {
+          closeQuickAdd();
+        }
+      } catch(e){
+        showToast('Save failed: ' + e.message, 'error');
+      }
+    }
+
+    // ==================== BUDGET MODAL ====================
+    function openBudgetModal(){
+      updateBudgetModalStats();
+      renderBudgetMonths();
+      document.getElementById('budgetModal').classList.add('open');
+    }
+
+    function closeBudgetModal(){
+      document.getElementById('budgetModal').classList.remove('open');
+    }
+
+    function updateBudgetModalStats(){
+      if (!calendar) return;
+      const view = calendar.view;
+      const monthKey = getMonthKey(view.currentStart);
+      
+      const budget = monthlyBudgets[monthKey] || 0;
+      const planned = events.filter(e => e.start && e.start.slice(0, 7) === monthKey)
+        .reduce((sum, e) => sum + (e.budget || 0), 0);
+      const actual = events.filter(e => e.start && e.start.slice(0, 7) === monthKey)
+        .reduce((sum, e) => sum + (e.spend || 0), 0);
+      const remaining = budget - actual;
+
+      document.getElementById('modalBudget').textContent = formatCurrency(budget);
+      document.getElementById('modalPlanned').textContent = formatCurrency(planned);
+      document.getElementById('modalActual').textContent = formatCurrency(actual);
+      
+      const remainingEl = document.getElementById('modalRemaining');
+      remainingEl.textContent = formatCurrency(remaining);
+      remainingEl.className = 'value ' + (remaining >= 0 ? 'positive' : 'negative');
+    }
+
+    function initBudgetYearSelect(){
+      const select = document.getElementById('budgetYear');
+      const now = new Date().getFullYear();
+      select.innerHTML = [now - 1, now, now + 1, now + 2].map(y => 
+        `<option value="${y}" ${y === now ? 'selected' : ''}>${y}</option>`
+      ).join('');
+      select.addEventListener('change', renderBudgetMonths);
+    }
+
+    function renderBudgetMonths(){
+      const year = parseInt(document.getElementById('budgetYear').value, 10);
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const container = document.getElementById('budgetMonths');
+      
+      container.innerHTML = months.map((m, i) => {
+        const ym = `${year}-${String(i + 1).padStart(2, '0')}`;
+        const val = monthlyBudgets[ym] || '';
+        return `<div class="month-input">
+          <label>${m}</label>
+          <input type="number" data-ym="${ym}" value="${val}" step="0.01">
+        </div>`;
+      }).join('');
+      
+      container.querySelectorAll('input').forEach(inp => {
+        inp.addEventListener('input', (e) => {
+          const ym = e.target.dataset.ym;
+          const v = parseFloat(e.target.value);
+          if (isFinite(v)) monthlyBudgets[ym] = Math.round(v * 100) / 100;
+          else delete monthlyBudgets[ym];
+        });
+      });
+    }
+
+    async function saveBudgets(){
+      try {
+        await apiFetch('/budgets', { method: 'PUT', body: JSON.stringify({ property: currentProperty, months: monthlyBudgets }) });
+        updateStats();
+        updateBudgetModalStats();
+        showToast('Budgets saved!');
+      } catch(e){
+        showToast('Save failed: ' + e.message, 'error');
+      }
+    }
+
+    // ==================== INITIALIZATION ====================
+    async function initializeApp(){
+      loadTargets();
+      await loadProperties();
+      renderPropertyOptions();
+      
+      const list = getAccessibleProperties();
+      if (!list.length){
+        alert('No properties assigned to your account.');
+        return;
+      }
+      
+      const saved = mapPropertyNameToGroup(localStorage.getItem(STORE_CURRENT_PROPERTY_KEY) || '');
+      currentProperty = list.includes(saved) ? saved : list[0];
+      document.getElementById('propertySelect').value = currentProperty;
+      
+      await setActiveProperty(currentProperty);
+      
+      initCalendar();
+      renderFilters();
+      renderTargets();
+      initBudgetYearSelect();
+      bindEventListeners();
+    }
+
+    function bindEventListeners(){
+      // Header
+      document.getElementById('backToLiveBtn').addEventListener('click', () => location.href = 'mmp_calendar_app.html');
+      document.getElementById('logoutBtn').addEventListener('click', doLogout);
+      document.getElementById('adminPageBtn').addEventListener('click', () => location.href = 'mmp_admin.html');
+      document.getElementById('propertySelect').addEventListener('change', (e) => setActiveProperty(e.target.value));
+      
+      // Add Event
+      document.getElementById('addEventBtn').addEventListener('click', openQuickAdd);
+      
+      // Budget
+      document.getElementById('budgetPill').addEventListener('click', openBudgetModal);
+      document.getElementById('closeBudgetModal').addEventListener('click', closeBudgetModal);
+      document.getElementById('cancelBudgetBtn').addEventListener('click', closeBudgetModal);
+      document.getElementById('saveBudgetBtn').addEventListener('click', saveBudgets);
+      document.getElementById('budgetModal').addEventListener('click', (e) => { if (e.target.id === 'budgetModal') closeBudgetModal(); });
+      
+      // Event Panel
+      document.getElementById('closePanel').addEventListener('click', closeEventPanel);
+      document.getElementById('cancelEventBtn').addEventListener('click', closeEventPanel);
+      document.getElementById('saveEventBtn').addEventListener('click', saveEvent);
+      document.getElementById('deleteEventBtn').addEventListener('click', deleteEvent);
+      document.getElementById('eventPanel').addEventListener('click', (e) => { if (e.target.id === 'eventPanel') closeEventPanel(); });
+      
+      // Quick Add
+      document.getElementById('closeQuickAdd').addEventListener('click', closeQuickAdd);
+      document.getElementById('cancelQuickAdd').addEventListener('click', closeQuickAdd);
+      document.getElementById('quickAddSave').addEventListener('click', () => quickAddEvent(false));
+      document.getElementById('quickAddModal').addEventListener('click', (e) => { if (e.target.id === 'quickAddModal') closeQuickAdd(); });
+      
+      document.getElementById('campaignGrid').addEventListener('click', (e) => {
+        const option = e.target.closest('.type-option');
+        if (!option) return;
+        document.querySelectorAll('.type-option').forEach(el => el.classList.remove('selected'));
+        option.classList.add('selected');
+        selectedCampaignType = option.dataset.type;
+      });
+      
+      // Wizard Navigation
+      document.getElementById('wizardNext').addEventListener('click', wizardNext);
+      document.getElementById('wizardBack').addEventListener('click', wizardBack);
+      
+      // Targets Modal (Admin)
+      document.getElementById('editTargetsBtn').addEventListener('click', openTargetsModal);
+      document.getElementById('closeTargetsModal').addEventListener('click', closeTargetsModal);
+      document.getElementById('cancelTargetsBtn').addEventListener('click', closeTargetsModal);
+      document.getElementById('saveTargetsBtn').addEventListener('click', saveTargetsFromModal);
+      document.getElementById('addTargetBtn').addEventListener('click', addNewTarget);
+      document.getElementById('targetsModal').addEventListener('click', (e) => { if (e.target.id === 'targetsModal') closeTargetsModal(); });
+      
+      // Login
+      document.getElementById('loginBtn').addEventListener('click', doLogin);
+      document.getElementById('loginPassword').addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
+      
+      // Keyboard
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape'){
+          closeEventPanel();
+          closeQuickAdd();
+          closeBudgetModal();
+          closeTargetsModal();
+        }
+      });
+    }
+
+    // Start
+    initAuth();
+  </script>
+<script>
+/* Inactivity Auto-Logout (12h) */
+(function(){var T=12*60*60*1000,K='mmp_last_activity';function u(){try{localStorage.setItem(K,Date.now().toString())}catch(e){}}function c(){try{var l=parseInt(localStorage.getItem(K)||'0',10);if(l&&(Date.now()-l)>T){localStorage.removeItem(K);fetch('/api/auth-logout',{method:'POST',credentials:'include'}).catch(function(){});window.location.href='index.html';}}catch(e){}}u();['mousedown','keydown','scroll','touchstart'].forEach(function(e){document.addEventListener(e,u,{passive:true})});setInterval(c,60000);c()})();
+</script>
+</body>
+</html>
