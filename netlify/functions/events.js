@@ -19,6 +19,8 @@ export async function handler(event){
       const { property } = payload || {};
       if (!property) return { statusCode: 400, body: 'Missing property' };
       if (user.role !== 'admin' && !(user.properties||[]).includes(property)) return { statusCode: 403, body: 'Forbidden' };
+      // Only admins may create already-approved items.
+      if (user.role !== 'admin' && payload.approval === 'approved'){ payload.approval = 'pending'; delete payload.approvedBy; delete payload.approvedAt; }
       const res = await db.collection('events').insertOne({ ...payload, createdAt: new Date() });
       return { statusCode: 200, body: JSON.stringify({ id: res.insertedId.toString() }) };
     }
@@ -27,6 +29,8 @@ export async function handler(event){
       const { id, property, ...updates } = payload || {};
       if (!id || !property) return { statusCode: 400, body: 'Missing id/property' };
       if (user.role !== 'admin' && !(user.properties||[]).includes(property)) return { statusCode: 403, body: 'Forbidden' };
+      // Only admins may approve; non-admins can still move an item back to pending.
+      if (user.role !== 'admin' && updates.approval !== 'pending'){ delete updates.approval; delete updates.approvedBy; delete updates.approvedAt; }
       await db.collection('events').updateOne({ _id: new ObjectId(id), property }, { $set: { ...updates, updatedAt: new Date() } });
       return { statusCode: 200, body: 'OK' };
     }
