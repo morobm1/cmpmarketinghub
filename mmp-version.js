@@ -1,5 +1,5 @@
 /*
- * MMP calendar version switch (legacy mmp_calendar_app.html <-> Updated MMP calendar_test.html).
+ * MMP calendar version switch (legacy mmp_calendar_app.html <-> Updated MMP marketing_calendar.html).
  *
  * - Every role except RA / REC can use the Updated MMP.
  * - Until the legacy cutoff, eligible users choose with a toggle (remembered in localStorage).
@@ -8,7 +8,7 @@
  */
 (function(){
   var LEGACY_URL = 'mmp_calendar_app.html';
-  var UPDATED_URL = 'calendar_test.html';
+  var UPDATED_URL = 'marketing_calendar.html';
   var PREF_KEY = 'mmp_calendar_version_v1';           // 'updated' | 'legacy'
   var LEGACY_LAST_DAY = new Date(2026, 9, 30);         // Oct 30, 2026 (legacy usable through end of this day, local time)
   var CUTOFF = new Date(2026, 9, 31, 0, 0, 0);         // first moment the legacy page is retired

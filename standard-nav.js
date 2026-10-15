@@ -393,9 +393,14 @@
     setTimeout(measure, 1200);
   }
 
+  // Pages that should highlight another page's nav item (e.g. the Updated MMP is
+  // reached through the "Marketing Calendar" link, which points at the legacy URL).
+  var ACTIVE_ALIASES = { 'marketing_calendar.html': 'mmp_calendar_app.html' };
+
   // Build navigation HTML
   function buildNavHTML() {
     var currentPage = window.location.pathname.split('/').pop() || 'index.html';
+    currentPage = ACTIVE_ALIASES[currentPage] || currentPage;
     var collapsedClass = isCollapsed ? ' collapsed' : '';
 
     function getIconHTML(item) {

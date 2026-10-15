@@ -2,6 +2,7 @@
 
 ## Main Application Pages (Priority 1)
 - [x] mmp_calendar_app.html - DONE (already has vertical nav)
+- [x] marketing_calendar.html - DONE (Updated MMP calendar; shared header + vertical nav)
 - [ ] marketing_plans.html - Has old nav hidden, needs vertical nav added
 - [ ] velocity_tracker.html
 - [ ] mplr.html
@@ -20,7 +21,6 @@
 
 ## Test/Reference Pages (Priority 3 - Optional)
 - [ ] admin_test.html
-- [ ] calendar_test.html
 - [ ] mmp_web_app.html
 - [ ] mmp_calendar_app_v2.html
 

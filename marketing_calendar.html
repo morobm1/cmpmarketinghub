@@ -9,21 +9,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+  <script src="custom-tools-nav.js"></script>
   <script src="mmp-version.js"></script>
   <style>
     :root{--brand-primary:#446472;--brand-accent:#ffb732;--brand-accent-2:#52d5ff;--page-bg:#f8fafc;--text:#1e293b;--subtext:#64748b;--border:#e2e8f0;--success:#22c55e;--warning:#f59e0b;--danger:#ef4444}
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:'Open Sans',system-ui,sans-serif;background:var(--page-bg);color:var(--text);font-size:14px;line-height:1.5}
-
-    header{padding:12px 24px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-    .brand{display:flex;align-items:center;gap:10px}
-    .brand .logo-img{height:28px;width:auto}
-    .brand .title{color:#ffb732;font-family:zooja-pro,Arial,sans-serif;font-size:clamp(32px,4vw,48px);line-height:1}
-    .header-controls{display:flex;align-items:center;gap:10px;margin-left:auto;flex-wrap:wrap}
-    .header-controls select{background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;min-width:220px}
-    .header-btn{background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer}
-    .header-btn:hover{background:#f8fafc}
-    .header-btn.back{background:#dcfce7;border-color:#86efac;color:#166534}
+    /* Header + sidebar styles come from standard-nav.js (shared across the Marketing Hub). */
 
     .main-container{max-width:1280px;margin:0 auto;padding:20px}
 
@@ -332,11 +324,15 @@
     </div>
     <div class="header-controls">
       <select id="propertySelect"></select>
-      <button class="header-btn" id="adminPageBtn" style="display:none">Admin</button>
       <button class="header-btn" id="logoutBtn">Sign Out</button>
+      <button class="header-btn" id="adminPageBtn" style="display:none">Admin</button>
     </div>
+    <span class="company-name">Capstone Management Partners</span>
   </header>
 
+  <!-- Sidebar navigation is injected dynamically by standard-nav.js -->
+
+  <div class="main-content">
   <div class="main-container" id="appContainer" style="display:none">
     <!-- Version switch (hidden after the legacy cutoff) -->
     <section class="mmpv-banner" id="mmpVersionBanner" style="display:none">
@@ -425,6 +421,7 @@
       </section>
     </div>
   </div>
+  </div><!-- /.main-content -->
 
   <!-- Event panel -->
   <div class="panel-overlay" id="eventPanel">
@@ -982,7 +979,7 @@
     function showApp(){
       document.getElementById('bootLoader').style.display = 'none';
       document.getElementById('loginView').style.display = 'none';
-      document.getElementById('appHeader').style.display = 'flex';
+      document.getElementById('appHeader').style.display = '';
       document.getElementById('appContainer').style.display = 'block';
       if (isAdmin()){ document.getElementById('targetsActions').style.display = 'flex'; document.getElementById('adminPageBtn').style.display = 'block'; }
     }
@@ -1924,9 +1921,7 @@
     document.getElementById('loginPassword').addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
     initAuth();
   </script>
-<script>
-/* Inactivity Auto-Logout (12h) */
-(function(){var T=12*60*60*1000,K='mmp_last_activity';function u(){try{localStorage.setItem(K,Date.now().toString())}catch(e){}}function c(){try{var l=parseInt(localStorage.getItem(K)||'0',10);if(l&&(Date.now()-l)>T){localStorage.removeItem(K);fetch('/api/auth-logout',{method:'POST',credentials:'include'}).catch(function(){});window.location.href='index.html';}}catch(e){}}u();['mousedown','keydown','scroll','touchstart'].forEach(function(e){document.addEventListener(e,u,{passive:true})});setInterval(c,60000);c()})();
-</script>
+<!-- Shared header styles, sidebar navigation and 12h inactivity auto-logout -->
+<script src="standard-nav.js"></script>
 </body>
 </html>
