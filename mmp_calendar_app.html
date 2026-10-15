@@ -257,6 +257,22 @@
   <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.10/index.global.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="custom-tools-nav.js"></script>
+  <style>
+    .mmpv-banner{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:14px 18px;border-radius:12px;background:linear-gradient(90deg,#ecfeff,#fff7e6);border:1px solid #a5f3fc;color:#1e293b;font-family:'Open Sans',Roboto,Arial,sans-serif}
+    .mmpv-text{flex:1;min-width:240px}
+    .mmpv-title{font-size:15px;font-weight:700;margin-bottom:2px}
+    .mmpv-sub{font-size:13px;color:#475569;line-height:1.5}
+    .mmpv-sub b{color:#92400e}
+    .mmpv-switch{display:inline-flex;align-items:center;gap:10px;cursor:pointer;user-select:none;white-space:nowrap}
+    .mmpv-switch input{position:absolute;opacity:0;width:0;height:0}
+    .mmpv-track{position:relative;width:46px;height:26px;border-radius:999px;background:#cbd5e1;transition:background .2s;flex-shrink:0}
+    .mmpv-thumb{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s}
+    .mmpv-switch input:checked + .mmpv-track{background:#22c55e}
+    .mmpv-switch input:checked + .mmpv-track .mmpv-thumb{transform:translateX(20px)}
+    .mmpv-switch input:focus-visible + .mmpv-track{box-shadow:0 0 0 3px rgba(82,213,255,.4)}
+    .mmpv-label{font-size:14px;font-weight:700;color:#446472}
+  </style>
+  <script src="mmp-version.js"></script>
 </head>
 <body>
   <div id="bootLoader" style="position:fixed;inset:0;background:#ffffff;display:flex;align-items:center;justify-content:center;z-index:100;color:#111827;font-family:Roboto,Arial,sans-serif">
@@ -458,6 +474,19 @@
           </aside>
 
     <main style="display:flex; flex-direction:column; gap:16px">
+      <!-- Updated MMP opt-in (hidden for RA/REC users) -->
+      <section class="mmpv-banner" id="mmpVersionBanner" style="display:none">
+        <div class="mmpv-text">
+          <div class="mmpv-title">Try the New Updated MMP</div>
+          <div class="mmpv-sub">Calendar-first layout, Idea Lab, auto-scheduled promotion, monthly approvals and one-click MMP emails.
+            <b>This legacy version is available until <span id="mmpLegacyDate">10/30</span>.</b> After that, the Updated MMP will be the only option.</div>
+        </div>
+        <label class="mmpv-switch" title="Switch to the Updated MMP">
+          <input type="checkbox" id="mmpVersionToggle">
+          <span class="mmpv-track"><span class="mmpv-thumb"></span></span>
+          <span class="mmpv-label">Use New Updated MMP</span>
+        </label>
+      </section>
       <section class="card">
         <h3>Calendar</h3>
         <div class="content">
@@ -1514,6 +1543,8 @@
         if (meRes.ok){
           const me = await meRes.json();
           currentUser = { username: me.username, role: me.role, properties: me.properties };
+          // Send eligible users to the Updated MMP if they opted in (or after the legacy cutoff).
+          if (window.MMPVersion && MMPVersion.gateLegacy(currentUser)) return true;
           SESSION_ACTIVE = true;
           // Ensure a login time exists for auto-logout scheduling
           try{ if (!localStorage.getItem(STORE_LOGIN_TIME_KEY)) localStorage.setItem(STORE_LOGIN_TIME_KEY, String(Date.now())); }catch(e){}

@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+  <script src="mmp-version.js"></script>
   <style>
     :root{--brand-primary:#446472;--brand-accent:#ffb732;--brand-accent-2:#52d5ff;--page-bg:#f8fafc;--text:#1e293b;--subtext:#64748b;--border:#e2e8f0;--success:#22c55e;--warning:#f59e0b;--danger:#ef4444}
     *{box-sizing:border-box;margin:0;padding:0}
@@ -282,6 +283,19 @@
     .toast.success{background:var(--success)}
     .toast.error{background:var(--danger)}
     .hidden{display:none !important}
+    .mmpv-banner{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:12px 18px;border-radius:12px;background:linear-gradient(90deg,#ecfeff,#fff7e6);border:1px solid #a5f3fc;margin-bottom:16px}
+    .mmpv-text{flex:1;min-width:240px}
+    .mmpv-title{font-size:14px;font-weight:700}
+    .mmpv-sub{font-size:13px;color:#475569}
+    .mmpv-sub b{color:#92400e}
+    .mmpv-switch{display:inline-flex;align-items:center;gap:10px;cursor:pointer;user-select:none;white-space:nowrap}
+    .mmpv-switch input{position:absolute;opacity:0;width:0;height:0}
+    .mmpv-track{position:relative;width:46px;height:26px;border-radius:999px;background:#cbd5e1;transition:background .2s;flex-shrink:0}
+    .mmpv-thumb{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s}
+    .mmpv-switch input:checked + .mmpv-track{background:#22c55e}
+    .mmpv-switch input:checked + .mmpv-track .mmpv-thumb{transform:translateX(20px)}
+    .mmpv-switch input:focus-visible + .mmpv-track{box-shadow:0 0 0 3px rgba(82,213,255,.4)}
+    .mmpv-label{font-size:14px;font-weight:700;color:var(--brand-primary)}
     #bootLoader{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;z-index:1000;font-weight:800}
     #loginView{min-height:100vh;display:none;align-items:center;justify-content:center;padding:20px}
     .login-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:32px;max-width:400px;width:100%}
@@ -318,13 +332,24 @@
     </div>
     <div class="header-controls">
       <select id="propertySelect"></select>
-      <button class="header-btn back" id="backToLiveBtn">Back to Live</button>
       <button class="header-btn" id="adminPageBtn" style="display:none">Admin</button>
       <button class="header-btn" id="logoutBtn">Sign Out</button>
     </div>
   </header>
 
   <div class="main-container" id="appContainer" style="display:none">
+    <!-- Version switch (hidden after the legacy cutoff) -->
+    <section class="mmpv-banner" id="mmpVersionBanner" style="display:none">
+      <div class="mmpv-text">
+        <div class="mmpv-title">You're using the New Updated MMP</div>
+        <div class="mmpv-sub">The legacy calendar is available until <b><span id="mmpLegacyDate">10/30</span></b>. After that, the Updated MMP will be the only option. Turn the switch off to go back to the legacy version until then.</div>
+      </div>
+      <label class="mmpv-switch" title="Turn off to return to the legacy MMP">
+        <input type="checkbox" id="mmpVersionToggle" checked>
+        <span class="mmpv-track"><span class="mmpv-thumb"></span></span>
+        <span class="mmpv-label">Use New Updated MMP</span>
+      </label>
+    </section>
     <!-- CALENDAR FIRST -->
     <div class="calendar-card">
       <div class="calendar-header">
@@ -933,7 +958,12 @@
     async function initAuth(){
       try {
         const r = await fetch('/api/me', { credentials: 'include' });
-        if (r.ok){ const me = await r.json(); currentUser = { username: me.username, role: me.role, properties: me.properties }; showApp(); await initializeApp(); return; }
+        if (r.ok){
+          const me = await r.json(); currentUser = { username: me.username, role: me.role, properties: me.properties };
+          // RA / REC users don't have access to the Updated MMP; they're sent to the legacy calendar.
+          if (window.MMPVersion && MMPVersion.gateUpdated(currentUser)) return;
+          showApp(); await initializeApp(); return;
+        }
       } catch(e){}
       showLogin();
     }
@@ -1767,7 +1797,6 @@
 
     function bindEventListeners(){
       if (listenersBound) return; listenersBound = true;
-      onClick('backToLiveBtn', () => location.href = 'mmp_calendar_app.html');
       onClick('logoutBtn', doLogout);
       onClick('adminPageBtn', () => location.href = 'mmp_admin.html');
       $('propertySelect').addEventListener('change', (e) => setActiveProperty(e.target.value));
